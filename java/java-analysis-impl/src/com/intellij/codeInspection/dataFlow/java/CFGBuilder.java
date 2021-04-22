@@ -316,7 +316,7 @@ public class CFGBuilder {
    * @return this builder
    */
   CFGBuilder compare(IElementType relation) {
-    return add(new BinopInstruction(relation, null, PsiType.BOOLEAN));
+    return add(new BooleanBinaryInstruction(relation, null));
   }
 
   /**

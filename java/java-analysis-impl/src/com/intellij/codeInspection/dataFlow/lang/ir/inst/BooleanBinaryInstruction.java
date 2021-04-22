@@ -16,23 +16,19 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.JavaTokenType.*;
 
-public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression> implements BranchingInstruction {
-  private static final TokenSet ourSignificantOperations =
-    TokenSet.create(EQ, EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS, MINUS, AND, OR, XOR, PERC, DIV, ASTERISK, GTGT, GTGTGT, LTLT);
+public class BooleanBinaryInstruction extends ExpressionPushingInstruction<PsiExpression> implements BranchingInstruction {
+  // AND and OR for boolean arguments only
+  private static final TokenSet ourSignificantOperations = TokenSet.create(EQ, EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, AND, OR);
 
   /**
    * A special operation to express string comparison by content (like equals() method does).
@@ -41,31 +37,22 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
   public static final IElementType STRING_EQUALITY_BY_CONTENT = EQ;
 
   private final IElementType myOperationSign;
-  private final @Nullable PsiType myResultType;
   private final int myLastOperand;
 
-  public BinopInstruction(IElementType opSign, @Nullable PsiExpression expression, @Nullable PsiType resultType) {
-    this(opSign, expression, resultType, -1);
+  public BooleanBinaryInstruction(IElementType opSign, @Nullable PsiExpression expression) {
+    this(opSign, expression, -1);
   }
 
   /**
    * @param opSign sign of the operation
    * @param expression PSI element to bind the instruction to
-   * @param resultType result of the operation
    * @param lastOperand number of last operand if anchor is a {@link PsiPolyadicExpression} and this instruction is the result of
    *                    part of that expression; -1 if not applicable
-   * @param unrolledLoop true means that this instruction is executed inside an unrolled loop; in this case it will never be widened
    */
-  public BinopInstruction(IElementType opSign,
-                          @Nullable PsiExpression expression,
-                          @Nullable PsiType resultType,
-                          int lastOperand) {
+  public BooleanBinaryInstruction(IElementType opSign, @Nullable PsiExpression expression, int lastOperand) {
     super(expression);
     assert lastOperand == -1 || expression instanceof PsiPolyadicExpression;
-    myResultType = resultType;
-    myOperationSign =
-      opSign == XOR && PsiType.BOOLEAN.equals(resultType) ? NE : // XOR for boolean is equivalent to NE
-      ourSignificantOperations.contains(opSign) ? opSign : null;
+    myOperationSign = opSign == XOR ? NE : ourSignificantOperations.contains(opSign) ? opSign : null;
     myLastOperand = lastOperand;
   }
 
@@ -75,14 +62,7 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
   @Override
   @Nullable
   public TextRange getExpressionRange() {
-    if (myLastOperand != -1 && getExpression() instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression anchor = (PsiPolyadicExpression)getExpression();
-      PsiExpression[] operands = anchor.getOperands();
-      if (operands.length > myLastOperand + 1) {
-        return new TextRange(0, operands[myLastOperand].getStartOffsetInParent()+operands[myLastOperand].getTextLength());
-      }
-    }
-    return null;
+    return DfaPsiUtil.getRange(getExpression(), myLastOperand);
   }
 
   @Override
@@ -90,13 +70,8 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
     return visitor.visitBinop(this, runner, stateBefore);
   }
 
-  @Nullable
-  public PsiType getResultType() {
-    return myResultType;
-  }
-
   public String toString() {
-    return "BINOP " + myOperationSign;
+    return "BOOLEAN_OP " + myOperationSign;
   }
 
   public IElementType getOperationSign() {

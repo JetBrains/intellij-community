@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.ControlFlowOffset;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -205,12 +206,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       rExpr.accept(this);
       generateBoxingUnboxingInstructionFor(rExpr, type);
     }
-    else if (op == JavaTokenType.PLUSEQ && type != null && type.equalsToText(JAVA_LANG_STRING)) {
-      lExpr.accept(this);
-      addInstruction(new DupInstruction());
-      rExpr.accept(this);
-      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, type));
-    }
     else {
       IElementType sign = TypeConversionUtil.convertEQtoOperation(op);
       PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lExpr.getType(), rExpr.getType(), sign, true);
@@ -219,10 +214,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(lExpr, resType);
       rExpr.accept(this);
       generateBoxingUnboxingInstructionFor(rExpr, resType);
-      if (isAssignmentDivision(op) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
-        checkZeroDivisor(resType);
-      }
-      addInstruction(new BinopInstruction(sign, expression.isPhysical() ? expression : null, resType));
+      generateBinOp(expression, -1, sign, rExpr, resType);
       generateBoxingUnboxingInstructionFor(rExpr, resType, type, false);
     }
 
@@ -526,7 +518,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (length != null) {
         addInstruction(new UnwrapSpecialFieldInstruction(length));
         addInstruction(new PushValueInstruction(DfTypes.intValue(0)));
-        addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
+        addInstruction(new BooleanBinaryInstruction(JavaTokenType.EQEQ, null));
         addInstruction(new ConditionalGotoInstruction(loopEndOffset, false, null));
         hasSizeCheck = true;
       } else {
@@ -950,9 +942,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   if (caseValue != null && expressionValue != null && (enumConstant || PsiUtil.isConstantExpression(caseValue))) {
                     addInstruction(new PushInstruction(expressionValue, null));
                     caseValue.accept(this);
-                    addInstruction(new BinopInstruction(
-                      TypeUtils.isJavaLangString(targetType) ? BinopInstruction.STRING_EQUALITY_BY_CONTENT :
-                      JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
+                    addInstruction(new BooleanBinaryInstruction(
+                      TypeUtils.isJavaLangString(targetType) ? BooleanBinaryInstruction.STRING_EQUALITY_BY_CONTENT :
+                      JavaTokenType.EQEQ, null));
                   }
                   else {
                     pushUnknown();
@@ -1361,30 +1353,26 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateShortCircuitAndOr(expression, operands, expression.getType(), false);
     }
     else {
-      generateBinOp(expression, op, operands);
+      generateBinOpChain(expression, op, operands);
     }
     finishElement(expression);
   }
 
-  static boolean isBinaryDivision(IElementType binaryOp) {
+  private static boolean isBinaryDivision(IElementType binaryOp) {
     return binaryOp == JavaTokenType.DIV || binaryOp == JavaTokenType.PERC;
-  }
-
-  static boolean isAssignmentDivision(IElementType op) {
-    return op == JavaTokenType.PERCEQ || op == JavaTokenType.DIVEQ;
   }
 
   private void checkZeroDivisor(PsiType resType) {
     addInstruction(new DupInstruction());
     addInstruction(new PushValueInstruction(PsiType.LONG.equals(resType) ? DfTypes.longValue(0) : DfTypes.intValue(0)));
-    addInstruction(new BinopInstruction(JavaTokenType.NE, null, PsiType.BOOLEAN));
+    addInstruction(new BooleanBinaryInstruction(JavaTokenType.NE, null));
     ConditionalGotoInstruction ifNonZero = new ConditionalGotoInstruction(null, false, null);
     addInstruction(ifNonZero);
     throwException(myExceptionCache.get(ArithmeticException.class.getName()), null);
     ifNonZero.setOffset(myCurrentFlow.getInstructionCount());
   }
 
-  private void generateBinOp(PsiPolyadicExpression expression, @NotNull IElementType op, PsiExpression[] operands) {
+  private void generateBinOpChain(PsiPolyadicExpression expression, @NotNull IElementType op, PsiExpression[] operands) {
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
@@ -1395,17 +1383,31 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       acceptBinaryRightOperand(op, lExpr, lType, rExpr, rType);
       PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, op, true);
-      if (isBinaryDivision(op) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
-        Object divisorValue = ExpressionUtils.computeConstantExpression(rExpr);
-        if (!(divisorValue instanceof Number) || (((Number)divisorValue).longValue() == 0)) {
-          checkZeroDivisor(resType);
-        }
-      }
-      addInstruction(new BinopInstruction(op, expression, resType, i));
+      generateBinOp(expression, i, op, rExpr, resType);
 
       lExpr = rExpr;
       lType = resType;
     }
+  }
+
+  private void generateBinOp(PsiExpression expression, int lastOperand, @NotNull IElementType op, PsiExpression rExpr, PsiType resType) {
+    if (isBinaryDivision(op) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
+      Object divisorValue = ExpressionUtils.computeConstantExpression(rExpr);
+      if (!(divisorValue instanceof Number) || (((Number)divisorValue).longValue() == 0)) {
+        checkZeroDivisor(resType);
+      }
+    }
+    Instruction inst;
+    if (op.equals(JavaTokenType.PLUS) && TypeUtils.isJavaLangString(resType)) {
+      inst = new StringConcatInstruction(expression, resType, lastOperand);
+    }
+    else if (PsiType.BOOLEAN.equals(resType)) {
+      inst = new BooleanBinaryInstruction(op, expression, lastOperand);
+    }
+    else {
+      inst = new NumericBinaryInstruction(JvmPsiRangeSetUtil.binOpFromToken(op), expression, lastOperand);
+    }
+    addInstruction(inst);
   }
 
   private void acceptBinaryRightOperand(@NotNull IElementType op,
@@ -1749,7 +1751,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
       addInstruction(new PushValueInstruction(DfType.FAIL));
-      addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
+      addInstruction(new BooleanBinaryInstruction(JavaTokenType.EQEQ, null));
       ConditionalGotoInstruction ifNotFail = new ConditionalGotoInstruction(null, true, null);
       addInstruction(ifNotFail);
       addInstruction(new ReturnInstruction(myFactory.controlTransfer(myExceptionCache.get(JAVA_LANG_THROWABLE), myTrapStack), anchor));
@@ -1927,13 +1929,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private boolean processIncrementDecrement(PsiUnaryExpression expression, PsiExpression operand) {
-    IElementType token;
+    LongRangeBinOp token;
     IElementType exprTokenType = expression.getOperationTokenType();
     if (exprTokenType.equals(JavaTokenType.MINUSMINUS)) {
-      token = JavaTokenType.MINUS;
+      token = LongRangeBinOp.MINUS;
     }
     else if (exprTokenType.equals(JavaTokenType.PLUSPLUS)) {
-      token = JavaTokenType.PLUS;
+      token = LongRangeBinOp.PLUS;
     }
     else {
       return false;
@@ -1946,7 +1948,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiType resultType = TypeConversionUtil.binaryNumericPromotion(unboxedType, PsiType.INT);
     Object addend = TypeConversionUtil.computeCastTo(1, resultType);
     addInstruction(new PushValueInstruction(DfTypes.primitiveConstant(addend)));
-    addInstruction(new BinopInstruction(token, null, resultType));
+    addInstruction(new NumericBinaryInstruction(token, null));
     if (!unboxedType.equals(resultType)) {
       addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
     }
@@ -1990,7 +1992,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           else if (expression.getOperationTokenType() == JavaTokenType.MINUS && (PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
             addInstruction(new PushValueInstruction(DfTypes.defaultValue(type)));
             addInstruction(new SwapInstruction());
-            addInstruction(new BinopInstruction(expression.getOperationTokenType(), expression, type));
+            addInstruction(new NumericBinaryInstruction(LongRangeBinOp.MINUS, expression));
           }
           else {
             addInstruction(new PopInstruction());

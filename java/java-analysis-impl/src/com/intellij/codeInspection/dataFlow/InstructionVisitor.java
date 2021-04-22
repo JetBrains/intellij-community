@@ -26,7 +26,6 @@ import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaLanguageSupport;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -39,7 +38,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -589,35 +587,20 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
   }
 
-  public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+  public DfaInstructionState[] visitBinop(BooleanBinaryInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     DfaValue dfaRight = memState.pop();
     DfaValue dfaLeft = memState.pop();
 
     final IElementType opSign = instruction.getOperationSign();
     RelationType relationType =
-      DfaPsiUtil.getRelationByToken(opSign == BinopInstruction.STRING_EQUALITY_BY_CONTENT ? JavaTokenType.EQEQ : opSign);
+      DfaPsiUtil.getRelationByToken(opSign == BooleanBinaryInstruction.STRING_EQUALITY_BY_CONTENT ? JavaTokenType.EQEQ : opSign);
     if (relationType != null) {
       return handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft, relationType);
     }
-    PsiType type = instruction.getResultType();
-    if (PsiType.BOOLEAN.equals(type)) {
-      return handleAndOrBinop(instruction, runner, memState, dfaRight, dfaLeft);
-    }
-    DfaValue result = runner.getFactory().getUnknown();
-    if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-      DfIntegralType dfType = PsiType.LONG.equals(type) ? LONG : INT;
-      LongRangeBinOp binOp = JvmPsiRangeSetUtil.binOpFromToken(opSign);
-      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, dfType, binOp);
-    }
-    if (DfaTypeValue.isUnknown(result) && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
-      result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
-    }
-    pushExpressionResult(result, instruction, memState);
-
-    return nextInstruction(instruction, runner, memState);
+    return handleAndOrBinop(instruction, runner, memState, dfaRight, dfaLeft);
   }
 
-  private DfaInstructionState @NotNull [] handleAndOrBinop(BinopInstruction instruction,
+  private DfaInstructionState @NotNull [] handleAndOrBinop(BooleanBinaryInstruction instruction,
                                                            DataFlowRunner runner,
                                                            DfaMemoryState memState,
                                                            DfaValue dfaRight, DfaValue dfaLeft) {
@@ -640,29 +623,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  private static @NotNull DfaValue concatStrings(@NotNull DfaValue left,
-                                                 @NotNull DfaValue right,
-                                                 @NotNull DfaMemoryState memState,
-                                                 @NotNull PsiType stringType,
-                                                 @NotNull DfaValueFactory factory) {
-    String leftString = memState.getDfType(left).getConstantOfType(String.class);
-    String rightString = memState.getDfType(right).getConstantOfType(String.class);
-    if (leftString != null && rightString != null &&
-        leftString.length() + rightString.length() <= CustomMethodHandlers.MAX_STRING_CONSTANT_LENGTH_TO_TRACK) {
-      return factory.fromDfType(concatenationResult(leftString + rightString, stringType));
-    }
-    DfaValue leftLength = JvmSpecialField.STRING_LENGTH.createValue(factory, left);
-    DfaValue rightLength = JvmSpecialField.STRING_LENGTH.createValue(factory, right);
-    DfType leftRange = memState.getDfType(leftLength);
-    DfType rightRange = memState.getDfType(rightLength);
-    DfType resultRange = leftRange instanceof DfIntType ? ((DfIntType)leftRange).eval(rightRange, LongRangeBinOp.PLUS) : INT;
-    DfType result = resultRange.isConst(0)
-                    ? referenceConstant("", stringType)
-                    : JvmSpecialField.STRING_LENGTH.asDfType(resultRange).meet(TypeConstraints.exact(stringType).asDfType());
-    return factory.fromDfType(result);
-  }
-
-  private DfaInstructionState @NotNull [] handleRelationBinop(BinopInstruction instruction,
+  private DfaInstructionState @NotNull [] handleRelationBinop(BooleanBinaryInstruction instruction,
                                                               DataFlowRunner runner,
                                                               DfaMemoryState memState,
                                                               DfaValue dfaRight,
@@ -670,7 +631,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
                                                               RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
     if((relationType == RelationType.EQ || relationType == RelationType.NE) &&
-       instruction.getOperationSign() != BinopInstruction.STRING_EQUALITY_BY_CONTENT &&
+       instruction.getOperationSign() != BooleanBinaryInstruction.STRING_EQUALITY_BY_CONTENT &&
        memState.shouldCompareByEquals(dfaLeft, dfaRight)) {
       ArrayList<DfaInstructionState> states = new ArrayList<>(2);
       DfaMemoryState equality = memState.createCopy();

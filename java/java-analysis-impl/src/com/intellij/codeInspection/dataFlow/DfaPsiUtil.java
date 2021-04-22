@@ -25,6 +25,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -692,5 +693,17 @@ public final class DfaPsiUtil {
       return ((PsiType)value).getPresentableText();
     }
     return value.toString();
+  }
+
+  @Nullable
+  public static TextRange getRange(@Nullable PsiExpression expression, int myLastOperand) {
+    if (myLastOperand != -1 && expression instanceof PsiPolyadicExpression) {
+      PsiPolyadicExpression anchor = (PsiPolyadicExpression)expression;
+      PsiExpression[] operands = anchor.getOperands();
+      if (operands.length > myLastOperand + 1) {
+        return new TextRange(0, operands[myLastOperand].getStartOffsetInParent()+operands[myLastOperand].getTextLength());
+      }
+    }
+    return null;
   }
 }

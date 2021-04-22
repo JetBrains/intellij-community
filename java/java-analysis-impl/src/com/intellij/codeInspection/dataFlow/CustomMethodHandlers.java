@@ -61,7 +61,7 @@ public final class CustomMethodHandlers {
     exactInstanceCall(JAVA_LANG_CHARACTER, "toString").parameterCount(0),
     exactInstanceCall(JAVA_LANG_BOOLEAN, "toString").parameterCount(0)
   );
-  static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 256;
+  public static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 256;
 
   interface CustomMethodHandler {
 
