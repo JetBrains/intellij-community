@@ -52,7 +52,6 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
     private static final Key<KotlinInplaceVariableIntroducer> ACTIVE_INTRODUCER = Key.create("ACTIVE_INTRODUCER");
 
     public static final String TYPE_REFERENCE_VARIABLE_NAME = "TypeReferenceVariable";
-    public static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
 
     private static final Function0<Boolean> TRUE = new Function0<>() {
         @Override

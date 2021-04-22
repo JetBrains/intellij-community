@@ -401,7 +401,7 @@ public class KotlinTestUtils {
             throw new RuntimeException(e);
         }
 
-        List<String> files = TestFiles.createTestFiles("", content, new TestFiles.TestFileFactoryNoModules<String>() {
+        List<String> files = TestFiles.createTestFiles("", content, new TestFiles.TestFileFactoryNoModules<>() {
             @NotNull
             @Override
             public String create(@NotNull String fileName, @NotNull String text, @NotNull Directives directives) {

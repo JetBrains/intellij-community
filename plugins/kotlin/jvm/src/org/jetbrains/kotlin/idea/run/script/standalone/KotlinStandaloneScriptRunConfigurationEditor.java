@@ -10,7 +10,6 @@ import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -50,7 +49,7 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     }
 
     @Override
-    protected void resetEditorFrom(KotlinStandaloneScriptRunConfiguration configuration) {
+    protected void resetEditorFrom(@NotNull KotlinStandaloneScriptRunConfiguration configuration) {
         commonProgramParameters.reset(configuration);
         String path = configuration.filePath;
         chooseScriptFileTextField.setText(path != null ? path : "");
@@ -58,7 +57,7 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     }
 
     @Override
-    protected void applyEditorTo(KotlinStandaloneScriptRunConfiguration configuration) throws ConfigurationException {
+    protected void applyEditorTo(@NotNull KotlinStandaloneScriptRunConfiguration configuration) {
         commonProgramParameters.applyTo(configuration);
         configuration.setAlternativeJrePath(jrePathEditor.getJrePathOrName());
         configuration.setAlternativeJrePathEnabled(jrePathEditor.isAlternativeJreSelected());

@@ -55,6 +55,7 @@ class KtClassOrObjectTreeNode(project: Project?, ktClassOrObject: KtClassOrObjec
         }
 
         val file = value.containingFile
+        @Suppress("UseVirtualFileEquals")
         if (file != null && (file === element || file.virtualFile === element)) {
             return true
         }

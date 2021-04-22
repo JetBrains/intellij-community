@@ -43,6 +43,7 @@ abstract public class KotlinCompletionTestCase extends JavaCompletionTestCase {
         return new File(getTestDataPath(), fileName);
     }
 
+    @SuppressWarnings("TestMethodWithIncorrectSignature")
     protected File testDataFile() {
         return testDataFile(fileName());
     }

@@ -15,7 +15,7 @@ fun verify(updateStatus: PluginUpdateStatus.Update): PluginUpdateStatus {
     if (!PlatformVersion.isAndroidStudio()) {
         return updateStatus
     }
-    @Suppress("InvalidBundleOrProperty")
+    @Suppress("InvalidBundleOrProperty", "UnresolvedPluginConfigReference")
     val pluginVerifierEnabled = Registry.`is`("kotlin.plugin.update.verifier.enabled", true)
     if (!pluginVerifierEnabled) {
         return updateStatus

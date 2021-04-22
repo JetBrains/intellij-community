@@ -105,7 +105,7 @@ public class KotlinLanguageConfigurationForm {
     }
 
     private void showVerifierDisabledStatus() {
-        //noinspection UnresolvedPropertyKey
+        //noinspection UnresolvedPluginConfigReference
         if (!Registry.is("kotlin.plugin.update.verifier.enabled", true)) {
             verifierDisabledText.setText(KotlinBundle.message("configuration.message.verifier.disabled"));
         }

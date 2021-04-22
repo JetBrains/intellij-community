@@ -48,12 +48,12 @@ import static org.jetbrains.kotlin.asJava.LightClassUtilsKt.toLightClass;
 
 public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProducer {
     @Override
-    public boolean shouldReplace(ConfigurationFromContext self, ConfigurationFromContext other) {
+    public boolean shouldReplace(@NotNull ConfigurationFromContext self, ConfigurationFromContext other) {
         return other.isProducedBy(TestNGConfigurationProducer.class);
     }
 
     @Override
-    public boolean isConfigurationFromContext(TestNGConfiguration configuration, ConfigurationContext context) {
+    public boolean isConfigurationFromContext(@NotNull TestNGConfiguration configuration, @NotNull ConfigurationContext context) {
         if (isMultipleElementsSelected(context)) {
             return false;
         }
@@ -92,7 +92,7 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
 
     @Override
     protected boolean setupConfigurationFromContext(
-            TestNGConfiguration configuration, ConfigurationContext context, Ref<PsiElement> sourceElement
+            @NotNull TestNGConfiguration configuration, ConfigurationContext context, @NotNull Ref<PsiElement> sourceElement
     ) {
         // TODO: check TestNG Pattern running first, before method/class (see TestNGInClassConfigurationProducer for logic)
         // TODO: and PsiClassOwner not handled, which is in TestNGInClassConfigurationProducer
@@ -130,7 +130,7 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
     }
 
     @Override
-    public void onFirstRun(ConfigurationFromContext configuration, ConfigurationContext context, Runnable startRunnable) {
+    public void onFirstRun(ConfigurationFromContext configuration, @NotNull ConfigurationContext context, @NotNull Runnable startRunnable) {
         KtNamedDeclaration declarationToRun = getDeclarationToRun(configuration.getSourceElement());
         final PsiNamedElement lightElement = CollectionsKt.firstOrNull(LightClassUtilsKt.toLightElements(declarationToRun));
 
