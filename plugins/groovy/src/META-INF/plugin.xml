@@ -831,10 +831,11 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyConditionalWithIdenticalBranchesInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.conditional.can.be.elvis" groupKey="inspection.control.flow"
+                     enabledByDefault="true" level="INFORMATION"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyConditionalCanBeElvisInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.conditional.can.be.conditional.call"
-                     groupKey="inspection.control.flow"
+                     groupKey="inspection.control.flow" enabledByDefault="true" level="INFORMATION"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyConditionalCanBeConditionalCallInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.if.statement.with.identical.branches"
@@ -993,7 +994,7 @@
                      groupKey="inspection.confusing"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNestedSwitchInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.conditional"
-                     groupKey="inspection.confusing"
+                     groupKey="inspection.style"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyConditionalInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.clashing.getters" groupKey="inspection.confusing"
