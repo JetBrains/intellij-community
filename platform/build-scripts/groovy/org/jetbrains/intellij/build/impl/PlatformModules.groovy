@@ -168,7 +168,7 @@ class PlatformModules {
       addModule("intellij.platform.vcs.dvcs.impl", PLATFORM_JAR)
       addModule("intellij.platform.vcs.log.graph.impl", PLATFORM_JAR)
       addModule("intellij.platform.vcs.log.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.codeReview", PLATFORM_JAR)
+      addModule("intellij.platform.collaborationTools", PLATFORM_JAR)
 
       addModule("intellij.platform.objectSerializer.annotations")
 
