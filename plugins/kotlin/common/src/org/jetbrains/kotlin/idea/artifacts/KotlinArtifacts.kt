@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.artifacts
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
-import java.io.FileNotFoundException
 
 abstract class KotlinArtifacts(val kotlincDistDir: File) {
     companion object {
@@ -82,9 +81,16 @@ private object ProductionKotlinArtifacts : KotlinArtifacts(run {
 
     val libFile = pluginJar.parentFile.takeIf { it.name == "lib" }
     if (libFile == null || !libFile.exists()) {
-        // Don't throw exception because someone may want to just try to initialize
-        // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
-        File("<invalid_kotlinc_path>")
+        if ("compile-server" in pluginJar.path && File(pluginJar.parentFile, "kotlinc").exists()) {
+            // WSL JPS build copies all JPS plugin jars to the cache directory, without an intervening 'lib' directory,
+            // and the kotlinc directory becomes a subdirectory of the cache directory (see KotlinBuildProcessParametersProvider.getAdditionalPluginPaths())
+            pluginJar.parentFile
+        }
+        else {
+            // Don't throw exception because someone may want to just try to initialize
+            // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
+            File("<invalid_kotlinc_path>")
+        }
     } else {
         libFile.parentFile
     }

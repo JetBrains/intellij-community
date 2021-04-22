@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 
 class KotlinBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
     override fun getVMArguments(): MutableList<String> {
@@ -35,5 +36,9 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
             }
         }
         return res
+    }
+
+    override fun getAdditionalPluginPaths(): Iterable<String> {
+        return listOf(KotlinArtifacts.instance.kotlincDirectory.path)
     }
 }
