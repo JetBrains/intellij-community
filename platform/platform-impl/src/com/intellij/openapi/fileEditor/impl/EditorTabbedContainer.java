@@ -436,9 +436,11 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   }
 
   private static void doHideAll(@NotNull MouseEvent e) {
-    if (!Registry.is("editor.maximize.on.double.click")) return;
+    if (!Registry.is("editor.maximize.on.double.click") && !Registry.is("editor.maximize.in.splits.on.double.click")) return;
     ActionManager mgr = ActionManager.getInstance();
-    mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.EDITOR_TAB, true);
+    String actionName = Registry.is("editor.maximize.in.splits.on.double.click") ? "MaximizeEditorInSplit" : "HideAllWindows";
+    mgr.tryToExecute(mgr.getAction(actionName), e, null, ActionPlaces.EDITOR_TAB, true);
+    e.consume();
   }
 
   public void processSplit() {
