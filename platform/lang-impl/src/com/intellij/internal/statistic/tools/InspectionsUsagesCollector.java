@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.tools;
 
 import com.intellij.codeInspection.InspectionEP;
@@ -7,12 +7,9 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId1;
-import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -41,12 +38,51 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
   private static final Predicate<ScopeToolState> ENABLED = state -> !state.getTool().isEnabledByDefault() && state.isEnabled();
   private static final Predicate<ScopeToolState> DISABLED = state -> state.getTool().isEnabledByDefault() && !state.isEnabled();
 
-  private static final String OPTION_VALUE = "option_value";
-  private static final String OPTION_TYPE = "option_type";
-  private static final String OPTION_NAME = "option_name";
-  private static final String INSPECTION_ID = "inspection_id";
+  private static final StringEventField INSPECTION_ID_FIELD = EventFields.StringValidatedByCustomRule("inspection_id", "tool");
+  private static final BooleanEventField ENABLED_FIELD = EventFields.Boolean("enabled");
+  private static final BooleanEventField INSPECTION_ENABLED_FIELD = EventFields.Boolean("inspection_enabled");
+  private static final PrimitiveEventField<Object> OPTION_VALUE_FIELD = new PrimitiveEventField<>() {
+    @NotNull
+    @Override
+    public List<String> getValidationRule() {
+      return Arrays.asList("{enum#boolean}", "{regexp#integer}");
+    }
+
+    @Override
+    public void addData(@NotNull FeatureUsageData fuData, Object value) {
+      if (value instanceof Integer) {
+        fuData.addData(getName(), (Integer)value);
+      } else if (value instanceof Boolean) {
+        fuData.addData(getName(), (Boolean)value);
+      }
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "option_value";
+    }
+  };
+  private static final StringEventField OPTION_TYPE_FIELD =
+    new StringEventField.ValidatedByAllowedValues("option_type", Arrays.asList("boolean", "integer"));
+  private static final StringEventField OPTION_NAME_FIELD = EventFields.StringValidatedByCustomRule("option_name", "plugin_info");
 
   private static final EventLogGroup GROUP = new EventLogGroup("inspections", 6);
+
+  private static final VarargEventId NOT_DEFAULT_STATE =
+    GROUP.registerVarargEvent("not.default.state",
+                              INSPECTION_ID_FIELD,
+                              EventFields.Language,
+                              ENABLED_FIELD,
+                              EventFields.PluginInfo);
+  private static final VarargEventId SETTING_NON_DEFAULT_STATE =
+    GROUP.registerVarargEvent("setting.non.default.state",
+                              INSPECTION_ID_FIELD,
+                              INSPECTION_ENABLED_FIELD,
+                              EventFields.PluginInfo,
+                              OPTION_TYPE_FIELD,
+                              OPTION_VALUE_FIELD,
+                              OPTION_NAME_FIELD);
   private static final EventId1<Integer> PROFILES =
     GROUP.registerEvent("profiles",
                         EventFields.Int("amount"));
@@ -111,56 +147,46 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
       if (fields.contains(name) && value != null) {
         Attribute defaultValue = defaultOptions.get(name);
         if (defaultValue == null || !StringUtil.equals(value.getValue(), defaultValue.getValue())) {
-          FeatureUsageData data = new FeatureUsageData();
-          data.addData(OPTION_NAME, name);
-          data.addData(INSPECTION_ID, inspectionId);
-          data.addData("inspection_enabled", inspectionEnabled);
-          data.addPluginInfo(pluginInfo);
-          if (addSettingValue(value, data)) {
-            result.add(MetricEventFactoryKt.newMetric("setting.non.default.state", data));
-          }
+          final var settingPair = getSettingValue(value);
+          if (settingPair == null) continue;
+          result.add(SETTING_NON_DEFAULT_STATE.metric(
+            INSPECTION_ID_FIELD.with(inspectionId),
+            INSPECTION_ENABLED_FIELD.with(inspectionEnabled),
+            EventFields.PluginInfo.with(pluginInfo),
+            settingPair.first,
+            settingPair.second,
+            OPTION_NAME_FIELD.with(name)
+          ));
         }
       }
     }
     return result;
   }
 
-  private static boolean addSettingValue(Attribute value, FeatureUsageData data) {
+  private static Pair<EventPair<String>, EventPair<Object>> getSettingValue(Attribute value) {
     try {
-      boolean booleanValue = value.getBooleanValue();
-      data.addData(OPTION_VALUE, booleanValue);
-      data.addData(OPTION_TYPE, "boolean");
-      return true;
+      final boolean booleanValue = value.getBooleanValue();
+      return new Pair<>(OPTION_TYPE_FIELD.with("boolean"), OPTION_VALUE_FIELD.with(booleanValue));
     }
-    catch (DataConversionException e) {
-      return addIntValue(value, data);
-    }
-  }
-
-  private static boolean addIntValue(Attribute value, FeatureUsageData data) {
-    try {
-      int intValue = value.getIntValue();
-      data.addData(OPTION_VALUE, intValue);
-      data.addData(OPTION_TYPE, "integer");
-      return true;
-    }
-    catch (DataConversionException e) {
-      return false;
+    catch (DataConversionException e1) {
+      try {
+        final int intValue = value.getIntValue();
+        return new Pair<>(OPTION_TYPE_FIELD.with("integer"), OPTION_VALUE_FIELD.with(intValue));
+      }
+      catch (DataConversionException e2) {
+        return null;
+      }
     }
   }
 
   @NotNull
   private static MetricEvent create(InspectionToolWrapper<?, ?> tool, PluginInfo info, boolean enabled) {
-    final FeatureUsageData data = new FeatureUsageData().addData("enabled", enabled);
-    final String language = tool.getLanguage();
-    if (StringUtil.isNotEmpty(language)) {
-      data.addLanguage(Language.findLanguageByID(language));
-    }
-    if (info != null) {
-      data.addPluginInfo(info);
-    }
-    data.addData(INSPECTION_ID, isSafeToReport(info) ? tool.getID() : "third.party");
-    return MetricEventFactoryKt.newMetric("not.default.state", data);
+    return NOT_DEFAULT_STATE.metric(
+      INSPECTION_ID_FIELD.with(isSafeToReport(info) ? tool.getID() : "third.party"),
+      EventFields.Language.with(Language.findLanguageByID(tool.getLanguage())),
+      ENABLED_FIELD.with(enabled),
+      EventFields.PluginInfo.with(info)
+    );
   }
 
   @NotNull
