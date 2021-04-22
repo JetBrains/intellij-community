@@ -16,14 +16,14 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCase {
+public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
   private MavenProjectsNavigator myNavigator;
   private MavenProjectsStructure myStructure;
 

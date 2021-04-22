@@ -9,14 +9,14 @@ import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectT
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+import org.jetbrains.idea.maven.MavenImportingTestCase
 import org.jetbrains.idea.maven.importing.xml.MavenBuildFileBuilder
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
 import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 
-class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenMultiVersionImportingTestCase() {
+class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTestCase() {
   override fun getSystemId(): ProjectSystemId = SYSTEM_ID
 
   override fun generateProject(id: String): ExternalSystemSetupProjectTestCase.ProjectInfo {

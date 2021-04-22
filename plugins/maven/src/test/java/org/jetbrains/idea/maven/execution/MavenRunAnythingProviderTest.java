@@ -10,9 +10,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenConstants;
-import org.junit.Test;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +25,7 @@ import static java.util.stream.Collectors.groupingBy;
 /**
  * @author ibessonov
  */
-public class MavenRunAnythingProviderTest extends MavenMultiVersionImportingTestCase {
+public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
 
   private DataContext myDataContext;
   private MavenRunAnythingProvider myProvider;
@@ -39,7 +38,6 @@ public class MavenRunAnythingProviderTest extends MavenMultiVersionImportingTest
     myProvider = new MavenRunAnythingProvider();
   }
 
-  @Test
   public void testRegularProject() {
     withVariantsFor("", it -> {
       assertContain(it, "clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site");
@@ -50,7 +48,6 @@ public class MavenRunAnythingProviderTest extends MavenMultiVersionImportingTest
     });
   }
 
-  @Test
   public void testSingleMavenProject() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -79,7 +76,6 @@ public class MavenRunAnythingProviderTest extends MavenMultiVersionImportingTest
     });
   }
 
-  @Test
   public void testMavenProjectWithModules() {
     VirtualFile m1 =
       createModulePom("m1", "<groupId>test</groupId>" +

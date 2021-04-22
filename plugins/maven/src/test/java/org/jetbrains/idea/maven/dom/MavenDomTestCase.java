@@ -55,7 +55,7 @@ import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
@@ -66,7 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCase {
+public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected CodeInsightTestFixture myFixture;
   private final Map<VirtualFile, Long> myConfigTimestamps = new THashMap<>();
   private boolean myOriginalAutoCompletion;

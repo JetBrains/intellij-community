@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl;
@@ -34,7 +34,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
 
-public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase {
+public class MavenFoldersImporterTest extends MavenImportingTestCase {
   public void testUpdatingExternallyCreatedFolders() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

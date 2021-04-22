@@ -24,12 +24,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.junit.Test;
 
-public class MavenModelReadingAndWritingTest extends MavenMultiVersionImportingTestCase {
+public class MavenModelReadingAndWritingTest extends MavenImportingTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
@@ -39,7 +38,6 @@ public class MavenModelReadingAndWritingTest extends MavenMultiVersionImportingT
                   "<version>1</version>");
   }
 
-  @Test
   public void testReading() {
     MavenDomProjectModel model = getDomModel();
 
@@ -48,7 +46,6 @@ public class MavenModelReadingAndWritingTest extends MavenMultiVersionImportingT
     assertEquals("1", model.getVersion().getStringValue());
   }
 
-  @Test
   public void testWriting() throws Exception {
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       MavenDomProjectModel model = getDomModel();
@@ -71,7 +68,6 @@ public class MavenModelReadingAndWritingTest extends MavenMultiVersionImportingT
                     VfsUtil.loadText(myProjectPom));
   }
 
-  @Test
   public void testAddingADependency() throws Exception {
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       MavenDomProjectModel model = getDomModel();

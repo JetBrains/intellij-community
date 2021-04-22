@@ -21,12 +21,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
-import org.junit.Test;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
 
-public class WorkingWithOpenProjectTest extends MavenMultiVersionImportingTestCase {
+public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
@@ -36,12 +35,10 @@ public class WorkingWithOpenProjectTest extends MavenMultiVersionImportingTestCa
                   "<version>1</version>");
   }
 
-  @Test
   public void testShouldNotFailOnNewEmptyPomCreation() {
     createModulePom("module", ""); // should not throw an exception
   }
 
-  @Test
   public void testShouldNotFailOnAddingNewContentRootWithAPomFile() throws Exception {
     File newRootDir = new File(myDir, "newRoot");
     newRootDir.mkdirs();

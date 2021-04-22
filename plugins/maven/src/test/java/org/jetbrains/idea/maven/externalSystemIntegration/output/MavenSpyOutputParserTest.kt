@@ -2,11 +2,9 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenBuildToolLogTestUtils.failOnWarns
-import org.junit.Test
 
 class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
 
-  @Test
   fun testSuccessfullBuildWithTwoSubmodules() {
     failOnWarns {
       assertSameLines("" +
@@ -34,7 +32,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun testArchetypeRun() {
+  fun testArchetypeRun() {
     failOnWarns {
       testCase(*fromFile("org/jetbrains/maven/buildlogs/test-scala-archetype.log"))
         .withSkippedOutput()
@@ -42,7 +40,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun testdependencyInSinleMojoFailed() {
+  fun testdependencyInSinleMojoFailed() {
     failOnWarns {
       assertSameLines("io.testproject:web-test-example:jar:1.1\n" +
                       "  resources\n" +
@@ -63,7 +61,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun testSuccessfullBuildWithOutputTwoSubmodules() {
+  fun testSuccessfullBuildWithOutputTwoSubmodules() {
     failOnWarns {
       assertSameLines("test:project:pom:1\n" +
                       "  [INFO]\n" +

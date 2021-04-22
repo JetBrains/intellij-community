@@ -20,7 +20,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingTestCase {
+public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
   protected void compileModules(final String... moduleNames) {
     compile(createModulesCompileScope(moduleNames));
   }

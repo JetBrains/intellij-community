@@ -24,20 +24,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
+public class FoldersImportingTest extends MavenImportingTestCase {
 
   //public static Test suite() throws ClassNotFoundException {
   //  return new TestSuite(
@@ -47,7 +46,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   //  );
   //}
 
-  @Test
   public void testSimpleProjectStructure() {
     createStdProjectFolders();
 
@@ -64,7 +62,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  @Test
   public void testInvalidProjectHasContentRoot() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -75,7 +72,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertContentRoots("project", getProjectPath());
   }
 
-  @Test
   public void testDoNotResetFoldersAfterResolveIfProjectIsInvalid() {
     createStdProjectFolders();
 
@@ -100,7 +96,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  @Test
   public void testDoesNotResetUserFolders() {
     final VirtualFile dir1 = createProjectSubDir("userSourceFolder");
     final VirtualFile dir2 = createProjectSubDir("userExcludedFolder");
@@ -110,10 +105,9 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   "<version>1</version>");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      MavenRootModelAdapter adapter =
-        new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
-                                                                      getModule("project"),
-                                                                      new IdeModifiableModelsProviderImpl(myProject)));
+      MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
+                                                                getModule("project"),
+                                                                new IdeModifiableModelsProviderImpl(myProject)));
       adapter.addSourceFolder(dir1.getPath(), JavaSourceRootType.SOURCE);
       adapter.addExcludedFolder(dir2.getPath());
       adapter.getRootModel().commit();
@@ -134,7 +128,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertExcludes("project", "target", "userExcludedFolder");
   }
 
-  @Test
   public void testClearParentAndSubFoldersOfNewlyImportedFolders() {
     createProjectSubDirs("src/main/java", "src/main/resources");
 
@@ -163,7 +156,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  @Test
   public void testSourceFoldersOnReimport() {
     createProjectSubDirs("src1", "src2");
 
@@ -200,7 +192,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project", "src2", "src1");
   }
 
-  @Test
   public void testCustomSourceFolders() {
     createStdProjectFolders();
     createProjectSubDirs("src", "test", "res1", "res2", "testRes1", "testRes2");
@@ -231,7 +222,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "testRes1", "testRes2");
   }
 
-  @Test
   public void testCustomSourceFoldersOutsideOfContentRoot() {
     createStdProjectFolders();
     createProjectSubDirs("m",
@@ -273,7 +263,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                        getProjectPath() + "/testRes");
   }
 
-  @Test
   public void testPluginSources() {
     createStdProjectFolders();
     createProjectSubDirs("src1", "src2");
@@ -313,7 +302,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  @Test
   public void testPluginSourceDuringGenerateResourcesPhase() {
     createStdProjectFolders();
     createProjectSubDirs("extraResources");
@@ -352,7 +340,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  @Test
   public void testPluginTestSourcesDuringGenerateTestResourcesPhase() {
     createStdProjectFolders();
     createProjectSubDirs("extraTestResources");
@@ -393,7 +380,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  @Test
   public void testPluginSourcesWithRelativePath() {
     createStdProjectFolders();
     createProjectSubDirs("relativePath");
@@ -432,7 +418,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  @Test
   public void testPluginSourcesWithVariables() {
     createStdProjectFolders();
     createProjectSubDirs("target/src");
@@ -471,7 +456,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  @Test
   public void testPluginSourcesWithIntermoduleDependency() {
     createProjectSubDirs("m1/src/main/java",
                          "m1/src/main/resources",
@@ -536,7 +520,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("m1", "src/main/resources");
   }
 
-  @Test
   public void testPluginExtraFilesInMultipleExecutions() {
     createStdProjectFolders();
     createProjectSubDirs("src1", "src2");
@@ -664,7 +647,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources", "test-resources1", "test-resources2");
   }
 
-  @Test
   public void testDownloadingNecessaryPlugins() throws Exception {
     try {
       MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
@@ -712,7 +694,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     }
   }
 
-  @Test
   public void testAddingExistingGeneratedSources() throws Exception {
     createStdProjectFolders();
 
@@ -738,7 +719,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  @Test
   public void testAddingExistingGeneratedSources2() throws Exception {
     createStdProjectFolders();
 
@@ -754,7 +734,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  @Test
   public void testAddingExistingGeneratedSources3() throws Exception {
     createStdProjectFolders();
 
@@ -773,7 +752,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  @Test
   public void testOverrideAnnotationSources() throws Exception {
     createStdProjectFolders();
 
@@ -793,7 +771,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  @Test
   public void testIgnoreGeneratedSources() throws Exception {
     createStdProjectFolders();
 
@@ -812,7 +789,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
 
-  @Test
   public void testAddingExistingGeneratedSources4() throws Exception {
     createStdProjectFolders();
 
@@ -832,7 +808,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  @Test
   public void testAddingExistingGeneratedSources5() throws Exception {
     createStdProjectFolders();
 
@@ -850,7 +825,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
 
-  @Test
   public void testAddingExistingGeneratedSourcesWithCustomTargetDir() throws Exception {
     createStdProjectFolders();
     createProjectSubDirsWithFile("targetCustom/generated-sources/src",
@@ -875,7 +849,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  @Test
   public void testDoesNotAddAlreadyRegisteredSourcesUnderGeneratedDir() {
     createStdProjectFolders();
     createProjectSubDirs("target/generated-sources/main/src",
@@ -933,7 +906,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  @Test
   public void testIgnoringFilesRightUnderGeneratedSources() throws Exception {
     createStdProjectFolders();
     createProjectSubFile("target/generated-sources/f.txt");
@@ -949,7 +921,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  @Test
   public void testExcludingOutputDirectories() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -962,7 +933,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                        getProjectPath() + "/target/test-classes");
   }
 
-  @Test
   public void testExcludingOutputDirectoriesIfProjectOutputIsUsed() {
     getMavenImporterSettings().setUseMavenOutput(false);
 
@@ -979,7 +949,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertProjectOutput("project");
   }
 
-  @Test
   public void testExcludingCustomOutputDirectories() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1002,7 +971,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                        getProjectPath() + "/testCustom");
   }
 
-  @Test
   public void testExcludingCustomOutputUnderTargetUsingStandardVariable() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1021,7 +989,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                        getProjectPath() + "/target/testCustom");
   }
 
-  @Test
   public void testDoNotExcludeExcludeOutputDirectoryWhenItPointstoRoot() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1041,7 +1008,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                        getProjectPath());
   }
 
-  @Test
   public void testOutputDirsOutsideOfContentRoot() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1074,7 +1040,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                        getParentPath() + "/target/test-classes");
   }
 
-  @Test
   public void testDoesNotExcludeGeneratedSourcesUnderTargetDir() throws Exception {
     createStdProjectFolders();
     createProjectSubDirsWithFile("target/foo",
@@ -1099,7 +1064,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  @Test
   public void testDoesNotExcludeSourcesUnderTargetDir() {
     createStdProjectFolders();
     createProjectSubDirs("target/src",
@@ -1120,7 +1084,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertExcludes("project", "target");
   }
 
-  @Test
   public void testDoesNotExcludeSourcesUnderTargetDirWithProperties() {
     createProjectSubDirs("target/src", "target/xxx");
 
@@ -1138,7 +1101,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertExcludes("project", "target");
   }
 
-  @Test
   public void testDoesNotExcludeFoldersWithSourcesUnderTargetDir() {
     createStdProjectFolders();
     createProjectSubDirs("target/src/main",
@@ -1160,7 +1122,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  @Test
   public void testDoesNotUnExcludeFoldersOnRemoval() throws Exception {
     createStdProjectFolders();
 
@@ -1193,7 +1154,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertExcludes("project", "target");
   }
 
-  @Test
   public void testSourceFoldersOrder() throws Exception {
     createStdProjectFolders();
 
@@ -1260,7 +1220,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     testAssertions.run();
   }
 
-  @Test
   public void testUnexcludeNewSources() {
     createProjectSubDirs("target/foo");
     createProjectSubDirs("target/src");
@@ -1287,7 +1246,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertExcludes("project", "target");
   }
 
-  @Test
   public void testUnexcludeNewSourcesUnderCompilerOutputDir() {
     createProjectSubDirs("target/classes/src");
 
@@ -1313,7 +1271,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     //assertFalse(getCompilerExtension("project").isExcludeOutput());
   }
 
-  @Test
   public void testAnnotationProcessorSources() throws Exception {
     createStdProjectFolders();
     createProjectSubDirsWithFile("target/generated-sources/foo",
@@ -1338,7 +1295,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
-  @Test
   public void testCustomAnnotationProcessorSources() throws Exception {
     createStdProjectFolders();
     createProjectSubDirsWithFile("anno",
@@ -1382,7 +1338,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
 
-  @Test
   public void testModuleWorkingDirWithMultiplyContentRoots() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1401,28 +1356,28 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                           "<artifactId>AA</artifactId>");
 
     VirtualFile pomBB = createModulePom("BB", "<parent>" +
-                                              "        <artifactId>project</artifactId>" +
-                                              "        <groupId>test</groupId>" +
-                                              "        <version>1</version>" +
-                                              "    </parent>" +
-                                              "<artifactId>BB</artifactId>" +
-                                              " <build>" +
-                                              "        <testResources>" +
-                                              "            <testResource>" +
-                                              "                <targetPath>${project.build.testOutputDirectory}</targetPath>" +
-                                              "                <directory>" +
-                                              "                    ${project.basedir}/src/test/resources" +
-                                              "                </directory>" +
-                                              "            </testResource>" +
-                                              "            <testResource>" +
-                                              "                <targetPath>${project.build.testOutputDirectory}</targetPath>" +
-                                              "                <directory>" +
-                                              "                     ${project.basedir}/../AA/src/test/resources" +
-                                              "                </directory>" +
-                                              "            </testResource>" +
-                                              "" +
-                                              "        </testResources>" +
-                                              "    </build>"
+                                           "        <artifactId>project</artifactId>" +
+                                           "        <groupId>test</groupId>" +
+                                           "        <version>1</version>" +
+                                           "    </parent>" +
+                                           "<artifactId>BB</artifactId>" +
+                                           " <build>" +
+                                           "        <testResources>" +
+                                           "            <testResource>" +
+                                           "                <targetPath>${project.build.testOutputDirectory}</targetPath>" +
+                                           "                <directory>" +
+                                           "                    ${project.basedir}/src/test/resources" +
+                                           "                </directory>" +
+                                           "            </testResource>" +
+                                           "            <testResource>" +
+                                           "                <targetPath>${project.build.testOutputDirectory}</targetPath>" +
+                                           "                <directory>" +
+                                           "                     ${project.basedir}/../AA/src/test/resources" +
+                                           "                </directory>" +
+                                           "            </testResource>" +
+                                           "" +
+                                           "        </testResources>" +
+                                           "    </build>"
     );
     createProjectSubDirs("AA/src/test/resources");
     createProjectSubDirs("BB/src/test/resources");

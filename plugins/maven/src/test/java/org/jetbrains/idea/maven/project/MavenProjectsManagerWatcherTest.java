@@ -11,7 +11,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingTestCase {
+public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
 
   private MavenProjectsManager myProjectsManager;
   private ProjectNotificationAware myNotificationAware;

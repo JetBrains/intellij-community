@@ -4,16 +4,14 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
-import org.junit.Test;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.IOException;
 import java.util.List;
 
-public class RepositoriesImportingTest extends MavenMultiVersionImportingTestCase {
+public class RepositoriesImportingTest extends MavenImportingTestCase {
 
 
-  @Test
   public void testMirrorCentralImport() throws IOException {
     String oldSettingsFile = getMavenGeneralSettings().getUserSettingsFile();
     try {
@@ -41,7 +39,6 @@ public class RepositoriesImportingTest extends MavenMultiVersionImportingTestCas
     }
   }
 
-  @Test
   public void testMirrorAllImport() throws IOException {
     String oldSettingsFile = getMavenGeneralSettings().getUserSettingsFile();
     try {
@@ -69,7 +66,6 @@ public class RepositoriesImportingTest extends MavenMultiVersionImportingTestCas
     }
   }
 
-  @Test
   public void testMirrorAllExceptCentralImport() throws IOException {
     String oldSettingsFile = getMavenGeneralSettings().getUserSettingsFile();
     try {

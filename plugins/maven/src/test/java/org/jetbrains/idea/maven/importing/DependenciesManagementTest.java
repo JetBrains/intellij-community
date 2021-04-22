@@ -16,14 +16,12 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
-import org.junit.Test;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
 import java.util.Arrays;
 
-public class DependenciesManagementTest extends MavenMultiVersionImportingTestCase {
-  @Test
+public class DependenciesManagementTest extends MavenImportingTestCase {
   public void testImportingDependencies() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -74,7 +72,6 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 
-  @Test
   public void testImportingNotInstalledDependencies() throws Exception {
     if (ignore()) return;
 
@@ -133,7 +130,6 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 
-  @Test
   public void testCheckThatOrderDoesntMatterForMaven() throws Exception {
     // this is a check that in general importing a dependent project after its dependency (parent in this case) works fine.
     // see previous test for more information

@@ -21,16 +21,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenConstants;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
-public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCase {
-
+public class MavenPropertyResolverTest extends MavenImportingTestCase {
+  
   private static String resolve(Module module,
                                 String text,
                                 Properties additionalProperties,
@@ -46,9 +45,8 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
 
     return sb.toString();
   }
-
-
-  @Test
+  
+  
   public void testResolvingProjectAttributes() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -58,7 +56,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals("test", resolve("${pom.groupId}", myProjectPom));
   }
 
-  @Test
   public void testResolvingProjectParentAttributes() {
     VirtualFile modulePom
       = createModulePom("test",
@@ -83,7 +80,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals("parent.test", resolve("${pom.parent.groupId}", modulePom));
   }
 
-  @Test
   public void testResolvingAbsentProperties() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -92,7 +88,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals("${project.parent.groupId}", resolve("${project.parent.groupId}", myProjectPom));
   }
 
-  @Test
   public void testResolvingProjectDirectories() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -104,7 +99,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
                  resolve("${project.build.sourceDirectory}", myProjectPom));
   }
 
-  @Test
   public void testResolvingProjectAndParentProperties() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -145,7 +139,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals("${pom.moduleProp}", resolve("${pom.moduleProp}", f));
   }
 
-  @Test
   public void testProjectPropertiesRecursively() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -164,7 +157,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals("value-2-3", resolve("${prop3}", myProjectPom));
   }
 
-  @Test
   public void testDoNotGoIntoInfiniteRecursion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -188,7 +180,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals("${prop5}", resolve("${prop5}", myProjectPom));
   }
 
-  @Test
   public void testSophisticatedPropertyNameDoesNotBreakResolver() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -198,7 +189,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals("${#ARRAY[@]}", resolve("${#ARRAY[@]}", myProjectPom));
   }
 
-  @Test
   public void testProjectPropertiesWithProfiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -233,7 +223,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals("value3", resolve("${prop}", myProjectPom));
   }
 
-  @Test
   public void testResolvingBasedirProperties() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -244,7 +233,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals(getProjectPath(), resolve("${pom.basedir}", myProjectPom));
   }
 
-  @Test
   public void testResolvingSystemProperties() {
     String javaHome = System.getProperty("java.home");
     String tempDir = System.getenv(getEnvVar());
@@ -257,7 +245,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals(tempDir, resolve("${env." + getEnvVar() + "}", myProjectPom));
   }
 
-  @Test
   public void testAllProperties() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -267,7 +254,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
                  resolve("foo ${project.groupId}-${project.artifactId} bar", myProjectPom));
   }
 
-  @Test
   public void testIncompleteProperties() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -278,7 +264,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
     assertEquals("{project.groupId}", resolve("{project.groupId}", myProjectPom));
   }
 
-  @Test
   public void testUncomittedProperties() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -286,19 +271,18 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
 
     final Document doc = FileDocumentManager.getInstance().getDocument(myProjectPom);
     WriteCommandAction.runWriteCommandAction(null, () -> doc.setText(createPomXml("<groupId>test</groupId>" +
-                                                                                  "<artifactId>project</artifactId>" +
-                                                                                  "<version>2</version>" +
+                                                                                "<artifactId>project</artifactId>" +
+                                                                                "<version>2</version>" +
 
-                                                                                  "<properties>" +
-                                                                                  "  <uncomitted>value</uncomitted>" +
-                                                                                  "</properties>")));
+                                                                                "<properties>" +
+                                                                                "  <uncomitted>value</uncomitted>" +
+                                                                                "</properties>")));
 
     PsiDocumentManager.getInstance(myProject).commitDocument(doc);
 
     assertEquals("value", resolve("${uncomitted}", myProjectPom));
   }
 
-  @Test
   public void testEscapingProperties() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -314,7 +298,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
                          new Properties(), "^"));
   }
 
-  @Test
   public void testMavenConfigProperties() throws IOException {
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dprop=value");
     importProject("<groupId>test</groupId>" +
@@ -325,7 +308,6 @@ public class MavenPropertyResolverTest extends MavenMultiVersionImportingTestCas
                  resolve(getModule("project"), "foo ${prop} bar", new Properties(), "/"));
   }
 
-  @Test
   public void testChainResolvePropertiesForFileWhichIsNotAProjectPom() throws IOException {
     VirtualFile file = createProjectSubFile("../some.pom",
                                             "<project>" +

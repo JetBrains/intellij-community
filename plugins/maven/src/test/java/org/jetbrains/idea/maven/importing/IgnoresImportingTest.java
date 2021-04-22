@@ -16,20 +16,18 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
-import org.junit.Test;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
+public class IgnoresImportingTest extends MavenImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     initProjectsManager(false);
   }
 
-  @Test
   public void testDoNotImportIgnoredProjects() {
     VirtualFile p1 = createModulePom("project1",
                                      "<groupId>test</groupId>" +
@@ -46,7 +44,6 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project2");
   }
 
-  @Test
   public void testAddingAndRemovingModulesWhenIgnoresChange() {
     configConfirmationForYesAnswer();
 
@@ -75,7 +72,6 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project1");
   }
 
-  @Test
   public void testDoNotAskTwiceToRemoveIgnoredModule() {
     AtomicInteger counter = configConfirmationForNoAnswer();
 

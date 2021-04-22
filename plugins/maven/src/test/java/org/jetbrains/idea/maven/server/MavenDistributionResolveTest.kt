@@ -10,16 +10,15 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.ZipUtil
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+import org.jetbrains.idea.maven.MavenImportingTestCase
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.junit.Test
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.util.zip.ZipOutputStream
 
-class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
+class MavenDistributionResolveTest : MavenImportingTestCase() {
   private val myEvents: MutableList<Pair<BuildEvent, Throwable>> = ArrayList()
   private lateinit var mySyncViewManager: SyncViewManager;
 
@@ -37,7 +36,6 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(IOException::class)
-  @Test
   fun testShouldUseEmbedMavenIfWrapperIsBad() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -52,7 +50,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldNotRestartMavenConnectorIfWrapperIsBadButNotChanged() {
+  fun testShouldNotRestartMavenConnectorIfWrapperIsBadButNotChanged() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
@@ -70,7 +68,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldShowWarningIfWrapperDownloadedViaUnsecureProtocol() {
+  fun testShouldShowWarningIfWrapperDownloadedViaUnsecureProtocol() {
     runWithServer { url ->
       createProjectPom("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
@@ -85,7 +83,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldNotUseWrapperIfSettingsNotSetToUseIt() {
+  fun testShouldNotUseWrapperIfSettingsNotSetToUseIt() {
     runWithServer { url ->
       createProjectPom("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
@@ -100,7 +98,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldUseEmbeddedMavenForUnexistingHome() {
+  fun testShouldUseEmbeddedMavenForUnexistingHome() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")

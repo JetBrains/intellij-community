@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -32,11 +32,10 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder;
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder;
-import org.junit.Test;
 
 import java.util.List;
 
-public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
+public class MavenModuleBuilderTest extends MavenImportingTestCase {
   private AbstractMavenModuleBuilder myBuilder;
 
   @Override
@@ -48,7 +47,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
     setModuleNameAndRoot("module", getProjectPath());
   }
 
-  @Test
   public void testModuleRecreation() throws Exception {
     MavenId id = new MavenId("org.foo", "module", "1.0");
 
@@ -59,7 +57,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
     assertModules(id.getArtifactId());
   }
 
-  @Test
   public void testCreatingBlank() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -83,7 +80,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
     assertTestSources("module", "src/test/java");
   }
 
-  @Test
   public void testInheritJdkFromProject() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -92,7 +88,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
     assertTrue(manager.isSdkInherited());
   }
 
-  @Test
   public void testCreatingFromArchetype() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -113,7 +108,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
     assertTestSources("module", "src/test/java");
   }
 
-  @Test
   public void testAddingNewlyCreatedModuleToTheAggregator() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -135,7 +129,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
                  StringUtil.convertLineSeparators(VfsUtil.loadText(myProjectPom)));
   }
 
-  @Test
   public void testAddingManagedProjectIfNoArrgerator() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -153,7 +146,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
     assertEquals(2, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
-  @Test
   public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -171,7 +163,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
     assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
-  @Test
   public void testAddingParent() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -203,7 +194,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")));
   }
 
-  @Test
   public void testAddingParentWithInheritedProperties() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -234,7 +224,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")));
   }
 
-  @Test
   public void testAddingParentAndInheritWhenGeneratingFromArchetype() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -279,7 +268,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")));
   }
 
-  @Test
   public void testAddingParentWithRelativePath() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -312,12 +300,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("subDir/module/pom.xml")));
   }
 
-  @Test
   public void testSameFolderAsParent() throws Exception {
     VirtualFile customPomXml = createProjectSubFile("custompom.xml", createPomXml(
-      "<groupId>test</groupId>" +
-      "<artifactId>project</artifactId>" +
-      "<version>1</version>"));
+                                                    "<groupId>test</groupId>" +
+                                                    "<artifactId>project</artifactId>" +
+                                                    "<version>1</version>"));
     importProject(customPomXml);
     assertModules("project");
 
