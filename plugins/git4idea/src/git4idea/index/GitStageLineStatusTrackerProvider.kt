@@ -23,7 +23,6 @@ import git4idea.GitContentRevision
 import git4idea.GitUtil
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.repo.GitRepositoryManager
-import git4idea.repo.GitSubmodule
 import git4idea.util.GitFileUtils
 import java.nio.charset.Charset
 

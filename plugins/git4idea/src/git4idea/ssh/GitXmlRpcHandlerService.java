@@ -5,11 +5,11 @@ import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import git4idea.GitExternalApp;
 import git4idea.config.GitExecutable;
+import git4idea.util.ScriptGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import git4idea.GitExternalApp;
-import git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;

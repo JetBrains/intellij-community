@@ -15,8 +15,8 @@
  */
 package git4idea.rebase;
 
-import org.jetbrains.annotations.NotNull;
 import git4idea.editor.GitRebaseEditorXmlRpcHandler;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 

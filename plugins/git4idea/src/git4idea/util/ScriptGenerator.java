@@ -8,13 +8,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.config.GitExecutable;
+import git4idea.editor.GitRebaseEditorXmlRpcHandler;
+import git4idea.http.GitAskPassXmlRpcHandler;
+import git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import git4idea.editor.GitRebaseEditorXmlRpcHandler;
-import git4idea.http.GitAskPassXmlRpcHandler;
-import git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
 
 import java.io.File;
 import java.io.IOException;

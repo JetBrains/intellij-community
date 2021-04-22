@@ -13,13 +13,13 @@ import git4idea.config.GitExecutable;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import git4idea.http.GitAskPassXmlRpcHandler;
 import git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
 import git4idea.ssh.GitXmlRpcHandlerService;
 import git4idea.ssh.GitXmlRpcNativeSshService;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;

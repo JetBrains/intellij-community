@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Font
 import java.awt.event.MouseEvent
-import java.util.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import kotlin.math.min

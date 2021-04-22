@@ -2,12 +2,12 @@
 package git4idea.ssh;
 
 import com.intellij.openapi.util.NlsSafe;
-import git4idea.commands.GitNativeSshAuthenticator;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import git4idea.GitAppUtil;
+import git4idea.commands.GitNativeSshAuthenticator;
 import git4idea.nativessh.GitNativeSshAskPassApp;
 import git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 

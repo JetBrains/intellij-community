@@ -41,7 +41,6 @@ import git4idea.repo.GitRepository
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
-import kotlin.collections.ArrayList
 
 private val LOG = logger<GitUpdateInfoAsLog>()
 

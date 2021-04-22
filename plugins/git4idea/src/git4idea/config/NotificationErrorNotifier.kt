@@ -12,7 +12,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.config.GitExecutableProblemsNotifier.BadGitExecutableNotification
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NotNull
 
 internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
   override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String,

@@ -25,7 +25,6 @@ import com.intellij.ui.ClickListener
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable

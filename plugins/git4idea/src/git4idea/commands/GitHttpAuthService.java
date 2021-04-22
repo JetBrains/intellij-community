@@ -20,10 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import org.jetbrains.annotations.NotNull;
 import git4idea.http.GitAskPassApp;
 import git4idea.http.GitAskPassXmlRpcHandler;
 import git4idea.ssh.GitXmlRpcHandlerService;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
