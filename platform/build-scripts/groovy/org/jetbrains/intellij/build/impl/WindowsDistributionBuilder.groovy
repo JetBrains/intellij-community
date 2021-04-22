@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileFilters
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.util.Processor
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jdom.Element
@@ -63,7 +64,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
     }
-    BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
+    def pty4jNativeDir = BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
     BuildTasksImpl.generateBuildTxt(buildContext, winDistPath)
     BuildTasksImpl.copyResourceFiles(buildContext, winDistPath)
 
@@ -81,10 +82,17 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       buildWinLauncher(architecture, winDistPath)
     }
     customizer.copyAdditionalFiles(buildContext, winDistPath.toString())
-    for (String extension : ["exe", "dll"]) {
-      distBinDir.toFile().listFiles(FileFilters.filesWithExtension(extension))?.each {
-        buildContext.signExeFile(it.absolutePath)
-      }
+    FileFilter signFileFilter = createFileFilter("exe", "dll")
+    for (Path nativeRoot : [distBinDir, pty4jNativeDir]) {
+      FileUtil.processFilesRecursively(nativeRoot.toFile(), new Processor<File>() {
+        @Override
+        boolean process(File file) {
+          if (signFileFilter.accept(file)) {
+            buildContext.signExeFile(file.absolutePath)
+          }
+          return true
+        }
+      })
     }
   }
 
@@ -314,6 +322,16 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     String javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
     new ProductInfoGenerator(buildContext)
       .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
+  }
+
+  private static @NotNull FileFilter createFileFilter(String... extensions) {
+    List<FileFilter> filters = extensions.collect { FileFilters.filesWithExtension(it) }
+    return new FileFilter() {
+      @Override
+      boolean accept(File pathname) {
+        return filters.any { it.accept(pathname) }
+      }
+    }
   }
 }
 
