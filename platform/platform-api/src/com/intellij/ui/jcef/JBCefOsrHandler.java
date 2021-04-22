@@ -4,7 +4,9 @@ package com.intellij.ui.jcef;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
@@ -39,13 +41,16 @@ class JBCefOsrHandler implements CefRenderHandler {
   private @Nullable JBHiDPIScaledImage myImage;
 
   private final @NotNull JComponent myComponent;
+  private final @NotNull Function<JComponent, Rectangle> myScreenBoundsProvider;
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
   private volatile double myScale = 1.0;
 
   private final @NotNull Object myImageLock = new Object();
 
-  JBCefOsrHandler(@NotNull JComponent component) {
+  JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<JComponent, Rectangle> screenBoundsProvider) {
     myComponent = component;
+    component.setRenderHandler(this);
+    myScreenBoundsProvider = ObjectUtils.notNull(screenBoundsProvider, JBCefOSRHandlerFactory.DEFAULT.createScreenBoundsProvider());
 
     myComponent.addComponentListener(new ComponentAdapter() {
       @Override
@@ -69,19 +74,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public boolean getScreenInfo(CefBrowser browser, CefScreenInfo screenInfo) {
-    Rectangle rect;
-    try {
-      if (!myComponent.isShowing()) {
-        rect = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
-      }
-      else {
-        rect = myComponent.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
-      }
-    }
-    catch (Exception e) {
-      Logger.getInstance(JBCefOsrHandler.class).error(e);
-      rect = new Rectangle(0, 0, 0, 0);
-    }
+    Rectangle rect = myScreenBoundsProvider.fun(myComponent);
     screenInfo.Set(getDeviceScaleFactor(browser), 32, 4, false, rect, rect);
     return true;
   }

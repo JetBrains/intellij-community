@@ -33,7 +33,7 @@ public class JCEFHtmlPanel extends JBCefBrowser {
 
   @ApiStatus.Experimental
   public JCEFHtmlPanel(@NotNull JBCefBrowser.RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
-    super(type, client, url);
+    super(type, null, client, url);
     myUrl = getCefBrowser().getURL();
     if (client != null && client != ourCefClient) {
       Disposer.register(this, client);

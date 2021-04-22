@@ -140,7 +140,10 @@ public class JBCefBrowser extends JBCefBrowserBase {
                        builder.myCefBrowser,
                        false,
                        ObjectUtils.notNull(builder.myClient, JBCefApp.getInstance().createClient(true))) :
-      new JBCefBrowser(builder.myRenderingType, builder.myClient, builder.myUrl);
+      new JBCefBrowser(builder.myRenderingType,
+                       builder.myOSRHandlerFactory,
+                       builder.myClient,
+                       builder.myUrl);
 
     if (builder.myCreateImmediately) browser.createImmediately();
     return browser;
@@ -152,14 +155,14 @@ public class JBCefBrowser extends JBCefBrowserBase {
    * @see #createBuilder
    */
   public JBCefBrowser() {
-    this(createBrowser(RenderingType.EMBEDDED_WINDOW, null, null));
+    this(createBrowser(RenderingType.EMBEDDED_WINDOW, null, null, null));
   }
 
   /**
    * @see #createBuilder
    */
   public JBCefBrowser(@NotNull String url) {
-    this(createBrowser(RenderingType.EMBEDDED_WINDOW, null, url));
+    this(createBrowser(RenderingType.EMBEDDED_WINDOW, null, null, url));
   }
 
   /**
@@ -168,7 +171,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
    * @see #createBuilder
    */
   public JBCefBrowser(@NotNull JBCefClient client, @Nullable String url) {
-    this(createBrowser(RenderingType.EMBEDDED_WINDOW, client, url));
+    this(createBrowser(RenderingType.EMBEDDED_WINDOW, null, client, url));
   }
 
   /**
@@ -183,10 +186,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
   }
 
   protected JBCefBrowser(@Nullable RenderingType type,
+                         @Nullable JBCefOSRHandlerFactory factory,
                          @Nullable JBCefClient client,
                          @Nullable String url)
   {
-    this(createBrowser(ObjectUtils.notNull(type, RenderingType.EMBEDDED_WINDOW), client, url));
+    this(createBrowser(ObjectUtils.notNull(type, RenderingType.EMBEDDED_WINDOW), factory, client, url));
     CefBrowser cefBrowser = getCefBrowser();
     if (type == RenderingType.BUFFERED_IMAGE) {
       CefBrowserOsrWithHandler cefOsrBrowser = (CefBrowserOsrWithHandler)cefBrowser;
@@ -269,7 +273,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
     return USE_ABOUT_BLANK ? BLANK_URI : "";
   }
 
-  private static @NotNull CreateBrowserArtefacts createBrowser(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
+  private static @NotNull CreateBrowserArtefacts createBrowser(@NotNull RenderingType type,
+                                                               @Nullable JBCefOSRHandlerFactory factory,
+                                                               @Nullable JBCefClient client,
+                                                               @Nullable String url)
+  {
     if (client == null) {
       client = JBCefApp.getInstance().createClient(true);
     }
@@ -285,9 +293,9 @@ public class JBCefBrowser extends JBCefBrowserBase {
           client.getCefClient().createBrowser(validateUrl(url), CefRendering.OFFSCREEN, false, null),
           client);
       case BUFFERED_IMAGE:
-        JBCefOsrComponent comp = new JBCefOsrComponent();
-        JBCefOsrHandler handler = new JBCefOsrHandler(comp);
-        comp.setRenderHandler(handler);
+        if (factory == null) factory = JBCefOSRHandlerFactory.DEFAULT;
+        JComponent comp = factory.createComponent();
+        CefRenderHandler handler = factory.createCefRenderHandler(comp);
         return new CreateBrowserArtefacts(
           type,
           new CefBrowserOsrWithHandler(client.getCefClient(), validateUrl(url), null, handler, comp),

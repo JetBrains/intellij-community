@@ -52,7 +52,7 @@ public class IDEA246306Test {
 
     @SuppressWarnings("ObjectToString")
     MyBrowser() {
-      super(null, ourClient, "chrome:version");
+      super(null, null, ourClient, "chrome:version");
       myQuery.addHandler(result -> {
         System.out.println("query: result " + result + ", on " + this);
         if (!result.equals(this.toString())) {
