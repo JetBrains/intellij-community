@@ -33,7 +33,6 @@ public class PluginGroups {
   private final Collection<PluginId> myDisabledPluginIds = new HashSet<>();
   private final List<IdeaPluginDescriptorImpl> myAllPlugins;
   private boolean myInitialized;
-  private final Set<String> myFeaturedIds = new HashSet<>();
   private Runnable myLoadingCallback;
 
   public PluginGroups() {
@@ -45,8 +44,7 @@ public class PluginGroups {
           MarketplaceRequests requests = MarketplaceRequests.getInstance();
           List<PluginNode> featuredPlugins = requests.loadLastCompatiblePluginDescriptors(myFeaturedPlugins.keySet());
 
-          Set<PluginId> dependsIds = featuredPlugins
-            .stream()
+          Set<PluginId> dependsIds = featuredPlugins.stream()
             .map(PluginNode::getDependencies)
             .flatMap(Collection::stream)
             .filter(dep -> !dep.isOptional())
@@ -76,13 +74,14 @@ public class PluginGroups {
     };
 
     myTree.addAll(getInitialGroups());
-    for (PluginGroupDescription description : getInitialFeaturedPlugins()) {
-      myFeaturedPlugins.put(description.getPluginId(), description);
-    }
 
-    // todo to be removed
     Map<String, String> tempFeaturedPlugins = new LinkedHashMap<>();
     initGroups(myTree, tempFeaturedPlugins);
+    // TODO:
+    //  1) remove initGroups, initFeaturedPlugins usages;
+    //  2) replace with for (PluginGroupDescription description : getInitialFeaturedPlugins());
+    //  3) remove parsePluginId, parseString, add*Plugin usages;
+    //  4) regenerate PluginGroupDescription#toString().
     for (Entry<String, String> entry : tempFeaturedPlugins.entrySet()) {
       @SuppressWarnings("HardCodedStringLiteral") String[] strings = parseString(entry.getValue());
       PluginGroupDescription description = PluginGroupDescription.create(/* idString = */ strings[2],
@@ -335,7 +334,7 @@ public class PluginGroups {
   }
 
   /**
-   * @deprecated Please migrate to {@link PluginGroupDescription#teamCity()}.
+   * @deprecated Please migrate to {@link #getInitialFeaturedPlugins()}.
    */
   @Deprecated(since = "2020.2", forRemoval = true)
   private static void addPlugin(@NotNull Map<String, String> featuredPlugins,

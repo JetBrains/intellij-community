@@ -37,9 +37,12 @@ public abstract class PluginGroupDescription {
     return getPluginId().hashCode();
   }
 
+  /**
+   * TODO regenerate after {@link PluginGroups#parseString(String)} removal.
+   */
   @Override
   public final String toString() {
-    return "PluginGroupDescription{pluginId=" + getPluginId() + "}";
+    return StringUtil.join(new String[]{getCategory(), getDescription(), getPluginId().getIdString()}, ":");
   }
 
   public static @NotNull PluginGroupDescription vim() {
@@ -96,6 +99,13 @@ public abstract class PluginGroupDescription {
                     "Live Edit Tool",
                     "Web Development",
                     "Live WYSIWYG Editing of HTML, CSS, and JavaScript");
+  }
+
+  public static @NotNull PluginGroupDescription ideolog() {
+    return new Impl("com.intellij.ideolog",
+                    "Ideolog",
+                    "Languages",
+                    "Interactive viewer for '.log' files");
   }
 
   public static @NotNull PluginGroupDescription create(@NotNull @NonNls String idString,
