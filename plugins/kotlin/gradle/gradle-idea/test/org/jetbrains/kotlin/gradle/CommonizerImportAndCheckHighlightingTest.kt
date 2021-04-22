@@ -102,7 +102,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.5.20-M1+")
+    @PluginTargetVersions(pluginVersion = "1.5.20-dev+")
     fun testSingleNativeTarget() {
         configureByFiles()
         importProject()
