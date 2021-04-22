@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -41,4 +42,23 @@ public interface FormattingService {
   PsiElement formatElement(@NotNull PsiElement element, @NotNull TextRange range, boolean canChangeWhiteSpaceOnly);
 
   void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly);
+
+  /**
+   * @return A class of the service which should be run prior to this FormattingService (default is {@code null})
+   * <p>
+   * For example:
+   * <pre><code>
+   *   Class<? extends FormattingService> runAfter() {
+   *     return CoreFormattingService.class;
+   *   }
+   * </code></pre>
+   * will call platform formatter prior to executing the current formatting service.
+   * <p>
+   * <b>NOTE:</b> It works only if all the file content is formatted. In case of subrange(s) only the current service
+   * is called since original ranges become invalid after formatting.
+   */
+  @Nullable
+  default Class<? extends FormattingService> runAfter() {
+    return null;
+  }
 }
