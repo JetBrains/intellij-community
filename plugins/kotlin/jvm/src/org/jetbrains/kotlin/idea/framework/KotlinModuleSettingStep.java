@@ -24,6 +24,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
@@ -67,8 +68,9 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
 
     private final CustomLibraryDescription customLibraryDescription;
     private final LibrariesContainer librariesContainer;
+    private final Disposable myDisposable;
 
-    private boolean isNewProject;
+    private final boolean isNewProject;
 
     private LibraryOptionsPanel libraryOptionsPanel;
     private JPanel panel;
@@ -84,6 +86,7 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
             @Nullable WizardContext wizardContext
     ) {
         isNewProject = wizardContext != null && wizardContext.isCreatingNewProject();
+        myDisposable = wizardContext.getDisposable();
 
         if (!(JvmPlatformKt.isJvm(targetPlatform))) {
             KotlinSdkType.Companion.setUpIfNeeded();
@@ -120,13 +123,6 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
                 }
             }
         };
-    }
-
-    @Override
-    public void disposeUIResources() {
-        if (libraryOptionsPanel != null) {
-            Disposer.dispose(libraryOptionsPanel);
-        }
     }
 
     @Override
@@ -189,6 +185,8 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
                     FrameworkLibraryVersionFilter.ALL,
                     librariesContainer,
                     false);
+
+            Disposer.register(myDisposable, libraryOptionsPanel);
         }
 
         return libraryOptionsPanel;
