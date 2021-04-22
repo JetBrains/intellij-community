@@ -137,6 +137,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   private static final double ZOOM_COMMON_RATIO = 1.2;
   private static final double LOG_ZOOM = Math.log(ZOOM_COMMON_RATIO);
+
+  static volatile @Nullable JBCefBrowserBase focusedBrowser;
+
   protected final @NotNull JBCefClient myCefClient;
   protected final @NotNull CefBrowser myCefBrowser;
   private final @NotNull RenderingType myRenderingType;
@@ -321,6 +324,15 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @NotNull
   public final CefBrowser getCefBrowser() {
     return myCefBrowser;
+  }
+
+  /**
+   * Returns the browser currently in focus.
+   * <p></p>
+   * It is possible that at a certain moment the browser can be focused natively but can not yet have java focus.
+   */
+  public static @Nullable JBCefBrowserBase getFocusedBrowser() {
+    return focusedBrowser;
   }
 
   /**
