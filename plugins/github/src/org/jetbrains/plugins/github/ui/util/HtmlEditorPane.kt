@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Graphics2DDelegate
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.codereview.BaseHtmlEditorPane
+import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
 import org.jetbrains.plugins.github.GithubIcons
 import java.awt.*
 import java.awt.image.ImageObserver

@@ -8,7 +8,7 @@ import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.timeline.TimelineComponent
+import com.intellij.collaboration.ui.codereview.timeline.TimelineComponent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComponentFactory.Item

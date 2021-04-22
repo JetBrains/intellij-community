@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.intellij.util.ui.codereview.timeline.TimelineItem
+import com.intellij.collaboration.ui.codereview.timeline.TimelineItem
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview

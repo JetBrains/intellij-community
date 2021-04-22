@@ -15,7 +15,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.TimelineItemComponentFactory
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout

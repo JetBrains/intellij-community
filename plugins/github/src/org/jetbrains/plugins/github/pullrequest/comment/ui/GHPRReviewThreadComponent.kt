@@ -14,8 +14,8 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.InlineIconButton
-import com.intellij.util.ui.codereview.ToggleableContainer
+import com.intellij.collaboration.ui.codereview.InlineIconButton
+import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout

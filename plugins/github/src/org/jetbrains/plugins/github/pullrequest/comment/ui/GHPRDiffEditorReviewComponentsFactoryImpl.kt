@@ -5,7 +5,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.NlsActions
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.codereview.comment.wrapComponentUsingRoundedPanel
+import com.intellij.collaboration.ui.codereview.comment.wrapComponentUsingRoundedPanel
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment

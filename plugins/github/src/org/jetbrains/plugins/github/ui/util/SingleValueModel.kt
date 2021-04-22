@@ -7,7 +7,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil
 
-class SingleValueModel<T>(initialValue: T) : com.intellij.util.ui.codereview.SingleValueModel<T> {
+class SingleValueModel<T>(initialValue: T) : com.intellij.collaboration.ui.codereview.SingleValueModel<T> {
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   override var value by GithubUtil.Delegates.observableField(initialValue, changeEventDispatcher)

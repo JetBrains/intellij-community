@@ -26,7 +26,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JButtonAction
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.InlineIconButton
+import com.intellij.collaboration.ui.codereview.InlineIconButton
 import icons.CollaborationToolsIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC

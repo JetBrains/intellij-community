@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.util.ui.codereview.diff.DiffEditorGutterIconRendererFactory
-import com.intellij.util.ui.codereview.diff.EditorRangesController
+import com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory
+import com.intellij.collaboration.ui.codereview.diff.EditorRangesController
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
 internal class GHPREditorCommentableRangesController(

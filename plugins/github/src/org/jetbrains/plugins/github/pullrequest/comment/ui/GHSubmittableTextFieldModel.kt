@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
 import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt

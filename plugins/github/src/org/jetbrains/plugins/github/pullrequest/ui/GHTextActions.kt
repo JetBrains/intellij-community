@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.util.ui.codereview.InlineIconButton
+import com.intellij.collaboration.ui.codereview.InlineIconButton
 import icons.CollaborationToolsIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.event.ActionListener

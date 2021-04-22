@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditor.PROP_VALID
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ui.codereview.diff.MutableDiffRequestChainProcessor
+import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.plugins.github.i18n.GithubBundle

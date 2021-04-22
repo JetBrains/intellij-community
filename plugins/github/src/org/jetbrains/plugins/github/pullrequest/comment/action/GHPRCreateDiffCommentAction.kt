@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.CommonProcessors
-import com.intellij.util.ui.codereview.diff.AddCommentGutterIconRenderer
+import com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer
 
 class GHPRCreateDiffCommentAction : DumbAwareAction() {
 

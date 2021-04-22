@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.hosting.GitHostingUrlUtil;
+import com.intellij.collaboration.hosting.GitHostingUrlUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;

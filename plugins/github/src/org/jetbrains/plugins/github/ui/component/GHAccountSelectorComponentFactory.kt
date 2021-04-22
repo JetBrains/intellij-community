@@ -14,7 +14,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuItemRenderer
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
-import com.intellij.util.ui.codereview.avatar.CachingAvatarIconsProvider
+import com.intellij.collaboration.ui.codereview.avatar.CachingAvatarIconsProvider
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount

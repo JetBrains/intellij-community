@@ -9,7 +9,7 @@ import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.impl.SingleHeightTabs
-import com.intellij.util.ui.codereview.ReturnToListComponent
+import com.intellij.collaboration.ui.codereview.ReturnToListComponent
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.SingleValueModel

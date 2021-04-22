@@ -6,8 +6,8 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.OpenReviewButton
-import com.intellij.util.ui.codereview.OpenReviewButtonViewModel
+import com.intellij.collaboration.ui.codereview.OpenReviewButton
+import com.intellij.collaboration.ui.codereview.OpenReviewButtonViewModel
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout

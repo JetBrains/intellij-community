@@ -5,7 +5,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.commits.CommitNodeComponent
+import com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.graph.DefaultColorGenerator
