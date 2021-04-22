@@ -94,7 +94,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     assert !isDirty();
     if (myFileLength == 0) return true;
 
-    return getPagedFileStorage().readInputStream(is -> {
+    return readInputStream(is -> {
       DataInputStream keyStream = new DataInputStream(
         new BufferedInputStream(new LimitedInputStream(is, myFileLength) {
           @Override
@@ -159,26 +159,6 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     myDataDescriptor.save(out, value);
     comparer.close();
     return sameValue[0];
-  }
-
-  @Override
-  public void lockRead() {
-    getPagedFileStorage().lockRead();
-  }
-
-  @Override
-  public void unlockRead() {
-    getPagedFileStorage().unlockRead();
-  }
-
-  @Override
-  public void lockWrite() {
-    getPagedFileStorage().lockWrite();
-  }
-
-  @Override
-  public void unlockWrite() {
-    getPagedFileStorage().unlockWrite();
   }
 
   @NotNull

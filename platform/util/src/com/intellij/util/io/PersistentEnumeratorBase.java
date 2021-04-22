@@ -241,7 +241,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       try {
         myKeyStorage = new AppendableStorageBackedByResizableMappedFile<>(keyStreamFile(),
                                                                           initialSize,
-                                                                          myStorage.getPagedFileStorage().getStorageLockContext(),
+                                                                          myStorage.getStorageLockContext(),
                                                                           PagedFileStorage.MB,
                                                                           false,
                                                                           dataDescriptor);
@@ -260,19 +260,19 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   void lockStorageRead() {
-    myStorage.getPagedFileStorage().lockRead();
+    myStorage.lockRead();
   }
 
   void unlockStorageRead() {
-    myStorage.getPagedFileStorage().unlockRead();
+    myStorage.unlockRead();
   }
 
   void lockStorageWrite() {
-    myStorage.getPagedFileStorage().lockWrite();
+    myStorage.lockWrite();
   }
 
   void unlockStorageWrite() {
-    myStorage.getPagedFileStorage().unlockWrite();
+    myStorage.unlockWrite();
   }
 
   protected abstract void setupEmptyFile() throws IOException;

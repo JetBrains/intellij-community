@@ -21,6 +21,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -240,5 +242,31 @@ public class ResizeableMappedFile implements Forceable {
   @NotNull
   public PagedFileStorage getPagedFileStorage() {
     return myStorage;
+  }
+
+  @NotNull
+  public StorageLockContext getStorageLockContext() {
+    return myStorage.getStorageLockContext();
+  }
+
+  public <R> @NotNull R readInputStream(@NotNull ThrowableNotNullFunction<? super InputStream, R, ? extends IOException> consumer)
+    throws IOException {
+    return myStorage.readInputStream(consumer);
+  }
+
+  public void lockRead() {
+    myStorage.lockRead();
+  }
+
+  public void unlockRead() {
+    myStorage.unlockRead();
+  }
+
+  public void lockWrite() {
+    myStorage.lockWrite();
+  }
+
+  public void unlockWrite() {
+    myStorage.unlockWrite();
   }
 }
