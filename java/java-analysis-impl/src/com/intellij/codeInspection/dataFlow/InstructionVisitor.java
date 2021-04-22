@@ -796,10 +796,6 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
 
   }
 
-  protected void processArrayCreation(PsiExpression expression, boolean alwaysNegative) {
-
-  }
-
   public DfaInstructionState[] visitFlushVariable(FlushVariableInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.flushVariable(instruction.getVariable());
     return nextInstruction(instruction, runner, memState);
@@ -943,33 +939,34 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     return value;
   }
 
-  public DfaInstructionState[] visitArraySizeCheck(ArraySizeCheckInstruction instruction,
-                                                   DataFlowRunner runner, DfaMemoryState memState) {
-    DfaValue arraySize = memState.peek();
-    DfaControlTransferValue transfer = instruction.getNegativeSizeExceptionTransfer();
-    DfaCondition cond = arraySize.cond(RelationType.GE, intValue(0));
+  public DfaInstructionState[] visitEnsure(@NotNull EnsureInstruction instruction,
+                                           @NotNull DataFlowRunner runner,
+                                           @NotNull DfaMemoryState memState) {
+    DfaValue tosValue = memState.peek();
+    DfaControlTransferValue transfer = instruction.getExceptionTransfer();
+    DfaCondition cond = instruction.createCondition(tosValue);
     Instruction nextInstruction = runner.getInstruction(instruction.getIndex() + 1);
     DfaInstructionState nextState = new DfaInstructionState(nextInstruction, memState);
     if (cond.equals(DfaCondition.getTrue())) {
       return new DfaInstructionState[]{nextState};
     }
     if (transfer == null) {
-      boolean hasNonNegative = memState.applyCondition(cond);
-      processArrayCreation(instruction.getExpression(), !hasNonNegative);
-      if (!hasNonNegative) {
+      boolean satisfied = memState.applyCondition(cond);
+      myLanguageSupport.processConditionFailure(myInterceptor, instruction, !satisfied);
+      if (!satisfied) {
         return DfaInstructionState.EMPTY_ARRAY;
       }
       return new DfaInstructionState[]{nextState};
     }
-    DfaMemoryState negativeSize = memState.createCopy();
-    boolean hasNonNegative = memState.applyCondition(cond);
-    boolean hasNegative = negativeSize.applyCondition(cond.negate());
+    DfaMemoryState falseState = memState.createCopy();
+    boolean trueStatePossible = memState.applyCondition(cond);
+    boolean falseStatePossible = falseState.applyCondition(cond.negate());
     List<DfaInstructionState> result = new ArrayList<>();
-    if (hasNonNegative) {
+    if (trueStatePossible) {
       result.add(nextState);
     }
-    if (hasNegative) {
-      List<DfaInstructionState> states = ControlTransferHandler.dispatch(negativeSize, runner, transfer);
+    if (falseStatePossible) {
+      List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, runner, transfer);
       for (DfaInstructionState negState : states) {
         negState.getMemoryState().markEphemeral();
       }

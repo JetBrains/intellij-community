@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow.java;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaLanguageSupport;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.EnsureInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodReferenceInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
@@ -12,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaDfaLanguageSupport implements DfaLanguageSupport<PsiExpression> {
@@ -33,6 +35,16 @@ public class JavaDfaLanguageSupport implements DfaLanguageSupport<PsiExpression>
       else {
         callBeforeExpressionPush(interceptor, value, instruction, anchor, state, anchor);
       }
+    }
+  }
+
+  @Override
+  public void processConditionFailure(@NotNull DfaInterceptor<PsiExpression> interceptor,
+                                      @NotNull EnsureInstruction instruction,
+                                      boolean alwaysFails) {
+    PsiExpression expression = ObjectUtils.tryCast(instruction.getPsiAnchor(), PsiExpression.class);
+    if (expression != null) {
+      interceptor.onConditionFailure(expression, alwaysFails);
     }
   }
 

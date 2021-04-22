@@ -300,8 +300,10 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   }
 
   @Override
-  protected void processArrayCreation(PsiExpression expression, boolean alwaysNegative) {
-    myNegativeArraySizes.merge(expression, ThreeState.fromBoolean(alwaysNegative), ThreeState::merge);
+  public void onConditionFailure(@NotNull PsiExpression anchor, boolean alwaysNegative) {
+    if (anchor.getParent() instanceof PsiNewExpression) {
+      myNegativeArraySizes.merge(anchor, ThreeState.fromBoolean(alwaysNegative), ThreeState::merge);
+    }
   }
 
   @Override

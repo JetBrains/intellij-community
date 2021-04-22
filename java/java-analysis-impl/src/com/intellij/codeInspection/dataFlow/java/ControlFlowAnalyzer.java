@@ -1358,18 +1358,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  private static boolean isBinaryDivision(IElementType binaryOp) {
-    return binaryOp == JavaTokenType.DIV || binaryOp == JavaTokenType.PERC;
-  }
-
-  private void checkZeroDivisor(PsiType resType) {
-    addInstruction(new DupInstruction());
-    addInstruction(new PushValueInstruction(PsiType.LONG.equals(resType) ? DfTypes.longValue(0) : DfTypes.intValue(0)));
-    addInstruction(new BooleanBinaryInstruction(JavaTokenType.NE, null));
-    ConditionalGotoInstruction ifNonZero = new ConditionalGotoInstruction(null, false, null);
-    addInstruction(ifNonZero);
-    throwException(myExceptionCache.get(ArithmeticException.class.getName()), null);
-    ifNonZero.setOffset(myCurrentFlow.getInstructionCount());
+  private void checkZeroDivisor(PsiExpression anchor, PsiType resType) {
+    DfaControlTransferValue transfer =
+      shouldHandleException() ?
+      myFactory.controlTransfer(myExceptionCache.get("java.lang.ArithmeticException"), myTrapStack) : null;
+    addInstruction(new EnsureInstruction(anchor, RelationType.NE, PsiType.LONG.equals(resType) ? DfTypes.longValue(0) : DfTypes.intValue(0),
+                                         transfer));
   }
 
   private void generateBinOpChain(PsiPolyadicExpression expression, @NotNull IElementType op, PsiExpression[] operands) {
@@ -1391,10 +1385,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateBinOp(PsiExpression expression, int lastOperand, @NotNull IElementType op, PsiExpression rExpr, PsiType resType) {
-    if (isBinaryDivision(op) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
+    if ((op == JavaTokenType.DIV || op == JavaTokenType.PERC) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
       Object divisorValue = ExpressionUtils.computeConstantExpression(rExpr);
       if (!(divisorValue instanceof Number) || (((Number)divisorValue).longValue() == 0)) {
-        checkZeroDivisor(resType);
+        checkZeroDivisor(rExpr, resType);
       }
     }
     Instruction inst;
@@ -1791,7 +1785,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           shouldHandleException() ?
           myFactory.controlTransfer(myExceptionCache.get("java.lang.NegativeArraySizeException"), myTrapStack) : null;
         for (int i = dims - 1; i >= 0; i--) {
-          addInstruction(new ArraySizeCheckInstruction(dimensions[i], transfer));
+          addInstruction(new EnsureInstruction(dimensions[i], RelationType.GE, DfTypes.intValue(0), transfer));
           if (i != 0) {
             addInstruction(new PopInstruction());
           }

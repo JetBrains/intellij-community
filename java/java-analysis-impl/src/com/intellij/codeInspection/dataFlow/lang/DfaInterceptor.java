@@ -64,4 +64,14 @@ public interface DfaInterceptor<EXPR extends PsiElement> {
                                  @NotNull DfaMemoryState state) {
 
   }
+
+  /**
+   * Called for every expression that fails to satisfy the condition required by EnsureInstruction
+   *
+   * @param anchor psi anchor that corresponds to the top-of-stack value
+   * @param alwaysFailed true if condition failed always; false if it fails only sometimes
+   */
+  default void onConditionFailure(@NotNull EXPR anchor, boolean alwaysFailed) {
+
+  }
 }
