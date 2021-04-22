@@ -48,12 +48,12 @@ public class JBCefMultiRenderingModeTest {
   }
 
   private static void show(@NotNull JBCefBrowser browser) {
-    invokeAndWaitForLoad(browser, () -> SwingUtilities.invokeLater(() -> {
+    invokeAndWaitForLoad(browser, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
       frame.add(browser.getComponent(), BorderLayout.CENTER);
       frame.setVisible(true);
-    }));
+    });
   }
 }

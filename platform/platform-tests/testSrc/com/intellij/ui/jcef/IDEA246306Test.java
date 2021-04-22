@@ -62,17 +62,16 @@ public class IDEA246306Test {
         return null;
       });
 
-      invokeAndWaitForLoad(this, () -> SwingUtilities.invokeLater(() -> {
+      invokeAndWaitForLoad(this, () -> {
         JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
         frame.setSize(640, 480);
         frame.setLocationRelativeTo(null);
         frame.add(getComponent(), BorderLayout.CENTER);
         frame.setVisible(true);
-      }));
+      });
 
-      invokeAndWaitForLatch(latch, () -> SwingUtilities.invokeLater(() -> {
-        getCefBrowser().executeJavaScript(myQuery.inject("'" + this + "'"), getCefBrowser().getURL(), 0);
-      }));
+      invokeAndWaitForLatch(latch,
+        () -> getCefBrowser().executeJavaScript(myQuery.inject("'" + this + "'"), getCefBrowser().getURL(), 0));
     }
   }
 }

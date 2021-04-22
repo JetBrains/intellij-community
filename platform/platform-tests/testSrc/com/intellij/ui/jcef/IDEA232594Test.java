@@ -53,17 +53,16 @@ public class IDEA232594Test {
       return null;
     });
 
-    invokeAndWaitForLoad(browser, () -> SwingUtilities.invokeLater(() -> {
+    invokeAndWaitForLoad(browser, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
       frame.add(browser.getComponent(), BorderLayout.CENTER);
       frame.setVisible(true);
-    }));
+    });
 
-    invokeAndWaitForLoad(browser, () -> SwingUtilities.invokeLater(() -> {
-      browser.getCefBrowser().executeJavaScript(jsQuery.inject("'hello'"), "about:blank", 0);
-    }));
+    invokeAndWaitForLoad(browser,
+      () -> browser.getCefBrowser().executeJavaScript(jsQuery.inject("'hello'"), "about:blank", 0));
 
     TestCase.assertEquals("JS callback has been erroneously called on page reload", 1, CALLBACL_COUNT.get());
   }

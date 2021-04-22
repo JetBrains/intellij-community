@@ -55,8 +55,6 @@ public class JBCefHeadlessOsrTest {
       .setUrl("chrome:version")
       .createBrowser();
 
-    invokeAndWaitForLoad(browser, () -> SwingUtilities.invokeLater(() -> {
-      browser.getCefBrowser().createImmediately();
-    }));
+    invokeAndWaitForLoad(browser, () -> browser.getCefBrowser().createImmediately());
   }
 }
