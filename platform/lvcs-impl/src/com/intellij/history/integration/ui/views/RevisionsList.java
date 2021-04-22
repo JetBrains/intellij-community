@@ -151,6 +151,7 @@ public final class RevisionsList {
   private boolean filterRevision(RevisionItem r) {
     if (filterText == null) return true;
     Entry entry = r.revision.findEntry();
+    if (entry == null) return false;
     String text = entry.getContent().getString(entry, new IdeaGateway());
     return text != null && text.contains(filterText);
   }
