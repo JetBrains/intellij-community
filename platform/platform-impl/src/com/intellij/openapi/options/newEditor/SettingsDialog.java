@@ -192,7 +192,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   public void applyAndClose(boolean scheduleSave) {
-    UIUtil.stopFocusedEditing(getWindow());
+    Window window = getWindow();
+    if (window != null) {
+      UIUtil.stopFocusedEditing(window);
+    }
     if (myEditor.apply()) {
       if (scheduleSave) {
         SaveAndSyncHandler.getInstance().scheduleSave(new SaveAndSyncHandler.SaveTask(null, /* forceSavingAllSettings = */ true));
