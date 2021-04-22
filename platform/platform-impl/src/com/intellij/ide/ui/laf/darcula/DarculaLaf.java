@@ -16,6 +16,7 @@ import com.intellij.ui.TableActions;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.Alarm;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.StartupUiUtil;
@@ -272,11 +273,11 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected void loadDefaults(UIDefaults defaults) {
-    //if (Registry.is("ide.load.laf.as.json", false)) {
-    //  loadDefaultsFromJson(defaults);
-    //} else{
+    if (SystemProperties.getBooleanProperty("ide.load.laf.as.json", true)) {
+      loadDefaultsFromJson(defaults);
+    } else{
       loadDefaultsFromProperties(defaults);
-    //}
+    }
   }
 
   protected void loadDefaultsFromJson(UIDefaults defaults) {
