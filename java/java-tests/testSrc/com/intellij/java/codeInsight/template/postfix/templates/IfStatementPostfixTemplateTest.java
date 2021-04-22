@@ -72,4 +72,8 @@ public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testIncompleteExpression() {
     doTest();
   }
+
+  public void testLesserOperatorExpression() {
+    doTest();
+  }
 }
