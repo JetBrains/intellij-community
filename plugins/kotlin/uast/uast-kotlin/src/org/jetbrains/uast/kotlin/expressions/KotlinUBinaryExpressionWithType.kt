@@ -36,7 +36,7 @@ class KotlinUBinaryExpressionWithType(
     }
     
     override val operationKind = when (sourcePsi.operationReference.getReferencedNameElementType()) {
-        KtTokens.AS_KEYWORD -> UastBinaryExpressionWithTypeKind.TYPE_CAST
+        KtTokens.AS_KEYWORD -> UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE
         KtTokens.AS_SAFE -> KotlinBinaryExpressionWithTypeKinds.SAFE_TYPE_CAST
         else -> UastBinaryExpressionWithTypeKind.UNKNOWN
     }

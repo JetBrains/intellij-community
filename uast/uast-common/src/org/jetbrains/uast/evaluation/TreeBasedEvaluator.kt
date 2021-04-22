@@ -386,8 +386,8 @@ class TreeBasedEvaluator(
         return operandInfo storeResultFor node
       }
       return when (node.operationKind) {
-        UastBinaryExpressionWithTypeKind.TYPE_CAST -> evaluateTypeCast(operandInfo, node.type)
-        UastBinaryExpressionWithTypeKind.INSTANCE_CHECK -> evaluateTypeCheck(operandInfo, node.type)
+        UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE -> evaluateTypeCast(operandInfo, node.type)
+        UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE -> evaluateTypeCheck(operandInfo, node.type)
         else -> UUndeterminedValue to operandInfo.state
       } storeResultFor node
     }

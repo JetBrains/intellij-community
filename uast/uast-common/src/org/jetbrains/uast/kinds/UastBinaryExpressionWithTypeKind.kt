@@ -17,20 +17,36 @@
 
 package org.jetbrains.uast
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Kinds of [UBinaryExpressionWithType].
  * Examples: type casts, instance checks.
  */
 open class UastBinaryExpressionWithTypeKind(val name: String) {
-  open class TypeCast(name: String) : UastBinaryExpressionWithTypeKind(name)
-  open class InstanceCheck(name: String) : UastBinaryExpressionWithTypeKind(name)
+  open class TypeCast(name: String) : UastBinaryExpressionWithTypeKind(name) {
+    companion object {
+      @JvmField
+      val INSTANCE: TypeCast = TypeCast("as")
+    }
+  }
+  open class InstanceCheck(name: String) : UastBinaryExpressionWithTypeKind(name) {
+    companion object {
+      @JvmField
+      val INSTANCE: InstanceCheck = InstanceCheck("is")
+    }
+  }
 
   companion object {
+    @kotlin.Deprecated("See KT-32444", replaceWith = ReplaceWith("UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE"))
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     @JvmField
-    val TYPE_CAST: TypeCast = TypeCast("as")
+    val TYPE_CAST: TypeCast = TypeCast.INSTANCE
 
+    @kotlin.Deprecated("See KT-32444", replaceWith = ReplaceWith("UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE"))
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     @JvmField
-    val INSTANCE_CHECK: InstanceCheck = InstanceCheck("is")
+    val INSTANCE_CHECK: InstanceCheck = InstanceCheck.INSTANCE
 
     @JvmField
     val UNKNOWN: UastBinaryExpressionWithTypeKind = UastBinaryExpressionWithTypeKind("<unknown>")

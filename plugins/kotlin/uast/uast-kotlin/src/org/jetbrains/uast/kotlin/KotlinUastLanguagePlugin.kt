@@ -477,7 +477,7 @@ internal object KotlinConverter {
                         operand = KotlinStringUSimpleReferenceExpression("it", this)
                         operationKind = when {
                             condition.isNegated -> KotlinBinaryExpressionWithTypeKinds.NEGATED_INSTANCE_CHECK
-                            else -> UastBinaryExpressionWithTypeKind.INSTANCE_CHECK
+                            else -> UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE
                         }
                         val typeRef = condition.typeReference
                         typeReference = typeRef?.let {

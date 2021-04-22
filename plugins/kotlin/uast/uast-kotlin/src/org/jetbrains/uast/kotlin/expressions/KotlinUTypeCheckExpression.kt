@@ -32,10 +32,10 @@ class KotlinUTypeCheckExpression(
     override val typeReference = sourcePsi.typeReference?.let {
         LazyKotlinUTypeReferenceExpression(it, this) { it.toPsiType(this) }
     }
-    
+
     override val operationKind =
-            if(sourcePsi.isNegated)
-                KotlinBinaryExpressionWithTypeKinds.NEGATED_INSTANCE_CHECK
-            else
-                UastBinaryExpressionWithTypeKind.INSTANCE_CHECK
+        if (sourcePsi.isNegated)
+            KotlinBinaryExpressionWithTypeKinds.NEGATED_INSTANCE_CHECK
+        else
+            UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE
 }

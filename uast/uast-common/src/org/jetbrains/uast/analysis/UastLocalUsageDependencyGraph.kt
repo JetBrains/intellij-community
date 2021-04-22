@@ -208,7 +208,9 @@ private class VisitorWithVariablesTracking(
   }
 
   override fun visitBinaryExpressionWithType(node: UBinaryExpressionWithType): Boolean = checkedDepthCall(node) {
-    if (node.operationKind != UastBinaryExpressionWithTypeKind.TYPE_CAST) return@checkedDepthCall super.visitBinaryExpressionWithType(node)
+    if (node.operationKind != UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE) {
+      return@checkedDepthCall super.visitBinaryExpressionWithType(node)
+    }
     registerDependency(Dependent.CommonDependent(node), node.operand.extractBranchesResultAsDependency())
     return@checkedDepthCall super.visitBinaryExpressionWithType(node)
   }
