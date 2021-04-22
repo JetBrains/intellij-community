@@ -2,16 +2,18 @@
 package com.intellij.ide.plugins.marketplace
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.certificates.PluginCertificateStore
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
+import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
+import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.zip.signer.verifier.InvalidSignatureResult
-import org.jetbrains.zip.signer.verifier.MissingSignatureResult
-import org.jetbrains.zip.signer.verifier.SuccessfulVerificationResult
-import org.jetbrains.zip.signer.verifier.ZipVerifier
+import org.jetbrains.zip.signer.verifier.*
 import java.io.File
 import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
@@ -33,58 +35,72 @@ internal object PluginSignatureChecker {
   }
 
   @JvmStatic
-  fun isSignedByAnyCertificates(pluginName: String, pluginFile: File): Boolean {
-    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("jetbrains.certificate.not.found"))
+  fun isSignedByAnyCertificates(descriptor: IdeaPluginDescriptor, pluginFile: File): Boolean {
+    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))
     val certificates = PluginCertificateStore.getInstance().customTrustManager.certificates.orEmpty() + jbCert
-    return isSignedBy(pluginName, pluginFile, *certificates.toTypedArray())
+    return isSignedBy(descriptor, pluginFile, *certificates.toTypedArray())
   }
 
   @JvmStatic
-  fun isSignedByCustomCertificates(pluginName: String, pluginFile: File): Boolean {
+  fun isSignedByCustomCertificates(descriptor: IdeaPluginDescriptor, pluginFile: File): Boolean {
     val certificates = PluginCertificateStore.getInstance().customTrustManager.certificates
     if (certificates.isEmpty()) return true
-    return isSignedBy(pluginName, pluginFile, *certificates.toTypedArray())
+    return isSignedBy(descriptor, pluginFile, *certificates.toTypedArray())
   }
 
   @JvmStatic
-  fun isSignedByJetBrains(pluginName: String, pluginFile: File): Boolean {
-    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("jetbrains.certificate.not.found"))
-    return isSignedBy(pluginName, pluginFile, jbCert)
+  fun isSignedByJetBrains(descriptor: IdeaPluginDescriptor, pluginFile: File): Boolean {
+    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))
+    return isSignedBy(descriptor, pluginFile, jbCert)
   }
 
-  private fun isSignedBy(pluginName: String, pluginFile: File, vararg certificate: Certificate): Boolean {
-    val errorMessage = verifyPluginAndGetErrorMessage(pluginFile, *certificate)
+  private fun isSignedBy(descriptor: IdeaPluginDescriptor, pluginFile: File, vararg certificate: Certificate): Boolean {
+    val errorMessage = verifyPluginAndGetErrorMessage(descriptor.pluginId, pluginFile, *certificate)
     if (errorMessage != null) {
-      return processSignatureWarning(pluginName, errorMessage)
+      return processSignatureWarning(descriptor, errorMessage)
     }
     return true
   }
 
-  private fun verifyPluginAndGetErrorMessage(file: File, vararg certificates: Certificate): String? {
+  private fun verifyPluginAndGetErrorMessage(pluginId: PluginId, file: File, vararg certificates: Certificate): String? {
     return when (val verificationResult = ZipVerifier.verify(file)) {
-      is InvalidSignatureResult -> verificationResult.errorMessage
-      is MissingSignatureResult -> IdeBundle.message("plugin.signature.not.signed")
+      is InvalidSignatureResult -> {
+        PluginManagerUsageCollector.signatureCheckResult(pluginId, SignatureVerificationResult.INVALID_SIGNATURE)
+        verificationResult.errorMessage
+      }
+      is MissingSignatureResult -> {
+        PluginManagerUsageCollector.signatureCheckResult(pluginId, SignatureVerificationResult.MISSING_SIGNATURE)
+        IdeBundle.message("plugin.signature.not.signed")
+      }
       is SuccessfulVerificationResult -> {
         val isSigned = certificates.any { certificate ->
           certificate is X509Certificate && verificationResult.isSignedBy(certificate)
         }
         if (!isSigned) {
+          PluginManagerUsageCollector.signatureCheckResult(pluginId, SignatureVerificationResult.WRONG_SIGNATURE)
           IdeBundle.message("plugin.signature.not.signed.by")
         }
-        else null
+        else {
+          PluginManagerUsageCollector.signatureCheckResult(pluginId, SignatureVerificationResult.SUCCESSFUL)
+          null
+        }
       }
     }
   }
 
-  private fun processSignatureWarning(pluginName: String, errorMessage: String): Boolean {
+  private fun processSignatureWarning(descriptor: IdeaPluginDescriptor, errorMessage: String): Boolean {
     val title = IdeBundle.message("plugin.signature.checker.title")
-    val message = IdeBundle.message("plugin.signature.checker.untrusted.message", pluginName, errorMessage)
+    val message = IdeBundle.message("plugin.signature.checker.untrusted.message", descriptor.name, errorMessage)
     val yesText = IdeBundle.message("plugin.signature.checker.yes")
     val noText = IdeBundle.message("plugin.signature.checker.no")
     var result: Int = -1
     ApplicationManager.getApplication().invokeAndWait(
       { result = Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) },
       ModalityState.any()
+    )
+    PluginManagerUsageCollector.signatureWarningShown(
+      descriptor.pluginId,
+      if (result == Messages.YES) DialogAcceptanceResultEnum.ACCEPTED else DialogAcceptanceResultEnum.DECLINED
     )
     return result == Messages.YES
   }

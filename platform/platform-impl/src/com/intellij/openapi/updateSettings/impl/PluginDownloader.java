@@ -5,11 +5,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
+import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.internal.statistic.DeviceIdManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -183,19 +185,27 @@ public final class PluginDownloader {
       myOldFile = descriptor.isBundled() ? null : descriptor.getPluginPath();
     }
 
+    boolean isFromMarketplace = myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
+    String previousVersion = (descriptor == null) ? null : descriptor.getVersion();
+
+    PluginManagerUsageCollector.pluginInstallationStarted(
+      myDescriptor,
+      isFromMarketplace ? InstallationSourceEnum.MARKETPLACE : InstallationSourceEnum.CUSTOM_REPOSITORY,
+      previousVersion
+    );
+
     // download plugin
     myFile = tryDownloadPlugin(indicator, showMessageOnError);
     if (myFile != null) {
       if (Registry.is("marketplace.certificate.signature.check")) {
 
-        if (myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)) {
-          if (!PluginSignatureChecker.isSignedByJetBrains(getPluginName(), myFile)) {
+        if (isFromMarketplace) {
+          if (!PluginSignatureChecker.isSignedByJetBrains(myDescriptor, myFile)) {
             myShownErrors = true;
             return null;
           }
-        }
-        else {
-          if (!PluginSignatureChecker.isSignedByCustomCertificates(getPluginName(), myFile)) {
+        } else {
+          if (!PluginSignatureChecker.isSignedByCustomCertificates(myDescriptor, myFile)) {
             myShownErrors = true;
             return null;
           }
@@ -260,6 +270,13 @@ public final class PluginDownloader {
     }
   }
 
+  public static String getMarketplaceDownloadsUUID() {
+    try {
+      return DeviceIdManager.getOrGenerateId(new DeviceIdManager.DeviceIdToken() {}, "MarketplaceDownloads");
+    } catch (DeviceIdManager.InvalidDeviceIdTokenException e){
+      return "";
+    }
+  }
 
   public static int compareVersionsSkipBrokenAndIncompatible(String newPluginVersion,
                                                              @NotNull IdeaPluginDescriptor existingPlugin) {
@@ -394,7 +411,7 @@ public final class PluginDownloader {
                                         @Nullable BuildNumber buildNumber) {
     Map<String, String> parameters = Map.of("id", pluginId.getIdString(),
                                             "build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
-                                            "uuid", PermanentInstallationID.get());
+                                            "uuid", getMarketplaceDownloadsUUID());
 
     return Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
       .addParameters(parameters)

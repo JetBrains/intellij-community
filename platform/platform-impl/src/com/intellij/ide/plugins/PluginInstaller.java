@@ -6,6 +6,8 @@ import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
+import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -225,14 +227,8 @@ public final class PluginInstaller {
           .message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName().toString()), CommonBundle.getErrorTitle());
         return false;
       }
-      if (Registry.is("marketplace.certificate.signature.check")) {
-        if (!PluginSignatureChecker.isSignedByAnyCertificates(pluginDescriptor.name, file.toFile())) {
-          return false;
-        }
-      }
 
       InstalledPluginsState ourState = InstalledPluginsState.getInstance();
-
       if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
         String message = IdeBundle.message("dialog.message.plugin.was.already.installed", pluginDescriptor.getName());
         MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
@@ -257,6 +253,15 @@ public final class PluginInstaller {
           .message("dialog.message.plugin.core.part", pluginDescriptor.getName(), ApplicationNamesInfo.getInstance().getFullProductName());
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
         return false;
+      }
+
+      String previousVersion = (installedPlugin == null) ? null : installedPlugin.getVersion();
+      PluginManagerUsageCollector.pluginInstallationStarted(pluginDescriptor, InstallationSourceEnum.FROM_DISK, previousVersion);
+
+      if (Registry.is("marketplace.certificate.signature.check")) {
+        if (!PluginSignatureChecker.isSignedByAnyCertificates(pluginDescriptor, file.toFile())) {
+          return false;
+        }
       }
 
       PluginEnabler pluginEnabler = model instanceof PluginEnabler ? (PluginEnabler)model : PluginEnabler.HEADLESS;
