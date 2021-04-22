@@ -20,223 +20,369 @@
       "textBackground": "#cccccc",
       "textForeground": "#000000"
     },
-    "ActionButton.hoverBackground": "#dfdfdf",
-    "ActionButton.hoverBorderColor": "#dfdfdf",
-    "ActionButton.pressedBackground": "#cfcfcf",
-    "ActionButton.pressedBorderColor": "#cfcfcf",
-    "AssignedMnemonic.background": "#F7C777",
-    "AssignedMnemonic.borderColor": "#F7C777",
-    "AssignedMnemonic.foreground": "#000000",
-    "AvailableMnemonic.background": "#FFFFFF",
-    "AvailableMnemonic.borderColor": "#C4C4C4",
-    "AvailableMnemonic.foreground": "#000000",
+
+    "ActionButton": {
+      "hoverBackground": "#dfdfdf",
+      "hoverBorderColor": "#dfdfdf",
+      "pressedBackground": "#cfcfcf",
+      "pressedBorderColor": "#cfcfcf"
+    },
+
+    "AssignedMnemonic": {
+      "background": "#F7C777",
+      "borderColor": "#F7C777",
+      "foreground": "#000000"
+    },
+
+    "AvailableMnemonic": {
+      "background": "#FFFFFF",
+      "borderColor": "#C4C4C4",
+      "foreground": "#000000"
+    },
+
     "BookmarkIcon.background": "#F7C777",
     "Borders.ContrastBorderColor": "#C9C9C9",
-    "Button.background.opaque": "#ededed",
-    "Button.background": "#e3e3e3",
-    "Button.border": "com.intellij.laf.win10.WinIntelliJButtonBorder",
-    "Button.disabledText": "#8a8a8a",
-    "Button.intellij.native.borderColor": "#adadad",
-    "Button.intellij.native.focusDottedRingColor": "#000000",
-    "Button.intellij.native.focusedBackgroundColor": "#e3f1fa",
-    "Button.intellij.native.focusedBorderColor": "#0784de",
-    "Button.intellij.native.pressedBackgroundColor": "#cce4f7",
-    "Button.intellij.native.pressedBorderColor": "#005499",
-    "ButtonUI": "com.intellij.laf.win10.WinIntelliJButtonUI",
+
+    "Button": {
+      "background.opaque": "#ededed",
+      "background": "#e3e3e3",
+      "border": "com.intellij.laf.win10.WinIntelliJButtonBorder",
+      "disabledText": "#8a8a8a",
+      "intellij.native": {
+        "borderColor": "#adadad",
+        "focusDottedRingColor": "#000000",
+        "focusedBackgroundColor": "#e3f1fa",
+        "focusedBorderColor": "#0784de",
+        "pressedBackgroundColor": "#cce4f7",
+        "pressedBorderColor": "#005499"
+      },
+      "UI": "com.intellij.laf.win10.WinIntelliJButtonUI"
+    },
+
     "CellEditor.border.width": 2,
-    "CheckBox.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
-    "CheckBox.borderInsets": "1,1,1,0",
-    "CheckBox.disabledText": "#8a8a8a",
-    "CheckBoxUI": "com.intellij.laf.win10.WinIntelliJCheckBoxUI",
-    "ComboBox.disabledBackground": "#f2f2f2",
-    "ComboBox.padding": "1,6,1,6",
-    "ComboBoxButton.arrowIcon": "/icons/comboDropTriangle.svg",
-    "ComboBoxButton.arrowIconDisabled": "/icons/comboDropTriangleDisabled.svg",
-    "ComboBoxUI": "com.intellij.laf.win10.WinIntelliJComboBoxUI",
+
+    "CheckBox": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
+      "borderInsets": "1,1,1,0",
+      "disabledText": "#8a8a8a",
+      "UI": "com.intellij.laf.win10.WinIntelliJCheckBoxUI"
+    },
+
+    "ComboBox": {
+      "disabledBackground": "#f2f2f2",
+      "padding": "1,6,1,6",
+      "UI": "com.intellij.laf.win10.WinIntelliJComboBoxUI"
+    },
+
+    "ComboBoxButton": {
+      "arrowIcon": "/icons/comboDropTriangle.svg",
+      "arrowIconDisabled": "/icons/comboDropTriangleDisabled.svg"
+    },
+
     "CompletionPopup.nonFocusedState": true,
-    "Component.errorFocusColor": "#e53e4d",
-    "Component.focusWidth": 1,
-    "Component.inactiveErrorFocusColor": "#ebbcbc",
-    "Component.inactiveWarningFocusColor": "#ffd385",
-    "Component.infoForeground": "#999999",
-    "Component.warningFocusColor": "#e2a53a",
-    "CurrentMnemonic.background": "#389FD6",
-    "CurrentMnemonic.borderColor": "#389FD6",
-    "CurrentMnemonic.foreground": "#FFFFFF",
+
+    "Component": {
+      "errorFocusColor": "#e53e4d",
+      "focusWidth": 1,
+      "inactiveErrorFocusColor": "#ebbcbc",
+      "inactiveWarningFocusColor": "#ffd385",
+      "infoForeground": "#999999",
+      "warningFocusColor": "#e2a53a"
+    },
+
+    "CurrentMnemonic": {
+      "background": "#389FD6",
+      "borderColor": "#389FD6",
+      "foreground": "#FFFFFF"
+    },
+
     "DefaultTabs.background": "#F2F2F2",
-    "DialogWrapper.southPanelBackground": "#f0f0f0",
-    "DialogWrapper.southPanelDivider": "#f0f0f0",
-    "EditorPane.background": "#ffffff",
-    "EditorPaneUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaEditorPaneUI",
+
+    "DialogWrapper": {
+      "southPanelBackground": "#f0f0f0",
+      "southPanelDivider": "#f0f0f0"
+    },
+
+    "EditorPane": {
+      "background": "#ffffff",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaEditorPaneUI"
+    },
+
     "EditorTabs.underlinedTabBackground": "#fafafa",
     "FileView.fileIcon": "AllIcons.FileTypes.Unknown",
     "Focus.color": "#ff0000",
-    "FormattedTextField.background": "#ffffff",
-    "FormattedTextField.border": "com.intellij.laf.win10.WinIntelliJTextBorder",
-    "FormattedTextFieldUI": "com.intellij.laf.win10.WinIntelliJTextFieldUI",
+
+    "FormattedTextField": {
+      "background": "#ffffff",
+      "border": "com.intellij.laf.win10.WinIntelliJTextBorder",
+      "UI": "com.intellij.laf.win10.WinIntelliJTextFieldUI"
+    },
+
     "Group.separatorColor": "#cdcdcd",
-    "HelpTooltip.defaultTextBorderInsets": "8,10,10,13",
-    "HelpTooltip.smallTextBorderInsets": "6,10,7,12",
-    "HelpTooltip.xOffset": 1,
-    "HelpTooltip.yOffset": 1,
+
+    "HelpTooltip": {
+      "defaultTextBorderInsets": "8,10,10,13",
+      "smallTextBorderInsets": "6,10,7,12",
+      "xOffset": 1,
+      "yOffset": 1
+    },
+
     "Hyperlink.linkColor": "#589df6",
-    "InternalFrame.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaInternalBorder",
-    "InternalFrameUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaInternalFrameUI",
-    "Label.disabledForeground": "#777777",
-    "Label.foreground": "#000000",
-    "Label.selectedDisabledForeground": "#777777",
-    "Label.selectedForeground": "#000000",
-    "LabelUI": "com.intellij.laf.win10.WinIntelliJLabelUI",
-    "Link.activeForeground": "#016cc1",
-    "Link.hoverForeground": "#016cc1",
-    "Link.pressedForeground": "#006064",
-    "Link.visitedForeground": "#016cc1",
-    "List.background": "#ffffff",
-    "List.rowHeight": 20,
-    "ListUI": "com.intellij.ui.components.WideSelectionListUI",
-    "Menu.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
-    "Menu.borderColor": "#cdcdcd",
-    "Menu.maxGutterIconWidth": 18,
-    "Menu.opaque": true,
-    "Menu.separatorColor": "#cdcdcd",
-    "MenuBar.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuBarBorder",
-    "MenuBar.borderColor": "#cdcdcd",
-    "MenuBar.disabledBackground": "#cccccc",
-    "MenuItem.acceleratorDelimiter": "-",
-    "MenuItem.acceleratorForeground": "#505050",
-    "MenuItem.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
-    "MenuItem.maxGutterIconWidth": 18,
-    "MnemonicIcon.background": "#FEF7EC",
-    "MnemonicIcon.borderColor": "#F4AF3D",
-    "MnemonicIcon.foreground": "#000000",
+
+    "InternalFrame": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaInternalBorder",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaInternalFrameUI"
+    },
+
+    "Label": {
+      "Label.disabledForeground": "#777777",
+      "Label.foreground": "#000000",
+      "Label.selectedDisabledForeground": "#777777",
+      "Label.selectedForeground": "#000000",
+      "UI": "com.intellij.laf.win10.WinIntelliJLabelUI"
+    },
+
+    "Link": {
+      "activeForeground": "#016cc1",
+      "hoverForeground": "#016cc1",
+      "pressedForeground": "#006064",
+      "visitedForeground": "#016cc1"
+    },
+
+    "List": {
+      "background": "#ffffff",
+      "rowHeight": 20,
+      "UI": "com.intellij.ui.components.WideSelectionListUI"
+    },
+
+    "Menu": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
+      "borderColor": "#cdcdcd",
+      "maxGutterIconWidth": 18,
+      "opaque": true,
+      "separatorColor": "#cdcdcd"
+    },
+
+    "MenuBar": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuBarBorder",
+      "borderColor": "#cdcdcd",
+      "disabledBackground": "#cccccc"
+    },
+
+    "MenuItem": {
+      "acceleratorDelimiter": "-",
+      "acceleratorForeground": "#505050",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
+      "maxGutterIconWidth": 18
+    },
+
+    "MnemonicIcon": {
+      "background": "#FEF7EC",
+      "borderColor": "#F4AF3D",
+      "foreground": "#000000"
+    },
+
     "NavBar.borderColor": "#cdcdcd",
-    "NewClass.Panel.background": "#f2f2f2",
-    "NewClass.SearchField.background": "#ffffff",
-    "NewClass.separatorWidth": 10,
+
+    "NewClass": {
+      "Panel.background": "#f2f2f2",
+      "SearchField.background": "#ffffff",
+      "separatorWidth": 10
+    },
+
     "OnOffButtonUI": "com.intellij.laf.win10.WinOnOffButtonUI",
     "OnePixelDivider.background": "#adadad",
+
     "OptionButtonUI": "com.intellij.laf.win10.WinIntelliJOptionButtonUI",
-    "OptionPane.errorIcon": "AllIcons.General.ErrorDialog",
-    "OptionPane.informationIcon": "AllIcons.General.InformationDialog",
-    "OptionPane.messageForeground": "#000000",
-    "OptionPane.questionIcon": "AllIcons.General.QuestionDialog",
-    "OptionPane.warningIcon": "AllIcons.General.WarningDialog",
-    "PasswordField.background": "#ffffff",
-    "PasswordField.border": "com.intellij.laf.win10.WinIntelliJTextBorder",
-    "PasswordFieldUI": "com.intellij.laf.win10.WinIntelliJPasswordFieldUI",
-    "Popup.Header.activeBackground": "#E6E6E6",
-    "Popup.Header.inactiveBackground": "#ededed",
-    "Popup.Toolbar.background": "#f7f7f7",
-    "Popup.Toolbar.borderColor": "#f7f7f7",
-    "Popup.borderColor": "#808080",
-    "Popup.inactiveBorderColor": "#aaaaaa",
-    "PopupMenu.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
-    "PopupMenu.translucentBackground": "#f2f2f2",
+
+    "OptionPane": {
+      "errorIcon": "AllIcons.General.ErrorDialog",
+      "informationIcon": "AllIcons.General.InformationDialog",
+      "messageForeground": "#000000",
+      "questionIcon": "AllIcons.General.QuestionDialog",
+      "warningIcon": "AllIcons.General.WarningDialog"
+    },
+
+    "PasswordField": {
+      "background": "#ffffff",
+      "border": "com.intellij.laf.win10.WinIntelliJTextBorder",
+      "UI": "com.intellij.laf.win10.WinIntelliJPasswordFieldUI"
+    },
+
+    "Popup": {
+      "Header.activeBackground": "#E6E6E6",
+      "Header.inactiveBackground": "#ededed",
+      "Toolbar.background": "#f7f7f7",
+      "Toolbar.borderColor": "#f7f7f7",
+      "borderColor": "#808080",
+      "inactiveBorderColor": "#aaaaaa"
+    },
+
+    "PopupMenu": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
+      "translucentBackground": "#f2f2f2"
+    },
+
     "PopupMenuSeparatorUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI",
-    "ProgressBar.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder",
-    "ProgressBar.failedColor": "#d64f4f",
-    "ProgressBar.failedEndColor": "#fb8f89",
-    "ProgressBar.foreground": "#808080",
-    "ProgressBar.indeterminateEndColor": "#0075da",
-    "ProgressBar.indeterminateStartColor": "#76b8f8",
-    "ProgressBar.passedColor": "#34b171",
-    "ProgressBar.passedEndColor": "#7ee8a5",
-    "ProgressBar.progressColor": "#0075da",
-    "ProgressBar.trackColor": "#cccccc",
-    "ProgressBarUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI",
-    "RadioButton.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
-    "RadioButton.borderInsets": "1,1,1,0",
-    "RadioButton.disabledText": "#8a8a8a",
-    "RadioButtonUI": "com.intellij.laf.win10.WinIntelliJRadioButtonUI",
+
+    "ProgressBar": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder",
+      "failedColor": "#d64f4f",
+      "failedEndColor": "#fb8f89",
+      "foreground": "#808080",
+      "indeterminateEndColor": "#0075da",
+      "indeterminateStartColor": "#76b8f8",
+      "passedColor": "#34b171",
+      "passedEndColor": "#7ee8a5",
+      "progressColor": "#0075da",
+      "trackColor": "#cccccc",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI"
+    },
+
+    "RadioButton": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
+      "borderInsets": "1,1,1,0",
+      "disabledText": "#8a8a8a",
+      "UI": "com.intellij.laf.win10.WinIntelliJRadioButtonUI"
+    },
+
     "RootPaneUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI",
-    "ScrollBar.background": "#F5F5F5",
-    "ScrollBarUI": "com.intellij.ui.components.JBScrollBar",
-    "SearchEverywhere.Advertiser.background": "#f2f2f2",
-    "SearchEverywhere.Advertiser.foreground": "#808080",
-    "SearchEverywhere.Header.background": "#f2f2f2",
-    "SearchEverywhere.List.separatorColor": "#dcdcdc",
-    "SearchEverywhere.SearchField.background": "#ffffff",
-    "SearchEverywhere.SearchField.borderColor": "#bdbdbd",
-    "SearchEverywhere.SearchField.infoForeground": "#808080",
-    "SearchEverywhere.Tab.selectedBackground": "#dedede",
-    "SearchEverywhere.Tab.selectedForeground": "#000000",
-    "SearchEverywhere.background": "#1772b3",
-    "SearchEverywhere.foreground": "#ffffff",
-    "SearchEverywhere.shortcutForeground": "#a7c1db",
-    "Separator.separatorColor": "#cdcdcd",
-    "SeparatorUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI",
-    "Slider.disabledForeground": "#c0c0c0",
-    "Slider.focusedColor": "#0784de",
-    "Slider.foreground": "#6e6e6e",
-    "Slider.pressedColor": "#005499",
-    "Slider.tickColor": "#6e6e6e",
-    "SliderUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI",
-    "Spinner.background": "#ffffff",
-    "Spinner.border": "com.intellij.laf.win10.WinIntelliJSpinnerBorder",
-    "Spinner.editorAlignment": 2,
-    "SpinnerUI": "com.intellij.laf.win10.WinIntelliJSpinnerUI",
+
+    "ScrollBar": {
+      "background": "#F5F5F5",
+      "UI": "com.intellij.ui.components.JBScrollBar"
+    },
+
+    "SearchEverywhere": {
+      "Advertiser.background": "#f2f2f2",
+      "Advertiser.foreground": "#808080",
+      "Header.background": "#f2f2f2",
+      "List.separatorColor": "#dcdcdc",
+      "SearchField.background": "#ffffff",
+      "SearchField.borderColor": "#bdbdbd",
+      "SearchField.infoForeground": "#808080",
+      "Tab.selectedBackground": "#dedede",
+      "Tab.selectedForeground": "#000000",
+      "background": "#1772b3",
+      "foreground": "#ffffff",
+      "shortcutForeground": "#a7c1db"
+    },
+
+    "Separator": {
+      "separatorColor": "#cdcdcd",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI"
+    },
+
+    "Slider": {
+      "disabledForeground": "#c0c0c0",
+      "focusedColor": "#0784de",
+      "foreground": "#6e6e6e",
+      "pressedColor": "#005499",
+      "tickColor": "#6e6e6e",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI"
+    },
+
+    "Spinner": {
+      "background": "#ffffff",
+      "border": "com.intellij.laf.win10.WinIntelliJSpinnerBorder",
+      "editorAlignment": 2,
+      "UI": "com.intellij.laf.win10.WinIntelliJSpinnerUI"
+    },
+
     "SplitPane.highlight": "#f2f2f2",
-    "StatusBar.borderColor": "#919191",
-    "StatusBar.hoverBackground": "#dfdfdf",
-    "TabbedPane.contentAreaColor": "#bfbfbf",
-    "TabbedPane.disabledForeground": "#8a8a8a",
-    "TabbedPane.disabledUnderlineColor": "#ababab",
-    "TabbedPane.focusColor": "#dae4ed",
-    "TabbedPane.hoverColor": "#d9d9d9",
-    "TabbedPane.labelShift": 0,
-    "TabbedPane.selectedLabelShift": 0,
-    "TabbedPane.selectedTabPadInsets": "0,0,0,0",
-    "TabbedPane.tabAreaInsets": "0,0,0,0",
-    "TabbedPane.tabFillStyle": "underline",
-    "TabbedPane.tabHeight": 32,
-    "TabbedPane.tabInsets": "0,12,0,12",
-    "TabbedPane.tabSelectionHeight": 3,
-    "TabbedPane.tabsOverlapBorder": true,
-    "TabbedPane.underlineColor": "#4083C9",
-    "TabbedPaneUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI",
-    "Table.ascendingSortIcon": "AllIcons.General.ArrowUp",
-    "Table.background": "#ffffff",
-    "Table.cellNoFocusBorder": "3,4,3,3",
-    "Table.descendingSortIcon": "AllIcons.General.ArrowDown",
-    "Table.focusSelectedCellHighlightBorder": "com.intellij.laf.win10.WinIntelliJTableSelectedCellHighlightBorder",
-    "Table.gridColor": "#F7F7F7",
-    "Table.rowHeight": 20,
-    "TableHeader.background": "#ffffff",
-    "TableHeader.bottomSeparatorColor": "#e5e5e5",
-    "TableHeader.cellBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderBorder",
-    "TableHeader.height": 25,
-    "TableHeader.separatorColor": "#e5e5e5",
-    "TableHeaderUI": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderUI",
-    "TextArea.background": "#ffffff",
-    "TextArea.selectionForeground": "#ffffff",
-    "TextField.background": "#ffffff",
-    "TextField.border": "com.intellij.laf.win10.WinIntelliJTextBorder",
-    "TextField.borderColor": "#bdbdbd",
-    "TextField.disabledBackground": "#ededed",
-    "TextField.focusedBorderColor": "#0784de",
-    "TextField.hoverBorderColor": "#a1a1a1",
-    "TextFieldUI": "com.intellij.laf.win10.WinIntelliJTextFieldUI",
+
+    "StatusBar": {
+      "borderColor": "#919191",
+      "hoverBackground": "#dfdfdf"
+    },
+
+    "TabbedPane": {
+      "contentAreaColor": "#bfbfbf",
+      "disabledForeground": "#8a8a8a",
+      "disabledUnderlineColor": "#ababab",
+      "focusColor": "#dae4ed",
+      "hoverColor": "#d9d9d9",
+      "labelShift": 0,
+      "selectedLabelShift": 0,
+      "selectedTabPadInsets": "0,0,0,0",
+      "tabAreaInsets": "0,0,0,0",
+      "tabFillStyle": "underline",
+      "tabHeight": 32,
+      "tabInsets": "0,12,0,12",
+      "tabSelectionHeight": 3,
+      "tabsOverlapBorder": true,
+      "underlineColor": "#4083C9",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI"
+    },
+
+    "Table": {
+      "ascendingSortIcon": "AllIcons.General.ArrowUp",
+      "background": "#ffffff",
+      "cellNoFocusBorder": "3,4,3,3",
+      "descendingSortIcon": "AllIcons.General.ArrowDown",
+      "focusSelectedCellHighlightBorder": "com.intellij.laf.win10.WinIntelliJTableSelectedCellHighlightBorder",
+      "gridColor": "#F7F7F7",
+      "rowHeight": 20
+    },
+
+    "TableHeader": {
+      "background": "#ffffff",
+      "bottomSeparatorColor": "#e5e5e5",
+      "cellBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderBorder",
+      "height": 25,
+      "separatorColor": "#e5e5e5",
+      "UI": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderUI"
+    },
+
+    "TextArea": {
+      "background": "#ffffff",
+      "selectionForeground": "#ffffff"
+    },
+
+    "TextField": {
+      "background": "#ffffff",
+      "border": "com.intellij.laf.win10.WinIntelliJTextBorder",
+      "borderColor": "#bdbdbd",
+      "disabledBackground": "#ededed",
+      "focusedBorderColor": "#0784de",
+      "hoverBorderColor": "#a1a1a1",
+      "UI": "com.intellij.laf.win10.WinIntelliJTextFieldUI"
+    },
+
     "TitledBorder.titleColor": "#000000",
-    "ToggleButton.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter",
-    "ToggleButtonUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI",
-    "ToolTip.background": "#f7f7f7",
-    "ToolTip.paintBorder": true,
-    "ToolWindow.Header.background": "#E2E6EC",
-    "ToolWindow.Header.inactiveBackground": "#F2F2F2",
-    "ToolWindow.HeaderCloseButton.background": "#B9B9B9",
-    "ToolWindow.HeaderTab.selectedBackground": "#D0D4D8",
-    "ToolWindow.HeaderTab.selectedInactiveBackground": "#DEDEDE",
-    "Tree.background": "#ffffff",
-    "Tree.collapsedIcon": "/icons/treeCollapsed.svg",
-    "Tree.collapsedSelectedIcon": "/icons/treeCollapsedSelected.svg",
-    "Tree.expandedIcon": "/icons/treeExpanded.svg",
-    "Tree.expandedSelectedIcon": "/icons/treeExpandedSelected.svg",
-    "Tree.hash": "#E6E6E6",
-    "Tree.paintLines": false,
-    "Tree.rowHeight": 20,
-    "Tree.selectionBorderColor": "#1a7dc4",
-    "Tree.textBackground": "#ffffff",
-    "TreeUI": "com.intellij.ui.tree.ui.DefaultTreeUI",
+
+    "ToggleButton": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
+    },
+
+    "ToolTip": {
+      "background": "#f7f7f7",
+      "paintBorder": true
+    },
+
+    "ToolWindow": {
+      "Header.background": "#E2E6EC",
+      "Header.inactiveBackground": "#F2F2F2",
+      "HeaderCloseButton.background": "#B9B9B9",
+      "HeaderTab.selectedBackground": "#D0D4D8",
+      "HeaderTab.selectedInactiveBackground": "#DEDEDE"
+    },
+
+    "Tree": {
+      "background": "#ffffff",
+      "collapsedIcon": "/icons/treeCollapsed.svg",
+      "collapsedSelectedIcon": "/icons/treeCollapsedSelected.svg",
+      "expandedIcon": "/icons/treeExpanded.svg",
+      "expandedSelectedIcon": "/icons/treeExpandedSelected.svg",
+      "hash": "#E6E6E6",
+      "paintLines": false,
+      "rowHeight": 20,
+      "selectionBorderColor": "#1a7dc4",
+      "textBackground": "#ffffff",
+      "UI": "com.intellij.ui.tree.ui.DefaultTreeUI"
+    },
+
     "control": "#f2f2f2",
     "darcula.selectionBackground": "#4A6EB7",
     "darcula.selectionForeground": "#ffffff",
