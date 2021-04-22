@@ -278,6 +278,13 @@ public final class DfaUtil {
       }
     }
     if (type instanceof DfPrimitiveType) {
+      if (value.getDfType() instanceof DfPrimitiveType) {
+        PsiPrimitiveType psiType = ((DfPrimitiveType)type).getPsiType();
+        DfPrimitiveType valueType = (DfPrimitiveType)value.getDfType();
+        if (!valueType.getPsiType().equals(psiType)) {
+          return value.getFactory().fromDfType(valueType.castTo(psiType));
+        }
+      }
       if (value instanceof DfaWrappedValue || TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
         return JvmSpecialField.UNBOX.createValue(value.getFactory(), value);
       }
