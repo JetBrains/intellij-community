@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.ConditionalGotoInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.ControlTransferInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.GotoInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
+import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.graph.DFSTBuilder;
@@ -13,6 +11,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -101,6 +100,12 @@ final class LoopAnalyzer {
     }
     if (instruction instanceof ControlTransferInstruction) {
       return ArrayUtil.toIntArray(((ControlTransferInstruction)instruction).getPossibleTargetIndices());
+    }
+    if (instruction instanceof EnsureInstruction) {
+      DfaControlTransferValue transfer = ((EnsureInstruction)instruction).getExceptionTransfer();
+      return transfer == null
+             ? new int[]{i + 1}
+             : StreamEx.of(transfer.getPossibleTargetIndices()).mapToInt(x -> x).append(i + 1).toArray();
     }
     if (instruction instanceof ConditionalGotoInstruction) {
       int offset = ((ConditionalGotoInstruction)instruction).getOffset();

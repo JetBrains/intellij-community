@@ -59,7 +59,8 @@ final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
     return instruction instanceof FinishElementInstruction ||
            instruction instanceof GotoInstruction ||
            instruction instanceof ConditionalGotoInstruction ||
-           instruction instanceof ControlTransferInstruction;
+           instruction instanceof ControlTransferInstruction ||
+           instruction instanceof EnsureInstruction;
   }
 
   @Nullable

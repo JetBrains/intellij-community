@@ -3,10 +3,12 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FList;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * A value that could be pushed to the stack and used for control transfer
@@ -38,6 +40,10 @@ public final class DfaControlTransferValue extends DfaValue {
 
   public @NotNull FList<Trap> getTraps() {
     return traps;
+  }
+
+  public @NotNull List<@NotNull Integer> getPossibleTargetIndices() {
+    return StreamEx.of(traps).flatCollection(Trap::getPossibleTargets).append(target.getPossibleTargets()).toList();
   }
 
   /**
