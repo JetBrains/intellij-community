@@ -209,7 +209,7 @@ final class CommunityRepositoryModules {
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.gauge"),
-    plugin("idea.plugin.protoeditor")
+    plugin("intellij.protoeditor")
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
