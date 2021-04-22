@@ -1,7 +1,11 @@
 package org.jetbrains.kotlin.gradle
 
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.DependencyScope.COMPILE
 import com.intellij.openapi.roots.DependencyScope.PROVIDED
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
@@ -104,10 +108,51 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
         importProject()
         val highlightingCheck = createHighlightingCheck()
 
-        checkProjectStructure(false, false, false){
+        checkProjectStructure(false, false, false) {
             module("project.p1.nativeMain") {
                 highlightingCheck(module)
                 libraryDependency(Regex("""Kotlin/Native.*posix.*"""), PROVIDED)
+            }
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.5.20-dev+")
+    fun testSingleSupportedNativeTargetDependencyPropagation() {
+        configureByFiles()
+        importProject()
+        val highlightingCheck = createHighlightingCheck(severityLevel = HighlightSeverity.ERROR)
+
+        checkProjectStructure(false, false, false) {
+            module("project.p1.commonMain") {
+                highlightingCheck(module)
+            }
+
+            module("project.p1.nativeMainParent") {
+                highlightingCheck(module)
+                libraryDependencyByUrl(Regex(""".*posix.*"""), COMPILE)
+            }
+
+            module("project.p1.nativeMain") {
+                highlightingCheck(module)
+                libraryDependencyByUrl(Regex(""".*posix.*"""), COMPILE)
+            }
+
+            module("project.p1.nativePlatformMain") {
+                highlightingCheck(module)
+
+                val posixDependencies = module.rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().filter { entry ->
+                    entry.library?.getUrls(OrderRootType.CLASSES)?.any { it.matches(Regex(""".*posix.*""")) } ?: false
+                }
+
+                if (posixDependencies.isEmpty()) {
+                    report("Missing dependency on posix")
+                }
+
+                if (posixDependencies.size > 2) {
+                    // Gradle plugin detail whether or not it decides to use commonized expect/actual, or just the original klib
+                    report("Expected one or two dependencies on posix")
+                }
             }
         }
     }
