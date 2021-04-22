@@ -27,6 +27,14 @@ private const val TIPS_SERVER_URL = "https://feature-recommendation.analytics.aw
 
 internal data class RecommendationDescription(val algorithm: String, val tips: List<TipAndTrickBean>, val version: String?)
 
+private fun sortTipsByUtility(): Boolean = ApplicationManager.getApplication().isEAP && EventLogConfiguration.isInExperiment()
+
+private fun EventLogConfiguration.isInExperiment(): Boolean = bucket in 75..99
+
+private fun randomShuffle(tips: List<TipAndTrickBean>): RecommendationDescription {
+  return RecommendationDescription(RANDOM_SHUFFLE_ALGORITHM, tips.shuffled(), null)
+}
+
 @Service
 internal class TipsOrderUtil {
   private class RecommendationsStartupActivity : StartupActivity.Background {
@@ -86,9 +94,13 @@ internal class TipsOrderUtil {
    * @return object that contains sorted tips and describes approach of how the tips are sorted
    */
   fun sort(tips: List<TipAndTrickBean>): RecommendationDescription {
-    // temporarily suggest random order if we cannot estimate quality
-    return serverRecommendation?.reorder(tips)
-           ?: RecommendationDescription(RANDOM_SHUFFLE_ALGORITHM, tips.shuffled(), null)
+    if (sortTipsByUtility()) {
+      return service<TipsUsageManager>().sortByUtility(tips)
+    }
+
+    serverRecommendation?.let { return it.reorder(tips) }
+
+    return randomShuffle(tips)
   }
 }
 
@@ -109,13 +121,13 @@ private class ServerRecommendation {
   @JvmField
   var version: String? = null
 
-  fun reorder(tips: List<TipAndTrickBean>): RecommendationDescription? {
+  fun reorder(tips: List<TipAndTrickBean>): RecommendationDescription {
     val tipToIndex = Object2IntOpenHashMap<String>(showingOrder.size)
     showingOrder.forEachIndexed { index, tipFile -> tipToIndex.put(tipFile, index) }
     for (tip in tips) {
       if (!tipToIndex.containsKey(tip.fileName)) {
         LOG.error("Unknown tips file: ${tip.fileName}")
-        return null
+        return randomShuffle(tips)
       }
     }
     return RecommendationDescription(usedAlgorithm, tips.sortedBy { tipToIndex.getInt(it.fileName) }, version)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -15,9 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +28,6 @@ public final class TipDialog extends DialogWrapper {
   private static TipDialog ourInstance;
 
   public static final Key<Boolean> DISABLE_TIPS_FOR_PROJECT = Key.create("DISABLE_TIPS_FOR_PROJECT");
-  @NonNls private static final String LAST_TIME_TIPS_WERE_SHOWN = "lastTimeTipsWereShown";
   private final TipPanel myTipPanel;
   private final boolean myShowingOnStartup;
 
@@ -79,28 +76,18 @@ public final class TipDialog extends DialogWrapper {
     return myTipPanel;
   }
 
-  @Override
-  public void show() {
-    PropertiesComponent.getInstance().setValue(LAST_TIME_TIPS_WERE_SHOWN, String.valueOf(System.currentTimeMillis()));
-    super.show();
-  }
-
   public static boolean canBeShownAutomaticallyNow(@NotNull Project project) {
     if (!GeneralSettings.getInstance().isShowTipsOnStartup() ||
         DISABLE_TIPS_FOR_PROJECT.get(project, false) ||
         (ourInstance != null && ourInstance.isVisible())) {
       return false;
     }
-    return !wereTipsShownToday();
+    return !TipsUsageManager.getInstance().wereTipsShownToday();
   }
 
   @Override
   public void dispose() {
     super.dispose();
-  }
-
-  public static boolean wereTipsShownToday() {
-    return System.currentTimeMillis() - PropertiesComponent.getInstance().getLong(LAST_TIME_TIPS_WERE_SHOWN, 0) < DateFormatUtil.DAY;
   }
 
   public static void showForProject(@Nullable Project project) {

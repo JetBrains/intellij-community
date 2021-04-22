@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+import static com.intellij.ide.util.TipsUsageManager.BY_TIP_UTILITY;
+
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 6);
 
@@ -32,12 +34,17 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   private static final StringEventField ALGORITHM_FIELD =
     EventFields.String("algorithm",
                        Arrays.asList("TOP", "MATRIX_ALS", "MATRIX_BPR", "PROB", "WIDE", "CODIS", "RANDOM", "WEIGHTS_LIN_REG",
-                                     "default_shuffle", "unknown", "ONE_TIP_SUMMER2020", "RANDOM_SUMMER2020"));
+                                     "default_shuffle", BY_TIP_UTILITY, "unknown", "ONE_TIP_SUMMER2020", "RANDOM_SUMMER2020"));
   private static final EventId3<String, String, String> TIP_SHOWN =
     GROUP.registerEvent("tip.shown",
                         EventFields.StringValidatedByCustomRule("filename", "tip_info"),
                         ALGORITHM_FIELD,
                         EventFields.Version);
+
+  private static final EventId2<String, Long> TIP_PERFORMED =
+    GROUP.registerEvent("tip.performed",
+                        EventFields.StringValidatedByCustomRule("filename", "tip_info"),
+                        EventFields.Long("time_passed"));
 
   @Override
   public EventLogGroup getGroup() {
@@ -54,6 +61,10 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
 
   public static void triggerDialogClosed(boolean showOnStartupBefore) {
     DIALOG_CLOSED.log(showOnStartupBefore, GeneralSettings.getInstance().isShowTipsOnStartup());
+  }
+
+  public static void triggerTipUsed(@NotNull String tipFilename, long timePassed) {
+    TIP_PERFORMED.log(tipFilename, timePassed);
   }
 
   public static class TipInfoValidationRule extends CustomValidationRule {
