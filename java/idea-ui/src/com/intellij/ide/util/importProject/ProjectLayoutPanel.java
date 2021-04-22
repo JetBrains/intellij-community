@@ -281,6 +281,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   protected abstract @NlsContexts.BorderTitle String getDependenciesTitle();
 
+  protected abstract @NotNull Set<String> getExistingNames();
+
   enum ElementType {
     LIBRARY(0), MODULE(1);
     private final int id;
@@ -304,7 +306,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         return true;
       }
     }
-    return false;
+    return getExistingNames().contains(entryName);
   }
 
   @NotNull

@@ -194,6 +194,14 @@ public abstract class ModuleInsight {
     }
   }
 
+  Set<String> getExistingModuleNames() {
+    return Collections.unmodifiableSet(myExistingModuleNames);
+  }
+
+  Set<String> getExistingProjectLibraryNames() {
+    return Collections.unmodifiableSet(myExistingProjectLibraryNames);
+  }
+
   @NotNull
   protected List<DetectedSourceRoot> getSourceRootsToScan() {
     return Collections.unmodifiableList(mySourceRoots);

@@ -3,13 +3,11 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -87,6 +85,11 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   @Override
   protected @Nls(capitalization = Nls.Capitalization.Title) String getDependenciesTitle() {
     return JavaUiBundle.message("title.module.dependencies");
+  }
+
+  @Override
+  protected @NotNull Set<String> getExistingNames() {
+    return getInsight().getExistingModuleNames();
   }
 
   @Override
