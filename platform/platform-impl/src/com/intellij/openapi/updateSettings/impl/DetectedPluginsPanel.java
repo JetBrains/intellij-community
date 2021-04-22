@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -44,25 +45,28 @@ public final class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
                                            int row,
                                            int column) {
         setBorder(null);
+        if (!(value instanceof PluginDownloader)) return;
+
         PluginDownloader downloader = (PluginDownloader)value;
-        if (downloader != null) {
-          String pluginName = downloader.getPluginName();
-          append(pluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          IdeaPluginDescriptor ideaPluginDescriptor = PluginManagerCore.getPlugin(downloader.getId());
-          if (ideaPluginDescriptor != null) {
-            String oldPluginName = ideaPluginDescriptor.getName();
-            if (!Comparing.strEqual(pluginName, oldPluginName)) {
-              append(" - " + oldPluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            }
-          }
-          String loadedVersion = downloader.getPluginVersion();
-          if (loadedVersion != null || (ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null)) {
-            String installedVersion = ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null
-                                            ? ideaPluginDescriptor.getVersion() + (loadedVersion != null ? " " + UIUtil.rightArrow() + " " : "")
-                                            : "";
-            String availableVersion = loadedVersion != null ? loadedVersion : "";
-            append(" " + installedVersion + availableVersion, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
-          }
+        String pluginName = downloader.getPluginName();
+        append(pluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+        IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(downloader.getId());
+
+        String oldPluginName = installedPlugin != null ? installedPlugin.getName() : null;
+        if (oldPluginName != null &&
+            !Comparing.strEqual(pluginName, oldPluginName)) {
+          append(" - " + oldPluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+
+        String installedVersion = installedPlugin != null ? installedPlugin.getVersion() : null;
+        String availableVersion = downloader.getPluginVersion();
+        String version = installedVersion != null && availableVersion != null ?
+                         StringUtil.join(new String[]{installedVersion, UIUtil.rightArrow(), availableVersion}, "") :
+                         StringUtil.defaultIfEmpty(installedVersion, availableVersion);
+
+        if (StringUtil.isNotEmpty(version)) {
+          append(" " + version, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
         }
       }
     });
@@ -71,9 +75,10 @@ public final class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
       public void valueChanged(ListSelectionEvent e) {
         int selectedRow = entryTable.getSelectedRow();
         if (selectedRow != -1) {
-          PluginDownloader selection = getValueAt(selectedRow);
-          IdeaPluginDescriptor descriptor = selection.getDescriptor();
-          PluginManagerMain.pluginInfoUpdate(descriptor, null, myDescriptionPanel, myHeader);
+          IdeaPluginDescriptor plugin = getValueAt(selectedRow).getDescriptor();
+          myHeader.setPlugin(plugin);
+          myDescriptionPanel.setText(PluginManagerMain.pluginInfoUpdate(plugin));
+          myDescriptionPanel.setCaretPosition(0);
         }
       }
     });

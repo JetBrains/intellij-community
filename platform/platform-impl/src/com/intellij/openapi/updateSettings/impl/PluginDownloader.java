@@ -58,7 +58,7 @@ public final class PluginDownloader {
   private final @NotNull String myPluginUrl;
   private final BuildNumber myBuildNumber;
 
-  private String myPluginVersion;
+  private @NlsSafe String myPluginVersion;
   private IdeaPluginDescriptor myDescriptor;
   private File myFile;
   private Path myOldFile;
@@ -107,7 +107,7 @@ public final class PluginDownloader {
     return myPluginId;
   }
 
-  public String getPluginVersion() {
+  public @NlsSafe String getPluginVersion() {
     return myPluginVersion;
   }
 

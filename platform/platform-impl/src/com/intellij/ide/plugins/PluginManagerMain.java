@@ -5,8 +5,6 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
-import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -32,10 +30,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -162,18 +157,8 @@ public final class PluginManagerMain {
     }
   }
 
-  public static void pluginInfoUpdate(IdeaPluginDescriptor plugin,
-                                      @Nullable String filter,
-                                      @NotNull JEditorPane descriptionTextArea,
-                                      @NotNull PluginHeaderPanel header) {
-    if (plugin == null) {
-      setTextValue(null, filter, descriptionTextArea);
-      header.getPanel().setVisible(false);
-      return;
-    }
-
-    StringBuilder sb = new StringBuilder();
-    header.setPlugin(plugin);
+  public static @Nls String pluginInfoUpdate(@NotNull IdeaPluginDescriptor plugin) {
+    StringBuilder sb = new StringBuilder(getTextPrefix());
     String description = plugin.getDescription();
     if (!Strings.isEmptyOrSpaces(description)) {
       sb.append(description);
@@ -209,15 +194,16 @@ public final class PluginManagerMain {
       String pluginDescriptorUrl = plugin.getUrl();
       PluginInfoProvider provider = PluginInfoProvider.getInstance();
       Set<PluginId> marketplacePlugins = provider.loadCachedPlugins();
-      if (marketplacePlugins == null) {
-        // There are no marketplace plugins in the cache, but we should show the title anyway.
-        setPluginHomePage(pluginDescriptorUrl, sb);
-        // will get the marketplace plugins ids next time
-        provider.loadPlugins();
-      }
-      else if (marketplacePlugins.contains(plugin.getPluginId())) {
-        // Prevent the link to the marketplace from showing to external plugins
-        setPluginHomePage(pluginDescriptorUrl, sb);
+      if (marketplacePlugins == null ||
+          marketplacePlugins.contains(plugin.getPluginId())) {
+        if (!Strings.isEmptyOrSpaces(pluginDescriptorUrl)) {
+          sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
+        }
+
+        if (marketplacePlugins == null) {
+          // will get the marketplace plugins ids next time
+          provider.loadPlugins();
+        }
       }
 
       String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
@@ -226,26 +212,8 @@ public final class PluginManagerMain {
       }
     }
 
-    setTextValue(sb, filter, descriptionTextArea);
-  }
-
-  private static void setPluginHomePage(String pluginDescriptorUrl, StringBuilder sb){
-    if (!Strings.isEmptyOrSpaces(pluginDescriptorUrl)) {
-      sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
-    }
-  }
-
-  private static void setTextValue(@Nullable StringBuilder text, @Nullable String filter, JEditorPane pane) {
-    if (text != null) {
-      text.insert(0, getTextPrefix());
-      text.append(TEXT_SUFFIX);
-      @NlsSafe String markup = SearchUtil.markup(text.toString(), filter);
-      pane.setText(markup.trim());
-      pane.setCaretPosition(0);
-    }
-    else {
-      pane.setText(getTextPrefix() + TEXT_SUFFIX);
-    }
+    @SuppressWarnings("HardCodedStringLiteral") String result = sb.append(TEXT_SUFFIX).toString();
+    return result.trim();
   }
 
   private static String composeHref(String vendorUrl) {
@@ -258,9 +226,8 @@ public final class PluginManagerMain {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         JEditorPane pane = (JEditorPane)e.getSource();
         if (e instanceof HTMLFrameHyperlinkEvent) {
-          HTMLFrameHyperlinkEvent evt = (HTMLFrameHyperlinkEvent)e;
           HTMLDocument doc = (HTMLDocument)pane.getDocument();
-          doc.processHTMLFrameHyperlinkEvent(evt);
+          doc.processHTMLFrameHyperlinkEvent((HTMLFrameHyperlinkEvent)e);
         }
         else {
           URL url = e.getURL();
@@ -270,39 +237,6 @@ public final class PluginManagerMain {
         }
       }
     }
-  }
-
-  public static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
-    if (Strings.isEmpty(filter) ||
-        StringUtil.indexOfIgnoreCase(descriptor.getName(), filter, 0) >= 0 ||
-        isAccepted(search, filter, descriptor.getName())) {
-      return true;
-    }
-    if (isAccepted(search, filter, descriptor.getDescription())) {
-      return true;
-    }
-
-    String category = descriptor.getCategory();
-    return category != null && (StringUtil.containsIgnoreCase(category, filter) || isAccepted(search, filter, category));
-  }
-
-  public static boolean isAccepted(@NotNull Set<String> search, @NotNull String filter, @Nullable String description) {
-    if (Strings.isEmpty(description) || filter.length() <= 2) {
-      return false;
-    }
-
-    Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWords(description);
-    if (words.contains(filter)) {
-      return true;
-    }
-
-    if (search.isEmpty()) {
-      return false;
-    }
-
-    Set<String> descriptionSet = new HashSet<>(search);
-    descriptionSet.removeAll(words);
-    return descriptionSet.isEmpty();
   }
 
   public static boolean suggestToEnableInstalledDependantPlugins(@NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
