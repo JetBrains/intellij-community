@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -57,14 +58,12 @@ fun getLocalMacMessages(): MacMessages {
 }
 
 private class MessageInfo(val title: String,
-                          message: String?,
+                          val message: String?,
                           val buttons: Array<String>,
                           val errorStyle: Boolean,
                           window: Window?,
                           val defaultOptionIndex: Int,
                           val doNotAskDialogOption: DoNotAskOption?) {
-  val message = MacMessageHelper.stripHtmlMessage(message)
-
   val window: Window?
   val nativeWindow: ID?
   val menuWindow: ID
@@ -117,7 +116,7 @@ private fun getVisibleWindow(window: Window): Window? {
 class MacMessageHelper {
   companion object {
     @JvmStatic
-    fun stripHtmlMessage(message: String?): String {
+    fun stripHtmlMessage(message: String?): @NlsSafe String {
       if (message == null) {
         return ""
       }
@@ -318,8 +317,8 @@ private class NativeMacMessageManager : MacMessages() {
         Foundation.invoke(alertWindow, "setBackgroundColor:", Foundation.invoke(info.menuWindow, "backgroundColor"))
       }
 
-      Foundation.invoke(alert, "setMessageText:", Foundation.nsString(info.title))
-      Foundation.invoke(alert, "setInformativeText:", Foundation.nsString(info.message))
+      Foundation.invoke(alert, "setMessageText:", Foundation.nsString(MacMessageHelper.stripHtmlMessage(info.title)))
+      Foundation.invoke(alert, "setInformativeText:", Foundation.nsString(MacMessageHelper.stripHtmlMessage(info.message)))
 
       val app = Foundation.invoke("NSApplication", "sharedApplication")
       Foundation.invoke(alert, "setIcon:", Foundation.invoke(app, "applicationIconImage"))
@@ -331,7 +330,8 @@ private class NativeMacMessageManager : MacMessages() {
       var enableEscape = true
 
       for (button in info.buttons) {
-        val nsButton = Foundation.invoke(alert, "addButtonWithTitle:", Foundation.nsString(UIUtil.removeMnemonic(button)))
+        val buttonText = MacMessageHelper.stripHtmlMessage(button)
+        val nsButton = Foundation.invoke(alert, "addButtonWithTitle:", Foundation.nsString(UIUtil.removeMnemonic(buttonText)))
         // don't equals with nls "button.cancel"
         if (button == "Cancel") {
           Foundation.invoke(nsButton, "setKeyEquivalent:", Foundation.nsString("\u001b"))
@@ -347,7 +347,8 @@ private class NativeMacMessageManager : MacMessages() {
         Foundation.invoke(alert, "setShowsSuppressionButton:", 1)
 
         val button = Foundation.invoke(alert, "suppressionButton")
-        Foundation.invoke(button, "setTitle:", Foundation.nsString(info.doNotAskDialogOption.doNotShowMessage))
+        val buttonText = Foundation.nsString(MacMessageHelper.stripHtmlMessage(info.doNotAskDialogOption.doNotShowMessage))
+        Foundation.invoke(button, "setTitle:", buttonText)
         Foundation.invoke(button, "setState:", !info.doNotAskDialogOption.isToBeShown)
       }
 

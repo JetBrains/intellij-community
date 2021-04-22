@@ -268,9 +268,33 @@ public class TestMacMessagesAction extends AnAction {
 
         JButton html = new JButton("Show Alert with HTML content");
         html.addActionListener(event -> {
-          Messages.showInfoMessage(
+          Messages.showDialog(
             "<html>Message <a>Message</a> Message<br>Test <b>Test</b> Test<br>&nbsp;&nbsp;&nbsp;Foo &lt;&gt;&amp;&#39;&quot; Foo</html>",
-            "Title");
+            "<html>Title <b>AA</b></html>", new String[]{"Y&es", "<html>ZZZZ</html>", "Cancel"}, 0, null, new DoNotAskOption() {
+              @Override
+              public boolean isToBeShown() {
+                return false;
+              }
+
+              @Override
+              public void setToBeShown(boolean toBeShown, int exitCode) {
+              }
+
+              @Override
+              public boolean canBeHidden() {
+                return true;
+              }
+
+              @Override
+              public boolean shouldSaveOptionsOnCancel() {
+                return false;
+              }
+
+              @Override
+              public @NotNull String getDoNotShowMessage() {
+                return "<html>Delete branch:</br>EE-F1-0A</html>";
+              }
+            });
         });
         panel.add(html);
 
