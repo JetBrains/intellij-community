@@ -46,6 +46,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.paths.WebReference;
@@ -1215,5 +1216,10 @@ public final class PlatformTestUtil {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       dispatchAllInvocationEventsInIdeEventQueue();
     }
+  }
+
+  public static boolean isUnderCommunityClassPath() {
+    // StdFileTypes.JSPX is assigned to PLAIN_TEXT in community
+    return StdFileTypes.JSPX == FileTypes.PLAIN_TEXT;
   }
 }
