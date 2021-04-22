@@ -50,6 +50,18 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertReportedProblems("Module '${module.name}' sources do not depend on module 'mod1' sources")
   }
 
+  fun testUsageInXml() {
+    val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
+    val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
+    ModuleRootModificationUtil.addDependency(mod1, module, DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addDependency(mod1, mod2, DependencyScope.COMPILE, false)
+    
+
+    myFixture.addClass("package a; public class Class0 {}")
+    myFixture.addFileToProject("mod1/classes.xml", "<root><class name='a.Class0'/></root>")
+    assertReportedProblems("Module 'mod1' sources do not depend on module 'mod2' sources")
+  }
+
   fun testRequireSuperClassInUnusedReturnTypeOfFactory() {
     addModuleDependencies()
 

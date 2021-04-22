@@ -3,14 +3,14 @@ package com.intellij.codeInspection.unnecessaryModuleDependency;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefGraphAnnotator;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.ex.JobDescriptor;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +22,57 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
   @Override
   public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
     return new UnnecessaryModuleDependencyAnnotator(refManager);
+  }
+
+  @Override
+  public JobDescriptor @Nullable [] getAdditionalJobs(@NotNull GlobalInspectionContext context) {
+    return JobDescriptor.EMPTY_ARRAY;
+  }
+
+  @Override
+  public boolean queryExternalUsagesRequests(@NotNull InspectionManager manager,
+                                             @NotNull GlobalInspectionContext globalContext,
+                                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    GlobalJavaInspectionContext javaInspectionContext = globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT);
+    if (javaInspectionContext != null) {
+      final RefManager refManager = globalContext.getRefManager();
+      refManager.iterate(new RefJavaVisitor() {
+        @Override
+        public void visitClass(@NotNull RefClass aClass) {
+          RefModule toModule = aClass.getModule();
+          if (toModule == null) return;
+          String toModuleName = toModule.getName();
+          javaInspectionContext.enqueueClassUsagesProcessor(aClass, reference -> {
+            PsiFile containingFile = reference.getElement().getContainingFile();
+            if (!(containingFile instanceof PsiClassOwner)) {
+              RefElement refFrom = refManager.getReference(containingFile);
+              if (refFrom != null) {
+                RefModule fromModule = refFrom.getModule();
+                if (fromModule != null) {
+                  CommonProblemDescriptor[] descriptions = problemDescriptionsProcessor.getDescriptions(fromModule);
+                  if (descriptions != null) {
+                    LinkedHashSet<CommonProblemDescriptor> problemDescriptors = new LinkedHashSet<>(Arrays.asList(descriptions));
+                    boolean removed = problemDescriptors.removeIf(descriptor -> {
+                      QuickFix<?>[] fixes = descriptor.getFixes();
+                      return fixes != null && ContainerUtil.exists(fixes, fix -> fix instanceof RemoveModuleDependencyFix && 
+                                                                                 toModuleName.equals(((RemoveModuleDependencyFix)fix).myDependency));
+                    });
+                    if (removed) {
+                      problemDescriptionsProcessor.ignoreElement(fromModule);
+                      if (!problemDescriptors.isEmpty()) {
+                        problemDescriptionsProcessor.addProblemElement(fromModule, problemDescriptors.toArray(CommonProblemDescriptor[]::new));
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            return true;
+          });
+        }
+      });
+    }
+    return false;
   }
 
   @Override
