@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.git4idea.http;
+package git4idea.http;
 
-import org.jetbrains.git4idea.GitAppUtil;
-import org.jetbrains.git4idea.GitExternalApp;
+import git4idea.GitAppUtil;
+import git4idea.GitExternalApp;
 
 /**
  * <p>This is a program that would be called by Git when an HTTP connection is needed, that requires authorization,

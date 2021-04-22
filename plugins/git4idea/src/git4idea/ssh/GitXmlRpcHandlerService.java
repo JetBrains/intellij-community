@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.git4idea.ssh;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.ssh;
 
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
@@ -8,8 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import git4idea.config.GitExecutable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.git4idea.GitExternalApp;
-import org.jetbrains.git4idea.util.ScriptGenerator;
+import git4idea.GitExternalApp;
+import git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;

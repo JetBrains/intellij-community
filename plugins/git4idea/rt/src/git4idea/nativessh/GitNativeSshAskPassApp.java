@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.git4idea.nativessh;
+package git4idea.nativessh;
 
-import org.jetbrains.git4idea.GitAppUtil;
-import org.jetbrains.git4idea.GitExternalApp;
+import git4idea.GitAppUtil;
+import git4idea.GitExternalApp;
 
 /**
  * <p>This is a program that would be called by ssh when key passphrase is needed,

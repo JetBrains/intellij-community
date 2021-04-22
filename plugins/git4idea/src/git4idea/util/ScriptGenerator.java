@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.git4idea.util;
+package git4idea.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -12,9 +12,9 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
-import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
-import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
+import git4idea.editor.GitRebaseEditorXmlRpcHandler;
+import git4idea.http.GitAskPassXmlRpcHandler;
+import git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
 
 import java.io.File;
 import java.io.IOException;

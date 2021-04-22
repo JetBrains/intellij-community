@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.git4idea.editor;
+package git4idea.editor;
 
-import org.jetbrains.git4idea.GitAppUtil;
-import org.jetbrains.git4idea.GitExternalApp;
+import git4idea.GitAppUtil;
+import git4idea.GitExternalApp;
 
 import java.io.File;
 import java.util.Arrays;
 
-import static org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
-import static org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV;
+import static git4idea.editor.GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
+import static git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV;
 
 /**
  * The rebase editor application, this editor is invoked by the git.

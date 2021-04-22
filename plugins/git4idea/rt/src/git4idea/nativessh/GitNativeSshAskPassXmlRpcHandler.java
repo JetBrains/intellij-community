@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.git4idea.nativessh;
+package git4idea.nativessh;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +20,7 @@ public interface GitNativeSshAskPassXmlRpcHandler {
    * @param description Key description specified by ssh, or empty string if description is not available
    * @return passphrase or null if prompt was canceled
    * <p>
-   * Return value should be wrapped using {@link org.jetbrains.git4idea.GitAppUtil#adjustNullTo}
+   * Return value should be wrapped using {@link git4idea.GitAppUtil#adjustNullTo}
    */
   @NotNull
   @SuppressWarnings("unused")
