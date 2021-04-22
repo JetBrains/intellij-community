@@ -1292,4 +1292,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testOverloadsAndPureStubInSamePyiScope() {
     doMultiFileTest();
   }
+
+  // PY-45438
+  public void testFunctionAgainstCallbackProtocol() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
 }
