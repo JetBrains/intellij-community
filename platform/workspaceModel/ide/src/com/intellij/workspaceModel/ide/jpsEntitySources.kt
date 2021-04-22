@@ -13,7 +13,6 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -161,19 +160,14 @@ fun getJpsProjectConfigLocation(project: Project): JpsProjectConfigLocation? {
 }
 
 internal class FileInDirectorySerializer : Serializer<JpsFileEntitySource.FileInDirectory>(false, true) {
-  // We should not care of this collection cleanup because each serialization/deserialization creates it's own instance of Kryo
-  private val oldFileNameIdToNewEntitySource = Int2ObjectOpenHashMap<JpsFileEntitySource.FileInDirectory>()
-
   override fun write(kryo: Kryo, output: Output, o: JpsFileEntitySource.FileInDirectory) {
     kryo.writeClassAndObject(output, o.directory)
-    kryo.writeClassAndObject(output, o.fileNameId)
     kryo.writeClassAndObject(output, o.projectLocation)
   }
 
   override fun read(kryo: Kryo, input: Input, type: Class<JpsFileEntitySource.FileInDirectory>): JpsFileEntitySource.FileInDirectory {
     val fileUrl = kryo.readClassAndObject(input) as VirtualFileUrl
-    val oldFileNameId = kryo.readClassAndObject(input) as Int
     val location = kryo.readClassAndObject(input) as JpsProjectConfigLocation
-    return oldFileNameIdToNewEntitySource.getOrPut(oldFileNameId) { JpsFileEntitySource.FileInDirectory(fileUrl, location) }
+    return JpsFileEntitySource.FileInDirectory(fileUrl, location)
   }
 }
