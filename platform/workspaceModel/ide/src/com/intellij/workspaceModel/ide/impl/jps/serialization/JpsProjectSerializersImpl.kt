@@ -347,22 +347,27 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     for ((libraryId, buildersWithSerializers) in libraries) {
       if (buildersWithSerializers.size <= 1) continue
       val defaultFileName = FileUtil.sanitizeFileName(libraryId.name) + ".xml"
+      val hasImportedEntity = buildersWithSerializers.any { (builder, _) ->
+        builder.resolve(libraryId)!!.entitySource is JpsImportedEntitySource
+      }
       val entitiesToRemove = buildersWithSerializers.mapNotNull { (builder, serializer) ->
         val library = builder.resolve(libraryId)!!
         val entitySource = library.entitySource
         if (entitySource !is JpsFileEntitySource.FileInDirectory) return@mapNotNull null
         val fileName = serializer.fileUrl.fileName
-        if (fileName != defaultFileName || enableExternalStorage) Triple(builder, library, fileName) else null
+        if (fileName != defaultFileName || enableExternalStorage && hasImportedEntity) Triple(builder, library, fileName) else null
       }
+
+      LOG.warn("Multiple configuration files were found for '${libraryId.name}' library.")
       if (entitiesToRemove.isNotEmpty() && entitiesToRemove.size < buildersWithSerializers.size) {
         for ((builder, entity) in entitiesToRemove) {
           sourcesToUpdate.add(entity.entitySource)
           builder.removeEntity(entity)
         }
-        LOG.warn("""
-            |Multiple configuration files were found for '${libraryId.name}' library. 
-            |Libraries defined in ${entitiesToRemove.joinToString { it.third }} files will ignored and these files will be removed.
-          """.trimMargin())
+        LOG.warn("Libraries defined in ${entitiesToRemove.joinToString { it.third }} files will ignored and these files will be removed.")
+      }
+      else {
+        LOG.warn("Cannot determine which configuration file should be ignored: ${buildersWithSerializers.map { it.second }}")
       }
     }
     return sourcesToUpdate
