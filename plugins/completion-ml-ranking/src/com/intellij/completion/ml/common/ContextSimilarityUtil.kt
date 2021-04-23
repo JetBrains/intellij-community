@@ -1,26 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.common
 
+import com.intellij.internal.ml.WordsSplitter
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
-import com.intellij.util.text.NameUtilCore
 import kotlin.math.max
 
-internal object ContextSimilarityUtil {
-  private val STOP_WORDS: List<String> = listOf("get", "set")
+object ContextSimilarityUtil {
+  private val WORDS_SPLITTER = WordsSplitter.Builder.identifiers().build()
+  private val STEMMING_WORDS_SPLITTER = WordsSplitter.Builder.identifiers().withStemming().build()
   val LINE_SIMILARITY_SCORER_KEY: Key<ContextSimilarityScoringFunction> = Key.create("LINE_SIMILARITY_SCORER")
   val PARENT_SIMILARITY_SCORER_KEY: Key<ContextSimilarityScoringFunction> = Key.create("PARENT_SIMILARITY_SCORER")
 
-  fun createLineSimilarityScoringFunction(line: String): ContextSimilarityScoringFunction {
-    return ContextSimilarityScoringFunction(
-      StringUtil.getWordsIn(line).map {
-        clearWords(NameUtilCore.nameToWords(it))
-      }
-    )
-  }
+  fun createLineSimilarityScoringFunction(line: String): ContextSimilarityScoringFunction =
+    ContextSimilarityScoringFunction(StringUtil.getWordsIn(line))
 
   fun createParentSimilarityScoringFunction(element: PsiElement?): ContextSimilarityScoringFunction {
     var curElement = element
@@ -32,15 +28,15 @@ internal object ContextSimilarityUtil {
       }
       curElement = curElement.parent
     }
-    return ContextSimilarityScoringFunction(
-      parents.map {
-        clearWords(NameUtilCore.nameToWords(it))
-      }
-    )
+    return ContextSimilarityScoringFunction(parents)
   }
 
-  class ContextSimilarityScoringFunction(private val tokens: List<List<String>>) {
-    fun score(value: String): Similarity = calculateSimilarity(tokens, value)
+  class ContextSimilarityScoringFunction(words: List<String>) {
+    private val tokens: List<List<String>> = words.map { WORDS_SPLITTER.split(it) }
+    private val stemmedTokens: List<List<String>> = words.map { STEMMING_WORDS_SPLITTER.split(it) }
+
+    fun scorePrefixSimilarity(value: String): Similarity = calculatePrefixSimilarity(tokens, value)
+    fun scoreStemmedSimilarity(value: String): Similarity = calculateStemmedSimilarity(stemmedTokens, value)
   }
 
   class Similarity {
@@ -64,9 +60,9 @@ internal object ContextSimilarityUtil {
     fun fullSimilarity(): Double = fullSimilarity
   }
 
-  fun calculateSimilarity(tokens: List<List<String>>, lookupString: String): Similarity {
+  fun calculatePrefixSimilarity(tokens: List<List<String>>, lookupString: String): Similarity {
     val result = Similarity()
-    val lookupWords = clearWords(NameUtilCore.nameToWords(lookupString))
+    val lookupWords = WORDS_SPLITTER.split(lookupString)
     if (lookupWords.isEmpty()) return result
     for (tokenWords in tokens) {
       var tokenSimilarity = 0.0
@@ -85,6 +81,17 @@ internal object ContextSimilarityUtil {
     return result
   }
 
-  private fun clearWords(words: Array<String>): List<String> =
-    words.filter { it.length > 2 && it !in STOP_WORDS }
+  fun calculateStemmedSimilarity(tokens: List<List<String>>, lookupString: String): Similarity {
+    val result = Similarity()
+    val lookupWords = STEMMING_WORDS_SPLITTER.split(lookupString)
+    if (lookupWords.isEmpty()) return result
+    for (tokenWords in tokens) {
+      var matchedWords = 0.0
+      for (word in lookupWords) {
+        if (tokenWords.any { it.equals(word, true) }) matchedWords++
+      }
+      result.addSimilarityValue(matchedWords / lookupWords.size)
+    }
+    return result
+  }
 }
