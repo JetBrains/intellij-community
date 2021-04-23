@@ -1,4 +1,4 @@
-<idea-plugin allow-bundled-update="true">
+<idea-plugin>
     <id>com.jetbrains.packagesearch.intellij-plugin</id>
     <name>Package Search</name>
     <vendor>JetBrains</vendor>
