@@ -14,7 +14,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -154,8 +153,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
             }
           }
         }
-
-        ActionToolbarImpl.updateAllToolbarsImmediately();
       }
     }, this);
 

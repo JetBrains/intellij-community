@@ -148,14 +148,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     if (!isEmbedded) {
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR);
-      ActionToolbar actionToolbar = actionManager.createActionToolbar(
-        ImageEditorActions.ACTION_PLACE, actionGroup, true
-      );
-
-      // Make sure toolbar is 'ready' before it's added to component hierarchy
-      // to prevent ActionToolbarImpl.updateActionsImpl(boolean, boolean) from increasing popup size unnecessarily
-      actionToolbar.updateActionsImmediately();
-
+      ActionToolbar actionToolbar = actionManager.createActionToolbar(ImageEditorActions.ACTION_PLACE, actionGroup, true);
       actionToolbar.setTargetComponent(this);
 
       toolbarPanel = actionToolbar.getComponent();

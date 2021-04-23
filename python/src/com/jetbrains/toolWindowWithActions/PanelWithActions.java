@@ -71,8 +71,6 @@ final class PanelWithActions extends JPanel {
 
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, toolbarActions, false);
     toolbar.setTargetComponent(dataComponent);
-    // This method forces toolbar to add action buttons to its panel to make #getComponents() and #getPreferredSize() work correctly
-    toolbar.updateActionsImmediately();
 
     // TODO: Move GUI and alignment out of here.
     final JComponent toolbarComponent = toolbar.getComponent();

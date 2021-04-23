@@ -28,9 +28,6 @@ public class SplitEditorToolbar extends EditorHeaderComponent {
                                             GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
 
     add(myRightToolbar.getComponent());
-
-    if (leftToolbar != null) leftToolbar.updateActionsImmediately();
-    rightToolbar.updateActionsImmediately();
   }
 
   public void refresh() {

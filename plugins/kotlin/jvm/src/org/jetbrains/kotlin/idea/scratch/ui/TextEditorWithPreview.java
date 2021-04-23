@@ -466,9 +466,6 @@ class SplitEditorToolbar extends JPanel implements Disposable {
         add(myRightToolbar.getComponent());
 
         setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIUtil.CONTRAST_BORDER_COLOR));
-
-        if (leftToolbar != null) leftToolbar.updateActionsImmediately();
-        rightToolbar.updateActionsImmediately();
     }
 
     @Deprecated

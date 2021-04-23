@@ -108,7 +108,6 @@ public class DiffSplitter extends Splitter {
     if (action == null) return null;
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DiffSplitter", new DefaultActionGroup(action), true);
-    toolbar.updateActionsImmediately();
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setCursor(Cursor.getDefaultCursor());
     return toolbar.getComponent();

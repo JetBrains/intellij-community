@@ -277,7 +277,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, DataProvider {
       toolbarComponent.setBorder(new CustomLineBorder(0, 0, 1, 0));
     }
     leftPanel.add(toolbarComponent, BorderLayout.NORTH);
-    toolbar.updateActionsImmediately();
     rightTopPanel.setPreferredSize(new Dimension(-1, toolbarComponent.getPreferredSize().height));
 
     myTabbedPane = new TabbedPaneWrapper(this);

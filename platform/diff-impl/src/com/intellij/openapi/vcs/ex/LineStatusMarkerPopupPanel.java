@@ -145,7 +145,6 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
     if (dataProvider != null) DataManager.registerDataProvider(popupPanel, dataProvider);
     toolbar.setTargetComponent(popupPanel);
-    toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
 
     LightweightHint hint = new LightweightHint(popupPanel);
     HintListener closeListener = __ -> Disposer.dispose(childDisposable);
