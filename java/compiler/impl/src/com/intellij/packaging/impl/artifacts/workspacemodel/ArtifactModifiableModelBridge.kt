@@ -414,26 +414,16 @@ fun PackagingElementEntity.toElement(project: Project, storage: WorkspaceEntityS
     is FileCopyPackagingElementEntity -> {
       val file = this.filePath
       val renamedOutputFileName = this.renamedOutputFileName
-      if (file != null) {
-        if (renamedOutputFileName != null) {
-          FileCopyPackagingElement(JpsPathUtil.urlToPath(file.url), renamedOutputFileName)
-        }
-        else {
-          FileCopyPackagingElement(JpsPathUtil.urlToPath(file.url))
-        }
+      if (renamedOutputFileName != null) {
+        FileCopyPackagingElement(JpsPathUtil.urlToPath(file.url), renamedOutputFileName)
       }
       else {
-        FileCopyPackagingElement()
+        FileCopyPackagingElement(JpsPathUtil.urlToPath(file.url))
       }
     }
     is DirectoryCopyPackagingElementEntity -> {
       val directory = this.filePath
-      if (directory != null) {
-        DirectoryCopyPackagingElement(JpsPathUtil.urlToPath(directory.url))
-      }
-      else {
-        DirectoryCopyPackagingElement()
-      }
+      DirectoryCopyPackagingElement(JpsPathUtil.urlToPath(directory.url))
     }
     is ArchivePackagingElementEntity -> this.toCompositeElement(project, storage, false)
     is DirectoryPackagingElementEntity -> this.toCompositeElement(project, storage, false)
