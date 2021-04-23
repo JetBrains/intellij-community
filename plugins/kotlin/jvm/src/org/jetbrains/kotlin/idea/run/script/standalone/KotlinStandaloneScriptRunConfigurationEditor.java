@@ -16,8 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,12 +40,7 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
 
     void initChooseFileField(Project project) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-                .withFileFilter(new Condition<VirtualFile>() {
-                    @Override
-                    public boolean value(VirtualFile file) {
-                        return file.isDirectory() || KotlinParserDefinition.STD_SCRIPT_SUFFIX.equals(file.getExtension());
-                    }
-                })
+                .withFileFilter(file -> file.isDirectory() || KotlinParserDefinition.STD_SCRIPT_SUFFIX.equals(file.getExtension()))
                 .withTreeRootVisible(true);
 
         chooseScriptFileTextField.addBrowseFolderListener(
@@ -92,7 +85,7 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     }
 
     private void createUIComponents() {
-        chooseScriptFileComponent = new LabeledComponent<TextFieldWithBrowseButton>();
+        chooseScriptFileComponent = new LabeledComponent<>();
         chooseScriptFileTextField = new TextFieldWithBrowseButton();
         chooseScriptFileComponent.setComponent(chooseScriptFileTextField);
     }

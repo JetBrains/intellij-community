@@ -19,7 +19,6 @@ package org.jetbrains.kotlin.idea.decompiler.navigation;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,12 +215,7 @@ public class MemberMatching {
             }
 
             Set<String> descriptorUpperBounds = Sets.newHashSet(ContainerUtil.map(
-                    descriptor.getUpperBounds(), new Function<KotlinType, String>() {
-                @Override
-                public String fun(KotlinType type) {
-                    return DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type);
-                }
-            }));
+                    descriptor.getUpperBounds(), type -> DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)));
 
             KotlinBuiltIns builtIns = DescriptorUtilsKt.getBuiltIns(descriptor);
             Set<String> decompiledUpperBounds = decompiledParameterToBounds.get(descriptor.getName()).isEmpty()

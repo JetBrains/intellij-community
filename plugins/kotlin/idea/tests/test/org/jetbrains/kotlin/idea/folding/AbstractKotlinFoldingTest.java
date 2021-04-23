@@ -103,7 +103,7 @@ public abstract class AbstractKotlinFoldingTest extends KotlinLightCodeInsightFi
     // Rewritten version of CodeInsightTestFixtureImpl.testFoldingRegions(verificationFileName, true).
     // Configure test with custom file name to force creating different editors for normal and inverted tests.
     private void assertFoldingRegionsForFile(String verificationFileName) {
-        String START_FOLD = "<fold\\stext=\'[^\']*\'(\\sexpand=\'[^\']*\')*>";
+        String START_FOLD = "<fold\\stext='[^']*'(\\sexpand='[^']*')*>";
         String END_FOLD = "</fold>";
 
         String expectedContent;

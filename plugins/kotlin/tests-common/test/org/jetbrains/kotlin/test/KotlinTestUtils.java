@@ -615,7 +615,7 @@ public class KotlinTestUtils {
                         while (text.startsWith("// !", l)) {
                             int r = text.indexOf("\n", l) + 1;
                             if (r <= 0) r = text.length();
-                            prefixBuilder.append(text.substring(l, r));
+                            prefixBuilder.append(text, l, r);
                             l = r;
                         }
                         prefixBuilder.append(directive);

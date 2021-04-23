@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.diagnostics.rendering.TabledDescriptorRenderer.Table
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle;
 import org.jetbrains.kotlin.idea.highlighter.renderersUtil.RenderersUtilKt;
 import org.jetbrains.kotlin.renderer.DescriptorRenderer;
-import org.jetbrains.kotlin.renderer.DescriptorRendererModifier;
 import org.jetbrains.kotlin.renderer.DescriptorRendererOptions;
 import org.jetbrains.kotlin.renderer.RenderingFormat;
 import org.jetbrains.kotlin.resolve.calls.inference.constraintPosition.ConstraintPosition;
@@ -214,11 +213,11 @@ public class HtmlTabledDescriptorRenderer extends TabledDescriptorRenderer {
 
     private static final DiagnosticParameterRenderer<DeclarationDescriptor>
             DESCRIPTOR_IN_TABLE = new SmartDescriptorRenderer(DescriptorRenderer.Companion.withOptions(
-            new Function1<DescriptorRendererOptions, Unit>() {
+            new Function1<>() {
                 @Override
                 public Unit invoke(DescriptorRendererOptions options) {
                     options.setWithDefinedIn(false);
-                    options.setModifiers(Collections.<DescriptorRendererModifier>emptySet());
+                    options.setModifiers(Collections.emptySet());
                     options.setValueParametersHandler(VALUE_PARAMETERS_HANDLER);
                     options.setTextFormat(RenderingFormat.HTML);
                     return Unit.INSTANCE;

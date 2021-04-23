@@ -93,7 +93,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         super.setUp();
 
         myDir = KotlinTestUtils.tmpDir(getTestName(false));
-        
+
         setUpFixtures();
 
         myProject = myTestFixture.getProject();
@@ -105,34 +105,28 @@ public abstract class MavenTestCase extends UsefulTestCase {
             getMavenGeneralSettings().setMavenHome(home);
         }
 
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-            @Override
-            public void run() {
+        UIUtil.invokeAndWaitIfNeeded((Runnable) () -> {
+            try {
+                restoreSettingsFile();
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            ApplicationManager.getApplication().runWriteAction(() -> {
                 try {
-                    restoreSettingsFile();
+                    setUpInWriteAction();
                 }
-                catch (IOException e) {
+                catch (Throwable e) {
+                    try {
+                        tearDown();
+                    }
+                    catch (Exception e1) {
+                        e1.printStackTrace();
+                    }
                     throw new RuntimeException(e);
                 }
-
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            setUpInWriteAction();
-                        }
-                        catch (Throwable e) {
-                            try {
-                                tearDown();
-                            }
-                            catch (Exception e1) {
-                                e1.printStackTrace();
-                            }
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-            }
+            });
         });
     }
 
@@ -147,7 +141,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    protected void tearDown() {
         RunAll.runAll(
                 () -> MavenServerManager.getInstance().shutdown(true),
                 () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
@@ -178,7 +172,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         }
     }
 
-    protected void tearDownFixtures() throws Exception {
+    protected void tearDownFixtures() {
         RunAll.runAll(
                 () -> myTestFixture.tearDown(),
                 () -> myTestFixture = null
@@ -212,10 +206,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
     protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
         try {
             if (runInWriteAction()) {
-                WriteAction.run(() -> MavenTestCase.super.runTestRunnable(testRunnable));
+                WriteAction.run(() -> super.runTestRunnable(testRunnable));
             }
             else {
-                MavenTestCase.super.runTestRunnable(testRunnable);
+                super.runTestRunnable(testRunnable);
             }
         }
         catch (Exception throwable) {
@@ -298,7 +292,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         return f;
     }
 
-    protected void deleteSettingsXml() throws IOException {
+    protected void deleteSettingsXml() {
         new WriteCommandAction.Simple(myProject) {
             @Override
             protected void run() throws Throwable {
@@ -339,7 +333,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         return createModule(name, StdModuleTypes.JAVA);
     }
 
-    protected Module createModule(final String name, final ModuleType type) throws IOException {
+    protected Module createModule(final String name, final ModuleType type) {
         return new WriteCommandAction<Module>(myProject) {
             @Override
             protected void run(@NotNull Result<? super Module> moduleResult) throws Throwable {

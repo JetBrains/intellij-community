@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.idea.framework.ui;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -49,6 +48,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +64,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
 
     private JPanel contentPane;
     private JPanel chooseModulesPanelPlace;
-    private JComboBox kotlinVersionComboBox;
+    private JComboBox<String> kotlinVersionComboBox;
     private JPanel infoPanel;
 
     private final AsyncProcessIcon processIcon = new AsyncProcessIcon("loader");
@@ -138,45 +138,36 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
     }
 
     private void hideLoader() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                infoPanel.setVisible(false);
-                infoPanel.updateUI();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+            infoPanel.setVisible(false);
+            infoPanel.updateUI();
         }, ModalityState.stateForComponent(infoPanel));
     }
 
     private void showWarning() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                infoPanel.remove(processIcon);
-                infoPanel.add(new JLabel(UIUtil.getBalloonWarningIcon()), BorderLayout.CENTER);
-                infoPanel.setToolTipText(KotlinJvmBundle.message("configure.kotlin.cant.load.versions"));
-                infoPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                infoPanel.updateUI();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+            infoPanel.remove(processIcon);
+            infoPanel.add(new JLabel(UIUtil.getBalloonWarningIcon()), BorderLayout.CENTER);
+            infoPanel.setToolTipText(KotlinJvmBundle.message("configure.kotlin.cant.load.versions"));
+            infoPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            infoPanel.updateUI();
         }, ModalityState.stateForComponent(infoPanel));
     }
 
     private void updateVersions(@NotNull final Collection<String> newItems) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                kotlinVersionComboBox.removeAllItems();
-                kotlinVersionComboBox.setEnabled(true);
-                for (String newItem : newItems) {
-                    kotlinVersionComboBox.addItem(newItem);
-                }
-                kotlinVersionComboBox.setSelectedIndex(0);
+        ApplicationManager.getApplication().invokeLater(() -> {
+            kotlinVersionComboBox.removeAllItems();
+            kotlinVersionComboBox.setEnabled(true);
+            for (String newItem : newItems) {
+                kotlinVersionComboBox.addItem(newItem);
             }
+            kotlinVersionComboBox.setSelectedIndex(0);
         }, ModalityState.stateForComponent(kotlinVersionComboBox));
     }
 
     @NotNull
         public static Collection<String> loadVersions(String minimumVersion) throws Exception {
-        List<String> versions = Lists.newArrayList();
+        List<String> versions = new ArrayList<>();
 
         String bundledRuntimeVersion = KotlinRuntimeLibraryUtilKt.bundledRuntimeVersion();
         RepositoryDescription repositoryDescription = ConfigureKotlinInProjectUtilsKt.getRepositoryForVersion(bundledRuntimeVersion);

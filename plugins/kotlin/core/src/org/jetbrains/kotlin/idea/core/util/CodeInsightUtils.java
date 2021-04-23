@@ -121,8 +121,7 @@ public class CodeInsightUtils {
 
         PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
         if (parent == null) return PsiElement.EMPTY_ARRAY;
-        while (true) {
-            if (parent instanceof KtBlockExpression) break;
+        while (!(parent instanceof KtBlockExpression)) {
             if (parent == null || parent instanceof KtFile) return PsiElement.EMPTY_ARRAY;
             parent = parent.getParent();
         }
@@ -133,7 +132,7 @@ public class CodeInsightUtils {
         element2 = getTopmostParentInside(element2, parent);
         if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
 
-        List<PsiElement> array = new ArrayList<PsiElement>();
+        List<PsiElement> array = new ArrayList<>();
         PsiElement stopElement = element2.getNextSibling();
         for (PsiElement currentElement = element1; currentElement != stopElement; currentElement = currentElement.getNextSibling()) {
             if (!(currentElement instanceof PsiWhiteSpace)) {
@@ -206,9 +205,9 @@ public class CodeInsightUtils {
         if (endOffset != element2.getTextRange().getEndOffset()) return Collections.emptyList();
 
         PsiElement stopElement = element2.getNextSibling();
-        List<PsiElement> result = new ArrayList<PsiElement>();
+        List<PsiElement> result = new ArrayList<>();
         for (PsiElement currentElement = element1; currentElement != stopElement && currentElement != null; currentElement = currentElement.getNextSibling()) {
-            for (Class aClass : classes) {
+            for (var aClass : classes) {
                 if (aClass.isInstance(currentElement)) {
                     result.add(currentElement);
                 }

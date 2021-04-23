@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.test;
 
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Pair;
 
@@ -31,13 +30,9 @@ public class SettingsConfigurator {
         settingsToIntValue = ContainerUtil.map2Array(
                 InTextDirectivesUtils.findArrayWithPrefixes(fileText, SET_INT_DIRECTIVE),
                 Pair.class,
-                new Function<String, Pair>() {
-                    @SuppressWarnings("unchecked")
-                    @Override
-                    public Pair fun(String s) {
-                        String[] tokens = s.split("=");
-                        return new Pair(tokens[0].trim(), Integer.valueOf(tokens[1].trim()));
-                    }
+                s -> {
+                    String[] tokens = s.split("=");
+                    return new Pair<>(tokens[0].trim(), Integer.valueOf(tokens[1].trim()));
                 }
         );
         this.objects = objects;

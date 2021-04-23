@@ -104,30 +104,19 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
 
         final RequestInfo requestInfoCopy = cloneRequestInfo(requestInfo);
 
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-                runWithWriteActionPriority(progressIndicator, parentDisposable, new Runnable() {
-                    @Override
-                    public void run() {
-                        ResultData resultData = null;
-                        try {
-                            resultData = processRequest(requestInfoCopy);
-                        }
-                        finally {
-                            // Back to GUI thread for submitting result
-                            final ResultData finalResult = resultData;
-                            ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    resultReady(finalResult);
-                                }
-                            });
-                        }
-                    }
-                });
-            }
-        });
+        ApplicationManager.getApplication().executeOnPooledThread(
+                () -> runWithWriteActionPriority(
+                        progressIndicator, parentDisposable,
+                        () -> {
+                            ResultData resultData = null;
+                            try {
+                                resultData = processRequest(requestInfoCopy);
+                            } finally {
+                                // Back to GUI thread for submitting result
+                                final ResultData finalResult = resultData;
+                                ApplicationManager.getApplication().invokeLater(() -> resultReady(finalResult));
+                            }
+                        }));
     }
 
     /**
@@ -210,7 +199,7 @@ public abstract class LongRunningReadTask<RequestInfo, ResultData> {
     /**
      * Execute action with immediate stop when write lock is required.
      *
-     * {@link ProgressIndicatorUtils#runWithWriteActionPriority(Runnable)}
+     * {@link ProgressIndicatorUtils#runWithWriteActionPriority(Runnable, ProgressIndicator)}
      *
      * @param indicator
      * @param parentDisposable

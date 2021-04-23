@@ -16,6 +16,7 @@
 
 package org.jetbrains.eval4j.test;
 
+@SuppressWarnings("ALL")
 class TestData extends BaseTestData {
    static void returnVoid() {
     }

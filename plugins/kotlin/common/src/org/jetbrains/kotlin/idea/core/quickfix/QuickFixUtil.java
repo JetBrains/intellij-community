@@ -74,7 +74,7 @@ public class QuickFixUtil {
     @Nullable
     public static KotlinType findLowerBoundOfOverriddenCallablesReturnTypes(@NotNull CallableDescriptor descriptor) {
         KotlinType matchingReturnType = null;
-        for (CallableDescriptor overriddenDescriptor : ((CallableDescriptor) descriptor).getOverriddenDescriptors()) {
+        for (CallableDescriptor overriddenDescriptor : descriptor.getOverriddenDescriptors()) {
             KotlinType overriddenReturnType = overriddenDescriptor.getReturnType();
             if (overriddenReturnType == null) {
                 return null;

@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.IntroduceTypeAliasDescriptor;
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.IntroduceTypeAliasImplKt;
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.KotlinIntroduceTypeAliasHandler;
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.TypeParameter;
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent;
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken;
 import org.jetbrains.kotlin.lexer.KtTokens;
@@ -49,7 +48,7 @@ import java.util.List;
 public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
     private JPanel contentPane;
     private TitledSeparator inputParametersPanel;
-    private JComboBox visibilityBox;
+    private JComboBox<KtModifierKeywordToken> visibilityBox;
     private KotlinSignatureComponent signaturePreviewField;
     private JPanel aliasNamePanel;
     private NameSuggestionsField aliasNameField;
@@ -124,9 +123,7 @@ public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
     protected void init() {
         super.init();
 
-        //noinspection unchecked
-        visibilityBox.setModel(new DefaultComboBoxModel(getApplicableVisibilities().toArray()));
-        //noinspection unchecked
+        visibilityBox.setModel(new DefaultComboBoxModel<>(getApplicableVisibilities().toArray(new KtModifierKeywordToken[0])));
         visibilityBox.setRenderer(
                 new DefaultListCellRenderer() {
                     @Override
@@ -144,14 +141,7 @@ public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
         );
 
         aliasNameField = new NameSuggestionsField(new String[]{originalDescriptor.getName()}, project, KotlinFileType.INSTANCE);
-        aliasNameField.addDataChangedListener(
-                new NameSuggestionsField.DataChanged() {
-                    @Override
-                    public void dataChanged() {
-                        update();
-                    }
-                }
-        );
+        aliasNameField.addDataChangedListener(() -> update());
         aliasNamePanel.add(aliasNameField, BorderLayout.CENTER);
         aliasNameLabel.setLabelFor(aliasNameField);
 
@@ -201,21 +191,20 @@ public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
         }
     }
 
-    @SuppressWarnings("SuspiciousMethodCalls")
     @Override
     protected void doOKAction() {
         MultiMap<PsiElement, String> conflicts = IntroduceTypeAliasImplKt.validate(currentDescriptor).getConflicts();
         KotlinRefactoringUtilKt.checkConflictsInteractively(
                 project,
                 conflicts,
-                new Function0<Unit>() {
+                new Function0<>() {
                     @Override
                     public Unit invoke() {
                         close(OK_EXIT_CODE);
                         return Unit.INSTANCE;
                     }
                 },
-                new Function0<Unit>() {
+                new Function0<>() {
                     @Override
                     public Unit invoke() {
                         KotlinIntroduceTypeAliasDialog.super.doOKAction();
@@ -247,7 +236,7 @@ public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
                 originalDescriptor.getOriginalData(),
                 getAliasName(),
                 getVisibility(),
-                parameterTablePanel != null ? parameterTablePanel.getSelectedTypeParameters() : Collections.<TypeParameter>emptyList()
+                parameterTablePanel != null ? parameterTablePanel.getSelectedTypeParameters() : Collections.emptyList()
         );
     }
 

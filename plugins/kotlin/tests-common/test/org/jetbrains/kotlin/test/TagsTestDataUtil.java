@@ -25,8 +25,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,7 +46,7 @@ public class TagsTestDataUtil {
     }
 
     public static String generateTextWithCaretAndSelection(@NotNull Editor editor) {
-        List<TagInfo> points = Lists.newArrayList();
+        List<TagInfo> points = new ArrayList<>();
         points.add(new TagInfo<>(editor.getCaretModel().getOffset(), true, "caret"));
         if (editor.getSelectionModel().hasSelection()) {
             points.add(new TagInfo<>(editor.getSelectionModel().getSelectionStart(), true, "selection"));
@@ -98,7 +100,7 @@ public class TagsTestDataUtil {
             Collection<LineMarkerInfo> lineMarkers,
             boolean withDescription
     ) {
-        List<LineMarkerTagPoint> lineMarkerPoints = Lists.newArrayList();
+        List<LineMarkerTagPoint> lineMarkerPoints = new ArrayList<>();
         for (LineMarkerInfo markerInfo : lineMarkers) {
             lineMarkerPoints.add(new LineMarkerTagPoint(markerInfo.startOffset, true, markerInfo, withDescription));
             lineMarkerPoints.add(new LineMarkerTagPoint(markerInfo.endOffset, false, markerInfo, withDescription));
@@ -108,7 +110,7 @@ public class TagsTestDataUtil {
 
     @NotNull
     public static List<HighlightTagPoint> toHighlightTagPoints(Collection<HighlightInfo> highlights) {
-        List<HighlightTagPoint> highlightPoints = Lists.newArrayList();
+        List<HighlightTagPoint> highlightPoints = new ArrayList<>();
         for (HighlightInfo highlight : highlights) {
             highlightPoints.add(new HighlightTagPoint(highlight.startOffset, true, highlight));
             highlightPoints.add(new HighlightTagPoint(highlight.endOffset, false, highlight));
@@ -142,7 +144,7 @@ public class TagsTestDataUtil {
         @Override
         public int compareTo(@NotNull TagInfo<?> other) {
             if (offset != other.offset) {
-                return ((Integer) offset).compareTo(other.offset);
+                return Integer.compare(offset, other.offset);
             }
 
             if (isStart != other.isStart) {
@@ -185,7 +187,7 @@ public class TagsTestDataUtil {
         public String getName() {
             return highlightInfo.getSeverity().equals(HighlightSeverity.INFORMATION)
                    ? "info"
-                   : highlightInfo.getSeverity().toString().toLowerCase();
+                   : highlightInfo.getSeverity().toString().toLowerCase(Locale.ROOT);
         }
 
         @NotNull

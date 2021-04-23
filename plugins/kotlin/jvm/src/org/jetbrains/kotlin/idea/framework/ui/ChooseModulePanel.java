@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.KotlinJvmBundle;
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtilsKt;
@@ -45,7 +44,7 @@ public class ChooseModulePanel {
     private JPanel contentPane;
     private JRadioButton allModulesWithKtRadioButton;
     private JRadioButton singleModuleRadioButton;
-    private JComboBox singleModuleComboBox;
+    private JComboBox<String> singleModuleComboBox;
     private HyperlinkLabel allModulesWithKtNames;
     private JRadioButton allModulesRadioButton;
 
@@ -70,7 +69,7 @@ public class ChooseModulePanel {
         this.modules = modulesPair.first;
         this.modulesWithKtFiles = modulesPair.second;
 
-        DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
+        DefaultComboBoxModel<String> comboBoxModel = new DefaultComboBoxModel<>();
 
         for (Module module : modules) {
             comboBoxModel.addElement(module.getName());
@@ -101,7 +100,7 @@ public class ChooseModulePanel {
                 @Override
                 public void hyperlinkUpdate(HyperlinkEvent event) {
                     String title = KotlinJvmBundle.message("choose.module.modules.with.kotlin");
-                    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<Module>(title, modulesWithKtFiles) {
+                    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(title, modulesWithKtFiles) {
                         @NotNull
                         @Override
                         public String getTextFor(Module value) {
@@ -112,12 +111,7 @@ public class ChooseModulePanel {
             });
         }
         else {
-            allModulesWithKtNames.setText(StringUtil.join(modulesWithKtFiles, new Function<Module, String>() {
-                @Override
-                public String fun(Module module) {
-                    return module.getName();
-                }
-            }, ", "));
+            allModulesWithKtNames.setText(StringUtil.join(modulesWithKtFiles, module -> module.getName(), ", "));
         }
 
         ButtonGroup modulesGroup = new ButtonGroup();

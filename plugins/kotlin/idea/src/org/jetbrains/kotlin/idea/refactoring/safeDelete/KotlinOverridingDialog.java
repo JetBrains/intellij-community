@@ -56,6 +56,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -73,13 +74,11 @@ class KotlinOverridingDialog extends DialogWrapper {
     private JBTable myTable;
     private final UsagePreviewPanel myUsagePreviewPanel;
 
-    public KotlinOverridingDialog(Project project, List<UsageInfo> overridingMethods) {
+    KotlinOverridingDialog(Project project, List<UsageInfo> overridingMethods) {
         super(project, true);
         myOverridingMethods = overridingMethods;
         myChecked = new boolean[myOverridingMethods.size()];
-        for (int i = 0; i < myChecked.length; i++) {
-            myChecked[i] = true;
-        }
+        Arrays.fill(myChecked, true);
 
         myMethodText = new String[myOverridingMethods.size()];
         for (int i = 0; i < myMethodText.length; i++) {
@@ -120,7 +119,7 @@ class KotlinOverridingDialog extends DialogWrapper {
 
     @NotNull
     public List<UsageInfo> getSelected() {
-        List<UsageInfo> result = new ArrayList<UsageInfo>();
+        List<UsageInfo> result = new ArrayList<>();
         for (int i = 0; i < myChecked.length; i++) {
             if (myChecked[i]) {
                 result.add(myOverridingMethods.get(i));
@@ -131,7 +130,7 @@ class KotlinOverridingDialog extends DialogWrapper {
 
     @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action [] createActions() {
         return new Action[] {getOKAction(), getCancelAction()};
     }
 
@@ -247,22 +246,15 @@ class KotlinOverridingDialog extends DialogWrapper {
 
         @Override
         public String getColumnName(int column) {
-            switch (column) {
-                case CHECK_COLUMN:
-                    return " ";
-                default:
-                    return KotlinBundle.message("override.declaration.member");
+            if (column == CHECK_COLUMN) {
+                return " ";
             }
+            return KotlinBundle.message("override.declaration.member");
         }
 
         @Override
         public Class getColumnClass(int columnIndex) {
-            switch (columnIndex) {
-                case CHECK_COLUMN:
-                    return Boolean.class;
-                default:
-                    return String.class;
-            }
+            return columnIndex == CHECK_COLUMN ? Boolean.class : String.class;
         }
 
 

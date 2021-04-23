@@ -17,14 +17,16 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PositionTracker;
+import kotlin.collections.ArraysKt;
+import kotlin.collections.CollectionsKt;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
@@ -51,15 +53,15 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
 
     public static final String TYPE_REFERENCE_VARIABLE_NAME = "TypeReferenceVariable";
     public static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
-    
-    private static final Function0<Boolean> TRUE = new Function0<Boolean>() {
+
+    private static final Function0<Boolean> TRUE = new Function0<>() {
         @Override
         public Boolean invoke() {
             return true;
         }
     };
 
-    private static final Pass<JComponent> DO_NOTHING = new Pass<JComponent>() {
+    private static final Pass<JComponent> DO_NOTHING = new Pass<>() {
         @Override
         public void pass(JComponent component) {
 
@@ -111,7 +113,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
     private final boolean myDoNotChangeVar;
     @Nullable private final KotlinType myExprType;
     private final boolean noTypeInference;
-    private final List<ControlWrapper> panelControls = new ArrayList<ControlWrapper>();
+    private final List<ControlWrapper> panelControls = new ArrayList<>();
     private JPanel contentPanel;
 
     public KotlinInplaceVariableIntroducer(
@@ -176,16 +178,16 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
             panelControl.initialize();
             panel.add(panelControl.getComponent(), new GridBagConstraints(0, count, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
                                                                           GridBagConstraints.HORIZONTAL,
-                                                                          new Insets(0, 5, 0, 5), 0, 0));
+                                                                          JBUI.insets(0, 5), 0, 0));
             ++count;
         }
         panel.add(Box.createVerticalBox(), new GridBagConstraints(0, count, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
                                                                   GridBagConstraints.BOTH,
-                                                                  new Insets(0, 0, 0, 0), 0, 0));
+                                                                  JBUI.emptyInsets(), 0, 0));
     }
 
+    @NotNull
     @Override
-    @Nullable
     protected final JComponent getComponent() {
         panelControls.clear();
         initPanelControls();
@@ -199,7 +201,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
     protected final Function0<JComponent> getCreateExplicitTypeCheckBox() {
         if (myExprType == null || noTypeInference) return null;
 
-        return new Function0<JComponent>() {
+        return new Function0<>() {
             @Override
             public JComponent invoke() {
                 final JCheckBox exprTypeCheckbox = new NonFocusableCheckBox(
@@ -209,17 +211,13 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
                     @Override
                     public void actionPerformed(@NotNull ActionEvent e) {
                         runWriteActionAndRestartRefactoring(
-                                new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (exprTypeCheckbox.isSelected()) {
-                                            String renderedType =
-                                                    IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(myExprType);
-                                            myDeclaration.setTypeReference(new KtPsiFactory(myProject).createType(renderedType));
-                                        }
-                                        else {
-                                            myDeclaration.setTypeReference(null);
-                                        }
+                                () -> {
+                                    if (exprTypeCheckbox.isSelected()) {
+                                        String renderedType =
+                                                IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(myExprType);
+                                        myDeclaration.setTypeReference(new KtPsiFactory(myProject).createType(renderedType));
+                                    } else {
+                                        myDeclaration.setTypeReference(null);
                                     }
                                 }
                         );
@@ -235,7 +233,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
     protected final Function0<JComponent> getCreateVarCheckBox() {
         if (myDoNotChangeVar) return null;
 
-        return new Function0<JComponent>() {
+        return new Function0<>() {
             @Override
             public JComponent invoke() {
                 final JCheckBox varCheckbox = new NonFocusableCheckBox(KotlinBundle.message("checkbox.text.declare.with.var"));
@@ -245,15 +243,16 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
                     public void actionPerformed(@NotNull ActionEvent e) {
                         new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
                             @Override
-                            protected void run(@NotNull Result result) throws Throwable {
+                            protected void run(@NotNull Result result) {
                                 PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
 
                                 KtPsiFactory psiFactory = new KtPsiFactory(myProject);
-                                PsiElement keyword = varCheckbox.isSelected() ? psiFactory.createVarKeyword() : psiFactory.createValKeyword();
+                                PsiElement keyword =
+                                        varCheckbox.isSelected() ? psiFactory.createVarKeyword() : psiFactory.createValKeyword();
 
                                 PsiElement valOrVar = myDeclaration instanceof KtProperty
-                                                       ? ((KtProperty) myDeclaration).getValOrVarKeyword()
-                                                       : ((KtParameter) myDeclaration).getValOrVarKeyword();
+                                                      ? ((KtProperty) myDeclaration).getValOrVarKeyword()
+                                                      : ((KtParameter) myDeclaration).getValOrVarKeyword();
                                 valOrVar.replace(keyword);
                             }
                         }.execute();
@@ -266,10 +265,10 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
     }
 
     protected final void runWriteActionAndRestartRefactoring(final Runnable runnable) {
-        final Ref<Boolean> greedyToRight = new Ref<Boolean>();
+        final Ref<Boolean> greedyToRight = new Ref<>();
         new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
             @Override
-            protected void run(@NotNull Result result) throws Throwable {
+            protected void run(@NotNull Result result) {
                 PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
 
                 ASTNode identifier = myDeclaration.getNode().findChildByType(KtTokens.IDENTIFIER);
@@ -296,18 +295,15 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
                 }
             }
         }.execute();
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-                ASTNode identifier = myDeclaration.getNode().findChildByType(KtTokens.IDENTIFIER);
-                if (identifier != null) {
-                    TextRange range = identifier.getTextRange();
-                    RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
-                    for (RangeHighlighter highlighter : highlighters) {
-                        if (highlighter.getStartOffset() == range.getStartOffset()) {
-                            if (highlighter.getEndOffset() == range.getEndOffset()) {
-                                highlighter.setGreedyToRight(greedyToRight.get());
-                            }
+        ApplicationManager.getApplication().runReadAction(() -> {
+            ASTNode identifier = myDeclaration.getNode().findChildByType(KtTokens.IDENTIFIER);
+            if (identifier != null) {
+                TextRange range = identifier.getTextRange();
+                RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
+                for (RangeHighlighter highlighter : highlighters) {
+                    if (highlighter.getStartOffset() == range.getStartOffset()) {
+                        if (highlighter.getEndOffset() == range.getEndOffset()) {
+                            highlighter.setGreedyToRight(greedyToRight.get());
                         }
                     }
                 }
@@ -327,7 +323,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
             nameSuggestions = myNameSuggestions;
         }
         else {
-            nameSuggestions = new LinkedHashSet<String>();
+            nameSuggestions = new LinkedHashSet<>();
             nameSuggestions.add(currentName);
             nameSuggestions.addAll(myNameSuggestions);
         }
@@ -337,7 +333,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
     protected void revalidate() {
         getContentPanel().revalidate();
         if (myTarget != null) {
-            myBalloon.revalidate(new PositionTracker.Static<Balloon>(myTarget));
+            myBalloon.revalidate(new PositionTracker.Static<>(myTarget));
         }
     }
 
@@ -377,9 +373,9 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
 
     @Override
     protected Collection<PsiReference> collectRefs(SearchScope referencesSearchScope) {
-        return kotlin.collections.CollectionsKt.map(
-                kotlin.collections.ArraysKt.filterIsInstance(getOccurrences(), KtSimpleNameExpression.class),
-                new Function1<KtSimpleNameExpression, PsiReference>() {
+        return CollectionsKt.map(
+                ArraysKt.filterIsInstance(getOccurrences(), KtSimpleNameExpression.class),
+                new Function1<>() {
                     @Override
                     public PsiReference invoke(KtSimpleNameExpression expression) {
                         return ReferenceUtilsKt.getMainReference(expression);
@@ -424,12 +420,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
     public void stopIntroduce() {
         final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
         if (templateState != null) {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    templateState.gotoEnd(true);
-                }
-            };
+            Runnable runnable = () -> templateState.gotoEnd(true);
             CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), getCommandName());
         }
     }

@@ -18,7 +18,6 @@ package org.jetbrains.kotlin.idea.editor;
 
 import com.intellij.codeInsight.editorActions.TypedHandlerUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.kotlin.lexer.KtToken;
@@ -47,7 +46,7 @@ final class LtGtTypingUtils {
     }
 
     private static boolean isAfterClassIdentifier(int offset, Editor editor) {
-        HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+        HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
         if (iterator.atEnd()) {
             return false;
         }
@@ -60,7 +59,7 @@ final class LtGtTypingUtils {
     }
 
     static boolean isAfterToken(int offset, Editor editor, KtToken tokenType) {
-        HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+        HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
         if (iterator.atEnd()) {
             return false;
         }

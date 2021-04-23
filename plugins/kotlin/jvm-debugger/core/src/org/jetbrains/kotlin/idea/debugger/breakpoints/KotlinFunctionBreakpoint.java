@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.breakpoints;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -17,7 +17,10 @@ import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.ClassesByNameProvider;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.requests.Requestor;
-import com.intellij.debugger.ui.breakpoints.*;
+import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
+import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
+import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
+import com.intellij.debugger.ui.breakpoints.MethodBreakpointBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -53,9 +56,9 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointPr
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin;
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod;
+import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle;
 import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile;
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper;
-import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle;
 import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
 import org.jetbrains.kotlin.psi.KtDeclaration;
@@ -270,10 +273,10 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
         }
         Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(classType, classesByName);
         if (lambdaMethod != null &&
-            !breakpoint
+            breakpoint
                     .matchingMethods(StreamEx.of(((ClassType) classType).interfaces()).flatCollection(ReferenceType::allMethods),
                                      debugProcess)
-                    .findFirst().isPresent()) {
+                    .findFirst().isEmpty()) {
             return;
         }
         StreamEx<Method> methods = lambdaMethod != null

@@ -55,7 +55,7 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
     private JPanel functionNamePanel;
     private NameSuggestionsField functionNameField;
     private JLabel functionNameLabel;
-    private JComboBox returnTypeBox;
+    private JComboBox<KotlinType> returnTypeBox;
     private JPanel returnTypePanel;
     private ExtractFunctionParameterTablePanel parameterTablePanel;
 
@@ -131,20 +131,13 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
                 project,
                 KotlinFileType.INSTANCE
         );
-        functionNameField.addDataChangedListener(
-                new NameSuggestionsField.DataChanged() {
-                    @Override
-                    public void dataChanged() {
-                        update();
-                    }
-                }
-        );
+        functionNameField.addDataChangedListener(() -> update());
         functionNamePanel.add(functionNameField, BorderLayout.CENTER);
         functionNameLabel.setLabelFor(functionNameField);
 
         List<KotlinType> possibleReturnTypes = ExtractableCodeDescriptorKt.getPossibleReturnTypes(extractableCodeDescriptor.getControlFlow());
         if (possibleReturnTypes.size() > 1) {
-            DefaultComboBoxModel returnTypeBoxModel = new DefaultComboBoxModel(possibleReturnTypes.toArray());
+            DefaultComboBoxModel<KotlinType> returnTypeBoxModel = new DefaultComboBoxModel<>(possibleReturnTypes.toArray(new KotlinType[0]));
             returnTypeBox.setModel(returnTypeBoxModel);
             returnTypeBox.setRenderer(
                     new DefaultListCellRenderer() {
@@ -216,7 +209,6 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
         inputParametersPanel.add(parameterTablePanel);
     }
 
-    @SuppressWarnings("SuspiciousMethodCalls")
     @Override
     protected void doOKAction() {
         MultiMap<PsiElement, String> conflicts = ExtractableAnalysisUtilKt.validate(currentDescriptor).getConflicts();
@@ -225,14 +217,14 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
         KotlinRefactoringUtilKt.checkConflictsInteractively(
                 project,
                 conflicts,
-                new Function0<Unit>() {
+                new Function0<>() {
                     @Override
                     public Unit invoke() {
                         close(OK_EXIT_CODE);
                         return Unit.INSTANCE;
                     }
                 },
-                new Function0<Unit>() {
+                new Function0<>() {
                     @Override
                     public Unit invoke() {
                         KotlinExtractFunctionDialog.super.doOKAction();
