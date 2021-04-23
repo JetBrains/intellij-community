@@ -130,7 +130,7 @@ class KotlinOverridingDialog extends DialogWrapper {
 
     @NotNull
     @Override
-    protected Action [] createActions() {
+    protected Action[] createActions() {
         return new Action[] {getOKAction(), getCancelAction()};
     }
 
