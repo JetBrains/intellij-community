@@ -3,8 +3,11 @@ package com.intellij.collaboration.ui.codereview.timeline.comment
 
 import com.intellij.collaboration.ui.codereview.SimpleEventListener
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.Project
 
 interface SubmittableTextFieldModel {
+  val project: Project?
+
   val document: Document
 
   val isBusy: Boolean

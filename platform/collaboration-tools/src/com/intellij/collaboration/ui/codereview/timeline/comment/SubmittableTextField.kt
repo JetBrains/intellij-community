@@ -135,7 +135,7 @@ class SubmittableTextField(
 
   private fun createTextField(@Nls placeHolder: String): EditorTextField {
 
-    return object : EditorTextField(model.document, null, FileTypes.PLAIN_TEXT) {
+    return object : EditorTextField(model.document, model.project, FileTypes.PLAIN_TEXT) {
       //always paint pretty border
       override fun updateBorder(editor: EditorEx) = setupBorder(editor)
 
