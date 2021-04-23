@@ -377,7 +377,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             }
             tbody {
               for (scanningStats in projectIndexingHistory.scanningStatistics) {
-                tr(className = getMinorDataClass(scanningStats.scanningTime.milliseconds < 100)) {
+                tr(className = getMinorDataClass(scanningStats.scanningTime.milliseconds < 100 && scanningStats.numberOfScannedFiles < 1000)) {
                   td(scanningStats.providerName)
                   td(scanningStats.numberOfScannedFiles.toString())
                   td(scanningStats.numberOfFilesForIndexing.toString())
@@ -427,7 +427,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             }
             tbody {
               for (providerStats in projectIndexingHistory.fileProviderStatistics) {
-                tr(className = getMinorDataClass(providerStats.totalIndexingTime.milliseconds < 100)) {
+                tr(className = getMinorDataClass(providerStats.totalIndexingTime.milliseconds < 100 && providerStats.totalNumberOfIndexedFiles < 1000)) {
                   td(providerStats.providerName)
                   td(providerStats.totalIndexingTime.presentableDuration())
                   td(providerStats.contentLoadingTime.presentableDuration())
