@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +27,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
@@ -40,6 +38,7 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -49,9 +48,9 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class UnindexedFilesUpdater extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
@@ -209,45 +208,46 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
 
     for (int index = 0; index < orderedProviders.size(); ) {
-      List<VirtualFile> files = new ArrayList<>();
-      List<Pair<IndexableFilesIterator, Integer>> takenProviders = new ArrayList<>();
-      while (files.size() < MINIMUM_NUMBER_OF_FILES_TO_RUN_CONCURRENT_INDEXING && index < orderedProviders.size()) {
+      List<IndexUpdateRunner.BagOfFiles> bagsOfFiles = new ArrayList<>();
+      int takenFiles = 0;
+
+      int biggestProviderFiles = 0;
+      IndexableFilesIterator biggestProvider = null;
+
+      while (takenFiles < MINIMUM_NUMBER_OF_FILES_TO_RUN_CONCURRENT_INDEXING && index < orderedProviders.size()) {
         IndexableFilesIterator provider = orderedProviders.get(index++);
         List<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
         if (!providerFiles.isEmpty()) {
-          files.addAll(providerFiles);
-          takenProviders.add(Pair.create(provider, providerFiles.size()));
+          bagsOfFiles.add(new IndexUpdateRunner.BagOfFiles(myProject, provider.getDebugName(), providerFiles));
+        }
+        if (biggestProviderFiles < providerFiles.size()) {
+          biggestProviderFiles = providerFiles.size();
+          biggestProvider = provider;
         }
       }
-      if (takenProviders.isEmpty()) {
+      if (bagsOfFiles.isEmpty() || biggestProvider == null) {
         break;
       }
-      var sortedProviders = takenProviders.stream().sorted((p1, p2) -> Integer.compare(p2.second, p1.second)).collect(Collectors.toList());
-      var indexingProgressText = sortedProviders.get(0).first.getIndexingProgressText();
-      var fileSetName = sortedProviders.size() == 1
-                        ? sortedProviders.get(0).first.getDebugName()
-                        : sortedProviders.stream()
-                          .map(p -> p.getFirst().getDebugName() + ": " + p.getSecond() + " " + StringUtil.pluralize("file", p.getSecond()))
-                          .collect(Collectors.joining("\n"));
+
+      var indexingProgressText = biggestProvider.getIndexingProgressText();
 
       concurrentTasksProgressManager.setText(indexingProgressText);
-      SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(files.size());
+      int bagFilesNumber = bagsOfFiles.stream().mapToInt(b -> b.files.size()).sum();
+      SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(bagFilesNumber);
       try {
-        IndexingJobStatistics statistics;
         IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          statistics = indexUpdateRunner.indexFiles(myProject, fileSetName, files, subTaskIndicator);
+          indexUpdateRunner.indexFiles(myProject, bagsOfFiles, subTaskIndicator);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           exception = e;
-          statistics = e.myStatistics;
         }
 
         try {
-          projectIndexingHistory.addProviderStatistics(statistics);
+          bagsOfFiles.forEach(b -> projectIndexingHistory.addProviderStatistics(b.statistics));
         }
         catch (Exception e) {
-          LOG.error("Failed to add indexing statistics for " + fileSetName, e);
+          LOG.error("Failed to add indexing statistics", e);
         }
 
         if (exception != null) {
