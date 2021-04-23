@@ -591,6 +591,14 @@ class ExternalSystemStorageTest {
     }
   }
 
+  @Test
+  fun `multiple libraries in internal storage`() {
+    loadModifySaveAndCheck("multipleLibrariesInInternalStorage", "multipleLibrariesInInternalStorageFixed") {
+      val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(it).libraries
+      assertThat(libraries.size).isEqualTo(1)
+    }
+  }
+
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
