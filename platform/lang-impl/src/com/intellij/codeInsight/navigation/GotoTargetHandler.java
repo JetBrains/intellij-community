@@ -11,7 +11,6 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -36,7 +35,6 @@ import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -142,9 +140,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
         PsiElementListCellRenderer<?> renderer = getRenderer(value, gotoData);
-        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
-          return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        }
+        return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
     }).
       setItemsChosenCallback(selectedElements -> {
