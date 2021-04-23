@@ -32,7 +32,7 @@ class GithubAuthenticationManager internal constructor() {
   fun getAccounts(): Set<GithubAccount> = accountManager.accounts
 
   @CalledInAny
-  internal fun getTokenForAccount(account: GithubAccount): String? = accountManager.getTokenForAccount(account)
+  internal fun getTokenForAccount(account: GithubAccount): String? = accountManager.findCredentials(account)
 
   @RequiresEdt
   @JvmOverloads
@@ -104,7 +104,7 @@ class GithubAuthenticationManager internal constructor() {
 
   @RequiresEdt
   internal fun updateAccountToken(account: GithubAccount, newToken: String) =
-    accountManager.updateAccountToken(account, newToken)
+    accountManager.setCredentials(account, newToken)
 
   @RequiresEdt
   internal fun registerAccount(name: String, server: GithubServerPath, token: String): GithubAccount =
@@ -113,7 +113,7 @@ class GithubAuthenticationManager internal constructor() {
   @RequiresEdt
   internal fun registerAccount(account: GithubAccount, token: String): GithubAccount {
     accountManager.accounts += account
-    accountManager.updateAccountToken(account, token)
+    accountManager.setCredentials(account, token)
     return account
   }
 

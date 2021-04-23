@@ -33,7 +33,7 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
         component(accountsPanel)
           .onIsModified { accountsPanel.isModified(accountManager.accounts, defaultAccountHolder.account) }
           .onReset {
-            val accountsMap = accountManager.accounts.associateWith { accountManager.getTokenForAccount(it) }
+            val accountsMap = accountManager.accounts.associateWith { accountManager.findCredentials(it) }
             accountsPanel.setAccounts(accountsMap, defaultAccountHolder.account)
             accountsPanel.clearNewTokens()
             accountsPanel.loadExistingAccountsDetails()
@@ -41,7 +41,7 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
           .onApply {
             val (accountsTokenMap, defaultAccount) = accountsPanel.getAccounts()
             accountManager.accounts = accountsTokenMap.keys
-            accountsTokenMap.filterValues { it != null }.forEach(accountManager::updateAccountToken)
+            accountsTokenMap.filterValues { it != null }.forEach(accountManager::setCredentials)
             defaultAccountHolder.account = defaultAccount
             accountsPanel.clearNewTokens()
           }
@@ -61,6 +61,7 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
         cell {
           label(GithubBundle.message("settings.timeout"))
           intTextField({ settings.connectionTimeout / 1000 }, { settings.connectionTimeout = it * 1000 }, columns = 2, range = 0..60)
+          @Suppress("DialogTitleCapitalization")
           label(GithubBundle.message("settings.timeout.seconds"))
         }
       }

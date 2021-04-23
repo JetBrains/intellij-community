@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.accounts;
 
+import com.intellij.collaboration.auth.Account;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -12,7 +13,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Tag("account")
-public class GithubAccount {
+public class GithubAccount implements Account {
   @Attribute("id")
   @NotNull private final String myId;
   @Attribute("name")
@@ -39,8 +40,9 @@ public class GithubAccount {
     return myServer + "/" + myName;
   }
 
+  @Override
   @NotNull
-  String getId() {
+  public String getId() {
     return myId;
   }
 

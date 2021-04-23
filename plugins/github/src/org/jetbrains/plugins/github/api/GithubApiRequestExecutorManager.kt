@@ -22,7 +22,7 @@ class GithubApiRequestExecutorManager {
   }
 
   internal fun tokenChanged(account: GithubAccount) {
-    val token = service<GithubAccountManager>().getTokenForAccount(account)
+    val token = service<GithubAccountManager>().findCredentials(account)
     if (token == null) executors.remove(account)
     else executors[account]?.token = token
   }
