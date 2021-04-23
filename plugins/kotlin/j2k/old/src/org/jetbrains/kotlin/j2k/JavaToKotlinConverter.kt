@@ -325,6 +325,7 @@ class OldWithProgressProcessor(private val progress: ProgressIndicator?, private
         ProgressManager.getInstance().runProcess(
             {
                 progress?.text = "$progressText ($fileCountText) - ${KotlinJ2KBundle.message("text.pass.of.3", pass)}"
+                progress?.isIndeterminate = false
 
                 for ((i, item) in inputItems.withIndex()) {
                     progress?.checkCanceled()
