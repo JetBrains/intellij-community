@@ -7,7 +7,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
-import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
 import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
@@ -317,9 +316,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
     String stacktrace = myStacktrace;
     if (stacktrace != null && properties instanceof SMStacktraceParser && isLeaf()) {
-      Navigatable result = properties instanceof SMStacktraceParserEx ?
-                           ((SMStacktraceParserEx)properties).getErrorNavigatable(location, stacktrace) :
-                             ((SMStacktraceParser)properties).getErrorNavigatable(location.getProject(), stacktrace);
+      Navigatable result = ((SMStacktraceParser)properties).getErrorNavigatable(location, stacktrace);
       if (result != null) {
         return result;
       }
