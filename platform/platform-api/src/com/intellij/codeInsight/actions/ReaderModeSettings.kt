@@ -30,8 +30,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
                         editor: Editor?,
                         file: VirtualFile?,
                         fileIsOpenAlready: Boolean = false,
-                        forceUpdate: Boolean = false,
-                        preferGlobalSettings: Boolean = false) {
+                        forceUpdate: Boolean = false) {
       if (editor == null || file == null || PsiManager.getInstance(project).findFile(file) == null) return
 
       val matchMode = matchMode(project, file, editor)
