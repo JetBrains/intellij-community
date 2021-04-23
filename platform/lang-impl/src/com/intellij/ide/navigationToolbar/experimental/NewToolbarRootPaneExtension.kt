@@ -12,15 +12,14 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.util.ui.JBSwingUtilities
-import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.NotNull
 import java.awt.BorderLayout
@@ -62,6 +61,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
   }
 
   init {
+    Disposer.register(myProject, this)
     Registry.get(navBarKey).addListener(registryListener, this)
     revalidate()
     myProject.messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener { revalidate() })

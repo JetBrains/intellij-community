@@ -51,19 +51,21 @@ abstract class ToolbarActionTracker<T: PositionTracker.Client<*>>: Disposable {
   }
   private val componentAdapter = MyComponentAdapter()
   private var ancestorListener : MyAncestorAdapter? = null
+  private var toolbar: JComponent? = null
 
   protected fun followToolbarComponent(component: JComponent, toolbar: JComponent, pointProvider: (Component, T) -> Point) {
     if (canShow()) {
+      this.toolbar = toolbar
       this.pointProvider = pointProvider
-      component.addComponentListener(componentAdapter.also { Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
+      component.addComponentListener(componentAdapter)
       ancestorListener = MyAncestorAdapter(component)
-      toolbar.addAncestorListener(ancestorListener.also{ Disposer.register(this, Disposable { component.removeAncestorListener(it) }) })
+      toolbar.addAncestorListener(ancestorListener)
     }
   }
 
   protected fun unfollowComponent(component: JComponent){
     component.removeComponentListener(componentAdapter)
-    component.removeAncestorListener(ancestorListener)
+    toolbar?.removeAncestorListener(ancestorListener)
   }
 
 
