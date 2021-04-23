@@ -1,187 +1,160 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins;
+package com.intellij.ide.plugins
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.SafeJdomFactory;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jdom.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.SafeJdomFactory
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import org.jdom.*
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.function.Supplier
 
 @ApiStatus.Internal
-public final class DescriptorListLoadingContext implements AutoCloseable {
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private static final boolean unitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
+class DescriptorListLoadingContext internal constructor(flags: Int,
+                                                        val disabledPlugins: Set<PluginId>,
+                                                        @Suppress("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR") val result: PluginLoadingResult) : AutoCloseable, ReadModuleContext {
+  companion object {
+    @JvmStatic
+    private val unitTestWithBundledPlugins = java.lang.Boolean.getBoolean("idea.run.tests.with.bundled.plugins")
 
-  static final int IGNORE_MISSING_INCLUDE = 2;
-  static final int IGNORE_MISSING_SUB_DESCRIPTOR = 4;
-  static final int CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS = 8;
+    const val IGNORE_MISSING_INCLUDE = 2
+    const val IGNORE_MISSING_SUB_DESCRIPTOR = 4
+    const val CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS = 8
 
-  static final Logger LOG = PluginManagerCore.getLogger();
+    @JvmField
+    val LOG = PluginManagerCore.getLogger()
 
-  private final ConcurrentLinkedQueue<SafeJdomFactory[]> toDispose;
-
-  private final ThreadLocal<PluginXmlFactory[]> threadLocalXmlFactory;
-
-  final @NotNull PluginLoadingResult result;
-
-  final Set<PluginId> disabledPlugins;
-
-  private volatile String defaultVersion;
-
-  final boolean ignoreMissingInclude;
-  final boolean ignoreMissingSubDescriptor;
-
-  boolean usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins;
-
-  private final Map<String, PluginId> optionalConfigNames;
-
-  public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
-    return new DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null));
+    @JvmStatic
+    fun createSingleDescriptorContext(disabledPlugins: Set<PluginId>): DescriptorListLoadingContext {
+      return DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null))
+    }
   }
 
-  DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result) {
-    this.result = result;
-    this.disabledPlugins = disabledPlugins;
-    ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
-    ignoreMissingSubDescriptor = (flags & IGNORE_MISSING_SUB_DESCRIPTOR) == IGNORE_MISSING_SUB_DESCRIPTOR;
-    optionalConfigNames = (flags & CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS) == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS ? new ConcurrentHashMap<>() : null;
+  private val toDispose: ConcurrentLinkedQueue<Array<PluginXmlFactory?>>
+  private val threadLocalXmlFactory: ThreadLocal<Array<PluginXmlFactory?>>
 
-    toDispose = new ConcurrentLinkedQueue<>();
+  @Volatile var defaultVersion: String? = null
+    get() {
+      var result = field
+      if (result == null) {
+        result = this.result.productBuildNumber.get().asStringWithoutProductCode()
+        field = result
+      }
+      return result
+    }
+    private set
+
+  override val isMissingIncludeIgnored: Boolean
+
+  @JvmField val ignoreMissingSubDescriptor: Boolean
+
+  @JvmField var usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins
+
+  private val optionalConfigNames: MutableMap<String, PluginId>?
+
+  init {
+    isMissingIncludeIgnored = flags and IGNORE_MISSING_INCLUDE == IGNORE_MISSING_INCLUDE
+    ignoreMissingSubDescriptor = flags and IGNORE_MISSING_SUB_DESCRIPTOR == IGNORE_MISSING_SUB_DESCRIPTOR
+    optionalConfigNames = if (flags and CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS) ConcurrentHashMap() else null
+    toDispose = ConcurrentLinkedQueue()
 
     // synchronization will ruin parallel loading, so, string pool is local for thread
-    threadLocalXmlFactory = ThreadLocal.withInitial(() -> {
-      PluginXmlFactory factory = new PluginXmlFactory();
-      PluginXmlFactory[] ref = {factory};
-      toDispose.add(ref);
-      return ref;
-    });
+    threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
+      val factory = PluginXmlFactory()
+      val ref = arrayOf<PluginXmlFactory?>(factory)
+      toDispose.add(ref)
+      ref
+    })
   }
 
-  boolean isPluginDisabled(@NotNull PluginId id) {
-    return !PluginManagerCore.CORE_ID.equals(id) && disabledPlugins.contains(id);
+  fun isPluginDisabled(id: PluginId): Boolean {
+    return PluginManagerCore.CORE_ID != id && disabledPlugins.contains(id)
   }
 
-  @NotNull SafeJdomFactory getXmlFactory() {
-      return threadLocalXmlFactory.get()[0];
-  }
+  override val jdomFactory: SafeJdomFactory
+    get() = threadLocalXmlFactory.get()[0]!!
 
-  @Override
-  public void close() {
-    for (SafeJdomFactory[] ref : toDispose) {
-      ref[0] = null;
+  override fun close() {
+    for (ref in toDispose) {
+      ref[0] = null
     }
   }
 
-  public @NotNull String internString(@NotNull String string) {
-    return threadLocalXmlFactory.get()[0].intern(string);
+  fun internString(string: String): String {
+    return threadLocalXmlFactory.get()[0]!!.intern(string)
   }
 
-  public @NotNull String getDefaultVersion() {
-    String result = defaultVersion;
-    if (result == null) {
-      result = this.result.productBuildNumber.get().asStringWithoutProductCode();
-      defaultVersion = result;
-    }
-    return result;
-  }
+  val visitedFiles: List<String>
+    get() = threadLocalXmlFactory.get()[0]!!.visitedFiles
 
-  public @NotNull DateFormat getDateParser() {
-    return threadLocalXmlFactory.get()[0].releaseDateFormat;
-  }
-
-  public @NotNull List<String> getVisitedFiles() {
-    return threadLocalXmlFactory.get()[0].visitedFiles;
-  }
-
-  boolean checkOptionalConfigShortName(@NotNull String configFile,
-                                       @NotNull IdeaPluginDescriptor descriptor,
-                                       @NotNull IdeaPluginDescriptor rootDescriptor) {
-    PluginId pluginId = descriptor.getPluginId();
-    if (pluginId == null) {
-      return false;
-    }
-
-    Map<String, PluginId> configNames = optionalConfigNames;
+  fun checkOptionalConfigShortName(configFile: String,
+                                   descriptor: IdeaPluginDescriptor,
+                                   rootDescriptor: IdeaPluginDescriptor): Boolean {
+    val pluginId = descriptor.pluginId ?: return false
+    val configNames = optionalConfigNames
     if (configNames == null || configFile.startsWith("intellij.")) {
-      return false;
+      return false
     }
-
-    PluginId oldPluginId = configNames.put(configFile, pluginId);
-    if (oldPluginId == null || oldPluginId.equals(pluginId)) {
-      return false;
+    val oldPluginId = configNames.put(configFile, pluginId)
+    if (oldPluginId == null || oldPluginId == pluginId) {
+      return false
     }
-
-    LOG.error("Optional config file with name '" + configFile + "' already registered by '" + oldPluginId + "'. " +
-              "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
-              "Current plugin: '" + rootDescriptor + "'. ");
-    return true;
+    LOG.error(
+      "Optional config file with name '" + configFile + "' already registered by '" + oldPluginId + "'. " +
+      "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
+      "Current plugin: '" + rootDescriptor + "'. ")
+    return true
   }
 }
 
-/**
- * Consider using some threshold in StringInterner (CDATA is not interned at all),
- * but maybe some long text for Text node doesn't make sense to intern too.
- */
 // don't intern CDATA because in most cases it is used for some unique large text (e.g. plugin description)
-final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
-  // doesn't make sense to intern class name since it is unique
-  // ouch, do we really cannot agree how to name implementation class attribute?
-  private static final @NonNls Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(new String[]{
-    "implementation", "implementationClass", "builderClass",
-    "serviceImplementation", "class", "className", "beanClass",
-    "serviceInterface", "interface", "interfaceClass", "instance", "implementation-class",
-    "qualifiedName"});
+internal class PluginXmlFactory : SafeJdomFactory.BaseSafeJdomFactory() {
+  companion object {
+    // doesn't make sense to intern class name since it is unique
+    // ouch, do we really cannot agree how to name implementation class attribute?
+    @JvmStatic private val CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
+      "implementation", "implementationClass", "builderClass",
+      "serviceImplementation", "class", "className", "beanClass",
+      "serviceInterface", "interface", "interfaceClass", "instance", "implementation-class",
+      "qualifiedName"))
 
-  private static final List<String> EXTRA_STRINGS = Arrays.asList("id",
-                                                                  PluginManagerCore.VENDOR_JETBRAINS,
-                                                                  XmlReader.APPLICATION_SERVICE,
-                                                                  XmlReader.PROJECT_SERVICE,
-                                                                  XmlReader.MODULE_SERVICE);
-  @SuppressWarnings("SSBasedInspection")
-  private final ObjectOpenHashSet<String> strings = new ObjectOpenHashSet<>(CLASS_NAMES.size() + EXTRA_STRINGS.size());
-
-  final DateFormat releaseDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
-  final List<String> visitedFiles = new ArrayList<>(3);
-
-  PluginXmlFactory() {
-    strings.addAll(CLASS_NAMES);
-    strings.addAll(EXTRA_STRINGS);
+    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+    @JvmStatic private val EXTRA_STRINGS = Arrays.asList("id",
+                                                         PluginManagerCore.VENDOR_JETBRAINS,
+                                                         APPLICATION_SERVICE,
+                                                         PROJECT_SERVICE,
+                                                         MODULE_SERVICE)
   }
 
-  @NotNull String intern(@NotNull String string) {
-    // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
-    return string.length() < 64 ? strings.addOrGet(string) : string;
+  @Suppress("SSBasedInspection")
+  private val strings = ObjectOpenHashSet<String>(CLASS_NAMES.size + EXTRA_STRINGS.size)
+
+  @JvmField val visitedFiles = ArrayList<String>(3)
+
+  init {
+    strings.addAll(CLASS_NAMES)
+    strings.addAll(EXTRA_STRINGS)
   }
 
-  @Override
-  public @NotNull Element element(@NotNull String name, @Nullable Namespace namespace) {
-    return super.element(intern(name), namespace);
-  }
+  // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
+  fun intern(string: String): String = if (string.length < 64) strings.addOrGet(string) else string
 
-  @Override
-  public @NotNull Attribute attribute(@NotNull String name, @NotNull String value, @Nullable AttributeType type, @Nullable Namespace namespace) {
-    String internedName = intern(name);
-    if (CLASS_NAMES.contains(internedName)) {
-      return super.attribute(internedName, value, type, namespace);
+  override fun element(name: String, namespace: Namespace?) = super.element(intern(name), namespace)
+
+  override fun attribute(name: String, value: String, type: AttributeType?, namespace: Namespace?): Attribute {
+    val internedName = intern(name)
+    return if (CLASS_NAMES.contains(internedName)) {
+      super.attribute(internedName, value, type, namespace)
     }
     else {
-      return super.attribute(internedName, intern(value), type, namespace);
+      super.attribute(internedName, intern(value), type, namespace)
     }
   }
 
-  @Override
-  public @NotNull Text text(@NotNull String text, @NotNull Element parentElement) {
-    return new Text(CLASS_NAMES.contains(parentElement.getName()) ? text : intern(text));
+  override fun text(text: String, parentElement: Element): Text {
+    return Text(if (CLASS_NAMES.contains(parentElement.name)) text else intern(text))
   }
 }
