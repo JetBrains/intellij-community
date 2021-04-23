@@ -10,7 +10,6 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
-import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -75,6 +74,10 @@ class UStringEvaluator {
       if (methodEvaluator != null) {
         return methodEvaluator.provideValue(this, configuration, element)
       }
+      val builderEvaluator = configuration.getBuilderEvaluatorForCall(element)
+      if (builderEvaluator != null) {
+        return calculateBuilder(graph, element, configuration, builderEvaluator)
+      }
       if (element.resolve()?.let { configuration.methodsToAnalyzePattern.accepts(it) } == true) {
         return PartiallyKnownString(
           StringEntry.Unknown(element.sourcePsi, element.ownTextRange,
@@ -86,7 +89,8 @@ class UStringEvaluator {
     for (dependency in graph.dependencies[element].orEmpty()) {
       val (originalDependency, graphToUse) = if (dependency is Dependency.ConnectionDependency) {
         dependency.dependencyFromConnectedGraph to dependency.connectedGraph
-      } else {
+      }
+      else {
         dependency to graph
       }
       when (originalDependency) {
@@ -101,7 +105,8 @@ class UStringEvaluator {
         is Dependency.CommonDependency -> {
           calculate(graphToUse, originalDependency.element, configuration)?.segments?.let { entries += it }
         }
-        else -> {}
+        else -> {
+        }
       }
     }
 
@@ -155,8 +160,63 @@ class UStringEvaluator {
     return results
   }
 
-  private val UElement.ownTextRange: TextRange
-    get() = TextRange(0, sourcePsi!!.textLength)
+  private fun calculateBuilder(
+    graph: UastLocalUsageDependencyGraph,
+    element: UElement,
+    configuration: Configuration,
+    builderEvaluator: BuilderLikeExpressionEvaluator<PartiallyKnownString?>
+  ): PartiallyKnownString? {
+    if (element is UCallExpression) {
+      val methodEvaluator = builderEvaluator.methodDescriptions.entries.firstOrNull { (pattern, _) -> pattern.accepts(element.resolve()) }
+      if (methodEvaluator != null) {
+        val dependencies = graph.dependencies[element].orEmpty()
+        return when (val dependency = dependencies.firstOrNull { it !is Dependency.PotentialSideEffectDependency && it !is Dependency.ArgumentDependency }) {
+          is Dependency.BranchingDependency -> {
+            val branchResult = dependency.elements.mapNotNull { calculateBuilder(graph, it, configuration, builderEvaluator) }.collapse(
+              element)
+            methodEvaluator.value(element, branchResult, this, configuration)
+          }
+          is Dependency.CommonDependency -> {
+            val result = calculateBuilder(graph, dependency.element, configuration, builderEvaluator)
+            methodEvaluator.value(element, result, this, configuration)
+          }
+          is Dependency.PotentialSideEffectDependency -> null // there should not be anything
+          else -> methodEvaluator.value(element, null, this, configuration)
+        }
+      }
+    }
+
+    val dependencies = graph.dependencies[element].orEmpty()
+    val dependency = (dependencies.firstOrNull { it is Dependency.PotentialSideEffectDependency }.takeIf { builderEvaluator.allowSideEffects }
+                      ?: dependencies.firstOrNull { it !is Dependency.PotentialSideEffectDependency && it !is Dependency.ArgumentDependency })
+
+    return when (dependency) {
+      is Dependency.BranchingDependency -> {
+        PartiallyKnownString(StringEntry.Unknown(
+          element.sourcePsi!!, element.ownTextRange,
+          dependency.elements.mapNotNull {
+            calculateBuilder(graph, it, configuration, builderEvaluator)
+          }.takeUnless { it.isEmpty() }
+        ))
+      }
+      is Dependency.CommonDependency -> calculateBuilder(graph, dependency.element, configuration, builderEvaluator)
+      is Dependency.PotentialSideEffectDependency -> if (!builderEvaluator.allowSideEffects) null
+      else {
+        dependency.candidates
+          .mapNotNull { branch ->
+            branch.firstOrNull {
+              it.dependencyEvidence.evidenceElement == null || builderEvaluator.isExpressionReturnSelf(
+                it.dependencyEvidence.evidenceElement)
+            }
+              ?.let { candidate ->
+                calculateBuilder(graph, candidate.updateElement, configuration, builderEvaluator)
+              }
+          }
+          .collapse(element)
+      }
+      else -> null
+    }
+  }
 
   fun interface DeclarationValueProvider {
     fun provideValue(element: UDeclaration): PartiallyKnownString?
@@ -166,16 +226,71 @@ class UStringEvaluator {
     fun provideValue(evaluator: UStringEvaluator, configuration: Configuration, callExpression: UCallExpression): PartiallyKnownString?
   }
 
+  interface BuilderLikeExpressionEvaluator<T> {
+    val buildMethod: ElementPattern<PsiMethod>
+
+    val allowSideEffects: Boolean
+
+    val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, T, UStringEvaluator, Configuration) -> T>
+
+    fun isExpressionReturnSelf(expression: UReferenceExpression): Boolean = false
+  }
+
   data class Configuration(
     val methodCallDepth: Int = 1,
     val parameterUsagesDepth: Int = 1,
     val valueProviders: Iterable<DeclarationValueProvider> = emptyList(),
     val usagesSearchScope: SearchScope = LocalSearchScope.EMPTY,
     val methodsToAnalyzePattern: ElementPattern<PsiMethod> = PlatformPatterns.alwaysFalse(),
-    val methodEvaluators: Map<ElementPattern<UCallExpression>, MethodCallEvaluator> = emptyMap()
+    val methodEvaluators: Map<ElementPattern<UCallExpression>, MethodCallEvaluator> = emptyMap(),
+    val builderEvaluators: List<BuilderLikeExpressionEvaluator<PartiallyKnownString?>> = emptyList()
   ) {
     internal fun getEvaluatorForCall(callExpression: UCallExpression): MethodCallEvaluator? {
       return methodEvaluators.entries.firstOrNull { (pattern, _) -> pattern.accepts(callExpression) }?.value
     }
+
+    internal fun getBuilderEvaluatorForCall(callExpression: UCallExpression): BuilderLikeExpressionEvaluator<PartiallyKnownString?>? {
+      return builderEvaluators.firstOrNull { it.buildMethod.accepts(callExpression.resolve()) }
+    }
   }
+}
+
+private val UElement.ownTextRange: TextRange
+  get() = TextRange(0, sourcePsi!!.textLength)
+
+private fun List<PartiallyKnownString>.collapse(element: UElement): PartiallyKnownString? = when {
+  isEmpty() -> null
+  size == 1 -> single()
+  else -> {
+    val maxIndex = this.maxOf { it.segments.lastIndex }
+    val segments = mutableListOf<StringEntry>()
+    for (segmentIndex in 0..maxIndex) {
+      val segment = this.mapNotNull { it.segments.getOrNull(segmentIndex) }.firstOrNull() ?: break
+      if (map { it.segments.getOrNull(segmentIndex) }.any { !it.areEqual(segment) }) {
+        break
+      }
+      segments.add(segment)
+    }
+
+    if (segments.size != maxIndex + 1) {
+      segments.add(
+        StringEntry.Unknown(element.sourcePsi!!, element.ownTextRange,
+                            map { PartiallyKnownString(it.segments.subList(segments.size, it.segments.size)) })
+      )
+    }
+
+    PartiallyKnownString(segments)
+  }
+}
+
+private fun StringEntry?.areEqual(other: StringEntry?): Boolean {
+  if (this == null && other == null) return true
+  if (this?.javaClass != other?.javaClass) return false
+  if (this is StringEntry.Unknown && other is StringEntry.Unknown) {
+    return this.sourcePsi == other.sourcePsi && this.range == other.range
+  }
+  if (this is StringEntry.Known && other is StringEntry.Known) {
+    return this.sourcePsi == other.sourcePsi && this.range == other.range && this.value == other.value
+  }
+  return false
 }

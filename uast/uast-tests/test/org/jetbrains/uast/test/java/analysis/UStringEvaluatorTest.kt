@@ -12,6 +12,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.castSafelyTo
 import junit.framework.TestCase
 import org.jetbrains.uast.*
+import org.jetbrains.uast.analysis.UStringBuilderEvaluator
 import org.jetbrains.uast.analysis.UStringEvaluator
 import org.jetbrains.uast.test.java.AbstractJavaUastLightTest
 
@@ -404,8 +405,8 @@ class UStringEvaluatorTest : AbstractJavaUastLightTest() {
       }
     """.trimIndent())
 
-    val myAnnoValueProvider = UStringEvaluator.DeclarationValueProvider {
-      val myAnnotation = it.uAnnotations.firstOrNull { anno -> anno.qualifiedName == "MyAnno" }
+    val myAnnoValueProvider = UStringEvaluator.DeclarationValueProvider { declaration ->
+      val myAnnotation = declaration.uAnnotations.firstOrNull { anno -> anno.qualifiedName == "MyAnno" }
       myAnnotation?.findAttributeValue("value")?.castSafelyTo<ULiteralExpression>()?.takeIf { it.isString }?.let { literal ->
         PartiallyKnownString(StringEntry.Known(literal.value as String, literal.sourcePsi!!, TextRange(0, literal.sourcePsi!!.textLength)))
       }
@@ -491,6 +492,259 @@ class UStringEvaluatorTest : AbstractJavaUastLightTest() {
     )) ?: fail("Cannot evaluate string")
 
     TestCase.assertEquals("""'abacaba''\m/'NULL'\m/''my-string'' is cool''\m/''aaa'""", pks.debugConcatenation)
+  }
+
+  fun `test StringBuilder toString evaluate`() {
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("I am StringBuilder");
+          StringBuilder sb1 = sb.append(". Hi!");
+          
+          sb.append("a");
+          
+          if (param) {
+            sb.append("x");
+          } else {
+            sb1.append("z");
+            sb.append("y");
+          }
+          
+          sb.append("c").append("d");
+          
+          sb1.append("b");
+          
+          return sb.toStrin<caret>g();
+        }
+      }
+    """.trimIndent())
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement().getUCallExpression()
+                         ?: fail("Cannot find UElement at caret")
+    val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+      builderEvaluators = listOf(UStringBuilderEvaluator)
+    )) ?: fail("Cannot evaluate string")
+
+    TestCase.assertEquals("""'I am StringBuilder''. Hi!''a'{'x'|'z''y'}'c''d''b'""", pks.debugConcatenation)
+  }
+
+  fun `test mixed assignment and side effect changes for StringBuilder`() {
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          sb = sb.append("b");
+          sb.append("c");
+          sb = sb.append("d");
+          sb.append("e");
+          return sb.toStrin<caret>g();
+        }
+      }
+    """.trimIndent())
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement().getUCallExpression()
+                         ?: fail("Cannot find UElement at caret")
+    val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+      builderEvaluators = listOf(UStringBuilderEvaluator)
+    )) ?: fail("Cannot evaluate string")
+
+    TestCase.assertEquals("""'a''b''c''d''e'""", pks.debugConcatenation)
+  }
+
+  @Suppress("unused")
+  fun `ignore test StringBuilder change through possible reference`() {
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          StringBuilder sb1 = new StringBuilder("b");
+          
+          StringBuilder sb2 = param ? sb : sb1; // ignore sb1 because sb1 != sb
+          
+          s1.append("-");
+          
+          StringBuilder sb3 = sb2;
+          
+          sb3.append("c");  // add because of equality (strict = true)
+          
+          sb1.append("d"); // ignore (strict = false, witness incorrect)
+          
+          sb2.append("e"); // add "c" as optional (strict = false, witness correct)
+          
+          sb1.append("f"); // ignore (no connection)
+          
+          return sb.toStrin<caret>g(); // go to potential update from sb
+        }
+      }
+    """.trimIndent())
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement().getUCallExpression()
+                         ?: fail("Cannot find UElement at caret")
+    val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+      builderEvaluators = listOf(UStringBuilderEvaluator)
+    )) ?: fail("Cannot evaluate string")
+
+    TestCase.assertEquals("""'a'{''|'c'}""", pks.debugConcatenation)
+  }
+
+  fun `test StringBuilder update through another equal reference`() {
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          StringBuilder sb1 = sb.append("b");
+          StringBuilder sb2 = sb1.append("c");
+          sb2.append("d");
+          sb2.append("e");
+          return sb.toStrin<caret>g();
+        }
+      }
+    """.trimIndent())
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement().getUCallExpression()
+                         ?: fail("Cannot find UElement at caret")
+    val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+      builderEvaluators = listOf(UStringBuilderEvaluator)
+    )) ?: fail("Cannot evaluate string")
+
+    TestCase.assertEquals("""'a''b''c''d''e'""", pks.debugConcatenation)
+  }
+
+  fun `test StringBuilder with if`() {
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          
+          if (param) {
+            sb.append("b");
+          } else {
+            sb.append("c");
+          }
+          
+          return sb.toStrin<caret>g();
+        }
+      }
+    """.trimIndent())
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement().getUCallExpression()
+                         ?: fail("Cannot find UElement at caret")
+    val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+      builderEvaluators = listOf(UStringBuilderEvaluator)
+    )) ?: fail("Cannot evaluate string")
+
+    TestCase.assertEquals("""'a'{'b'|'c'}""", pks.debugConcatenation)
+  }
+
+  fun `test StringBuilder reassignment and side effect change in if`() {
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          
+          if (param) {
+            sb.append("b");
+          } else {
+            sb = new StringBuilder("c");
+          }
+          
+          return sb.toStrin<caret>g();
+        }
+      }
+    """.trimIndent())
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement().getUCallExpression()
+                         ?: fail("Cannot find UElement at caret")
+    val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+      builderEvaluators = listOf(UStringBuilderEvaluator)
+    )) ?: fail("Cannot evaluate string")
+
+    TestCase.assertEquals("""{'a''b'|'c'}""", pks.debugConcatenation)
+  }
+
+  fun `test StringBuilder reference reassignment to another object`() {
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          StringBuilder sb1 = sb.append("b");
+          
+          sb1.append("c");
+          
+          sb1 = new StringBuilder("d");
+          
+          sb1.append("e");
+          
+          return sb.toStrin<caret>g();
+        }
+      }
+    """.trimIndent())
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement().getUCallExpression()
+                         ?: fail("Cannot find UElement at caret")
+    val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+      builderEvaluators = listOf(UStringBuilderEvaluator)
+    )) ?: fail("Cannot evaluate string")
+
+    TestCase.assertEquals("""'a''b''c'""", pks.debugConcatenation)
+  }
+
+  fun `test deep StringBuilder update by another reference`() {
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          StringBuilder sb1 = sb.append("b");
+          
+          if (param) {
+            sb.append("c");
+            if (!param) {
+              sb1.append("d")
+            } else {
+              sb1.append("e");
+            }
+          } else {
+            sb1.append("f");
+          }
+          
+          return sb.toStrin<caret>g();
+        }
+      }
+    """.trimIndent())
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement().getUCallExpression()
+                         ?: fail("Cannot find UElement at caret")
+    val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+      builderEvaluators = listOf(UStringBuilderEvaluator)
+    )) ?: fail("Cannot evaluate string")
+
+    TestCase.assertEquals("""'a''b'{'c''d'|'c''e'|'f'}""", pks.debugConcatenation)
+  }
+
+  fun `test StringBuilder update through reference with lower scope`() {
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          StringBuilder sb1 = sb.append("b");
+          
+          if (param) {
+            StringBuilder sb2 = sb1.append("c");
+            sb2.append("d");
+          }
+          
+          return sb.toStrin<caret>g();
+        }
+      }
+    """.trimIndent())
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement().getUCallExpression()
+                         ?: fail("Cannot find UElement at caret")
+    val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+      builderEvaluators = listOf(UStringBuilderEvaluator)
+    )) ?: fail("Cannot evaluate string")
+
+    TestCase.assertEquals("""'a''b'{|'c''d'}""", pks.debugConcatenation)
   }
 
   fun `test many assignments`() {
