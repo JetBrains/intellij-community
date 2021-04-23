@@ -24,10 +24,11 @@ internal class EditSourceFromChangesBrowserAction : EditSourceAction() {
       icon = AllIcons.Actions.EditSource
       text = VcsBundle.message("edit.source.action.text")
 
+      val isModalContext = e.getData(PlatformDataKeys.IS_MODAL_CONTEXT) == true
       val changesBrowser = e.getData(ChangesBrowserBase.DATA_KEY)
       isVisible = isVisible && changesBrowser != null
       isEnabled = isEnabled && changesBrowser != null &&
-                  e.getData(PlatformDataKeys.IS_MODAL_CONTEXT) == false &&
+                  !isModalContext &&
                   e.getData(CommittedChangesBrowserUseCase.DATA_KEY) != IN_AIR
     }
   }
