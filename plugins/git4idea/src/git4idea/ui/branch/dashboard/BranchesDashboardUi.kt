@@ -343,8 +343,9 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
   internal val changesBrowser: ChangesBrowserBase
     get() = mainFrame.changesBrowser
 
-  override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties, filterUi: VcsLogFilterUiEx) =
-    MainFrame(logData, this, uiProperties, filterUi, this)
+  override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties,
+                               filterUi: VcsLogFilterUiEx, isEditorDiffPreview: Boolean) =
+    MainFrame(logData, this, uiProperties, filterUi, isEditorDiffPreview, this)
       .apply {
         isFocusCycleRoot = false
         focusTraversalPolicy = null //new focus traversal policy will be configured include branches tree

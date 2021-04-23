@@ -87,6 +87,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                    @NotNull AbstractVcsLogUi logUi,
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLogFilterUiEx filterUi,
+                   boolean withEditorDiffPreview,
                    @NotNull Disposable disposable) {
     myLogData = logData;
     myUiProperties = uiProperties;
@@ -110,7 +111,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
       return myLogData.getMiniDetailsGetter().getCommitData(index, Collections.singleton(index));
-    }, this);
+    }, withEditorDiffPreview, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
                                                            ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
@@ -153,7 +154,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
     setLayout(new BorderLayout());
-    myDiffPreview = new FrameDiffPreview<>(createDiffPreview(false, myChangesBrowser),
+    VcsLogChangeProcessor processor = myChangesBrowser.createChangeProcessor(false);
+    processor.getToolbarWrapper().setVerticalSizeReferent(getToolbar());
+    myDiffPreview = new FrameDiffPreview<>(processor,
                                            myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
                                            myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
                                            0.7f) {
@@ -168,13 +171,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
-  }
-
-  @NotNull
-  public VcsLogChangeProcessor createDiffPreview(boolean isInEditor, @NotNull Disposable parent) {
-    VcsLogChangeProcessor processor = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, isInEditor, parent);
-    if (!isInEditor) processor.getToolbarWrapper().setVerticalSizeReferent(getToolbar());
-    return processor;
   }
 
   public void setExplanationHtml(@Nullable @NlsContexts.LinkLabel String text) {

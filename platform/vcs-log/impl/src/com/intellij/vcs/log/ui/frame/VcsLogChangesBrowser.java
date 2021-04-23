@@ -13,10 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.DiffPreview;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
@@ -40,6 +37,7 @@ import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.Nls;
@@ -76,11 +74,12 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull private Consumer<StatusText> myUpdateEmptyText = this::updateEmptyText;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  @Nullable private DiffPreview myEditorDiffPreview;
+  @Nullable private EditorDiffPreview myEditorDiffPreview;
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
                        @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> getter,
+                       boolean isWithEditorDiffPreview,
                        @NotNull Disposable parent) {
     super(project, false, false);
     myUiProperties = uiProperties;
@@ -103,6 +102,11 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     GuiUtils.installVisibilityReferent(myToolbarWrapper, toolbarComponent);
 
     init();
+
+    if (isWithEditorDiffPreview) {
+      setEditorDiffPreview(true);
+      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::toggleEditorDiffPreview);
+    }
 
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
     myViewer.rebuildTree();
@@ -397,13 +401,31 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return ChangeDiffRequestProducer.create(project, change, context);
   }
 
+  public void toggleEditorDiffPreview() {
+    setEditorDiffPreview(VcsLogUiUtil.isDiffPreviewInEditor(myProject));
+  }
+
+  public void setEditorDiffPreview(boolean isWithEditorDiffPreview) {
+    EditorDiffPreview preview = myEditorDiffPreview;
+
+    if (isWithEditorDiffPreview && preview == null) {
+      preview = new VcsLogEditorDiffPreview(myProject, this);
+      myEditorDiffPreview = preview;
+    }
+    else if (!isWithEditorDiffPreview && preview != null) {
+      preview.closePreview();
+      myEditorDiffPreview = null;
+    }
+  }
+
+  @NotNull
+  public VcsLogChangeProcessor createChangeProcessor(boolean isInEditor) {
+    return new VcsLogChangeProcessor(myProject, this, isInEditor, this);
+  }
+
   @Override
   protected @Nullable DiffPreview getShowDiffActionPreview() {
     return myEditorDiffPreview;
-  }
-
-  public void setEditorDiffPreview(@Nullable DiffPreview editorDiffPreview) {
-    myEditorDiffPreview = editorDiffPreview;
   }
 
   private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {

@@ -146,35 +146,35 @@ abstract class EditorDiffPreview(private val project: Project,
   abstract fun addSelectionListener(listener: () -> Unit)
 }
 
-class VcsLogEditorDiffPreview(project: Project, private val mainFrame: MainFrame) :
-  EditorDiffPreview(project, mainFrame.changesBrowser) {
+class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsLogChangesBrowser) :
+  EditorDiffPreview(project, changesBrowser) {
 
   init {
     init()
   }
 
   override fun createDiffRequestProcessor(): DiffRequestProcessor {
-    val preview = mainFrame.createDiffPreview(true, owner)
+    val preview = changesBrowser.createChangeProcessor(true)
     preview.updatePreview(true)
     return preview
   }
 
   override fun getEditorTabName(): @Nls String {
-    val changesBrowser = mainFrame.changesBrowser
+    val changesBrowser = changesBrowser
     val change = changesBrowser.selectedChanges.firstOrNull() ?: changesBrowser.directChanges.firstOrNull()
 
     return if (change == null) VcsLogBundle.message("vcs.log.diff.preview.editor.empty.tab.name")
     else VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name", ChangesUtil.getFilePath(change).name)
   }
 
-  override fun getOwnerComponent(): JComponent = mainFrame.changesBrowser.preferredFocusedComponent
+  override fun getOwnerComponent(): JComponent = changesBrowser.preferredFocusedComponent
 
   override fun addSelectionListener(listener: () -> Unit) {
-    mainFrame.changesBrowser.viewer.addSelectionListener(Runnable {
-      if (mainFrame.changesBrowser.selectedChanges.isNotEmpty()) {
+    changesBrowser.viewer.addSelectionListener(Runnable {
+      if (changesBrowser.selectedChanges.isNotEmpty()) {
         listener()
       }
     }, owner)
-    mainFrame.changesBrowser.addListener(VcsLogChangesBrowser.Listener { updatePreview(true) }, owner)
+    changesBrowser.addListener(VcsLogChangesBrowser.Listener { updatePreview(true) }, owner)
   }
 }
