@@ -769,6 +769,10 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       TEST_OBJECT = TEST_METHOD;
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
+    
+    public void setTestMethodName(String methodName) {
+      METHOD_NAME = methodName;
+    }
 
     public @NlsSafe String getTags() {
       return TAGS;

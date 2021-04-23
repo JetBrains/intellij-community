@@ -109,9 +109,10 @@ abstract class AbstractRunConfigurationTest : KotlinCodeInsightTestCase() {
         }
     }
 
-    protected fun configureProject(platform: Platform = Platform.Jvm()) {
+    protected fun configureProject(platform: Platform = Platform.Jvm(), 
+                                   testDirectory: String = getTestName(false)) {
         runWriteAction {
-            val projectBaseDir = testDataDirectory.resolve(getTestName(false))
+            val projectBaseDir = testDataDirectory.resolve(testDirectory)
             val projectDir = PlatformTestUtil.getOrCreateProjectBaseDir(project)
 
             val projectBaseVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectBaseDir)

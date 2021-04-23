@@ -6,16 +6,26 @@
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.execution.PsiLocation
+import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
+import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.junit.TestInClassConfigurationProducer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.refactoring.RefactoringFactory
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.search.allScope
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.findFunctionByName
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -31,6 +41,7 @@ class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationTest() {
 
     override fun tearDown() {
         runAll(
+            ThrowableRunnable { (RunManager.Companion.getInstance(myProject) as RunManagerImpl).clearAll() },
             ThrowableRunnable { mockLibraryFacility.tearDown(module) },
             ThrowableRunnable { super.tearDown() }
         )
@@ -60,6 +71,59 @@ class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationTest() {
         val kotlinFunctionConfiguration = getConfiguration(kotlinFile, project, "testA")
         assert(kotlinFunctionConfiguration.isProducedBy(KotlinJUnitRunConfigurationProducer::class.java))
         assert(kotlinFunctionConfiguration.configuration.name == "MyKotlinTest.testA")
+       
+    }
+
+    fun testRenameKotlinClass() {
+        configureProject(testDirectory = "Simple")
+        val configuredModule = configuredModules.single()
+
+        val testDir = configuredModule.testDir!!
+
+        val kotlinFile = testDir.findChild("MyKotlinTest.kt")!!
+
+        val manager = RunManager.Companion.getInstance(myProject) as RunManagerImpl
+
+        val kotlinClassConfiguration = getConfiguration(kotlinFile, project, "MyKotlinTest")
+        assert(kotlinClassConfiguration.configuration is JUnitConfiguration)
+        manager.setTemporaryConfiguration(RunnerAndConfigurationSettingsImpl(manager, kotlinClassConfiguration.configuration))
+
+        val kotlinFunctionConfiguration = getConfiguration(kotlinFile, project, "testA")
+        assert(kotlinFunctionConfiguration.configuration is JUnitConfiguration)
+        manager.setTemporaryConfiguration(RunnerAndConfigurationSettingsImpl(manager, kotlinFunctionConfiguration.configuration))
+
+        val obj = KotlinFullClassNameIndex.getInstance().get("MyKotlinTest", project, project.allScope()).single()
+        val rename = RefactoringFactory.getInstance(project).createRename(obj, "MyBarKotlinTest")
+        rename.run()
+
+        assert((kotlinClassConfiguration.configuration as JUnitConfiguration).persistentData.MAIN_CLASS_NAME == "MyBarKotlinTest")
+        assert((kotlinFunctionConfiguration.configuration as JUnitConfiguration).persistentData.MAIN_CLASS_NAME == "MyBarKotlinTest")
+    
+    }
+    
+    fun testRenameKotlinMethod() {
+        configureProject(testDirectory = "Simple")
+        val configuredModule = configuredModules.single()
+
+        val testDir = configuredModule.testDir!!
+
+        val kotlinFile = testDir.findChild("MyKotlinTest.kt")!!
+
+        val manager = RunManager.Companion.getInstance(myProject) as RunManagerImpl
+        
+        val kotlinFunctionConfiguration = getConfiguration(kotlinFile, project, "testA")
+        assert(kotlinFunctionConfiguration.configuration is JUnitConfiguration)
+        assert((kotlinFunctionConfiguration.configuration as JUnitConfiguration).persistentData.TEST_OBJECT == JUnitConfiguration.TEST_METHOD)
+        manager.setTemporaryConfiguration(RunnerAndConfigurationSettingsImpl(manager, kotlinFunctionConfiguration.configuration))
+
+        val obj: KtClassOrObject = KotlinFullClassNameIndex.getInstance().get("MyKotlinTest", project, project.allScope()).single()
+        val method = (obj as KtClass).findFunctionByName("testA")
+        assert(method != null)
+        val rename = RefactoringFactory.getInstance(project).createRename(method!!, "testA1")
+        rename.run()
+
+        assert((kotlinFunctionConfiguration.configuration as JUnitConfiguration).persistentData.METHOD_NAME == "testA1")
+    
     }
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("runConfigurations/junit")
