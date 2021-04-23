@@ -12,6 +12,7 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.Compressor
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
@@ -198,7 +199,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
       val updatedEntity = copiedData.createEntity(this)
 
-      updatePersistentIdIndexes(updatedEntity, beforePersistentId, copiedData)
+      updatePersistentIdIndexes(updatedEntity, beforePersistentId, copiedData, modifiableEntity)
 
       return updatedEntity
     }
@@ -209,7 +210,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   internal fun <T : WorkspaceEntity> updatePersistentIdIndexes(updatedEntity: WorkspaceEntity,
                                                                beforePersistentId: PersistentEntityId<*>?,
-                                                               copiedData: WorkspaceEntityData<T>) {
+                                                               copiedData: WorkspaceEntityData<T>,
+                                                               modifiableEntity: ModifiableWorkspaceEntityBase<*>? = null) {
     val entityId = (updatedEntity as WorkspaceEntityBase).id
     if (updatedEntity is WorkspaceEntityWithPersistentId) {
       val newPersistentId = updatedEntity.persistentId()
@@ -218,7 +220,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         updateComposedIds(beforePersistentId, newPersistentId)
       }
     }
-    indexes.simpleUpdateSoftReferences(copiedData)
+    indexes.simpleUpdateSoftReferences(copiedData, modifiableEntity)
   }
 
   private fun updateComposedIds(beforePersistentId: PersistentEntityId<*>, newPersistentId: PersistentEntityId<*>) {
@@ -230,7 +232,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
       // Add an entry to changelog
       this.changeLog.addReplaceEvent(entityId, entity, emptyList(), emptyList(), emptyMap())
-
+      // TODO :: Avoid updating of all soft links for the dependent entity
       updatePersistentIdIndexes(entity.createEntity(this), editingBeforePersistentId, entity)
     }
   }
@@ -899,8 +901,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val children = unmappedChildren.flatMap { (key, value) -> value.map { key to it } }
 
       // Collect children changes
-      val addedChildren = (children.toSet() - beforeChildren.toSet()).toList()
-      val removedChildren = (beforeChildren.toSet() - children.toSet()).toList()
+      val beforeChildrenSet = beforeChildren.toMutableSet()
+      val (removedChildren, addedChildren) = getDiff(beforeChildrenSet, children)
 
       // Collect parent changes
       val parentsMapRes: MutableMap<ConnectionId, EntityId?> = beforeParents.toMutableMap()

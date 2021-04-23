@@ -5,8 +5,10 @@ import com.google.common.collect.HashBiMap
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntityData
+import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
@@ -201,15 +203,15 @@ internal class MutableStorageIndexes(
     externalMappings.values.forEach { it.remove(entityId) }
   }
 
-  fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>) {
+  fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>, modifiableEntity: ModifiableWorkspaceEntityBase<*>?) {
     val pid = copiedData.createEntityId()
     if (copiedData is SoftLinkable) {
-      val beforeSoftLinks = HashSet(this.softLinks.getEntriesById(pid))
+      if (modifiableEntity is ModifiableModuleEntity && !modifiableEntity.dependencyChanged) return
+      val beforeSoftLinksCopy = HashSet(this.softLinks.getEntriesById(pid))
       val afterSoftLinks = copiedData.getLinks()
-      if (beforeSoftLinks != afterSoftLinks) {
-        beforeSoftLinks.forEach { this.softLinks.remove(pid, it) }
-        afterSoftLinks.forEach { this.softLinks.index(pid, it) }
-      }
+      val (removed, added) = getDiff(beforeSoftLinksCopy, afterSoftLinks)
+      removed.forEach { this.softLinks.remove(pid, it) }
+      added.forEach { this.softLinks.index(pid, it) }
     }
   }
 

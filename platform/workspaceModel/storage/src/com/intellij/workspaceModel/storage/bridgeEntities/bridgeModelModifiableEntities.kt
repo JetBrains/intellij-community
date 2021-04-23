@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.ModuleDependencyEntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlLibraryRootProperty
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlListProperty
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlNullableProperty
@@ -18,9 +19,10 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 private val LOG = logger<WorkspaceEntityStorage>()
 
 class ModifiableModuleEntity : ModifiableWorkspaceEntityBase<ModuleEntity>() {
+  internal var dependencyChanged = false
   var name: String by EntityDataDelegation()
   var type: String? by EntityDataDelegation()
-  var dependencies: List<ModuleDependencyItem> by EntityDataDelegation()
+  var dependencies: List<ModuleDependencyItem> by ModuleDependencyEntityDataDelegation()
 }
 
 fun WorkspaceEntityStorageDiffBuilder.addModuleEntity(name: String, dependencies: List<ModuleDependencyItem>, source: EntitySource,

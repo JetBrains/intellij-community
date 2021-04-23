@@ -3,6 +3,8 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.util.ReflectionUtil
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -266,6 +268,24 @@ class EntityDataDelegation<A : ModifiableWorkspaceEntityBase<*>, B> : ReadWriteP
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    field.set(thisRef.original, value)
+  }
+}
+
+class ModuleDependencyEntityDataDelegation : ReadWriteProperty<ModifiableModuleEntity, List<ModuleDependencyItem>> {
+  override fun getValue(thisRef: ModifiableModuleEntity, property: KProperty<*>): List<ModuleDependencyItem> {
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    return field.get(thisRef.original) as List<ModuleDependencyItem>
+  }
+
+  override fun setValue(thisRef: ModifiableModuleEntity, property: KProperty<*>, value: List<ModuleDependencyItem>) {
+    if (!thisRef.modifiable.get()) {
+      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+    }
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    thisRef.dependencyChanged = true
     field.isAccessible = true
     field.set(thisRef.original, value)
   }
