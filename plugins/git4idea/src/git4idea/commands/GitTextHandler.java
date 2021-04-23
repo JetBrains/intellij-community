@@ -41,11 +41,11 @@ public abstract class GitTextHandler extends GitHandler {
     super(project, directory, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
+  protected GitTextHandler(@Nullable Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(@NotNull Project project,
+  protected GitTextHandler(@Nullable Project project,
                            @NotNull VirtualFile vcsRoot,
                            @NotNull GitCommand command,
                            List<String> configParameters) {

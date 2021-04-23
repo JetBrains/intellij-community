@@ -97,7 +97,7 @@ public abstract class GitHandler {
    * @param vcsRoot a process directory
    * @param command a command to execute
    */
-  protected GitHandler(@NotNull Project project,
+  protected GitHandler(@Nullable Project project,
                        @NotNull VirtualFile vcsRoot,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {

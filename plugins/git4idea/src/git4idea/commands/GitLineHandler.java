@@ -48,13 +48,13 @@ public class GitLineHandler extends GitTextHandler {
     super(project, directory, command);
   }
 
-  public GitLineHandler(@NotNull Project project,
+  public GitLineHandler(@Nullable Project project,
                         @NotNull VirtualFile vcsRoot,
                         @NotNull GitCommand command) {
     super(project, vcsRoot, command);
   }
 
-  public GitLineHandler(@NotNull Project project,
+  public GitLineHandler(@Nullable Project project,
                         @NotNull VirtualFile vcsRoot,
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {

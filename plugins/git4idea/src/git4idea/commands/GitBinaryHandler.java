@@ -25,6 +25,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -46,7 +47,7 @@ public class GitBinaryHandler extends GitHandler {
   @NotNull private final Semaphore mySteamSemaphore = new Semaphore(0); // The semaphore that waits for stream processing
   @NotNull private final AtomicReference<VcsException> myException = new AtomicReference<>();
 
-  public GitBinaryHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
+  public GitBinaryHandler(@Nullable Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
