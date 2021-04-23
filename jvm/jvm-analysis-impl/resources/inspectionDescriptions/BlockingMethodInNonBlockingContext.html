@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports thread-blocking method calls found in a code fragment where a thread should not be blocked.
+Reports thread-blocking method calls in code fragments where threads should not be blocked.
 
 <p>Example (Reactor):</p>
 <pre><code>
@@ -21,9 +21,9 @@ suspend fun exampleFun() {
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
 <ul>
-  <li>Use the <b>Blocking Annotations</b> option to configure annotations to mark methods that could block thread.</li>
-  <li>Use the <b>Non-Blocking Annotations</b> option to configure annotations to mark methods that should work in non-blocking context.</li>
+  <li>In the <b>Blocking Annotations</b> list, specify annotations that mark thread-blocking methods.</li>
+  <li>In the <b>Non-Blocking Annotations</b> list, specify annotations that mark non-blocking methods.</li>
 </ul>
-<p>Added annotations could also be used as <a href="https://www.jetbrains.com/help/idea/external-annotations.html">External Annotations</a></p>
+<p>Specified annotations can be used as <a href="https://www.jetbrains.com/help/idea/external-annotations.html">External Annotations</a></p>
 </body>
 </html>
