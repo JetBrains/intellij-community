@@ -62,9 +62,23 @@ public class JBColor extends Color {
   }
 
   @NotNull
+  public static JBColor namedColor(@NonNls @NotNull final String propertyName) {
+    return namedColor(propertyName, fallbackColor(propertyName));
+  }
+
+  @NotNull
   public static JBColor namedColor(@NonNls @NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
-      Color color = notNull(UIManager.getColor(propertyName), () -> notNull(findPatternMatch(propertyName), defaultColor));
+      Color color = UIManager.getColor(propertyName);
+      return color == null ? defaultColor : color;
+    });
+  }
+
+  @NotNull
+  private static JBColor fallbackColor(@NonNls @NotNull final String propertyName) {
+    return new JBColor(() -> {
+      Color color = notNull(UIManager.getColor(propertyName),
+                            () -> notNull(findPatternMatch(propertyName), Gray.TRANSPARENT));
       if (UIManager.get(propertyName) == null) {
         if (Registry.is("ide.save.missing.jb.colors", false)) {
           return _saveAndReturnColor(propertyName, color);
