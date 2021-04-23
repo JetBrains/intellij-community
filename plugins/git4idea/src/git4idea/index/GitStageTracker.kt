@@ -225,6 +225,8 @@ class GitStageTracker(val project: Project) : Disposable {
   }
 
   data class State(val rootStates: Map<VirtualFile, RootState>) {
+    val allRoots: Set<VirtualFile>
+      get() = rootStates.keys
     val stagedRoots: Set<VirtualFile>
       get() = rootStates.filterValues(RootState::hasStagedFiles).keys
     val changedRoots: Set<VirtualFile>
