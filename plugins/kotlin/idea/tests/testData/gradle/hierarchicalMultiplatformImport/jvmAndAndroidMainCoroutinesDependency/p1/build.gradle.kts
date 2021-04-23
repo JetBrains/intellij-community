@@ -6,7 +6,7 @@ android {
     compileSdkVersion(26)
 }
 kotlin {
-    js()
+    js().browser()
     jvm()
     android()
     sourceSets {
