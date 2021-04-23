@@ -169,13 +169,13 @@ class IndexDiagnosticDumper : Disposable {
     return diagnosticJson to diagnosticHtml
   }
 
-  private fun <T> fastReadJsonField(jsonFile: Path, type: Class<T>): T? {
+  private fun <T> fastReadJsonField(jsonFile: Path, propertyName: String, type: Class<T>): T? {
     try {
       jsonFile.bufferedReader().use { reader ->
         jacksonMapper.factory.createParser(reader).use { parser ->
           while (parser.nextToken() != null) {
             val property = parser.currentName
-            if (property == "times") {
+            if (property == propertyName) {
               parser.nextToken()
               return jacksonMapper.readValue(parser, type)
             }
@@ -190,10 +190,10 @@ class IndexDiagnosticDumper : Disposable {
   }
 
   private fun fastReadIndexingHistoryTimes(jsonFile: Path): JsonProjectIndexingHistoryTimes? =
-    fastReadJsonField(jsonFile, JsonProjectIndexingHistoryTimes::class.java)
+    fastReadJsonField(jsonFile, "times", JsonProjectIndexingHistoryTimes::class.java)
 
   private fun fastReadFileCount(jsonFile: Path): JsonProjectIndexingFileCount? =
-    fastReadJsonField(jsonFile, JsonProjectIndexingFileCount::class.java)
+    fastReadJsonField(jsonFile, "fileCount", JsonProjectIndexingFileCount::class.java)
 
   private fun deleteOutdatedDiagnostics(existingDiagnostics: List<ExistingDiagnostic>): List<ExistingDiagnostic> {
     val sortedDiagnostics = existingDiagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }
