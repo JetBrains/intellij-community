@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +28,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
@@ -211,7 +209,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
 
     for (int index = 0; index < orderedProviders.size(); ) {
-      List<IndexUpdateRunner.BagOfFiles> bagsOfFiles = new ArrayList<>();
+      List<IndexUpdateRunner.FileSet> fileSets = new ArrayList<>();
       int takenFiles = 0;
 
       int biggestProviderFiles = 0;
@@ -221,33 +219,33 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
         IndexableFilesIterator provider = orderedProviders.get(index++);
         List<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
         if (!providerFiles.isEmpty()) {
-          bagsOfFiles.add(new IndexUpdateRunner.BagOfFiles(myProject, provider.getDebugName(), providerFiles));
+          fileSets.add(new IndexUpdateRunner.FileSet(myProject, provider.getDebugName(), providerFiles));
         }
         if (biggestProviderFiles < providerFiles.size()) {
           biggestProviderFiles = providerFiles.size();
           biggestProvider = provider;
         }
       }
-      if (bagsOfFiles.isEmpty() || biggestProvider == null) {
+      if (fileSets.isEmpty() || biggestProvider == null) {
         break;
       }
 
       var indexingProgressText = biggestProvider.getIndexingProgressText();
 
       concurrentTasksProgressManager.setText(indexingProgressText);
-      int bagFilesNumber = bagsOfFiles.stream().mapToInt(b -> b.files.size()).sum();
-      SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(bagFilesNumber);
+      int setFilesNumber = fileSets.stream().mapToInt(b -> b.files.size()).sum();
+      SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(setFilesNumber);
       try {
         IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          indexUpdateRunner.indexFiles(myProject, bagsOfFiles, subTaskIndicator);
+          indexUpdateRunner.indexFiles(myProject, fileSets, subTaskIndicator);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           exception = e;
         }
 
         try {
-          bagsOfFiles.forEach(b -> projectIndexingHistory.addProviderStatistics(b.statistics));
+          fileSets.forEach(b -> projectIndexingHistory.addProviderStatistics(b.statistics));
         }
         catch (Exception e) {
           LOG.error("Failed to add indexing statistics", e);
