@@ -118,7 +118,8 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     testKind.addSettingsEditorListener(
       editor -> {
         int selectedType = testKind.getTestKind();
-        forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(selectedType, forkMode.getSelectedVariant()));
+        forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(selectedType, forkMode.getSelectedVariant(),
+                                                                       repeat.getSelectedVariant()));
         scopeFragment.setRemovable(selectedType == JUnitConfigurationModel.PATTERN ||
                                    selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE ||
                                    selectedType == JUnitConfigurationModel.TAGS ||

@@ -386,15 +386,16 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myChangeListLabeledComponent.setVisible(selectedType == JUnitConfigurationModel.BY_SOURCE_CHANGES);
 
     myForkCb.setModel(new DefaultComboBoxModel<>(getForkModel(selectedType, myRepeatCb.getSelectedItem())));
-    myForkCb.setSelectedItem(updateForkMethod(selectedType, (String)myForkCb.getSelectedItem()));
+    myForkCb.setSelectedItem(updateForkMethod(selectedType, (String)myForkCb.getSelectedItem(), myRepeatCb.getSelectedItem()));
   }
 
   @NotNull
-  public static String updateForkMethod(Integer selectedType, String forkMethod) {
+  public static String updateForkMethod(Integer selectedType, String forkMethod, Object repeat) {
     if (forkMethod == null) {
       forkMethod = JUnitConfiguration.FORK_NONE;
     }
-    else if (selectedType == JUnitConfigurationModel.CLASS && forkMethod == JUnitConfiguration.FORK_KLASS) {
+    else if (selectedType == JUnitConfigurationModel.CLASS && forkMethod == JUnitConfiguration.FORK_KLASS &&
+             RepeatCount.ONCE.equals(repeat)) {
       forkMethod = JUnitConfiguration.FORK_METHOD;
     }
     return forkMethod;
