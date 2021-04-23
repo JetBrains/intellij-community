@@ -159,6 +159,10 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
       }
     } as Consumer<PlatformLayout>
 
+    productLayout.compatiblePluginsToIgnore = [
+      "intellij.java.plugin",
+      "kotlin.idea"
+    ]
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
 

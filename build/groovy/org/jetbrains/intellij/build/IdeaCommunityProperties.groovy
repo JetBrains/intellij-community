@@ -24,7 +24,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
-    productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin", "kotlin.idea"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin([:]),
