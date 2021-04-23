@@ -54,7 +54,7 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
     Disposer.register(panel, updater)
 
     updater.pathsProvider = {
-      val singleRoot = ProjectLevelVcsManager.getInstance(project).allVersionedRoots.singleOrNull()
+      val singleRoot = tracker.state.allRoots.singleOrNull()
       if (singleRoot != null) listOf(VcsUtil.getFilePath(singleRoot)) else tracker.state.changedRoots.map { VcsUtil.getFilePath(it) }
     }
     updater.start()
