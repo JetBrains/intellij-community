@@ -361,10 +361,13 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
     }
   }
 
-  private static String getClassPresentableName(@NotNull UClass uClass) {
+  private static @NotNull String getClassPresentableName(@NotNull UClass uClass) {
     return ReadAction.compute(() -> {
       String qualifiedName = uClass.getQualifiedName();
-      return qualifiedName != null ? qualifiedName : uClass.getName();
+      if (qualifiedName != null) {
+        return qualifiedName;
+      }
+      return Objects.requireNonNullElse(uClass.getName(), "anonymous class");
     });
   }
 
