@@ -59,6 +59,7 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
 
     myFixture.addClass("package a; public class Class0 {}")
     myFixture.addFileToProject("mod1/classes.xml", "<root><class name='a.Class0'/></root>")
+    myFixture.addFileToProject("mod2/Class2.java", "public class Class2 {{Runnable r = new Runnable() {};}}")
     assertReportedProblems("Module 'mod1' sources do not depend on module 'mod2' sources")
   }
 

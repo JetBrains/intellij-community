@@ -61,12 +61,14 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
 
   @Override
   public void enqueueClassUsagesProcessor(RefClass refClass, UsagesProcessor p) {
+    LOG.assertTrue(!refClass.isAnonymous());
     if (myClassUsagesRequests == null) myClassUsagesRequests = new HashMap<>();
     enqueueRequestImpl(refClass, myClassUsagesRequests, p);
 
   }
   @Override
   public void enqueueDerivedClassesProcessor(RefClass refClass, DerivedClassesProcessor p) {
+    LOG.assertTrue(!refClass.isAnonymous());
     if (myDerivedClassesRequests == null) myDerivedClassesRequests = new HashMap<>();
     enqueueRequestImpl(refClass, myDerivedClassesRequests, p);
   }
@@ -367,7 +369,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
       if (qualifiedName != null) {
         return qualifiedName;
       }
-      return Objects.requireNonNullElse(uClass.getName(), "anonymous class");
+      return Objects.requireNonNull(uClass.getName(), uClass.getClass().getName());
     });
   }
 

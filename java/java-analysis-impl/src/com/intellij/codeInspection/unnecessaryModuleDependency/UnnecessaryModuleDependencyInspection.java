@@ -39,6 +39,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       refManager.iterate(new RefJavaVisitor() {
         @Override
         public void visitClass(@NotNull RefClass aClass) {
+          if (aClass.isAnonymous()) return;
           RefModule toModule = aClass.getModule();
           if (toModule == null) return;
           String toModuleName = toModule.getName();
