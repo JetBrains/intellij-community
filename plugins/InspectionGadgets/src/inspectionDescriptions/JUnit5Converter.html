@@ -4,6 +4,9 @@ Reports JUnit 4 tests which can be automatically migrated to JUnit 5.
 Though default runners are automatically convertable, custom runners, method- and field- rules are not and require manual changes.
 <p>For example:</p>
 <pre><code>
+  <b>import</b> org.junit.Assert;
+  <b>import</b> org.junit.Test;
+
   <b>public class</b> RelevantTest {
 
     @Test
@@ -12,8 +15,11 @@ Though default runners are automatically convertable, custom runners, method- an
     }
   }
 </code></pre>
-<p>After the quick fix is applied, the result looks like this:</p>
+<p>A quick fix is provided which invokes the Migrate refactoring on the reported test:</p>
 <pre><code>
+  <b>import</b> org.junit.Test;
+  <b>import</b> org.junit.jupiter.api.Assertions;
+
   <b>public class</b> RelevantTest {
 
     @Test

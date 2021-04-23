@@ -5,10 +5,8 @@ which are never thrown inside the method body.
 Such test methods can never succeed.
 <p>For example:</p>
 <pre><code>
-  <b>public class</b> ChiefTest {
-    @Test(expected = CloneNotSupportedException.class)
-    <b>public void</b> testIt() {
-    }
+  @Test(expected = CloneNotSupportedException.class)
+  <b>public void</b> testIt() {
   }
 </code></pre>
 <!-- tooltip end -->

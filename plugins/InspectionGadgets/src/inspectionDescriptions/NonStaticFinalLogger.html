@@ -10,7 +10,7 @@ enumerations, annotations and inner classes are not reported by this inspection.
     <b>private</b> Logger LOG = Logger.getLogger(Critical.class);
   }
 </code></pre>
-<p>After the quick fix is applied, the result looks like this:</p>
+<p>A quick fix is provided to change the logger modifiers to <code>static final</code>:</p>
 <pre><code>
   <b>public class</b> Significant {
     <b>private static final</b> Logger LOG = Logger.getLogger(Critical.class);
@@ -18,7 +18,7 @@ enumerations, annotations and inner classes are not reported by this inspection.
 </code></pre>
 <!-- tooltip end -->
 <p>
-Use the table below to specify Logger class names.
+Use the table below to specify logger class names.
 Fields which have a type equal to one of the class names specified and which are not <code>static</code>
 and <code>final</code>, will be reported by this inspection.
 <p>

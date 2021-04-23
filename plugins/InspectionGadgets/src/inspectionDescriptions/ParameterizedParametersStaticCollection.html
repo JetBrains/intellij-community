@@ -20,7 +20,7 @@ Such <a href="https://github.com/junit-team/junit4/wiki/parameterized-tests">par
     // ... test cases
   }
 </code></pre>
-<p>After the quick fix is applied, the result looks like this:</p>
+<p>A quick fix is provided to create an empty parameter provider method (though you'll need to implement it manually):</p>
 <pre><code>
   @RunWith(Parameterized.class)
   <b>public class</b> ImportantTest {
@@ -33,7 +33,7 @@ Such <a href="https://github.com/junit-team/junit4/wiki/parameterized-tests">par
     }
 
     @Parameters
-    <b>public static</b> Collection parameters() {
+    <b>public static</b> Iterable&lt;Object[]> parameters() {
       <b>return null</b>;
     }
 

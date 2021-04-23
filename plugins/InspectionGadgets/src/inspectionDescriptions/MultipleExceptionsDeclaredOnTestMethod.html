@@ -5,28 +5,21 @@ Such clauses are unnecessarily verbose.
 The test methods will not be called from other project code, so there is not need to handle the exceptions separately.
 <p>For example:</p>
 <pre><code>
-  <b>public class</b> EssentialTest {
-
-    @Test
-    <b>public void</b> testUnknownLetters() <b>throws</b> FileNotFoundException, UnsupportedEncodingException {
-      HunspellDictionary hunspell = getTestHunspell();
-      assertNull(hunspell.contains("русский"));
-    }
-
-    // ...
+  @Test
+  <b>public void</b> testReflection() <b>throws</b> NoSuchMethodException,
+      InvocationTargetException, IllegalAccessException {
+    String result = (String) String.class.getMethod("trim")
+        .invoke(" hello ");
+    assertEquals("hello", result);
   }
 </code></pre>
-<p>After the quick fix is applied, the result looks like this:</p>
+<p>A quick fix is provied to replace the exception declarations with a single exception:</p>
 <pre><code>
-  <b>public class</b> EssentialTest {
-
-    @Test
-    <b>public void</b> testUnknownLetters() <b>throws</b> Exception {
-      HunspellDictionary hunspell = getTestHunspell();
-      assertNull(hunspell.contains("русский"));
-    }
-
-    // ...
+  @Test
+  <b>public void</b> testReflection() <b>throws</b> Exception {
+    String result = (String) String.class.getMethod("trim")
+        .invoke(" hello ");
+    assertEquals("hello", result);
   }
 </code></pre>
 <!-- tooltip end -->

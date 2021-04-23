@@ -6,17 +6,17 @@ an exception before the <code>super.tearDown()</code> call, this may lead to inc
 <p>Problem example:</p>
 <pre><code>
   <b>public class</b> AnotherTest <b>extends</b> CompanyTestCase {
-    <b>private</b> File file;
+    <b>private</b> Path path;
 
     @Override
     <b>protected void</b> setUp() <b>throws</b> Exception {
       <b>super</b>.setUp();
-      file = File.createTempFile("abcde", ".tmp");
+      path = Files.createTempFile("abcde", ".tmp");
     }
 
     @Override
     <b>protected void</b> tearDown() <b>throws</b> Exception {
-      file.delete();
+      Files.delete(path);
       <b>super</b>.tearDown();
     }
   }
@@ -24,18 +24,18 @@ an exception before the <code>super.tearDown()</code> call, this may lead to inc
 <p>Good example:</p>
 <pre><code>
   <b>public class</b> AnotherTest <b>extends</b> CompanyTestCase {
-    <b>private</b> File file;
+    <b>private</b> Path path;
 
     @Override
     <b>protected void</b> setUp() <b>throws</b> Exception {
       <b>super</b>.setUp();
-      file = File.createTempFile("abcde", ".tmp");
+      path = Files.createTempFile("abcde", ".tmp");
     }
 
     @Override
     <b>protected void</b> tearDown() <b>throws</b> Exception {
       <b>try</b> {
-        file.delete();
+        Files.delete(path);
       } <b>finally</b> {
         <b>super</b>.tearDown();
       }

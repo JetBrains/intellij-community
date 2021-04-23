@@ -1,7 +1,8 @@
 <html>
 <body>
 Reports <code>Logger</code> instances which are initialized with a <code>class</code> literal from a different class than the <code>Logger</code>
-is contained in. This can easily happen when copy-pasting some contents from another class.
+is contained in. This can easily happen when copy-pasting some contents from another class and
+may result in logging events under an unexpected category and cause filters to be applied incorrectly.
 <pre><code>
   <b>public class</b> Paramount {
     <b>protected static final</b> Logger LOG = Logger.getLogger(Critical.class);
@@ -9,7 +10,7 @@ is contained in. This can easily happen when copy-pasting some contents from ano
     // ... other fields and methods
   }
 </code></pre>
-<p>After the quick fix is applied, the result looks like this:</p>
+<p>A quick fix is provided to replace the foreign class literal with one from the surrounding class:</p>
 <pre><code>
   <b>public class</b> Paramount {
     <b>protected static final</b> Logger LOG = Logger.getLogger(Paramount.class);
