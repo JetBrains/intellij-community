@@ -22,7 +22,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.util.ObjectUtils;
@@ -294,7 +293,6 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
   @Override
   public void initializeComponent() {
-    myProject.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new ArtifactVirtualFileListener(myProject, this));
     updateWatchedRoots();
   }
 

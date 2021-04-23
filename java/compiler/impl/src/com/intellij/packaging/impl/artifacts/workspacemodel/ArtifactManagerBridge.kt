@@ -10,7 +10,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
@@ -18,7 +17,6 @@ import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.elements.PackagingElementResolvingContext
 import com.intellij.packaging.impl.artifacts.ArtifactModelBase
 import com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl
-import com.intellij.packaging.impl.artifacts.ArtifactVirtualFileListener
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -40,7 +38,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   init {
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).setArtifactManager(this)
-    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, ArtifactVirtualFileListener(project, this))
     DynamicArtifactExtensionsLoaderBridge(this).installListeners(this)
   }
 
@@ -238,8 +235,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
       added.forEach { publisher.artifactAdded(it) }
       changed.forEach { (artifact, oldName) -> publisher.artifactChanged(artifact, oldName) }
     }
-
-    // TODO: 17.02.2021 Update watch roots
 
     if (changes.isNotEmpty()) {
       BuildManager.getInstance().clearState(project)

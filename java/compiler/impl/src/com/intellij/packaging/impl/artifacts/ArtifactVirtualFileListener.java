@@ -26,7 +26,8 @@ public final class ArtifactVirtualFileListener implements BulkFileListener {
   private final CachedValue<MultiValuesMap<String, Artifact>> myParentPathsToArtifacts;
   private final ArtifactManager myArtifactManager;
 
-  public ArtifactVirtualFileListener(@NotNull Project project, @NotNull ArtifactManager artifactManager) {
+  public ArtifactVirtualFileListener(@NotNull Project project) {
+    ArtifactManager artifactManager = ArtifactManager.getInstance(project);
     myArtifactManager = artifactManager;
     myParentPathsToArtifacts =
       CachedValuesManager.getManager(project).createCachedValue(() -> {

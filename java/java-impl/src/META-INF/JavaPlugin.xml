@@ -49,6 +49,7 @@
     <listener class="com.intellij.debugger.impl.DebuggerManagerImpl$DebuggerRunContentWithExecutorListener" topic="com.intellij.execution.ui.RunContentWithExecutorListener"/>
     <listener class="com.intellij.debugger.impl.HotSwapManager$HotSwapDebuggerManagerListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.debugger.ui.HotSwapUIImpl$HotSwapDebuggerManagerListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+    <listener class="com.intellij.packaging.impl.artifacts.ArtifactVirtualFileListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </projectListeners>
 
   <extensionPoints>
