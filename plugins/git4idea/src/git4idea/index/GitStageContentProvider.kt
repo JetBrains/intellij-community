@@ -62,6 +62,11 @@ private class GitStageTabTitleUpdater(private val tracker: GitStageTracker, pane
   SimpleTabTitleUpdater(panel.tree, STAGING_AREA_TAB_NAME) {
 
   init {
+    tracker.addListener(object : GitStageTrackerListener {
+      override fun update() {
+        refresh()
+      }
+    }, panel)
     Disposer.register(panel, this)
   }
 

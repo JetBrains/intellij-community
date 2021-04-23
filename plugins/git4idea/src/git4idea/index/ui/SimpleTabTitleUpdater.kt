@@ -12,27 +12,27 @@ import com.intellij.ui.content.Content
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation
+import com.intellij.vcs.log.runInEdt
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
-import java.beans.PropertyChangeListener
-import javax.swing.JTree.TREE_MODEL_PROPERTY
+import java.beans.PropertyChangeEvent
 
-abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val tabName: String): Disposable {
+abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val tabName: String) : Disposable {
   private var branches = emptySet<BranchData>()
     set(value) {
       if (field == value) return
       field = value
       updatePresentation()
     }
-  private val treeChangeListener = PropertyChangeListener { e ->
-    if (e.propertyName == TREE_MODEL_PROPERTY) {
-      refresh()
-    }
-  }
+  private val groupingListener: (evt: PropertyChangeEvent) -> Unit = { refresh() }
 
   init {
     UiNotifyConnector.doWhenFirstShown(tree, Runnable { refresh() })
-    tree.addPropertyChangeListener(treeChangeListener)
+    tree.addGroupingChangeListener(groupingListener)
+    tree.project.messageBus.connect(this).subscribe(GitRepository.GIT_REPO_CHANGE,
+                                                    GitRepositoryChangeListener { runInEdt(this) { refresh() } })
   }
 
   abstract fun getRoots(): Collection<VirtualFile>
@@ -73,7 +73,7 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
   }
 
   override fun dispose() {
-    tree.removePropertyChangeListener(treeChangeListener)
+    tree.removeGroupingChangeListener(groupingListener)
     branches = emptySet()
   }
 }
