@@ -113,6 +113,11 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                 highlightingCheck(module)
                 libraryDependency(Regex("""Kotlin/Native.*posix.*"""), PROVIDED)
             }
+
+            module("project.p1.commonMain") {
+                highlightingCheck(module)
+                libraryDependency(Regex("""Kotlin/Native.*posix.*"""), PROVIDED)
+            }
         }
     }
 
