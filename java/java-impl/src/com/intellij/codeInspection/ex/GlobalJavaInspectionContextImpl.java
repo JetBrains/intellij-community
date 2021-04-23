@@ -301,7 +301,12 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
 
         LOG.assertTrue(processors != null, classDeclaration.getClass().getName());
         UClass uClass = ReadAction.compute(() -> UastContextKt.toUElement(classDeclaration, UClass.class));
-        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, getClassPresentableName(uClass));
+        String name = getClassPresentableName(uClass);
+        if (name == null) {
+          LOG.error(classDeclaration.getText());
+          continue;
+        }
+        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, name);
 
         ReferencesSearch.search(classDeclaration, searchScope, false).forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
       }
