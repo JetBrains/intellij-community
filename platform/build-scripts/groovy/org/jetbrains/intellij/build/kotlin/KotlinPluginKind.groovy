@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.jps.model.artifact.JpsArtifact
+import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 
 @CompileStatic
 enum KotlinPluginKind {
@@ -69,11 +70,31 @@ enum KotlinPluginKind {
   }
 
   JpsArtifact build(CompilationContext context) {
-    def buildNumber = context.options.buildNumber ?: BuildContextImpl.readSnapshotBuildNumber(context.paths.communityHomeDir)
-    def version = System.getProperty(versionPropertyName, buildNumber)
+    def buildNumber = buildNumber(context)
+    def version = System.getProperty(versionPropertyName, version(context, buildNumber))
     def sinceBuild = System.getProperty("build.since", buildNumber)
     def untilBuild = System.getProperty("build.until", buildNumber)
     return new KotlinPluginArtifact(context).build(this, sinceBuild, untilBuild, version)
+  }
+
+  private static String buildNumber(CompilationContext context) {
+    def buildNumber = context.options.buildNumber
+    if (buildNumber == null || !buildNumber.contains('.')) {
+      buildNumber = BuildContextImpl.readSnapshotBuildNumber(context.paths.communityHomeDir)
+    }
+    return buildNumber
+  }
+
+  private static String version(CompilationContext context, String rawBuildNumber) {
+    def parts = rawBuildNumber.split('\\.')
+    assert parts.size() == 2
+    def intellijMajorVersion = parts[0]
+    def buildNumber = parts[1]
+    def kotlinVersion = context.project.libraryCollection.libraries
+                          .find { it.name.startsWith("kotlinc.") && it.type instanceof JpsRepositoryLibraryType }
+                          ?.asTyped(JpsRepositoryLibraryType.INSTANCE)
+                          ?.properties?.data?.version ?: "UNKNOWN"
+    return "$intellijMajorVersion-$kotlinVersion-IJ$buildNumber"
   }
 
   private static String getVersionFromProperty(String versionPropertyName) {
