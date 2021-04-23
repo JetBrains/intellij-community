@@ -1,13 +1,13 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.lombok.ide
+package org.jetbrains.kotlin.plugin.ide
 
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import java.io.File
+
+//todo this is basically a copy-paste of the same file from annotation-based-compiler-plugins-ide-support
+//and should be merged together later
 
 class CompilerPluginSetup(val options: List<PluginOption>, val classpath: List<String>) {
     class PluginOption(val key: String, val value: String)
