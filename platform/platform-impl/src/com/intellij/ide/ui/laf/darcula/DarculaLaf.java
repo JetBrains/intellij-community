@@ -273,7 +273,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected void loadDefaults(UIDefaults defaults) {
-    if (SystemProperties.getBooleanProperty("ide.load.laf.as.json", true)) {
+    if (SystemProperties.getBooleanProperty("ide.load.laf.as.json", false)) {
       loadDefaultsFromJson(defaults);
     } else{
       loadDefaultsFromProperties(defaults);
