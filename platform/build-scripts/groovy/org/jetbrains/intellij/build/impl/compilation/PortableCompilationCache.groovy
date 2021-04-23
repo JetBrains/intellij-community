@@ -218,7 +218,7 @@ final class PortableCompilationCache {
   }
 
   private def clean() {
-    [jpsCaches.dir, new File(context.classesOutputDirectory)].each {
+    [jpsCaches.dir, context.projectOutputDirectory].each {
       context.messages.info("Cleaning $it")
       FileUtil.delete(it)
     }

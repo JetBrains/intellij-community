@@ -28,8 +28,6 @@ interface CompilationContext {
    */
   File getProjectOutputDirectory()
 
-  String getClassesOutputDirectory()
-
   JpsModule findRequiredModule(String name)
 
   JpsModule findModule(String name)

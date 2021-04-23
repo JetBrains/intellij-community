@@ -50,7 +50,6 @@ class CompilationContextImpl implements CompilationContext {
   final Map<String, String> newToOldModuleName
   JpsCompilationData compilationData
   KotlinBinaries kotlinBinaries
-  String classesOutputDirectory
   private final CompilationTasks compilationTasks
 
   @SuppressWarnings("GrUnresolvedAccess")
@@ -174,7 +173,6 @@ class CompilationContextImpl implements CompilationContext {
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
     def copy = new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
                                       kotlinBinaries, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
-    copy.classesOutputDirectory = classesOutputDirectory
     copy.compilationData = compilationData
     return copy
   }
@@ -214,7 +212,7 @@ class CompilationContextImpl implements CompilationContext {
 
     def classesDirName = CLASSES_DIR_NAME
     def projectArtifactsDirName = "project-artifacts"
-    classesOutputDirectory = classesOutputDirectory()
+    overrideProjectOutputDirectory()
     List<String> outputDirectoriesToKeep = ["log"]
     if (compilationTasks.areCompiledClassesProvided()) {
       outputDirectoriesToKeep.add(classesDirName)
@@ -247,28 +245,21 @@ class CompilationContextImpl implements CompilationContext {
     compilationTasks.reuseCompiledClassesIfProvided()
   }
 
-  static final String CLASSES_DIR_NAME = "classes"
+  private static final String CLASSES_DIR_NAME = "classes"
 
-  private String classesOutputDirectory() {
-    String classesOutput
+  private overrideProjectOutputDirectory() {
     if (options.projectClassesOutputDirectory != null && !options.projectClassesOutputDirectory.isEmpty()) {
-      classesOutput = options.projectClassesOutputDirectory
-      projectOutputDirectory = classesOutput
+      projectOutputDirectory = options.projectClassesOutputDirectory
+    }
+    else if (options.useCompiledClassesFromProjectOutput) {
+      def outputDir = getProjectOutputDirectory()
+      if (!outputDir.exists()) {
+        messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $outputDir doesn't exist")
+      }
     }
     else {
-      classesOutput = "$paths.buildOutputRoot/$CLASSES_DIR_NAME"
-      if (!options.useCompiledClassesFromProjectOutput) {
-        projectOutputDirectory = classesOutput
-      }
+      projectOutputDirectory = "$paths.buildOutputRoot/$CLASSES_DIR_NAME"
     }
-    if (options.useCompiledClassesFromProjectOutput) {
-      def outputDir = getProjectOutputDirectory()
-      classesOutput = outputDir.absolutePath
-      if (!outputDir.exists()) {
-        messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $classesOutput doesn't exist")
-      }
-    }
-    return classesOutput
   }
 
   @Override

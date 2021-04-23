@@ -136,10 +136,10 @@ class CompilationTasksImpl extends CompilationTasks {
       context.messages.info("Compiled classes reused from project output")
     }
     else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
-      CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.classesOutputDirectory, context.options)
+      CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)
     }
     else if (context.options.pathToCompiledClassesArchive != null) {
-      unpackCompiledClasses(context.classesOutputDirectory)
+      unpackCompiledClasses(context.projectOutputDirectory)
     }
     else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
       jpsCache.downloadCacheAndCompileProject()
@@ -147,10 +147,10 @@ class CompilationTasksImpl extends CompilationTasks {
   }
 
   @CompileDynamic
-  private void unpackCompiledClasses(String classesOutput) {
+  private void unpackCompiledClasses(File classesOutput) {
     context.messages.block("Unpack compiled classes archive") {
-      FileUtil.delete(new File(classesOutput))
-      context.ant.unzip(src: context.options.pathToCompiledClassesArchive, dest: classesOutput)
+      FileUtil.delete(classesOutput)
+      context.ant.unzip(src: context.options.pathToCompiledClassesArchive, dest: classesOutput.absolutePath)
     }
   }
 }

@@ -67,11 +67,6 @@ abstract class DelegatingCompilationContext implements CompilationContext {
   }
 
   @Override
-  String getClassesOutputDirectory() {
-    return delegate.getClassesOutputDirectory()
-  }
-
-  @Override
   JpsModule findRequiredModule(String name) {
     return delegate.findRequiredModule(name)
   }

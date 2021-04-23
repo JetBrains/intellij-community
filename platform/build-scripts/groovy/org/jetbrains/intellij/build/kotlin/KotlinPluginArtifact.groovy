@@ -43,10 +43,6 @@ final class KotlinPluginArtifact {
     def pluginXml = "production/${kind.pluginXmlModuleName}/META-INF/plugin.xml"
     Path jpsOutPluginXml = Paths.get("$context.projectOutputDirectory/$pluginXml")
     if (!Files.exists(jpsOutPluginXml)) {
-      context.messages.info("jpsOutPluginXml=$jpsOutPluginXml doesn't exist")
-      jpsOutPluginXml = Paths.get("$context.paths.buildOutputRoot/$CompilationContextImpl.CLASSES_DIR_NAME/$pluginXml")
-    }
-    if (!Files.exists(jpsOutPluginXml)) {
       throw new IllegalStateException("jpsOutPluginXml=$jpsOutPluginXml doesn't exist!")
     }
     return jpsOutPluginXml

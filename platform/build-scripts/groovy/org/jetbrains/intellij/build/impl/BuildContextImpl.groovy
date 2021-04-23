@@ -177,11 +177,6 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  String getClassesOutputDirectory() {
-    return compilationContext.classesOutputDirectory
-  }
-
-  @Override
   JpsModule findRequiredModule(String name) {
     return compilationContext.findRequiredModule(name)
   }
