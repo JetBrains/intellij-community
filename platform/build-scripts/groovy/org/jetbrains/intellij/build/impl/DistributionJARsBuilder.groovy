@@ -1109,12 +1109,8 @@ final class DistributionJARsBuilder {
         }
 
         Files.createDirectories(libOutputDir)
-        if (!removeVersionFromJarName && nioFiles.size() > 1) {
-          String mergedFilename = FileUtil.sanitizeFileName(lowerCasedLibName, false)
-          if (mergedFilename == "gradle") {
-            mergedFilename = "gradle-lib"
-          }
-          Path targetFile = outputDir.resolve(mergedFilename + ".jar")
+        if (!removeVersionFromJarName && nioFiles.size() > 1 && lowerCasedLibName != "gradle") {
+          Path targetFile = outputDir.resolve(FileUtil.sanitizeFileName(lowerCasedLibName, false) + ".jar")
           BuildHelper.getInstance(buildContext).mergeJars.invokeWithArguments(targetFile, nioFiles)
           layoutSpec.addLibraryMapping(library, targetFile.fileName.toString(), targetFile.toString())
           continue libProcessing
