@@ -72,7 +72,7 @@ in the [Code Inspections](https://jetbrains.org/intellij/sdk/docs/tutorials/code
 It's essential to know 
 about [PSI](https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/psi.html), the source code model used in IntelliJ IDEA.
 To inspect PSI, you can use either the built-in [Psi Viewer](https://www.jetbrains.com/help/idea/psi-viewer.html) available 
-in the "internal" mode or an external plugin called [PsiViewer](https://plugins.jetbrains.com/plugin/227-psiviewer).
+in the "internal" mode, or an external plugin called [PsiViewer](https://plugins.jetbrains.com/plugin/227-psiviewer).
 
 ### 4.2. Kotlin-specific information
 
@@ -83,8 +83,8 @@ in the "internal" mode or an external plugin called [PsiViewer](https://plugins.
    Put descriptions for intentions to [`idea/resources-en/intentionDescriptions`](idea/resources-en/intentionDescriptions),
    descriptions for inspections are in [`idea/resources-en/inspectionDescriptions`](idea/resources-en/inspectionDescriptions).
 3. All intentions, inspections and quick-fixes should have automatic tests.
-   Put test data for local inspections with quick fixes to [`idea/testData/inspectionsLocal`](idea/testData/inspectionsLocal),
-   inspections without quick fixes to [`idea/testData/inspections`](idea/testData/inspections).
+   Put test data for local inspections with quick fixes to [`idea/testData/inspectionsLocal`](idea/tests/testData/inspectionsLocal),
+   inspections without quick fixes to [`idea/testData/inspections`](idea/tests/testData/inspections).
 4. Prefer inspections with `ProblemHighlightType.INFORMATION` and attached quick-fixes over intentions.
 5. In inspection code, use only `ProblemHighlightType.GENERIC_ERROR_OR_WARNING` as it allows users to adjust 
    the inspection level by themselves.
