@@ -25,49 +25,51 @@ fun createAggregateHtml(
       style(CSS_STYLE)
     }
     body {
-      h1("Project name")
-      text(projectName)
+      div(className = "aggregate-report-content") {
+        h1("Project name")
+        text(projectName)
 
-      printAppInfo(appInfo)
-      printRuntimeInfo(runtimeInfo)
+        printAppInfo(appInfo)
+        printRuntimeInfo(runtimeInfo)
 
-      h1("Indexing history")
-      table {
-        thead {
-          tr {
-            th("Started")
-            th("Total time")
-            th("Scanning time")
-            th("Indexing time")
-            th("Content loading time")
-            th(TITLE_NUMBER_OF_FILE_PROVIDERS)
-            th(TITLE_NUMBER_OF_SCANNED_FILES)
-            th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
-            th(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
-            th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
-            th(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
-            th("Details")
-          }
-        }
-        tbody {
-          for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
+        h1("Indexing history")
+        table {
+          thead {
             tr {
-              td(diagnostic.indexingTimes.updatingStart.presentableDateTime())
-              td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
-              td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
-              td(diagnostic.indexingTimes.indexingTime.presentableDuration())
-              td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
+              th("Started")
+              th("Total time")
+              th("Scanning time")
+              th("Indexing time")
+              th("Content loading time")
+              th(TITLE_NUMBER_OF_FILE_PROVIDERS)
+              th(TITLE_NUMBER_OF_SCANNED_FILES)
+              th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
+              th(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
+              th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
+              th(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
+              th("Details")
+            }
+          }
+          tbody {
+            for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
+              tr {
+                td(diagnostic.indexingTimes.updatingStart.presentableDateTime())
+                td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
+                td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
+                td(diagnostic.indexingTimes.indexingTime.presentableDuration())
+                td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
 
-              val fileCount = diagnostic.fileCount
-              td(fileCount?.numberOfFileProviders?.toString() ?: "N/A")
-              td(fileCount?.numberOfScannedFiles?.toString() ?: "N/A")
-              td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString() ?: "N/A")
-              td(fileCount?.numberOfFilesScheduledForIndexingAfterScan?.toString() ?: "N/A")
-              td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: "N/A")
-              td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: "N/A")
+                val fileCount = diagnostic.fileCount
+                td(fileCount?.numberOfFileProviders?.toString() ?: "N/A")
+                td(fileCount?.numberOfScannedFiles?.toString() ?: "N/A")
+                td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString() ?: "N/A")
+                td(fileCount?.numberOfFilesScheduledForIndexingAfterScan?.toString() ?: "N/A")
+                td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: "N/A")
+                td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: "N/A")
 
-              td {
-                link(diagnostic.htmlFile.fileName.toString(), "details")
+                td {
+                  link(diagnostic.htmlFile.fileName.toString(), "details")
+                }
               }
             }
           }
@@ -487,6 +489,10 @@ private val CSS_STYLE = """
   .stats-content {
     margin-left: 20%;
   }
+  
+  .aggregate-report-content {
+    margin-left: 10%;
+  }
 
   .navigation-bar {
     width: 15%;
@@ -591,10 +597,14 @@ private fun HtmlBuilder.h1(@Nls title: String) = append(HtmlChunk.text(title).wr
 
 private fun HtmlBuilder.hr(className: String) = append(HtmlChunk.hr().attr("class", className))
 
-private fun HtmlBuilder.table(className: String = "", body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("table").addAttrIfNotEmpty("class", className)))
+private fun HtmlBuilder.table(className: String = "", body: HtmlBuilder.() -> Unit) = append(
+  createTag(body, tag("table").addAttrIfNotEmpty("class", className)))
+
 private fun HtmlBuilder.thead(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("thead")))
 private fun HtmlBuilder.tbody(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tbody")))
-private fun HtmlBuilder.tr(className: String = "", body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tr").addAttrIfNotEmpty("class", className)))
+private fun HtmlBuilder.tr(className: String = "", body: HtmlBuilder.() -> Unit) = append(
+  createTag(body, tag("tr").addAttrIfNotEmpty("class", className)))
+
 private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("th")))
 private fun HtmlBuilder.th(@Nls text: String) = th { text(text) }
 private fun HtmlBuilder.td(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
@@ -627,7 +637,9 @@ private fun HtmlBuilder.input(id: String, type: String, onClick: String = "", st
   """.trimIndent()))
 
 private fun HtmlBuilder.link(target: String, text: String) = append(HtmlBuilder().appendLink(target, text))
-private fun HtmlBuilder.div(className: String = "", id: String = "", body: HtmlBuilder.() -> Unit) = append(createTag(body, div().addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("id", id)))
+private fun HtmlBuilder.div(className: String = "", id: String = "", body: HtmlBuilder.() -> Unit) = append(
+  createTag(body, div().addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("id", id)))
+
 private fun HtmlBuilder.head(head: HtmlBuilder.() -> Unit) = append(createTag(head, HtmlChunk.head()))
 private fun HtmlBuilder.body(body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))
 private fun HtmlBuilder.html(body: HtmlBuilder.() -> Unit) = createTag(body, html())
