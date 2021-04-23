@@ -11,24 +11,15 @@ Kotlin plugin is an IntelliJ IDEA plugin for the [Kotlin programming language](h
 
 ### 1.1. Requirements
 - [IntelliJ IDEA](https://jetbrains.com/idea/download) Community or Ultimate, 2020.3 or later
-- [Kotlin Plugin](https://plugins.jetbrains.com/plugin/6954-kotlin), 1.4.21 or later
+- [Kotlin Plugin](https://plugins.jetbrains.com/plugin/6954-kotlin) 1.4.21 or later
 
-### 1.2. Clone required repositories
+### 1.2. Clone required repository
 
-Clone the Kotlin IDE plugin repository:
-
-```bash
-git clone https://github.com/JetBrains/intellij-kotlin.git
-```
-
-Clone the IDEA Community repository to the `intellij/` subdirectory:
+Clone the [intellij-community](https://github.com/JetBrains/intellij-community) repository:
 
 ```bash
-cd intellij-kotlin
-git clone https://github.com/JetBrains/intellij-community.git intellij
+git clone https://github.com/JetBrains/intellij-community.git
 ```
-
-NOTE. You should not try symlinks unless [IDEA-255777](https://youtrack.jetbrains.com/issue/IDEA-255777) is fixed.
 
 ### 1.3. Follow IntelliJ set up instructions
 
@@ -43,7 +34,7 @@ more generic "VM options" (shared or user-local). `3000` or `4000` megabytes sho
 
 Now you should be able to open and build the project.
 
-Use the provided "IDEA" build configuration to run an IntelliJ IDEA instance with your modifications to the Kotlin plugin.
+Use the provided `IDEA` build configuration to run an IntelliJ IDEA instance with your modifications to the Kotlin plugin.
 
 ## 2. Frequently Asked Questions
 
