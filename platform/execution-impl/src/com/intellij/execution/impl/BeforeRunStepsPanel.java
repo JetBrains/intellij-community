@@ -324,12 +324,16 @@ public final class BeforeRunStepsPanel extends JPanel {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value instanceof BeforeRunTask) {
         BeforeRunTask<?> task = (BeforeRunTask<?>)value;
-        BeforeRunTaskProvider<BeforeRunTask<?>> provider = getProvider(myRunConfiguration.getProject(), task.getProviderId());
-        if (provider != null) {
-          Icon icon = provider.getTaskIcon(task);
-          setIcon(icon != null ? icon : provider.getIcon());
-          setText(provider.getDescription(task));
+        //noinspection rawtypes
+        BeforeRunTaskProvider provider = getProvider(myRunConfiguration.getProject(), task.getProviderId());
+        if (provider == null) {
+          provider = new UnknownBeforeRunTaskProvider(task.getProviderId().toString());
         }
+        //noinspection unchecked
+        Icon icon = provider.getTaskIcon(task);
+        setIcon(icon != null ? icon : provider.getIcon());
+        //noinspection unchecked
+        setText(provider.getDescription(task));
       }
       return this;
     }
