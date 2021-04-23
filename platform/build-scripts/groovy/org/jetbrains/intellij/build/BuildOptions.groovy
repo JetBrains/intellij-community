@@ -169,7 +169,7 @@ class BuildOptions {
   /**
    * If {@code true} the build is running as a unit test
    */
-  boolean isTestBuild = false
+  boolean isTestBuild = SystemProperties.getBooleanProperty("intellij.build.test.mode", false)
 
   boolean skipDependencySetup = false
 
