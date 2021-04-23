@@ -17,10 +17,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -64,7 +61,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static final Set<ActionToolbarImpl> ourToolbars = new LinkedHashSet<>();
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
 
-  private static final String SECONDARY_SHORTCUT = "SecondaryActions.shortcut";
+  private static final Key<String> SECONDARY_SHORTCUT = Key.create("SecondaryActions.shortcut");
 
   private static final String SUPPRESS_ACTION_COMPONENT_WARNING = "ActionToolbarImpl.suppressCustomComponentWarning";
   private static final String SUPPRESS_TARGET_COMPONENT_WARNING = "ActionToolbarImpl.suppressTargetComponentWarning";
@@ -81,6 +78,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   public static void updateAllToolbarsImmediately(boolean includeInvisible) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
       toolbar.updateActionsImmediately(includeInvisible);
       for (Component c : toolbar.getComponents()) {
@@ -90,6 +88,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         }
         toolbar.updateUI();
       }
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void resetAllToolbars() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
+      CancellablePromise<List<AnAction>> promise = toolbar.myLastUpdate;
+      if (promise != null) promise.cancel();
+      toolbar.myVisibleActions.clear();
+      toolbar.removeAll();
+      if (!isTestMode) {
+        toolbar.addLoadingIcon();
+      }
+      toolbar.updateActionsImmediately(true);
     }
   }
 
@@ -331,8 +345,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize()) {
           @Override
           protected String getShortcutText() {
-            Object shortcut = myPresentation.getClientProperty(SECONDARY_SHORTCUT);
-            return shortcut != null ? shortcut.toString() : super.getShortcutText();
+            String shortcut = myPresentation.getClientProperty(SECONDARY_SHORTCUT);
+            return shortcut != null ? shortcut : super.getShortcutText();
           }
         };
       mySecondaryActionsButton.setNoIconsInPopup(true);

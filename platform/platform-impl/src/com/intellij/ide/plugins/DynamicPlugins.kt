@@ -502,7 +502,7 @@ object DynamicPlugins {
           TypeFactory.defaultInstance().clearCache()
           app.getServiceIfCreated(TopHitCache::class.java)?.clear()
           PresentationFactory.clearPresentationCaches()
-          ActionToolbarImpl.updateAllToolbarsImmediately(true)
+          ActionToolbarImpl.resetAllToolbars()
           TouchbarSupport.reloadAllActions()
           (serviceIfCreated<NotificationsManager>() as? NotificationsManagerImpl)?.expireAll()
           MessagePool.getInstance().clearErrors()
