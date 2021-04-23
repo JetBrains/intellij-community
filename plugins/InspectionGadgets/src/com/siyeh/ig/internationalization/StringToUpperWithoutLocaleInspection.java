@@ -18,6 +18,7 @@ package com.siyeh.ig.internationalization;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -57,7 +58,8 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)infos[0];
     List<InspectionGadgetsFix> fixes = new ArrayList<>(2);
     final PsiModifierListOwner annotatableQualifier = NonNlsUtils.getAnnotatableQualifier(methodExpression);
-    fixes.add(new AddArgumentFix("java.util.Locale.ENGLISH", "Locale.ENGLISH"));
+    String constantName = PsiUtil.isLanguageLevel6OrHigher(methodExpression) ? "ROOT" : "ENGLISH";
+    fixes.add(new AddArgumentFix("java.util.Locale." + constantName, "Locale." + constantName));
     if (annotatableQualifier != null) {
       fixes.add(new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableQualifier)));
     }
