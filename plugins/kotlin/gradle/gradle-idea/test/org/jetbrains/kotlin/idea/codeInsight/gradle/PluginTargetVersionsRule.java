@@ -60,7 +60,18 @@ public class PluginTargetVersionsRule implements MethodRule {
             return new Statement() {
                 @Override
                 public void evaluate() {
-                    throw new AssumptionViolatedException("Test is ignored");
+                    throw new AssumptionViolatedException(
+                            "Test is ignored\n" +
+                            "Gradle version: " +
+                            testCase.gradleVersion +
+                            " | Requirement: " +
+                            targetVersions.gradleVersion() +
+                            "\n" +
+                            "Plugin version: " +
+                            testCase.getKotlinPluginVersionString() +
+                            " | Requirement: " +
+                            targetVersions.pluginVersion()
+                    );
                 }
             };
         }
