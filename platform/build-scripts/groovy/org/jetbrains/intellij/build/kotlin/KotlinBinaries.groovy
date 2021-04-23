@@ -36,24 +36,6 @@ final class KotlinBinaries {
   private final BuildOptions options
   final String compilerHome
 
-  @Lazy
-  private Path pluginHome = {
-    def projectPath = Paths.get(projectHome)
-    def pluginArtifactXml = projectPath.resolve(".idea/artifacts/${PLUGIN_ARTIFACT_NAME}.xml")
-    if (!Files.exists(pluginArtifactXml)) {
-      pluginArtifactXml = projectPath.resolve(".idea/artifacts/${PLUGIN_ARTIFACT_NAME}Community.xml")
-    }
-    if (!Files.exists(pluginArtifactXml)) {
-      throw new BuildException("$pluginArtifactXml doesn't exist")
-    }
-    def rootElement = JpsLoaderBase.tryLoadRootElement(pluginArtifactXml)
-    def artifactElement = JDOMUtil.getChildren(rootElement, "artifact").first()
-    def state = XmlSerializer.deserialize(artifactElement, ArtifactState.class)
-    def macroExpander = new JpsMacroExpander([:])
-    macroExpander.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectPath.toFile())
-    Paths.get(macroExpander.substitute(state.outputPath, SystemInfo.isFileSystemCaseSensitive))
-  }()
-
   KotlinBinaries(String projectHome, String communityHome, BuildOptions options, BuildMessages messages) {
     this.options = options
     this.messages = messages
@@ -117,7 +99,7 @@ final class KotlinBinaries {
   Path setUpPlugin(CompilationContext context, boolean isTestBuild = context.options.isTestBuild) {
     if (pluginArtifact == null) {
       synchronized (this) {
-        if (pluginArtifact != null) return pluginHome
+        if (pluginArtifact != null) return pluginArtifact
         if (context.options.prebuiltKotlinPluginPath != null) {
           pluginArtifact = Paths.get(context.options.prebuiltKotlinPluginPath)
         }
@@ -132,7 +114,7 @@ final class KotlinBinaries {
         copyPluginArtifactToProjectOutput()
       }
     }
-    return pluginHome
+    return pluginArtifact
   }
 
   private static Path buildPluginForTests(CompilationContext context) {
@@ -163,7 +145,7 @@ final class KotlinBinaries {
     try {
       stream.forEach {
         if (Files.isRegularFile(it)) {
-          def destination = pluginHome.resolve(pluginArtifact.relativize(it))
+          def destination = projectOutputPath().resolve(pluginArtifact.relativize(it))
           Files.createDirectories(destination.parent)
           Files.copy(it, destination, StandardCopyOption.REPLACE_EXISTING)
         }
@@ -172,5 +154,22 @@ final class KotlinBinaries {
     finally {
       stream.close()
     }
+  }
+
+  private Path projectOutputPath() {
+    def projectPath = Paths.get(projectHome)
+    def pluginArtifactXml = projectPath.resolve(".idea/artifacts/${PLUGIN_ARTIFACT_NAME}.xml")
+    if (!Files.exists(pluginArtifactXml)) {
+      pluginArtifactXml = projectPath.resolve(".idea/artifacts/${PLUGIN_ARTIFACT_NAME}Community.xml")
+    }
+    if (!Files.exists(pluginArtifactXml)) {
+      throw new BuildException("$pluginArtifactXml doesn't exist")
+    }
+    def rootElement = JpsLoaderBase.tryLoadRootElement(pluginArtifactXml)
+    def artifactElement = JDOMUtil.getChildren(rootElement, "artifact").first()
+    def state = XmlSerializer.deserialize(artifactElement, ArtifactState.class)
+    def macroExpander = new JpsMacroExpander([:])
+    macroExpander.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectPath.toFile())
+    return Paths.get(macroExpander.substitute(state.outputPath, SystemInfo.isFileSystemCaseSensitive))
   }
 }
