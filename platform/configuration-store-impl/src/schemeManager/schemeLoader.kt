@@ -216,7 +216,7 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
 }
 
 internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boolean, consumer: (name: String?, parser: XMLStreamReader) -> Unit) {
-  val reader = JDOMUtil.getXmlInputFactory().createXMLStreamReader(bytes.inputStream().reader())
+  val reader = JDOMUtil.getXmlInputFactory().createXMLStreamReader(CharsetToolkit.inputStreamSkippingBOM(bytes.inputStream()))
   consumer(preload(isOldSchemeNaming, reader), reader)
 }
 
