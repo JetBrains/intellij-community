@@ -181,6 +181,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
       })
       .inSmartMode(project)
       .withDocumentsCommitted(project)
+      .coalesceBy(this)
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
