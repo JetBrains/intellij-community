@@ -155,7 +155,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     }
 
     if(result == null) {
-      MavenLog.LOG.error("index " + localId + " not found, known ids are:" + myDataMap.keySet());
+      MavenLog.LOG.warn("index " + localId + " not found, known ids are:" + myDataMap.keySet());
       return -1;
     }
 
