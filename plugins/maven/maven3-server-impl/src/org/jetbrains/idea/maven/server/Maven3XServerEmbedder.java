@@ -1157,7 +1157,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
       else {
         source = file == null ? "" : file.getPath();
-        ;
       }
       myConsoleWrapper.error("Maven model problem: " +
                              problem.getMessage() +
