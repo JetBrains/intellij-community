@@ -11,13 +11,13 @@ abstract class SubmittableTextFieldModelBase(initialText: String) : SubmittableT
   override val document = EditorFactory.getInstance().createDocument(initialText)
 
   override var isBusy = false
-    protected set(value) {
+    set(value) {
       field = value
       listeners.multicaster.eventOccurred()
     }
 
   override var error: Throwable? = null
-    protected set(value) {
+    set(value) {
       field = value
       listeners.multicaster.eventOccurred()
     }
