@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+import org.jetbrains.kotlin.idea.quickfix.getAddExclExclCallFix
 import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -75,12 +75,14 @@ class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
                 val stableNullability = context.getDataFlowInfoBefore(receiverExpression).getStableNullability(dataFlow)
                 if (!stableNullability.canBeNull()) return
 
-                holder.registerProblem(
-                    receiverExpression,
-                    KotlinBundle.message("call.of.inline.function.with.nullable.extension.receiver.can.cause.npe.in.kotlin.1.2"),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    IntentionWrapper(AddExclExclCallFix(receiverExpression))
-                )
+                getAddExclExclCallFix(receiverExpression)?.let {
+                    holder.registerProblem(
+                        receiverExpression,
+                        KotlinBundle.message("call.of.inline.function.with.nullable.extension.receiver.can.provoke.npe.in.kotlin.1.2"),
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                        IntentionWrapper(it, receiverExpression.containingKtFile)
+                    )
+                }
             }
         }
 
