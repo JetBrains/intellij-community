@@ -69,6 +69,7 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
         try {
           val learningLessonsAutoExecutor = LearningLessonsAutoExecutor(project, it)
           learningLessonsAutoExecutor.runAllLessons()
+          System.setProperty("ift.gui.result", getLessonsStatus())
         }
         finally {
           TaskTestContext.inTestMode = false
@@ -87,6 +88,17 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
           TaskTestContext.inTestMode = false
         }
       }
+    }
+
+    private fun getLessonsStatus(): String {
+      val buffer = StringBuffer()
+      for (lesson in CourseManager.instance.lessonsForModules) {
+        if (lesson !is KLesson || lesson.testScriptProperties.skipTesting) continue
+        buffer.append("${lesson.id} (${lesson.name}): ")
+        if (lesson.passed) buffer.append("passed\n")
+        else buffer.append("failed\n")
+      }
+      return buffer.toString()
     }
   }
 }
