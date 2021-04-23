@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.impl;
 
@@ -62,6 +62,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -1102,6 +1103,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
 
+      List<ConsoleFolding> extensions = ContainerUtil.filter(ConsoleFolding.EP_NAME.getExtensionList(), cf -> cf.isEnabledForConsole(this));
+      if (extensions.isEmpty()) return;
+
       for (int line = startLine; line <= endLine; line++) {
         /*
         Grep Console plugin allows to fold empty lines. We need to handle this case in a special way.
@@ -1115,7 +1119,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         So therefore the condition, the last line(empty string) should still flush, but not be processed by
         com.intellij.execution.ConsoleFolding.
          */
-        ConsoleFolding next = line < endLine ? foldingForLine(line, document) : null;
+        ConsoleFolding next = line < endLine ? foldingForLine(extensions, line, document) : null;
         if (next != lastFolding) {
           if (lastFolding != null) {
             boolean isExpanded = false;
@@ -1167,18 +1171,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return consoleFolding.getClass().getName();
   }
 
-  @Nullable
-  private ConsoleFolding foldingForLine(int line, @NotNull Document document) {
+  private @Nullable ConsoleFolding foldingForLine(List<ConsoleFolding> extensions, int line, Document document) {
     String lineText = EditorHyperlinkSupport.getLineText(document, line, false);
     if (line == 0 && myCommandLineFolding.shouldFoldLine(myProject, lineText)) {
       return myCommandLineFolding;
     }
 
-    for (ConsoleFolding extension : ConsoleFolding.EP_NAME.getExtensions()) {
-      if (extension.isEnabledForConsole(this) && extension.shouldFoldLine(myProject, lineText)) {
+    for (ConsoleFolding extension : extensions) {
+      if (extension.shouldFoldLine(myProject, lineText)) {
         return extension;
       }
     }
+
     return null;
   }
 
