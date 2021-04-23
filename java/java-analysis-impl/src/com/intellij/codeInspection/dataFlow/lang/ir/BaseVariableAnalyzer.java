@@ -33,7 +33,7 @@ public abstract class BaseVariableAnalyzer {
     return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).elements(myInstructions).toList();
   }
 
-  protected MultiMap<Instruction, Instruction> calcBackwardMap() {
+  private MultiMap<Instruction, Instruction> calcBackwardMap() {
     MultiMap<Instruction, Instruction> result = MultiMap.create();
     for (Instruction instruction : myInstructions) {
       for (Instruction next : myForwardMap.get(instruction)) {
@@ -43,7 +43,7 @@ public abstract class BaseVariableAnalyzer {
     return result;
   }
 
-  protected MultiMap<Instruction, Instruction> calcForwardMap() {
+  private MultiMap<Instruction, Instruction> calcForwardMap() {
     MultiMap<Instruction, Instruction> result = MultiMap.create();
     for (Instruction instruction : myInstructions) {
       if (isInterestingInstruction(instruction)) {
@@ -110,7 +110,7 @@ public abstract class BaseVariableAnalyzer {
     return true;
   }
 
-  static class InstructionState extends Pair<Instruction, BitSet> {
+  private static class InstructionState extends Pair<Instruction, BitSet> {
     InstructionState(Instruction first, BitSet second) {
       super(first, second);
     }

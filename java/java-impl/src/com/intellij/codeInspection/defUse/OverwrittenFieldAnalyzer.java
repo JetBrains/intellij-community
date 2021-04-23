@@ -56,7 +56,7 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
     return getReadVariables(instruction).findFirst().isPresent();
   }
 
-  public Set<AssignInstruction> getOverwrittenFields() {
+  Set<AssignInstruction> getOverwrittenFields() {
     Set<AssignInstruction> overwrites = StreamEx.of(myInstructions).select(AssignInstruction.class).toSet();
     if (overwrites.isEmpty()) return Collections.emptySet();
     boolean hasFieldWrite = StreamEx.of(overwrites).map(AssignInstruction::getAssignedValue)
