@@ -9,3 +9,4 @@ org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptModelBuilderService
 org.jetbrains.kotlin.idea.gradleTooling.model.noarg.NoArgModelBuilderService
 org.jetbrains.kotlin.idea.gradleTooling.model.samWithReceiver.SamWithReceiverModelBuilderService
 org.jetbrains.kotlin.idea.gradleTooling.model.parcelize.ParcelizeModelBuilderService
+org.jetbrains.kotlin.lombok.ide.LombokModelBuilderService
