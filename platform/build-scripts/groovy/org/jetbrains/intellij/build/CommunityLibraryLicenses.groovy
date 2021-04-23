@@ -680,7 +680,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-coroutines-experimental-compat"),
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
-    jetbrainsLibrary("kotlinc.kotlin-script-runtime"),
     jetbrainsLibrary("kotlinc.kotlin-script-util"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-common"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler"),
