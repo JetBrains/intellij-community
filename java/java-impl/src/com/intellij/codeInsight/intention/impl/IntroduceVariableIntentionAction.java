@@ -61,11 +61,15 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
       return false;
     }
 
-    if (expression.getParent() instanceof PsiExpressionStatement &&
-        !PsiUtil.isStatement(expression.getParent())) {
-      // Same action is available as an error quick-fix
-      return false;
+    if (expression.getParent() instanceof PsiExpressionStatement) {
+      if (!PsiUtil.isStatement(expression.getParent()) ||
+          expression.getParent().getLastChild() instanceof PsiErrorElement &&
+          editor.getCaretModel().getOffset() == expression.getParent().getTextRange().getEndOffset()) {
+        // Same action is available as an error quick-fix
+        return false;
+      }
     }
+
 
     final PsiType expressionType = expression.getType();
     return expressionType != null && !PsiType.VOID.equals(expressionType) && !(expression instanceof PsiAssignmentExpression);

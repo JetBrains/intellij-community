@@ -1,6 +1,6 @@
 import java.lang.annotation.Annotation;
 
-// "Iterate" "true"
+// "Iterate over Annotation[]" "true"
 class Test {
   void foo() {
       for (Annotation annotation : getClass().getAnnotations()) {

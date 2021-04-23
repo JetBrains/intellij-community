@@ -1034,4 +1034,14 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createIntroduceVariableAction(@NotNull PsiExpression expression) {
     return new IntroduceVariableErrorFixAction(expression);
   }
+
+  @Override
+  public @NotNull IntentionAction createInsertReturnFix(@NotNull PsiExpression expression) {
+    return new ConvertExpressionToReturnFix(expression);
+  }
+
+  @Override
+  public @NotNull IntentionAction createIterateFix(@NotNull PsiExpression expression) {
+    return new IterateOverIterableIntention(expression);
+  }
 }

@@ -1566,12 +1566,9 @@ public final class HighlightUtil {
       HighlightInfo error =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(anchor).descriptionAndTooltip(description).create();
       if (statement instanceof PsiExpressionStatement) {
-        PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
-        if (statement.getParent() instanceof PsiCodeBlock) {
-          QuickFixAction.registerQuickFixAction(error, PriorityIntentionActionWrapper
-            .highPriority(getFixFactory().createIntroduceVariableAction(expression)));
-        }
-        QuickFixAction.registerQuickFixAction(error, getFixFactory().createDeleteSideEffectAwareFix((PsiExpressionStatement)statement));
+        HighlightFixUtil.registerFixesForExpressionStatement(error, statement);
+        QuickFixAction.registerQuickFixAction(error, PriorityIntentionActionWrapper
+          .lowPriority(getFixFactory().createDeleteSideEffectAwareFix((PsiExpressionStatement)statement)));
       }
       return error;
     }

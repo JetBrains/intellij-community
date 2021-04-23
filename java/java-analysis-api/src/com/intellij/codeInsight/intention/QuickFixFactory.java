@@ -528,4 +528,8 @@ public abstract class QuickFixFactory {
   public abstract @NotNull IntentionAction createUnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue);
 
   public abstract @NotNull IntentionAction createIntroduceVariableAction(@NotNull PsiExpression expression);
+
+  public abstract @NotNull IntentionAction createInsertReturnFix(@NotNull PsiExpression expression);
+
+  public abstract @NotNull IntentionAction createIterateFix(@NotNull PsiExpression expression);
 }
