@@ -132,14 +132,17 @@ class CompilationTasksImpl extends CompilationTasks {
 
   @Override
   void reuseCompiledClassesIfProvided() {
-    if (context.options.pathToCompiledClassesArchivesMetadata != null) {
+    if (context.options.useCompiledClassesFromProjectOutput) {
+      context.messages.info("Compiled classes reused from project output")
+    }
+    else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
       CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.classesOutputDirectory, context.options)
     }
     else if (context.options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(context.classesOutputDirectory)
     }
-    else if (!context.options.useCompiledClassesFromProjectOutput) {
-      context.messages.warning("Compiled classes cannot be reused")
+    else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
+      jpsCache.downloadCacheAndCompileProject()
     }
   }
 
