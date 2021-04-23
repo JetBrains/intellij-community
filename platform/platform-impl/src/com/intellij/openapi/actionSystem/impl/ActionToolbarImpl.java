@@ -73,10 +73,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     });
   }
 
+  /** Async toolbars are not updated immediately despite the name of the method. */
   public static void updateAllToolbarsImmediately() {
     updateAllToolbarsImmediately(false);
   }
 
+  @ApiStatus.Internal
   public static void updateAllToolbarsImmediately(boolean includeInvisible) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
@@ -1111,13 +1113,21 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return myOrientation;
   }
 
+  /** Async toolbars are not updated immediately despite the name of the method. */
   @Override
   public void updateActionsImmediately() {
     updateActionsImmediately(false);
   }
 
+  @ApiStatus.Internal
   public void updateActionsImmediately(boolean includeInvisible) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (getParent() == null && myTargetComponent == null &&
+        !includeInvisible && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.warn(new Throwable("'" + myPlace + "' toolbar manual update is ignored. " +
+                             "Newly created toolbars are updated automatically on `addNotify`."));
+      return;
+    }
     myUpdater.updateActions(true, false, includeInvisible);
   }
 
