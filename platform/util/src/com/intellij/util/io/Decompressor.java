@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.BitUtil.isSet;
 
 public abstract class Decompressor {
@@ -231,7 +232,7 @@ public abstract class Decompressor {
   private @Nullable List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
   private boolean myErrorOnOutsideSymlinkTarget = false;
-  private @Nullable Consumer<Pair<? super Entry, ? super Path>>  myPostProcessor;
+  private @Nullable Consumer<Pair<? super Entry, ? super Path>> myPostProcessor;
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
@@ -250,12 +251,7 @@ public abstract class Decompressor {
   }
 
   public Decompressor postProcessor(@Nullable Consumer<? super Path> consumer) {
-    if (consumer == null) {
-      myPostProcessor = null;
-      return this;
-    }
-
-    myPostProcessor = pair -> consumer.accept((Path)pair.second);
+    myPostProcessor = consumer != null ? pair -> consumer.accept((Path)pair.second) : null;
     return this;
   }
 
@@ -342,7 +338,7 @@ public abstract class Decompressor {
         }
 
         if (myPostProcessor != null) {
-          myPostProcessor.accept(new Pair<>(entry, outputFile));
+          myPostProcessor.accept(pair(entry, outputFile));
         }
       }
     }
@@ -365,7 +361,8 @@ public abstract class Decompressor {
       if (!FileUtil.isAncestor(outputDir.toString(), outputFile.getParent().resolve(entry.linkTarget).toString(), true)) {
         throw new IOException("Invalid symlink (points outside of output directory): " + entry.name + " -> " + entry.linkTarget);
       }
-    } catch(InvalidPathException e) {
+    }
+    catch (InvalidPathException e) {
       throw new IOException("Failed to verify symlink entry scope: " + entry.name + " -> " + entry.linkTarget, e);
     }
   }
