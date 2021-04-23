@@ -167,7 +167,7 @@ fun replaceIdeEventQueueSafely() {
   EventQueue.invokeAndWait(EmptyRunnable.getInstance())
 }
 
-inline fun <reified T : Any, reified TI : Any> Application.serviceIfCreated(): TI? = this.getServiceIfCreated(T::class.java) as TI?
+inline fun <reified T : Any, reified TI : Any> Application.serviceIfCreated(): TI? = this.getServiceIfCreated(T::class.java) as? TI
 
 private var testCounter = 0
 
