@@ -117,6 +117,8 @@ public final class StartupUtil {
     Activity activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
 
+    ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
+
     activity = activity.endAndStart("main class loading scheduling");
     CompletableFuture<AppStarter> appStarterFuture = CompletableFuture.supplyAsync(() -> {
       try {
@@ -132,14 +134,16 @@ public final class StartupUtil {
       catch (Throwable e) {
         throw new CompletionException(e);
       }
-    }, ForkJoinPool.commonPool());
+    }, forkJoinPool);
 
     activity = activity.endAndStart("log4j configuration");
     configureLog4j();
 
     activity = activity.endAndStart("LaF init scheduling");
+
+    Thread busyThread = Thread.currentThread();
     // EndUserAgreement.Document type is not specified to avoid class loading
-    CompletableFuture<?> initUiTask = scheduleInitUi();
+    CompletableFuture<?> initUiTask = scheduleInitUi(busyThread);
     CompletableFuture<Boolean> agreementDialogWasShown;
     if (Main.isHeadless()) {
       agreementDialogWasShown = initUiTask.thenApply(__ -> true);
@@ -165,17 +169,6 @@ public final class StartupUtil {
       });
     }
     activity.end();
-
-    /*
-      Make EDT to always persist while main thread is alive. Otherwise, it's possible to have EDT being
-      terminated by {@link AWTAutoShutdown}, which will have negative impact on a ReadMostlyRWLock instance.
-      {@link AWTAutoShutdown#notifyThreadBusy(Thread)} will put a main thread into the thread map,
-      and thus will effectively disable auto shutdown behavior for this application.
-
-      This should never be called from a EDT, since a EDT could remove itself from the busy map while there are no events in
-      the event queue.
-     */
-    AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
 
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
@@ -210,14 +203,14 @@ public final class StartupUtil {
       PluginManagerCore.scheduleDescriptorLoading();
     }
 
-    ForkJoinPool.commonPool().execute(() -> {
+    forkJoinPool.execute(() -> {
       setupSystemLibraries();
       logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance());
       loadSystemLibraries(log);
     });
 
     // don't load EnvironmentUtil class in main thread
-    shellEnvLoadFuture = ForkJoinPool.commonPool().submit(() -> {
+    shellEnvLoadFuture = forkJoinPool.submit(() -> {
       Activity subActivity = StartUpMeasurer.startActivity("environment loading");
       Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
       return envReaderFile == null ? null : EnvironmentUtil.loadEnvironment(envReaderFile, subActivity);
@@ -261,7 +254,7 @@ public final class StartupUtil {
       });
 
     Activity mainClassLoadingWaitingActivity = StartUpMeasurer.startActivity("main class loading waiting");
-    appStarterFuture
+    CompletableFuture<?> future = appStarterFuture
       .thenCompose(appStarter -> {
         mainClassLoadingWaitingActivity.end();
 
@@ -284,8 +277,11 @@ public final class StartupUtil {
 
     // prevent JVM from exiting - because in FJP pool "all worker threads are initialized with {@link Thread#isDaemon} set {@code true}"
     // awaitQuiescence allows us to reuse main thread instead of creating another one
-    ForkJoinPool.commonPool().awaitQuiescence(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-    AWTAutoShutdown.getInstance().notifyThreadFree(Thread.currentThread());
+    do {
+      forkJoinPool.awaitQuiescence(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+    }
+    while (!future.isDone());
+    AWTAutoShutdown.getInstance().notifyThreadFree(busyThread);
   }
 
   /** Called via reflection from {@link com.intellij.ide.WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
@@ -407,7 +403,7 @@ public final class StartupUtil {
     PluginManagerCore.scheduleDescriptorLoading();
   }
 
-  private static @NotNull CompletableFuture<?> scheduleInitUi() {
+  private static @NotNull CompletableFuture<?> scheduleInitUi(@NotNull Thread busyThread) {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
@@ -489,6 +485,14 @@ public final class StartupUtil {
 
         activity = activity.endAndStart("awt thread busy notification");
         activity.end();
+
+        /*
+          Make EDT to always persist while main thread is alive. Otherwise, it's possible to have EDT being
+          terminated by {@link AWTAutoShutdown}, which will have negative impact on a ReadMostlyRWLock instance.
+          {@link AWTAutoShutdown#notifyThreadBusy(Thread)} will put a main thread into the thread map,
+          and thus will effectively disable auto shutdown behavior for this application.
+         */
+        AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread);
       }, it -> EventQueue.invokeLater(it)/* don't use here method reference (EventQueue class must be loaded on demand) */);
 
     if (isUsingSeparateWriteThread()) {
