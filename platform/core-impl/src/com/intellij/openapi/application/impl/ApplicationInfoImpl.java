@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -13,16 +14,20 @@ import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
 
+import static java.util.Objects.requireNonNull;
+
 /**
- * Provides access to content of *ApplicationInfo.xml file. Scheme for *ApplicationInfo.xml files is defined in platform/platform-resources/src/idea/ApplicationInfo.xsd,
+ * Provides access to content of *ApplicationInfo.xml file. Scheme for *ApplicationInfo.xml files is defined
+ * in platform/platform-resources/src/idea/ApplicationInfo.xsd,
  * so you need to update it when adding or removing support for some XML elements in this class.
  */
 public final class ApplicationInfoImpl extends ApplicationInfoEx {
@@ -43,8 +48,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private long myCopyrightForeground = -1;
   private long myAboutForeground = -1;
   private long myAboutLinkColor = -1;
-  // don't use Rectangle to avoid dependency on awt
-  private int[] myAboutLogoRect;
+  private int[] myAboutLogoRect;  // don't use Rectangle to avoid dependency on AWT
   private String myProgressTailIconName;
   private int myProgressHeight = 2;
   private int myProgressY = 350;
@@ -101,88 +105,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myDefaultLightLaf;
   private String myDefaultDarkLaf;
 
-  private static final @NonNls String ELEMENT_VERSION = "version";
-  private static final @NonNls String ATTRIBUTE_MAJOR = "major";
-  private static final @NonNls String ATTRIBUTE_MINOR = "minor";
-  private static final @NonNls String ATTRIBUTE_MICRO = "micro";
-  private static final @NonNls String ATTRIBUTE_PATCH = "patch";
-  private static final @NonNls String ATTRIBUTE_FULL = "full";
-  private static final @NonNls String ATTRIBUTE_CODENAME = "codename";
-  private static final @NonNls String ATTRIBUTE_NAME = "name";
-  private static final @NonNls String ELEMENT_BUILD = "build";
-  private static final @NonNls String ELEMENT_COMPANY = "company";
-  private static final @NonNls String ATTRIBUTE_NUMBER = "number";
-  private static final @NonNls String ATTRIBUTE_API_VERSION = "apiVersion";
-  private static final @NonNls String ATTRIBUTE_DATE = "date";
-  private static final @NonNls String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
-  private static final @NonNls String ELEMENT_LOGO = "logo";
-  private static final @NonNls String ATTRIBUTE_URL = "url";
-  private static final @NonNls String COPYRIGHT_START = "copyrightStart";
-  private static final @NonNls String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
-  private static final @NonNls String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
-  private static final @NonNls String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
-  private static final @NonNls String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
-  private static final @NonNls String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
-  private static final @NonNls String ATTRIBUTE_PROGRESS_Y = "progressY";
-  private static final @NonNls String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
-  private static final @NonNls String ELEMENT_ABOUT = "about";
-  private static final @NonNls String ELEMENT_ICON = "icon";
-  private static final @NonNls String ATTRIBUTE_SIZE16 = "size16";
-  private static final @NonNls String ATTRIBUTE_SIZE12 = "size12";
-  private static final @NonNls String ELEMENT_PACKAGE = "package";
-  private static final @NonNls String ATTRIBUTE_CODE = "code";
-  private static final @NonNls String ELEMENT_LICENSEE = "licensee";
-  private static final @NonNls String ATTRIBUTE_SHOW = "show";
-  private static final @NonNls String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
-  private static final @NonNls String LOGO_URL_ATTR = "logo-url";
-  private static final @NonNls String UPDATE_URLS_ELEMENT_NAME = "update-urls";
-  private static final @NonNls String ATTRIBUTE_EAP = "eap";
-  private static final @NonNls String HELP_ELEMENT_NAME = "help";
-  private static final @NonNls String ELEMENT_DOCUMENTATION = "documentation";
-  private static final @NonNls String ELEMENT_SUPPORT = "support";
-  private static final @NonNls String ELEMENT_YOUTRACK = "youtrack";
-  private static final @NonNls String ELEMENT_FEEDBACK = "feedback";
-  private static final @NonNls String ELEMENT_PLUGINS = "plugins";
-  private static final @NonNls String ATTRIBUTE_LIST_URL = "list-url";
-  private static final @NonNls String ATTRIBUTE_CHANNEL_LIST_URL = "channel-list-url";
-  private static final @NonNls String ATTRIBUTE_DOWNLOAD_URL = "download-url";
-  private static final @NonNls String ATTRIBUTE_BUILTIN_URL = "builtin-url";
-  @SuppressWarnings("SpellCheckingInspection") private static final @NonNls String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
-  private static final @NonNls String ATTRIBUTE_HAS_HELP = "has-help";
-  private static final @NonNls String ATTRIBUTE_HAS_CONTEXT_HELP = "has-context-help";
-  @SuppressWarnings("SpellCheckingInspection") private static final @NonNls String ELEMENT_WHATS_NEW = "whatsnew";
-  private static final @NonNls String ATTRIBUTE_ELIGIBILITY = "eligibility";
-  private static final @NonNls String ATTRIBUTE_ELIGIBILITY_EMBED = "embed";
-  private static final @NonNls String ATTRIBUTE_ELIGIBILITY_AUTO = "auto";
-  private static final @NonNls String ELEMENT_KEYMAP = "keymap";
-  private static final @NonNls String ATTRIBUTE_WINDOWS_URL = "win";
-  private static final @NonNls String ATTRIBUTE_MAC_URL = "mac";
-  private static final @NonNls String ELEMENT_STATISTICS = "statistics";
-  private static final @NonNls String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
-  private static final @NonNls String ELEMENT_JB_TV = "jetbrains-tv";
-  private static final @NonNls String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
-  private static final @NonNls String STEPS_PROVIDER = "provider";
-  private static final @NonNls String WIZARD_DIALOG = "dialog";
-  private static final @NonNls String ELEMENT_EVALUATION = "evaluation";
-  private static final @NonNls String ATTRIBUTE_EVAL_LICENSE_URL = "license-url";
-  private static final @NonNls String ELEMENT_LICENSING = "licensing";
-  private static final @NonNls String ATTRIBUTE_KEY_CONVERSION_URL = "key-conversion-url";
-  private static final @NonNls String ESSENTIAL_PLUGIN = "essential-plugin";
-
-  private static final @NonNls String ELEMENT_SUBSCRIPTIONS = "subscriptions";
-  @SuppressWarnings("SpellCheckingInspection") private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_FORM_ID = "formid";
-  private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY = "news-key";
-  private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_NEWS_VALUE = "news-value";
-  private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY = "tips-key";
-  private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE = "tips-available";
-  private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
-  private static final @NonNls String PROGRESS_SLIDE = "progressSlide";
-  private static final @NonNls String PROGRESS_PERCENT = "progressPercent";
-
-  private static final @NonNls String ELEMENT_DEFAULT_LAF = "default-laf";
-  private static final @NonNls String ATTRIBUTE_LAF_LIGHT = "light";
-  private static final @NonNls String ATTRIBUTE_LAF_DARK = "dark";
-
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
@@ -197,54 +119,53 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @NonInjectable
   ApplicationInfoImpl(@NotNull Element element) {
     // behavior of this method must be consistent with idea/ApplicationInfo.xsd schema.
-    Element versionElement = getChild(element, ELEMENT_VERSION);
+    Element versionElement = getChild(element, "version");
     if (versionElement != null) {
-      myMajorVersion = versionElement.getAttributeValue(ATTRIBUTE_MAJOR);
-      myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
-      myMicroVersion = versionElement.getAttributeValue(ATTRIBUTE_MICRO);
-      myPatchVersion = versionElement.getAttributeValue(ATTRIBUTE_PATCH);
-      myFullVersionFormat = versionElement.getAttributeValue(ATTRIBUTE_FULL);
-      myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
-      myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
+      myMajorVersion = versionElement.getAttributeValue("major");
+      myMinorVersion = versionElement.getAttributeValue("minor");
+      myMicroVersion = versionElement.getAttributeValue("micro");
+      myPatchVersion = versionElement.getAttributeValue("patch");
+      myFullVersionFormat = versionElement.getAttributeValue("full");
+      myCodeName = versionElement.getAttributeValue("codename");
+      myEAP = Boolean.parseBoolean(versionElement.getAttributeValue("eap"));
       myVersionSuffix = versionElement.getAttributeValue("suffix");
       if (myVersionSuffix == null && myEAP) {
         myVersionSuffix = "EAP";
       }
     }
 
-    Element companyElement = getChild(element, ELEMENT_COMPANY);
+    Element companyElement = getChild(element, "company");
     if (companyElement != null) {
-      myCompanyName = companyElement.getAttributeValue(ATTRIBUTE_NAME, myCompanyName);
-      //noinspection TestOnlyProblems
+      myCompanyName = companyElement.getAttributeValue("name", myCompanyName);
       myShortCompanyName = companyElement.getAttributeValue("shortName", shortenCompanyName(myCompanyName));
-      myCompanyUrl = companyElement.getAttributeValue(ATTRIBUTE_URL, myCompanyUrl);
-      myCopyrightStart = companyElement.getAttributeValue(COPYRIGHT_START, myCopyrightStart);
+      myCompanyUrl = companyElement.getAttributeValue("url", myCompanyUrl);
+      myCopyrightStart = companyElement.getAttributeValue("copyrightStart", myCopyrightStart);
     }
 
-    Element buildElement = getChild(element, ELEMENT_BUILD);
+    Element buildElement = getChild(element, "build");
     if (buildElement != null) {
       readBuildInfo(buildElement);
     }
 
-    Element logoElement = getChild(element, ELEMENT_LOGO);
+    Element logoElement = getChild(element, "logo");
     if (logoElement != null) {
       readLogoInfo(logoElement);
     }
 
-    Element aboutLogoElement = getChild(element, ELEMENT_ABOUT);
+    Element aboutLogoElement = getChild(element, "about");
     if (aboutLogoElement != null) {
-      myAboutImageUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
+      myAboutImageUrl = aboutLogoElement.getAttributeValue("url");
 
-      String v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_FOREGROUND_COLOR);
+      String v = aboutLogoElement.getAttributeValue("foreground");
       if (v != null) {
         myAboutForeground = parseColor(v);
       }
-      v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR);
+      v = aboutLogoElement.getAttributeValue("copyrightForeground");
       if (v != null) {
         myCopyrightForeground = parseColor(v);
       }
 
-      String c = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_LINK_COLOR);
+      String c = aboutLogoElement.getAttributeValue("linkColor");
       if (c != null) {
         myAboutLinkColor = parseColor(c);
       }
@@ -261,12 +182,12 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    Element iconElement = getChild(element, ELEMENT_ICON);
+    Element iconElement = getChild(element, "icon");
     if (iconElement != null) {
       myIconUrl = iconElement.getAttributeValue("size32");
-      mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16, mySmallIconUrl);
+      mySmallIconUrl = iconElement.getAttributeValue("size16", mySmallIconUrl);
       myBigIconUrl = getAttributeValue(iconElement, "size128");
-      String toolWindowIcon = getAttributeValue(iconElement, ATTRIBUTE_SIZE12);
+      String toolWindowIcon = getAttributeValue(iconElement, "size12");
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;
       }
@@ -279,83 +200,81 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       mySmallSvgEapIconUrl = iconEap.getAttributeValue("svg-small");
     }
 
-    Element packageElement = getChild(element, ELEMENT_PACKAGE);
+    Element packageElement = getChild(element, "package");
     if (packageElement != null) {
-      myPackageCode = packageElement.getAttributeValue(ATTRIBUTE_CODE);
+      myPackageCode = packageElement.getAttributeValue("code");
     }
 
-    Element showLicensee = getChild(element, ELEMENT_LICENSEE);
+    Element showLicensee = getChild(element, "licensee");
     if (showLicensee != null) {
-      myShowLicensee = Boolean.parseBoolean(showLicensee.getAttributeValue(ATTRIBUTE_SHOW));
+      myShowLicensee = Boolean.parseBoolean(showLicensee.getAttributeValue("show"));
     }
 
-    Element welcomeScreen = getChild(element, WELCOME_SCREEN_ELEMENT_NAME);
+    Element welcomeScreen = getChild(element, "welcome-screen");
     if (welcomeScreen != null) {
-      myWelcomeScreenLogoUrl = welcomeScreen.getAttributeValue(LOGO_URL_ATTR);
+      myWelcomeScreenLogoUrl = welcomeScreen.getAttributeValue("logo-url");
     }
 
-    Element wizardSteps = getChild(element, CUSTOMIZE_IDE_WIZARD_STEPS);
+    Element wizardSteps = getChild(element, "customize-ide-wizard");
     if (wizardSteps != null) {
-      myCustomizeIDEWizardStepsProvider = wizardSteps.getAttributeValue(STEPS_PROVIDER);
-
-      myCustomizeIDEWizardDialog = getAttributeValue(wizardSteps, WIZARD_DIALOG);
+      myCustomizeIDEWizardStepsProvider = wizardSteps.getAttributeValue("provider");
+      myCustomizeIDEWizardDialog = getAttributeValue(wizardSteps, "dialog");
     }
 
-    Element helpElement = getChild(element, HELP_ELEMENT_NAME);
+    Element helpElement = getChild(element, "help");
     if (helpElement != null) {
-      String webHelpUrl = getAttributeValue(helpElement, ATTRIBUTE_WEBHELP_URL);
+      String webHelpUrl = getAttributeValue(helpElement, "webhelp-url");
       if (webHelpUrl != null) {
         myWebHelpUrl = webHelpUrl;
       }
 
-      String attValue = helpElement.getAttributeValue(ATTRIBUTE_HAS_HELP);
+      String attValue = helpElement.getAttributeValue("has-help");
       myHasHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
 
-      attValue = helpElement.getAttributeValue(ATTRIBUTE_HAS_CONTEXT_HELP);
+      attValue = helpElement.getAttributeValue("has-context-help");
       myHasContextHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
     }
 
-    Element updateUrls = getChild(element, UPDATE_URLS_ELEMENT_NAME);
+    Element updateUrls = getChild(element, "update-urls");
     myUpdateUrls = updateUrls == null ? null : new UpdateUrlsImpl(updateUrls);
 
-    @SuppressWarnings("DuplicatedCode")
-    Element documentationElement = getChild(element, ELEMENT_DOCUMENTATION);
+    Element documentationElement = getChild(element, "documentation");
     if (documentationElement != null) {
-      myDocumentationUrl = documentationElement.getAttributeValue(ATTRIBUTE_URL);
+      myDocumentationUrl = documentationElement.getAttributeValue("url");
     }
 
-    Element supportElement = getChild(element, ELEMENT_SUPPORT);
+    Element supportElement = getChild(element, "support");
     if (supportElement != null) {
-      mySupportUrl = supportElement.getAttributeValue(ATTRIBUTE_URL);
+      mySupportUrl = supportElement.getAttributeValue("url");
     }
 
-    Element youtrackElement = getChild(element, ELEMENT_YOUTRACK);
+    Element youtrackElement = getChild(element, "youtrack");
     if (youtrackElement != null) {
-      myYoutrackUrl = youtrackElement.getAttributeValue(ATTRIBUTE_URL);
+      myYoutrackUrl = youtrackElement.getAttributeValue("url");
     }
 
-    Element feedbackElement = getChild(element, ELEMENT_FEEDBACK);
+    Element feedbackElement = getChild(element, "feedback");
     if (feedbackElement != null) {
-      myFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_URL);
+      myFeedbackUrl = feedbackElement.getAttributeValue("url");
     }
 
-    Element whatsNewElement = getChild(element, ELEMENT_WHATS_NEW);
+    Element whatsNewElement = getChild(element, "whatsnew");
     if (whatsNewElement != null) {
-      myWhatsNewUrl = whatsNewElement.getAttributeValue(ATTRIBUTE_URL);
-      String eligibility = whatsNewElement.getAttributeValue(ATTRIBUTE_ELIGIBILITY);
-      if (ATTRIBUTE_ELIGIBILITY_EMBED.equals(eligibility)) myWhatsNewEligibility = WHATS_NEW_EMBED;
-      else if (ATTRIBUTE_ELIGIBILITY_AUTO.equals(eligibility)) myWhatsNewEligibility = WHATS_NEW_AUTO;
+      myWhatsNewUrl = whatsNewElement.getAttributeValue("url");
+      String eligibility = whatsNewElement.getAttributeValue("eligibility");
+      if ("embed".equals(eligibility)) myWhatsNewEligibility = WHATS_NEW_EMBED;
+      else if ("auto".equals(eligibility)) myWhatsNewEligibility = WHATS_NEW_AUTO;
     }
 
-    readPluginInfo(getChild(element, ELEMENT_PLUGINS));
+    readPluginInfo(getChild(element, "plugins"));
 
-    Element keymapElement = getChild(element, ELEMENT_KEYMAP);
+    Element keymapElement = getChild(element, "keymap");
     if (keymapElement != null) {
-      myWinKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_WINDOWS_URL);
-      myMacKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_MAC_URL);
+      myWinKeymapUrl = keymapElement.getAttributeValue("win");
+      myMacKeymapUrl = keymapElement.getAttributeValue("mac");
     }
 
-    List<Element> essentialPluginsElements = getChildren(element, ESSENTIAL_PLUGIN);
+    List<Element> essentialPluginsElements = getChildren(element, "essential-plugin");
     if (essentialPluginsElements.isEmpty()) {
       myEssentialPluginsIds = Collections.emptyList();
     }
@@ -371,53 +290,53 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       myEssentialPluginsIds = Collections.unmodifiableList(essentialPluginsIds);
     }
 
-    Element statisticsElement = getChild(element, ELEMENT_STATISTICS);
+    Element statisticsElement = getChild(element, "statistics");
     if (statisticsElement != null) {
-      myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
+      myEventLogSettingsUrl = statisticsElement.getAttributeValue("event-log-settings");
     }
     else {
       myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
     }
 
-    Element tvElement = getChild(element, ELEMENT_JB_TV);
+    Element tvElement = getChild(element, "jetbrains-tv");
     if (tvElement != null) {
-      myJetBrainsTvUrl = tvElement.getAttributeValue(ATTRIBUTE_URL);
+      myJetBrainsTvUrl = tvElement.getAttributeValue("url");
     }
 
-    Element evaluationElement = getChild(element, ELEMENT_EVALUATION);
+    Element evaluationElement = getChild(element, "evaluation");
     if (evaluationElement != null) {
-      String url = getAttributeValue(evaluationElement, ATTRIBUTE_EVAL_LICENSE_URL);
+      String url = getAttributeValue(evaluationElement, "license-url");
       if (url != null) {
         myEvalLicenseUrl = url.trim();
       }
     }
 
-    Element licensingElement = getChild(element, ELEMENT_LICENSING);
+    Element licensingElement = getChild(element, "licensing");
     if (licensingElement != null) {
-      String url = getAttributeValue(licensingElement, ATTRIBUTE_KEY_CONVERSION_URL);
+      String url = getAttributeValue(licensingElement, "key-conversion-url");
       if (url != null) {
         myKeyConversionUrl = url.trim();
       }
     }
 
-    Element subscriptionsElement = getChild(element, ELEMENT_SUBSCRIPTIONS);
+    Element subscriptionsElement = getChild(element, "subscriptions");
     if (subscriptionsElement != null) {
-      mySubscriptionFormId = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_FORM_ID);
-      mySubscriptionNewsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY);
-      mySubscriptionNewsValue = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_NEWS_VALUE, "yes");
-      mySubscriptionTipsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY);
-      mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
-      mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
+      mySubscriptionFormId = subscriptionsElement.getAttributeValue("formid");
+      mySubscriptionNewsKey = subscriptionsElement.getAttributeValue("news-key");
+      mySubscriptionNewsValue = subscriptionsElement.getAttributeValue("news-value", "yes");
+      mySubscriptionTipsKey = subscriptionsElement.getAttributeValue("tips-key");
+      mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue("tips-available"));
+      mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue("additional-form-data");
     }
 
-    Element defaultLafElement = getChild(element, ELEMENT_DEFAULT_LAF);
+    Element defaultLafElement = getChild(element, "default-laf");
     if (defaultLafElement != null) {
-      String laf = getAttributeValue(defaultLafElement, ATTRIBUTE_LAF_LIGHT);
+      String laf = getAttributeValue(defaultLafElement, "light");
       if (laf != null) {
         myDefaultLightLaf = laf.trim();
       }
 
-      laf = getAttributeValue(defaultLafElement, ATTRIBUTE_LAF_DARK);
+      laf = getAttributeValue(defaultLafElement, "dark");
       if (laf != null) {
         myDefaultDarkLaf = laf.trim();
       }
@@ -425,36 +344,32 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private void readLogoInfo(@NotNull Element element) {
-    mySplashImageUrl = getAttributeValue(element, ATTRIBUTE_URL);
-    String v = getAttributeValue(element, ATTRIBUTE_PROGRESS_COLOR);
+    mySplashImageUrl = getAttributeValue(element, "url");
+    String v = getAttributeValue(element, "progressColor");
     if (v != null) {
       myProgressColor = parseColor(v);
     }
 
-    v = getAttributeValue(element, ATTRIBUTE_PROGRESS_TAIL_ICON);
+    v = getAttributeValue(element, "progressTailIcon");
     if (v != null) {
       myProgressTailIconName = v;
     }
 
-    v = getAttributeValue(element, ATTRIBUTE_PROGRESS_HEIGHT);
+    v = getAttributeValue(element, "progressHeight");
     if (v != null) {
       myProgressHeight = Integer.parseInt(v);
     }
 
-    v = getAttributeValue(element, ATTRIBUTE_PROGRESS_Y);
+    v = getAttributeValue(element, "progressY");
     if (v != null) {
       myProgressY = Integer.parseInt(v);
     }
 
-    for (Element child : getChildren(element, PROGRESS_SLIDE)) {
-      String slideUrl = child.getAttributeValue(ATTRIBUTE_URL);
-      assert slideUrl != null;
-      String progressPercentString = child.getAttributeValue(PROGRESS_PERCENT);
-      assert progressPercentString != null;
-
-      int progressPercentInt = Integer.parseInt(progressPercentString);
-      assert (progressPercentInt <= 100 && progressPercentInt >= 0);
-
+    for (Element child : getChildren(element, "progressSlide")) {
+      String slideUrl = requireNonNull(child.getAttributeValue("url"));
+      String progressPercent = requireNonNull(child.getAttributeValue("progressPercent"));
+      int progressPercentInt = Integer.parseInt(progressPercent);
+      if (progressPercentInt < 0 || progressPercentInt > 100) throw new IllegalArgumentException("Expected [0, 100], got " + progressPercent);
       float progressPercentFloat = (float)progressPercentInt / 100;
       myProgressSlides.add(new ProgressSlide(slideUrl, progressPercentFloat));
     }
@@ -489,9 +404,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   public static @NotNull String orFromPluginsCompatibleBuild(@Nullable BuildNumber buildNumber) {
-    BuildNumber number = buildNumber != null ?
-                         buildNumber :
-                         getShadowInstanceImpl().getPluginsCompatibleBuildAsNumber();
+    BuildNumber number = buildNumber != null ? buildNumber : getShadowInstanceImpl().getPluginsCompatibleBuildAsNumber();
     return number.asString();
   }
 
@@ -510,7 +423,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @NotNull BuildNumber getBuild() {
-    return Objects.requireNonNull(BuildNumber.fromString(myBuildNumber));
+    return requireNonNull(BuildNumber.fromString(myBuildNumber));
   }
 
   @Override
@@ -557,9 +470,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       result = MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
     }
     else {
-      result = StringUtilRt.notNullize(myMajorVersion, "0") + '.' + StringUtilRt.notNullize(myMinorVersion, "0");
+      result = requireNonNullElse(myMajorVersion) + '.' + requireNonNullElse(myMinorVersion);
     }
-    if (!StringUtilRt.isEmpty(myVersionSuffix)) {
+    if (myVersionSuffix != null && !myVersionSuffix.isEmpty()) {
       result += " " + myVersionSuffix;
     }
     return result;
@@ -567,13 +480,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @NotNull String getStrictVersion() {
-    return myMajorVersion + "." + myMinorVersion + "." + StringUtilRt.notNullize(myMicroVersion, "0") + "." + StringUtilRt.notNullize(myPatchVersion, "0");
+    return myMajorVersion + "." + myMinorVersion + "." + requireNonNullElse(myMicroVersion) + "." + requireNonNullElse(myPatchVersion);
   }
 
   @Override
   public String getVersionName() {
     String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
-    if (myEAP && !StringUtilRt.isEmptyOrSpaces(myCodeName)) {
+    if (myEAP && myCodeName != null && !myCodeName.isEmpty()) {
       fullName += " (" + myCodeName + ")";
     }
     return fullName;
@@ -875,11 +788,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
     BuildNumber buildNumber = fromStringWithProductCode(version.asString(),
                                                         getBuild());
-    return Objects.requireNonNull(buildNumber);
+    return requireNonNull(buildNumber);
   }
 
-  private static @Nullable BuildNumber fromStringWithProductCode(@NotNull @NlsSafe String version,
-                                                                 @NotNull BuildNumber buildNumber) {
+  private static @Nullable BuildNumber fromStringWithProductCode(@NotNull String version, @NotNull BuildNumber buildNumber) {
     return BuildNumber.fromStringWithProductCode(version, buildNumber.getProductCode());
   }
 
@@ -889,15 +801,15 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private void readBuildInfo(@NotNull Element element) {
-    myBuildNumber = getAttributeValue(element, ATTRIBUTE_NUMBER);
-    myApiVersion = getAttributeValue(element, ATTRIBUTE_API_VERSION);
+    myBuildNumber = getAttributeValue(element, "number");
+    myApiVersion = getAttributeValue(element, "apiVersion");
 
-    String dateString = element.getAttributeValue(ATTRIBUTE_DATE);
+    String dateString = element.getAttributeValue("date");
     if (dateString != null && !dateString.equals("__BUILD_DATE__")) {
       myBuildDate = parseDate(dateString);
     }
 
-    String majorReleaseDateString = element.getAttributeValue(ATTRIBUTE_MAJOR_RELEASE_DATE);
+    String majorReleaseDateString = element.getAttributeValue("majorReleaseDate");
     if (majorReleaseDateString != null) {
       myMajorReleaseBuildDate = parseDate(majorReleaseDateString);
     }
@@ -909,27 +821,27 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     myChannelsListUrl = null;
     myPluginsDownloadUrl = null;
     if (element != null) {
-      String url = element.getAttributeValue(ATTRIBUTE_URL);
+      String url = element.getAttributeValue("url");
       if (url != null) {
         pluginManagerUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
       }
 
-      String listUrl = element.getAttributeValue(ATTRIBUTE_LIST_URL);
+      String listUrl = element.getAttributeValue("list-url");
       if (listUrl != null) {
         pluginsListUrl = listUrl;
       }
 
-      String channelListUrl = element.getAttributeValue(ATTRIBUTE_CHANNEL_LIST_URL);
+      String channelListUrl = element.getAttributeValue("channel-list-url");
       if (channelListUrl != null) {
         myChannelsListUrl = channelListUrl;
       }
 
-      String downloadUrl = element.getAttributeValue(ATTRIBUTE_DOWNLOAD_URL);
+      String downloadUrl = element.getAttributeValue("download-url");
       if (downloadUrl != null) {
         myPluginsDownloadUrl = downloadUrl;
       }
 
-      String builtinPluginsUrl = element.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
+      String builtinPluginsUrl = element.getAttributeValue("builtin-url");
       if (builtinPluginsUrl != null && !builtinPluginsUrl.isEmpty()) {
         myBuiltinPluginsUrl = builtinPluginsUrl;
       }
@@ -960,9 +872,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   // copy of ApplicationInfoProperties.shortenCompanyName
-  @SuppressWarnings("SSBasedInspection")
-  @TestOnly
-  static String shortenCompanyName(@NotNull String name) {
+  private static String shortenCompanyName(@NotNull String name) {
     if (name.endsWith(" s.r.o.")) {
       name = name.substring(0, name.length() - " s.r.o.".length());
     }
@@ -991,8 +901,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return calendar;
   }
 
-  public static long parseColor(@NotNull String colorString) {
+  private static long parseColor(@NotNull String colorString) {
     return Long.parseLong(colorString, 16);
+  }
+
+  @ReviseWhenPortedToJDK("9")
+  private static String requireNonNullElse(String s) {
+    return s != null ? s : "0";
   }
 
   @Override
@@ -1040,9 +955,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
-  /**
-   * @deprecated Use {{@link ApplicationManagerEx#isInStressTest()}}
-   */
+  /** @deprecated Use {@link ApplicationManagerEx#isInStressTest} */
   @Deprecated
   public static boolean isInStressTest() {
     return ApplicationManagerEx.isInStressTest();
