@@ -21,7 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -49,7 +49,10 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.InputEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
@@ -742,12 +745,9 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private void registerAction(@NotNull Consumer<InputEvent> action, @NotNull ShortcutSet shortcuts) {
-      new DumbAwareAction() {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent event) {
-          if (myPopup != null && myPopup.isVisible()) action.consume(event.getInputEvent());
-        }
-      }.registerCustomShortcutSet(shortcuts, this, this);
+      LightEditActionFactory.create(event -> {
+        if (myPopup != null && myPopup.isVisible()) action.consume(event.getInputEvent());
+      }).registerCustomShortcutSet(shortcuts, this, this);
     }
 
     private void registerSwingAction(@NonNls @NotNull String id, @NonNls String @NotNull ... keys) {
