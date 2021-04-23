@@ -89,11 +89,11 @@ public final class IndexUpdateRunner {
     }
   }
 
-  public static final class BagOfFiles {
+  public static final class FileSet {
     public final String debugName;
     public final Collection<VirtualFile> files;
     public final IndexingJobStatistics statistics;
-    public BagOfFiles(@NotNull Project project, @NotNull String debugName, @NotNull Collection<VirtualFile> files) {
+    public FileSet(@NotNull Project project, @NotNull String debugName, @NotNull Collection<VirtualFile> files) {
       this.debugName = debugName;
       this.files = files;
       statistics = new IndexingJobStatistics(project, debugName);
@@ -101,19 +101,19 @@ public final class IndexUpdateRunner {
   }
 
   public void indexFiles(@NotNull Project project,
-                         @NotNull List<BagOfFiles> bagsOfFiles,
+                         @NotNull List<FileSet> fileSets,
                          @NotNull ProgressIndicator indicator) throws IndexingInterruptedException {
     long startTime = System.nanoTime();
     try {
-      doIndexFiles(project, bagsOfFiles, indicator);
+      doIndexFiles(project, fileSets, indicator);
     }
     catch (RuntimeException e) {
       throw new IndexingInterruptedException(e);
     }
     finally {
       long visibleIndexingTime = System.nanoTime() - startTime;
-      long totalProcessingTimeInAllThreads = bagsOfFiles.stream().mapToLong(b -> b.statistics.getProcessingTimeInAllThreads()).sum();
-      bagsOfFiles.forEach(b -> {
+      long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getProcessingTimeInAllThreads()).sum();
+      fileSets.forEach(b -> {
         long weightedVisibleTime = totalProcessingTimeInAllThreads == 0
                                    ? 0 : (long)(visibleIndexingTime * ((double) b.statistics.getProcessingTimeInAllThreads() / totalProcessingTimeInAllThreads));
         b.statistics.setIndexingVisibleTime(weightedVisibleTime);
@@ -121,8 +121,8 @@ public final class IndexUpdateRunner {
     }
   }
 
-  private void doIndexFiles(@NotNull Project project, @NotNull List<BagOfFiles> bagsOfFiles, @NotNull ProgressIndicator indicator) {
-    if (ContainerUtil.and(bagsOfFiles, b -> b.files.isEmpty())) {
+  private void doIndexFiles(@NotNull Project project, @NotNull List<FileSet> fileSets, @NotNull ProgressIndicator indicator) {
+    if (ContainerUtil.and(fileSets, b -> b.files.isEmpty())) {
       return;
     }
     indicator.checkCanceled();
@@ -131,7 +131,7 @@ public final class IndexUpdateRunner {
     CachedFileContentLoader contentLoader = new CurrentProjectHintedCachedFileContentLoader(project);
     ProgressIndicator originalIndicator = unwrapAll(indicator);
     ProgressSuspender originalSuspender = ProgressSuspender.getSuspender(originalIndicator);
-    IndexingJob indexingJob = new IndexingJob(project, indicator, contentLoader, bagsOfFiles, originalIndicator, originalSuspender);
+    IndexingJob indexingJob = new IndexingJob(project, indicator, contentLoader, fileSets, originalIndicator, originalSuspender);
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       // If the current thread has acquired the write lock, we can't grant it to worker threads, so we must do the work in the current thread.
       while (!indexingJob.areAllFilesProcessed()) {
@@ -237,7 +237,7 @@ public final class IndexUpdateRunner {
     }
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
-      IndexingJobStatistics statistics = indexingJob.getBagStatistics(e.getFile());
+      IndexingJobStatistics statistics = indexingJob.getStatistics(e.getFile());
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (statistics) {
         statistics.addTooLargeForIndexingFile(e.getFile());
@@ -269,7 +269,7 @@ public final class IndexUpdateRunner {
           .wrapProgress(indexingJob.myIndicator)
           .executeSynchronously();
         long processingTime = System.nanoTime() - startTime;
-        IndexingJobStatistics statistics = indexingJob.getBagStatistics(file);
+        IndexingJobStatistics statistics = indexingJob.getStatistics(file);
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (statistics) {
           statistics.addFileStatistics(file,
@@ -447,7 +447,7 @@ public final class IndexUpdateRunner {
 
   private static class IndexingJob {
     final Project myProject;
-    private final Map<VirtualFile, BagOfFiles> myFileToBag;
+    private final Map<VirtualFile, FileSet> myFileToSet;
     final CachedFileContentLoader myContentLoader;
     final BlockingQueue<VirtualFile> myQueueOfFiles;
     final ProgressIndicator myIndicator;
@@ -461,25 +461,25 @@ public final class IndexUpdateRunner {
     IndexingJob(@NotNull Project project,
                 @NotNull ProgressIndicator indicator,
                 @NotNull CachedFileContentLoader contentLoader,
-                @NotNull List<BagOfFiles> bagsOfFiles,
+                @NotNull List<FileSet> fileSets,
                 @NotNull ProgressIndicator originalProgressIndicator,
                 @Nullable ProgressSuspender originalProgressSuspender) {
       myProject = project;
       myIndicator = indicator;
-      myFileToBag = new HashMap<>();
-      for (BagOfFiles bagOfFiles : bagsOfFiles) {
-        bagOfFiles.files.forEach(file -> myFileToBag.put(file, bagOfFiles));
+      myFileToSet = new HashMap<>();
+      for (FileSet fileSet : fileSets) {
+        fileSet.files.forEach(file -> myFileToSet.put(file, fileSet));
       }
-      myTotalFiles = myFileToBag.keySet().size();
+      myTotalFiles = myFileToSet.keySet().size();
       myContentLoader = contentLoader;
-      myQueueOfFiles = new ArrayBlockingQueue<>(myFileToBag.keySet().size(), false, myFileToBag.keySet());
-      myAllFilesAreProcessedLatch = new CountDownLatch(myFileToBag.keySet().size());
+      myQueueOfFiles = new ArrayBlockingQueue<>(myFileToSet.keySet().size(), false, myFileToSet.keySet());
+      myAllFilesAreProcessedLatch = new CountDownLatch(myFileToSet.keySet().size());
       myOriginalProgressIndicator = originalProgressIndicator;
       myOriginalProgressSuspender = originalProgressSuspender;
     }
 
-    public @NotNull IndexingJobStatistics getBagStatistics(@NotNull VirtualFile file) {
-      return myFileToBag.get(file).statistics;
+    public @NotNull IndexingJobStatistics getStatistics(@NotNull VirtualFile file) {
+      return myFileToSet.get(file).statistics;
     }
 
     public void oneMoreFileProcessed() {

@@ -208,7 +208,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
 
     for (int index = 0; index < orderedProviders.size(); ) {
-      List<IndexUpdateRunner.BagOfFiles> bagsOfFiles = new ArrayList<>();
+      List<IndexUpdateRunner.FileSet> fileSets = new ArrayList<>();
       int takenFiles = 0;
 
       int biggestProviderFiles = 0;
@@ -218,33 +218,33 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
         IndexableFilesIterator provider = orderedProviders.get(index++);
         List<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
         if (!providerFiles.isEmpty()) {
-          bagsOfFiles.add(new IndexUpdateRunner.BagOfFiles(myProject, provider.getDebugName(), providerFiles));
+          fileSets.add(new IndexUpdateRunner.FileSet(myProject, provider.getDebugName(), providerFiles));
         }
         if (biggestProviderFiles < providerFiles.size()) {
           biggestProviderFiles = providerFiles.size();
           biggestProvider = provider;
         }
       }
-      if (bagsOfFiles.isEmpty() || biggestProvider == null) {
+      if (fileSets.isEmpty() || biggestProvider == null) {
         break;
       }
 
       var indexingProgressText = biggestProvider.getIndexingProgressText();
 
       concurrentTasksProgressManager.setText(indexingProgressText);
-      int bagFilesNumber = bagsOfFiles.stream().mapToInt(b -> b.files.size()).sum();
-      SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(bagFilesNumber);
+      int numberOfFiles = fileSets.stream().mapToInt(b -> b.files.size()).sum();
+      SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(numberOfFiles);
       try {
         IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          indexUpdateRunner.indexFiles(myProject, bagsOfFiles, subTaskIndicator);
+          indexUpdateRunner.indexFiles(myProject, fileSets, subTaskIndicator);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           exception = e;
         }
 
         try {
-          bagsOfFiles.forEach(b -> projectIndexingHistory.addProviderStatistics(b.statistics));
+          fileSets.forEach(b -> projectIndexingHistory.addProviderStatistics(b.statistics));
         }
         catch (Exception e) {
           LOG.error("Failed to add indexing statistics", e);
