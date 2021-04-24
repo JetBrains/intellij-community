@@ -452,13 +452,13 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+    delayIndexingInTestsIfNecessary();
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
     ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject);
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject);
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     try {
-      delayIndexingInTestsIfNecessary();
       updateUnindexedFiles(projectIndexingHistory, indicator);
     }
     catch (Throwable e) {
