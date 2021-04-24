@@ -3,8 +3,8 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -163,7 +163,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       }
     }
     ApplicationManager.getApplication().invokeLater(() -> {
-      ActionToolbarImpl.updateAllToolbarsImmediately();
+      ActivityTracker.getInstance().inc();
     });
   }
 
