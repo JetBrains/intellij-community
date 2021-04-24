@@ -4,6 +4,8 @@ package com.intellij.util.indexing.diagnostic.dto
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.SystemInfo
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonIndexDiagnosticAppInfo(
@@ -19,9 +21,9 @@ data class JsonIndexDiagnosticAppInfo(
       val appInfo = ApplicationInfo.getInstance()
       return JsonIndexDiagnosticAppInfo(
         build = appInfo.build.asStringWithoutProductCode(),
-        buildDate = JsonDateTime(),
+        buildDate = JsonDateTime(ZonedDateTime.ofInstant(appInfo.buildDate.toInstant(), appInfo.buildDate.timeZone.toZoneId())),
         productCode = appInfo.build.productCode,
-        generated = JsonDateTime(),
+        generated = JsonDateTime(ZonedDateTime.now(ZoneOffset.UTC)),
         os = SystemInfo.getOsNameAndVersion(),
         runtime = SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION
       )
