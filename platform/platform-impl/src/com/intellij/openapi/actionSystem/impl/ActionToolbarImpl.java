@@ -44,6 +44,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -101,10 +102,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       CancellablePromise<List<AnAction>> promise = toolbar.myLastUpdate;
       if (promise != null) promise.cancel();
       toolbar.myVisibleActions.clear();
+      Image image = !isTestMode && toolbar.isShowing() ? paintToImage(toolbar) : null;
       toolbar.removeAll();
-      if (!isTestMode) {
-        toolbar.addLoadingIcon();
-      }
+      if (image != null) toolbar.myCachedImage = image;
+      else if (!isTestMode) toolbar.addLoadingIcon();
       toolbar.updateActionsImmediately(true);
     }
   }
@@ -171,6 +172,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private JComponent myTargetComponent;
   private boolean myReservePlaceAutoPopupIcon = true;
   private boolean myShowSeparatorTitles;
+  private Image myCachedImage;
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
     this(place, actionGroup, horizontal, false);
@@ -290,6 +292,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   protected void paintComponent(final Graphics g) {
+    if (myCachedImage != null) {
+      UIUtil.drawImage(g, myCachedImage, 0, 0, null);
+      return;
+    }
     super.paintComponent(g);
 
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY && myAutoPopupRec != null) {
@@ -861,6 +867,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public @NotNull Dimension getPreferredSize() {
+    if (myCachedImage != null) {
+      return new Dimension(ImageUtil.getUserWidth(myCachedImage), ImageUtil.getUserHeight(myCachedImage));
+    }
     return updatePreferredSize(super.getPreferredSize());
   }
 
@@ -994,6 +1003,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   protected int getSeparatorHeight() {
     return JBUIScale.scale(24);
+  }
+
+  private static @Nullable Image paintToImage(@NotNull JComponent comp) {
+    Dimension size = comp.getSize();
+    if (size.width < 1 || size.height < 1) return null;
+    BufferedImage image = UIUtil.createImage(comp, size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+    UIUtil.useSafely(image.getGraphics(), comp::paint);
+    return image;
   }
 
   private final class MySeparator extends JComponent {
@@ -1206,6 +1223,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   protected void actionsUpdated(boolean forced, @NotNull List<? extends AnAction> newVisibleActions) {
     if (forced || canUpdateActions(newVisibleActions)) {
       myForcedUpdateRequested = false;
+      myCachedImage = null;
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;
 
