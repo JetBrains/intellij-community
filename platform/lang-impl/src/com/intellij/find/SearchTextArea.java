@@ -283,6 +283,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
         addedButtons.add(button);
         buttonsGrid.add(button);
       }
+      buttonsGrid.setBorder(JBUI.Borders.empty(1, 0, 0, 2));
       myExtraActionsPanel.setLayout(new BorderLayout());
       myExtraActionsPanel.add(buttonsGrid, BorderLayout.NORTH);
       myExtraActionsPanel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 1, 0, 0), JBUI.Borders.emptyLeft(5)));
