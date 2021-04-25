@@ -111,7 +111,7 @@ class AccountManagerBaseTest {
     manager.updateAccount(account, "test")
   }
 
-  private class MockAccount : Account()
+  private class MockAccount(override val id: String = generateId()) : Account()
 
   private class TestManager(private val persistentAccounts: AccountsPersistentStateComponent<MockAccount, *>,
                             override val passwordSafe: PasswordSafe,

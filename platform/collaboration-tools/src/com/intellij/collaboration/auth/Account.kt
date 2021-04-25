@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth
 
-import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.util.xmlb.annotations.Tag
 import java.util.*
 
-@Tag("account")
-abstract class Account(@Attribute("id") val id: String = UUID.randomUUID().toString()) {
+abstract class Account {
+  abstract val id: String
 
   final override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -19,5 +17,9 @@ abstract class Account(@Attribute("id") val id: String = UUID.randomUUID().toStr
 
   final override fun hashCode(): Int {
     return id.hashCode()
+  }
+
+  companion object {
+    fun generateId() = UUID.randomUUID().toString()
   }
 }
