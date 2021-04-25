@@ -258,15 +258,12 @@ public final class ModifierKeyDoubleClickHandler {
         }
 
         DataContext context = calculateContext();
-        AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.KEYBOARD_SHORTCUT, context);
-        action.update(anActionEvent);
-        if (!anActionEvent.getPresentation().isEnabled()) return false;
-
-        ex.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
-        ActionUtil.performAction(action, anActionEvent);
-        ex.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
-        ActionsCollectorImpl
-          .recordCustomActionInvoked(anActionEvent.getProject(), "DoubleShortcut", anActionEvent.getInputEvent(), action.getClass());
+        AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.KEYBOARD_SHORTCUT, context);
+        if (!ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) {
+          return false;
+        }
+        ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
+        ActionsCollectorImpl.recordCustomActionInvoked(actionEvent.getProject(), "DoubleShortcut", event, action.getClass());
         return true;
       }
       finally {

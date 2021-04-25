@@ -6,11 +6,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
@@ -213,17 +209,11 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   protected void executeAction(@NonNls String actionId) {
-    final AnAction action = ActionManager.getInstance().getAction(actionId);
-    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(),
-                                                                 DataManager.getInstance().getDataContext(this));
-    action.beforeActionPerformedUpdate(event);
-    action.update(event);
-
-    if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-      ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
-      ActionUtil.performAction(action, event);
-      actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    DataContext dataContext = DataManager.getInstance().getDataContext(this);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(), dataContext);
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
   }
 

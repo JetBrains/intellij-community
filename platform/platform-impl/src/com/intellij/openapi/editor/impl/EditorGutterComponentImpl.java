@@ -1947,8 +1947,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
 
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
-    action.update(actionEvent);
-    if (actionEvent.getPresentation().isEnabledAndVisible()) {
+    if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, true)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
     }
   }
