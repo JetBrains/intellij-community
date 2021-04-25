@@ -154,8 +154,11 @@ public abstract class ActionManager {
   public abstract void removeTimerListener(@NotNull TimerListener listener);
 
   @NotNull
-  public abstract ActionCallback tryToExecute(@NotNull AnAction action, @NotNull InputEvent inputEvent, @Nullable Component contextComponent,
-                                              @Nullable String place, boolean now);
+  public abstract ActionCallback tryToExecute(@NotNull AnAction action,
+                                              @Nullable InputEvent inputEvent,
+                                              @Nullable Component contextComponent,
+                                              @Nullable String place,
+                                              boolean now);
 
   /**
    * @deprecated Use {@link AnActionListener#TOPIC}

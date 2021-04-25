@@ -1675,11 +1675,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NotNull
   @Override
   public ActionCallback tryToExecute(@NotNull AnAction action,
-                                     @NotNull InputEvent inputEvent,
+                                     @Nullable InputEvent inputEvent,
                                      @Nullable Component contextComponent,
                                      @Nullable String place,
                                      boolean now) {
-    assert ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     ActionCallback result = new ActionCallback();
     Runnable doRunnable = () -> tryToExecuteNow(action, inputEvent, contextComponent, place, result);
@@ -1687,14 +1687,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       doRunnable.run();
     }
     else {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(doRunnable);
     }
 
     return result;
   }
 
-  private void tryToExecuteNow(@NotNull AnAction action, @NotNull InputEvent inputEvent, @Nullable Component contextComponent, String place, ActionCallback result) {
+  private void tryToExecuteNow(@NotNull AnAction action, @Nullable InputEvent inputEvent, @Nullable Component contextComponent, String place, ActionCallback result) {
     Presentation presentation = action.getTemplatePresentation().clone();
     IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(() -> {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
@@ -1704,7 +1703,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           inputEvent, context,
           place != null ? place : ActionPlaces.UNKNOWN,
           presentation, this,
-          inputEvent.getModifiersEx()
+          inputEvent == null ? 0 : inputEvent.getModifiersEx()
         );
 
         ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
