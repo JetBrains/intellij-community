@@ -25,6 +25,7 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -975,8 +976,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiMethodCallExpression expression = tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (expression == null) return;
-      CommentTracker commentTracker = new CommentTracker();
-      PsiReplacementUtil.replaceExpression(expression, "\"\"", commentTracker);
+      new CommentTracker().replaceAndRestoreComments(expression, "\"\"");
     }
   }
 }
