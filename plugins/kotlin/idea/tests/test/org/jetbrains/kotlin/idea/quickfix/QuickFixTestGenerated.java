@@ -686,6 +686,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/addExclExclCall/implicitFunctionCall.kt");
         }
 
+        @TestMetadata("infixCall.kt")
+        public void testInfixCall() throws Exception {
+            runTest("idea/testData/quickfix/addExclExclCall/infixCall.kt");
+        }
+
         @TestMetadata("iterable.kt")
         public void testIterable() throws Exception {
             runTest("idea/testData/quickfix/addExclExclCall/iterable.kt");
@@ -721,6 +726,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/addExclExclCall/operationIn.kt");
         }
 
+        @TestMetadata("operationPlus.kt")
+        public void testOperationPlus() throws Exception {
+            runTest("idea/testData/quickfix/addExclExclCall/operationPlus.kt");
+        }
+
+        @TestMetadata("operationUnary.kt")
+        public void testOperationUnary() throws Exception {
+            runTest("idea/testData/quickfix/addExclExclCall/operationUnary.kt");
+        }
+
         @TestMetadata("idea/testData/quickfix/addExclExclCall/typeMismatch")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
@@ -731,6 +746,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             public void testAllFilesPresentInTypeMismatch() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/quickfix/addExclExclCall/typeMismatch"), Pattern.compile("^([\\w\\-_]+)\\.kt$"), null, true);
+            }
+
+            @TestMetadata("argumentAfterNullCheck.kt")
+            public void testArgumentAfterNullCheck() throws Exception {
+                runTest("idea/testData/quickfix/addExclExclCall/typeMismatch/argumentAfterNullCheck.kt");
             }
 
             @TestMetadata("assignmentRValue.kt")
@@ -746,6 +766,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("memberAccessInExtensionAsAssignmentRValue.kt")
             public void testMemberAccessInExtensionAsAssignmentRValue() throws Exception {
                 runTest("idea/testData/quickfix/addExclExclCall/typeMismatch/memberAccessInExtensionAsAssignmentRValue.kt");
+            }
+
+            @TestMetadata("nullArgument.kt")
+            public void testNullArgument() throws Exception {
+                runTest("idea/testData/quickfix/addExclExclCall/typeMismatch/nullArgument.kt");
             }
 
             @TestMetadata("qualifiedArgument.kt")
