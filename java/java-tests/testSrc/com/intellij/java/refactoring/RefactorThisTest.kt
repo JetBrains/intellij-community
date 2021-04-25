@@ -2,8 +2,11 @@
 package com.intellij.java.refactoring
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.refactoring.actions.*
 import com.intellij.refactoring.wrapreturnvalue.WrapReturnValueAction
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
@@ -201,9 +204,10 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
   private fun findAvailableActions(): List<AnAction> {
     val action = RefactoringQuickListPopupAction()
     val group = DefaultActionGroup()
-    val dataContext = DataManager.getInstance().getDataContext(editor.component)
+    val dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(editor.component))
     action.fillActions(project, group, dataContext)
-    return group.childActionsOrStubs.toList()
+    return Utils.expandActionGroup(false, group, PresentationFactory(), dataContext,
+                                   ActionPlaces.REFACTORING_QUICKLIST)
   }
 
 }

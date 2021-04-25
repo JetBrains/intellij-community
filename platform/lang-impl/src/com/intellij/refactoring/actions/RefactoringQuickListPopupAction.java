@@ -23,6 +23,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
   public RefactoringQuickListPopupAction() {
     setInjectedContext(true);
+    myActionPlace = ActionPlaces.REFACTORING_QUICKLIST;
   }
 
   @Override
