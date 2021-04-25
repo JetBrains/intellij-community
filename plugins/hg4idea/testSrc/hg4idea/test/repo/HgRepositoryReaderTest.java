@@ -45,25 +45,6 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     super.setUp();
     myHgDir = new File(myRepository.getPath(), ".hg");
     assertTrue(myHgDir.exists());
-    //File pluginRoot = new File(PluginPathManager.getPluginHomePath("hg4idea"));
-
-    //String pathToHg = "testData/repo/dot_hg";
-    //File testHgDir = new File(pluginRoot, FileUtil.toSystemDependentName(pathToHg));
-
-    //File cacheDir = new File(testHgDir, "cache");
-    //File testDirStateFile = new File(testHgDir, "dirstate");
-    //File testBranchFile = new File(testHgDir, "branch");
-    //File testBookmarkFile = new File(testHgDir, "bookmarks");
-    //File testCurrentBookmarkFile = new File(testHgDir, "bookmarks.current");
-    //File testTagFile = new File(testHgDir.getParentFile(), ".hgtags");
-    //File testLocalTagFile = new File(testHgDir, "localtags");
-    //FileUtil.copyDir(cacheDir, new File(myHgDir, "cache"));
-    //FileUtil.copy(testBranchFile, new File(myHgDir, "branch"));
-    //FileUtil.copy(testDirStateFile, new File(myHgDir, "dirstate"));
-    //FileUtil.copy(testBookmarkFile, new File(myHgDir, "bookmarks"));
-    //FileUtil.copy(testCurrentBookmarkFile, new File(myHgDir, "bookmarks.current"));
-    //FileUtil.copy(testTagFile, new File(myHgDir.getParentFile(), ".hgtags"));
-    //FileUtil.copy(testLocalTagFile, new File(myHgDir, "localtags"));
 
     myRepositoryReader = new HgRepositoryReader(myVcs, myHgDir, myRepository);
     myBranches = setUpBranches();
@@ -216,35 +197,10 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     VcsTestUtil.assertEqualCollections(localTags, myLocalTags);
   }
 
-  //@NotNull
-  //private Collection<String> readBranches() throws IOException {
-  //  Collection<String> branches = new HashSet<>();
-  //  File branchHeads = new File(new File(myHgDir, "cache"), "branchheads-served");
-  //  String[] branchesWithHashes = FileUtil.loadFile(branchHeads).split("\n");
-  //  for (int i = 1; i < branchesWithHashes.length; ++i) {
-  //    String[] refAndName = branchesWithHashes[i].trim().split(" ");
-  //    assertEquals(2, refAndName.length);
-  //    branches.add(refAndName[1]);
-  //  }
-  //  return branches;
-  //}
-
-
   public void testCurrentBookmark() {
     String bookmarkName = "bookmark_2";
     updateRepoTo(bookmarkName);
     assertEquals(bookmarkName, myRepositoryReader.readCurrentBookmark());
   }
 
-  //@NotNull
-  //private static Collection<String> readRefs(@NotNull File refFile) throws IOException {
-  //  Collection<String> refs = new HashSet<>();
-  //  String[] refsWithHashes = FileUtil.loadFile(refFile).split("\n");
-  //  for (String str : refsWithHashes) {
-  //    String[] refAndName = str.trim().split(" ");
-  //    assertEquals(2, refAndName.length);
-  //    refs.add(refAndName[1]);
-  //  }
-  //  return refs;
-  //}
 }
