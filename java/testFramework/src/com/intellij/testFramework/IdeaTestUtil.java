@@ -19,7 +19,9 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 import org.junit.Assume;
 
@@ -56,9 +58,7 @@ public final class IdeaTestUtil {
   }
 
   public static void setModuleLanguageLevel(@NotNull Module module, @Nullable LanguageLevel level) {
-    ModuleRootModificationUtil.updateModel(module, (model) -> {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
-    });
+    ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level));
   }
 
   public static void setModuleLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level, @NotNull Disposable parentDisposable) {
