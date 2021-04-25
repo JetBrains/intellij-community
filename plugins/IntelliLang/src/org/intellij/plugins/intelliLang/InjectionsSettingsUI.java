@@ -135,7 +135,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     decorator.setEditActionUpdater(e -> {
       AnAction edit = getEditAction();
       if (edit != null) edit.update(e);
-      return edit != null && edit.getTemplatePresentation().isEnabled();
+      return edit != null && e.getPresentation().isEnabled();
     });
     decorator.setEditAction(button -> performEditAction());
     decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.duplicate"),
