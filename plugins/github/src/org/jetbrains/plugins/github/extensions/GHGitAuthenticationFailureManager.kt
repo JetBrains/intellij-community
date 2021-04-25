@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.extensions
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.util.concurrent.ConcurrentHashMap
 
@@ -16,8 +16,8 @@ internal class GHGitAuthenticationFailureManager {
 
   fun isAccountIgnored(url: String, account: GithubAccount): Boolean = storeMap[account]?.contains(url) ?: false
 
-  class AccountTokenListener(private val project: Project) : AccountTokenChangedListener {
-    override fun tokenChanged(account: GithubAccount) {
+  class AccountTokenListener(private val project: Project) : GHAccountsListener {
+    override fun onAccountCredentialsChanged(account: GithubAccount) {
       project.service<GHGitAuthenticationFailureManager>().storeMap.remove(account)
     }
   }

@@ -69,26 +69,22 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager$PasswordStorageClearedListener"
-              topic="com.intellij.credentialStore.PasswordSafeSettingsListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
-
     <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider$AccountTokenListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
+              topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"/>
+              topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"/>
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"/>
+              topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"/>
   </applicationListeners>
 
   <projectListeners>
     <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder$RemovalListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"
+              topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager$AccountTokenListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
+              topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"

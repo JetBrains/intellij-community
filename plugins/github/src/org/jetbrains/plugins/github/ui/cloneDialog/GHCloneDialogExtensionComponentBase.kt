@@ -51,8 +51,7 @@ import org.jetbrains.plugins.github.api.data.request.Affiliation
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
-import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
@@ -74,8 +73,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private val accountInformationProvider: GithubAccountInformationProvider,
   private val avatarLoader: CachingGHUserAvatarLoader
 ) : VcsCloneDialogExtensionComponent(),
-    AccountRemovedListener,
-    AccountTokenChangedListener {
+    GHAccountsListener {
 
   private val LOG = GithubUtil.LOG
 
@@ -186,12 +184,15 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     }
   }
 
-  override fun accountRemoved(removedAccount: GithubAccount) {
-    removeAccount(removedAccount)
-    dialogStateListener.onListItemChanged()
+  override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
+    val removed = old - new
+    if (removed.isNotEmpty()) {
+      removeAccounts(removed)
+      dialogStateListener.onListItemChanged()
+    }
   }
 
-  override fun tokenChanged(account: GithubAccount) {
+  override fun onAccountCredentialsChanged(account: GithubAccount) {
     if (repositoriesByAccount[account] != null) return
 
     dialogStateListener.onListItemChanged()
@@ -240,13 +241,15 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     }
   }
 
-  private fun removeAccount(account: GithubAccount) {
-    repositoriesByAccount.remove(account)
-    accountComponents.remove(account).let {
-      accountsPanel.remove(it)
-      accountsPanel.revalidate()
-      accountsPanel.repaint()
+  private fun removeAccounts(accounts: Collection<GithubAccount>) {
+    for (account in accounts) {
+      repositoriesByAccount.remove(account)
+      accountComponents.remove(account).let {
+        accountsPanel.remove(it)
+      }
     }
+    accountsPanel.revalidate()
+    accountsPanel.repaint()
     refillRepositories()
     if (getAccounts().isEmpty()) switchToLogin(null)
   }

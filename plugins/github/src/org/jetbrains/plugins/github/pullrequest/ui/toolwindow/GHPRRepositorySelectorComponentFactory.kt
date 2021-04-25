@@ -20,9 +20,9 @@ import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.ComboBoxWithActionsModel
 import org.jetbrains.plugins.github.ui.component.GHAccountSelectorComponentFactory
@@ -144,8 +144,8 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
     init {
       repositoryManager.addRepositoryListChangedListener(this, ::updateRepositories)
       ApplicationManager.getApplication().messageBus.connect(this)
-        .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-          override fun tokenChanged(account: GithubAccount) {
+        .subscribe(GHAccountManager.TOPIC, object : GHAccountsListener {
+          override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
             invokeAndWaitIfNeeded { updateAccounts() }
           }
         })

@@ -41,10 +41,10 @@ internal class GithubProjectDefaultAccountHolder(private val project: Project) :
     return account
   }
 
-  class RemovalListener(private val project: Project) : AccountRemovedListener {
-    override fun accountRemoved(removedAccount: GithubAccount) {
+  class RemovalListener(private val project: Project) : GHAccountsListener {
+    override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
       val holder = project.service<GithubProjectDefaultAccountHolder>()
-      if (holder.account == removedAccount) holder.account = null
+      if (!new.contains(holder.account)) holder.account = null
     }
   }
 }

@@ -9,9 +9,9 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.layout.*
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanel
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -22,7 +22,7 @@ import org.jetbrains.plugins.github.util.GithubUtil
 internal class GithubSettingsConfigurable internal constructor(private val project: Project) : BoundConfigurable(GithubUtil.SERVICE_DISPLAY_NAME, "settings.github") {
   override fun createPanel(): DialogPanel {
     val defaultAccountHolder = project.service<GithubProjectDefaultAccountHolder>()
-    val accountManager = service<GithubAccountManager>()
+    val accountManager = service<GHAccountManager>()
     val settings = GithubSettings.getInstance()
     return panel {
       row {
@@ -40,19 +40,17 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
           }
           .onApply {
             val (accountsTokenMap, defaultAccount) = accountsPanel.getAccounts()
-            accountManager.accounts = accountsTokenMap.keys
-            accountsTokenMap.filterValues { it != null }.forEach(accountManager::setCredentials)
+            accountManager.updateAccounts(accountsTokenMap)
             defaultAccountHolder.account = defaultAccount
             accountsPanel.clearNewTokens()
           }
 
         ApplicationManager.getApplication().messageBus.connect(disposable!!)
-          .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC,
-                     object : AccountTokenChangedListener {
-                       override fun tokenChanged(account: GithubAccount) {
-                         if (!isModified) reset()
-                       }
-                     })
+          .subscribe(GHAccountManager.TOPIC, object : GHAccountsListener {
+            override fun onAccountCredentialsChanged(account: GithubAccount) {
+              if (!isModified) reset()
+            }
+          })
       }
       row {
         checkBox(GithubBundle.message("settings.clone.ssh"), settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)

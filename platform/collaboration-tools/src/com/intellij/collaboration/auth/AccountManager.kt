@@ -1,77 +1,47 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth
 
-import com.intellij.application.subscribe
-import com.intellij.credentialStore.*
-import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.util.concurrency.annotations.RequiresEdt
+
 
 /**
- * Handles application-level accounts
+ * Account management service
  *
  * @param A - account type
  * @param Cred - account credentials
  */
-abstract class AccountManager<A : Account, Cred>(private val serviceName: String)
-  : Disposable {
-
-  private val LOG = thisLogger()
-
-  protected abstract val persistentAccounts: AccountsPersistentStateComponent<A, *>
-
-  var accounts: Set<A>
-    get() = persistentAccounts.accounts
-    set(value) {
-      val oldValue = persistentAccounts.accounts
-      persistentAccounts.accounts = value
-      oldValue.filter { it !in value }.forEach {
-        setCredentials(it, null)
-        fireAccountRemoved(it)
-      }
-      LOG.debug("Account list changed to: $value")
-    }
-
-  init {
-    PasswordSafeSettings.TOPIC.subscribe(this, PasswordStorageClearedListener())
-  }
+interface AccountManager<A : Account, Cred> {
 
   /**
-   * Add/update/remove account credentials from application
+   * Set of accounts registered within application
    */
-  fun setCredentials(account: A, credentials: Cred?) {
-    PasswordSafe.instance.set(createCredentialAttributes(account.id), credentials?.let { createCredentials(account.id, it) })
-    LOG.debug((if (credentials == null) "Cleared" else "Updated") + " credentials for account: $account")
-
-    fireCredentialsChanged(account)
-  }
+  @get:RequiresEdt
+  val accounts: Set<A>
 
   /**
-   * Retrieve credentials for account from password safe
+   * Add/update account and it's credentials
    */
-  fun findCredentials(account: A): Cred? =
-    PasswordSafe.instance.get(createCredentialAttributes(account.id))?.getPasswordAsString()?.let(::deserializeCredentials)
+  @RequiresEdt
+  fun updateAccount(account: A, credentials: Cred)
 
-  protected abstract fun fireAccountRemoved(account: A)
+  /**
+   * Add/update/remove multiple accounts and their credentials
+   * Credentials are not updated if null value is passed
+   * Should only be used by a bulk update from settings
+   */
+  @RequiresEdt
+  fun updateAccounts(accountsWithCredentials: Map<A, Cred?>)
 
-  protected abstract fun fireCredentialsChanged(account: A)
+  /**
+   * Remove an account and clear stored credentials
+   * Does nothing if account is not present
+   */
+  @RequiresEdt
+  fun removeAccount(account: A)
 
-  private fun createCredentialAttributes(accountId: String) = CredentialAttributes(createServiceName(accountId))
-
-  private fun createServiceName(accountId: String): String = generateServiceName(serviceName, accountId)
-
-  private fun createCredentials(accountId: String, credentials: Cred?) =
-    Credentials(accountId, credentials?.let(::serializeCredentials))
-
-  protected abstract fun serializeCredentials(credentials: Cred): String
-
-  protected abstract fun deserializeCredentials(credentials: String): Cred
-
-  override fun dispose() {}
-
-  private inner class PasswordStorageClearedListener : PasswordSafeSettingsListener {
-    override fun credentialStoreCleared() {
-      accounts.forEach { fireCredentialsChanged(it) }
-    }
-  }
+  /**
+   * Retrieve credentials for account
+   */
+  @RequiresEdt
+  fun findCredentials(account: A): Cred?
 }

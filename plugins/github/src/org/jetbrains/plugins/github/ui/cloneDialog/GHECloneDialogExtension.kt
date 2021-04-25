@@ -19,8 +19,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_REMOVED_TOPIC
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_TOKEN_CHANGED_TOPIC
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
@@ -50,20 +49,18 @@ private class GHECloneDialogExtensionComponent(project: Project) : GHCloneDialog
 ) {
 
   init {
-    ACCOUNT_REMOVED_TOPIC.subscribe(this, this)
-    ACCOUNT_TOKEN_CHANGED_TOPIC.subscribe(this, this)
-
+    GHAccountManager.TOPIC.subscribe(this, this)
     setup()
   }
 
   override fun getAccounts(): Collection<GithubAccount> = getGHEAccounts()
 
-  override fun accountRemoved(removedAccount: GithubAccount) {
-    if (removedAccount.isGHEAccount) super.accountRemoved(removedAccount)
+  override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
+    super.onAccountListChanged(old.filter { it.isGHEAccount }, new.filter { it.isGHEAccount })
   }
 
-  override fun tokenChanged(account: GithubAccount) {
-    if (account.isGHEAccount) super.tokenChanged(account)
+  override fun onAccountCredentialsChanged(account: GithubAccount) {
+    if (account.isGHEAccount) super.onAccountCredentialsChanged(account)
   }
 
   override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =

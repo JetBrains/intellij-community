@@ -9,7 +9,7 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
@@ -23,7 +23,7 @@ internal class GHAccountAuthData(val account: GithubAccount, login: String, toke
  * Entry point for interactions with Github authentication subsystem
  */
 class GithubAuthenticationManager internal constructor() {
-  private val accountManager: GithubAccountManager get() = service()
+  private val accountManager: GHAccountManager get() = service()
 
   @CalledInAny
   fun hasAccounts() = accountManager.accounts.isNotEmpty()
@@ -99,27 +99,26 @@ class GithubAuthenticationManager internal constructor() {
 
   @RequiresEdt
   internal fun removeAccount(account: GithubAccount) {
-    accountManager.accounts -= account
+    accountManager.removeAccount(account)
   }
 
   @RequiresEdt
   internal fun updateAccountToken(account: GithubAccount, newToken: String) =
-    accountManager.setCredentials(account, newToken)
+    accountManager.updateAccount(account, newToken)
 
   @RequiresEdt
   internal fun registerAccount(name: String, server: GithubServerPath, token: String): GithubAccount =
-    registerAccount(GithubAccountManager.createAccount(name, server), token)
+    registerAccount(GHAccountManager.createAccount(name, server), token)
 
   @RequiresEdt
   internal fun registerAccount(account: GithubAccount, token: String): GithubAccount {
-    accountManager.accounts += account
-    accountManager.setCredentials(account, token)
+    accountManager.updateAccount(account, token)
     return account
   }
 
   @TestOnly
   fun clearAccounts() {
-    accountManager.accounts = emptySet()
+    accountManager.updateAccounts(emptyMap())
   }
 
   fun getDefaultAccount(project: Project): GithubAccount? =

@@ -30,7 +30,7 @@ import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.authentication.GHLoginRequest
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -125,7 +125,7 @@ internal class GHAccountsPanel(
   }
 
   override fun addAccount(server: GithubServerPath, login: String, token: String) {
-    val githubAccount = GithubAccountManager.createAccount(login, server)
+    val githubAccount = GHAccountManager.createAccount(login, server)
     newTokensMap[githubAccount] = token
 
     val accountData = GithubAccountDecorator(githubAccount, false)

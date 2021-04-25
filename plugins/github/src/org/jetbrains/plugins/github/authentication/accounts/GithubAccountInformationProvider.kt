@@ -34,9 +34,14 @@ class GithubAccountInformationProvider {
     }
   }
 
-  class AccountTokenListener : AccountTokenChangedListener {
-    override fun tokenChanged(account: GithubAccount) {
-      getInstance().informationCache.invalidate(account)
+  class AccountTokenListener : GHAccountsListener {
+    override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
+      val cache = getInstance().informationCache
+      for (account in (old - new)) {
+        cache.invalidate(account)
+      }
     }
+
+    override fun onAccountCredentialsChanged(account: GithubAccount) = getInstance().informationCache.invalidate(account)
   }
 }
