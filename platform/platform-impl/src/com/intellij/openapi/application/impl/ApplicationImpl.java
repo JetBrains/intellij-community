@@ -1115,7 +1115,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
       " Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue() +
       "\nCurrent thread: " + describe(Thread.currentThread()) +
-      "\nWrite thread (volatile): " + describe(myLock.writeThread) +
+      "\nWrite thread (volatile): " + describe(myLock.writeThread),
       new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
