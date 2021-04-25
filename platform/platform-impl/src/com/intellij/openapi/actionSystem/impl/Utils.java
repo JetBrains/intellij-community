@@ -7,6 +7,7 @@ import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -162,7 +163,7 @@ public final class Utils {
       }
     }
     else {
-      if (Registry.is("actionSystem.update.actions.async")) {
+      if (Registry.is("actionSystem.update.actions.async") && !ApplicationManager.getApplication().isUnitTestMode()) {
         LOG.warn(new Throwable("Non-async data context detected in async mode in '" + place + "': " + context.getClass().getName()));
       }
       try {
