@@ -163,7 +163,7 @@ public final class Utils {
     }
     else {
       if (Registry.is("actionSystem.update.actions.async")) {
-        LOG.warn(new Throwable("Non-async data context detected in async mode in '" + place + "'"));
+        LOG.warn(new Throwable("Non-async data context detected in async mode in '" + place + "': " + context.getClass().getName()));
       }
       try {
         list = DO_FULL_EXPAND ?
