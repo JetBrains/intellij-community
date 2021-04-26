@@ -13,6 +13,7 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.UIUtil.runWhenChanged
@@ -31,21 +32,34 @@ import javax.swing.JList
 import javax.swing.event.ListDataEvent
 
 internal fun getComputer(list: JList<*>, renderer: PsiElementListCellRenderer<*>): PsiElementBackgroundListCellRendererComputer {
-  list.getClientProperty(renderer)?.let {
-    return it as PsiElementBackgroundListCellRendererComputer
+  return computers(list).computeIfAbsent(renderer) {
+    PsiElementBackgroundListCellRendererComputer(list, renderer)
   }
+}
 
-  val computer = PsiElementBackgroundListCellRendererComputer(list, renderer)
-  list.putClientProperty(renderer, computer)
+private typealias Computers = HashMap<PsiElementListCellRenderer<*>, PsiElementBackgroundListCellRendererComputer>
+
+private val computersKey = ObjectUtils.sentinel("renderer computers")
+
+private fun computers(list: JList<*>): Computers {
+  val existing = list.getClientProperty(computersKey)
+  if (existing != null) {
+    @Suppress("UNCHECKED_CAST")
+    return existing as Computers
+  }
+  val computers = Computers()
+  list.putClientProperty(computersKey, computers)
   list.putClientProperty(ANIMATION_IN_RENDERER_ALLOWED, true)
   fun cleanUp() {
-    list.putClientProperty(renderer, null)
+    list.putClientProperty(computersKey, null)
     list.putClientProperty(ANIMATION_IN_RENDERER_ALLOWED, null)
-    computer.dispose()
+    for (computer in computers.values) {
+      computer.dispose()
+    }
   }
   runWhenHidden(list, ::cleanUp)
   runWhenChanged(list, "cellRenderer", ::cleanUp)
-  return computer
+  return computers
 }
 
 internal class PsiElementBackgroundListCellRendererComputer(
