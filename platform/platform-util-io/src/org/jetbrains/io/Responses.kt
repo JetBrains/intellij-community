@@ -2,6 +2,8 @@
 @file:JvmName("Responses")
 package org.jetbrains.io
 
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.NlsSafe
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
@@ -14,6 +16,8 @@ import io.netty.util.CharsetUtil
 import java.nio.CharBuffer
 import java.nio.charset.Charset
 import java.util.*
+
+private var SERVER_HEADER_VALUE: String? = null
 
 fun response(contentType: String?, content: ByteBuf?): FullHttpResponse {
   val response = if (content == null)
@@ -35,6 +39,23 @@ fun HttpResponse.addNoCache(): HttpResponse {
   headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")//NON-NLS
   headers().add(HttpHeaderNames.PRAGMA, "no-cache")//NON-NLS
   return this
+}
+
+val serverHeaderValue: String?
+  get() {
+    if (SERVER_HEADER_VALUE == null) {
+      val app = ApplicationManager.getApplication()
+      if (app != null && !app.isDisposed) {
+        SERVER_HEADER_VALUE = ApplicationInfo.getInstance().fullApplicationName
+      }
+    }
+    return SERVER_HEADER_VALUE
+  }
+
+fun HttpResponse.addServer() {
+  serverHeaderValue?.let {
+    headers().add(HttpHeaderNames.SERVER, it)
+  }
 }
 
 @JvmOverloads
@@ -59,6 +80,7 @@ fun HttpResponse.addKeepAliveIfNeeded(request: HttpRequest): Boolean {
 }
 
 fun HttpResponse.addCommonHeaders() {
+  addServer()
   if (!headers().contains(HttpHeaderNames.DATE)) {
     headers().set(HttpHeaderNames.DATE, Calendar.getInstance().time)
   }
