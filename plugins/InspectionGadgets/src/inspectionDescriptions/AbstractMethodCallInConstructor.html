@@ -8,7 +8,7 @@ A call is during object construction if it is inside:
   <li>A Non-static field initializer</li>
   <li><code>clone()</code></li>
   <li><code>readObject()</code></li>
-  <li></li>
+  <li><code>readObjectNoData()</code></li>
 </ul>
 Such calls may result in subtle bugs, as the object is not guaranteed to be initialized before the method call occurs.
 <p>Example:</p>

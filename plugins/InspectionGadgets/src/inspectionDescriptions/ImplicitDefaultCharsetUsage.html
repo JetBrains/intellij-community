@@ -6,13 +6,13 @@ specify explicit UTF-8 charset if the corresponding overloaded method is availab
 <p>Example:</p>
 <pre>
   void foo(byte[] bytes) {
-    String s = new String(bytes)
+    String s = new String(bytes);
   }
 </pre>
 <p>After the quick-fix is applied, the result looks like this:</p>
 <pre>
   void foo(byte[] bytes) {
-    String s = new String(bytes, StandardCharsets.UTF_8)
+    String s = new String(bytes, StandardCharsets.UTF_8);
   }
 </pre>
 <!-- tooltip end -->
