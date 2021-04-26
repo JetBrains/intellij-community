@@ -852,9 +852,10 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public @Nullable Object getData(@NotNull String dataId) {
-      return EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)
-             ? (myDiffPreview instanceof EditorTabPreview) ? myDiffPreview : null
-             : myTree.getData(dataId);
+      if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)) {
+        return myDiffPreview instanceof EditorTabPreview ? myDiffPreview : null;
+      }
+      return myTree.getData(dataId);
     }
 
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {
