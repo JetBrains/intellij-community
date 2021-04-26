@@ -105,7 +105,6 @@
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.JvmPluginStartupActivity"/>
         <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilerStartupActivity"/>
-        <postStartupActivity implementation="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider"/>
 
         <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinAlternativeSourceNotificationProvider"/>
 
@@ -224,4 +223,7 @@
                       interface="org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework" dynamic="true"/>
     </extensionPoints>
     <resource-bundle>messages.KotlinBundle</resource-bundle>
+    <projectListeners>
+        <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider" topic="org.jetbrains.kotlin.idea.scratch.ScratchFileListener"/>
+    </projectListeners>
 </idea-plugin>

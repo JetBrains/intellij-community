@@ -17,48 +17,44 @@
 package org.jetbrains.kotlin.idea.scratch
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.util.projectStructure.getModule
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 import org.jetbrains.kotlin.psi.KtFile
 
+class ScratchFileModuleInfoProvider() : ScratchFileListener {
+    companion object {
+        private val LOG = logger<ScratchFileModuleInfoProvider>()
+    }
 
-class ScratchFileModuleInfoProvider : StartupActivity {
-    private val LOG = Logger.getInstance(this.javaClass)
+    override fun fileCreated(file: ScratchFile) {
+        val ktFile = file.getPsiFile() as? KtFile ?: return
+        val virtualFile = ktFile.virtualFile ?: return
+        val project = ktFile.project
 
-    override fun runActivity(project: Project) {
-        project.messageBus.connect().subscribe(ScratchFileListener.TOPIC, object : ScratchFileListener {
-            override fun fileCreated(file: ScratchFile) {
-                val ktFile = file.getPsiFile() as? KtFile ?: return
-                val virtualFile = ktFile.virtualFile ?: return
+        if (virtualFile.extension != STD_SCRIPT_SUFFIX) {
+            LOG.error("Kotlin Scratch file should have .kts extension. Cannot add scratch panel for ${virtualFile.path}")
+            return
+        }
 
-                if (virtualFile.extension != STD_SCRIPT_SUFFIX) {
-                    LOG.error("Kotlin Scratch file should have .kts extension. Cannot add scratch panel for ${virtualFile.path}")
-                    return
-                }
+        file.addModuleListener { psiFile, module ->
+            ScriptRelatedModuleNameFile[project, psiFile.virtualFile] = module?.name
 
-                file.addModuleListener { psiFile, module ->
-                    ScriptRelatedModuleNameFile[project, psiFile.virtualFile] = module?.name
+            // Drop caches for old module
+            ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+            // Force re-highlighting
+            DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
+        }
 
-                    // Drop caches for old module
-                    ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
-                    // Force re-highlighting
-                    DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
-                }
-
-                if (virtualFile.isKotlinWorksheet) {
-                    val module = virtualFile.getModule(project) ?: return
-                    file.setModule(module)
-                } else {
-                    val module = ScriptRelatedModuleNameFile[project, virtualFile]?.let { ModuleManager.getInstance(project).findModuleByName(it) } ?: return
-                    file.setModule(module)
-                }
-            }
-        })
+        if (virtualFile.isKotlinWorksheet) {
+            val module = virtualFile.getModule(project) ?: return
+            file.setModule(module)
+        } else {
+            val module = ScriptRelatedModuleNameFile[project, virtualFile]?.let { ModuleManager.getInstance(project).findModuleByName(it) } ?: return
+            file.setModule(module)
+        }
     }
 }
