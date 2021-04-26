@@ -110,19 +110,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  /**
-   * This array contains Rectangles which define bounds of the corresponding
-   * components in the toolbar. This list can be consider as a cache of the
-   * Rectangle objects that are used in calculation of preferred sizes and
-   * components layout.
-   */
+  /** @see #calculateBounds(Dimension, List) */
   private final List<Rectangle> myComponentBounds = new ArrayList<>();
-
   private JBDimension myMinimumButtonSize = JBUI.emptySize();
 
-  /**
-   * @see ActionToolbar#getLayoutPolicy()
-   */
+  /** @see ActionToolbar#getLayoutPolicy() */
   @LayoutPolicy
   private int myLayoutPolicy;
   private int myOrientation;
@@ -134,35 +126,20 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private final ToolbarUpdater myUpdater;
 
-  /**
-   * @see ActionToolbar#adjustTheSameSize(boolean)
-   */
+  /** @see ActionToolbar#adjustTheSameSize(boolean) */
   private boolean myAdjustTheSameSize;
 
   private final ActionButtonLook myMinimalButtonLook = ActionButtonLook.INPLACE_LOOK;
 
   private Rectangle myAutoPopupRec;
 
-  private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup() {
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      if (mySecondaryGroupUpdater != null) {
-        e.getPresentation().setIcon(getTemplatePresentation().getIcon());
-        mySecondaryGroupUpdater.update(e);
-      }
-    }
-  };
+  private final DefaultActionGroup mySecondaryActions;
   private SecondaryGroupUpdater mySecondaryGroupUpdater;
   private boolean myForceMinimumSize;
   private boolean myForceShowFirstComponent;
   private boolean mySkipWindowAdjustments;
   private boolean myMinimalMode;
   private boolean myNoGapMode;//if true secondary actions button would be layout side-by-side with other buttons
-
-  public ActionButton getSecondaryActionsButton() {
-    return mySecondaryActionsButton;
-  }
 
   private ActionButton mySecondaryActionsButton;
 
@@ -199,6 +176,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
+    mySecondaryActions = new DefaultActionGroup() {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        if (mySecondaryGroupUpdater != null) {
+          e.getPresentation().setIcon(getTemplatePresentation().getIcon());
+          mySecondaryGroupUpdater.update(e);
+        }
+      }
+    };
     mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);
 
@@ -1426,7 +1413,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     };
     popupToolbar.setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
-    popupToolbar.updateActionsImmediately();
 
     Point location;
     if (myOrientation == SwingConstants.HORIZONTAL) {
