@@ -5,6 +5,7 @@ import com.intellij.execution.CantRunException
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Platform
+import com.intellij.execution.configurations.CompositeParameterTargetedValue
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
@@ -278,22 +279,28 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
     }
     if (!dynamicParameters) {
-      for (parameter in javaParameters.programParametersList.targetedList) {
-        val values = mutableListOf<TargetValue<String>>()
-        for (part in parameter.parts) {
-          when (part) {
-            is ParameterTargetValuePart.Const ->
-              TargetValue.fixed(part.localValue)
-            is ParameterTargetValuePart.Path ->
-              requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, part.pathToUpload, null)
-            is ParameterTargetValuePart.PromiseValue ->
-              TargetValue.create(part.localValue, part.targetValue)
-            else ->
-              throw IllegalStateException("Unexpected parameter list part " + part.javaClass)
-          }.let { values.add(it) }
-        }
-        commandLine.addParameter(TargetValue.composite(values) { it.joinToString(separator = "") })
+      for (value in mapTargetValues(javaParameters.programParametersList.targetedList)) {
+        commandLine.addParameter(value)
       }
+    }
+  }
+
+  private fun mapTargetValues(parameterValues: Collection<CompositeParameterTargetedValue>): List<TargetValue<String>> {
+    return parameterValues.map { parameter ->
+      val values = mutableListOf<TargetValue<String>>()
+      for (part in parameter.parts) {
+        when (part) {
+          is ParameterTargetValuePart.Const ->
+            TargetValue.fixed(part.localValue)
+          is ParameterTargetValuePart.Path ->
+            requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, part.pathToUpload, null)
+          is ParameterTargetValuePart.PromiseValue ->
+            TargetValue.create(part.localValue, part.targetValue)
+          else ->
+            throw IllegalStateException("Unexpected parameter list part " + part.javaClass)
+        }.let { values.add(it) }
+      }
+      TargetValue.composite(values) { it.joinToString(separator = "") }
     }
   }
 
@@ -327,6 +334,13 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
 
       appendEncoding(javaParameters, vmParameters)
+
+      if (dynamicParameters) {
+        val targetValues = mapTargetValues(javaParameters.programParametersList.targetedList)
+        for (targetValue in targetValues) {
+          argFile.addPromisedParameter(targetValue)
+        }
+      }
 
       val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
@@ -753,9 +767,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
       for (nextResolvedParameter in myPromisedParameters) {
         fileArgs.add(nextResolvedParameter.targetValue.blockingGet(0))
-      }
-      if (dynamicParameters) {
-        fileArgs.addAll(javaParameters.programParametersList.list)
       }
       CommandLineWrapperUtil.writeArgumentsFile(file, fileArgs, platform.lineSeparator, charset)
     }
