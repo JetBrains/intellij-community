@@ -3,6 +3,7 @@ package com.intellij.terminal;
 
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.HyperlinkWithHoverInfo;
 import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -127,6 +128,19 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
           ActionGroup group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(event);
           AnAction[] actions = group != null ? group.getChildren(null) : AnAction.EMPTY_ARRAY;
           return ContainerUtil.map(actions, action -> TerminalActionUtil.createTerminalAction(JBTerminalWidget.this, action));
+        }
+      });
+    }
+    if (info instanceof HyperlinkWithHoverInfo) {
+      builder.setHoverConsumer(new LinkInfo.HoverConsumer() {
+        @Override
+        public void onMouseEntered(@NotNull JComponent hostComponent, @NotNull Rectangle linkBounds) {
+          ((HyperlinkWithHoverInfo)info).onMouseEntered(hostComponent, linkBounds);
+        }
+
+        @Override
+        public void onMouseExited() {
+          ((HyperlinkWithHoverInfo)info).onMouseExited();
         }
       });
     }
