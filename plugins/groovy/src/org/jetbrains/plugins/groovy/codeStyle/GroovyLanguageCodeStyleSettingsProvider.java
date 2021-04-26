@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -172,6 +172,12 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES",
                                 GroovyBundle.message("code.style.option.use.flying.geese.braces"),
                                 getInstance().WRAPPING_BRACES);
+
+      consumer.showCustomOption(GroovyCodeStyleSettings.class,
+                                "WRAP_CHAIN_CALLS_AFTER_DOT",
+                                "Wrap after dot",
+                                getInstance().WRAPPING_CALL_CHAIN);
+
       consumer
         .showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP",
                           GroovyBundle.message("code.style.option.align.when.multiple"),
