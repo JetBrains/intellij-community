@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2000-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -16,16 +16,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns.isAny
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
-import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.search.declarationsSearch.findSuperDescriptors
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class GotoSuperActionHandler : CodeInsightActionHandler {
     data class SuperDeclarationsAndDescriptor(val supers: List<PsiElement>, val descriptor: DeclarationDescriptor?) {
@@ -34,47 +32,25 @@ class GotoSuperActionHandler : CodeInsightActionHandler {
         companion object {
             fun forDeclarationAtCaret(editor: Editor, file: PsiFile): SuperDeclarationsAndDescriptor {
                 val element = file.findElementAt(editor.caretModel.offset) ?: return SuperDeclarationsAndDescriptor()
-                val declaration =
-                    PsiTreeUtil.getParentOfType<KtDeclaration>(
-                        element,
-                        KtNamedFunction::class.java,
-                        KtClass::class.java,
-                        KtProperty::class.java,
-                        KtObjectDeclaration::class.java
-                    ) ?: return SuperDeclarationsAndDescriptor()
+                val declaration = PsiTreeUtil.getParentOfType<KtDeclaration>(
+                    element,
+                    KtNamedFunction::class.java,
+                    KtClass::class.java,
+                    KtProperty::class.java,
+                    KtObjectDeclaration::class.java
+                ) ?: return SuperDeclarationsAndDescriptor()
 
-                val expectDeclaration = if (declaration.hasActualModifier()) declaration.expectedDeclarationIfAny() else null
+                val project = declaration.project
+                val descriptor = declaration.resolveToDescriptorIfAny() ?: return SuperDeclarationsAndDescriptor()
+                val superDeclarations = findSuperDescriptors(declaration, descriptor).mapNotNull {
+                    DescriptorToSourceUtilsIde.getAnyDeclaration(project, it)
+                }.toList()
 
-                val descriptor = declaration.unsafeResolveToDescriptor(BodyResolveMode.PARTIAL)
-                val superDeclarations = findSuperDeclarations(file.project, descriptor)
                 return SuperDeclarationsAndDescriptor(
-                    supers = (superDeclarations ?: emptyList()) + listOfNotNull(expectDeclaration),
+                    supers = superDeclarations,
                     descriptor = descriptor
                 )
             }
-
-            private fun findSuperDeclarations(project: Project, descriptor: DeclarationDescriptor): List<PsiElement>? {
-                val superDescriptors: Collection<DeclarationDescriptor> = when (descriptor) {
-                    is ClassDescriptor -> {
-                        val supertypes = descriptor.typeConstructor.supertypes
-                        val superclasses = supertypes.mapNotNull { type ->
-                            type.constructor.declarationDescriptor as? ClassDescriptor
-                        }
-                        ContainerUtil.removeDuplicates(superclasses)
-                        superclasses
-                    }
-                    is CallableMemberDescriptor -> descriptor.getDirectlyOverriddenDeclarations()
-                    else -> return null
-                }
-
-                return superDescriptors.mapNotNull { superDescriptor ->
-                    if (superDescriptor is ClassDescriptor && isAny(superDescriptor)) {
-                        null
-                    } else
-                        DescriptorToSourceUtilsIde.getAnyDeclaration(project, superDescriptor)
-                }
-            }
-
         }
     }
 
@@ -94,10 +70,8 @@ class GotoSuperActionHandler : CodeInsightActionHandler {
             val popup = if (descriptor is ClassDescriptor)
                 NavigationUtil.getPsiElementPopup(superDeclarationsArray, message)
             else
-                NavigationUtil.getPsiElementPopup(
-                    superDeclarationsArray,
-                    KtFunctionPsiElementCellRenderer(), message
-                )
+                NavigationUtil.getPsiElementPopup(superDeclarationsArray, KtFunctionPsiElementCellRenderer(), message)
+
             popup.showInBestPositionFor(editor)
         }
     }

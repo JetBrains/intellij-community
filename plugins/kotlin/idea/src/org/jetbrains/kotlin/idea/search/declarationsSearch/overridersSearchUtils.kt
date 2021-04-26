@@ -13,11 +13,14 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.Processor
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.isOverridable
 import org.jetbrains.kotlin.idea.caches.lightClasses.KtFakeLightMethod
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -25,13 +28,12 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
+import org.jetbrains.kotlin.idea.refactoring.resolveToExpectedDescriptorIfPossible
 import org.jetbrains.kotlin.idea.search.excludeKotlinSources
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
@@ -99,6 +101,35 @@ fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
         }
         else -> emptyList()
     }
+}
+
+fun findSuperDescriptors(declaration: KtDeclaration, descriptor: DeclarationDescriptor): Sequence<DeclarationDescriptor> {
+    val sequenceOfExpectedDescriptor = declaration.takeIf { it.hasActualModifier() }
+        ?.resolveToExpectedDescriptorIfPossible()
+        ?.let { sequenceOf(it) }
+        .orEmpty()
+
+    val superDescriptors = findSuperDescriptors(descriptor)
+    return if (superDescriptors == null) sequenceOfExpectedDescriptor else superDescriptors + sequenceOfExpectedDescriptor
+}
+
+private fun findSuperDescriptors(descriptor: DeclarationDescriptor): Sequence<DeclarationDescriptor>? {
+    val superDescriptors: Collection<DeclarationDescriptor> = when (descriptor) {
+        is ClassDescriptor -> {
+            val supertypes = descriptor.typeConstructor.supertypes
+            val superclasses = supertypes.mapNotNull { type ->
+                type.constructor.declarationDescriptor as? ClassDescriptor
+            }
+
+            ContainerUtil.removeDuplicates(superclasses)
+            superclasses
+        }
+
+        is CallableMemberDescriptor -> descriptor.getDirectlyOverriddenDeclarations()
+        else -> return null
+    }
+
+    return superDescriptors.asSequence().filterNot { it is ClassDescriptor && KotlinBuiltIns.isAny(it) }
 }
 
 fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
