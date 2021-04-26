@@ -389,6 +389,20 @@ public final class DebuggerUIUtil {
   /**
    * Checks if value has evaluation expression ready, or calculation is pending
    */
+  public static boolean hasEvaluationExpression(@NotNull XValueNodeImpl value) {
+    Promise<XExpression> promise = value.calculateEvaluationExpression();
+    try {
+      return promise.getState() == Promise.State.PENDING || promise.blockingGet(0) != null;
+    }
+    catch (ExecutionException | TimeoutException e) {
+      return true;
+    }
+  }
+
+  /**
+   * @deprecated use {@link #hasEvaluationExpression(XValueNodeImpl)}
+   */
+  @Deprecated
   public static boolean hasEvaluationExpression(@NotNull XValue value) {
     Promise<XExpression> promise = value.calculateEvaluationExpression();
     try {
@@ -400,7 +414,7 @@ public final class DebuggerUIUtil {
   }
 
   public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValueNodeImpl node) {
-    node.getValueContainer().calculateEvaluationExpression().onSuccess(expression -> {
+    node.calculateEvaluationExpression().onSuccess(expression -> {
       if (expression != null) {
         invokeLater(() -> watchesView.addWatchExpression(expression, -1, false));
       }

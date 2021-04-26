@@ -14,6 +14,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -31,6 +32,7 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -217,6 +219,14 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       updateText();
       fireNodeChanged();
     }
+  }
+
+  /** always compute evaluate expression from the base value container to avoid recalculation for watches
+   * @see com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl#getValueContainer()
+   */
+  @NotNull
+  public final Promise<XExpression> calculateEvaluationExpression() {
+    return myValueContainer.calculateEvaluationExpression();
   }
 
   @Nullable

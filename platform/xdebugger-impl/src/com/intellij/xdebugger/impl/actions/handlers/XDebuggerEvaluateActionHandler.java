@@ -47,11 +47,8 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
               if (pair.first != null) {
                 expressionPromise = Promises.resolvedPromise(XExpressionImpl.fromText(pair.first, pair.second));
               }
-              else if (node instanceof WatchNode) {
-                expressionPromise = Promises.resolvedPromise(((WatchNode)node).getExpression());
-              }
               else if (node != null) {
-                expressionPromise = node.getValueContainer().calculateEvaluationExpression();
+                expressionPromise = node.calculateEvaluationExpression();
               }
               expressionPromise.onSuccess(
                 expression -> AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator, expression)));

@@ -151,10 +151,10 @@ public class XDebuggerTreeInlayPopup<D> {
 
     @Override
     protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-      node.getValueContainer().calculateEvaluationExpression()
+      node.calculateEvaluationExpression()
         .thenAsync(expr -> {
           if (expr == null && node != myValueNode) {
-            return myValueNode.getValueContainer().calculateEvaluationExpression();
+            return myValueNode.calculateEvaluationExpression();
           } else {
             return Promises.resolvedPromise(expr);
           }
