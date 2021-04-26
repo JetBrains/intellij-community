@@ -4,4 +4,4 @@ fun foo(param: String) {
 
 // EXIST: { itemText: "length", attributes: "" }
 // EXIST: { itemText: "hashCode", attributes: "" }
-// EXIST: { itemText: "lowercase", attributes: "bold" }
+// EXIST: { itemText: "capitalize", attributes: "bold" }

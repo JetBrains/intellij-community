@@ -236,7 +236,7 @@ fun reportDeclarationConflict(
     declaration: PsiElement,
     message: (renderedDeclaration: String) -> String
 ) {
-    conflicts.putValue(declaration, message(RefactoringUIUtil.getDescription(declaration, true).replaceFirstChar(Char::uppercaseChar)))
+    conflicts.putValue(declaration, message(RefactoringUIUtil.getDescription(declaration, true).capitalize()))
 }
 
 fun <T : PsiElement> getPsiElementPopup(

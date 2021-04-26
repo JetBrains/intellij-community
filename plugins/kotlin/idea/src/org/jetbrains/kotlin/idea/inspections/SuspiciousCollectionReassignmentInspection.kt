@@ -62,7 +62,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
                 else -> fixes.add(IntentionWrapper(ReplaceWithOrdinaryAssignmentIntention()))
             }
 
-            val typeText = leftDefaultType.toString().takeWhile { it != '<' }.lowercase()
+            val typeText = leftDefaultType.toString().takeWhile { it != '<' }.toLowerCase()
             val operationReference = binaryExpression.operationReference
             holder.registerProblem(
                 operationReference,
