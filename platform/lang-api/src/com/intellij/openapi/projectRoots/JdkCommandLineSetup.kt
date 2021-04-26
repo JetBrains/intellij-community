@@ -294,6 +294,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
             TargetValue.fixed(part.localValue)
           is ParameterTargetValuePart.Path ->
             requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, part.pathToUpload, null)
+          is ParameterTargetValuePart.PathSeparator ->
+            TargetValue.fixed(platform.pathSeparator.toString())
           is ParameterTargetValuePart.PromiseValue ->
             TargetValue.create(part.localValue, part.targetValue)
           else ->

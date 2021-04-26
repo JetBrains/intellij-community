@@ -24,5 +24,7 @@ sealed class ParameterTargetValuePart(override val localValue: String) : Paramet
     override fun toString() = "ParameterTargetValuePart.Path $localValue"
   }
 
+  object PathSeparator : ParameterTargetValuePart(File.pathSeparator)
+
   class PromiseValue(localValue: String, val targetValue: Promise<String>) : ParameterTargetValuePart(localValue)
 }

@@ -43,6 +43,12 @@ public class CompositeParameterTargetedValue {
   }
 
   @NotNull
+  public CompositeParameterTargetedValue addPathSeparator() {
+    myValues.add(ParameterTargetValuePart.PathSeparator.INSTANCE);
+    return this;
+  }
+
+  @NotNull
   public CompositeParameterTargetedValue addPathPart(@NotNull File file) {
     myValues.add(new ParameterTargetValuePart.Path(file));
     return this;
