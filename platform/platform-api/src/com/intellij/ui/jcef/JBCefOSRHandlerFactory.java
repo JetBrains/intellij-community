@@ -18,7 +18,7 @@ import java.awt.*;
  */
 public interface JBCefOSRHandlerFactory {
   /**
-   * Default implementation provides buffered rendering over a lightweight Swing component.
+   * Default implementation provides buffered rendering onto a lightweight Swing component.
    */
   @NotNull JBCefOSRHandlerFactory DEFAULT = new JBCefOSRHandlerFactory() {};
 

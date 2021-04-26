@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * A builder for creating {@link JBCefBrowser}.
+ *
+ * @see JBCefBrowser#createBuilder
  * @author tav
  */
 public class JBCefBrowserBuilder {
@@ -19,10 +22,10 @@ public class JBCefBrowserBuilder {
   /**
    * Sets whether the browser is rendered off-screen.
    * <p></p>
-   * By default buffered rendering is used over a lightweight Swing component.
+   * When set to true a buffered rendering is used onto a lightweight Swing component.
    * To override - use {@link #setOSRHandlerFactory(JBCefOSRHandlerFactory)}.
    * <p></p>
-   * When not set the windowed mode is used to render the browser.
+   * When not set (or false) the windowed mode is used to render the browser.
    *
    * @see #setOSRHandlerFactory(JBCefOSRHandlerFactory)
    */
@@ -72,7 +75,7 @@ public class JBCefBrowserBuilder {
   /**
    * Sets whether the native browser should be created immediately.
    * <p></p>
-   * When not set the native browser is created when the browser's component is added to a UI hierarchy.
+   * When not set (or false) the native browser is created when the browser's component is added to a UI hierarchy.
    *
    * @see CefBrowser#createImmediately
    * @see JBCefBrowserBase#getComponent
