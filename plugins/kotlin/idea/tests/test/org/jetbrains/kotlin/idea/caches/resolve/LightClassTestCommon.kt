@@ -5,9 +5,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClass
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer.renderClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 import java.util.regex.Pattern
 
@@ -16,9 +14,10 @@ object LightClassTestCommon {
     private const val NOT_GENERATED_DIRECTIVE = "// NOT_GENERATED"
 
     fun getActualLightClassText(
-            testDataFile: File,
-            findLightClass: (String) -> PsiClass?,
-            normalizeText: (String) -> String
+        testDataFile: File,
+        findLightClass: (String) -> PsiClass?,
+        normalizeText: (String) -> String,
+        membersFilter: PsiClassRenderer.MembersFilter = PsiClassRenderer.MembersFilter.DEFAULT
     ): String {
         val text = FileUtil.loadFile(testDataFile, true)
         val matcher = SUBJECT_FQ_NAME_PATTERN.matcher(text)
@@ -27,15 +26,20 @@ object LightClassTestCommon {
 
         val lightClass = findLightClass(fqName)
 
-        return actualText(fqName, lightClass, normalizeText)
+        return actualText(fqName, lightClass, normalizeText, membersFilter)
     }
 
-    private fun actualText(fqName: String?, lightClass: PsiClass?, normalizeText: (String) -> String): String {
+    private fun actualText(
+        fqName: String?,
+        lightClass: PsiClass?,
+        normalizeText: (String) -> String,
+        membersFilter: PsiClassRenderer.MembersFilter
+    ): String {
         if (lightClass == null) {
             return NOT_GENERATED_DIRECTIVE
         }
         TestCase.assertTrue("Not a light class: $lightClass ($fqName)", lightClass is KtLightClass)
-        return normalizeText(lightClass.renderClass(renderInner = true))
+        return normalizeText(PsiClassRenderer.renderClass(lightClass, renderInner = true, membersFilter = membersFilter))
     }
 
     // Actual text for light class is generated with ClsElementImpl.appendMirrorText() that can find empty DefaultImpl inner class in stubs
