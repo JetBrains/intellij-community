@@ -32,8 +32,8 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
 
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
     myTree = new MavenProjectsTree(myProject);
   }
 
