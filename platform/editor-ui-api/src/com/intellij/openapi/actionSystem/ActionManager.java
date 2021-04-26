@@ -139,7 +139,11 @@ public abstract class ActionManager {
    * @param messageActionGroup the action group from which the toolbar is created.
    * @return the created panel.
    *
-   * @deprecated use {@link #createActionToolbar(String, ActionGroup, boolean)} or {@link com.intellij.ui.ToolbarDecorator} instead.
+   * @deprecated use regular Swing {@link Action},
+   *   {@link com.intellij.openapi.ui.DialogWrapper#createActions()},
+   *   {@link com.intellij.openapi.ui.DialogWrapper#createLeftSideActions()},
+   *   {@link #createActionToolbar(String, ActionGroup, boolean)}, or
+   *   {@link com.intellij.ui.ToolbarDecorator} instead.
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
