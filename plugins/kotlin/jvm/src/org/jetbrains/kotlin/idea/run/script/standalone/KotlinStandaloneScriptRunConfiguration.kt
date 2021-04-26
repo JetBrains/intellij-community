@@ -7,13 +7,11 @@ package org.jetbrains.kotlin.idea.run.script.standalone
 
 import com.intellij.execution.*
 import com.intellij.execution.application.BaseJavaApplicationCommandLineState
-import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
-import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.SettingsEditor
@@ -36,7 +34,6 @@ import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRun
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil.isProjectSourceFile
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
-import java.util.*
 
 class KotlinStandaloneScriptRunConfiguration(
     project: Project,
@@ -154,9 +151,9 @@ private class ScriptCommandLineState(
         }
 
         params.mainClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
-        params.programParametersList.prepend(filePath)
+        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(filePath))
         params.programParametersList.prepend("-script")
-        params.programParametersList.prepend(KotlinArtifacts.instance.kotlincDirectory.absolutePath)
+        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(KotlinArtifacts.instance.kotlincDirectory.absolutePath))
         params.programParametersList.prepend("-kotlin-home")
 
         val module = scriptVFile.module(environment.project)
@@ -165,9 +162,17 @@ private class ScriptCommandLineState(
                 if (!ProjectRootsUtil.isInTestSource(scriptVFile, environment.project)) it.productionOnly() else it
             }
 
-            val moduleDependencies = orderEnumerator.classes().pathsList.pathsString
-            if (moduleDependencies.isNotBlank()) {
-                params.programParametersList.prepend(moduleDependencies)
+            val moduleDependencies = orderEnumerator.classes().pathsList
+            if (!moduleDependencies.isEmpty) {
+                val classpath = CompositeParameterTargetedValue()
+                for ((index, path) in moduleDependencies.pathList.withIndex()) {
+                    if (index > 0) {
+                        classpath.addPathSeparator()
+                    }
+                    classpath.addPathPart(path)
+                }
+
+                params.programParametersList.prepend(classpath)
                 params.programParametersList.prepend("-cp")
             }
         }
