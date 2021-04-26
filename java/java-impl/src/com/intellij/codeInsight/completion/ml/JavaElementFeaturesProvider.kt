@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.ml
 
 import com.intellij.codeInsight.completion.CompletionLocation
@@ -39,6 +39,7 @@ class JavaElementFeaturesProvider : ElementFeatureProvider {
         features.addStartsWithFeature(element, "set")
       }
       is PsiClass -> {
+        features.putAll(JavaCompletionFeatures.getPackageMatchingFeatures(contextFeatures, psi))
         JavaCompletionFeatures.getChildClassTokensMatchingFeature(contextFeatures, element.lookupString)?.let {
           features["child_class_tokens_matches"] = it
         }
