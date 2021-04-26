@@ -628,10 +628,9 @@ public final class IdeKeyEventDispatcher {
     Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForInputEvent(
       e, wrappedContext, place, processor, presentationFactory,
       event -> events.put(event.getPresentation(), event),
-      session -> {
-        ReadAction.run(() -> rearrangeByPromoters(actions, Utils.freezeDataContext(wrappedContext, null)));
-        return doUpdateActionsInner(actions, dumb, wouldBeEnabledIfNotDumb, session, events::get);
-      });
+      session -> Utils.tryInReadAction(
+        () -> rearrangeByPromoters(actions, Utils.freezeDataContext(wrappedContext, null))) ?
+                 doUpdateActionsInner(actions, dumb, wouldBeEnabledIfNotDumb, session, events::get) : null);
 
     doPerformActionInner(chosen, e, processor, wrappedContext, actionManager, project, wouldBeEnabledIfNotDumb, () -> {
       //invokeLater to make sure correct dataContext is taken from focus
@@ -829,7 +828,7 @@ public final class IdeKeyEventDispatcher {
     }
   }
 
-  private static void rearrangeByPromoters(List<AnAction> actions, DataContext context) {
+  private static boolean rearrangeByPromoters(List<AnAction> actions, DataContext context) {
     List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
     for (ActionPromoter promoter : getPromoters(actions)) {
       try {
@@ -843,6 +842,7 @@ public final class IdeKeyEventDispatcher {
         LOG.error(e);
       }
     }
+    return true;
   }
 
   @NotNull

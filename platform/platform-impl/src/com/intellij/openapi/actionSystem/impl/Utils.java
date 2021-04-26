@@ -8,7 +8,7 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
@@ -47,6 +47,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -461,7 +462,7 @@ public final class Utils {
               if (fastResult != null) {
                 ref.set(fastResult);
               }
-              else if (ReadAction.compute(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
+              else if (tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
                 UpdateSession slowSession = actionUpdater.asUpdateSession();
                 T slowResult = function.apply(slowSession);
                 ref.set(slowResult);
@@ -516,5 +517,14 @@ public final class Utils {
       }
     }
     return defValue;
+  }
+
+  @ApiStatus.Internal
+  public static boolean tryInReadAction(@NotNull BooleanSupplier supplier) {
+    boolean[] result = {false};
+    ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+      result[0] = supplier.getAsBoolean();
+    });
+    return result[0];
   }
 }
