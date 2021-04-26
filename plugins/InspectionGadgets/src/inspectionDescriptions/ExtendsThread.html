@@ -1,11 +1,15 @@
 <html>
 <body>
-Reports any classes which directly extend <b>java.lang.Thread</b>.
-It is usually thought better practice to delegate to rather than extend
-<b>java.lang.Thread</b>, so that a thread creator may exert better
-control over the thread's behavior, and to better localize all concurrency related operations.
+Reports any classes which directly extend <code>java.lang.Thread</code>.
+It is usually recommended to prefer composition over inheritance, to create more reusable code that is easier to modify later,
 <!-- tooltip end -->
-<p>
-
+<p>For example:</p>
+<pre><code>
+  new Thread() {
+    public void run() {
+      System.out.println("Hello World!");
+    }
+  }.start();
+</code></pre>
 </body>
 </html>

@@ -5,6 +5,36 @@ A simple property getter is defined as one which simply returns the value of a f
 and does no other calculation. Such simple getter calls may be safely inlined.
 Some coding standards also suggest against the use of simple getters for code clarity
 reasons.
+<p>For example:</p>
+<pre><code>
+  <b>public class</b> Salient {
+    <b>private</b> String name;
+
+    <b>public</b> String getName() {
+      <b>return</b> name;
+    }
+
+    @Override
+    <b>public</b> String toString() {
+      <b>return</b> getName();
+    }
+  }
+</code></pre>
+<p>A quick-fix is provided to inline the getter call:</p>
+<pre><code>
+  <b>public class</b> Salient {
+    <b>private</b> String name;
+
+    <b>public</b> String getName() {
+      <b>return</b> name;
+    }
+
+    @Override
+    <b>public</b> String toString() {
+      <b>return</b> name;
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the first option below to only report on getter calls on <b>this</b>, not on objects of the same type passed in as a parameter. Use
