@@ -2,8 +2,8 @@
 package com.intellij.ide.bookmarks.actions
 
 import com.intellij.icons.AllIcons.Actions.Checked
+import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.bookmarks.BookmarkBundle.messagePointer
-import com.intellij.ide.bookmarks.BookmarkType
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Toggleable

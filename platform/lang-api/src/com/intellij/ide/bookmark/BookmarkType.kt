@@ -1,7 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.bookmarks
+package com.intellij.ide.bookmark
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.util.registry.Registry
@@ -37,7 +38,7 @@ enum class BookmarkType(val mnemonic: Char, private val painter: RegionPainter<C
 
   private fun createIcon(size: Int, insets: Int): Icon = IconWrapperWithToolTip(
     RegionPaintIcon(size, size, insets, painter).withIconPreScaled(false),
-    BookmarkBundle.messagePointer("tooltip.bookmarked"))
+    LangBundle.messagePointer("tooltip.bookmarked"))
 
   companion object {
     @JvmStatic
