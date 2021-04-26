@@ -968,8 +968,10 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     if (falseStatePossible) {
       myLanguageSupport.processConditionFailure(myInterceptor, tosValue, instruction, !trueStatePossible);
       List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, runner, transfer);
-      for (DfaInstructionState negState : states) {
-        negState.getMemoryState().markEphemeral();
+      if (instruction.isMakeEphemeral()) {
+        for (DfaInstructionState negState : states) {
+          negState.getMemoryState().markEphemeral();
+        }
       }
       result.addAll(states);
     }

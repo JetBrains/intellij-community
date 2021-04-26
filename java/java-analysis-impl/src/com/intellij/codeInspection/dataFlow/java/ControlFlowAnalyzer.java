@@ -1030,13 +1030,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (!shouldHandleException()) {
       return;
     }
-
-    pushUnknown();
-    final ConditionalGotoInstruction ifNoException = addInstruction(new ConditionalGotoInstruction(null, false, null));
-
-    throwException(myExceptionCache.get(JAVA_LANG_ERROR), null);
-
-    ifNoException.setOffset(myCurrentFlow.getInstructionCount());
+    DfaControlTransferValue transfer = myFactory.controlTransfer(myExceptionCache.get(JAVA_LANG_ERROR), myTrapStack);
+    addInstruction(new EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer));
   }
 
   private boolean shouldHandleException() {
@@ -1360,7 +1355,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       shouldHandleException() ?
       myFactory.controlTransfer(myExceptionCache.get("java.lang.ArithmeticException"), myTrapStack) : null;
     addInstruction(new EnsureInstruction(anchor, RelationType.NE, PsiType.LONG.equals(resType) ? DfTypes.longValue(0) : DfTypes.intValue(0),
-                                         transfer));
+                                         transfer, true));
   }
 
   private void generateBinOpChain(PsiPolyadicExpression expression, @NotNull IElementType op, PsiExpression[] operands) {
@@ -1774,7 +1769,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           shouldHandleException() ?
           myFactory.controlTransfer(myExceptionCache.get("java.lang.NegativeArraySizeException"), myTrapStack) : null;
         for (int i = dims - 1; i >= 0; i--) {
-          addInstruction(new EnsureInstruction(dimensions[i], RelationType.GE, DfTypes.intValue(0), transfer));
+          addInstruction(new EnsureInstruction(dimensions[i], RelationType.GE, DfTypes.intValue(0), transfer, true));
           if (i != 0) {
             addInstruction(new PopInstruction());
           }

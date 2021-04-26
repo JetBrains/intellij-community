@@ -19,15 +19,38 @@ public class EnsureInstruction extends Instruction {
   private final @NotNull RelationType myRelation;
   private final @NotNull DfType myCompareTo;
   private final @Nullable DfaControlTransferValue myTransferValue;
+  private final boolean myMakeEphemeral;
 
+  /**
+   * @param expression psi anchor
+   * @param relation relation to apply to top-of-stack value
+   * @param compareTo right operand of relation
+   * @param value transfer to use if relation is not satisfied (can be null, in this case the interpretation simply finishes)
+   */
   public EnsureInstruction(@Nullable PsiElement expression,
                            @NotNull RelationType relation,
                            @NotNull DfType compareTo,
                            @Nullable DfaControlTransferValue value) {
+    this(expression, relation, compareTo, value, false);
+  }
+
+  /**
+   * @param expression psi anchor
+   * @param relation relation to apply to top-of-stack value
+   * @param compareTo right operand of relation
+   * @param value transfer to use if relation is not satisfied (can be null, in this case the interpretation simply finishes)
+   * @param makeEphemeral if true, memory states on unsatisfied condition will be marked as ephemeral
+   */
+  public EnsureInstruction(@Nullable PsiElement expression,
+                           @NotNull RelationType relation,
+                           @NotNull DfType compareTo,
+                           @Nullable DfaControlTransferValue value,
+                           boolean makeEphemeral) {
     myExpression = expression;
     myRelation = relation;
     myCompareTo = compareTo;
     myTransferValue = value;
+    myMakeEphemeral = makeEphemeral;
   }
 
   @Override
@@ -37,6 +60,10 @@ public class EnsureInstruction extends Instruction {
                                             myTransferValue.bindToFactory(factory));
     instruction.setIndex(getIndex());
     return instruction;
+  }
+
+  public boolean isMakeEphemeral() {
+    return myMakeEphemeral;
   }
 
   public @Nullable PsiElement getPsiAnchor() {
