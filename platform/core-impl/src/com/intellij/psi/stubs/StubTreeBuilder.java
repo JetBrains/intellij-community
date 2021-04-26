@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.TreeBackedLighterAST;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -22,6 +23,7 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContent;
@@ -96,6 +98,7 @@ public final class StubTreeBuilder {
       return builder.compute();
     }
     catch (Exception e) {
+      if (e instanceof ControlFlowException) ExceptionUtil.rethrowUnchecked(e);
       LOG.error(PluginException.createByClass("Failed to build stub tree for " + inputData.getFileName(), e,
                                               stubBuilderType.getClassToBlameInCaseOfException()));
       return null;
