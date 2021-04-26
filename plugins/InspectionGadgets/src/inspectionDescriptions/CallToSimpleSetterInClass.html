@@ -5,10 +5,33 @@ A simple property setter is defined as one which simply assigns the value of its
 and does no other calculation. Such simple setter calls may be safely inlined.
 Some coding standards also suggest against the use of simple setters for code clarity
 reasons.
+<p>Example:</p>
+<pre><code>class Foo {
+  private int index;
+  public Foo(int idx) {
+     setIndex(idx);
+  }
+  public void setIndex(int idx) {
+     index = idx;
+  }
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>class Foo {
+  private int index;
+  public Foo(int idx) {
+    index = idx;
+  }
+  public void setIndex(int idx) {
+    index = idx;
+  }
+}
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the first option below to only report on setter calls on <b>this</b>, not on objects of the same type passed in as a parameter. Use
-the second option below to only report when the setter is <b>private</b>.
+Use the first option below to only report on setter calls on <code>this</code> not on objects of the same type passed in as a parameter. 
+<p>
+Use the second option below to only report when the setter is <code>private</code>.
 <p>
 
 </body>
