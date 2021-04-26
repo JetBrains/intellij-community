@@ -1,8 +1,12 @@
 <html>
 <body>
-Reports <b>public</b> <b>static</b> array fields. Often used
+Reports <code>public</code> <code>static</code> array fields. Often used
 to store arrays of constant values, these fields nonetheless represent a security
-hazard, as their contents may be modified, even if the field is declared as <b>final</b>.
+hazard, as their contents may be modified, even if the field is declared as <code>final</code>.
+<p>Example:</p>
+<pre>
+  public static String[] allowedPasswords = {"foo", "bar"};
+</pre>
 <!-- tooltip end -->
 <p>
 
