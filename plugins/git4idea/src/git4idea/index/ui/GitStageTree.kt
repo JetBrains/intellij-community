@@ -85,6 +85,8 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     }, parentDisposable)
   }
 
+  override fun getToggleClickCount(): Int = 2
+
   abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
 
   abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
