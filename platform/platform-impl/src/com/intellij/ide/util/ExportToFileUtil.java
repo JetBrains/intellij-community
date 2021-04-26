@@ -38,16 +38,16 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.TooManyListenersException;
 
 public final class ExportToFileUtil {
   private static final Logger LOG = Logger.getInstance(ExportToFileUtil.class);
 
   public static void exportTextToFile(Project project, String fileName, String textToExport) {
-    String prepend = "";
+    boolean append = false;
     File file = new File(fileName);
     if (file.exists()) {
       int result = Messages.showYesNoCancelDialog(
@@ -64,18 +64,12 @@ public final class ExportToFileUtil {
         return;
       }
       if (result == Messages.NO) {
-        char[] buf = new char[(int)file.length()];
-        try (FileReader reader = new FileReader(fileName)) {
-          reader.read(buf, 0, (int)file.length());
-          prepend = new String(buf) + System.lineSeparator();
-        }
-        catch (IOException ignored) {
-        }
+        append = true;
       }
     }
 
-    try (FileWriter writer = new FileWriter(fileName)) {
-      writer.write(prepend + textToExport);
+    try (FileWriter writer = new FileWriter(fileName, StandardCharsets.UTF_8, append)) {
+      writer.write(textToExport);
     }
     catch (IOException e) {
       Messages.showMessageDialog(
