@@ -168,13 +168,16 @@ final class NST {
                                 int buttFlags,
                                 String text,
                                 String hint, int isHintDisabled,
-                                Icon icon,
+                                @Nullable Pair<Pointer, Dimension> raster,
                                 NSTLibrary.Action action) {
-    final BufferedImage img = _getImg4ByteRGBA(icon);
-    final Pointer raster4ByteRGBA = _getRaster(img);
-    final int w = _getImgW(img);
-    final int h = _getImgH(img);
-    return ourNSTLibrary.createButton(uid, buttWidth, buttFlags, text, hint, isHintDisabled, raster4ByteRGBA, w, h, action); // called from AppKit, uses per-event autorelease-pool
+    return ourNSTLibrary.createButton(
+      uid, buttWidth, buttFlags,
+      text, hint,
+      isHintDisabled,
+      raster == null ? null : raster.getFirst(),
+      raster == null ? 0 : raster.getSecond().width,
+      raster == null ? 0 : raster.getSecond().height,
+      action); // called from AppKit, uses per-event autorelease-pool
   }
 
   static ID createPopover(String uid,
