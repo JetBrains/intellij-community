@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.siyeh.ig.numeric.UnaryPlusInspection.IncrementDecrementFixManager;
+import static com.siyeh.ig.numeric.UnaryPlusInspection.ConvertDoubleUnaryToPrefixOperationFix;
 
 public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
 
@@ -90,32 +90,6 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
 
       newExpression.append(commentTracker.text(operand));
       PsiReplacementUtil.replaceExpression(parentExpression, newExpression.toString(), commentTracker);
-    }
-  }
-
-  static class UnaryDecrementFix extends InspectionGadgetsFix {
-    private final String myRefName;
-
-    UnaryDecrementFix(@NotNull String refName) {
-      myRefName = refName;
-    }
-
-    @Override
-    public @NotNull String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.unary.minus.decrement.quickfix", myRefName);
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return InspectionGadgetsBundle.message("unnecessary.unary.minus.decrement.quickfix.family.name");
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiPrefixExpression.class);
-      if (prefixExpr != null) {
-        IncrementDecrementFixManager.decrement(prefixExpr).applyFix();
-      }
     }
   }
 
@@ -176,8 +150,7 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
     @Override
     public void visitPrefixExpression(PsiPrefixExpression prefixExpr) {
       super.visitPrefixExpression(prefixExpr);
-      IncrementDecrementFixManager fixManager = IncrementDecrementFixManager.decrement(prefixExpr);
-      if (!fixManager.isValidPrefixExpression(prefixExpr)) {
+      if (!ConvertDoubleUnaryToPrefixOperationFix.isDesiredPrefixExpression(prefixExpr, false)) {
         return;
       }
       final PsiExpression operand = prefixExpr.getOperand();
@@ -187,11 +160,11 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
       final List<LocalQuickFix> fixes = new SmartList<>();
       addReplaceParentOperatorFix(fixes, prefixExpr);
       if (myOnTheFly) {
-        LocalQuickFix decrementFix = fixManager.createFix();
+        LocalQuickFix decrementFix = ConvertDoubleUnaryToPrefixOperationFix.createFix(prefixExpr);
         if (decrementFix != null) {
           fixes.add(decrementFix);
         }
-        addRemoveDoubleUnaryMinusesFix(fixes, fixManager, prefixExpr);
+        addRemoveDoubleUnaryMinusesFix(fixes, prefixExpr);
       }
       if (!fixes.isEmpty()) {
         myProblemsHolder.registerProblem(prefixExpr.getOperationSign(),
@@ -236,7 +209,6 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
     }
 
     private static void addRemoveDoubleUnaryMinusesFix(@NotNull List<LocalQuickFix> fixes,
-                                                       @NotNull IncrementDecrementFixManager fixManager,
                                                        @NotNull PsiPrefixExpression prefixExpr) {
       final PsiElement parent = PsiUtil.skipParenthesizedExprUp(prefixExpr.getParent());
       final PsiExpression operandExpr;
@@ -246,12 +218,14 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
       if (operand == null) {
         return;
       }
-      if (parent instanceof PsiPrefixExpression && fixManager.isValidPrefixExpression((PsiPrefixExpression)parent)) {
+      if (parent instanceof PsiPrefixExpression &&
+          ConvertDoubleUnaryToPrefixOperationFix.isDesiredPrefixExpression((PsiPrefixExpression)parent, false)) {
         operandExpr = prefixExpr.getOperand();
         expr = (PsiExpression)parent;
         minusOnTheLeft = false;
       }
-      else if (operand instanceof PsiPrefixExpression && fixManager.isValidPrefixExpression((PsiPrefixExpression)operand)) {
+      else if (operand instanceof PsiPrefixExpression &&
+               ConvertDoubleUnaryToPrefixOperationFix.isDesiredPrefixExpression((PsiPrefixExpression)operand, false)) {
         operandExpr = ((PsiPrefixExpression)operand).getOperand();
         expr = prefixExpr;
         minusOnTheLeft = true;
