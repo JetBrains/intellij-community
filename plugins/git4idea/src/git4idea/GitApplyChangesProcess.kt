@@ -369,9 +369,10 @@ class GitApplyChangesProcess(private val project: Project,
   private fun getCommitsDetails(successfulCommits: List<VcsFullCommitDetails>): String {
     var description = ""
     for (commit in successfulCommits) {
-      description += commitDetails(commit) + UIUtil.BR
+      if (description.isNotEmpty()) description += UIUtil.BR
+      description += commitDetails(commit)
     }
-    return description.substring(0, description.length - UIUtil.BR.length)
+    return description
   }
 
   @NlsSafe
