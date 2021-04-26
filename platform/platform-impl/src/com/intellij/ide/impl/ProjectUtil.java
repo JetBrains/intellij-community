@@ -482,15 +482,29 @@ public final class ProjectUtil {
    *         {@link Messages#CANCEL} (when a user cancels the dialog)
    */
   public static int confirmOpenNewProject(boolean isNewProject) {
+    return confirmOpenNewProject(isNewProject, null);
+  }
+
+  /**
+   * @param isNewProject true if the project is just created
+   * @param projectName name of the project to open (can be displayed to the user)
+   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW} or
+   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW} or
+   *         {@link Messages#CANCEL} (when a user cancels the dialog)
+   */
+  public static int confirmOpenNewProject(boolean isNewProject, @Nullable String projectName) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
     }
 
     int mode = GeneralSettings.getInstance().getConfirmOpenNewProject();
     if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
+      String message = projectName == null ? 
+                       IdeBundle.message("prompt.open.project.in.new.frame") :
+                       IdeBundle.message("prompt.open.project.with.name.in.new.frame", projectName);
       if (isNewProject) {
         boolean openInExistingFrame =
-          MessageDialogBuilder.yesNo(IdeBundle.message("title.new.project"), IdeBundle.message("prompt.open.project.in.new.frame"))
+          MessageDialogBuilder.yesNo(IdeBundle.message("title.new.project"), message)
             .yesText(IdeBundle.message("button.existing.frame"))
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(new ProjectNewWindowDoNotAskOption())
@@ -499,7 +513,7 @@ public final class ProjectUtil {
       }
       else {
         int exitCode =
-          MessageDialogBuilder.yesNoCancel(IdeBundle.message("title.open.project"), IdeBundle.message("prompt.open.project.in.new.frame"))
+          MessageDialogBuilder.yesNoCancel(IdeBundle.message("title.open.project"), message)
             .yesText(IdeBundle.message("button.existing.frame"))
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(new ProjectNewWindowDoNotAskOption())
