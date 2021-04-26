@@ -40,6 +40,7 @@ final class KotlinPluginArtifact {
   }
 
   Path jpsOutPluginXml(KotlinPluginKind kind) {
+    CompilationTasks.create(context).compileModules([kind.pluginXmlModuleName])
     def pluginXml = "production/${kind.pluginXmlModuleName}/META-INF/plugin.xml"
     Path jpsOutPluginXml = Paths.get("$context.projectOutputDirectory/$pluginXml")
     if (!Files.exists(jpsOutPluginXml)) {
