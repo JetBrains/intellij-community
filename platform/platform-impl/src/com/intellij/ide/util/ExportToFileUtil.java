@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,19 @@ import java.util.TooManyListenersException;
 public final class ExportToFileUtil {
   private static final Logger LOG = Logger.getInstance(ExportToFileUtil.class);
 
-  public static void exportTextToFile(Project project, String fileName, String textToExport) {
+  @RequiresEdt
+  public static void chooseFileAndExport(@NotNull Project project, @NotNull ExporterToTextFile exporter) {
+    final ExportDialogBase dlg = new ExportDialogBase(project, exporter);
+
+    if (!dlg.showAndGet()) {
+      return;
+    }
+
+    exportTextToFile(project, dlg.getFileName(), dlg.getText());
+    exporter.exportedTo(dlg.getFileName());
+  }
+
+  private static void exportTextToFile(Project project, String fileName, String textToExport) {
     boolean append = false;
     File file = new File(fileName);
     if (file.exists()) {
@@ -81,14 +94,14 @@ public final class ExportToFileUtil {
     }
   }
 
-  public static class ExportDialogBase extends DialogWrapper {
+  private static class ExportDialogBase extends DialogWrapper {
     private final Project myProject;
     private final ExporterToTextFile myExporter;
     protected Editor myTextArea;
     protected TextFieldWithBrowseButton myTfFile;
     private ChangeListener myListener;
 
-    public ExportDialogBase(Project project, ExporterToTextFile exporter) {
+    ExportDialogBase(Project project, ExporterToTextFile exporter) {
       super(project, true);
       myProject = project;
       myExporter = exporter;
