@@ -186,7 +186,7 @@ public final class DfaUtil {
     PsiElement body = owner.getBody();
     if (body == null) return Nullability.UNKNOWN;
 
-    final DataFlowRunner dfaRunner = new DataFlowRunner(owner.getProject());
+    final var dfaRunner = new StandardDataFlowRunner(owner.getProject());
 
     final class BlockNullabilityInterceptor implements DfaInterceptor<PsiExpression> {
       boolean hasNulls = false;
@@ -236,7 +236,7 @@ public final class DfaUtil {
 
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
-   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, InstructionVisitor)}) to cover
+   * (e.g. passed to {@link StandardDataFlowRunner#analyzeMethodRecursively(PsiElement, InstructionVisitor)}) to cover
    * given expression.
    *
    * @param expression expression to cover

@@ -190,7 +190,7 @@ public final class GuessManagerImpl extends GuessManager {
     return new GuessManagerRunner(scope.getProject(), honorAssignments);
   }
 
-  private static class GuessManagerRunner extends DataFlowRunner {
+  private static class GuessManagerRunner extends StandardDataFlowRunner {
     private final boolean myAssignments;
     private boolean myPlaceVisited;
     private int[] myLoopNumbers;
@@ -201,7 +201,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    protected int getComplexityLimit() {
+    public int getComplexityLimit() {
       // Limit analysis complexity for completion as it could be relaunched many times
       return DEFAULT_MAX_STATES_PER_BRANCH / 3;
     }

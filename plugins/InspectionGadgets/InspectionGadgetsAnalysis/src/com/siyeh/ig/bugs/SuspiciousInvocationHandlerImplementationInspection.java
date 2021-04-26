@@ -150,7 +150,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
     };
   }
 
-  private static class InvocationHandlerAnalysisRunner extends DataFlowRunner {
+  private static class InvocationHandlerAnalysisRunner extends StandardDataFlowRunner {
     private final PsiElement myBody;
     private DfaVariableValue myDfaMethodName;
     private DfaVariableValue myDfaMethodDeclaringClass;

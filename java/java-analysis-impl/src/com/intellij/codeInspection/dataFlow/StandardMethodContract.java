@@ -155,7 +155,7 @@ public final class StandardMethodContract extends MethodContract {
     for (StandardMethodContract contract : contracts) {
       if (contract.getParameterCount() != paramCount) return null;
       StreamEx.of(leftovers).map(c -> c.intersect(contract)).nonNull().into(result);
-      if (result.size() >= DataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH) return null;
+      if (result.size() >= StandardDataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH) return null;
       leftovers = StreamEx.of(leftovers).flatMap(c -> c.excludeContract(contract)).toList();
       if (leftovers.isEmpty()) break;
     }

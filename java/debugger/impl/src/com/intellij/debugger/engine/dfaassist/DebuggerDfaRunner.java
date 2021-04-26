@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class DebuggerDfaRunner extends DataFlowRunner {
+class DebuggerDfaRunner extends StandardDataFlowRunner {
   private static final Value NullConst = new Value() {
     @Override
     public VirtualMachine virtualMachine() { return null; }

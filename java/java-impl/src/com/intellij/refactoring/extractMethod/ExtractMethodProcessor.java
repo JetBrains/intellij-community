@@ -35,7 +35,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.scope.processor.VariablesProcessor;
@@ -443,7 +442,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     if (returnedExpressions.isEmpty()) return true;
 
-    final DataFlowRunner dfaRunner = new DataFlowRunner(myProject);
+    final var dfaRunner = new StandardDataFlowRunner(myProject);
     final var returnChecker = new DfaInterceptor<PsiExpression>() {
       @Override
       public void beforeValueReturn(@NotNull DfaValue value,
@@ -478,7 +477,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private static Nullability inferNullability(@NotNull PsiCodeBlock block, @NotNull PsiExpression expr) {
-    final DataFlowRunner dfaRunner = new DataFlowRunner(block.getProject());
+    final var dfaRunner = new StandardDataFlowRunner(block.getProject());
 
     var interceptor = new DfaInterceptor<PsiExpression>() {
       DfaNullability myNullability = DfaNullability.NOT_NULL;

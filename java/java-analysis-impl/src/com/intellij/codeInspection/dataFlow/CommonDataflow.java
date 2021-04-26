@@ -211,7 +211,7 @@ public final class CommonDataflow {
   @NotNull
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
-    DataFlowRunner runner = new DataFlowRunner(block.getProject(), block, ThreeState.UNSURE);
+    StandardDataFlowRunner runner = new StandardDataFlowRunner(block.getProject(), block, ThreeState.UNSURE);
     var interceptor = new CommonDataflowInterceptor();
     RunnerResult result = runner.analyzeMethodRecursively(block, new JavaDfaInstructionVisitor(interceptor));
     if (result != RunnerResult.OK) return new DataflowResult(result);

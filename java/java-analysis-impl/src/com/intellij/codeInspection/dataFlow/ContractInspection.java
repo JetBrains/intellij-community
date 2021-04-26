@@ -137,8 +137,8 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
             JavaAnalysisBundle.message("inspection.contract.checker.contract.clause.never.satisfied", contract), text, clauseIndex);
         }
         possibleContracts = StreamEx.of(possibleContracts).flatMap(c -> c.excludeContract(contract))
-                                     .limit(DataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH).toList();
-        if (possibleContracts.size() >= DataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH) {
+                                     .limit(StandardDataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH).toList();
+        if (possibleContracts.size() >= StandardDataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH) {
           possibleContracts = null;
         }
       }

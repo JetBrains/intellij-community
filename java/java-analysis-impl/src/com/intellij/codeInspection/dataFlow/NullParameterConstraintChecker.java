@@ -36,7 +36,7 @@ import java.util.Set;
  *
  * All remaining violated parameters is required to be not-null for successful method execution.
  */
-final class NullParameterConstraintChecker extends DataFlowRunner {
+final class NullParameterConstraintChecker extends StandardDataFlowRunner {
   private final Set<PsiParameter> myPossiblyViolatedParameters;
   private final Set<PsiParameter> myUsedParameters;
   private final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;

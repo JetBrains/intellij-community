@@ -3,10 +3,10 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInspection.dataFlow.DataFlowRunner
 import com.intellij.codeInspection.dataFlow.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.DfaNullability
 import com.intellij.codeInspection.dataFlow.RunnerResult
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor
 import com.intellij.codeInspection.dataFlow.value.DfaValue
@@ -242,7 +242,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
       if (expressionSet.isEmpty()) return Nullability.UNKNOWN
       val fragmentToAnalyze = ControlFlowUtil.findCodeFragment(expressionSet.first())
-      val dfaRunner = DataFlowRunner(fragmentToAnalyze.project)
+      val dfaRunner = StandardDataFlowRunner(fragmentToAnalyze.project)
 
       var nullability = DfaNullability.NOT_NULL
 

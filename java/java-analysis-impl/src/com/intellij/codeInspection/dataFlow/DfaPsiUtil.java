@@ -329,7 +329,7 @@ public final class DfaPsiUtil {
       @Override
       public Result<Set<PsiField>> compute() {
         final Map<PsiField, Boolean> map = new HashMap<>();
-        final DataFlowRunner dfaRunner = new DataFlowRunner(body.getProject()) {
+        final var dfaRunner = new StandardDataFlowRunner(body.getProject()) {
           PsiElement currentBlock;
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {

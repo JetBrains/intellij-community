@@ -163,7 +163,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         PsiClass exceptionClass = exception.resolve();
         if (exceptionClass == null) return false;
 
-        class CatchDataFlowRunner extends DataFlowRunner {
+        class CatchDataFlowRunner extends StandardDataFlowRunner {
           final DfaVariableValue myExceptionVar;
           final DfaVariableValue myStableExceptionVar;
 
