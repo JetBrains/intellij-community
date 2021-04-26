@@ -50,7 +50,7 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
                     // 2. the projectId should be stable and independent on IDE version
                     val presentableUrl = FileUtil.toSystemIndependentName(path)
                     val name =
-                        PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+                        PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
                     val locationHash = Integer.toHexString((presentableUrl).hashCode())
                     val projectHash =
                         "${name.trimMiddle(name.length.coerceAtMost(254 - locationHash.length), useEllipsisSymbol = false)}.$locationHash"
@@ -85,7 +85,7 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
             val data = HashMap<String, String>()
             fun putIfNotNull(key: String, value: String?) {
                 if (value != null) {
-                    data[key.lowercase()] = value
+                    data[key.toLowerCase()] = value
                 }
             }
 

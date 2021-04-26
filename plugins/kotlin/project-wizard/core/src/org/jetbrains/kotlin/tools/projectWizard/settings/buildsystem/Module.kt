@@ -133,7 +133,7 @@ class Module(
                         ?: return@map ValidationResult.ValidationError(
                             KotlinNewProjectWizardBundle.message(
                                 "validation.should.not.be.blank",
-                                setting.title.replaceFirstChar(Char::uppercaseChar)
+                                setting.title.capitalize()
                             )
                         )
                     setting.validator.validate(this@settingValidator, value)
@@ -150,7 +150,7 @@ class Module(
                         ?: return@map ValidationResult.ValidationError(
                             KotlinNewProjectWizardBundle.message(
                                 "validation.should.not.be.blank",
-                                setting.title.replaceFirstChar(Char::uppercaseChar)
+                                setting.title.capitalize()
                             )
                         )
                     (setting.validator as SettingValidator<Any>).validate(this@settingValidator, value)

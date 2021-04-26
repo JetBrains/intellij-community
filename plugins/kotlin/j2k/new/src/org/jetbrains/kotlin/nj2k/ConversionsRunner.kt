@@ -94,7 +94,7 @@ object ConversionsRunner {
 
     private fun Conversion.description(): String {
         val conversionName = this::class.simpleName
-        val words = conversionName?.let { wordRegex.findAll(conversionName).map { it.value.replaceFirstChar(Char::lowercaseChar) }.toList() }
+        val words = conversionName?.let { wordRegex.findAll(conversionName).map { it.value.decapitalize(Locale.US) }.toList() }
         return when {
             conversionName == null -> "Converting..."
             conversionName.endsWith("Conversion") -> "Converting ${words!!.dropLast(1).joinToString(" ")}"

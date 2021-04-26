@@ -169,7 +169,7 @@ internal fun checkRedeclarations(
         if (overloadChecker != null && overloadChecker.isOverloadable(descriptor, candidateDescriptor)) continue
         val what = candidate.renderDescription()
         val where = candidate.representativeContainer()?.renderDescription() ?: continue
-        val message = KotlinBundle.message("text.0.already.declared.in.1", what, where).replaceFirstChar(Char::uppercaseChar)
+        val message = KotlinBundle.message("text.0.already.declared.in.1", what, where).capitalize()
         result += BasicUnresolvableCollisionUsageInfo(candidate, candidate, message)
     }
 }
@@ -200,7 +200,7 @@ fun reportShadowing(
         "text.0.will.be.shadowed.by.1",
         declaration.renderDescription(),
         candidate.renderDescription()
-    ).replaceFirstChar(Char::uppercaseChar)
+    ).capitalize()
     result += BasicUnresolvableCollisionUsageInfo(refElement, elementToBindUsageInfoTo, message)
 }
 
