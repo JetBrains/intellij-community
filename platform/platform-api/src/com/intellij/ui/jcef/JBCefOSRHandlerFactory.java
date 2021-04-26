@@ -10,16 +10,15 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * A factory for a lightweight off-screen rendering browser.
- * <p></p>
- * Used with the {@link JBCefBrowserBase.RenderingType#BUFFERED_IMAGE} type.
+ * A factory for creating alternative component/handler/bounds for an off-screen rendering browser.
  *
  * @see JBCefBrowserBuilder#setOSRHandlerFactory(JBCefOSRHandlerFactory)
+ * @see JBCefBrowserBuilder#setOffScreenRendering(boolean)
  * @author tav
  */
 public interface JBCefOSRHandlerFactory {
   /**
-   * Default implementation.
+   * Default implementation provides buffered rendering over a lightweight Swing component.
    */
   @NotNull JBCefOSRHandlerFactory DEFAULT = new JBCefOSRHandlerFactory() {};
 

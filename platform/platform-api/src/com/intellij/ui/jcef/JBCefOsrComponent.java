@@ -23,7 +23,7 @@ import java.awt.event.*;
 @SuppressWarnings("NotNullFieldNotInitialized")
 class JBCefOsrComponent extends JPanel {
   private volatile @NotNull JBCefOsrHandler myRenderHandler;
-  private volatile @NotNull JBCefBrowser myBrowser;
+  private volatile @NotNull JBCefBrowserBase myBrowser;
   private double myScale = 1.0;
 
   private volatile @NotNull Alarm myAlarm;
@@ -54,7 +54,7 @@ class JBCefOsrComponent extends JPanel {
     });
   }
 
-  public void setBrowser(@NotNull JBCefBrowser browser) {
+  public void setBrowser(@NotNull JBCefBrowserBase browser) {
     myBrowser = browser;
     myAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, browser);
   }

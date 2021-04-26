@@ -2,7 +2,6 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.ui.jcef.JBCefBrowserBase.RenderingType;
 import com.intellij.ui.scale.TestScaleHelper;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +42,7 @@ public class JBCefHeadlessOsrTest {
   @Test
   public void test() {
     JBCefBrowser browser = JBCefBrowser.createBuilder()
-      .setRenderingType(RenderingType.BUFFERED_IMAGE)
+      .setOffScreenRendering(true)
       .setOSRHandlerFactory(new JBCefOSRHandlerFactory() {
         final Rectangle bounds = new Rectangle(1024, 768);
 

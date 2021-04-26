@@ -4,37 +4,41 @@ package com.intellij.ui.jcef;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.ui.jcef.JBCefBrowserBase.RenderingType;
 
 /**
  * @author tav
  */
 public class JBCefBrowserBuilder {
-  @Nullable RenderingType myRenderingType;
   @Nullable JBCefClient myClient;
   @Nullable String myUrl;
   @Nullable CefBrowser myCefBrowser;
   @Nullable JBCefOSRHandlerFactory myOSRHandlerFactory;
+  boolean myIsOffScreenRendering;
   boolean myCreateImmediately;
 
   /**
-   * Sets the rendering type.
+   * Sets whether the browser is rendered off-screen.
    * <p></p>
-   * When not set the default {@link RenderingType#EMBEDDED_WINDOW} type is used.
+   * By default buffered rendering is used over a lightweight Swing component.
+   * To override - use {@link #setOSRHandlerFactory(JBCefOSRHandlerFactory)}.
+   * <p></p>
+   * When not set the windowed mode is used to render the browser.
+   *
+   * @see #setOSRHandlerFactory(JBCefOSRHandlerFactory)
    */
-  public @NotNull JBCefBrowserBuilder setRenderingType(@NotNull RenderingType type) {
-    myRenderingType = type;
+  public @NotNull JBCefBrowserBuilder setOffScreenRendering(boolean isOffScreenRendering) {
+    myIsOffScreenRendering = isOffScreenRendering;
     return this;
   }
 
   /**
    * Sets the client.
    * <p></p>
-   * When not set the default client is created (disposed automatically).
+   * When not set the default client is created (which will be disposed automatically).
    * <p>
    * The disposal of the provided client is the responsibility of the caller.
    */
-  public @NotNull JBCefBrowserBuilder setClient(@NotNull JBCefClient client) {
+  public @NotNull JBCefBrowserBuilder setClient(@Nullable JBCefClient client) {
     myClient = client;
     return this;
   }
@@ -46,7 +50,7 @@ public class JBCefBrowserBuilder {
    *
    * @see JBCefBrowserBase#loadURL(String)
    */
-  public @NotNull JBCefBrowserBuilder setUrl(@NotNull String url) {
+  public @NotNull JBCefBrowserBuilder setUrl(@Nullable String url) {
     myUrl = url;
     return this;
   }
@@ -54,13 +58,13 @@ public class JBCefBrowserBuilder {
   /**
    * Sets the browser to wrap.
    * <p></p>
-   * When not set the default browser is created corresponding to the provided {@link JBCefBrowser.RenderingType}.
+   * When not set the default browser is created.
    * <p>
    * Use this option to set a browser like DevTools.
    *
    * @see CefBrowser#getDevTools
    */
-  public @NotNull JBCefBrowserBuilder setCefBrowser(@NotNull CefBrowser browser) {
+  public @NotNull JBCefBrowserBuilder setCefBrowser(@Nullable CefBrowser browser) {
     myCefBrowser = browser;
     return this;
   }
@@ -83,11 +87,11 @@ public class JBCefBrowserBuilder {
    * <p></p>
    * When not set the {@link JBCefOSRHandlerFactory#DEFAULT} factory is used.
    * <p>
-   * Used only with {@link RenderingType#BUFFERED_IMAGE}, otherwise ignored.
+   * Used only with off-screen rendering, otherwise ignored.
    *
-   * @see #setRenderingType(RenderingType)
+   * @see #setOffScreenRendering(boolean)
    */
-  public @NotNull JBCefBrowserBuilder setOSRHandlerFactory(@NotNull JBCefOSRHandlerFactory factory) {
+  public @NotNull JBCefBrowserBuilder setOSRHandlerFactory(@Nullable JBCefOSRHandlerFactory factory) {
     myOSRHandlerFactory = factory;
     return this;
   }

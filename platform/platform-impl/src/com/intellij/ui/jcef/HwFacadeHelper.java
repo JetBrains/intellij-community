@@ -74,7 +74,7 @@ public class HwFacadeHelper {
         if (browsers == null) return list;
         for (CefBrowser browser : browsers.values()) {
           JBCefBrowserBase jbCefBrowser = JBCefBrowserBase.getJBCefBrowser(browser);
-          if (jbCefBrowser != null && !jbCefBrowser.isProperty(JBCefBrowserBase.Properties.IS_LIGHTWEIGHT)) {
+          if (jbCefBrowser != null && !jbCefBrowser.isOffScreenRendering()) {
             list.add(browser);
           }
         }

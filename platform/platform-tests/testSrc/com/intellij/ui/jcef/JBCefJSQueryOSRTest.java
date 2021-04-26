@@ -2,7 +2,6 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.ui.jcef.JBCefBrowserBase.RenderingType;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.cef.browser.CefBrowser;
 import org.cef.callback.CefDragData;
@@ -71,7 +70,7 @@ public class JBCefJSQueryOSRTest {
     client.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 1);
 
     JBCefBrowser browser = JBCefBrowser.createBuilder()
-      .setRenderingType(RenderingType.BUFFERED_IMAGE)
+      .setOffScreenRendering(true)
       .setClient(client)
       .setCreateImmediately(true)
       .createBrowser();
@@ -84,7 +83,7 @@ public class JBCefJSQueryOSRTest {
   @Test
   public void test4() {
     JBCefBrowser browser = JBCefBrowser.createBuilder()
-      .setRenderingType(RenderingType.BUFFERED_IMAGE)
+      .setOffScreenRendering(true)
       .createBrowser();
 
     JBCefJSQuery jsQuery = JBCefJSQuery.create((JBCefBrowserBase)browser);

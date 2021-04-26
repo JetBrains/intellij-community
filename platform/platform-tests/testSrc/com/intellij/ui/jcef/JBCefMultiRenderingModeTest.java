@@ -3,7 +3,6 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.ui.jcef.JBCefBrowserBase.RenderingType;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -41,9 +40,8 @@ public class JBCefMultiRenderingModeTest {
 
   @Test
   public void test() {
-    show(JBCefBrowser.createBuilder().setRenderingType(RenderingType.EMBEDDED_WINDOW).setUrl("chrome:version").createBrowser());
-    show(JBCefBrowser.createBuilder().setRenderingType(RenderingType.OGL_CANVAS).setUrl("chrome:version").createBrowser());
-    show(JBCefBrowser.createBuilder().setRenderingType(RenderingType.BUFFERED_IMAGE).setUrl("chrome:version").createBrowser());
+    show(JBCefBrowser.createBuilder().setOffScreenRendering(false).setUrl("chrome:version").createBrowser());
+    show(JBCefBrowser.createBuilder().setOffScreenRendering(true).setUrl("chrome:version").createBrowser());
     Disposer.dispose(JBCefApp.getInstance().getDisposable());
   }
 

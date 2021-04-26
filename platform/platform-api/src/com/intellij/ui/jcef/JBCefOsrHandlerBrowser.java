@@ -2,7 +2,6 @@
 package com.intellij.ui.jcef;
 
 import org.cef.browser.CefBrowser;
-import org.cef.browser.CefBrowserOsrWithHandler;
 import org.cef.handler.CefRenderHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,12 +17,11 @@ import java.awt.event.MouseWheelEvent;
  * {@link CefBrowser#sendMouseEvent(MouseEvent)}, {@link CefBrowser#sendMouseWheelEvent(MouseWheelEvent)}.
  * <p></p>
  * Use {@link #loadURL(String)} or {@link #loadHTML(String)} for loading.
- * <p>
- * Use {@link JBCefBrowser#createBuilder} and {@link JBCefBrowserBuilder#setRenderingType(RenderingType)}
- * for creating a browser with provided {@link RenderingType)}.
+ * <p></p>
+ * For the default {@link CefRenderHandler} use {@link JBCefBrowser#create(JBCefBrowserBuilder)} with
+ * {@link JBCefBrowserBuilder#setOffScreenRendering(boolean)}.
  *
- * @see RenderingType
- * @see JBCefBrowserBuilder#setRenderingType(RenderingType)
+ * @see JBCefBrowserBuilder#setOffScreenRendering(boolean)
  * @see JBCefBrowser#createBuilder
  * @see JBCefBrowser#getCefBrowser
  */
@@ -51,7 +49,7 @@ public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
    */
   @NotNull
   public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, boolean createImmediately) {
-    return new JBCefOsrHandlerBrowser(RenderingType.BUFFERED_IMAGE, null, url, renderHandler, createImmediately) {
+    return new JBCefOsrHandlerBrowser(null, url, renderHandler, createImmediately) {
       @Override
       public @Nullable JComponent getComponent() {
         return null;
@@ -81,8 +79,12 @@ public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
    * @see CefBrowser#createImmediately()
    */
   @NotNull
-  public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, @NotNull JBCefClient client, boolean createImmediately) {
-    return new JBCefOsrHandlerBrowser(RenderingType.BUFFERED_IMAGE, client, url, renderHandler, createImmediately) {
+  public static JBCefOsrHandlerBrowser create(@NotNull String url,
+                                              @NotNull CefRenderHandler renderHandler,
+                                              @NotNull JBCefClient client,
+                                              boolean createImmediately)
+  {
+    return new JBCefOsrHandlerBrowser(client, url, renderHandler, createImmediately) {
       @Override
       public @Nullable JComponent getComponent() {
         return null;
@@ -91,33 +93,30 @@ public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
   }
 
   /**
-   * Creates the browser of the provided rendering type.
-   *
-   * @param type the rendering type based on the {@code renderHandler}
    * @param client the client or null to provide default client
    * @param url the url
    * @param renderHandler the render handler
    * @param createImmediately whether the native browser should be created immediately
    */
-  protected JBCefOsrHandlerBrowser(@NotNull RenderingType type,
-                                   @Nullable JBCefClient client,
+  protected JBCefOsrHandlerBrowser(@Nullable JBCefClient client,
                                    @Nullable String url,
                                    @NotNull CefRenderHandler renderHandler,
                                    boolean createImmediately)
   {
-    super(createBrowser(type, client, url, renderHandler));
-    if (createImmediately) createImmediately();
-  }
-
-  private static @NotNull CreateBrowserArtefacts createBrowser(@NotNull RenderingType type,
-                                                               @Nullable JBCefClient client,
-                                                               @Nullable String url,
-                                                               @NotNull CefRenderHandler renderHandler)
-  {
-    if (client == null) {
-      client = JBCefApp.getInstance().createClient(true);
-    }
-    var cefBrowser = new CefBrowserOsrWithHandler(client.getCefClient(), url, null, renderHandler);
-    return new CreateBrowserArtefacts(type, cefBrowser, client);
+    super(JBCefBrowser.createBuilder().
+            setClient(client).
+            setUrl(url).
+            setCreateImmediately(createImmediately).
+            setOffScreenRendering(true).
+            setOSRHandlerFactory(new JBCefOSRHandlerFactory() {
+              @Override
+              public @NotNull JComponent createComponent() {
+                return new JComponent() {};
+              }
+              @Override
+              public @NotNull CefRenderHandler createCefRenderHandler(@NotNull JComponent component) {
+                return renderHandler;
+              }
+            }));
   }
 }

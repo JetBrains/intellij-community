@@ -7,7 +7,6 @@ import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +27,11 @@ public class JCEFHtmlPanel extends JBCefBrowser {
   }
 
   public JCEFHtmlPanel(JBCefClient client, String url) {
-    this(RenderingType.EMBEDDED_WINDOW, client, url); // should no pass url to ctor
+    this(false, client, url); // should no pass url to ctor
   }
 
-  @ApiStatus.Experimental
-  public JCEFHtmlPanel(@NotNull JBCefBrowser.RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
-    super(type, null, client, url);
+  public JCEFHtmlPanel(boolean isOffScreenRendering, @Nullable JBCefClient client, @Nullable String url) {
+    super(JBCefBrowser.createBuilder().setOffScreenRendering(isOffScreenRendering).setClient(client).setUrl(url));
     myUrl = getCefBrowser().getURL();
     if (client != null && client != ourCefClient) {
       Disposer.register(this, client);

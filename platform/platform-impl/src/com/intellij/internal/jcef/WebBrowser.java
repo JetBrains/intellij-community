@@ -49,20 +49,20 @@ public class WebBrowser extends AnAction implements DumbAware {
     showBrowser(false);
   }
 
-  private static void showBrowser(boolean isOffScreenRenderingMode) {
+  private static void showBrowser(boolean isOffScreenRendering) {
     Window activeFrame = IdeFrameImpl.getActiveFrame();
     if (activeFrame == null) return;
 
     Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
 
     final JFrame frame = new IdeFrameImpl();
-    frame.setTitle("Web Browser" + (isOffScreenRenderingMode ? " (OSR) " : " ") + "- JCEF");
+    frame.setTitle("Web Browser" + (isOffScreenRendering ? " (OSR) " : " ") + "- JCEF");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.setBounds(bounds.width / 4, bounds.height / 4, bounds.width / 2, bounds.height / 2);
     frame.setLayout(new BorderLayout());
 
     final JBCefBrowser myJBCefBrowser = JBCefBrowser.createBuilder()
-      .setRenderingType(isOffScreenRenderingMode ? JBCefBrowser.RenderingType.BUFFERED_IMAGE : JBCefBrowser.RenderingType.EMBEDDED_WINDOW)
+      .setOffScreenRendering(isOffScreenRendering)
       .setUrl(URL)
       .createBrowser();
 
