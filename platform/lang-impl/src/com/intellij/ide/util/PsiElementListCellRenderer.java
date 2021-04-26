@@ -99,7 +99,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     }
   }
 
-  final class LeftRenderer extends ColoredListCellRenderer<Object> {
+  private final class LeftRenderer extends ColoredListCellRenderer<Object> {
 
     private final ItemMatchers myMatchers;
 
@@ -269,10 +269,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
                                                        boolean selected,
                                                        boolean hasFocus) {
     return false;
-  }
-
-  final @Nullable DefaultListCellRenderer rightRenderer(Object value) {
-    return getRightCellRenderer(value);
   }
 
   @Nullable

@@ -3,6 +3,8 @@ package com.intellij.ide.util
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
+import com.intellij.navigation.LocationPresentation
+import com.intellij.navigation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
@@ -33,20 +35,25 @@ internal class PsiElementBackgroundListCellRenderer(
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    val future: Future<RendererComponents> = getComputer(list, renderer).computeComponentsAsync(value)
+    val future: Future<TargetPresentation> = getComputer(list, renderer).computePresentationAsync(value)
     if (!future.isDone) {
       return myLoadingComponentRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     }
 
     myComponent.removeAll()
-    val (left, right) = future.get()
+    val presentation = future.get()
 
-    val selectedFg = if (isSelected) UIUtil.getListSelectionForeground(cellHasFocus) else null
-    val bg = if (isSelected) UIUtil.getListSelectionBackground(cellHasFocus) else left.background
+    val bg = if (isSelected) {
+      UIUtil.getListSelectionBackground(cellHasFocus)
+    }
+    else {
+      presentation.backgroundColor ?: UIUtil.getListBackground()
+    }
 
     myComponent.background = bg
 
-    if (right != null) {
+    val locationText = presentation.locationText
+    if (locationText != null) {
       val spacer = JPanel()
       spacer.background = bg
       spacer.border = BorderFactory.createEmptyBorder(0, 2, 0, 2)
@@ -59,13 +66,13 @@ internal class PsiElementBackgroundListCellRenderer(
                                                   isSelected: Boolean,
                                                   cellHasFocus: Boolean): Component {
           val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-          foreground = selectedFg ?: right.foreground
+          foreground = if (isSelected) UIUtil.getListSelectionForeground(cellHasFocus) else UIUtil.getInactiveTextColor()
           background = bg
-          icon = right.icon
-          text = right.text
-          border = right.border
-          horizontalTextPosition = right.horizontalTextPosition
-          horizontalAlignment = right.horizontalAlignment
+          icon = presentation.locationIcon
+          text = locationText
+          border = BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding())
+          horizontalTextPosition = LEFT
+          horizontalAlignment = RIGHT
           return component
         }
       }
@@ -83,20 +90,24 @@ internal class PsiElementBackgroundListCellRenderer(
                                          selected: Boolean,
                                          hasFocus: Boolean) {
         background = bg
-        icon = left.icon
-        border = left.border
+        icon = presentation.icon
 
-        val fragmentIterator = left.iterator()
-        while (fragmentIterator.hasNext()) {
-          val text = fragmentIterator.next()
-          val textAttributes = fragmentIterator.textAttributes
-          val effectiveTextAttributes = selectedFg?.let {
-            SimpleTextAttributes.merge(textAttributes, SimpleTextAttributes(0, selectedFg))
-          } ?: textAttributes
+        val nameAttributes = presentation.presentableTextAttributes?.let(SimpleTextAttributes::fromTextAttributes)
+                             ?: SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getListForeground(selected, hasFocus))
+        SpeedSearchUtil.appendColoredFragmentForMatcher(
+          presentation.presentableText, this, nameAttributes, itemMatchers.nameMatcher, bg, selected
+        )
+
+        val containerText = presentation.containerText
+        if (containerText != null) {
+          val containerTextAttributes = presentation.containerTextAttributes?.let {
+            SimpleTextAttributes.merge(SimpleTextAttributes.fromTextAttributes(it), SimpleTextAttributes.GRAYED_ATTRIBUTES)
+          } ?: SimpleTextAttributes.GRAYED_ATTRIBUTES
+          append(LocationPresentation.DEFAULT_LOCATION_PREFIX, SimpleTextAttributes.GRAYED_ATTRIBUTES)
           SpeedSearchUtil.appendColoredFragmentForMatcher(
-            text, this, effectiveTextAttributes, itemMatchers.nameMatcher,
-            effectiveTextAttributes.bgColor, selected
+            containerText, this, containerTextAttributes, itemMatchers.locationMatcher, bg, selected
           )
+          append(LocationPresentation.DEFAULT_LOCATION_SUFFIX, SimpleTextAttributes.GRAYED_ATTRIBUTES)
         }
       }
     }

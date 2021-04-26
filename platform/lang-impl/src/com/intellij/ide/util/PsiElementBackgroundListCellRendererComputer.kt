@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util
 
-import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.readAction
@@ -9,13 +9,10 @@ import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.psi.PsiElement
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
-import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.ScreenUtil
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.UIUtil.runWhenChanged
 import com.intellij.util.ui.UIUtil.runWhenHidden
 import kotlinx.coroutines.*
@@ -26,8 +23,6 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.util.concurrent.Future
 import javax.swing.AbstractListModel
-import javax.swing.DefaultListCellRenderer
-import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.event.ListDataEvent
 
@@ -70,7 +65,7 @@ internal class PsiElementBackgroundListCellRendererComputer(
   private val myCoroutineScope = CoroutineScope(Job())
   private val myRepaintQueue = Channel<Unit>(Channel.CONFLATED)
   private val uiDispatcher = AppUIExecutor.onUiThread().later().coroutineDispatchingContext()
-  private val myComponentsMap: MutableMap<Any, Future<RendererComponents>> = HashMap()
+  private val myComponentsMap: MutableMap<PsiElement, Future<TargetPresentation>> = HashMap()
 
   init {
     myCoroutineScope.launch(uiDispatcher) {
@@ -91,16 +86,16 @@ internal class PsiElementBackgroundListCellRendererComputer(
   }
 
   @RequiresEdt
-  fun computeComponentsAsync(element: PsiElement): Future<RendererComponents> {
-    return myComponentsMap.computeIfAbsent(element, ::doComputeComponentsAsync)
+  fun computePresentationAsync(element: PsiElement): Future<TargetPresentation> {
+    return myComponentsMap.computeIfAbsent(element, ::doComputePresentationAsync)
   }
 
-  private fun doComputeComponentsAsync(item: Any): Future<RendererComponents> {
+  private fun doComputePresentationAsync(element: PsiElement): Future<TargetPresentation> {
     val result = myCoroutineScope.async {
       //delay((Math.random() * 3000 + 2000).toLong()) // uncomment to add artificial delay to check out how it looks in UI
       readAction { progress ->
         runUnderIndicator(progress) {
-          rendererComponents(item)
+          renderer.computePresentation(element)
         }
       }
     }
@@ -110,23 +105,7 @@ internal class PsiElementBackgroundListCellRendererComputer(
     }
     return result.asCompletableFuture()
   }
-
-  @RequiresReadLock(generateAssertion = false)
-  private fun rendererComponents(item: Any): RendererComponents {
-    val leftComponent = renderer.LeftRenderer(ItemMatchers(null, null)).getListCellRendererComponent(
-      list, item, -1, false, false
-    ) as ColoredListCellRenderer<*>
-    val rightComponent = renderer.rightRenderer(item)?.getListCellRendererComponent(
-      list, item, -1, false, false
-    ) as DefaultListCellRenderer?
-    return RendererComponents(leftComponent, rightComponent)
-  }
 }
-
-internal data class RendererComponents(
-  val leftComponent: SimpleColoredComponent,
-  val rightComponent: JLabel?
-)
 
 /**
  * This method forces [javax.swing.plaf.basic.BasicListUI.updateLayoutStateNeeded] to become non-zero via the path:
