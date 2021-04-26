@@ -209,7 +209,12 @@ final class CommunityRepositoryModules {
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.gauge"),
-    plugin("intellij.protoeditor")
+    plugin("intellij.protoeditor") {
+      withModule("intellij.protoeditor-core")
+      withModule("intellij.protoeditor-go")
+      withModule("intellij.protoeditor-jvm")
+      withModule("intellij.protoeditor-python")
+    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
