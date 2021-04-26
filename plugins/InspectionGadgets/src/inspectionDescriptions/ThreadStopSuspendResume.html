@@ -1,9 +1,10 @@
 <html>
 <body>
-Reports any calls to <b>Thread.stop()</b>,
-<b>Thread.suspend()</b>, or <b>Thread.resume()</b>.
+Reports any calls to <code>Thread.stop()</code>,
+<code>Thread.suspend()</code>, or <code>Thread.resume()</code>.
 These calls are inherently prone to data corruption and deadlock, and their use is strongly
-discouraged.
+discouraged. It is better to use cooperative cancellation instead of <code>stop</code> and
+interruption instead of direct use of <code>suspend</code> and <code>resume</code>.
 <!-- tooltip end -->
 <p>
 

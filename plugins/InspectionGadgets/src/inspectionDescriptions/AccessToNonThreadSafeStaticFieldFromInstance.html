@@ -1,9 +1,18 @@
 <html>
 <body>
-Reports access to <b>static</b> fields that are of a non-thread-safe type.
+Reports access to <code>static</code> fields that are of a non-thread-safe type.
 When this access is from an instance field or a non-synchronized block,
 it is possible that the static field is accessed from multiple threads.
 This can lead to unspecified side effects, like exceptions and incorrect results.
+<p>Example:</p>
+<pre>
+  class C {
+    private static final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+    String m() {
+      return df.format("");
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 Use the table below to specify which types are not thread-safe.

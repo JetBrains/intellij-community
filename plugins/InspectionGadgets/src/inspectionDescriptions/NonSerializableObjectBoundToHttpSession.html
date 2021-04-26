@@ -1,12 +1,19 @@
 <html>
 <body>
-Reports non-<b>Serializable</b> objects used as arguments to
-<b>javax.servlet.http.HttpSession.setAttribute()</b> or
-<b>javax.servlet.http.HttpSession.putValue()</b>.
+Reports non-<code>Serializable</code> objects used as arguments to
+<code>javax.servlet.http.HttpSession.setAttribute()</code> or
+<code>javax.servlet.http.HttpSession.putValue()</code>.
 Such objects will not be serialized if the HttpSession is passivated or migrated, and may result in difficult-to-diagnose
-bugs. For purposes of this inspection, objects with <b>java.util.Collection</b> or
-<b>java.util.Map</b> types are assumed to be <b>Serializable</b>, unless the types
-they are declared to contain are non-<b>Serializable</b>.
+bugs. For purposes of this inspection, objects with <code>java.util.Collection</code> or
+<code>java.util.Map</code> types are assumed to be <code>Serializable</code>, unless the types
+they are declared to contain are non-<code>Serializable</code>.
+<p>Example:</p>
+<pre>
+  void foo(HttpSession session) {
+      session.setAttribute("foo", new NonSerializable());
+  }
+  static class NonSerializable {}
+</pre>
 <!-- tooltip end -->
 <p>
 
