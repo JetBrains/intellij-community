@@ -959,37 +959,37 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private static final class CompositeAction extends AbstractAction implements OptionAction {
 
-    private final Action myDefaultAction;
-    private final List<? extends Action> myOptions;
+    private final Action myMainAction;
+    private final List<? extends Action> myAdditionalActions;
 
-    private CompositeAction(@NotNull Action defaultAction, @NotNull List<? extends Action> additionalActions) {
-      super((String)defaultAction.getValue(Action.NAME));
+    private CompositeAction(@NotNull Action mainAction, @NotNull List<? extends Action> additionalActions) {
+      super((String)mainAction.getValue(Action.NAME));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
-      myDefaultAction = defaultAction;
-      myOptions = additionalActions;
+      myMainAction = mainAction;
+      myAdditionalActions = additionalActions;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      myDefaultAction.actionPerformed(e);
+      myMainAction.actionPerformed(e);
     }
 
     @Override
     public void setEnabled(boolean isEnabled) {
       super.setEnabled(isEnabled);
-      myDefaultAction.setEnabled(isEnabled);
-      for (Action optionAction : myOptions) {
-        optionAction.setEnabled(isEnabled);
+      myMainAction.setEnabled(isEnabled);
+      for (Action additionalAction : myAdditionalActions) {
+        additionalAction.setEnabled(isEnabled);
       }
     }
 
     @Override
     public Action @NotNull [] getOptions() {
-      return myOptions.toArray(new Action[0]);
+      return myAdditionalActions.toArray(new Action[0]);
     }
   }
 
-  private class ReportAllAction extends AbstractAction {
+  private final class ReportAllAction extends AbstractAction {
 
     private ReportAllAction() {
       super(DiagnosticBundle.message("error.report.all.action"));
@@ -1004,7 +1004,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ReportAndClearAllAction extends AbstractAction {
+  private final class ReportAndClearAllAction extends AbstractAction {
 
     private ReportAndClearAllAction() {
       super(DiagnosticBundle.message("error.report.and.clear.all.action"));
