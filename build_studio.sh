@@ -7,7 +7,7 @@ PROG_DIR=$(dirname "$0")
 
 function die() {
   echo "$*" > /dev/stderr
-  echo "Usage: $0" > /dev/stderr
+  echo "Usage: $0 [--incremental]" > /dev/stderr
   exit 1
 }
 
@@ -47,12 +47,23 @@ DIST="$(get_absolute_path "$DIST")"
 
 ANT="java -jar lib/ant/lib/ant-launcher.jar -f build.xml"
 
+INCREMENTAL=false
+while [[ $# -gt 0 ]]; do
+  if [[ $1 = "--incremental" ]]; then
+    INCREMENTAL=true
+  else
+    die "[$0] Unknown parameter: $1"
+  fi
+  shift
+done
+
 echo "## Building android-studio ##"
 echo "## Dist dir: $DIST"
 echo "## Qualifier: $QUAL"
 echo "## Build Num: $BNUM"
 echo "## Out dir: $OUT"
 echo "## Prog dir: $PROG_DIR"
+echo "## Incremental: $INCREMENTAL"
 echo
 
 set_java_home
@@ -70,6 +81,7 @@ declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.output.root=${OUT}"
   "-Dbuild.number=${AS_BUILD_NUMBER}"
   "-Dintellij.build.skip.build.steps=mac_dmg,mac_sign,windows_exe_installer,cross_platform_dist"
+  "-Dintellij.build.incremental.compilation=${INCREMENTAL}"
 )
 
 $ANT "${BUILD_PROPERTIES[@]}" build
