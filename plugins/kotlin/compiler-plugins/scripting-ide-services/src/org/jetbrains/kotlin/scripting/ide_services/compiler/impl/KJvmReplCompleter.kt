@@ -230,7 +230,7 @@ private class KJvmReplCompleter(
                         getPresentation(
                             it
                         )
-                    Triple(it, presentation, (presentation.presentableText + presentation.tailText).lowercase())
+                    Triple(it, presentation, (presentation.presentableText + presentation.tailText).toLowerCase())
                 }
                 .let {
                     if (isSortNeeded) it.sortedBy { descTriple -> descTriple.third } else it

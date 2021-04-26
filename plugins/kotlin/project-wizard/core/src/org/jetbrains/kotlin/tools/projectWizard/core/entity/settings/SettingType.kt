@@ -31,7 +31,7 @@ object StringSettingType : SettingType<String>() {
         neededAtPhase: GenerationPhase
     ) : SettingBuilder<String, StringSettingType>(path, title, neededAtPhase) {
         fun shouldNotBeBlank() {
-            validate(StringValidators.shouldNotBeBlank(title.replaceFirstChar(Char::uppercaseChar)))
+            validate(StringValidators.shouldNotBeBlank(title.capitalize()))
         }
 
         override val type = StringSettingType
@@ -199,7 +199,7 @@ object PathSettingType : SettingType<Path>() {
                     ValidationResult.ValidationError(
                         KotlinNewProjectWizardBundle.message(
                             "validation.should.not.be.blank",
-                            title.replaceFirstChar(Char::uppercaseChar)
+                            title.capitalize()
                         )
                     )
                 else ValidationResult.OK
@@ -210,7 +210,7 @@ object PathSettingType : SettingType<Path>() {
             if (isUnitTestMode) return@validate ValidationResult.OK
             if (!Files.exists(pathValue))
                 ValidationResult.ValidationError(
-                    KotlinNewProjectWizardBundle.message("validation.file.should.exist", title.replaceFirstChar(Char::uppercaseChar))
+                    KotlinNewProjectWizardBundle.message("validation.file.should.exist", title.capitalize())
                 )
             else ValidationResult.OK
         }

@@ -59,7 +59,7 @@ data class ConfiguratorNotFoundError(val id: String) : Error() {
 
 data class ValidationError(val validationMessage: String) : Error() {
     override val message: String
-        get() = validationMessage.replaceFirstChar(Char::uppercaseChar)
+        get() = validationMessage.capitalize()
 }
 
 data class ProjectImportingError(val kotlinVersion: String, @Nls val reason: String) : Error() {

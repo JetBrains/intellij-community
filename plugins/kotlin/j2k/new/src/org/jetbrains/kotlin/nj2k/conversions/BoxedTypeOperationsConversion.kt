@@ -40,11 +40,11 @@ class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : Recursive
         val shouldConvertToIntFirst =
             primitiveTypeName in floatingPointPrimitiveTypeNames && operationType in typeNameOfIntegersLesserThanInt
 
-        val conversionType = if (shouldConvertToIntFirst) "Int" else operationType.replaceFirstChar(Char::uppercaseChar)
+        val conversionType = if (shouldConvertToIntFirst) "Int" else operationType.capitalize(Locale.US)
 
         return JKCallExpressionImpl(
             symbolProvider.provideMethodSymbol(
-                "kotlin.${primitiveTypeName.replaceFirstChar(Char::uppercaseChar)}}.to$conversionType"
+                "kotlin.${primitiveTypeName.capitalize(Locale.US)}.to$conversionType"
             ),
             JKArgumentList()
         ).withFormattingFrom(methodCallExpression)
