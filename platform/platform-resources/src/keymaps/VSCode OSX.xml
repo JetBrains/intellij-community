@@ -518,9 +518,11 @@
         <keyboard-shortcut first-keystroke="back_space" />
     </action>
     <action id="SafeDelete" />
+    <action id="SaveDocument">
+        <keyboard-shortcut first-keystroke="meta S" />
+    </action>
     <action id="SaveAll">
         <keyboard-shortcut first-keystroke="meta alt s" />
-        <keyboard-shortcut first-keystroke="meta s" />
     </action>
     <action id="ScrollPane-scrollDown">
         <keyboard-shortcut first-keystroke="meta page_down" />

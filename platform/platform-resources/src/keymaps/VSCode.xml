@@ -420,6 +420,9 @@
   </action>
   <action id="RunDashboard.CopyConfiguration" />
   <action id="RunDashboard.ShowConfigurations" />
+  <action id="SaveDocument">
+    <keyboard-shortcut first-keystroke="ctrl S" />
+  </action>
   <action id="SaveAll">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="s" />
   </action>
