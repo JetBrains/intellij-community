@@ -3,7 +3,10 @@ package com.intellij.terminal;
 
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ReadAction;
@@ -13,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -45,6 +49,7 @@ import java.awt.*;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
@@ -102,14 +107,30 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return null;
   }
 
-  @Nullable
-  private static LinkResultItem convertResultItem(@NotNull Project project, @NotNull Filter.ResultItem item) {
+  private @Nullable LinkResultItem convertResultItem(@NotNull Project project, @NotNull Filter.ResultItem item) {
     HyperlinkInfo info = item.getHyperlinkInfo();
     if (info != null) {
       return new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
-                                new LinkInfo(() -> info.navigate(project)));
+                                convertInfo(project, info));
     }
     return null;
+  }
+
+  private @NotNull LinkInfo convertInfo(@NotNull Project project, @NotNull HyperlinkInfo info) {
+    LinkInfo.Builder builder = new LinkInfo.Builder().setNavigateCallback(() -> {
+      info.navigate(project);
+    });
+    if (info instanceof HyperlinkWithPopupMenuInfo) {
+      builder.setPopupMenuGroupProvider(new LinkInfo.PopupMenuGroupProvider() {
+        @Override
+        public @NotNull List<TerminalAction> getPopupMenuGroup(@NotNull MouseEvent event) {
+          ActionGroup group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(event);
+          AnAction[] actions = group != null ? group.getChildren(null) : AnAction.EMPTY_ARRAY;
+          return ContainerUtil.map(actions, action -> TerminalActionUtil.createTerminalAction(JBTerminalWidget.this, action));
+        }
+      });
+    }
+    return builder.build();
   }
 
   public JBTerminalWidgetListener getListener() {
