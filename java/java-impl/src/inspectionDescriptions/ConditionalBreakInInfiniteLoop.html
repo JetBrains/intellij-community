@@ -1,14 +1,14 @@
 <html>
 <body>
-Reports conditional breaks at the beginning or end of a loop and suggests to use a loop condition instead, to create shorter code.
-<p>Example:
+Reports conditional breaks at the beginning or at the end of a loop and suggests using a loop condition instead to shorten the code.
+<p>Example:</p>
 <pre><code>
   <b>while</b> (true) {
     <b>if</b> (i  == 23) <b>break</b>;
     i++;
   }
 </code></pre>
-<p>After the quick fix is applied the result looks like:
+<p>After the quick fix is applied:</p>
 <pre><code>
   <b>while</b> (i != 23) {
     i++;

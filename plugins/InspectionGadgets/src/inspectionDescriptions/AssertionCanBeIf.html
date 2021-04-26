@@ -1,12 +1,12 @@
 <html>
 <body>
 Reports <code>assert</code> statements and suggests replacing them with
-<code>if</code> statement throwing an <code>java.lang.AssertionError</code>.
+<code>if</code> statements that throw <code>java.lang.AssertionError</code>.
 <p>Example:</p>
 <pre>
   assert param != null;
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   if (param == null) throw new AssertionError();
 </pre>
