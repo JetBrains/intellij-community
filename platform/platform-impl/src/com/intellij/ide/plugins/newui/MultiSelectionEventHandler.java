@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -49,7 +51,7 @@ public class MultiSelectionEventHandler extends EventHandler {
         boolean isControlDown = event.isControlDown();
 
         if (!isControlDown && isLeftMouseButton) {
-          ListPluginComponent component = get(event);
+          ListPluginComponent component = findParent(event);
           int index = getIndex(component);
 
           if (event.isShiftDown()) {
@@ -74,7 +76,7 @@ public class MultiSelectionEventHandler extends EventHandler {
         }
         else if (SwingUtilities.isRightMouseButton(event) ||
                  isControlDown && isLeftMouseButton) {
-          ListPluginComponent component = get(event);
+          ListPluginComponent component = findParent(event);
 
           if (myAllSelected || myMixSelection) {
             int size = getSelection().size();
@@ -115,7 +117,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void mouseMoved(MouseEvent event) {
         if (myHoverComponent == null) {
-          ListPluginComponent component = get(event);
+          ListPluginComponent component = findParent(event);
           if (component.getSelection() == SelectionType.NONE) {
             myHoverComponent = component;
             component.setSelection(SelectionType.HOVER);
@@ -203,7 +205,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void focusGained(FocusEvent event) {
         if (mySelectionIndex >= 0 && mySelectionLength == 1 && !myMixSelection) {
-          ListPluginComponent component = get(event);
+          ListPluginComponent component = findParent(event);
           int index = getIndex(component);
           if (mySelectionIndex != index) {
             clearSelectionWithout(index);
@@ -565,5 +567,9 @@ public class MultiSelectionEventHandler extends EventHandler {
         component.setSelection(SelectionType.HOVER);
       }
     }, ModalityState.any());
+  }
+
+  private static @NotNull ListPluginComponent findParent(@NotNull ComponentEvent event) {
+    return Objects.requireNonNull(ComponentUtil.getParentOfType(ListPluginComponent.class, event.getComponent()));
   }
 }
