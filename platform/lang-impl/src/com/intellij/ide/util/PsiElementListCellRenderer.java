@@ -3,9 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
-import com.intellij.navigation.ColoredItemPresentation;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,6 +31,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
@@ -46,6 +45,7 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
@@ -360,5 +360,57 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         return o.toString();
       }
     });
+  }
+
+  @SuppressWarnings("unchecked")
+  @RequiresReadLock
+  final @NotNull TargetPresentation computePresentation(@NotNull PsiElement element) {
+    return computePresentationInner((T)element);
+  }
+
+  private @NotNull TargetPresentation computePresentationInner(@NotNull T element) {
+    @NlsSafe String name = Objects.requireNonNullElseGet(getElementText(element), () -> {
+      LOG.error("Null name for PSI element " + element.getClass() + " (by " + this + ")");
+      return LangBundle.message("label.unknown");
+    });
+    TargetPresentationBuilder builder = TargetPresentation.builder(name);
+    builder = builder.icon(getIcon(element));
+
+    Project project = element.getProject();
+
+    VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
+
+    TextAttributes presentableAttributes = getNavigationItemAttributes(element);
+    if (presentableAttributes != null) {
+      builder = builder.presentableTextAttributes(presentableAttributes);
+    }
+    else {
+      Color color = vFile == null ? null : FileStatusManager.getInstance(project).getStatus(vFile).getColor();
+      if (color != null) {
+        builder = builder.presentableTextAttributes(new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color).toTextAttributes());
+      }
+    }
+
+    if (vFile != null) {
+      builder = builder.backgroundColor(getFileBackgroundColor(project, vFile));
+    }
+
+    String containerText = getContainerText(element, name);
+    if (containerText != null) {
+      var matcher = CONTAINER_PATTERN.matcher(containerText);
+      boolean isProblemFile = vFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(vFile);
+      builder = builder.containerText(
+        matcher.matches() ? matcher.group(2) : containerText,
+        isProblemFile ? getErrorAttributes().toTextAttributes() : null
+      );
+    }
+
+    DefaultListCellRenderer rightCellRenderer = getRightCellRenderer(element);
+    if (rightCellRenderer != null) {
+      JLabel label = (JLabel)rightCellRenderer.getListCellRendererComponent(new JList<>(), element, -1, false, false);
+      builder = builder.locationText(label.getText(), label.getIcon());
+    }
+
+    return builder.presentation();
   }
 }
