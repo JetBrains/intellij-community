@@ -997,9 +997,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      boolean reportingStarted = reportAll();
-      if (reportingStarted) {
-        IdeErrorsDialog.super.doOKAction();
+      if (isEnabled()) {
+        boolean reportingStarted = reportAll();
+        if (reportingStarted) {
+          IdeErrorsDialog.super.doOKAction();
+        }
       }
     }
   }
@@ -1012,10 +1014,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      boolean reportingStarted = reportAll();
-      if (reportingStarted) {
-        myMessagePool.clearErrors();
-        IdeErrorsDialog.super.doOKAction();
+      if (isEnabled()) {
+        boolean reportingStarted = reportAll();
+        if (reportingStarted) {
+          myMessagePool.clearErrors();
+          IdeErrorsDialog.super.doOKAction();
+        }
       }
     }
   }
