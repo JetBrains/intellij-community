@@ -10,7 +10,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder;
@@ -55,14 +54,12 @@ public final class JavaStructuralSearchTemplateBuilder extends StructuralSearchT
       }
     };
 
-    MatchOptions matchOptions = new MatchOptions();
     String text = psiFile.getText();
     int textOffset = 0;
     while (textOffset < text.length() && StringUtil.isWhiteSpace(text.charAt(textOffset))) {
       textOffset++;
     }
     shift.set(shift.get() - textOffset);
-    matchOptions.setSearchPattern(text);
     PsiElement[] elements =
       MatcherImplUtil.createTreeFromText(text, PatternTreeContext.Block, (LanguageFileType)psiFile.getFileType(), psiFile.getProject());
     if (elements.length > 0) {
