@@ -19,6 +19,7 @@ import com.intellij.openapi.options.SettingsEditorGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.DefaultJDOMExternalizer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -26,6 +27,7 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
 import org.jdom.Element
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -42,10 +44,11 @@ class KotlinStandaloneScriptRunConfiguration(
 ) : KotlinRunConfiguration(name, JavaRunConfigurationModule(project, true), factory), CommonJavaRunConfigurationParameters,
     RefactoringListenerProvider {
     @JvmField
+    @NlsSafe
     var filePath: String? = null
 
-    override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
-        ScriptCommandLineState(environment, this)
+    override fun getState(executor: Executor, executionEnvironment: ExecutionEnvironment): RunProfileState =
+        ScriptCommandLineState(executionEnvironment, this)
 
     override fun suggestedName() = filePath?.substringAfterLast('/')
 
@@ -72,7 +75,7 @@ class KotlinStandaloneScriptRunConfiguration(
     }
 
     override fun getModules(): Array<Module> {
-        val scriptVFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
+        val scriptVFile = filePath?.let { LocalFileSystem.getInstance().findFileByIoFile(File(it)) }
         return scriptVFile?.module(project)?.let { arrayOf(it) } ?: emptyArray()
     }
 
@@ -90,14 +93,14 @@ class KotlinStandaloneScriptRunConfiguration(
         }
     }
 
-    private fun runtimeConfigurationWarning(message: String): Nothing {
+    private fun runtimeConfigurationWarning(@Nls message: String): Nothing {
         throw RuntimeConfigurationWarning(message)
     }
 
     // NOTE: this is needed for coverage
-    override fun getRunClass() = null
+    override fun getRunClass(): String? = null
 
-    override fun getPackage() = null
+    override fun getPackage(): String? = null
 
     override fun getRefactoringElementListener(element: PsiElement): RefactoringElementListener? {
         val file = element as? KtFile ?: return null
@@ -136,12 +139,12 @@ private class ScriptCommandLineState(
     configuration: KotlinStandaloneScriptRunConfiguration
 ) : BaseJavaApplicationCommandLineState<KotlinStandaloneScriptRunConfiguration>(environment, configuration) {
 
-    override fun createJavaParameters(): JavaParameters? {
+    override fun createJavaParameters(): JavaParameters {
         val params = commonParameters()
 
-        val filePath = configuration.filePath ?: throw CantRunException("Script file was not specified")
+        val filePath = configuration.filePath ?: throw CantRunException(KotlinJvmBundle.message("dialog.message.script.file.was.not.specified"))
         val scriptVFile =
-            LocalFileSystem.getInstance().findFileByIoFile(File(filePath)) ?: throw CantRunException("Script file was not found in project")
+            LocalFileSystem.getInstance().findFileByIoFile(File(filePath)) ?: throw CantRunException(KotlinJvmBundle.message("dialog.message.script.file.was.not.found.in.project"))
 
         params.classPath.add(KotlinArtifacts.instance.kotlinCompiler)
 
