@@ -96,7 +96,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
 
   override fun createFacetSerializer(): FacetEntitiesSerializer {
-    return FacetEntitiesSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", true)
+    return FacetEntitiesSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", getBaseDirPath(), true)
   }
 
   override fun getBaseDirPath(): String? {
