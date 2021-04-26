@@ -1706,7 +1706,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       startLine = myDocument.getLineNumber(myRangeToRepaintStart);
     }
     if (myRangeToRepaintEnd > myDocument.getLineEndOffset(endLine)) {
-      endLine = myDocument.getLineNumber(myRangeToRepaintEnd);
+      endLine = myDocument.getLineNumber(Math.min(myRangeToRepaintEnd, myDocument.getTextLength()));
     }
     if (countLineFeeds(e.getOldFragment()) != countLineFeeds(e.getNewFragment())) {
       // Lines removed. Need to repaint till the end of the screen
