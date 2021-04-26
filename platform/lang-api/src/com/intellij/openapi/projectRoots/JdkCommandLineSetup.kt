@@ -312,7 +312,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
                                cs: Charset) {
 
     try {
-      val argFile = ArgFile(dynamicVMOptions, dynamicParameters, cs, platform)
+      val argFile = ArgFile(dynamicVMOptions, cs, platform)
       commandLine.addFileToDeleteOnTermination(argFile.file)
 
       val classPath = javaParameters.classPath
@@ -347,7 +347,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
-      argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters) {
+      argFile.scheduleWriteFileWhenReady(vmParameters) {
         rememberFileContentAfterUpload(argFile.file, argFileParameter)
       }
 
@@ -717,7 +717,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   }
 
   private class ArgFile @Throws(IOException::class) constructor(private val dynamicVMOptions: Boolean,
-                                                                private val dynamicParameters: Boolean,
                                                                 private val charset: Charset,
                                                                 private val platform: Platform) {
 
@@ -737,12 +736,10 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       registerPromise(promisedValue)
     }
 
-    fun scheduleWriteFileWhenReady(javaParameters: SimpleJavaParameters,
-                                   vmParameters: ParametersList,
-                                   rememberContent: () -> Unit) {
+    fun scheduleWriteFileWhenReady(vmParameters: ParametersList, rememberContent: () -> Unit) {
       myAllPromises.collectResults().onSuccess {
         try {
-          writeArgFileNow(javaParameters, vmParameters)
+          writeArgFileNow(vmParameters)
           rememberContent.invoke()
         }
         catch (e: IOException) {
@@ -758,7 +755,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     }
 
     @Throws(IOException::class, ExecutionException::class, TimeoutException::class)
-    private fun writeArgFileNow(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
+    private fun writeArgFileNow(vmParameters: ParametersList) {
       val fileArgs: MutableList<String?> = ArrayList()
       if (dynamicVMOptions) {
         fileArgs.addAll(vmParameters.list)
