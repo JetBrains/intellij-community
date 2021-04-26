@@ -15,10 +15,10 @@ import git4idea.repo.GitConflict
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
-class GitAcceptTheirsAction : GitAcceptConflictSideAction(true)
-class GitAcceptYoursAction : GitAcceptConflictSideAction(false)
+class GitStageAcceptTheirsAction : GitStageAcceptConflictSideAction(GitBundle.messagePointer("conflicts.accept.theirs.action.text"), true)
+class GitStageAcceptYoursAction : GitStageAcceptConflictSideAction(GitBundle.messagePointer("conflicts.accept.yours.action.text"), false)
 
-abstract class GitConflictAction(text: Supplier<@Nls String>) :
+abstract class GitStageConflictAction(text: Supplier<@Nls String>) :
   GitFileStatusNodeAction(text, Presentation.NULL_STRING, null) {
 
   override fun update(e: AnActionEvent) {
@@ -46,18 +46,14 @@ abstract class GitConflictAction(text: Supplier<@Nls String>) :
   protected abstract fun perform(project: Project, handler: GitMergeHandler, conflicts: List<GitConflict>)
 }
 
-abstract class GitAcceptConflictSideAction(private val takeTheirs: Boolean) : GitConflictAction(getActionText(takeTheirs)) {
+abstract class GitStageAcceptConflictSideAction(text: Supplier<@Nls String>, private val takeTheirs: Boolean) : GitStageConflictAction(
+  text) {
   override fun perform(project: Project, handler: GitMergeHandler, conflicts: List<GitConflict>) {
-    acceptConflictSide(project, createMergeHandler(project), conflicts, takeTheirs, project::isReversedRoot)
+    acceptConflictSide(project, handler, conflicts, takeTheirs, project::isReversedRoot)
   }
 }
 
-private fun getActionText(takeTheirs: Boolean): Supplier<@Nls String> {
-  return if (takeTheirs) GitBundle.messagePointer("conflicts.accept.theirs.action.text")
-  else GitBundle.messagePointer("conflicts.accept.yours.action.text")
-}
-
-class GitMergeConflictAction : GitConflictAction(GitBundle.messagePointer("action.Git.Merge.text")) {
+class GitStageMergeConflictAction : GitStageConflictAction(GitBundle.messagePointer("action.Git.Merge.text")) {
 
   override fun isEnabled(project: Project, conflicts: Sequence<GitConflict>): Boolean {
     val handler = createMergeHandler(project)
