@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.util.EventDispatcher;
@@ -20,6 +21,8 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
@@ -67,7 +70,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     storeFullScreenStateIfNeeded();
 
     JRootPane rootPane = myFrame.getRootPane();
-    if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
+    if (rootPane != null) {
+      rootPane.putClientProperty(FULL_SCREEN, null);
+    }
     myFullScreenQueue.runFromQueue();
 
     myTabsHandler.exitFullScreen();
@@ -174,6 +179,21 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           myFrame.validate();
         }
       });
+    }
+    JRootPane rootPane = myFrame.getRootPane();
+
+    if (rootPane != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+      IdeGlassPane glassPane = (IdeGlassPane)myFrame.getRootPane().getGlassPane();
+      Disposable disposable = Disposer.newDisposable();
+      glassPane.addMousePreprocessor(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (e.getClickCount() == 2 && e.getY() <= UIUtil.getTransparentTitleBarHeight(rootPane)) {
+            myFrame.setExtendedState(Frame.MAXIMIZED_BOTH);
+          }
+          super.mouseClicked(e);
+        }
+      }, disposable);
     }
   }
 

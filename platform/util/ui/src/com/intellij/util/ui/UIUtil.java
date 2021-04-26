@@ -115,7 +115,7 @@ public final class UIUtil {
       return;
     }
 
-    JBInsets topWindowInset =  JBUI.insetsTop("small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 24);
+    JBInsets topWindowInset =  JBUI.insetsTop(getTransparentTitleBarHeight(rootPane));
 
     rootPane.putClientProperty("apple.awt.fullWindowContent", true);
     rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
@@ -167,6 +167,10 @@ public final class UIUtil {
       window.removeWindowListener(windowAdapter);
       window.removePropertyChangeListener("title", propertyChangeListener);
     });
+  }
+
+  public static int getTransparentTitleBarHeight(JRootPane rootPane) {
+    return "small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 24;
   }
 
   private static String getWindowTitle(Window window) {
