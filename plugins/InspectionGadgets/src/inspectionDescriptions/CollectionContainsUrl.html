@@ -1,16 +1,14 @@
 <html>
 <body>
-Reports objects which are a subtype of
-<b>java.util.Set</b> or <b>java.util.Map</b>
-and which may contain <b>java.net.URL</b> objects. Adding <b>java.net.URL</b>
-objects to such collections can cause performance problems because of calls to the
-<b>equals()</b> and <b>hashCode()</b>
-methods of <b>java.net.URL</b>.
-<b>java.net.URL</b>'s <b>equals()</b> and <b>hashCode()</b> method use a DNS
-lookup, which depending on the availability of the network and the speed of the DNS server
-can cause significant delays.
+Reports objects which are a subtype of <code>java.util.Set</code> or <code>java.util.Map</code> and which may contain
+<code>java.net.URL</code> objects. Adding <code>URL</code> objects to such collections can cause performance problems because of calls to
+the <code>equals()</code> and <code>hashCode()</code> methods of <code>URL</code>. <code>URL</code>'s <code>equals()</code> and
+<code>hashCode()</code> method use a DNS lookup, which depending on the availability of the network and the speed of the DNS server can
+cause significant delays.
+<p>Example:</p>
+<pre>
+  Set&#60;URL&#62; set = new HashSet&#60;URL&#62;();
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

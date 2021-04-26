@@ -1,7 +1,12 @@
 <html>
 <body>
-Reports suspicious array casts. An array cast is suspicious when it casts to a more specific array type. Such
-a cast is legal at compile time but may fail with a <b>ClassCastException</b> at runtime.
+Reports suspicious array casts. An array cast is suspicious when it casts to a more specific array type. Such a cast is legal at compile
+time but may fail with a <code>ClassCastException</code> at runtime.
+<p>Example:</p>
+<pre>
+  Number[] numbers = new Number[]{1L, 2L, 4L};
+  Long[] longs = (Long[])numbers;
+</pre>
 <!-- tooltip end -->
 <p>
 </body>
