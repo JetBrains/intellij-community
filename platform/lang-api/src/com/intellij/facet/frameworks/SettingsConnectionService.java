@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.frameworks;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +48,7 @@ public abstract class SettingsConnectionService {
       .connect(request -> {
         Map<String, String> settings = new LinkedHashMap<>();
         try {
-          Element root = JDOMUtil.load(request.getReader());
+          Element root = JDOMUtil.load(request.getInputStream());
           for (String s : attributes) {
             String attributeValue = root.getAttributeValue(s);
             if (StringUtil.isNotEmpty(attributeValue)) {

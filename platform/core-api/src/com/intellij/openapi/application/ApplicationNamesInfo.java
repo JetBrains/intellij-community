@@ -55,7 +55,7 @@ public final class ApplicationNamesInfo {
     if (filePath != null) {
       Path file = Paths.get(filePath);
       try {
-        return JDOMUtil.load(Files.newBufferedReader(file));
+        return JDOMUtil.load(Files.newInputStream(file));
       }
       catch (NoSuchFileException ignore) {
       }

@@ -7,6 +7,7 @@ import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.StaxFactory
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -216,7 +217,7 @@ internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeMan
 }
 
 internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boolean, consumer: (name: String?, parser: XMLStreamReader) -> Unit) {
-  val reader = JDOMUtil.getXmlInputFactory().createXMLStreamReader(CharsetToolkit.inputStreamSkippingBOM(bytes.inputStream()))
+  val reader = StaxFactory.createXmlStreamReader(bytes.inputStream())
   consumer(preload(isOldSchemeNaming, reader), reader)
 }
 

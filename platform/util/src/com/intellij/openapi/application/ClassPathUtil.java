@@ -20,8 +20,6 @@ public final class ClassPathUtil {
   }
 
   public static @NotNull Collection<String> getUtilClassPath() {
-    Set<String> classPath = new HashSet<>();
-
     @SuppressWarnings("UnnecessaryFullyQualifiedName") Class<?>[] classes = {
       PathManager.class,                                  // module 'intellij.platform.util'
       Strings.class,                                      // module 'intellij.platform.util.strings'
@@ -39,7 +37,11 @@ public final class ClassPathUtil {
       com.sun.jna.platform.FileUtils.class,               // JNA (jna-platform)
       org.apache.oro.text.regex.PatternMatcher.class,     // OROMatcher
       net.jpountz.lz4.LZ4Factory.class,                   // LZ4-Java
+      com.fasterxml.aalto.in.ReaderConfig.class,          // Aalto XML
+      org.codehaus.stax2.XMLStreamReader2.class,          // Aalto XML
     };
+
+    Set<String> classPath = new HashSet<>(classes.length);
     for (Class<?> aClass : classes) {
       String path = PathManager.getJarPathForClass(aClass);
       if (path != null) {

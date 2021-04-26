@@ -1,0 +1,56 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.util
+
+import com.fasterxml.aalto.`in`.ByteSourceBootstrapper
+import com.fasterxml.aalto.`in`.CharSourceBootstrapper
+import com.fasterxml.aalto.`in`.ReaderConfig
+import com.fasterxml.aalto.stax.StreamReaderImpl
+import org.codehaus.stax2.XMLInputFactory2
+import org.codehaus.stax2.XMLStreamReader2
+import java.io.InputStream
+import java.io.Reader
+import javax.xml.stream.XMLInputFactory
+import javax.xml.stream.XMLStreamException
+
+class StaxFactory {
+  companion object {
+    @JvmStatic private val config = createConfig(coalesce = false)
+    @JvmStatic private val configWithCoalescing = createConfig(coalesce = true)
+
+    @JvmStatic
+    private fun createConfig(coalesce: Boolean): ReaderConfig {
+      val config = ReaderConfig()
+      config.doAutoCloseInput(true)
+      config.setProperty(XMLInputFactory.SUPPORT_DTD, false)
+      config.setProperty(XMLInputFactory2.P_INTERN_NAMES, false)
+      config.setProperty(XMLInputFactory2.P_INTERN_NS_URIS, false)
+      config.doPreserveLocation(false)
+      config.setProperty(XMLInputFactory2.P_AUTO_CLOSE_INPUT, true)
+      config.setXmlEncoding("UTF-8")
+      config.doCoalesceText(coalesce)
+      config.doParseLazily(true)
+      return config
+    }
+
+    @JvmStatic
+    @Throws(XMLStreamException::class)
+    fun createXmlStreamReader(input: InputStream): XMLStreamReader2 {
+      return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(configWithCoalescing.createNonShared(null, null, "UTF-8"), input))
+    }
+
+    @JvmStatic
+    @Throws(XMLStreamException::class)
+    fun createNonCoalescingXmlStreamReader(`in`: InputStream): XMLStreamReader2 {
+      return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(config.createNonShared(null, null, "UTF-8"), `in`))
+    }
+
+    /**
+     * Consider passing [InputStream] but not [Reader].
+     */
+    @JvmStatic
+    @Throws(XMLStreamException::class)
+    fun createXmlStreamReader(reader: Reader): XMLStreamReader2 {
+      return StreamReaderImpl.construct(CharSourceBootstrapper.construct(configWithCoalescing.createNonShared(null, null, "UTF-8"), reader))
+    }
+  }
+}

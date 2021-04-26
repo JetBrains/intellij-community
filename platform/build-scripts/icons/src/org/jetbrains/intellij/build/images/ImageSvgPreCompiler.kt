@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.Formats
@@ -222,14 +222,14 @@ internal class ImageSvgPreCompiler {
 
     val light2x = variants.find { it.toString().endsWith("@2x.svg") }
     for (scale in scales) {
-      val document = createSvgDocument(null, if (scale >= 2 && light2x != null) Files.newBufferedReader(light2x) else light1xData.reader())
+      val document = createSvgDocument(null, if (scale >= 2 && light2x != null) Files.newInputStream(light2x) else light1xData.byteInputStream())
       addEntry(getMapByScale(scale, false), SvgTranscoder.createImage(scale, document, dimension), dimension, light1x, imageKey)
     }
 
     val dark2x = variants.find { it.toString().endsWith("@2x_dark.svg") }
     val dark1x = variants.find { it !== dark2x && it.toString().endsWith("_dark.svg") } ?: return
     for (scale in scales) {
-      val document = createSvgDocument(null, Files.newBufferedReader(if (scale >= 2 && dark2x != null) dark2x else dark1x))
+      val document = createSvgDocument(null, Files.newInputStream(if (scale >= 2 && dark2x != null) dark2x else dark1x))
       val image = SvgTranscoder.createImage(scale, document, dimension)
       addEntry(getMapByScale(scale, true), image, dimension, dark1x, imageKey)
     }

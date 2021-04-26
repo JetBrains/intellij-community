@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.vfs.CharsetToolkit
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -60,9 +59,6 @@ fun Path.safeOutputStream(): OutputStream {
 
 @Throws(IOException::class)
 fun Path.inputStream(): InputStream = Files.newInputStream(this)
-
-@Throws(IOException::class)
-fun Path.inputStreamSkippingBom() = CharsetToolkit.inputStreamSkippingBOM(inputStream().buffered())
 
 fun Path.inputStreamIfExists(): InputStream? {
   try {
