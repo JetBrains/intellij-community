@@ -28,15 +28,14 @@ final class DfDoubleNotValueType extends DfAntiConstantType<Double> implements D
   public DfType join(@NotNull DfType other) {
     if (isSuperType(other)) return this;
     if (other.isSuperType(this)) return other;
-    if (other == DfTypes.DOUBLE_ZERO) {
+    if (other == DfTypes.DOUBLE_ZERO || other instanceof DfDoubleNotValueType) {
       Set<Double> notValues = new HashSet<>(myNotValues);
-      notValues.remove(0.0);
-      notValues.remove(-0.0);
-      return notValues.isEmpty() ? DfTypes.DOUBLE : new DfDoubleNotValueType(notValues);
-    }
-    if (other instanceof DfDoubleNotValueType) {
-      Set<Double> notValues = new HashSet<>(myNotValues);
-      notValues.retainAll(((DfDoubleNotValueType)other).myNotValues);
+      if (other instanceof DfDoubleNotValueType) {
+        notValues.retainAll(((DfDoubleNotValueType)other).myNotValues);
+      }
+      else {
+        notValues.removeAll(DOUBLE_ZERO_SET);
+      }
       return notValues.isEmpty() ? DfTypes.DOUBLE : new DfDoubleNotValueType(notValues);
     }
     return DfType.TOP;
@@ -63,7 +62,7 @@ final class DfDoubleNotValueType extends DfAntiConstantType<Double> implements D
   @Override
   public @Nullable DfType tryNegate() {
     if (myNotValues.size() == 1) return new DfDoubleConstantType(myNotValues.iterator().next());
-    if (myNotValues.equals(Set.of(0.0, -0.0))) return DfTypes.DOUBLE_ZERO;
+    if (myNotValues.equals(DOUBLE_ZERO_SET)) return DfTypes.DOUBLE_ZERO;
     return null;
   }
 

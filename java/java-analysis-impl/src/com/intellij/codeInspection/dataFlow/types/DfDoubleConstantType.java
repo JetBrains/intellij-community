@@ -5,7 +5,6 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Set;
 
 class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleType {
@@ -34,7 +33,7 @@ class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleTyp
       case GT:
         return new DfDoubleNotValueType(value == 0.0 ? Set.of(0.0, -0.0, Double.NaN) : Set.of(value, Double.NaN));
       case NE:
-        return new DfDoubleNotValueType(value == 0.0 ? Set.of(0.0, -0.0) : Set.of(value));
+        return new DfDoubleNotValueType(value == 0.0 ? DOUBLE_ZERO_SET : Set.of(value));
       case LE:
       case GE:
         return new DfDoubleNotValueType(Set.of(Double.NaN));
@@ -52,6 +51,6 @@ class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleTyp
   @NotNull
   @Override
   public DfType tryNegate() {
-    return new DfDoubleNotValueType(Collections.singleton(getValue()));
+    return new DfDoubleNotValueType(Set.of(getValue()));
   }
 }

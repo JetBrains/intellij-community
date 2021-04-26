@@ -5,7 +5,11 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public interface DfFloatType extends DfFloatingPointType {
+  Set<Float> FLOAT_ZERO_SET = Set.of(0.0f, -0.0f);
+  
   @NotNull
   @Override
   default PsiPrimitiveType getPsiType() {

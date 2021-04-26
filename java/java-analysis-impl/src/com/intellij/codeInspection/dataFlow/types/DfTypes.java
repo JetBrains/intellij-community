@@ -252,11 +252,11 @@ public final class DfTypes {
 
     @Override
     public @NotNull DfType tryNegate() {
-      return new DfFloatNotValueType(Set.of(0.0f, -0.0f));
+      return new DfFloatNotValueType(FLOAT_ZERO_SET);
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return "\u00B10.0f";
     }
   };
@@ -336,11 +336,11 @@ public final class DfTypes {
 
     @Override
     public @NotNull DfType tryNegate() {
-      return new DfDoubleNotValueType(Set.of(0.0, -0.0));
+      return new DfDoubleNotValueType(DfDoubleType.DOUBLE_ZERO_SET);
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return "\u00B10.0";
     }
   };
