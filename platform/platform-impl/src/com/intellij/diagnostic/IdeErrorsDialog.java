@@ -1125,7 +1125,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           }
         }
       }
-      return DEFAULT;
+      return getDefaultAction();
+    }
+
+    @NotNull
+    private static ReportAction getDefaultAction() {
+      return ApplicationManager.getApplication().isInternal() ? DEFAULT : REPORT_AND_CLEAR_ALL;
     }
   }
 }
