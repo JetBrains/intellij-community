@@ -7,10 +7,10 @@ package org.jetbrains.kotlin.idea.configuration.klib
 
 import com.intellij.testFramework.PlatformTestUtil.getTestName
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.configuration.klib.KlibInfo.NativeTargets.CommonizerIdentity
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.konan.library.*
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.File
 
 class KlibInfoProviderTest : TestCase() {
@@ -35,7 +35,7 @@ class KlibInfoProviderTest : TestCase() {
         val kotlinNativeHome = testDataDir.resolve(getTestName(name, true)).resolve("kotlin-native-PLATFORM-VERSION")
         val sourcesDir = kotlinNativeHome.resolve(KONAN_DISTRIBUTION_SOURCES_DIR)
 
-        val klibProvider = KlibInfoProvider(kotlinNativeHome = kotlinNativeHome)
+        val klibProvider = KlibInfoProvider.create(kotlinNativeHome = kotlinNativeHome)
 
         val potentialKlibPaths = mutableListOf<File>()
         potentialKlibPaths += externalLibsDir.children()
@@ -60,6 +60,7 @@ class KlibInfoProviderTest : TestCase() {
 
         val actualKlibs = potentialKlibPaths.mapNotNull { klibProvider.getKlibInfo(it) }
             .associateBy { it.path.relativeTo(kotlinNativeHome) }
+            .filter { it.value.isFromNativeDistribution }
 
         val expectedKlibsFromDistribution = mutableMapOf<File, KlibInfo>().apply {
             expectedKlibsGenerators.forEach { this += it(kotlinNativeHome) }
@@ -73,68 +74,69 @@ class KlibInfoProviderTest : TestCase() {
             assertEquals(expectedKlib::class.java, actualKlib::class.java)
 
             assertEquals(expectedKlib.path, actualKlib.path)
-            assertEquals(expectedKlib.name, actualKlib.name)
+            assertEquals(expectedKlib.libraryName, actualKlib.libraryName)
 
             val actualSources = actualKlib.sourcePaths.map { it.relativeTo(sourcesDir) }.toSet()
             val expectedSources = expectedKlib.sourcePaths.map { it.relativeTo(sourcesDir) }.toSet()
 
             assertEquals(expectedSources, actualSources)
-
-            if (expectedKlib is NativeDistributionKlibInfo) {
-                require(actualKlib is NativeDistributionKlibInfo)
-
-                assertEquals(expectedKlib.target, actualKlib.target)
-            } else if (expectedKlib is NativeDistributionCommonizedKlibInfo) {
-                require(actualKlib is NativeDistributionCommonizedKlibInfo)
-
-                assertEquals(expectedKlib.ownTarget, actualKlib.ownTarget)
-                assertEquals(expectedKlib.commonizedTargets, actualKlib.commonizedTargets)
-            }
+            assertEquals(expectedKlib.isCommonized, actualKlib.isCommonized)
+            assertEquals(expectedKlib.isFromNativeDistribution, actualKlib.isFromNativeDistribution)
+            assertEquals(expectedKlib.targets, actualKlib.targets)
         }
     }
 
-    private fun generateExpectedKlibsFromDistribution(kotlinNativeHome: File): Map<File, NativeDistributionKlibInfo> {
+    private fun generateExpectedKlibsFromDistribution(kotlinNativeHome: File): Map<File, KlibInfo> {
         val sourcesDir = kotlinNativeHome.resolve(KONAN_DISTRIBUTION_SOURCES_DIR)
         val basePath = kotlinNativeHome.resolve(KONAN_DISTRIBUTION_KLIB_DIR)
 
-        val result = mutableListOf<NativeDistributionKlibInfo>()
+        val result = mutableListOf<KlibInfo>()
 
-        result += NativeDistributionKlibInfo(
+        result += KlibInfo(
             path = basePath.resolve(KONAN_DISTRIBUTION_COMMON_LIBS_DIR, KONAN_STDLIB_NAME),
             sourcePaths = listOf(
                 sourcesDir.resolve("kotlin-stdlib-native-sources.zip"),
                 sourcesDir.resolve("kotlin-test-anotations-common-sources.zip")
             ),
-            name = KONAN_STDLIB_NAME,
-            target = null
+            isStdlib = true,
+            isFromNativeDistribution = true,
+            isCommonized = false,
+            libraryName = KONAN_STDLIB_NAME,
+            targets = null
         )
 
-        result += NativeDistributionKlibInfo(
+        result += KlibInfo(
             path = basePath.resolve(KONAN_DISTRIBUTION_COMMON_LIBS_DIR, "kotlinx-cli"),
             sourcePaths = listOf(
                 sourcesDir.resolve("kotlinx-cli-common-sources.zip"),
                 sourcesDir.resolve("kotlinx-cli-native-sources.zip")
             ),
-            name = "kotlinx-cli",
-            target = null
+            isStdlib = true,
+            isCommonized = false,
+            isFromNativeDistribution = true,
+            libraryName = "kotlinx-cli",
+            targets = null
         )
 
         result += listOf("foo", "bar", "baz").map { name ->
-            NativeDistributionKlibInfo(
+            KlibInfo(
                 path = basePath.resolve(KONAN_DISTRIBUTION_PLATFORM_LIBS_DIR, "macos_x64", name),
                 sourcePaths = emptyList(),
-                name = name,
-                target = KonanTarget.MACOS_X64
+                isFromNativeDistribution = true,
+                isCommonized = false,
+                libraryName = name,
+                isStdlib = false,
+                targets = KlibInfo.NativeTargets.NativeTargetsList("macos_x64")
             )
         }
 
         return result.associateBy { it.path.relativeTo(kotlinNativeHome) }
     }
 
-    private fun generateExpectedCommonizedKlibsFromDistribution(kotlinNativeHome: File): Map<File, NativeDistributionCommonizedKlibInfo> {
+    private fun generateExpectedCommonizedKlibsFromDistribution(kotlinNativeHome: File): Map<File, KlibInfo> {
         val basePath = kotlinNativeHome.resolve(KONAN_DISTRIBUTION_KLIB_DIR, KONAN_DISTRIBUTION_COMMONIZED_LIBS_DIR)
 
-        fun generateCommonizedKlibsForDir(commonizedLibsDirName: String): Map<File, NativeDistributionCommonizedKlibInfo> {
+        fun generateCommonizedKlibsForDir(commonizedLibsDirName: String): Map<File, KlibInfo> {
             val rawTargets = commonizedLibsDirName.split('-').dropLast(1)
             val targets = rawTargets.map {
                 when (it) {
@@ -145,21 +147,25 @@ class KlibInfoProviderTest : TestCase() {
                 }
             }.toSet()
 
-            val result = mutableListOf<NativeDistributionCommonizedKlibInfo>()
+            val result = mutableListOf<KlibInfo>()
 
             with(basePath.resolve(commonizedLibsDirName)) {
                 val libraryDirsToTargets: Map<File, KonanTarget?> =
                     targets.associateBy { resolve(KONAN_DISTRIBUTION_PLATFORM_LIBS_DIR, it.name) } +
                             (resolve(KONAN_DISTRIBUTION_COMMON_LIBS_DIR) to null)
 
-                libraryDirsToTargets.forEach { (libraryDir, target) ->
+                libraryDirsToTargets.forEach { (libraryDir, _) ->
+                    val isCommonized = libraryDir.startsWith(resolve(KONAN_DISTRIBUTION_COMMON_LIBS_DIR))
                     result += listOf("foo", "bar", "baz").map { name ->
-                        NativeDistributionCommonizedKlibInfo(
+                        KlibInfo(
                             path = libraryDir.resolve(name),
                             sourcePaths = emptyList(),
-                            name = name,
-                            ownTarget = target,
-                            commonizedTargets = targets
+                            isStdlib = false,
+                            isFromNativeDistribution = true,
+                            isCommonized = isCommonized,
+                            libraryName = name,
+                            targets =
+                            if (isCommonized) CommonizerIdentity("(${targets.map { it.name }.sorted().joinToString(", ")})") else null
                         )
                     }
                 }
@@ -174,7 +180,7 @@ class KlibInfoProviderTest : TestCase() {
 
     companion object {
         private val testDataDir: File = IDEA_TEST_DATA_DIR.resolve("configuration/klib")
-                .also { assertTrue("Test data directory does not exist: $it", it.isDirectory) }
+            .also { assertTrue("Test data directory does not exist: $it", it.isDirectory) }
 
         private val externalLibsDir = testDataDir.resolve("external-libs")
 

@@ -12,7 +12,6 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.KotlinDependency
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.configuration.buildClasspathData
-import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.buildIDELibraryName
 import org.jetbrains.kotlin.idea.configuration.mpp.KotlinDependenciesPreprocessor
 import org.jetbrains.kotlin.idea.inspections.gradle.findKotlinPluginVersion
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
@@ -35,7 +34,7 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
     // Substitutes `ExternalDependency` entries that represent KLIBs with new dependency entries with proper type and name:
     // - every `FileCollectionDependency` is checked whether it points to an existing KLIB, and substituted if it is
     // - similarly for every `ExternalLibraryDependency` with `groupId == "Kotlin/Native"` (legacy KLIB provided by Gradle plugin <= 1.3.20)
-    fun substituteDependencies(dependencies: Collection<ExternalDependency>): List<ExternalDependency> {
+    private fun substituteDependencies(dependencies: Collection<ExternalDependency>): List<ExternalDependency> {
         val result = ArrayList(dependencies)
         for (i in 0 until result.size) {
             val dependency = result[i]
@@ -68,7 +67,7 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
 
             null
         } else
-            KlibInfoProvider(kotlinNativeHome = kotlinNativeHome)
+            KlibInfoProvider.create(kotlinNativeHome = kotlinNativeHome)
     }
 
     private val kotlinVersion: String? by lazy {
@@ -117,25 +116,10 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
         // need to check whether `library` points to a real KLIB,
         // and if answer is yes then build a new dependency that will substitute original one
         val klib = klibInfoProvider?.getKlibInfo(libraryFile) ?: return DependencySubstitute.NoSubstitute
-        val nonNullKotlinVersion = kotlinVersion ?: return DependencySubstitute.NoSubstitute
-
-        val newLibraryName = when (klib) {
-            is NativeDistributionKlibInfo -> buildIDELibraryName(
-                nonNullKotlinVersion,
-                klib.name,
-                listOfNotNull(klib.target?.name)
-            )
-            is NativeDistributionCommonizedKlibInfo -> buildIDELibraryName(
-                nonNullKotlinVersion,
-                klib.name,
-                klib.commonizedTargets.map { it.name },
-                klib.ownTarget?.name
-            )
-        }
 
         val substitute = DefaultExternalMultiLibraryDependency().apply {
-            classpathOrder = if (klib.name == KONAN_STDLIB_NAME) -1 else 0 // keep stdlib upper
-            name = newLibraryName
+            classpathOrder = if (klib.libraryName == KONAN_STDLIB_NAME) -1 else 0 // keep stdlib upper
+            name = klib.ideName(kotlinVersion)
             packaging = DEFAULT_PACKAGING
             files += klib.path
             sources += klib.sourcePaths
@@ -158,4 +142,24 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
 private sealed class DependencySubstitute {
     object NoSubstitute : DependencySubstitute()
     class YesSubstitute(val substitute: ExternalMultiLibraryDependency) : DependencySubstitute()
+}
+
+/**
+ * Library Name formatted for the IDE.
+ */
+internal fun KlibInfo.ideName(kotlinVersion: String? = null): String = buildString {
+    if (isFromNativeDistribution) {
+        append(KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX)
+        if (kotlinVersion != null) append(" $kotlinVersion - ") else append(" ")
+    }
+
+    append(libraryName)
+
+    if (isStdlib) return@buildString
+
+    when (targets) {
+        null -> Unit
+        is KlibInfo.NativeTargets.CommonizerIdentity -> append(" | [${targets.identityString}]")
+        is KlibInfo.NativeTargets.NativeTargetsList -> append(" | ${targets.nativeTargets}")
+    }
 }

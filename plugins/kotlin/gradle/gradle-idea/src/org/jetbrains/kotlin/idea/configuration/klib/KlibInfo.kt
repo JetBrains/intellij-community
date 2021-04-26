@@ -5,28 +5,29 @@
 
 package org.jetbrains.kotlin.idea.configuration.klib
 
-import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
 
-sealed class KlibInfo(
+internal data class KlibInfo(
     val path: File,
     val sourcePaths: Collection<File>,
-    val name: String
-)
+    val libraryName: String,
+    val isStdlib: Boolean,
+    val isCommonized: Boolean,
+    val isFromNativeDistribution: Boolean,
+    val targets: NativeTargets?
+) {
 
-class NativeDistributionKlibInfo(
-    path: File,
-    sourcePaths: Collection<File>,
-    name: String,
-    val target: KonanTarget? // null means "common"
-) : KlibInfo(path, sourcePaths, name)
+    sealed class NativeTargets {
+        final override fun toString(): String = when (this) {
+            is CommonizerIdentity -> identityString
+            is NativeTargetsList -> nativeTargets
+        }
 
-class NativeDistributionCommonizedKlibInfo(
-    path: File,
-    sourcePaths: Collection<File>,
-    name: String,
-    val ownTarget: KonanTarget?, // null means "common"
-    val commonizedTargets: Set<KonanTarget>
-) : KlibInfo(path, sourcePaths, name)
+        data class CommonizerIdentity(val identityString: String) : NativeTargets()
+        data class NativeTargetsList(val nativeTargets: String) : NativeTargets()
+    }
+}
 
-// TODO: add other subclasses as necessary
+
+
+

@@ -5,32 +5,66 @@
 
 package org.jetbrains.kotlin.idea.configuration.klib
 
+
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.buildIDELibraryName
 import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.isGradleLibraryName
 import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
+import java.io.File
 
 class KotlinNativeLibraryNameUtilTest : TestCase() {
     fun testBuildIDELibraryName() {
         assertEquals(
-            "Kotlin/Native 1.3.60 - stdlib",
-            buildIDELibraryName("1.3.60", "stdlib", emptyList())
+            "Kotlin/Native 1.5.20 - foo | [(a, b)]",
+            KlibInfo(
+                path = File(""),
+                sourcePaths = emptyList(),
+                libraryName = "foo",
+                isCommonized = true,
+                isStdlib = false,
+                isFromNativeDistribution = true,
+                targets = KlibInfo.NativeTargets.CommonizerIdentity("(a, b)")
+            ).ideName("1.5.20")
         )
 
         assertEquals(
-            "Kotlin/Native 1.3.60-eap-23 - Accelerate [macos_x64]",
-            buildIDELibraryName("1.3.60-eap-23", "Accelerate", listOf("macos_x64"))
+            "foo | [(a, b)]",
+            KlibInfo(
+                path = File(""),
+                sourcePaths = emptyList(),
+                libraryName = "foo",
+                isCommonized = true,
+                isStdlib = false,
+                isFromNativeDistribution = false,
+                targets = KlibInfo.NativeTargets.CommonizerIdentity("(a, b)")
+            ).ideName(null)
         )
 
         assertEquals(
-            "Kotlin/Native 1.3.60-eap-23 - Accelerate [ios_arm32, ios_arm64, ios_x64]",
-            buildIDELibraryName("1.3.60-eap-23", "Accelerate", listOf("ios_x64", "ios_arm32", "ios_arm64"))
+            "Kotlin/Native 1.5.20 - foo",
+            KlibInfo(
+                path = File(""),
+                sourcePaths = emptyList(),
+                libraryName = "foo",
+                isCommonized = false,
+                isStdlib = true,
+                isFromNativeDistribution = true,
+                targets = KlibInfo.NativeTargets.CommonizerIdentity("(a, b)")
+            ).ideName("1.5.20")
         )
 
         assertEquals(
-            "Kotlin/Native 1.3.60-eap-23 - Accelerate [ios_arm32, ios_arm64(*), ios_x64]",
-            buildIDELibraryName("1.3.60-eap-23", "Accelerate", listOf("ios_x64", "ios_arm32", "ios_arm64"), "ios_arm64")
+            "Kotlin/Native foo",
+            KlibInfo(
+                path = File(""),
+                sourcePaths = emptyList(),
+                libraryName = "foo",
+                isCommonized = true,
+                isStdlib = false,
+                isFromNativeDistribution = true,
+                targets = null
+            ).ideName(null)
         )
+
     }
 
     fun testParseIDELibraryName() {
@@ -71,3 +105,4 @@ class KotlinNativeLibraryNameUtilTest : TestCase() {
         assertTrue(isGradleLibraryName("Gradle: some:third-party-library:1.2"))
     }
 }
+

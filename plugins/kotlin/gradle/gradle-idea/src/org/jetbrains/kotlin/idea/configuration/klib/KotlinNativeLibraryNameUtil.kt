@@ -17,26 +17,6 @@ object KotlinNativeLibraryNameUtil {
 
     private val IDE_LIBRARY_NAME_REGEX = Regex("^$KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE([^\\s]+) - ([^\\s]+)( \\[([\\w ,()*]+)])?$")
 
-    // Builds the name of Kotlin/Native library that is a part of Kotlin/Native distribution
-    // as it will be displayed in IDE UI.
-    fun buildIDELibraryName(
-        kotlinVersion: String,
-        libraryName: String,
-        platforms: Collection<String>,
-        starredPlatform: String? = null
-    ): String {
-        val platformNamePart = if (platforms.isNotEmpty())
-            buildString {
-                append(" [")
-                platforms.sorted().joinTo(this) { if (it == starredPlatform) "$it(*)" else it }
-                append("]")
-            }
-        else
-            ""
-
-        return "$KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE$kotlinVersion - $libraryName$platformNamePart"
-    }
-
     // N.B. Returns null if this is not IDE name of Kotlin/Native library.
     fun parseIDELibraryName(ideLibraryName: String): Triple<String, String, String?>? {
         val match = IDE_LIBRARY_NAME_REGEX.matchEntire(ideLibraryName) ?: return null
