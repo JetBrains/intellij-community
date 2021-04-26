@@ -17,6 +17,15 @@ of a variable which is known to be constant can be replaced with the actual cons
     }
     private static void f(double number) {}
 </pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+    private static void foo(double number) {
+        if (number == 1.0) {
+            f(1.0);
+        }
+    }
+    private static void f(double number) {}
+</pre>
 
 <p>
 
