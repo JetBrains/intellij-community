@@ -5,11 +5,12 @@
 
 package org.jetbrains.kotlin.idea.scratch.repl
 
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.cli.common.repl.replInputAsXml
 import org.jetbrains.kotlin.cli.common.repl.replNormalizeLineBreaks
@@ -35,11 +36,14 @@ class KtScratchReplExecutor(file: ScratchFile) : SequentialScratchExecutor(file)
 
     override fun startExecution() {
         val module = file.module
-        val cmdLine = KotlinConsoleKeeper.createReplCommandLine(file.project, module)
+        val (environmentRequest, cmdLine) = KotlinConsoleKeeper.createReplCommandLine(file.project, module)
+        val environment = environmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
 
-        LOG.printDebugMessage("Execute REPL: ${cmdLine.commandLineString}")
+        val commandPresentation = cmdLine.getCommandPresentation(environment)
+        LOG.printDebugMessage("Execute REPL: $commandPresentation")
 
-        osProcessHandler = ReplOSProcessHandler(cmdLine)
+
+        osProcessHandler = ReplOSProcessHandler(environment.createProcess(cmdLine, EmptyProgressIndicator()), commandPresentation)
         osProcessHandler?.startNotify()
     }
 
@@ -136,7 +140,7 @@ class KtScratchReplExecutor(file: ScratchFile) : SequentialScratchExecutor(file)
         fun isAllProcessed() = entries.size == processedEntriesCount
     }
 
-    private inner class ReplOSProcessHandler(cmd: GeneralCommandLine) : OSProcessHandler(cmd) {
+    private inner class ReplOSProcessHandler(process: Process, commandLine: String) : OSProcessHandler(process, commandLine) {
         private val factory = DocumentBuilderFactory.newInstance()
 
         override fun notifyTextAvailable(text: String, outputType: Key<*>) {

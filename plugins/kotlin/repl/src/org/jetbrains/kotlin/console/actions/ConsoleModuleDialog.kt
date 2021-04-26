@@ -9,6 +9,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
@@ -49,7 +52,11 @@ class ConsoleModuleDialog(private val project: Project) {
     }
 
     private fun runConsole(module: Module) {
-        KotlinConsoleKeeper.getInstance(project).run(module)
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, KotlinIdeaReplBundle.message("progress.starting.repl")) {
+            override fun run(indicator: ProgressIndicator) {
+                KotlinConsoleKeeper.getInstance(project).run(module)
+            }
+        })
     }
 
     private fun createRunAction(module: Module) = object : AnAction(module.name) {

@@ -6,13 +6,16 @@
 package org.jetbrains.kotlin.console
 
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.console.ConsoleExecuteAction
 import com.intellij.execution.console.LanguageConsoleBuilder
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -28,6 +31,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -36,6 +41,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.console.actions.BuildAndRestartConsoleAction
@@ -75,15 +81,17 @@ private const val KOTLIN_SHELL_EXECUTE_ACTION_ID = "KotlinShellExecute"
 
 class KotlinConsoleRunner(
     val module: Module,
-    private val cmdLine: GeneralCommandLine,
+    private val environmentRequest: TargetEnvironmentRequest,
+    private val cmdLine: TargetedCommandLine,
     internal val previousCompilationFailed: Boolean,
     myProject: Project,
-    title: String,
+    @Nls(capitalization = Nls.Capitalization.Title) title: String,
     path: String?
 ) : AbstractConsoleRunnerWithHistory<LanguageConsoleView>(myProject, title, path) {
 
     private val replState = ReplState()
     private val consoleTerminated = CountDownLatch(1)
+    private lateinit var environment: TargetEnvironment
 
     override fun finishConsole() {
         KotlinConsoleKeeper.getInstance(project).removeConsole(consoleView.virtualFile)
@@ -128,7 +136,10 @@ class KotlinConsoleRunner(
         override fun getScriptName(script: KtScript) = Name.identifier("REPL")
     }
 
-    override fun createProcess() = cmdLine.createProcess()
+    override fun createProcess(): Process? {
+        environment = environmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
+        return environment.createProcess(cmdLine, ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator())
+    }
 
     override fun createConsoleView(): LanguageConsoleView? {
         val builder = LanguageConsoleBuilder()
@@ -173,7 +184,7 @@ class KotlinConsoleRunner(
         val processHandler = ReplOutputHandler(
             this,
             process,
-            cmdLine.commandLineString
+            cmdLine.getCommandPresentation(environment)
         )
         val consoleFile = consoleView.virtualFile
         val keeper = KotlinConsoleKeeper.getInstance(project)
