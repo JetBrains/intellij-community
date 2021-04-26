@@ -4,7 +4,9 @@
   </component>
   <component name="ExternalFacetManager">
     <facet __external-system-id="Maven" type="MockFacetId" name="imported">
-      <configuration />
+      <configuration>
+        <root url="file://$MODULE_DIR$/facet" />
+      </configuration>
     </facet>
   </component>
   <component name="ExternalSystem" externalSystem="Maven" />

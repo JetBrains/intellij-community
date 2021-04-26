@@ -7,6 +7,8 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetRootsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -68,6 +70,6 @@ public class MockFacet extends Facet<MockFacetConfiguration> implements FacetRoo
   @Override
   @NotNull
   public Collection<VirtualFile> getFacetRoots() {
-    return getConfiguration().getRoots();
+    return ContainerUtil.mapNotNull(getConfiguration().getRootUrls(), VirtualFileManager.getInstance()::findFileByUrl);
   }
 }
