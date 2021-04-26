@@ -666,7 +666,7 @@ final class ClassfileAnalyzer {
 
         private void processMethodHandle(Handle handle) {
           final String memberOwner = handle.getOwner();
-          if (myContext.get(memberOwner) != myName) {
+          if (memberOwner != null &&  !memberOwner.equals(myClassNameHolder.get())) {
             // do not register access to own class members
             final String memberName = handle.getName();
             final String memberDescriptor = handle.getDesc();
@@ -738,7 +738,7 @@ final class ClassfileAnalyzer {
 
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
-      if (myContext.get(name) == myName) {
+      if (name != null && name.equals(myClassNameHolder.get())) {
         // set outer class name only if we are parsing the real inner class and
         // not the reference to inner class inside some top-level class
         myAccess |= access; // information about some access flags for the inner class is missing from the mask passed to 'visit' method
