@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.*
@@ -34,6 +35,7 @@ import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
 import git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
 import git4idea.i18n.GitBundle
+import git4idea.index.isStagingAreaAvailable
 import git4idea.index.showStagingArea
 import git4idea.merge.GitConflictResolver
 import git4idea.merge.GitDefaultMergeDialogCustomizer
@@ -113,11 +115,15 @@ class GitApplyChangesProcess(private val project: Project,
     val commitMessage = defaultCommitMessageGenerator(repository, commit)
 
     val strategy: CommitStrategy = when {
-      changeListManager.areChangeListsEnabled() -> {
+      isStagingAreaAvailable(project) -> {
+        StagingAreaCommit(repository, commit, commitMessage)
+      }
+      changeListManager.areChangeListsEnabled() &&
+      VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY -> {
         ChangeListCommit(repository, commit, commitMessage)
       }
       else -> {
-        StagingAreaCommit(repository, commit, commitMessage)
+        SimplifiedCommit(repository, commit, commitMessage)
       }
     }
 
@@ -138,6 +144,8 @@ class GitApplyChangesProcess(private val project: Project,
           refreshStagedVfs(repository.root)
           VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
           changeListManager.waitForUpdate()
+          strategy.afterChangesRefreshed()
+
           return strategy.doUserCommit(successfulCommits, alreadyPicked)
         }
       }
@@ -149,6 +157,7 @@ class GitApplyChangesProcess(private val project: Project,
         refreshStagedVfs(repository.root) // `ConflictResolver` only refreshes conflicted files
         VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
         changeListManager.waitForUpdate()
+        strategy.afterChangesRefreshed()
 
         if (mergeCompleted) {
           LOG.debug("All conflicts resolved, will show commit dialog.")
@@ -189,6 +198,8 @@ class GitApplyChangesProcess(private val project: Project,
     open fun finish() = Unit
     abstract fun doUserCommit(successfulCommits: MutableList<VcsFullCommitDetails>,
                               alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean
+
+    open fun afterChangesRefreshed() = Unit
   }
 
   private inner class ChangeListCommit(val repository: GitRepository,
@@ -214,6 +225,25 @@ class GitApplyChangesProcess(private val project: Project,
     override fun doUserCommit(successfulCommits: MutableList<VcsFullCommitDetails>,
                               alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
       return commitChangelist(repository, commit, commitMessage, changeList, successfulCommits, alreadyPicked)
+    }
+  }
+
+  private inner class SimplifiedCommit(val repository: GitRepository,
+                                       val commit: VcsFullCommitDetails,
+                                       val commitMessage: String) : CommitStrategy() {
+    override fun doUserCommit(successfulCommits: MutableList<VcsFullCommitDetails>,
+                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
+      val list = changeListManager.defaultChangeList
+      return commitChangelist(repository, commit, commitMessage, list, successfulCommits, alreadyPicked)
+    }
+
+    override fun afterChangesRefreshed() {
+      val list = changeListManager.defaultChangeList
+      if (preserveCommitMetadata &&
+          changeListManager.areChangeListsEnabled() &&
+          list.changes.isNotEmpty()) {
+        changeListManager.editChangeListData(list.name, createChangeListData(commit))
+      }
     }
   }
 
