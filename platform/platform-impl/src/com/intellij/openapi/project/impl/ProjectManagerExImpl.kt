@@ -340,15 +340,17 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
       IdeEventQueue.getInstance().flushQueue()
     }
     else {
-      val exitCode = ProjectUtil.confirmOpenNewProject(false, projectDir?.fileName?.toString())
-      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-        if (!projectManager.closeAndDispose(projectToClose)) {
+      val mode = GeneralSettings.getInstance().confirmOpenNewProject
+      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+        if (projectDir != null && PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
           result = true
           return@task
         }
       }
-      else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
-        if (projectDir != null && PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
+
+      val exitCode = ProjectUtil.confirmOpenNewProject(false, projectDir?.fileName?.toString())
+      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+        if (!projectManager.closeAndDispose(projectToClose)) {
           result = true
           return@task
         }
