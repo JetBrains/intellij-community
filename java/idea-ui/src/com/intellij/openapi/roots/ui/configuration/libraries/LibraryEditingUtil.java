@@ -213,7 +213,7 @@ public final class LibraryEditingUtil {
     }
 
     public Icon getIcon() {
-      Icon icon = myType.getIcon(null);
+      Icon icon = myType != null ? myType.getIcon(null) : null;
       return icon != null ? icon : PlatformIcons.LIBRARY_ICON;
     }
 
