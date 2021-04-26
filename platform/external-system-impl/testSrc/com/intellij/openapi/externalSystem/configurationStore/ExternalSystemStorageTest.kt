@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.configurationStore
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetType
+import com.intellij.facet.mock.MockFacet
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.MockSubFacetType
 import com.intellij.openapi.Disposable
@@ -32,6 +33,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.elements.ArtifactRootElement
@@ -279,15 +281,20 @@ class ExternalSystemStorageTest {
   @Test
   fun `save imported facet in imported module`() = saveProjectInExternalStorageAndCheckResult("importedFacetInImportedModule") { project, projectDir ->
     val imported = ModuleManager.getInstance(project).newModule(projectDir.resolve("imported.iml").systemIndependentPath, ModuleTypeId.JAVA_MODULE)
-    addFacet(imported, ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID, "imported")
+    val facetRoot = VfsUtilCore.pathToUrl(projectDir.resolve("facet").systemIndependentPath)
+    addFacet(imported, ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID, "imported", listOf(facetRoot))
     ExternalSystemModulePropertyManager.getInstance(imported).setMavenized(true)
   }
 
-  private fun addFacet(module: Module, externalSystemId: String?, facetName: String) {
+  private fun addFacet(module: Module, externalSystemId: String?, facetName: String, rootUrls: List<String> = emptyList()) {
     val facetManager = FacetManager.getInstance(module)
     val model = facetManager.createModifiableModel()
     val source = externalSystemId?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
-    model.addFacet(facetManager.createFacet(MockFacetType.getInstance(), facetName, null), source)
+    val facet = facetManager.createFacet(MockFacetType.getInstance(), facetName, null)
+    for (root in rootUrls) {
+      facet.configuration.addRoot(root)
+    }
+    model.addFacet(facet, source)
     runWriteActionAndWait { model.commit() }
   }
 
@@ -337,9 +344,11 @@ class ExternalSystemStorageTest {
   fun `load imported facet in imported module`() = loadProjectAndCheckResults("importedFacetInImportedModule") { project ->
     val module = ModuleManager.getInstance(project).modules.single()
     assertThat(ExternalSystemModulePropertyManager.getInstance(module).isMavenized()).isTrue()
-    val facet = FacetManager.getInstance(module).allFacets.single()
+    val facet = FacetManager.getInstance(module).allFacets.single() as MockFacet
     assertThat(facet.name).isEqualTo("imported")
     assertThat(facet.externalSource!!.id).isEqualTo(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID)
+    val facetRoot = VfsUtil.pathToUrl(project.basePath!!) + "/facet"
+    assertThat(facet.configuration.rootUrls).containsExactly(facetRoot)
   }
 
   @Test
