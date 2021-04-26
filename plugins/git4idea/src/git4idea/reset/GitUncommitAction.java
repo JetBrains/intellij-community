@@ -70,9 +70,8 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
     VcsShortCommitDetails commit = commitEditingData.getSelectedCommit();
     LocalChangeList targetList;
     if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
-      ChangeListChooser chooser = new ChangeListChooser(project, null, null,
-                                                        GitBundle.message("git.undo.action.select.target.changelist.title"),
-                                                        commit.getSubject());
+      ChangeListChooser chooser = new ChangeListChooser(project, GitBundle.message("git.undo.action.select.target.changelist.title"));
+      chooser.setSuggestedName(commit.getSubject());
       if (!chooser.showAndGet()) return;
 
       targetList = chooser.getSelectedList();

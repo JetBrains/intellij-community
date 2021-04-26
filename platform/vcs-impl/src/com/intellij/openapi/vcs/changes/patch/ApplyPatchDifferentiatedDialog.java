@@ -211,7 +211,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         }
       });
 
-      myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
       if (defaultList != null) {
         myChangeListChooser.setDefaultSelection(defaultList);
       }

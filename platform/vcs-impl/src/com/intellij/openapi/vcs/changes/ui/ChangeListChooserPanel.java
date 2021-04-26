@@ -100,6 +100,9 @@ public final class ChangeListChooserPanel extends JPanel {
     };
     myOkEnabledListener = okEnabledListener;
     add(myListPanel, BorderLayout.CENTER);
+
+    setChangeLists(null);
+    setDefaultSelection(null);
   }
 
   public void init() {

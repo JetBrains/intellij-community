@@ -23,7 +23,16 @@ public class ChangeListChooser extends DialogWrapper {
                            @Nullable Collection<? extends ChangeList> changelists,
                            @Nullable ChangeList defaultSelection,
                            @NlsContexts.DialogTitle String title,
-                           @Nullable final @Nls String suggestedName) {
+                           @Nullable @Nls String suggestedName) {
+    this(project, title);
+
+    setChangeLists(changelists);
+    setDefaultSelection(defaultSelection);
+    setSuggestedName(suggestedName);
+  }
+
+  public ChangeListChooser(@NotNull Project project,
+                           @NlsContexts.DialogTitle String title) {
     super(project, false);
     myProject = project;
 
@@ -36,15 +45,22 @@ public class ChangeListChooser extends DialogWrapper {
     });
 
     myPanel.init();
-    myPanel.setChangeLists(changelists);
-    myPanel.setDefaultSelection(defaultSelection);
-
     setTitle(title);
+    init();
+  }
+
+  public void setChangeLists(@Nullable Collection<? extends ChangeList> changelists) {
+    myPanel.setChangeLists(changelists);
+  }
+
+  public void setDefaultSelection(@Nullable ChangeList defaultSelection) {
+    myPanel.setDefaultSelection(defaultSelection);
+  }
+
+  public void setSuggestedName(@Nls @Nullable String suggestedName) {
     if (suggestedName != null) {
       myPanel.setSuggestedName(suggestedName);
     }
-
-    init();
   }
 
   @Override
