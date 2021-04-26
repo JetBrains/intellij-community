@@ -351,14 +351,13 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         val existingIdCheck = if (newEntityId != null) existingIds.single() != newEntityId else true
         if (existingIdCheck) {
           // target persistent id exists already.
-          val existingEntity = target.entityDataByIdOrDie(existingIds.single()).createEntity(target)
-          target.removeEntity(existingEntity)
+          val existingEntityData = target.entityDataByIdOrDie(existingIds.single())
+          target.removeEntity(existingEntityData.createEntity(target))
           target.addDiffAndReport(
             """
                         Persistent ID already exists. Removing old entity
                         Persistent ID: $newPersistentId
-                        Entity Source: ${existingEntity.entitySource}
-                        Existing entity data: $existingEntity
+                        Existing entity data: $existingEntityData
                         New entity data: $entityData
                         """.trimIndent(), initialStorage, diff)
         }
