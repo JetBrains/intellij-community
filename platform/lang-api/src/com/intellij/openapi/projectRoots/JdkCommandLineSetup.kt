@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.CompositeParameterTargetedValue
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
+import com.intellij.execution.configurations.ParameterTargetValuePart
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
@@ -36,7 +37,6 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.THashMap
-import io.netty.bootstrap.com.intellij.execution.configurations.ParameterTargetValuePart
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise

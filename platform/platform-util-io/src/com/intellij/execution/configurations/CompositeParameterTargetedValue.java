@@ -2,8 +2,6 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.util.containers.ContainerUtil;
-import io.netty.bootstrap.com.intellij.execution.configurations.ParameterTargetValue;
-import io.netty.bootstrap.com.intellij.execution.configurations.ParameterTargetValuePart;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
