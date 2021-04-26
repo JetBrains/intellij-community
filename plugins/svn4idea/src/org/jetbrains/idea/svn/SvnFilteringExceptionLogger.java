@@ -18,7 +18,7 @@ class SvnFilteringExceptionLogger extends DelegatingLogger<Logger> {
   private static final ErrorCode[] ourErrorsToFilter =
     {WC_UNSUPPORTED_FORMAT, WC_CORRUPT, WC_CORRUPT_TEXT_BASE, WC_NOT_FILE, WC_NOT_WORKING_COPY, WC_PATH_NOT_FOUND};
 
-  private final long[] myLastLogged = new long[ourErrorsToFilter.length];
+  private final long[] myExpirationTime = new long[ourErrorsToFilter.length];
 
   SvnFilteringExceptionLogger(@NotNull Logger delegate) {
     super(delegate);
@@ -58,10 +58,11 @@ class SvnFilteringExceptionLogger extends DelegatingLogger<Logger> {
         ErrorCode key = ourErrorsToFilter[i];
         if (((SvnBindException)t).contains(key)) {
           long now = System.nanoTime();
-          if (myLastLogged[i] + EXPIRATION < now) {
+          if (myExpirationTime[i] > now) {
             return false;
           }
-          myLastLogged[i] = now;
+          myExpirationTime[i] = now + EXPIRATION;
+          break;
         }
       }
     }
