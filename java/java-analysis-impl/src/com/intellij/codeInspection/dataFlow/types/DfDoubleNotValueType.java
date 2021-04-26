@@ -32,8 +32,7 @@ final class DfDoubleNotValueType extends DfAntiConstantType<Double> implements D
       Set<Double> notValues = new HashSet<>(myNotValues);
       notValues.remove(0.0);
       notValues.remove(-0.0);
-      assert !notValues.isEmpty();
-      return new DfDoubleNotValueType(notValues);
+      return notValues.isEmpty() ? DfTypes.DOUBLE : new DfDoubleNotValueType(notValues);
     }
     if (other instanceof DfDoubleNotValueType) {
       Set<Double> notValues = new HashSet<>(myNotValues);

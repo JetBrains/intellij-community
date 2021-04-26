@@ -33,8 +33,7 @@ final class DfFloatNotValueType extends DfAntiConstantType<Float> implements DfF
       Set<Float> notValues = new HashSet<>(myNotValues);
       notValues.remove(0.0f);
       notValues.remove(-0.0f);
-      assert !notValues.isEmpty();
-      return new DfFloatNotValueType(notValues);
+      return notValues.isEmpty() ? DfTypes.FLOAT : new DfFloatNotValueType(notValues);
     }
     if (other instanceof DfFloatNotValueType) {
       Set<Float> notValues = new HashSet<>(myNotValues);
