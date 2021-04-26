@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
@@ -89,17 +92,6 @@ public abstract class EventHandler {
   public static ShortcutSet getShortcuts(@NotNull String id) {
     AnAction action = ActionManager.getInstance().getAction(id);
     return action == null ? null : action.getShortcutSet();
-  }
-
-  public static boolean check(@NotNull KeyboardShortcut shortcut, @Nullable ShortcutSet set) {
-    if (set != null) {
-      for (Shortcut test : set.getShortcuts()) {
-        if (test.isKeyboard() && shortcut.startsWith(test)) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @NotNull

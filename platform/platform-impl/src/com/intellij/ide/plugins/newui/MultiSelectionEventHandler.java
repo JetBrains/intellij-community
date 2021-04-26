@@ -129,23 +129,20 @@ public class MultiSelectionEventHandler extends EventHandler {
 
     myKeyListener = new KeyAdapter() {
       @Override
-      public void keyPressed(KeyEvent event) {
-        int code = event.getKeyCode();
-        int modifiers = event.getModifiersEx();
-        KeyboardShortcut shortcut = new KeyboardShortcut(
-          KeyStroke.getKeyStroke(code, modifiers),
-          null
-        );
+      public void keyPressed(@NotNull KeyEvent event) {
+        KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
 
-        if (check(shortcut, mySelectAllKeys)) {
+        if (contains(mySelectAllKeys, keyStroke)) {
           event.consume();
           selectAll();
-          return;
         }
-        if (check(shortcut, myDeleteKeys)) {
-          code = DELETE_CODE;
+        else {
+          keyPressed(event,
+                     contains(myDeleteKeys, keyStroke) ? DELETE_CODE : event.getKeyCode());
         }
+      }
 
+      private void keyPressed(@NotNull KeyEvent event, int code) {
         if (code == KeyEvent.VK_HOME || code == KeyEvent.VK_END) {
           if (myComponents.isEmpty()) {
             return;
@@ -162,11 +159,14 @@ public class MultiSelectionEventHandler extends EventHandler {
         }
         else if (code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN) {
           event.consume();
-          if (modifiers == 0) {
-            moveOrResizeSelection(code == KeyEvent.VK_UP, true, 1);
-          }
-          else if (modifiers == Event.SHIFT_MASK) {
-            moveOrResizeSelection(code == KeyEvent.VK_UP, false, 1);
+          Boolean singleSelection = event.getModifiersEx() == 0 ?
+                                    Boolean.TRUE :
+                                    event.isShiftDown() ?
+                                    Boolean.FALSE :
+                                    null;
+
+          if (singleSelection != null) {
+            moveOrResizeSelection(code == KeyEvent.VK_UP, singleSelection, 1);
           }
         }
         else if (code == KeyEvent.VK_PAGE_UP || code == KeyEvent.VK_PAGE_DOWN) {
@@ -186,6 +186,16 @@ public class MultiSelectionEventHandler extends EventHandler {
           }
           component.handleKeyAction(event, getSelection());
         }
+      }
+
+      private boolean contains(@Nullable ShortcutSet shortcutSet, @NotNull KeyStroke keyStroke) {
+        for (Shortcut shortcut : shortcutSet != null ? shortcutSet.getShortcuts() : Shortcut.EMPTY_ARRAY) {
+          if (shortcut instanceof KeyboardShortcut &&
+              ((KeyboardShortcut)shortcut).getFirstKeyStroke().equals(keyStroke)) {
+            return true;
+          }
+        }
+        return false;
       }
     };
 
