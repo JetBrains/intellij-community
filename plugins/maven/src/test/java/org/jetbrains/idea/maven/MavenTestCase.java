@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -100,20 +99,17 @@ public abstract class MavenTestCase extends UsefulTestCase {
     EdtTestUtil.runInEdtAndWait(() -> {
       restoreSettingsFile();
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        WriteAction.run(this::setUpInWriteAction);
+      } catch (Throwable e) {
         try {
-          setUpInWriteAction();
+          tearDown();
         }
-        catch (Throwable e) {
-          try {
-            tearDown();
-          }
-          catch (Exception e1) {
-            e1.printStackTrace();
-          }
-          throw new RuntimeException(e);
+        catch (Exception e1) {
+          e1.printStackTrace();
         }
-      });
+        throw new RuntimeException(e);
+      }
     });
   }
 
