@@ -197,6 +197,15 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                 removeNotNullAssertion = true, replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
             ),
 
+            Conversion(
+                "kotlin.collections.mapNotNull", "kotlin.collections.first", "firstNotNullOf",
+                replaceableLanguageVersion = LanguageVersion.KOTLIN_1_5
+            ),
+            Conversion(
+                "kotlin.collections.mapNotNull", "kotlin.collections.firstOrNull", "firstNotNullOfOrNull",
+                replaceableLanguageVersion = LanguageVersion.KOTLIN_1_5
+            ),
+
             Conversion("kotlin.collections.listOf", "kotlin.collections.filterNotNull", "listOfNotNull")
         ).map {
             when (val replacement = it.replacement) {
