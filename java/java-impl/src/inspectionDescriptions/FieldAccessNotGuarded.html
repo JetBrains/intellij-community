@@ -1,15 +1,25 @@
 <html>
 <body>
 Reports accesses of fields declared as <code>@GuardedBy</code> which are are not guarded by an appropriate synchronization structure.
+<p>Example:</p>
+<pre>
+    @GuardedBy("this")
+    void x() {
+        notify();
+    }
+    void y() {
+        x(); // unguarded method call
+    }
+</pre>
 <!-- tooltip end -->
 Supported <code>@GuardedBy</code> annotations are:
 <ul>
-  <li>net.jcip.annotations.GuardedBy</li>
-  <li>javax.annotation.concurrent.GuardedBy</li>
-  <li>org.apache.http.annotation.GuardedBy</li>
-  <li>com.android.annotations.concurrency.GuardedBy</li>
-  <li>androidx.annotation.GuardedBy</li>
-  <li>com.google.errorprone.annotations.concurrent.GuardedBy</li>
+  <li><code>net.jcip.annotations.GuardedBy</code></li>
+  <li><code>javax.annotation.concurrent.GuardedBy</code></li>
+  <li><code>org.apache.http.annotation.GuardedBy</code></li>
+  <li><code>com.android.annotations.concurrency.GuardedBy</code></li>
+  <li><code>androidx.annotation.GuardedBy</code></li>
+  <li><code>com.google.errorprone.annotations.concurrent.GuardedBy</code></li>
 </ul>
 </body>
 </html>
