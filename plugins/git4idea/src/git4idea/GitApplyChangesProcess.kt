@@ -111,12 +111,19 @@ class GitApplyChangesProcess(private val project: Project,
     val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(repository.root)
 
     val commitMessage = defaultCommitMessageGenerator(repository, commit)
-    val changeList = createChangeList(commitMessage, commit)
-    val previousDefaultChangelist = changeListManager.defaultChangeList
 
-    val startHash = GitUtil.getHead(repository)
+    val strategy: CommitStrategy = when {
+      changeListManager.areChangeListsEnabled() -> {
+        ChangeListCommit(repository, commit, commitMessage)
+      }
+      else -> {
+        StagingAreaCommit(repository, commit, commitMessage)
+      }
+    }
+
+    strategy.start()
     try {
-      if (changeListManager.areChangeListsEnabled()) changeListManager.setDefaultChangeList(changeList, true)
+      val startHash = GitUtil.getHead(repository)
 
       val result = command(repository, commit.id, doAutoCommit,
                            listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
@@ -131,7 +138,7 @@ class GitApplyChangesProcess(private val project: Project,
           refreshStagedVfs(repository.root)
           VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
           changeListManager.waitForUpdate()
-          return commit(repository, commit, commitMessage, changeList, successfulCommits, alreadyPicked)
+          return strategy.doUserCommit(successfulCommits, alreadyPicked)
         }
       }
       else if (conflictDetector.hasHappened()) {
@@ -144,8 +151,8 @@ class GitApplyChangesProcess(private val project: Project,
         changeListManager.waitForUpdate()
 
         if (mergeCompleted) {
-          LOG.debug("All conflicts resolved, will show commit dialog. Current default changelist is [$changeList]")
-          return commit(repository, commit, commitMessage, changeList, successfulCommits, alreadyPicked)
+          LOG.debug("All conflicts resolved, will show commit dialog.")
+          return strategy.doUserCommit(successfulCommits, alreadyPicked)
         }
         else {
           notifyConflictWarning(repository, commit, successfulCommits)
@@ -173,33 +180,61 @@ class GitApplyChangesProcess(private val project: Project,
       }
     }
     finally {
-      if (changeListManager.areChangeListsEnabled()) {
-        changeListManager.setDefaultChangeList(previousDefaultChangelist, true)
-        changeListManager.scheduleAutomaticEmptyChangeListDeletion(changeList, true)
-      }
+      strategy.finish()
     }
   }
 
-  private fun createChangeList(commitMessage: String, commit: VcsFullCommitDetails): LocalChangeList {
-    if (!changeListManager.areChangeListsEnabled()) return changeListManager.defaultChangeList
-    val changeListName = createNameForChangeList(project, commitMessage)
-    val changeListData = if (preserveCommitMetadata) createChangeListData(commit) else null
-    return changeListManager.addChangeList(changeListName, commitMessage, changeListData)
+  private abstract class CommitStrategy {
+    open fun start() = Unit
+    open fun finish() = Unit
+    abstract fun doUserCommit(successfulCommits: MutableList<VcsFullCommitDetails>,
+                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean
   }
 
-  private fun commit(repository: GitRepository,
-                     commit: VcsFullCommitDetails,
-                     commitMessage: String,
-                     changeList: LocalChangeList,
-                     successfulCommits: MutableList<VcsFullCommitDetails>,
-                     alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
-    if (!changeListManager.areChangeListsEnabled()) {
+  private inner class ChangeListCommit(val repository: GitRepository,
+                                       val commit: VcsFullCommitDetails,
+                                       val commitMessage: String) : CommitStrategy() {
+    lateinit var changeList: LocalChangeList
+    lateinit var previousDefaultChangelist: LocalChangeList
+
+    override fun start() {
+      previousDefaultChangelist = changeListManager.defaultChangeList
+
+      val changeListName = createNameForChangeList(project, commitMessage)
+      val changeListData = if (preserveCommitMetadata) createChangeListData(commit) else null
+      changeList = changeListManager.addChangeList(changeListName, commitMessage, changeListData)
+      changeListManager.setDefaultChangeList(changeList, true)
+    }
+
+    override fun finish() {
+      changeListManager.setDefaultChangeList(previousDefaultChangelist, true)
+      changeListManager.scheduleAutomaticEmptyChangeListDeletion(changeList, true)
+    }
+
+    override fun doUserCommit(successfulCommits: MutableList<VcsFullCommitDetails>,
+                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
+      return commitChangelist(repository, commit, commitMessage, changeList, successfulCommits, alreadyPicked)
+    }
+  }
+
+  private class StagingAreaCommit(val repository: GitRepository,
+                                  val commit: VcsFullCommitDetails,
+                                  val commitMessage: String) : CommitStrategy() {
+    override fun doUserCommit(successfulCommits: MutableList<VcsFullCommitDetails>,
+                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
       runInEdt {
-        showStagingArea(project, commitMessage)
+        showStagingArea(repository.project, commitMessage)
       }
       return false
     }
+  }
 
+  private fun commitChangelist(repository: GitRepository,
+                               commit: VcsFullCommitDetails,
+                               commitMessage: String,
+                               changeList: LocalChangeList,
+                               successfulCommits: MutableList<VcsFullCommitDetails>,
+                               alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
     val actualList = changeListManager.getChangeList(changeList.id)
     if (actualList == null) {
       LOG.error("Couldn't find the changelist with id ${changeList.id} and name ${changeList.name} among " +
