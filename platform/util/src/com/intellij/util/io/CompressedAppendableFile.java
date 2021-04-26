@@ -220,8 +220,13 @@ public class CompressedAppendableFile {
   @NotNull
   protected InputStream getChunkInputStream(long offset, int pageSize) throws IOException {
     InputStream in = Files.newInputStream(getChunksFile());
-    if (offset > 0) {
-      in.skip(offset);
+    long toSkip = offset;
+    while (toSkip > 0) {
+      long skipped = in.skip(toSkip);
+      if (skipped == 0) {
+        throw new EOFException("Unable to skip " + offset + " bytes: end-of-file reached");
+      }
+      toSkip -= skipped;
     }
     return new BufferedInputStream(new LimitedInputStream(in, pageSize) {
       @Override
