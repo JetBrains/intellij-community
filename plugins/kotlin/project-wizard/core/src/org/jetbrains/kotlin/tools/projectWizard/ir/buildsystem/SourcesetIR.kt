@@ -53,4 +53,4 @@ data class MultiplatformSourcesetIR(
 }
 
 val MultiplatformSourcesetIR.sourcesetName
-    get() = targetName + sourcesetType.name.replaceFirstChar(Char::uppercaseChar)
+    get() = targetName + sourcesetType.name.capitalize(Locale.US)

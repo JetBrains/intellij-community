@@ -251,7 +251,7 @@ class KotlinChangeSignatureConflictSearcher(
                     val prefix = if (declaration != null) RefactoringUIUtil.getDescription(declaration, true) else originalRef.text
                     result.putValue(
                         originalRef,
-                        KotlinBundle.message("text.0.will.no.longer.be.accessible.after.signature.change", prefix.replaceFirstChar(Char::uppercaseChar))
+                        KotlinBundle.message("text.0.will.no.longer.be.accessible.after.signature.change", prefix.capitalize())
                     )
                 }
             }

@@ -75,7 +75,7 @@ abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
 
     override fun getNameLabelText(): String {
         val occurrencesString = occurrencesString?.let { " - $it" } ?: ""
-        return "${kind.replaceFirstChar(Char::uppercaseChar)} ${declaration.nameAsSafeName} $occurrencesString"
+        return "${kind.capitalize()} ${declaration.nameAsSafeName} $occurrencesString"
     }
 
     @Nls

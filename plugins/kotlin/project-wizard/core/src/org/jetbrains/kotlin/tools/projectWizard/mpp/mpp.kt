@@ -316,7 +316,7 @@ private fun pathForFileInTarget(
     sourcesetType: SourcesetType,
 ) = mppModulePath /
         Defaults.SRC_DIR /
-        "${target.name}${sourcesetType.name.replaceFirstChar(Char::uppercaseChar)}" /
+        "${target.name}${sourcesetType.name.capitalize(Locale.US)}" /
         mppModule.configurator.kotlinDirectoryName /
         javaPackage?.asPath() /
         filename

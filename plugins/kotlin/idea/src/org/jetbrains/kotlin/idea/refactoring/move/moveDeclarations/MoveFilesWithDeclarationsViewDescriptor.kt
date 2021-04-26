@@ -27,7 +27,7 @@ internal class MoveFilesWithDeclarationsViewDescriptor(
                 "move.single.element.elements.header",
                 UsageViewUtil.getType(myElementsToMove[0]),
                 newParent.virtualFile.presentableUrl
-            ).replaceFirstChar(Char::uppercaseChar)
+            ).capitalize()
             myCodeReferencesText = KotlinBundle.message(
                 "text.references.in.code.to.0.1.and.its.declarations",
                 UsageViewUtil.getType(myElementsToMove[0]),
