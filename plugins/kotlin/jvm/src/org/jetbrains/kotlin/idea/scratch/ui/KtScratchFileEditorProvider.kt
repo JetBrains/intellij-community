@@ -93,6 +93,10 @@ class KtScratchFileEditorWithPreview private constructor(
         ScratchFileAutoRunner.addListener(scratchFile.project, sourceTextEditor)
     }
 
+    override fun getFile(): VirtualFile {
+        return scratchFile.file
+    }
+
     override fun previewLineToSourceLines(previewLine: Int): Pair<Int, Int>? {
         val expressionUnderCaret = scratchFile.getExpressionAtLine(previewLine) ?: return null
         val outputBlock = previewOutputManager.getBlock(expressionUnderCaret) ?: return null
