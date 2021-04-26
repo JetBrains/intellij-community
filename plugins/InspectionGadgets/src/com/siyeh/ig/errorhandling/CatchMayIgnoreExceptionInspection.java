@@ -188,7 +188,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         }
 
         CatchDataFlowRunner runner = new CatchDataFlowRunner();
-        var visitor = new IgnoredExceptionVisitor(parameter, block, exceptionClass, runner.myStableExceptionVar);
+        var visitor = new IgnoredExceptionVisitor(runner, parameter, block, exceptionClass, runner.myStableExceptionVar);
         return runner.analyzeCodeBlock(block, visitor) == RunnerResult.OK;
       }
     };
@@ -205,10 +205,12 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     @NonNls private final @NotNull List<PsiMethod> myMethods;
     private final @NotNull DfaVariableValue myExceptionVar;
 
-    IgnoredExceptionVisitor(@NotNull PsiParameter parameter,
-                                   @NotNull PsiCodeBlock block,
-                                   @NotNull PsiClass exceptionClass,
-                                   @NotNull DfaVariableValue exceptionVar) {
+    IgnoredExceptionVisitor(@NotNull DataFlowRunner runner,
+                            @NotNull PsiParameter parameter,
+                            @NotNull PsiCodeBlock block,
+                            @NotNull PsiClass exceptionClass,
+                            @NotNull DfaVariableValue exceptionVar) {
+      super(runner);
       myParameter = parameter;
       myBlock = block;
       myExceptionVar = exceptionVar;

@@ -142,5 +142,24 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                     "    }\n" +
                     "  ");
   }
+  
+  public void testSneakyThrow() {
+    doTest("class Exc {\n" +
+           "  Object apply() {\n" +
+           "    try {\n" +
+           "      return foo();\n" +
+           "    } catch (Throwable t) {\n" +
+           "      throw throwChecked(t);\n" +
+           "    }\n" +
+           "  }\n" +
+           "  \n" +
+           "  native Object foo() throws Exception;\n" +
+           "  \n" +
+           "  @SuppressWarnings(\"unchecked\")\n" +
+           "  private static <T extends Throwable> RuntimeException throwChecked(Throwable t) throws T {\n" +
+           "    throw (T) t;\n" +
+           "  }\n" +
+           "}\n");
+  }
 
 }

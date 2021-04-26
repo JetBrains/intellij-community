@@ -2,16 +2,24 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A visitor which cancels a dataflow once side effect occurs
  * @see DataFlowRunner#cancel()
  */
-public class SideEffectVisitor extends JavaDfaInstructionVisitor {
+public class SideEffectVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
+  private final @NotNull DataFlowRunner myRunner;
+
+  protected SideEffectVisitor(@NotNull DataFlowRunner runner) {
+    myRunner = runner;
+  }
+  
   /**
    * Override this method to allow some variable modifications which do not count as side effects
    *
@@ -38,6 +46,11 @@ public class SideEffectVisitor extends JavaDfaInstructionVisitor {
       runner.cancel();
     }
     return super.visitFlushVariable(instruction, runner, memState);
+  }
+
+  @Override
+  public void onConditionFailure(@NotNull PsiExpression anchor, @NotNull DfaValue value, boolean alwaysFailed) {
+    myRunner.cancel();
   }
 
   @Override
