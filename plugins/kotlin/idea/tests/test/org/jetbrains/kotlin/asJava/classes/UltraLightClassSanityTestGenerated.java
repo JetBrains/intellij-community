@@ -118,6 +118,11 @@ public class UltraLightClassSanityTestGenerated extends AbstractUltraLightClassS
         runTest("testData/compiler/asJava/lightClasses/JvmStatic.kt");
     }
 
+    @TestMetadata("LocalFunctions.kt")
+    public void testLocalFunctions() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/LocalFunctions.kt");
+    }
+
     @TestMetadata("NestedObjects.kt")
     public void testNestedObjects() throws Exception {
         runTest("testData/compiler/asJava/lightClasses/NestedObjects.kt");
