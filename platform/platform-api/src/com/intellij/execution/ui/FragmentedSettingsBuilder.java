@@ -119,7 +119,9 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
         }
       }
     }
-    addLine(tagsPanel, GROUP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
+    if (tagsPanel.getComponentCount() > 0) {
+      addLine(tagsPanel, GROUP_INSET, -getLeftInset((JComponent)tagsPanel.getComponent(0)) - TAG_HGAP, 0);
+    }
 
     for (SettingsEditorFragment<Settings, ?> group : subGroups) {
       addLine(group.getComponent());
