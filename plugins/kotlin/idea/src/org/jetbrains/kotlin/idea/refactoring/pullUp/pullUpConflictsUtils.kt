@@ -116,7 +116,7 @@ internal fun checkVisibilityInAbstractedMembers(
                 val memberText = memberDescriptor.renderForConflicts()
                 val targetText = targetDescriptor.renderForConflicts()
                 val message = KotlinBundle.message("text.0.uses.1.which.will.not.be.accessible.from.subclass", memberText, targetText)
-                conflicts.putValue(target, message.replaceFirstChar(Char::uppercaseChar))
+                conflicts.putValue(target, message.capitalize())
             }
         }
     }
@@ -187,7 +187,7 @@ private fun KotlinPullUpData.checkClashWithSuperDeclaration(
 
     if (member is KtParameter) {
         if (((targetClass as? KtClass)?.primaryConstructorParameters ?: emptyList()).any { it.name == member.name }) {
-            conflicts.putValue(member, message.replaceFirstChar(Char::uppercaseChar))
+            conflicts.putValue(member, message.capitalize())
         }
         return
     }
@@ -197,7 +197,7 @@ private fun KotlinPullUpData.checkClashWithSuperDeclaration(
     val clashingSuper = getClashingMemberInTargetClass(memberDescriptor) ?: return
     if (clashingSuper.modality == Modality.ABSTRACT) return
     if (clashingSuper.kind != CallableMemberDescriptor.Kind.DECLARATION) return
-    conflicts.putValue(member, message.replaceFirstChar(Char::uppercaseChar))
+    conflicts.putValue(member, message.capitalize())
 }
 
 private fun PsiClass.isSourceOrTarget(data: KotlinPullUpData): Boolean {
@@ -240,7 +240,7 @@ private fun KotlinPullUpData.checkAccidentalOverrides(
                     it.resolveToDescriptorWrapperAware(resolutionFacade).renderForConflicts()
                 )
 
-                conflicts.putValue(clashingMember, message.replaceFirstChar(Char::uppercaseChar))
+                conflicts.putValue(clashingMember, message.capitalize())
             }
         }
     }
@@ -253,7 +253,7 @@ private fun KotlinPullUpData.checkInnerClassToInterface(
 ) {
     if (isInterfaceTarget && memberDescriptor is ClassDescriptor && memberDescriptor.isInner) {
         val message = KotlinBundle.message("text.inner.class.0.cannot.be.moved.to.intefrace", memberDescriptor.renderForConflicts())
-        conflicts.putValue(member, message.replaceFirstChar(Char::uppercaseChar))
+        conflicts.putValue(member, message.capitalize())
     }
 }
 
@@ -273,7 +273,7 @@ private fun KotlinPullUpData.checkVisibility(
                 memberDescriptor.renderForConflicts(),
                 targetDescriptor.renderForConflicts()
             )
-            conflicts.putValue(target, message.replaceFirstChar(Char::uppercaseChar))
+            conflicts.putValue(target, message.capitalize())
         }
     }
 

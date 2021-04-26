@@ -103,7 +103,7 @@ class ConvertPropertyToFunctionIntention : SelfTargetingIntention<KtProperty>(
                         if (callable !is PsiNamedElement) continue
 
                         if (!checkModifiable(callable)) {
-                            val renderedCallable = RefactoringUIUtil.getDescription(callable, true).replaceFirstChar(Char::uppercaseChar)
+                            val renderedCallable = RefactoringUIUtil.getDescription(callable, true).capitalize()
                             conflicts.putValue(callable, KotlinBundle.message("can.t.modify.0", renderedCallable))
                         }
 
