@@ -2,7 +2,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -79,6 +79,11 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     }
 
     selectionBackground = UIUtil.getListSelectionBackground(true);
+
+    LookAndFeel.installProperty(menuItem, "iconTextGap", Integer.valueOf(6));
+    defaultTextIconGap = menuItem.getIconTextGap();
+
+    arrowIcon = null;
   }
 
   private static boolean isSelected(JMenuItem item) {
@@ -90,7 +95,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
   @Override
   public void paint(Graphics g, JComponent comp) {
-    UISettings.setupAntialiasing(g);
+    GraphicsUtil.setupAntialiasing(g);
     JMenuItem jmenuitem = (JMenuItem)comp;
     ButtonModel buttonmodel = jmenuitem.getModel();
     int mnemonicIndex = jmenuitem.getDisplayedMnemonicIndex();
@@ -352,7 +357,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
     // Position the Accelerator text rect
 
-    acceleratorRect.x += viewRect.width - arrowIconRect.width - menuItemGap - acceleratorRect.width;
+    acceleratorRect.x += viewRect.width - arrowIconRect.width - (arrowIconRect.width > 0 ? menuItemGap : 0) - acceleratorRect.width;
     acceleratorRect.y = (viewRect.y + viewRect.height / 2) - acceleratorRect.height / 2;
 
     // Position the Check and Arrow Icons

@@ -88,14 +88,15 @@
 
     "Menu": {
       "background": "#f6f6f6",
-      "border": "0,5,2,5",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
+      "borderCornerRadius": 14,
       "separatorColor": "#dfdfdf"
     },
 
     "MenuItem": {
       "acceleratorSelectionForeground": "#dcdcdc",
       "background": "#f6f6f6",
-      "border": "0,5,2,5"
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder"
     },
 
     "MnemonicIcon": {
@@ -124,16 +125,17 @@
 
     "PopupMenu": {
       "background": "#f6f6f6",
-      "borderInsets": "4,0,4,0",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
+      "borderInsets": "8,1,8,1",
       "borderWidth": 0,
       "translucentBackground": "#ececec",
       "UI": "com.intellij.ide.ui.laf.intellij.MacPopupMenuUI"
     },
 
     "PopupMenuSeparator": {
-      "height": 12,
-      "stripeIndent": 5,
-      "stripeWidth": 2,
+      "height": 9,
+      "stripeWidth": 1,
+      "stripeIndent": 4,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
     },
 

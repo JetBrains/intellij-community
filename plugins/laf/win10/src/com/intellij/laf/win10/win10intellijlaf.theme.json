@@ -158,6 +158,7 @@
     "Menu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
       "borderColor": "#cdcdcd",
+      "borderCornerRadius": 14,
       "maxGutterIconWidth": 18,
       "opaque": true,
       "separatorColor": "#cdcdcd"
@@ -171,7 +172,7 @@
 
     "MenuItem": {
       "acceleratorDelimiter": "-",
-      "acceleratorForeground": "#505050",
+      "acceleratorForeground": "#808080",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
       "maxGutterIconWidth": 18
     },
@@ -220,10 +221,17 @@
 
     "PopupMenu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
-      "translucentBackground": "#f2f2f2"
+      "translucentBackground": "#f2f2f2",
+      "borderInsets": "8,1,8,1",
+      "UI": "com.intellij.ide.ui.laf.intellij.MacPopupMenuUI"
     },
 
-    "PopupMenuSeparatorUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI",
+    "PopupMenuSeparator": {
+      "height": 9,
+      "stripeWidth": 1,
+      "stripeIndent": 4,
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
+    },
 
     "ProgressBar": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder",
