@@ -1,9 +1,21 @@
 <html>
 <body>
-Reports nested <b>synchronized</b> statements. Nested <b>synchronized</b> statements
-are either redundant (if the lock objects are identical) or prone to deadlock.
+Reports nested <code>synchronized</code> statements.
+When possible, it's better to avoid nested synchronization, since in some cases it may lead to a deadlock.
+<p>Example:</p>
+<pre>
+  synchronized (lockA){
+    //thread 1 is waiting for lockB
+    synchronized (lockB){ //warning
+    }
+  }
+  ...
+  synchronized (lockB) {
+    //thread 2 is waiting for lockA
+    synchronized (lockA) { //warning
+    }
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

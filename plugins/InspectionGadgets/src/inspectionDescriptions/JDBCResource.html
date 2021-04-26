@@ -1,21 +1,27 @@
 <html>
 <body>
-Reports any JDBC resource which is not safely closed in a <b>finally</b> block. Such resources may
-be inadvertently leaked if an exception is thrown before the resource is closed. JDBC resources reported
-by this inspection include <b>java.sql.Connection</b>,
-<b>java.sql.Statement</b>,
-<b>java.sql.PreparedStatement</b>,
-<b>java.sql.CallableStatement</b>,
-and <b>java.sql.ResultSet</b>.
+Reports any JDBC resource which is not safely closed. JDBC resources reported
+by this inspection include <code>java.sql.Connection</code>,
+<code>java.sql.Statement</code>, <code>java.sql.PreparedStatement</code>,
+<code>java.sql.CallableStatement</code>, and <code>java.sql.ResultSet</code>.
+<p>Example:</p>
+<pre>
+  ResultSet findAllElements(Connection connection) throws SQLException {
+    PreparedStatement statement = connection.prepareStatement("SELECT * FROM TABLE");//statement is not closed
+    statement.execute();
+    return statement.getResultSet();
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to specify if a JDBC resource is allowed to be opened <i>inside</i> a <b>try</b>
+Use the first checkbox below to specify if a JDBC resource is allowed to be opened inside a <code>try</code>
 block. This style is less desirable because it is more verbose than opening a resource
-<i>in front of</i> a <b>try</b> block.
+in front of a <code>try</code> block.
+</p>
 <p>
 Use the second checkbox below to specify that the inspection should not warn if a JDBC resource is passed as a method call argument.
 If enabled the inspection assumes the resource is closed in the called method.
-Method calls inside a <b>finally</b> block with <i>close</i> in the name and an JDBC resource argument will not be ignored.
-<p>
+Method calls inside a <code>finally</code> block with <code>close</code> in the name and an JDBC resource argument will not be ignored.
+</p>
 </body>
 </html>

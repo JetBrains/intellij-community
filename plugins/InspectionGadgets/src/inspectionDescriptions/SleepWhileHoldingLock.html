@@ -1,12 +1,16 @@
 <html>
 <body>
-Reports calls to <b>java.lang.Thread.sleep()</b> that occur while
-within a <b>synchronized</b> block or method. Sleeping
-while synchronized may result in decreased performance, poor scalability, and possibly
-even deadlocking. Consider using <b>wait</b> instead,
+Reports calls to <code>java.lang.Thread.sleep()</code> methods that occur
+within a <code>synchronized</code> block or method. <code>sleep()</code> within a
+<code>synchronized</code> block may result in decreased performance, poor scalability, and possibly
+even deadlocking. Consider using <code>wait()</code> instead,
 as it will release the lock held.
+<p>Example:</p>
+<pre>
+  synchronized (lock) {
+    Thread.sleep(100);
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

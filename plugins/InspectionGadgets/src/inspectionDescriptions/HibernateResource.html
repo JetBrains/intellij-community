@@ -1,18 +1,23 @@
-
 <html>
 <body>
-Reports any Hibernate resource which is not safely closed in a <code>finally</code> block. Such resources may
-be inadvertently leaked if an exception is thrown before the resource is closed. Hibernate resources reported
-by this inspection include <code>org.hibernate.Session</code>.
+Reports any calls to <code>openSession()</code> method if the returned <code>org.hibernate.Session</code> resource is not safely closed.
+<p>Example:</p>
+<pre>
+  void doHibernateQuery(SessionFactory factory) {
+    Session session = factory.openSession(); //warning
+    session.createQuery("...");
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to specify if a Hibernate resource is allowed to be opened <i>inside</i> a <code>try</code>
+Use the first checkbox below to specify if a <code>org.hibernate.Session</code> resource is allowed to be opened inside a <code>try</code>
 block. This style is less desirable because it is more verbose than opening a resource
-<i>in front of</i> a <code>try</code> block.
+in front of a <code>try</code> block.
+</p>
 <p>
 Use the second checkbox below to specify that the inspection should not warn if a Hibernate resource is passed as a method call argument.
 If enabled the inspection assumes the resource is closed in the called method.
 Method calls inside a <code>finally</code> block with <code>close</code> in the name and a Hibernate resource argument will not be ignored.
-<p>
+</p>
 </body>
 </html>

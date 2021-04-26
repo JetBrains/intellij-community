@@ -1,15 +1,23 @@
 <html>
 <body>
-Reports <b>transient</b> fields which
+Reports <code>transient</code> fields which
 are initialized during normal object construction, but whose class does not have a
-<b>readObject</b> method.
-Because <b>transient</b> fields are not serialized they need
-to be initialized separately in a <b>readObject</b> method
-during deserialization. Any <b>transient</b> fields which 
+<code>readObject</code> method.
+Because <code>transient</code> fields are not serialized they need
+to be initialized separately in a <code>readObject()</code> method
+during deserialization.
+<p>
+Any <code>transient</code> fields which
 are not initialized during normal object construction are considered to use the default
 initialization and are not reported by this inspection.
+</p>
+<p>Example:</p>
+<pre>
+  class Person implements Serializable {
+    transient String name = "Default"; //warning, can actually be a null after deserialization
+    transient String surname; //null is considered as a default value
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>
