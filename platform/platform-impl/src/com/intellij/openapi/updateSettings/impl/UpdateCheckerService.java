@@ -41,14 +41,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.max;
 
-final class UpdateCheckerComponent {
-  public static UpdateCheckerComponent getInstance() {
-    return ApplicationManager.getApplication().getService(UpdateCheckerComponent.class);
+final class UpdateCheckerService {
+  public static UpdateCheckerService getInstance() {
+    return ApplicationManager.getApplication().getService(UpdateCheckerService.class);
   }
 
   static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
 
-  private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
+  private static final Logger LOG = Logger.getInstance(UpdateCheckerService.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
@@ -130,7 +130,7 @@ final class UpdateCheckerComponent {
   }
 
   static final class MyActivity implements StartupActivity.DumbAware {
-    private static final AtomicBoolean ourWaiting = new AtomicBoolean(true);
+    private static final AtomicBoolean ourStarted = new AtomicBoolean(false);
 
     MyActivity() {
       Application app = ApplicationManager.getApplication();
@@ -141,7 +141,7 @@ final class UpdateCheckerComponent {
 
     @Override
     public void runActivity(@NotNull Project project) {
-      if (!ourWaiting.getAndSet(false)) {
+      if (ourStarted.getAndSet(true)) {
         return;
       }
 
