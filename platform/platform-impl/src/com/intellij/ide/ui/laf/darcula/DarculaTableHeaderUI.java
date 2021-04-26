@@ -62,6 +62,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
         if (columnAtLeft == -1) columnAtLeft = first;
         if (columnAtRight == -1) columnAtRight = last;
         Rectangle bounds = header.getHeaderRect(columnAtLeft);
+        bounds.height--; // because of bottomSeparatorColor above
         for (int index = columnAtLeft; columnAtRight >= index; index++) {
           if (index != first) paintLine(g, bounds, lineColor);
           paintCell(g, bounds, model, index, focused, draggedColumn);
@@ -72,6 +73,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
         if (columnAtRight == -1) columnAtRight = first;
         if (columnAtLeft == -1) columnAtLeft = last;
         Rectangle bounds = header.getHeaderRect(columnAtLeft);
+        bounds.height--; // because of bottomSeparatorColor above
         for (int index = columnAtLeft; columnAtRight <= index; index--) {
           if (index != last) paintLine(g, bounds, lineColor);
           paintCell(g, bounds, model, index, focused, draggedColumn);
@@ -106,7 +108,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
 
   private static void paintLine(Graphics g, Rectangle bounds, Color color) {
     g.setColor(color);
-    g.fillRect(bounds.x, bounds.y + 1, 1, bounds.height - 3);
+    g.fillRect(bounds.x, bounds.y + 1, 1, bounds.height - 2);
   }
 
   private void paintCell(Graphics g, Rectangle bounds, TableColumnModel model, int index, boolean focused, TableColumn draggedColumn) {
