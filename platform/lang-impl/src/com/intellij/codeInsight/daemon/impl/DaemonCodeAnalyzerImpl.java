@@ -931,7 +931,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     return progress;
   }
 
-  private static class MyDaemonProgressIndicator extends DaemonProgressIndicator {
+  private static final class MyDaemonProgressIndicator extends DaemonProgressIndicator {
     private final Project myProject;
     private Collection<? extends FileEditor> myFileEditors;
 
@@ -950,12 +950,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     public void stopIfRunning() {
       Collection<? extends FileEditor> editors = myFileEditors;
       super.stopIfRunning();
+
+      assert editors != null;
       myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished(editors);
       myFileEditors = null;
       HighlightingSessionImpl.clearProgressIndicator(this);
     }
   }
-
 
   @Override
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile psiFile) {
