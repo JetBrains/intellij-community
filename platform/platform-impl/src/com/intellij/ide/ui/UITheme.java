@@ -7,9 +7,10 @@ import com.google.common.hash.Hashing;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.SVGLoader;
@@ -29,8 +30,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -62,7 +61,6 @@ public final class UITheme {
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
   private SVGLoader.SvgElementColorPatcherProvider colorPatcher;
-  private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
   private static final String OS_MACOS_KEY = "os.mac";
   private static final String OS_WINDOWS_KEY = "os.windows";
@@ -481,21 +479,7 @@ public final class UITheme {
       return parseGrayFilter(value);
     }
     else {
-      Icon icon;
-      if (value.startsWith("AllIcons.")) {
-        Icon result;
-        try {
-          MethodHandle getter = LOOKUP.findStaticGetter(AllIcons.class, value.substring(value.lastIndexOf('.') + 1), Icon.class);
-          result = (Icon)getter.invoke();
-        }
-        catch (Throwable e) {
-          result = null;
-        }
-        icon = result;
-      }
-      else {
-        icon = null;
-      }
+      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;
       if (icon != null) {
         return new IconUIResource(icon);
       }
