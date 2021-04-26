@@ -67,6 +67,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull private final VcsLogUiProperties.PropertiesChangeListener myListener;
 
   @NotNull private final Set<VirtualFile> myRoots = new HashSet<>();
+  private final boolean myIsWithEditorDiffPreview;
   private boolean myHasMergeCommits = false;
   @NotNull private final List<Change> myChanges = new ArrayList<>();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = new LinkedHashMap<>();
@@ -82,6 +83,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
                        boolean isWithEditorDiffPreview,
                        @NotNull Disposable parent) {
     super(project, false, false);
+    myIsWithEditorDiffPreview = isWithEditorDiffPreview;
     myUiProperties = uiProperties;
     myDataGetter = getter;
 
@@ -103,8 +105,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
     init();
 
+    setEditorDiffPreview(isWithEditorDiffPreview && VcsLogUiUtil.isDiffPreviewInEditor(myProject));
     if (isWithEditorDiffPreview) {
-      setEditorDiffPreview(true);
       EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::toggleEditorDiffPreview);
     }
 
@@ -401,7 +403,9 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return ChangeDiffRequestProducer.create(project, change, context);
   }
 
-  public void toggleEditorDiffPreview() {
+  private void toggleEditorDiffPreview() {
+    if (!myIsWithEditorDiffPreview) return;
+
     setEditorDiffPreview(VcsLogUiUtil.isDiffPreviewInEditor(myProject));
   }
 

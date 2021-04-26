@@ -55,7 +55,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VisiblePackRefresher refresher,
                       @Nullable VcsLogFilterCollection initialFilters) {
-    this(id, logData, manager, uiProperties, refresher, initialFilters, VcsLogUiUtil.isDiffPreviewInEditor(logData.getProject()));
+    this(id, logData, manager, uiProperties, refresher, initialFilters, true);
   }
 
   public VcsLogUiImpl(@NotNull String id,
