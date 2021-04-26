@@ -18,6 +18,7 @@ import java.util.function.Consumer;
  * @author Alexander Lobas
  */
 public class MultiSelectionEventHandler extends EventHandler {
+
   private PluginsGroupComponent myContainer;
   private PagePluginLayout myLayout;
   private List<ListPluginComponent> myComponents;
@@ -209,16 +210,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       return;
     }
 
-    try {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = false;
-
-      myKeyListener.keyPressed(event);
-    }
-    finally {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = true;
-    }
+    myComponents.get(0).onSelection(() -> myKeyListener.keyPressed(event));
   }
 
   @Override
@@ -259,18 +251,12 @@ public class MultiSelectionEventHandler extends EventHandler {
 
   @Override
   public void initialSelection(boolean scrollAndFocus) {
-    if (!myComponents.isEmpty() && mySelectionLength == 0) {
-      try {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = false;
-
-        singleSelection(myComponents.get(0), 0, scrollAndFocus);
-      }
-      finally {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = true;
-      }
+    if (myComponents.isEmpty() || mySelectionLength != 0) {
+      return;
     }
+
+    ListPluginComponent component = myComponents.get(0);
+    component.onSelection(() -> singleSelection(component, 0, scrollAndFocus));
   }
 
   @Override

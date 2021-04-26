@@ -48,11 +48,12 @@ public class ListPluginComponent extends JPanel {
   public static final Color SELECTION_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xEDF6FE, 0x464A4D));
   public static final Color HOVER_COLOR = JBColor.namedColor("Plugins.hoverBackground", new JBColor(0xEDF6FE, 0x464A4D));
 
+  private static final Ref<Boolean> HANDLE_FOCUS_ON_SELECTION = Ref.create(Boolean.TRUE);
+
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
   private @NotNull IdeaPluginDescriptor myPlugin;
-  private boolean myUninstalled;
   private boolean myOnlyUpdateMode;
   public IdeaPluginDescriptor myUpdateDescriptor;
 
@@ -76,9 +77,7 @@ public class ListPluginComponent extends JPanel {
   private JComponent myErrorComponent;
   private OneLineProgressIndicator myIndicator;
   private EventHandler myEventHandler;
-  protected EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
-
-  public static boolean HANDLE_FOCUS_ON_SELECTION = true;
+  protected @NotNull EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel,
                              @NotNull IdeaPluginDescriptor plugin,
@@ -118,21 +117,26 @@ public class ListPluginComponent extends JPanel {
     updateColors(EventHandler.SelectionType.NONE);
   }
 
-  public EventHandler.SelectionType getSelection() {
+  @NotNull EventHandler.SelectionType getSelection() {
     return mySelection;
   }
 
-  public void setSelection(@NotNull EventHandler.SelectionType type) {
+  void setSelection(@NotNull EventHandler.SelectionType type) {
     setSelection(type, type == EventHandler.SelectionType.SELECTION);
   }
 
-  public void setSelection(@NotNull EventHandler.SelectionType type, boolean scrollAndFocus) {
+  void setSelection(@NotNull EventHandler.SelectionType type, boolean scrollAndFocus) {
     mySelection = type;
 
     if (scrollAndFocus) {
-      scrollToVisible();
-      if (getParent() != null && type == EventHandler.SelectionType.SELECTION && HANDLE_FOCUS_ON_SELECTION) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
+      JComponent parent = (JComponent)getParent();
+      if (parent != null) {
+        scrollToVisible(parent, getBounds());
+
+        if (type == EventHandler.SelectionType.SELECTION &&
+            HANDLE_FOCUS_ON_SELECTION.get()) {
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
+        }
       }
     }
 
@@ -140,13 +144,18 @@ public class ListPluginComponent extends JPanel {
     repaint();
   }
 
-  public void scrollToVisible() {
-    JComponent parent = (JComponent)getParent();
-    if (parent == null) {
-      return;
+  void onSelection(@NotNull Runnable runnable) {
+    try {
+      HANDLE_FOCUS_ON_SELECTION.set(Boolean.FALSE);
+      runnable.run();
     }
+    finally {
+      HANDLE_FOCUS_ON_SELECTION.set(Boolean.TRUE);
+    }
+  }
 
-    Rectangle bounds = getBounds();
+  private static void scrollToVisible(@NotNull JComponent parent,
+                                      @NotNull Rectangle bounds) {
     if (!parent.getVisibleRect().contains(bounds)) {
       parent.scrollRectToVisible(bounds);
     }
