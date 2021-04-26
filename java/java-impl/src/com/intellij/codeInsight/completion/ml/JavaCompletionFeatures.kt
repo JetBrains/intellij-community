@@ -11,9 +11,11 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-internal object JavaCompletionFeatures {
+@ApiStatus.Internal
+object JavaCompletionFeatures {
   private val VARIABLES_KEY: Key<VariablesInfo> = Key.create("java.ml.completion.variables")
   private val PACKAGES_KEY: Key<PackagesInfo> = Key.create("java.ml.completion.packages")
   private val CHILD_CLASS_WORDS_KEY: Key<List<String>> = Key.create("java.ml.completion.child.class.name.words")
@@ -213,7 +215,7 @@ internal object JavaCompletionFeatures {
     val importPackages: FqnTrie
   )
 
-  private class FqnTrie private constructor(private val level: Int) {
+  class FqnTrie private constructor(private val level: Int) {
     companion object {
       fun create(): FqnTrie = FqnTrie(0)
 
