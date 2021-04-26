@@ -606,7 +606,7 @@ public final class PluginManagerCore {
     int capacity = dependencies.size() + incompatibleModuleIds.size();
     if (!withOptional) {
       for (PluginDependency dependency : dependencies) {
-        if (dependency.isOptional) {
+        if (dependency.isOptional()) {
           capacity--;
         }
       }
@@ -629,12 +629,12 @@ public final class PluginManagerCore {
     }
 
     for (PluginDependency dependency : dependencies) {
-      if (!withOptional && dependency.isOptional) {
+      if (!withOptional && dependency.isOptional()) {
         continue;
       }
 
       // check for missing optional dependency
-      IdeaPluginDescriptorImpl dep = idToDescriptorMap.apply(dependency.id);
+      IdeaPluginDescriptorImpl dep = idToDescriptorMap.apply(dependency.getPluginId());
       // if 'dep' refers to a module we need to check the real plugin containing this module only if it's still enabled,
       // otherwise the graph will be inconsistent
       if (dep == null) {
@@ -1135,7 +1135,7 @@ public final class PluginManagerCore {
         continue;
       }
 
-      IdeaPluginDescriptorImpl dependencyDescriptor = idMap.get(dependency.id);
+      IdeaPluginDescriptorImpl dependencyDescriptor = idMap.get(dependency.getPluginId());
       if (dependencyDescriptor == null || !dependencyDescriptor.isEnabled()) {
         dependency.isDisabledOrBroken = true;
         continue;
@@ -1155,16 +1155,16 @@ public final class PluginManagerCore {
   private static boolean checkChildDeps(@NotNull List<PluginDependency> childDependencies, @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
     for (PluginDependency dependency : childDependencies) {
       if (dependency.isDisabledOrBroken) {
-        if (dependency.isOptional) {
+        if (dependency.isOptional()) {
           continue;
         }
         return false;
       }
 
-      IdeaPluginDescriptorImpl dependentDescriptor = idMap.get(dependency.id);
+      IdeaPluginDescriptorImpl dependentDescriptor = idMap.get(dependency.getPluginId());
       if (dependentDescriptor == null || !dependentDescriptor.isEnabled()) {
         dependency.isDisabledOrBroken = true;
-        if (dependency.isOptional) {
+        if (dependency.isOptional()) {
           continue;
         }
         return false;
@@ -1174,7 +1174,7 @@ public final class PluginManagerCore {
         List<PluginDependency> list = dependency.subDescriptor.pluginDependencies;
         if (list != null && !checkChildDeps(list, idMap)) {
           dependency.isDisabledOrBroken = true;
-          if (dependency.isOptional) {
+          if (dependency.isOptional()) {
             continue;
           }
           return false;
@@ -1186,7 +1186,7 @@ public final class PluginManagerCore {
 
   private static @NotNull IdeaPluginDescriptorImpl @NotNull [] getTopologicallySorted(@NotNull InboundSemiGraph<IdeaPluginDescriptorImpl> graph) {
     DFSTBuilder<IdeaPluginDescriptorImpl> requiredOnlyGraph = new DFSTBuilder<>(GraphGenerator.generate(graph));
-    IdeaPluginDescriptorImpl[] sortedRequired = graph.getNodes().toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
+    IdeaPluginDescriptorImpl[] sortedRequired = graph.getNodes().toArray(PluginLoadingResult.EMPTY_ARRAY);
     Comparator<IdeaPluginDescriptorImpl> comparator = requiredOnlyGraph.comparator();
     // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
     // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
@@ -1286,8 +1286,8 @@ public final class PluginManagerCore {
     }
 
     for (PluginDependency dependency : descriptor.pluginDependencies) {
-      PluginId depId = dependency.id;
-      if (dependency.isOptional || loadedPluginIds.contains(depId) || loadedModuleIds.contains(depId)) {
+      PluginId depId = dependency.getPluginId();
+      if (dependency.isOptional() || loadedPluginIds.contains(depId) || loadedModuleIds.contains(depId)) {
         continue;
       }
 
@@ -1487,12 +1487,12 @@ public final class PluginManagerCore {
     }
 
     for (PluginDependency dependency : rootDescriptor.pluginDependencies) {
-      if (!withOptionalDeps && dependency.isOptional) {
+      if (!withOptionalDeps && dependency.isOptional()) {
         continue;
       }
 
-      IdeaPluginDescriptorImpl descriptor = idToMap.get(dependency.id);
-      PluginId pluginId = descriptor == null ? dependency.id : descriptor.getPluginId();
+      IdeaPluginDescriptorImpl descriptor = idToMap.get(dependency.getPluginId());
+      PluginId pluginId = descriptor == null ? dependency.getPluginId() : descriptor.getPluginId();
       switch (consumer.apply(pluginId, descriptor)) {
         case TERMINATE:
           return false;

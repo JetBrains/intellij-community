@@ -21,7 +21,7 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
   val buildNumber = BuildNumber.fromString("2042.42")
-  val parentContext = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
+  val parentContext = DescriptorListLoadingContext(disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
   val result = PluginDescriptorLoader.loadDescriptorFromFileOrDir(file = dir,
                                                                   pathName = PluginManagerCore.PLUGIN_XML,
                                                                   context = parentContext,
@@ -31,7 +31,7 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
                                                                   isDirectory = Files.isDirectory(dir))
   if (result == null) {
     @Suppress("USELESS_CAST")
-    assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty
+    assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
   }
   return result!!
 }

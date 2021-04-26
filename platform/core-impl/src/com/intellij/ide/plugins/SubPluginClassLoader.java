@@ -24,7 +24,7 @@ final class SubPluginClassLoader extends PluginClassLoader {
                        @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
     super(urlClassLoaderBuilder, parents, pluginDescriptor, pluginDescriptor.getPluginPath(), coreLoader, null, null, resourceFileFactory);
 
-    assert pluginDescriptor.getPackagePrefix() == null;
+    assert pluginDescriptor.packagePrefix == null;
     this.packagePrefixes = packagePrefixes;
   }
 

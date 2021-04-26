@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.impl.ExtensionDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.ArrayUtil
 import com.intellij.util.messages.*
@@ -258,14 +260,14 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       val mainContainerDescriptor = getContainerDescriptor(mainPlugin)
 
       executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
-        registerServices(containerDescriptor.services, pluginDescriptor)
+        registerServices(containerDescriptor.services ?: return@executeRegisterTask, pluginDescriptor)
       }
 
       executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
         newComponentConfigCount += registerComponents(pluginDescriptor, containerDescriptor, isHeadless)
       }
 
-      executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { _, containerDescriptor ->
+      executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
         containerDescriptor.listeners?.let { listeners ->
           var m = map
           if (m == null) {
@@ -277,6 +279,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
               continue
             }
 
+            if (listener.os != null && !isSuitableForOs(listener.os)) {
+              continue
+            }
+
+            listener.pluginDescriptor = pluginDescriptor
             m.computeIfAbsent(listener.topicClassName) { ArrayList() }.add(listener)
           }
         }
@@ -321,12 +328,28 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   private fun registerComponents(pluginDescriptor: IdeaPluginDescriptor, containerDescriptor: ContainerDescriptor, headless: Boolean): Int {
     var count = 0
     for (descriptor in (containerDescriptor.components ?: return 0)) {
-      if (!descriptor.prepareClasses(headless) || !isComponentSuitable(descriptor)) {
+      var implementationClass = descriptor.implementationClass
+      if (headless && descriptor.headlessImplementationClass != null) {
+        if (descriptor.headlessImplementationClass.isEmpty()) {
+          continue
+        }
+
+        implementationClass = descriptor.headlessImplementationClass
+      }
+
+      if (descriptor.os != null && !isSuitableForOs(descriptor.os)) {
+        continue
+      }
+
+      if (!isComponentSuitable(descriptor)) {
         continue
       }
 
       try {
-        registerComponent(descriptor, pluginDescriptor)
+        registerComponent(interfaceClassName = descriptor.interfaceClass ?: descriptor.implementationClass!!,
+                          implementationClassName = implementationClass,
+                          config = descriptor,
+                          pluginDescriptor = pluginDescriptor)
         count++
       }
       catch (e: Throwable) {
@@ -380,23 +403,27 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     adapter.replaceInstance(componentKey, componentImplementation, parentDisposable, null)
   }
 
-  private fun registerComponent(config: ComponentConfig, pluginDescriptor: PluginDescriptor) {
-    val interfaceClass = pluginDescriptor.pluginClassLoader.loadClass(config.interfaceClass)
-    if (config.options != null && java.lang.Boolean.parseBoolean(config.options!!.get("overrides"))) {
+  private fun registerComponent(interfaceClassName: String,
+                                implementationClassName: String?,
+                                config: ComponentConfig,
+                                pluginDescriptor: PluginDescriptor) {
+    val interfaceClass = pluginDescriptor.pluginClassLoader.loadClass(interfaceClassName)
+    val options = config.options
+    if (config.overrides) {
       unregisterComponent(interfaceClass) ?: throw PluginException("$config does not override anything", pluginDescriptor.pluginId)
     }
 
-    val implementationClass = if (config.interfaceClass == config.implementationClass) interfaceClass.name else config.implementationClass
     // implementationClass == null means we want to unregister this component
-    if (implementationClass.isNullOrEmpty()) {
+    if (implementationClassName == null) {
       return
     }
 
-    if (config.options != null && java.lang.Boolean.parseBoolean(config.options!!.get("workspace")) &&
-        !badWorkspaceComponents.contains(implementationClass)) {
-      LOG.error("workspace option is deprecated (implementationClass=$implementationClass)")
+    if (options != null && java.lang.Boolean.parseBoolean(options.get("workspace")) &&
+        !badWorkspaceComponents.contains(implementationClassName)) {
+      LOG.error("workspace option is deprecated (implementationClass=$implementationClassName)")
     }
-    val adapter = MyComponentAdapter(interfaceClass, implementationClass, pluginDescriptor, this, null)
+
+    val adapter = MyComponentAdapter(interfaceClass, implementationClassName, pluginDescriptor, this, null)
     registerAdapter(adapter, adapter.pluginDescriptor)
     componentAdapters.add(adapter)
   }
@@ -410,6 +437,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     val app = getApplication()!!
     for (descriptor in services) {
+      if (descriptor.os != null && !isSuitableForOs(descriptor.os)) {
+        continue
+      }
+
       // Allow to re-define service implementations in plugins.
       // Empty serviceImplementation means we want to unregister service.
       val key = descriptor.getInterface()
@@ -678,10 +709,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
                       preloadMode: PreloadMode = PreloadMode.FALSE) {
     checkState()
 
-    val descriptor = ServiceDescriptor()
-    descriptor.serviceInterface = serviceInterface.name
-    descriptor.serviceImplementation = implementation.name
-    descriptor.preload = preloadMode
+    val descriptor = ServiceDescriptor(serviceInterface.name, implementation.name, null, null, false, null, preloadMode, null)
     val adapter = ServiceComponentAdapter(descriptor, pluginDescriptor, this, implementation)
     if (override) {
       overrideAdapter(adapter, pluginDescriptor)
@@ -700,9 +728,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val serviceKey = serviceInterface.name
     checkState()
 
-    val descriptor = ServiceDescriptor()
-    descriptor.serviceInterface = serviceKey
-    descriptor.serviceImplementation = instance.javaClass.name
+    val descriptor = ServiceDescriptor(serviceKey, instance.javaClass.name, null, null, false, null, PreloadMode.FALSE, null)
     componentKeyToAdapter.put(serviceKey, ServiceComponentAdapter(descriptor, pluginDescriptor, this, instance.javaClass, instance))
     serviceInstanceHotCache.put(serviceInterface, instance)
   }
@@ -949,8 +975,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     val syncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     for (plugin in plugins) {
-      serviceLoop@
-      for (service in getContainerDescriptor(plugin).services) {
+      serviceLoop@ for (service in getContainerDescriptor(plugin).services ?: continue) {
         val list: MutableList<ForkJoinTask<*>> = when (service.preload) {
           PreloadMode.TRUE -> {
             if (onlyIfAwait) {
@@ -979,6 +1004,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
           PreloadMode.AWAIT -> syncPreloadedServices
           PreloadMode.FALSE -> continue@serviceLoop
           else -> throw IllegalStateException("Unknown preload mode ${service.preload}")
+        }
+
+        if (service.os != null && !isSuitableForOs(service.os)) {
+          continue@serviceLoop
         }
 
         list.add(ForkJoinTask.adapt task@{
@@ -1289,6 +1318,17 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
     @Suppress("DEPRECATION")
     return ArrayUtil.toObjectArray(result, baseClass)
+  }
+
+  final override fun isSuitableForOs(os: ExtensionDescriptor.Os): Boolean {
+    return when (os) {
+      ExtensionDescriptor.Os.mac -> SystemInfoRt.isMac
+      ExtensionDescriptor.Os.linux -> SystemInfoRt.isLinux
+      ExtensionDescriptor.Os.windows -> SystemInfoRt.isWindows
+      ExtensionDescriptor.Os.unix -> SystemInfoRt.isUnix
+      ExtensionDescriptor.Os.freebsd -> SystemInfoRt.isFreeBSD
+      else -> throw IllegalArgumentException("Unknown OS '$os'")
+    }
   }
 }
 

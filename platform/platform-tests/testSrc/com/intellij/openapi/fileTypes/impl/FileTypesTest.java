@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginDescriptorTestKt;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -532,8 +533,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.name = MyTestFileType.NAME;
     bean.implementationClass = MyTestFileType.class.getName();
     bean.extensions = MyTestFileType.EXTENSION;
-    IdeaPluginDescriptorImpl pluginDescriptor = new IdeaPluginDescriptorImpl(Path.of(""), false);
-    pluginDescriptor.readForTest(new Element("empty"), PluginId.getId("myPlugin"));
+    IdeaPluginDescriptorImpl pluginDescriptor = PluginDescriptorTestKt
+      .readDescriptorForTest(Path.of(""), false, "<idea-plugin/>".getBytes(StandardCharsets.UTF_8), PluginId.getId("myPlugin"));
     Disposable disposable = registerFileType(bean, pluginDescriptor);
     myFileTypeManager.getRegisteredFileTypes();
     initStandardFileTypes();

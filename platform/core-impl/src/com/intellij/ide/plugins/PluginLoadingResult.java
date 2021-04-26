@@ -18,7 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-final class PluginLoadingResult {
+public final class PluginLoadingResult {
+  public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
+
   private final Map<PluginId, Set<String>> brokenPluginVersions;
   final @NotNull Supplier<BuildNumber> productBuildNumber;
 
@@ -64,7 +66,7 @@ final class PluginLoadingResult {
   }
 
   void finishLoading() {
-    IdeaPluginDescriptorImpl[] enabledPlugins = this.plugins.values().toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
+    IdeaPluginDescriptorImpl[] enabledPlugins = this.plugins.values().toArray(EMPTY_ARRAY);
     this.plugins.clear();
     Arrays.sort(enabledPlugins, Comparator.comparing(IdeaPluginDescriptorImpl::getPluginId));
     this.enabledPlugins = Arrays.asList(enabledPlugins);

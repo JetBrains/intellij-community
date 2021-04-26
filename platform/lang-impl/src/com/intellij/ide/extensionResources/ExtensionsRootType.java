@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.extensionResources;
 
 import com.intellij.ide.plugins.*;
@@ -198,7 +198,7 @@ public final class ExtensionsRootType extends RootType {
     }
     // exclude parent classloader resources from list
     for (PluginDependency it : plugin.getPluginDependencies()) {
-      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(it.id);
+      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(it.getPluginId());
       if (descriptor == null) {
         continue;
       }

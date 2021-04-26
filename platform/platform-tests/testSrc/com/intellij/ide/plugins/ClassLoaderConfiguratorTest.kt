@@ -83,7 +83,7 @@ internal class ClassLoaderConfiguratorTest {
 
 private fun loadDescriptors(dir: Path): PluginLoadingResult {
   val result = PluginLoadingResult(emptyMap(), Supplier { buildNumber })
-  val context = DescriptorListLoadingContext(0, emptySet(), result)
+  val context = DescriptorListLoadingContext.createForTest(result)
 
   // constant order in tests
   val paths: List<Path> = dir.directoryStreamIfExists { it.sorted() }!!

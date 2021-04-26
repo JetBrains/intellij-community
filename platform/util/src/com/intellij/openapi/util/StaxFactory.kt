@@ -22,6 +22,7 @@ class StaxFactory {
       val config = ReaderConfig()
       config.doAutoCloseInput(true)
       config.setProperty(XMLInputFactory.SUPPORT_DTD, false)
+      config.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false)
       config.setProperty(XMLInputFactory2.P_INTERN_NAMES, false)
       config.setProperty(XMLInputFactory2.P_INTERN_NS_URIS, false)
       config.doPreserveLocation(false)
@@ -40,8 +41,14 @@ class StaxFactory {
 
     @JvmStatic
     @Throws(XMLStreamException::class)
-    fun createNonCoalescingXmlStreamReader(`in`: InputStream): XMLStreamReader2 {
-      return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(config.createNonShared(null, null, "UTF-8"), `in`))
+    fun createNonCoalescingXmlStreamReader(input: InputStream, locationSource: String?): XMLStreamReader2 {
+      return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(config.createNonShared(null, locationSource, "UTF-8"), input))
+    }
+
+    @JvmStatic
+    @Throws(XMLStreamException::class)
+    fun createNonCoalescingXmlStreamReader(input: ByteArray, locationSource: String?): XMLStreamReader2 {
+      return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(config.createNonShared(null, locationSource, "UTF-8"), input, 0, input.size))
     }
 
     /**

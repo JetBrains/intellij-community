@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
 import org.jdom.Element;
-import org.jdom.Namespace;
 import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Modifier;
@@ -51,59 +50,41 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<? extends Element> extensionPointElements) {
+  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<Element> extensionPointElements) {
     for (Element element : extensionPointElements) {
-      registerExtensionPoint(pluginDescriptor, element);
-    }
-  }
+      String pointName = element.getAttributeValue("qualifiedName");
+      if (pointName == null) {
+        String name = element.getAttributeValue("name");
+        if (name == null) {
+          throw componentManager.createError("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin",
+                                             pluginDescriptor.getPluginId());
+        }
 
-  private void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionPointElement) {
-    String pointName = getExtensionPointName(extensionPointElement, pluginDescriptor);
-
-    String beanClassName = extensionPointElement.getAttributeValue("beanClass");
-    String interfaceClassName = extensionPointElement.getAttributeValue("interface");
-    if (beanClassName == null && interfaceClassName == null) {
-      throw componentManager.createError("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin", pluginDescriptor.getPluginId());
-    }
-
-    if (beanClassName != null && interfaceClassName != null) {
-      throw componentManager.createError("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin", pluginDescriptor.getPluginId());
-    }
-
-    boolean dynamic = Boolean.parseBoolean(extensionPointElement.getAttributeValue("dynamic"));
-    String className = interfaceClassName == null ? beanClassName : interfaceClassName;
-    doRegisterExtensionPoint(pointName, className, pluginDescriptor, interfaceClassName != null, dynamic);
-  }
-
-  private @NotNull String getExtensionPointName(@NotNull Element extensionPointElement, @NotNull PluginDescriptor pluginDescriptor) {
-    String pointName = extensionPointElement.getAttributeValue("qualifiedName");
-    if (pointName == null) {
-      final String name = extensionPointElement.getAttributeValue("name");
-      if (name == null) {
-        throw componentManager.createError("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin", pluginDescriptor.getPluginId());
+        assert pluginDescriptor.getPluginId() != null;
+        pointName = pluginDescriptor.getPluginId().getIdString() + '.' + name;
       }
 
-      assert pluginDescriptor.getPluginId() != null;
-      pointName = pluginDescriptor.getPluginId().getIdString() + '.' + name;
+      String beanClassName = element.getAttributeValue("beanClass");
+      String interfaceClassName = element.getAttributeValue("interface");
+      if (beanClassName == null && interfaceClassName == null) {
+        throw componentManager.createError("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" +
+                                           pluginDescriptor + "' plugin", pluginDescriptor.getPluginId());
+      }
+
+      if (beanClassName != null && interfaceClassName != null) {
+        throw componentManager.createError("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" +
+                                           pluginDescriptor + "' plugin", pluginDescriptor.getPluginId());
+      }
+
+      boolean dynamic = Boolean.parseBoolean(element.getAttributeValue("dynamic"));
+      String className = interfaceClassName == null ? beanClassName : interfaceClassName;
+      doRegisterExtensionPoint(pointName, className, pluginDescriptor, interfaceClassName != null, dynamic);
     }
-    return pointName;
-  }
-
-  @Override
-  public void registerExtension(final @NotNull PluginDescriptor pluginDescriptor, final @NotNull Element extensionElement, String extensionNs) {
-    String epName = extractPointName(extensionElement, extensionNs);
-    registerExtension(getExtensionPoint(epName), pluginDescriptor, extensionElement);
-  }
-
-  private void registerExtension(@NotNull ExtensionPoint<?> extensionPoint,
-                                 @NotNull PluginDescriptor pluginDescriptor,
-                                 @NotNull Element extensionElement) {
-    ((ExtensionPointImpl<?>)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor, componentManager);
   }
 
   public boolean unregisterExtensions(@NotNull String extensionPointName,
                                       @NotNull PluginDescriptor pluginDescriptor,
-                                      @NotNull List<Element> elements,
+                                      @NotNull List<ExtensionDescriptor> elements,
                                       @NotNull List<Runnable> priorityListenerCallbacks,
                                       @NotNull List<Runnable> listenerCallbacks) {
     ExtensionPointImpl<?> point = extensionPoints.get(extensionPointName);
@@ -137,20 +118,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     for (ExtensionPointImpl<?> point : rawExtensionPoints) {
       extensionPoints.remove(point.getName());
     }
-  }
-
-  public static @NotNull String extractPointName(@NotNull Element extensionElement, @Nullable String ns) {
-    String epName = extensionElement.getAttributeValue("point");
-    if (epName == null) {
-      if (ns == null) {
-        Namespace namespace = extensionElement.getNamespace();
-        epName = namespace.getURI() + '.' + extensionElement.getName();
-      }
-      else {
-        epName = ns + '.' + extensionElement.getName();
-      }
-    }
-    return epName;
   }
 
   @Override
@@ -246,7 +213,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @ApiStatus.Internal
-  public void registerExtensionPoints(@NotNull List<? extends ExtensionPointImpl<?>> points, boolean clonePoint) {
+  public void registerExtensionPoints(@NotNull List<ExtensionPointImpl<?>> points, boolean clonePoint) {
     ComponentManager componentManager = this.componentManager;
     Map<String, ExtensionPointImpl<?>> map = extensionPoints;
     for (ExtensionPointImpl<?> point : points) {
@@ -280,7 +247,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     return extensionPoint;
   }
 
-  public void registerExtensions(@NotNull Map<String, List<Element>> extensions,
+  public void registerExtensions(@NotNull Map<String, List<ExtensionDescriptor>> extensions,
                                  @NotNull PluginDescriptor pluginDescriptor,
                                  @Nullable List<Runnable> listenerCallbacks) {
     extensions.forEach((name, list) -> {
@@ -292,7 +259,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public boolean registerExtensions(@NotNull String pointName,
-                                    @NotNull List<Element> extensions,
+                                    @NotNull List<ExtensionDescriptor> extensions,
                                     @NotNull PluginDescriptor pluginDescriptor,
                                     @Nullable List<Runnable> listenerCallbacks)  {
     ExtensionPointImpl<?> point = extensionPoints.get(pointName);

@@ -4,6 +4,7 @@ package com.intellij.openapi.components;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.ExtensionDescriptor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.ReflectionUtil;
@@ -152,4 +153,9 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @NotNull ActivityCategory getActivityCategory(boolean isExtension);
+
+  @ApiStatus.Internal
+  default boolean isSuitableForOs(@NotNull ExtensionDescriptor.Os os) {
+    return true;
+  }
 }

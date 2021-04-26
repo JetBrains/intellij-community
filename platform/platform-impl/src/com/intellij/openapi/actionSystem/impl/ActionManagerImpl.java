@@ -10,10 +10,7 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginDependency;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
@@ -135,7 +132,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final String SYNONYM_ELEMENT_NAME = "synonym";
   private static final String PLACE_ATTR_NAME = "place";
   private static final String USE_TEXT_OF_PLACE_ATTR_NAME = "use-text-of-place";
-  private static final String RESOURCE_BUNDLE_ATTR_NAME = "resource-bundle";
 
   private static final Logger LOG = Logger.getInstance(ActionManagerImpl.class);
   private static final int DEACTIVATED_TIMER_DELAY = 5000;
@@ -195,7 +191,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @ApiStatus.Internal
   public void registerActions(@NotNull List<IdeaPluginDescriptorImpl> plugins, @SuppressWarnings("unused") boolean initialStartup) {
-    KeymapManager keymapManager = Objects.requireNonNull(KeymapManager.getInstance());
+    KeymapManagerEx keymapManager = Objects.requireNonNull(KeymapManagerEx.getInstanceEx());
 
     for (IdeaPluginDescriptorImpl plugin : plugins) {
       registerPluginActions(plugin, keymapManager);
@@ -464,12 +460,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @NotNull
   @Override
-  public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
+  public ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons) {
     return new ActionToolbarImpl(place, group, horizontal, decorateButtons);
   }
 
-  private void registerPluginActions(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull KeymapManager keymapManager) {
-    List<Element> elements = plugin.getActionDescriptionElements();
+  private void registerPluginActions(@NotNull IdeaPluginDescriptorImpl pluginDescriptor, @NotNull KeymapManagerEx keymapManager) {
+    List<RawPluginDescriptor.ActionDescriptor> elements = pluginDescriptor.getActionDescriptionElements();
     if (elements == null) {
       return;
     }
@@ -478,13 +474,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     String lastBundleName = null;
     ResourceBundle lastBundle = null;
-    for (Element element : elements) {
-      Element parent = element.getParentElement();
-
-      String bundleName = parent == null ? null : parent.getAttributeValue(RESOURCE_BUNDLE_ATTR_NAME);
+    for (RawPluginDescriptor.ActionDescriptor descriptor : elements) {
+      String bundleName = descriptor.resourceBundle;
       if (bundleName == null) {
-        bundleName = PluginManagerCore.CORE_ID.equals(plugin.getPluginId()) ? ACTIONS_BUNDLE : plugin.getResourceBundleBaseName();
+        bundleName = PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId()) ? ACTIONS_BUNDLE : pluginDescriptor.getResourceBundleBaseName();
       }
+
+      Element element = descriptor.element;
 
       ResourceBundle bundle;
       if (bundleName == null) {
@@ -495,41 +491,41 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       else {
         try {
-          bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, plugin.getPluginClassLoader());
+          bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, pluginDescriptor.getPluginClassLoader());
           lastBundle = bundle;
           lastBundleName = bundleName;
         }
         catch (MissingResourceException e) {
-          LOG.error(new PluginException("Cannot resolve resource bundle " + bundleName + " for action " + JDOMUtil.writeElement(element), e, plugin.getPluginId()));
+          LOG.error(new PluginException("Cannot resolve resource bundle " + bundleName + " for action " + JDOMUtil.writeElement(element), e, pluginDescriptor.getPluginId()));
           bundle = null;
         }
       }
 
       switch (element.getName()) {
         case ACTION_ELEMENT_NAME:
-          processActionElement(element, plugin, bundle, keymapManager);
+          processActionElement(element, pluginDescriptor, bundle, keymapManager);
           break;
         case GROUP_ELEMENT_NAME:
-          processGroupElement(element, plugin, bundle, keymapManager);
+          processGroupElement(element, pluginDescriptor, bundle, keymapManager);
           break;
         case SEPARATOR_ELEMENT_NAME:
-          processSeparatorNode(null, element, plugin.getPluginId(), bundle);
+          processSeparatorNode(null, element, pluginDescriptor.getPluginId(), bundle);
           break;
         case REFERENCE_ELEMENT_NAME:
-          processReferenceNode(element, plugin.getPluginId(), bundle);
+          processReferenceNode(element, pluginDescriptor.getPluginId(), bundle);
           break;
         case UNREGISTER_ELEMENT_NAME:
-          processUnregisterNode(element, plugin.getPluginId());
+          processUnregisterNode(element, pluginDescriptor.getPluginId());
           break;
         case PROHIBIT_ELEMENT_NAME:
-          processProhibitNode(element, plugin.getPluginId());
+          processProhibitNode(element, pluginDescriptor.getPluginId());
           break;
         default:
-          LOG.error(new PluginException("Unexpected name of element" + element.getName(), plugin.getPluginId()));
+          LOG.error(new PluginException("Unexpected name of element" + element.getName(), pluginDescriptor.getPluginId()));
           break;
       }
     }
-    StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);
+    StartUpMeasurer.addPluginCost(pluginDescriptor.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);
   }
 
   @Override
@@ -750,7 +746,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private AnAction processGroupElement(@NotNull Element element,
                                        @NotNull IdeaPluginDescriptorImpl plugin,
                                        @Nullable ResourceBundle bundle,
-                                       @NotNull KeymapManager keymapManager) {
+                                       @NotNull KeymapManagerEx keymapManager) {
     if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(plugin.getPluginId(), "unexpected name of element \"" + element.getName() + "\"");
       return null;
@@ -866,42 +862,46 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
       String shortcutOfActionId = element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME);
       if (customClass && shortcutOfActionId != null) {
-        KeymapManagerEx.getInstanceEx().bindShortcuts(shortcutOfActionId, id);
+        keymapManager.bindShortcuts(shortcutOfActionId, id);
       }
 
       // process all group's children. There are other groups, actions, references and links
       for (Element child : element.getChildren()) {
         String name = child.getName();
-        if (ACTION_ELEMENT_NAME.equals(name)) {
-          AnAction action = processActionElement(child, plugin, bundle, keymapManager);
-          if (action != null) {
-            addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
+        switch (name) {
+          case ACTION_ELEMENT_NAME: {
+            AnAction action = processActionElement(child, plugin, bundle, keymapManager);
+            if (action != null) {
+              addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
+            }
+            break;
           }
-        }
-        else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
-          processSeparatorNode((DefaultActionGroup)group, child, plugin.getPluginId(), bundle);
-        }
-        else if (GROUP_ELEMENT_NAME.equals(name)) {
-          AnAction action = processGroupElement(child, plugin, bundle, keymapManager);
-          if (action != null) {
-            addToGroupInner(group, action, Constraints.LAST, false);
+          case SEPARATOR_ELEMENT_NAME:
+            processSeparatorNode((DefaultActionGroup)group, child, plugin.getPluginId(), bundle);
+            break;
+          case GROUP_ELEMENT_NAME: {
+            AnAction action = processGroupElement(child, plugin, bundle, keymapManager);
+            if (action != null) {
+              addToGroupInner(group, action, Constraints.LAST, false);
+            }
+            break;
           }
-        }
-        else if (ADD_TO_GROUP_ELEMENT_NAME.equals(name)) {
-          processAddToGroupNode(group, child, plugin.getPluginId(), isSecondary(child));
-        }
-        else if (REFERENCE_ELEMENT_NAME.equals(name)) {
-          AnAction action = processReferenceElement(child, plugin.getPluginId());
-          if (action != null) {
-            addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
+          case ADD_TO_GROUP_ELEMENT_NAME:
+            processAddToGroupNode(group, child, plugin.getPluginId(), isSecondary(child));
+            break;
+          case REFERENCE_ELEMENT_NAME: {
+            AnAction action = processReferenceElement(child, plugin.getPluginId());
+            if (action != null) {
+              addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
+            }
+            break;
           }
-        }
-        else if (OVERRIDE_TEXT_ELEMENT_NAME.equals(name)) {
-          processOverrideTextNode(group, id, child, plugin.getPluginId(), bundle);
-        }
-        else {
-          reportActionError(plugin.getPluginId(), "unexpected name of element \"" + name + "\n");
-          return null;
+          case OVERRIDE_TEXT_ELEMENT_NAME:
+            processOverrideTextNode(group, id, child, plugin.getPluginId(), bundle);
+            break;
+          default:
+            reportActionError(plugin.getPluginId(), "unexpected name of element \"" + name + "\n");
+            return null;
         }
       }
       return group;
@@ -1188,16 +1188,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @ApiStatus.Internal
   public static @Nullable String checkUnloadActions(PluginId pluginId, @NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    List<Element> elements = pluginDescriptor.getActionDescriptionElements();
-    if (elements == null) {
+    List<RawPluginDescriptor.ActionDescriptor> descriptors = pluginDescriptor.getActionDescriptionElements();
+    if (descriptors == null) {
       return null;
     }
 
-    for (Element element : elements) {
-      if (!element.getName().equals(ACTION_ELEMENT_NAME) &&
-          !(element.getName().equals(GROUP_ELEMENT_NAME) && canUnloadGroup(element)) &&
-          !element.getName().equals(REFERENCE_ELEMENT_NAME)) {
-        return "Plugin " + pluginId + " is not unload-safe because of action element " + element.getName();
+    for (RawPluginDescriptor.ActionDescriptor descriptor : descriptors) {
+      Element element = descriptor.element;
+      String elementName = element.getName();
+      if (!elementName.equals(ACTION_ELEMENT_NAME) &&
+          !(elementName.equals(GROUP_ELEMENT_NAME) && canUnloadGroup(element)) &&
+          !elementName.equals(REFERENCE_ELEMENT_NAME)) {
+        return "Plugin " + pluginId + " is not unload-safe because of action element " + elementName;
       }
     }
     return null;
@@ -1214,12 +1216,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   public void unloadActions(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    List<Element> elements = pluginDescriptor.getActionDescriptionElements();
+    List<RawPluginDescriptor.ActionDescriptor> elements = pluginDescriptor.getActionDescriptionElements();
     if (elements == null) {
       return;
     }
 
-    for (Element element : ContainerUtil.reverse(elements)) {
+    for (RawPluginDescriptor.ActionDescriptor descriptor : ContainerUtil.reverse(elements)) {
+      Element element = descriptor.element;
       switch (element.getName()) {
         case ACTION_ELEMENT_NAME:
           unloadActionElement(element);

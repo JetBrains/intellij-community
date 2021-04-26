@@ -1,17 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginDescriptorTestKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
-import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
@@ -57,7 +59,7 @@ public class ExtensionsImplTest {
 
     final boolean[] removed = {true};
     ExtensionPointImpl<Object> point = extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1);
-    point.addExtensionPointListener(new ExtensionPointListener<Object>() {
+    point.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
         removed[0] = false;
@@ -68,7 +70,7 @@ public class ExtensionsImplTest {
         removed[0] = true;
       }
     }, false, null);
-    point.registerExtension(123);
+    point.registerExtension(123, LoadingOrder.ANY);
     extensionsArea.unregisterExtensionPoint(EXTENSION_POINT_NAME_1);
     assertThat(extensionsArea.getExtensionPoints().size()).withFailMessage("Extension point should be removed").isEqualTo(numEP);
     assertThat(removed[0]).withFailMessage("Extension point disposed").isTrue();
@@ -78,15 +80,12 @@ public class ExtensionsImplTest {
   public void testExtensionsNamespaces() throws IOException, JDOMException {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
     extensionsArea.doRegisterExtensionPoint("plugin.ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
-    registerExtension(extensionsArea, "plugin", JDOMUtil.load(
-        "<plugin:ep1 xmlns:plugin=\"plugin\" order=\"LAST\"><text>3</text></plugin:ep1>"));
-    registerExtension(extensionsArea, "plugin", JDOMUtil.load(
-        "<ep1 xmlns=\"plugin\" order=\"FIRST\"><text>1</text></ep1>"));
-    registerExtension(extensionsArea, "plugin", JDOMUtil.load(
-        "<extension point=\"plugin.ep1\"><text>2</text></extension>"));
+    registerExtension(extensionsArea, "plugin", "<plugin:ep1 xmlns:plugin=\"plugin\" order=\"LAST\"><text>3</text></plugin:ep1>");
+    registerExtension(extensionsArea, "plugin", "<ep1 xmlns=\"plugin\" order=\"FIRST\"><text>1</text></ep1>");
+    registerExtension(extensionsArea, "plugin", "<extension point=\"plugin.ep1\"><text>2</text></extension>");
     ExtensionPoint<?> extensionPoint = extensionsArea.getExtensionPoint("plugin.ep1");
     TestExtensionClassOne[] extensions = (TestExtensionClassOne[]) extensionPoint.getExtensions();
-    assertEquals(3, extensions.length);
+    assertThat(extensions).hasSize(3);
     assertEquals("1", extensions[0].getText());
     assertEquals("2", extensions[1].getText());
     assertEquals("3", extensions[2].getText());
@@ -96,12 +95,9 @@ public class ExtensionsImplTest {
   public void testExtensionsWithOrdering() throws IOException, JDOMException {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
     extensionsArea.doRegisterExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
-    registerExtension(extensionsArea, "", JDOMUtil.load(
-        "<extension point=\"ep1\" order=\"LAST\"><text>3</text></extension>"));
-    registerExtension(extensionsArea, "", JDOMUtil.load(
-        "<extension point=\"ep1\" order=\"FIRST\"><text>1</text></extension>"));
-    registerExtension(extensionsArea, "", JDOMUtil.load(
-        "<extension point=\"ep1\"><text>2</text></extension>"));
+    registerExtension(extensionsArea, "", "<extension point=\"ep1\" order=\"LAST\"><text>3</text></extension>");
+    registerExtension(extensionsArea, "", "<extension point=\"ep1\" order=\"FIRST\"><text>1</text></extension>");
+    registerExtension(extensionsArea, "", "<extension point=\"ep1\"><text>2</text></extension>");
     ExtensionPoint<?> extensionPoint = extensionsArea.getExtensionPoint("ep1");
     TestExtensionClassOne[] extensions = (TestExtensionClassOne[]) extensionPoint.getExtensions();
     assertEquals(3, extensions.length);
@@ -114,9 +110,9 @@ public class ExtensionsImplTest {
   public void testExtensionsWithOrderingUpdate() throws IOException, JDOMException {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
     extensionsArea.doRegisterExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
-    registerExtension(extensionsArea, "", JDOMUtil.load("<extension point=\"ep1\" id=\"_7\" order=\"LAST\"><text>7</text></extension>"));
-    registerExtension(extensionsArea, "", JDOMUtil.load("<extension point=\"ep1\" id=\"fst\" order=\"FIRST\"><text>1</text></extension>"));
-    registerExtension(extensionsArea, "", JDOMUtil.load("<extension point=\"ep1\" id=\"id\"><text>3</text></extension>"));
+    registerExtension(extensionsArea, "", "<extension point=\"ep1\" id=\"_7\" order=\"LAST\"><text>7</text></extension>");
+    registerExtension(extensionsArea, "", "<extension point=\"ep1\" id=\"fst\" order=\"FIRST\"><text>1</text></extension>");
+    registerExtension(extensionsArea, "", "<extension point=\"ep1\" id=\"id\"><text>3</text></extension>");
     ExtensionPoint<TestExtensionClassOne> extensionPoint = extensionsArea.getExtensionPoint("ep1");
     TestExtensionClassOne[] extensions = extensionPoint.getExtensions();
     assertEquals(3, extensions.length);
@@ -131,10 +127,10 @@ public class ExtensionsImplTest {
     //noinspection UnusedAssignment
     disposable2 = null;
 
-    registerExtension(extensionsArea, "", JDOMUtil.load("<extension point=\"ep1\" order=\"BEFORE id\"><text>2</text></extension>"));
-    registerExtension(extensionsArea, "", JDOMUtil.load("<extension point=\"ep1\" order=\"AFTER id\"><text>4</text></extension>"));
-    registerExtension(extensionsArea, "", JDOMUtil.load("<extension point=\"ep1\" order=\"last, after _7\"><text>8</text></extension>"));
-    registerExtension(extensionsArea, "", JDOMUtil.load("<extension point=\"ep1\" order=\"after:id, before _7, after fst\"><text>5</text></extension>"));
+    registerExtension(extensionsArea, "", "<extension point=\"ep1\" order=\"BEFORE id\"><text>2</text></extension>");
+    registerExtension(extensionsArea, "", "<extension point=\"ep1\" order=\"AFTER id\"><text>4</text></extension>");
+    registerExtension(extensionsArea, "", "<extension point=\"ep1\" order=\"last, after _7\"><text>8</text></extension>");
+    registerExtension(extensionsArea, "", "<extension point=\"ep1\" order=\"after:id, before _7, after fst\"><text>5</text></extension>");
     extensionPoint.registerExtension(new TestExtensionClassOne("6"), disposable);
     extensions = extensionPoint.getExtensions();
     assertEquals(8, extensions.length);
@@ -148,7 +144,11 @@ public class ExtensionsImplTest {
     assertEquals("8", extensions[7].getText());
   }
 
-  public static void registerExtension(ExtensionsAreaImpl area, @NotNull final String pluginName, @NotNull final Element extensionElement) {
-    area.registerExtension(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionElement, null);
+  public static void registerExtension(ExtensionsAreaImpl area, @NotNull String pluginName, @NotNull String extensionElement) {
+    String moduleXml = "<idea-plugin><extensions>" + extensionElement + "</extensions></idea-plugin>";
+    PluginId id = PluginId.getId(pluginName);
+    IdeaPluginDescriptorImpl pluginDescriptor =
+      PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), id);
+    pluginDescriptor.registerExtensions(area, pluginDescriptor.appContainerDescriptor, null);
   }
 }

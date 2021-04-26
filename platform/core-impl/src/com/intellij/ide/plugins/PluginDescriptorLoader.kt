@@ -7,19 +7,16 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.platform.util.plugins.LocalFsDataLoader
-import com.intellij.platform.util.plugins.PathResolver
 import com.intellij.platform.util.plugins.ZipFsDataLoader
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
-import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File
@@ -32,6 +29,7 @@ import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.RecursiveAction
 import java.util.concurrent.RecursiveTask
 import java.util.function.Supplier
+import javax.xml.stream.XMLStreamException
 
 @ApiStatus.Internal
 object PluginDescriptorLoader {
@@ -81,9 +79,16 @@ object PluginDescriptorLoader {
                                     isEssential: Boolean,
                                     pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
     try {
-      val descriptor = IdeaPluginDescriptorImpl(pluginPath ?: file, isBundled)
-      val element = JDOMUtil.load(file.resolve(descriptorRelativePath), context.xmlFactory)
-      descriptor.readExternal(element, pathResolver, context, descriptor, LocalFsDataLoader(file))
+      val dataLoader = LocalFsDataLoader(file)
+      val raw = readModuleDescriptor(input = Files.readAllBytes(file.resolve(descriptorRelativePath)),
+                                     readContext = context,
+                                     pathResolver = pathResolver,
+                                     dataLoader = dataLoader,
+                                     includeBase = null,
+                                     readInto = null,
+                                     locationSource = file.toString())
+      val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginPath ?: file, isBundled = isBundled, id = null)
+      descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
       return descriptor
     }
     catch (e: NoSuchFileException) {
@@ -99,45 +104,56 @@ object PluginDescriptorLoader {
   }
 
   internal fun loadDescriptorFromJar(file: Path,
-                                     fileName: String,
-                                     pathResolver: PathResolver,
-                                     context: DescriptorLoadingContext,
-                                     parentContext: DescriptorListLoadingContext,
-                                     isBundled: Boolean,
-                                     isEssential: Boolean,
-                                     pluginPath: Path?): IdeaPluginDescriptorImpl? {
-    val factory = parentContext.xmlFactory
+                                    fileName: String,
+                                    pathResolver: PathResolver,
+                                    context: DescriptorLoadingContext,
+                                    parentContext: DescriptorListLoadingContext,
+                                    isBundled: Boolean,
+                                    isEssential: Boolean,
+                                    pluginPath: Path?): IdeaPluginDescriptorImpl? {
     try {
-      val element: Element
+      val raw: RawPluginDescriptor
       val dataLoader: DataLoader
       try {
         val pool = ZipFilePool.POOL
         if (pool == null) {
           val fs = context.open(file)
           val pluginDescriptorFile = fs.getPath("/META-INF/$fileName")
-          element = JDOMUtil.load(pluginDescriptorFile, factory)
           dataLoader = ZipFsDataLoader(pluginDescriptorFile.root)
+          raw = readModuleDescriptor(input = Files.readAllBytes(pluginDescriptorFile),
+                                     readContext = parentContext,
+                                     pathResolver = pathResolver,
+                                     dataLoader = dataLoader,
+                                     includeBase = null,
+                                     readInto = null,
+                                     locationSource = file.toString())
         }
         else {
           val resolver = pool.load(file)
           val data = resolver.loadZipEntry("META-INF/$fileName") ?: return null
-          element = JDOMUtil.load(data, factory)
           dataLoader = ImmutableZipFileDataLoader(resolver, file, pool)
+          raw = readModuleDescriptor(input = data,
+                                     readContext = parentContext,
+                                     pathResolver = pathResolver,
+                                     dataLoader = dataLoader,
+                                     includeBase = null,
+                                     readInto = null,
+                                     locationSource = file.toString())
         }
       }
       catch (ignore: NoSuchFileException) {
         return null
       }
 
-      val descriptor = IdeaPluginDescriptorImpl(pluginPath ?: file, isBundled)
-      if (descriptor.readExternal(element, pathResolver, parentContext, descriptor, dataLoader)) {
+      val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginPath ?: file, isBundled = isBundled, id = null)
+      if (descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = parentContext, isSub = false, dataLoader = dataLoader)) {
         descriptor.jarFiles = listOf(descriptor.pluginPath)
       }
       return descriptor
     }
     catch (e: Throwable) {
       if (isEssential) {
-        throw e
+        throw if (e is XMLStreamException) RuntimeException("Cannot read $file", e) else e
       }
       parentContext.result.reportCannotLoad(file, e)
     }
@@ -308,14 +324,10 @@ object PluginDescriptorLoader {
     if (i == -1) {
       return false
     }
+
     if (i + 1 < name.length) {
       val c = name[i + 1]
-      if (Character.isDigit(c)) {
-        return true
-      }
-      else {
-        return (c == 'm' || c == 'M') && i + 2 < name.length && Character.isDigit(name[i + 2])
-      }
+      return Character.isDigit(c) || ((c == 'm' || c == 'M') && i + 2 < name.length && Character.isDigit(name[i + 2]))
     }
     return false
   }
@@ -393,18 +405,24 @@ object PluginDescriptorLoader {
     val pathResolver = ClassPathXmlPathResolver(classLoader)
     if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
         (java.lang.Boolean.getBoolean("idea.use.dev.build.server") || (!isUnitTestMode && !isRunningFromSources))) {
-      val factory = context.xmlFactory
-      val element = JDOMUtil.load(classLoader.getResourceAsStream(PluginManagerCore.PLUGIN_XML_PATH)!!, factory)
-
-      val descriptor = IdeaPluginDescriptorImpl(Paths.get(PathManager.getLibPath()), true)
-      descriptor.readExternal(element, pathResolver, context, descriptor, object : DataLoader {
+      val dataLoader = object : DataLoader {
         override val pool: ZipFilePool
           get() = throw IllegalStateException("must be not called")
 
         override fun load(path: String) = throw IllegalStateException("must be not called")
 
         override fun toString() = "product classpath"
-      })
+      }
+
+      val raw = readModuleDescriptor(inputStream = classLoader.getResourceAsStream(PluginManagerCore.PLUGIN_XML_PATH)!!,
+                                     readContext = context,
+                                     pathResolver = pathResolver,
+                                     dataLoader = dataLoader,
+                                     includeBase = null,
+                                     readInto = null,
+                                     locationSource = null)
+      val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = Paths.get(PathManager.getLibPath()), isBundled = true, id = null)
+      descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
       descriptor.setUseCoreClassLoader()
       context.result.add(descriptor, /* overrideUseIfCompatible = */false)
     }
@@ -515,6 +533,7 @@ object PluginDescriptorLoader {
 
   @JvmStatic
   fun tryLoadFullDescriptor(descriptor: IdeaPluginDescriptorImpl): IdeaPluginDescriptorImpl? {
+    @Suppress("LiftReturnOrAssignment")
     if (!PluginManagerCore.hasDescriptorByIdentity(descriptor) || PluginManagerCore.getLoadedPlugins().contains(descriptor)) {
       return descriptor
     }
@@ -528,7 +547,7 @@ object PluginDescriptorLoader {
 
   @JvmStatic
   fun loadDescriptor(file: Path,
-                     disabledPlugins: Set<PluginId?>,
+                     disabledPlugins: Set<PluginId>,
                      isBundled: Boolean,
                      pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
     DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins).use { context ->
@@ -699,7 +718,7 @@ private class LoadDescriptorsFromClassPathAction(private val urls: Map<URL, Stri
           }
         }
         else {
-          // Support for unpacked plugins in classpath. E.g. .../out/artifacts/KotlinPlugin/lib/kotlin-plugin.jar
+          // Support for unpacked plugins in classpath. E.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
           DescriptorLoadingContext().use { loadingContext ->
             val descriptor = PluginDescriptorLoader.loadDescriptorFromJar(file = file,
                                                                           fileName = pathName,

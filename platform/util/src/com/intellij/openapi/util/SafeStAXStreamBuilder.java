@@ -2,7 +2,10 @@
 package com.intellij.openapi.util;
 
 import org.codehaus.stax2.XMLStreamReader2;
-import org.jdom.*;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.Namespace;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,8 +18,7 @@ import static javax.xml.stream.XMLStreamConstants.*;
 public final class SafeStAXStreamBuilder {
   public static final SafeJdomFactory FACTORY = new SafeJdomFactory.BaseSafeJdomFactory();
 
-  static Document buildDocument(@NotNull XMLStreamReader2 stream,
-                                @SuppressWarnings("SameParameterValue") boolean isIgnoreBoundaryWhitespace) throws XMLStreamException {
+  static Document buildDocument(@NotNull XMLStreamReader2 stream) throws XMLStreamException {
     int state = stream.getEventType();
 
     if (START_DOCUMENT != state) {
@@ -42,7 +44,7 @@ public final class SafeStAXStreamBuilder {
           break;
 
         case START_ELEMENT:
-          document.setRootElement(processElementFragment(stream, isIgnoreBoundaryWhitespace, FACTORY));
+          document.setRootElement(processElementFragment(stream, true, true, FACTORY));
           break;
 
         case CHARACTERS:
@@ -88,7 +90,7 @@ public final class SafeStAXStreamBuilder {
           break;
 
         case START_ELEMENT:
-          rootElement = processElementFragment(stream, isIgnoreBoundaryWhitespace, factory);
+          rootElement = processElementFragment(stream, isIgnoreBoundaryWhitespace, true, factory);
           break;
 
         default:
@@ -110,16 +112,17 @@ public final class SafeStAXStreamBuilder {
     return rootElement;
   }
 
-  public static Element processElementFragment(@NotNull XMLStreamReader2 reader,
-                                               boolean isIgnoreBoundaryWhitespace,
-                                               @NotNull SafeJdomFactory factory) throws XMLStreamException {
-    Element fragment = processElement(reader, factory);
+  public static @NotNull Element processElementFragment(@NotNull XMLStreamReader2 reader,
+                                                        boolean isIgnoreBoundaryWhitespace,
+                                                        boolean isNsSupported,
+                                                        @NotNull SafeJdomFactory factory) throws XMLStreamException {
+    Element fragment = processElement(reader, isNsSupported, factory);
     Element current = fragment;
     int depth = 1;
     while (depth > 0 && reader.hasNext()) {
       switch (reader.next()) {
         case START_ELEMENT:
-          Element tmp = processElement(reader, factory);
+          Element tmp = processElement(reader, isNsSupported, factory);
           current.addContent(tmp);
           current = tmp;
           depth++;
@@ -157,21 +160,26 @@ public final class SafeStAXStreamBuilder {
     return fragment;
   }
 
-  private static @NotNull Element processElement(@NotNull XMLStreamReader2 reader, @NotNull SafeJdomFactory factory) {
-    Element element = factory.element(reader.getLocalName(), Namespace.getNamespace(reader.getPrefix(), reader.getNamespaceURI()));
+  private static @NotNull Element processElement(@NotNull XMLStreamReader2 reader,
+                                                 boolean isNsSupported,
+                                                 @NotNull SafeJdomFactory factory) {
+    Element element = factory.element(reader.getLocalName(), isNsSupported
+                                                             ? Namespace.getNamespace(reader.getPrefix(), reader.getNamespaceURI())
+                                                             : Namespace.NO_NAMESPACE);
     // handle attributes
     for (int i = 0, len = reader.getAttributeCount(); i < len; i++) {
       element.setAttribute(factory.attribute(
         reader.getAttributeLocalName(i),
         reader.getAttributeValue(i),
-        AttributeType.getAttributeType(reader.getAttributeType(i)),
-        Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i))
+        isNsSupported ? Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i)) : Namespace.NO_NAMESPACE
       ));
     }
 
-    // handle namespaces
-    for (int i = 0, len = reader.getNamespaceCount(); i < len; i++) {
-      element.addNamespaceDeclaration(Namespace.getNamespace(reader.getNamespacePrefix(i), reader.getNamespaceURI(i)));
+    if (isNsSupported) {
+      // handle namespaces
+      for (int i = 0, len = reader.getNamespaceCount(); i < len; i++) {
+        element.addNamespaceDeclaration(Namespace.getNamespace(reader.getNamespacePrefix(i), reader.getNamespaceURI(i)));
+      }
     }
 
     return element;

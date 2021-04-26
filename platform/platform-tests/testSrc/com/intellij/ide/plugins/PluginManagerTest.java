@@ -4,12 +4,10 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.util.plugins.DataLoader;
 import com.intellij.platform.util.plugins.LocalFsDataLoader;
-import com.intellij.platform.util.plugins.PathResolver;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -23,6 +21,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
@@ -127,7 +126,7 @@ public class PluginManagerTest {
   @Test
   public void testSimplePluginSort() throws Exception {
     // muted failure, investigation is assigned
-    doPluginSortTest("simplePluginSort", false);
+     doPluginSortTest("simplePluginSort", false);
   }
 
   @Test
@@ -198,7 +197,7 @@ public class PluginManagerTest {
   }
 
   private static void assertConvertsTo(String untilBuild, String result) {
-    assertEquals(result, IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild));
+    assertEquals(result, PluginManager.convertExplicitBigNumberInUntilBuildToStar(untilBuild));
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
@@ -225,7 +224,7 @@ public class PluginManagerTest {
     Path file = Path.of(getTestDataPath(), testDataName);
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), createPluginLoadingResult(true));
 
-    Element root = JDOMUtil.load(file, parentContext.getXmlFactory());
+    Element root = JDOMUtil.load(file, parentContext.getJdomFactory());
     PathResolver pathResolver = new PathResolver() {
       @Override
       public boolean isFlat() {
@@ -233,21 +232,23 @@ public class PluginManagerTest {
       }
 
       @Override
-      public @NotNull Element loadXIncludeReference(@NotNull DataLoader dataLoader,
-                                                    @Nullable String base,
-                                                    @NotNull String relativePath,
-                                                    @NotNull SafeJdomFactory jdomFactory) {
+      public boolean loadXIncludeReference(@NotNull RawPluginDescriptor readInto,
+                                           @NotNull ReadModuleContext readContext,
+                                           @NotNull DataLoader dataLoader,
+                                           @Nullable String base,
+                                           @NotNull String relativePath) {
         throw new UnsupportedOperationException();
       }
 
       @Override
-      public @NotNull Element resolvePath(@NotNull DataLoader dataLoader,
-                                          @NotNull String relativePath,
-                                          @NotNull SafeJdomFactory jdomFactory) {
+      public @NotNull RawPluginDescriptor resolvePath(@NotNull ReadModuleContext readContext,
+                                                      @NotNull DataLoader dataLoader,
+                                                      @NotNull String relativePath,
+                                                      @Nullable RawPluginDescriptor readInto) {
         for (Element child : root.getChildren("config-file-idea-plugin")) {
           String url = Objects.requireNonNull(child.getAttributeValue("url"));
           if (url.endsWith("/" + relativePath)) {
-            return child;
+            return XmlReader.readModuleDescriptor(elementAsBytes(child), readContext, this, dataLoader, null, readInto, null);
           }
         }
         throw new AssertionError("Unexpected: " + relativePath);
@@ -255,15 +256,22 @@ public class PluginManagerTest {
     };
 
     for (Element element : root.getChildren("idea-plugin")) {
-      String url = element.getAttributeValue("url");
-      Path pluginPath = Path.of(Objects.requireNonNull(url));
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath, isBundled);
-      descriptor.readExternal(element, pathResolver, parentContext, descriptor, new LocalFsDataLoader(pluginPath));
+      Path pluginPath = Path.of(Objects.requireNonNull(element.getAttributeValue("url")));
+      IdeaPluginDescriptorImpl descriptor = PluginDescriptorTestKt.createFromDescriptor(pluginPath,
+                                                                                        isBundled,
+                                                                                        elementAsBytes(element),
+                                                                                        parentContext,
+                                                                                        pathResolver,
+                                                                                        new LocalFsDataLoader(pluginPath));
       parentContext.result.add(descriptor,  /* overrideUseIfCompatible = */ false);
     }
     parentContext.close();
     parentContext.result.finishLoading();
     return PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
+  }
+
+  private static @NotNull byte[] elementAsBytes(Element child) {
+    return JDOMUtil.write(child).getBytes(StandardCharsets.UTF_8);
   }
 
   /** @noinspection unused */
@@ -281,17 +289,17 @@ public class PluginManagerTest {
         sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
       for (PluginDependency dependency : d.getPluginDependencies()) {
-        if (!dependency.isOptional) {
-          sb.append("\n    <depends>").append(escape.apply(dependency.id.getIdString())).append("</depends>");
+        if (!dependency.isOptional()) {
+          sb.append("\n    <depends>").append(escape.apply(dependency.getPluginId().getIdString())).append("</depends>");
         }
         else {
           IdeaPluginDescriptorImpl optionalConfigPerId = dependency.subDescriptor;
           if (optionalConfigPerId == null) {
-            sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(escape.apply(dependency.id.getIdString())).append("</depends>");
+            sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(escape.apply(dependency.getPluginId().getIdString())).append("</depends>");
           }
           else {
               sb.append("\n    <depends optional=\"true\" config-file=\"")
-                .append(optionalConfigPerId.getPluginPath().getFileName().toString()).append("\">").append(escape.apply(dependency.id.getIdString())).append("</depends>");
+                .append(optionalConfigPerId.getPluginPath().getFileName().toString()).append("\">").append(escape.apply(dependency.getPluginId().getIdString())).append("</depends>");
           }
         }
       }

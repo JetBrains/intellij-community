@@ -305,7 +305,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
 
   @Override
   protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
-    return super.isComponentSuitable(componentConfig) && componentConfig.isLoadForDefaultProject();
+    return componentConfig.loadForDefaultProject && super.isComponentSuitable(componentConfig);
   }
 
   public void init() {

@@ -147,7 +147,7 @@ final class DistributionJARsBuilder {
     plugins = plugins.findAll {
       // Kotlin Multiplatform Mobile plugin is excluded since:
       // * is compatible with Android Studio only;
-      // * has release cycle of its 
+      // * has release cycle of its
       // * shadows IntelliJ utility modules included via Kotlin Compiler;
       // * breaks searchable options index and jar order generation steps.
       it.mainModule != 'kotlin-ultimate.kmm-plugin'
@@ -1039,7 +1039,7 @@ final class DistributionJARsBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   private static Set<String> excludedFromMergeLibs = Set.of(
-    "JDOM", "jna", "Log4J", "sqlite", "Slf4j", "Trove4j", "async-profiler", "precompiled_jshell-frontend",
+    "JDOM", "aalto-xml", "jna", "Log4J", "sqlite", "Slf4j", "Trove4j", "async-profiler", "precompiled_jshell-frontend",
     "dexlib2", // android-only lib
     "intellij-coverage", "intellij-test-discovery", // used as agent
     "winp", "junixsocket-core", "pty4j" // contains native library

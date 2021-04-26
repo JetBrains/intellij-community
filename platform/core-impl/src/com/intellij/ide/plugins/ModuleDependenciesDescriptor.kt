@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
@@ -66,5 +67,9 @@ internal class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) 
         throw RuntimeException("packageName must not ends with dot: $packageName")
       }
     }
+  }
+
+  override fun toString(): String {
+    return "PluginContentDescriptor(modules=$modules)"
   }
 }

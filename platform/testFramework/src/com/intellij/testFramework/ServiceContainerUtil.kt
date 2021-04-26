@@ -71,7 +71,11 @@ fun processAllServiceDescriptors(componentManager: ComponentManager, consumer: (
       is Project -> pluginDescriptor.projectContainerDescriptor
       else -> pluginDescriptor.moduleContainerDescriptor
     }
-    containerDescriptor.services.forEach(consumer)
+    containerDescriptor.services?.forEach {
+      if (it.os == null || componentManager.isSuitableForOs(it.os)) {
+        consumer(it)
+      }
+    }
   }
 }
 

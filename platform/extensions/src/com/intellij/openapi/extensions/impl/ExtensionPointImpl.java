@@ -18,7 +18,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -751,7 +750,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   abstract void unregisterExtensions(@NotNull ComponentManager componentManager,
                                      @NotNull PluginDescriptor pluginDescriptor,
-                                     @NotNull List<Element> elements,
+                                     @NotNull List<ExtensionDescriptor> elements,
                                      @NotNull List<Runnable> priorityListenerCallbacks,
                                      @NotNull List<Runnable> listenerCallbacks);
 
@@ -929,25 +928,19 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
   }
 
-  protected abstract @NotNull ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement,
+  protected abstract @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor extensionElement,
                                                                       @NotNull PluginDescriptor pluginDescriptor,
                                                                       @NotNull ComponentManager componentManager);
-
-  final synchronized void createAndRegisterAdapter(@NotNull Element extensionElement,
-                                             @NotNull PluginDescriptor pluginDescriptor,
-                                             @NotNull ComponentManager componentManager) {
-    addExtensionAdapter(createAdapter(extensionElement, pluginDescriptor, componentManager));
-  }
 
   /**
    * {@link #clearCache} is not called.
    *
    * myAdapters is modified directly without copying - method must be called only during start-up.
    */
-  final synchronized void registerExtensions(@NotNull List<? extends Element> extensionElements,
+  final synchronized void registerExtensions(@NotNull List<ExtensionDescriptor> extensionElements,
                                              @NotNull PluginDescriptor pluginDescriptor,
                                              @NotNull ComponentManager componentManager,
-                                             @Nullable List<? super Runnable> listenerCallbacks) {
+                                             @Nullable List<Runnable> listenerCallbacks) {
     if (this.componentManager != componentManager) {
       LOG.error("The same point on different levels (pointName=" + getName() + ")");
     }
@@ -963,8 +956,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
 
     int oldSize = adapters.size();
-    for (Element extensionElement : extensionElements) {
-      adapters.add(createAdapter(extensionElement, pluginDescriptor, componentManager));
+    for (ExtensionDescriptor extensionElement : extensionElements) {
+      if (extensionElement.os == null || componentManager.isSuitableForOs(extensionElement.os)) {
+        adapters.add(createAdapter(extensionElement, pluginDescriptor, componentManager));
+      }
     }
     int newSize = adapters.size();
 

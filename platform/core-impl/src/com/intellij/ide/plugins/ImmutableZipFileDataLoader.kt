@@ -5,14 +5,13 @@ import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.lang.ZipFilePool.EntryResolver
 import org.jetbrains.annotations.ApiStatus
-import java.io.InputStream
 import java.nio.file.Path
 
 @ApiStatus.Internal
 class ImmutableZipFileDataLoader(private val resolver: EntryResolver,
                                  private val zipPath: Path,
                                  override val pool: ZipFilePool) : DataLoader {
-  override fun load(path: String): InputStream? {
+  override fun load(path: String): ByteArray? {
     // well, path maybe specified as `/META-INF/*` in plugin descriptor and
     // it is our responsibility to normalize path for ImmutableZipFile API
     // do not use kotlin stdlib here

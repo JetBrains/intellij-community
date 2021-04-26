@@ -4,8 +4,6 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.util.JDOMUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,24 +32,23 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> implement
   }
 
   @Override
-  protected @NotNull ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement,
+  protected @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor descriptor,
                                                              @NotNull PluginDescriptor pluginDescriptor,
                                                              @NotNull ComponentManager componentManager) {
-    String orderId = extensionElement.getAttributeValue("id");
-    LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
-    Element effectiveElement = JDOMUtil.isEmpty(extensionElement) ? null : extensionElement;
+    LoadingOrder order = LoadingOrder.readOrder(descriptor.order);
     if (componentManager.isInjectionForExtensionSupported()) {
-      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement, this);
+      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, descriptor.orderId, order,
+                                                                       descriptor.element, this);
     }
     else {
-      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement, this);
+      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, descriptor.orderId, order, descriptor.element, this);
     }
   }
 
   @Override
   void unregisterExtensions(@NotNull ComponentManager componentManager,
                             @NotNull PluginDescriptor pluginDescriptor,
-                            @NotNull List<Element> elements,
+                            @NotNull List<ExtensionDescriptor> elements,
                             @NotNull List<Runnable> priorityListenerCallbacks,
                             @NotNull List<Runnable> listenerCallbacks) {
     unregisterExtensions(adapter -> {

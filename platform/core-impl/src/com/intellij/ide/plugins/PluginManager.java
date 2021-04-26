@@ -11,32 +11,28 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.util.plugins.LocalFsDataLoader;
-import com.intellij.platform.util.plugins.PathResolver;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.GraphGenerator;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public final class PluginManager {
   public static final String INSTALLED_TXT = "installed.txt";
+  public static final Pattern EXPLICIT_BIG_NUMBER_PATTERN = Pattern.compile("(.*)\\.(9{4,}+|10{4,}+)");
 
   public static @NotNull PluginManager getInstance() {
     return ApplicationManager.getApplication().getService(PluginManager.class);
@@ -188,18 +184,6 @@ public final class PluginManager {
     return PluginManagerCore.getLogger();
   }
 
-  @TestOnly
-  public static void loadDescriptorFromFile(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                            @NotNull Path file,
-                                            @NotNull Path basePath,
-                                            @Nullable SafeJdomFactory factory,
-                                            @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
-    int flags = DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE | DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR;
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, PluginManagerCore.createLoadingResult(null));
-    descriptor.readExternal(JDOMUtil.load(file, factory), PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, parentContext, descriptor,
-                            new LocalFsDataLoader(basePath));
-  }
-
   public boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
     return isDevelopedByJetBrains(plugin.getVendor());
   }
@@ -239,7 +223,7 @@ public final class PluginManager {
   @ApiStatus.Internal
   public void setPlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
     @SuppressWarnings("SuspiciousToArrayCall")
-    IdeaPluginDescriptorImpl[] list = descriptors.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
+    IdeaPluginDescriptorImpl[] list = descriptors.toArray(PluginLoadingResult.EMPTY_ARRAY);
     PluginManagerCore.doSetPlugins(list);
   }
 
@@ -298,5 +282,19 @@ public final class PluginManager {
 
   interface PluginAwareDisposable extends Disposable {
     int getClassLoaderId();
+  }
+
+  /**
+   * Convert build number like '146.9999' to '146.*' (like plugin repository does) to ensure that plugins which have such values in
+   * 'until-build' attribute will be compatible with 146.SNAPSHOT build.
+   */
+  @ApiStatus.Internal
+  public static @Nullable String convertExplicitBigNumberInUntilBuildToStar(@Nullable String build) {
+    if (build == null) {
+      return null;
+    }
+
+    Matcher matcher = EXPLICIT_BIG_NUMBER_PATTERN.matcher(build);
+    return matcher.matches() ? (matcher.group(1) + ".*") : build;
   }
 }

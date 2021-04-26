@@ -2,11 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SafeJdomFactory
 import com.intellij.platform.util.plugins.DataLoader
-import com.intellij.platform.util.plugins.PathResolver
-import org.jdom.Element
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
@@ -20,16 +16,29 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
     val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(Collections.emptyList())
 
     @JvmStatic
-    private fun loadUsingZipFile(jarFile: Path, relativePath: String, jdomFactory: SafeJdomFactory): Element? {
+    private fun loadUsingZipFile(readInto: RawPluginDescriptor,
+                                 readContext: ReadModuleContext,
+                                 pathResolver: PathResolver,
+                                 dataLoader: DataLoader,
+                                 jarFile: Path,
+                                 relativePath: String,
+                                 base: String?): Boolean {
       val zipFile = ZipFile(jarFile.toFile())
       try {
         // do not use kotlin stdlib here
-        val entry = zipFile.getEntry(if (relativePath.startsWith("/")) relativePath.substring(1) else relativePath) ?: return null
-        return JDOMUtil.load(zipFile.getInputStream(entry), jdomFactory)
+        val entry = zipFile.getEntry(if (relativePath.startsWith("/")) relativePath.substring(1) else relativePath) ?: return false
+        readModuleDescriptor(inputStream = zipFile.getInputStream(entry),
+                             readContext = readContext,
+                             pathResolver = pathResolver,
+                             dataLoader = dataLoader,
+                             includeBase = getChildBase(base = base, relativePath = relativePath),
+                             readInto = readInto,
+                             locationSource = jarFile.toString())
+        return true
       }
       catch (e: IOException) {
         Logger.getInstance(PluginXmlPathResolver::class.java).error("Corrupted jar file: $jarFile", e)
-        return null
+        return false
       }
       finally {
         zipFile.close()
@@ -51,51 +60,88 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
         else -> "$base/$relativePath"
       }
     }
+
+    @JvmStatic
+    fun getChildBase(base: String?, relativePath: String): String? {
+      val end = relativePath.lastIndexOf('/')
+      if (end <= 0 || relativePath.startsWith("/META-INF/")) {
+        return base
+      }
+
+      val childBase = relativePath.substring(0, end)
+      return if (base == null) childBase else "$base/$childBase"
+    }
   }
 
-  override fun loadXIncludeReference(dataLoader: DataLoader,
+  override fun loadXIncludeReference(readInto: RawPluginDescriptor,
+                                     readContext: ReadModuleContext,
+                                     dataLoader: DataLoader,
                                      base: String?,
-                                     relativePath: String,
-                                     jdomFactory: SafeJdomFactory): Element? {
+                                     relativePath: String): Boolean {
     val path = toLoadPath(relativePath, base)
     dataLoader.load(path)?.let {
-      return JDOMUtil.load(it, jdomFactory)
+      readModuleDescriptor(input = it,
+                           readContext = readContext,
+                           pathResolver = this,
+                           dataLoader = dataLoader,
+                           includeBase = getChildBase(base = base, relativePath = relativePath),
+                           readInto = readInto,
+                           locationSource = null)
+      return true
     }
 
-    findInJarFiles(dataLoader, path, jdomFactory)?.let {
-      return it
+    if (findInJarFiles(readInto = readInto, dataLoader = dataLoader, readContext = readContext, relativePath = path, base = base)) {
+      return true
     }
 
     // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
     if (path.startsWith("META-INF/")) {
       PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let {
-        return JDOMUtil.load(it)
+        readModuleDescriptor(inputStream = it,
+                             readContext = readContext,
+                             pathResolver = this,
+                             dataLoader = dataLoader,
+                             includeBase = null,
+                             readInto = readInto,
+                             locationSource = null)
+        return true
       }
     }
-
-    return null
+    return false
   }
 
-  override fun resolvePath(dataLoader: DataLoader, relativePath: String, jdomFactory: SafeJdomFactory): Element? {
+  override fun resolvePath(readContext: ReadModuleContext,
+                           dataLoader: DataLoader,
+                           relativePath: String,
+                           readInto: RawPluginDescriptor?): RawPluginDescriptor? {
     val path = toLoadPath(relativePath, null)
     dataLoader.load(path)?.let {
-      return JDOMUtil.load(it)
+      return readModuleDescriptor(input = it,
+                                  readContext = readContext,
+                                  pathResolver = this,
+                                  dataLoader = dataLoader,
+                                  includeBase = null,
+                                  readInto = readInto,
+                                  locationSource = null)
     }
 
-    findInJarFiles(dataLoader, path, jdomFactory)?.let {
-      return it
+    val result = readInto ?: RawPluginDescriptor()
+    if (findInJarFiles(readInto = result, dataLoader = dataLoader, readContext = readContext, relativePath = path, base = null)) {
+      return result
     }
 
     if (relativePath.startsWith("intellij.")) {
       // module in a new file name format must be always resolved
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader)")
     }
-    else {
-      return null
-    }
+    return null
   }
 
-  private fun findInJarFiles(dataLoader: DataLoader, relativePath: String, jdomFactory: SafeJdomFactory): Element? {
+  private fun findInJarFiles(readInto: RawPluginDescriptor,
+                             readContext: ReadModuleContext,
+                             dataLoader: DataLoader,
+                             relativePath: String,
+                             base: String?): Boolean {
     val pool = dataLoader.pool
     for (jarFile in pluginJarFiles) {
       if (dataLoader.isExcludedFromSubSearch(jarFile)) {
@@ -103,8 +149,14 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
       }
 
       if (pool == null) {
-        loadUsingZipFile(jarFile, relativePath, jdomFactory)?.let {
-          return it
+        if (loadUsingZipFile(readInto = readInto,
+                             readContext = readContext,
+                             pathResolver = this,
+                             dataLoader = dataLoader,
+                             jarFile = jarFile,
+                             relativePath = relativePath,
+                             base = base)) {
+          return true
         }
       }
       else {
@@ -117,10 +169,17 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
         }
 
         resolver.loadZipEntry(relativePath)?.let {
-          return JDOMUtil.load(it, jdomFactory)
+          readModuleDescriptor(input = it,
+                               readContext = readContext,
+                               pathResolver = this,
+                               dataLoader = dataLoader,
+                               includeBase = getChildBase(base = base, relativePath = relativePath),
+                               readInto = readInto,
+                               locationSource = jarFile.toString())
+          return true
         }
       }
     }
-    return null
+    return false
   }
 }

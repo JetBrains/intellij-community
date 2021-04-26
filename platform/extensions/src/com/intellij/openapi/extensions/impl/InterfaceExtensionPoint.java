@@ -30,26 +30,29 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   }
 
   @Override
-  protected @NotNull ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
-    String implementationClassName = extensionElement.getAttributeValue("implementation");
+  protected @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor descriptor, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
+    Element element = descriptor.element;
+    assert element != null;
+    String implementationClassName = element.getAttributeValue("implementation");
     if (implementationClassName == null) {
       // deprecated
-      implementationClassName = extensionElement.getAttributeValue("implementationClass");
+      implementationClassName = element.getAttributeValue("implementationClass");
       if (implementationClassName == null) {
         throw componentManager.createError("Attribute \"implementation\" is not specified for \"" + getName() + "\" extension", pluginDescriptor.getPluginId());
       }
     }
 
-    String orderId = extensionElement.getAttributeValue("id");
-    LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
-    Element effectiveElement = shouldDeserializeInstance(extensionElement) ? extensionElement : null;
-    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement, InterfaceExtensionImplementationClassResolver.INSTANCE);
+    LoadingOrder order = LoadingOrder.readOrder(descriptor.order);
+    Element effectiveElement = shouldDeserializeInstance(element) ? element : null;
+    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, descriptor.orderId, order,
+                                                                     effectiveElement,
+                                                                     InterfaceExtensionImplementationClassResolver.INSTANCE);
   }
 
   @Override
   void unregisterExtensions(@NotNull ComponentManager componentManager,
                             @NotNull PluginDescriptor pluginDescriptor,
-                            @NotNull List<Element> elements,
+                            @NotNull List<ExtensionDescriptor> elements,
                             @NotNull List<Runnable> priorityListenerCallbacks,
                             @NotNull List<Runnable> listenerCallbacks) {
     unregisterExtensions(adapter -> adapter.getPluginDescriptor() != pluginDescriptor, false, priorityListenerCallbacks, listenerCallbacks);

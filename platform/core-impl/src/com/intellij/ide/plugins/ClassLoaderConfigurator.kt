@@ -127,7 +127,7 @@ class ClassLoaderConfigurator(
 
     for (dependency in pluginDependencies) {
       if (!dependency.isDisabledOrBroken && (!isClassloaderPerDescriptorEnabled(mainDependent) || dependency.subDescriptor == null)) {
-        addClassloaderIfDependencyEnabled(dependency.id, mainDependent)
+        addClassloaderIfDependencyEnabled(dependency.pluginId, mainDependent)
       }
     }
 
@@ -173,9 +173,9 @@ class ClassLoaderConfigurator(
     val pluginPackagePrefix = dependent.packagePrefix
     if (pluginPackagePrefix == null) {
       if (parentDescriptor.packagePrefix != null) {
-        throw PluginException(
-          "Sub descriptor must specify package if it is specified for main plugin descriptor " +
-          "(descriptorFile=" + dependent.descriptorPath + ")", parentDescriptor.id)
+        throw PluginException("Sub descriptor must specify package if it is specified for main plugin descriptor " +
+                              "(descriptorFile=${dependent.descriptorPath}, parentPackagePrefix=${parentDescriptor.packagePrefix})",
+                              parentDescriptor.id)
       }
     }
     else {
@@ -184,7 +184,7 @@ class ClassLoaderConfigurator(
       }
 
       if (parentDescriptor.packagePrefix == null) {
-        val parentId = parentDescriptor.id!!.idString
+        val parentId = parentDescriptor.id.idString
         if (!(parentId == "Docker" ||
               parentId == "org.jetbrains.plugins.ruby" ||
               parentId == "org.intellij.grails" ||
@@ -198,7 +198,7 @@ class ClassLoaderConfigurator(
       }
     }
 
-    val dependency = idMap.get(dependencyInfo.id)
+    val dependency = idMap.get(dependencyInfo.pluginId)
     if (dependency == null || !dependency.isEnabled) {
       return
     }
@@ -229,7 +229,7 @@ class ClassLoaderConfigurator(
     if (pluginDependencies != null) {
       for (subDependency in pluginDependencies) {
         if (!subDependency.isDisabledOrBroken && subDependency.subDescriptor == null) {
-          addClassloaderIfDependencyEnabled(subDependency.id, dependent)
+          addClassloaderIfDependencyEnabled(subDependency.pluginId, dependent)
         }
       }
     }
@@ -324,7 +324,7 @@ class ClassLoaderConfigurator(
     rootDescriptor.classLoader = classLoader
     for (dependency in rootDescriptor.getPluginDependencies()) {
       if (dependency.subDescriptor != null) {
-        val descriptor = idMap.get(dependency.id)
+        val descriptor = idMap.get(dependency.pluginId)
         if (descriptor != null && descriptor.isEnabled) {
           setPluginClassLoaderForMainAndSubPlugins(dependency.subDescriptor!!, classLoader)
         }
@@ -589,13 +589,14 @@ private fun isClassloaderPerDescriptorEnabled(descriptor: IdeaPluginDescriptorIm
 
 private fun collectPackagePrefixes(dependent: IdeaPluginDescriptorImpl, packagePrefixes: MutableList<String>) {
   // from extensions
-  dependent.unsortedEpNameToExtensionElements.values.forEach { elements ->
-    for (element in elements) {
-      if (!element.hasAttributes()) {
+  dependent.unsortedEpNameToExtensionElements.values.forEach { extensionDescriptors ->
+    for (extensionDescriptor in extensionDescriptors) {
+      if (!extensionDescriptor.element.hasAttributes()) {
         continue
       }
+
       for (attributeName in IMPL_CLASS_NAMES) {
-        val className = element.getAttributeValue(attributeName)
+        val className = extensionDescriptor.element.getAttributeValue(attributeName)
         if (className != null && !className.isEmpty()) {
           addPackageByClassNameIfNeeded(className, packagePrefixes)
           break

@@ -5,7 +5,10 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SafeJdomFactory
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
-import org.jdom.*
+import org.jdom.Attribute
+import org.jdom.Element
+import org.jdom.Namespace
+import org.jdom.Text
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -13,9 +16,25 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class DescriptorListLoadingContext internal constructor(flags: Int,
-                                                        val disabledPlugins: Set<PluginId>,
-                                                        @Suppress("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR") val result: PluginLoadingResult) : AutoCloseable, ReadModuleContext {
+class DescriptorListLoadingContext constructor(
+  @JvmField val disabledPlugins: Set<PluginId>,
+  @JvmField @Suppress("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR") val result: PluginLoadingResult,
+  override val isMissingIncludeIgnored: Boolean = false,
+  @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
+  checkOptionalConfigFileUniqueness: Boolean = false,
+) : AutoCloseable, ReadModuleContext {
+  internal constructor(
+    flags: Int,
+    disabledPlugins: Set<PluginId>,
+    @Suppress("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR") result: PluginLoadingResult
+  ) : this(
+    disabledPlugins = disabledPlugins,
+    result = result,
+    isMissingIncludeIgnored = flags and IGNORE_MISSING_INCLUDE == IGNORE_MISSING_INCLUDE,
+    isMissingSubDescriptorIgnored = flags and IGNORE_MISSING_SUB_DESCRIPTOR == IGNORE_MISSING_SUB_DESCRIPTOR,
+    checkOptionalConfigFileUniqueness = flags and CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS,
+  )
+
   companion object {
     @JvmStatic
     private val unitTestWithBundledPlugins = java.lang.Boolean.getBoolean("idea.run.tests.with.bundled.plugins")
@@ -24,17 +43,35 @@ class DescriptorListLoadingContext internal constructor(flags: Int,
     const val IGNORE_MISSING_SUB_DESCRIPTOR = 4
     const val CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS = 8
 
-    @JvmField
-    val LOG = PluginManagerCore.getLogger()
+    @JvmField val LOG = PluginManagerCore.getLogger()
 
     @JvmStatic
     fun createSingleDescriptorContext(disabledPlugins: Set<PluginId>): DescriptorListLoadingContext {
-      return DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null))
+      return DescriptorListLoadingContext(
+        disabledPlugins = disabledPlugins,
+        result = PluginManagerCore.createLoadingResult(null)
+      )
+    }
+
+    @JvmStatic
+    fun createForTest(result: PluginLoadingResult): DescriptorListLoadingContext {
+      return DescriptorListLoadingContext(
+        isMissingIncludeIgnored = false,
+        isMissingSubDescriptorIgnored = false,
+        disabledPlugins = Collections.emptySet(),
+        result = result
+      )
     }
   }
 
-  private val toDispose: ConcurrentLinkedQueue<Array<PluginXmlFactory?>>
-  private val threadLocalXmlFactory: ThreadLocal<Array<PluginXmlFactory?>>
+  private val toDispose = ConcurrentLinkedQueue<Array<PluginXmlFactory?>>()
+  // synchronization will ruin parallel loading, so, string pool is local for thread
+  private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
+    val factory = PluginXmlFactory()
+    val ref = arrayOf<PluginXmlFactory?>(factory)
+    toDispose.add(ref)
+    ref
+  })
 
   @Volatile var defaultVersion: String? = null
     get() {
@@ -47,28 +84,9 @@ class DescriptorListLoadingContext internal constructor(flags: Int,
     }
     private set
 
-  override val isMissingIncludeIgnored: Boolean
-
-  @JvmField val ignoreMissingSubDescriptor: Boolean
-
   @JvmField var usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins
 
-  private val optionalConfigNames: MutableMap<String, PluginId>?
-
-  init {
-    isMissingIncludeIgnored = flags and IGNORE_MISSING_INCLUDE == IGNORE_MISSING_INCLUDE
-    ignoreMissingSubDescriptor = flags and IGNORE_MISSING_SUB_DESCRIPTOR == IGNORE_MISSING_SUB_DESCRIPTOR
-    optionalConfigNames = if (flags and CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS) ConcurrentHashMap() else null
-    toDispose = ConcurrentLinkedQueue()
-
-    // synchronization will ruin parallel loading, so, string pool is local for thread
-    threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
-      val factory = PluginXmlFactory()
-      val ref = arrayOf<PluginXmlFactory?>(factory)
-      toDispose.add(ref)
-      ref
-    })
-  }
+  private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
   fun isPluginDisabled(id: PluginId): Boolean {
     return PluginManagerCore.CORE_ID != id && disabledPlugins.contains(id)
@@ -87,25 +105,24 @@ class DescriptorListLoadingContext internal constructor(flags: Int,
     return threadLocalXmlFactory.get()[0]!!.intern(string)
   }
 
-  val visitedFiles: List<String>
+  val visitedFiles: MutableList<String>
     get() = threadLocalXmlFactory.get()[0]!!.visitedFiles
 
-  fun checkOptionalConfigShortName(configFile: String,
-                                   descriptor: IdeaPluginDescriptor,
-                                   rootDescriptor: IdeaPluginDescriptor): Boolean {
+  fun checkOptionalConfigShortName(configFile: String, descriptor: IdeaPluginDescriptor): Boolean {
     val pluginId = descriptor.pluginId ?: return false
     val configNames = optionalConfigNames
     if (configNames == null || configFile.startsWith("intellij.")) {
       return false
     }
+
     val oldPluginId = configNames.put(configFile, pluginId)
     if (oldPluginId == null || oldPluginId == pluginId) {
       return false
     }
-    LOG.error(
-      "Optional config file with name '" + configFile + "' already registered by '" + oldPluginId + "'. " +
-      "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
-      "Current plugin: '" + rootDescriptor + "'. ")
+
+    LOG.error("Optional config file with name $configFile already registered by $oldPluginId. " +
+              "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
+              "Current plugin: $descriptor.")
     return true
   }
 }
@@ -122,11 +139,7 @@ internal class PluginXmlFactory : SafeJdomFactory.BaseSafeJdomFactory() {
       "qualifiedName"))
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    @JvmStatic private val EXTRA_STRINGS = Arrays.asList("id",
-                                                         PluginManagerCore.VENDOR_JETBRAINS,
-                                                         APPLICATION_SERVICE,
-                                                         PROJECT_SERVICE,
-                                                         MODULE_SERVICE)
+    @JvmStatic private val EXTRA_STRINGS = Arrays.asList("id", PluginManagerCore.VENDOR_JETBRAINS)
   }
 
   @Suppress("SSBasedInspection")
@@ -144,13 +157,13 @@ internal class PluginXmlFactory : SafeJdomFactory.BaseSafeJdomFactory() {
 
   override fun element(name: String, namespace: Namespace?) = super.element(intern(name), namespace)
 
-  override fun attribute(name: String, value: String, type: AttributeType?, namespace: Namespace?): Attribute {
+  override fun attribute(name: String, value: String, namespace: Namespace?): Attribute {
     val internedName = intern(name)
     return if (CLASS_NAMES.contains(internedName)) {
-      super.attribute(internedName, value, type, namespace)
+      super.attribute(internedName, value, namespace)
     }
     else {
-      super.attribute(internedName, intern(value), type, namespace)
+      super.attribute(internedName, intern(value), namespace)
     }
   }
 

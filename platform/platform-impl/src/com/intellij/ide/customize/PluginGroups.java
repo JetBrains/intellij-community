@@ -510,8 +510,8 @@ public class PluginGroups {
 
     for (IdeaPluginDescriptorImpl plugin : pluginsById.apply(pluginId)) {
       for (PluginDependency dependency : plugin.getPluginDependencies()) {
-        if (!dependency.isOptional && predicate.test(dependency.id, pluginId)) {
-          pluginIds.addAll(collectInvolvedIds(dependency.id, predicate, pluginsById));
+        if (!dependency.isOptional() && predicate.test(dependency.getPluginId(), pluginId)) {
+          pluginIds.addAll(collectInvolvedIds(dependency.getPluginId(), predicate, pluginsById));
         }
       }
     }
