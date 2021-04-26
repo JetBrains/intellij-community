@@ -109,6 +109,9 @@ class EclipseProjectDetector extends ProjectDetector {
 
   static List<String> scanForProjects(String workspace) {
     List<String> projects = new ArrayList<>();
+    if (isInSpecialMacFolder(workspace)) {
+      return projects;
+    }
     File[] files = new File(workspace).listFiles();
     if (files == null) {
       return projects;
@@ -128,5 +131,14 @@ class EclipseProjectDetector extends ProjectDetector {
     return ContainerUtil.map(elements, element1 -> StringUtil
       .trimEnd(Objects.requireNonNull(Objects.requireNonNull(element1.getChild("key")).getAttributeValue("href")),
                "/.metadata/.plugins/org.eclipse.oomph.setup/workspace.setup#/"));
+  }
+
+  private static boolean isInSpecialMacFolder(String file) {
+    if (!SystemInfo.isMac) return false;
+    String home = System.getProperty("user.home");
+    Path path = Path.of(file);
+    return path.startsWith(Path.of(home, "Documents")) ||
+           path.startsWith(Path.of(home, "Downloads")) ||
+           path.startsWith(Path.of(home, "Desktop"));
   }
 }
