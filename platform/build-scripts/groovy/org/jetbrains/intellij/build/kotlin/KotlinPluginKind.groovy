@@ -28,7 +28,7 @@ enum KotlinPluginKind {
      "CIDR-appcode/appcode-kotlin-native/resources"),
   ROBOSCOPE(
     "RoboscopePlugin.zip", "kotlin.plugin.version",
-    "util.android-studio.android-studio-roboscope-plugin",
+    "intellij.kotlin.util.android.studio.roboscope.plugin",
     "plugins/kotlin/tools/android-studio/android-studio-roboscope-plugin/resources",
     [
       Couple.of("RoboscopePlugin_zip/RoboscopePlugin.zip", "roboscope-plugin.zip")
