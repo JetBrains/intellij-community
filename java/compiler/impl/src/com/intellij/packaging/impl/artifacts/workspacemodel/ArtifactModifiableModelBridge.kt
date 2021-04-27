@@ -176,7 +176,7 @@ class ArtifactModifiableModelBridge(
     if (original != null) {
       modifiableToOriginal.remove(artifact)
 
-      diff.removeEntity(diff.resolve(ArtifactId(artifact.name))!!)
+      diff.removeEntity(diff.get(ArtifactId(artifact.name)))
       eventDispatcher.multicaster.artifactRemoved(original)
     }
     else {

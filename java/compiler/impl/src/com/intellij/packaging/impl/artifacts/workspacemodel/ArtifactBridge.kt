@@ -67,7 +67,7 @@ open class ArtifactBridge(
   val elementsWithDiff = mutableSetOf<PackagingElement<*>>()
 
   override fun getExternalSource(): ProjectModelExternalSource? {
-    val artifactEntity = entityStorage.current.resolve(artifactId) ?: error("")
+    val artifactEntity = entityStorage.current.get(artifactId)
     return (artifactEntity.entitySource as? JpsImportedEntitySource)?.toExternalSource()
   }
 
@@ -75,7 +75,7 @@ open class ArtifactBridge(
     if (this is InvalidArtifactBridge) return InvalidArtifactType.getInstance()
 
     val current = entityStorage.current
-    val artifactEntity = current.resolve(artifactId) ?: error("")
+    val artifactEntity = current.get(artifactId)
     val type = ArtifactType.findById(artifactEntity.artifactType)
     return if (type == null) {
       if (this !is InvalidArtifactBridge) error("")
@@ -89,13 +89,13 @@ open class ArtifactBridge(
   }
 
   override fun isBuildOnMake(): Boolean {
-    val artifactEntity = entityStorage.current.resolve(artifactId) ?: error("")
+    val artifactEntity = entityStorage.current.get(artifactId)
     return artifactEntity.includeInProjectBuild
   }
 
   override fun getRootElement(): CompositePackagingElement<*> {
     val current = entityStorage.current
-    val artifactEntity = current.resolve(artifactId) ?: error("")
+    val artifactEntity = current.get(artifactId)
     val rootElement = artifactEntity.rootElement
     val compositeElement = rootElement.toCompositeElement(project, entityStorage.base)
     if (!compositeElement.hasStorage() || (compositeElement.storageIsStore() && diffOrNull != null)) {
@@ -109,19 +109,19 @@ open class ArtifactBridge(
   }
 
   override fun getOutputPath(): String? {
-    val artifactEntity = entityStorage.current.resolve(artifactId) ?: error("Cannot find an artifact by id: $artifactId")
+    val artifactEntity = entityStorage.current.get(artifactId)
     return artifactEntity.outputUrl?.url?.let { JpsPathUtil.urlToOsPath(it) }
   }
 
   override fun getPropertiesProviders(): MutableCollection<out ArtifactPropertiesProvider> {
     val storage = this.entityStorage.current
-    val artifactEntity = storage.resolve(artifactId) ?: error("")
+    val artifactEntity = storage.get(artifactId)
     return artifactEntity.customProperties.map { ArtifactPropertiesProvider.findById(it.providerType)!! }.toMutableList()
   }
 
   override fun getProperties(propertiesProvider: ArtifactPropertiesProvider): ArtifactProperties<*>? {
     val storage = this.entityStorage.current
-    val artifactEntity = storage.resolve(artifactId) ?: error("")
+    val artifactEntity = storage.get(artifactId)
     val providerId = propertiesProvider.id
     val customProperty = artifactEntity.customProperties.find { it.providerType == providerId } ?: return null
     val propertiesXmlTag = customProperty.propertiesXmlTag ?: return null
@@ -137,14 +137,14 @@ open class ArtifactBridge(
 
   override fun getOutputFile(): VirtualFile? {
     val storage = this.entityStorage.current
-    val artifactEntity = storage.resolve(artifactId) ?: error("")
+    val artifactEntity = storage.get(artifactId)
     val outputUrl = artifactEntity.outputUrl
     return outputUrl?.virtualFile
   }
 
   override fun getOutputFilePath(): String? {
     val storage = this.entityStorage.current
-    val artifactEntity = storage.resolve(artifactId) ?: error("")
+    val artifactEntity = storage.get(artifactId)
     val outputUrl = artifactEntity.outputUrl
     if (outputUrl == null) return null
 
@@ -154,7 +154,7 @@ open class ArtifactBridge(
   }
 
   override fun setBuildOnMake(enabled: Boolean) {
-    val entity = diff.resolve(artifactId) ?: error("")
+    val entity = diff.get(artifactId)
     diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
       this.includeInProjectBuild = enabled
     }
@@ -162,14 +162,14 @@ open class ArtifactBridge(
 
   override fun setOutputPath(outputPath: String?) {
     val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).fromPath(it) }
-    val entity = diff.resolve(artifactId) ?: error("")
+    val entity = diff.get(artifactId)
     diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
       this.outputUrl = outputUrl
     }
   }
 
   override fun setName(name: String) {
-    val entity = diff.resolve(artifactId) ?: error("")
+    val entity = diff.get(artifactId)
     val oldName = artifactId.name
     diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
       this.name = name
@@ -179,7 +179,7 @@ open class ArtifactBridge(
   }
 
   override fun setRootElement(root: CompositePackagingElement<*>) {
-    val entity = diff.resolve(artifactId) ?: error("")
+    val entity = diff.get(artifactId)
     val rootEntity = root.getOrAddEntity(diff, entity.entitySource, project) as CompositePackagingElementEntity
 
     root.forThisAndFullTree {
@@ -195,7 +195,7 @@ open class ArtifactBridge(
 
   override fun setProperties(provider: ArtifactPropertiesProvider, properties: ArtifactProperties<*>?) {
     if (properties == null) {
-      val entity = diff.resolve(artifactId) ?: error("")
+      val entity = diff.get(artifactId)
       val filtered = entity.customProperties.filterNot { it.providerType == provider.id }
       diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
         this.customProperties = filtered
@@ -209,13 +209,13 @@ open class ArtifactBridge(
         JDOMUtil.write(element)
       } else null
 
-      val entity = diff.resolve(artifactId) ?: error("")
+      val entity = diff.get(artifactId)
       diff.addArtifactPropertiesEntity(entity, provider.id, tag, entity.entitySource)
     }
   }
 
   override fun setArtifactType(selected: ArtifactType) {
-    val entity = diff.resolve(artifactId) ?: error("")
+    val entity = diff.get(artifactId)
     diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
       this.artifactType = selected.id
     }
