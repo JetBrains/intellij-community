@@ -100,7 +100,7 @@ public final class PyABCUtil {
     if (PyNames.AWAITABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.DUNDER_AWAIT, inherited, context);
     }
-    if (PyNames.BUILTIN_PATH_LIKE.equals(superClassName)) {
+    if (PyNames.BUILTIN_PATH_LIKE.equals(superClassName) || PyNames.PATH_LIKE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.FSPATH, inherited, context);
     }
     return false;

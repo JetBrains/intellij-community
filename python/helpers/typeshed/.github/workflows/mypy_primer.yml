@@ -4,6 +4,9 @@ on:
   # Only run on PR, since we diff against master
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   mypy_primer:
     name: Run

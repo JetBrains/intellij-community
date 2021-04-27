@@ -2,17 +2,29 @@
 """Script to run mypy against its own code base."""
 
 import os
+import re
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-# Use the current mypy version until a version that supports modular
-# typeshed is released on PyPI.
-MYPY_VERSION = "git+git://github.com/python/mypy"
+REQUIREMENTS_FILE = "requirements-tests-py3.txt"
+MYPY_REQUIREMENTS_REGEXPS = [r"^mypy[ =>]", r"^git\+.*/mypy.git\W"]
+
+
+def determine_mypy_version() -> str:
+    with open(REQUIREMENTS_FILE) as f:
+        for line in f:
+            for regexp in MYPY_REQUIREMENTS_REGEXPS:
+                m = re.match(regexp, line)
+                if m:
+                    return line.strip()
+    raise RuntimeError(f"no mypy version found in {REQUIREMENTS_FILE}")
 
 
 if __name__ == "__main__":
+    mypy_version = determine_mypy_version()
+
     with tempfile.TemporaryDirectory() as tempdir:
         dirpath = Path(tempdir)
         subprocess.run(
@@ -21,7 +33,7 @@ if __name__ == "__main__":
         )
         os.environ["MYPYPATH"] = str(dirpath)
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", "-U", MYPY_VERSION], check=True)
+            subprocess.run([sys.executable, "-m", "pip", "install", "-U", mypy_version], check=True)
             subprocess.run([sys.executable, "-m", "pip", "install", "-r", dirpath / "test-requirements.txt"], check=True)
             subprocess.run(
                 [

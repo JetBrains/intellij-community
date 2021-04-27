@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   file-consistency:
     name: Check file consistency
@@ -79,7 +82,8 @@ jobs:
 
   mypy-test-suite:
     name: Run the mypy test suite
-    runs-on: ubuntu-latest
+    # Ubuntu 20.04 doesn't have the Python 2 venv module.
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -91,7 +95,7 @@ jobs:
     strategy:
       matrix:
         python-platform: ["Linux", "Windows", "Darwin"]
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.6, 3.7, 3.8, 3.9, '3.10']
       fail-fast: false
     steps:
       - uses: actions/checkout@v2

@@ -125,7 +125,7 @@ keyword: 2.7
 lib2to3: 2.7
 linecache: 2.7
 locale: 2.7
-logging: 2.7
+logging: 3.6
 lzma: 3.6
 macpath: 2.7
 macurl2path: 3.6
@@ -233,6 +233,7 @@ tty: 2.7
 turtle: 2.7
 types: 3.6
 typing: 3.6
+typing_extensions: 2.7
 unicodedata: 2.7
 unittest: 3.6
 urllib: 3.6

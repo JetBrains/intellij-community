@@ -1,5 +1,4 @@
-asyncio.unix_events._UnixSelectorEventLoop.create_unix_server
 ctypes.wintypes
 pwd.getpwnam
-ssl.PROTOCOL_SSLv3
-ssl.RAND_egd
+ssl.PROTOCOL_SSLv3  # Depends on openssl compilation
+ssl.RAND_egd  # Depends on openssl compilation

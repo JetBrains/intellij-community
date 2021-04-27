@@ -1,3 +1,4 @@
+from _typeshed import SupportsItems
 from typing import IO, Any, Callable, Iterable, List, Mapping, MutableMapping, Optional, Text, Tuple, Union
 
 from . import adapters, auth as _auth, compat, cookies, exceptions, hooks, models, status_codes, structures, utils
@@ -47,13 +48,22 @@ _Hook = Callable[[Response], Any]
 _Hooks = MutableMapping[Text, List[_Hook]]
 _HooksInput = MutableMapping[Text, Union[Iterable[_Hook], _Hook]]
 
+_ParamsMappingKeyType = Union[Text, bytes, int, float]
+_ParamsMappingValueType = Union[Text, bytes, int, float, Iterable[Union[Text, bytes, int, float]], None]
+_Params = Union[
+    SupportsItems[_ParamsMappingKeyType, _ParamsMappingValueType],
+    Tuple[_ParamsMappingKeyType, _ParamsMappingValueType],
+    Iterable[Tuple[_ParamsMappingKeyType, _ParamsMappingValueType]],
+    Union[Text, bytes],
+]
+
 class Session(SessionRedirectMixin):
     __attrs__: Any
     headers: CaseInsensitiveDict[Text]
     auth: Union[None, Tuple[Text, Text], _auth.AuthBase, Callable[[PreparedRequest], PreparedRequest]]
     proxies: MutableMapping[Text, Text]
     hooks: _Hooks
-    params: Union[bytes, MutableMapping[Text, Text]]
+    params: _Params
     stream: bool
     verify: Union[None, bool, Text]
     cert: Union[None, Text, Tuple[Text, Text]]
@@ -70,7 +80,7 @@ class Session(SessionRedirectMixin):
         self,
         method: str,
         url: Union[str, bytes, Text],
-        params: Union[None, bytes, MutableMapping[Text, Text]] = ...,
+        params: Optional[_Params] = ...,
         data: _Data = ...,
         headers: Optional[MutableMapping[Text, Text]] = ...,
         cookies: Union[None, RequestsCookieJar, MutableMapping[Text, Text]] = ...,
@@ -85,13 +95,132 @@ class Session(SessionRedirectMixin):
         cert: Union[Text, Tuple[Text, Text], None] = ...,
         json: Optional[Any] = ...,
     ) -> Response: ...
-    def get(self, url: Union[Text, bytes], **kwargs) -> Response: ...
-    def options(self, url: Union[Text, bytes], **kwargs) -> Response: ...
-    def head(self, url: Union[Text, bytes], **kwargs) -> Response: ...
-    def post(self, url: Union[Text, bytes], data: _Data = ..., json: Optional[Any] = ..., **kwargs) -> Response: ...
-    def put(self, url: Union[Text, bytes], data: _Data = ..., **kwargs) -> Response: ...
-    def patch(self, url: Union[Text, bytes], data: _Data = ..., **kwargs) -> Response: ...
-    def delete(self, url: Union[Text, bytes], **kwargs) -> Response: ...
+    def get(
+        self,
+        url: Union[Text, bytes],
+        params: Optional[_Params] = ...,
+        data: Optional[Any] = ...,
+        headers: Optional[Any] = ...,
+        cookies: Optional[Any] = ...,
+        files: Optional[Any] = ...,
+        auth: Optional[Any] = ...,
+        timeout: Optional[Any] = ...,
+        allow_redirects: bool = ...,
+        proxies: Optional[Any] = ...,
+        hooks: Optional[Any] = ...,
+        stream: Optional[Any] = ...,
+        verify: Optional[Any] = ...,
+        cert: Optional[Any] = ...,
+        json: Optional[Any] = ...,
+    ) -> Response: ...
+    def options(
+        self,
+        url: Union[Text, bytes],
+        params: Optional[_Params] = ...,
+        data: Optional[Any] = ...,
+        headers: Optional[Any] = ...,
+        cookies: Optional[Any] = ...,
+        files: Optional[Any] = ...,
+        auth: Optional[Any] = ...,
+        timeout: Optional[Any] = ...,
+        allow_redirects: bool = ...,
+        proxies: Optional[Any] = ...,
+        hooks: Optional[Any] = ...,
+        stream: Optional[Any] = ...,
+        verify: Optional[Any] = ...,
+        cert: Optional[Any] = ...,
+        json: Optional[Any] = ...,
+    ) -> Response: ...
+    def head(
+        self,
+        url: Union[Text, bytes],
+        params: Optional[_Params] = ...,
+        data: Optional[Any] = ...,
+        headers: Optional[Any] = ...,
+        cookies: Optional[Any] = ...,
+        files: Optional[Any] = ...,
+        auth: Optional[Any] = ...,
+        timeout: Optional[Any] = ...,
+        allow_redirects: bool = ...,
+        proxies: Optional[Any] = ...,
+        hooks: Optional[Any] = ...,
+        stream: Optional[Any] = ...,
+        verify: Optional[Any] = ...,
+        cert: Optional[Any] = ...,
+        json: Optional[Any] = ...,
+    ) -> Response: ...
+    def post(
+        self,
+        url: Union[Text, bytes],
+        data: _Data = ...,
+        json: Optional[Any] = ...,
+        params: Optional[_Params] = ...,
+        headers: Optional[Any] = ...,
+        cookies: Optional[Any] = ...,
+        files: Optional[Any] = ...,
+        auth: Optional[Any] = ...,
+        timeout: Optional[Any] = ...,
+        allow_redirects: bool = ...,
+        proxies: Optional[Any] = ...,
+        hooks: Optional[Any] = ...,
+        stream: Optional[Any] = ...,
+        verify: Optional[Any] = ...,
+        cert: Optional[Any] = ...,
+    ) -> Response: ...
+    def put(
+        self,
+        url: Union[Text, bytes],
+        data: _Data = ...,
+        params: Optional[_Params] = ...,
+        headers: Optional[Any] = ...,
+        cookies: Optional[Any] = ...,
+        files: Optional[Any] = ...,
+        auth: Optional[Any] = ...,
+        timeout: Optional[Any] = ...,
+        allow_redirects: bool = ...,
+        proxies: Optional[Any] = ...,
+        hooks: Optional[Any] = ...,
+        stream: Optional[Any] = ...,
+        verify: Optional[Any] = ...,
+        cert: Optional[Any] = ...,
+        json: Optional[Any] = ...,
+    ) -> Response: ...
+    def patch(
+        self,
+        url: Union[Text, bytes],
+        data: _Data = ...,
+        params: Optional[_Params] = ...,
+        headers: Optional[Any] = ...,
+        cookies: Optional[Any] = ...,
+        files: Optional[Any] = ...,
+        auth: Optional[Any] = ...,
+        timeout: Optional[Any] = ...,
+        allow_redirects: bool = ...,
+        proxies: Optional[Any] = ...,
+        hooks: Optional[Any] = ...,
+        stream: Optional[Any] = ...,
+        verify: Optional[Any] = ...,
+        cert: Optional[Any] = ...,
+        json: Optional[Any] = ...,
+    ) -> Response: ...
+    def delete(
+        self,
+        url: Union[Text, bytes],
+        params: Optional[_Params] = ...,
+        data: Optional[Any] = ...,
+        headers: Optional[Any] = ...,
+        cookies: Optional[Any] = ...,
+        files: Optional[Any] = ...,
+        auth: Optional[Any] = ...,
+        timeout: Optional[Any] = ...,
+        allow_redirects: bool = ...,
+        proxies: Optional[Any] = ...,
+        hooks: Optional[Any] = ...,
+        stream: Optional[Any] = ...,
+        verify: Optional[Any] = ...,
+        cert: Optional[Any] = ...,
+        json: Optional[Any] = ...,
+    ) -> Response: ...
     def send(self, request: PreparedRequest, **kwargs) -> Response: ...
     def merge_environment_settings(self, url, proxies, stream, verify, cert): ...
     def get_adapter(self, url): ...

@@ -1,6 +1,6 @@
 import sys
 from array import array
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 DEFLATED: int
 DEF_MEM_LEVEL: int
@@ -43,7 +43,12 @@ def compress(__data: bytes, level: int = ...) -> bytes: ...
 
 if sys.version_info >= (3,):
     def compressobj(
-        level: int = ..., method: int = ..., wbits: int = ..., memLevel: int = ..., strategy: int = ..., zdict: bytes = ...
+        level: int = ...,
+        method: int = ...,
+        wbits: int = ...,
+        memLevel: int = ...,
+        strategy: int = ...,
+        zdict: Optional[bytes] = ...,
     ) -> _Compress: ...
 
 else:
