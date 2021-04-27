@@ -107,7 +107,7 @@ internal fun createProjectSerializers(projectDir: File, virtualFileManager: Virt
   val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
   val externalStoragePath = projectDir.toPath().resolve("cache")
   return JpsProjectEntitiesLoader.createProjectSerializers(toConfigLocation(projectDir.toPath(), virtualFileManager), reader,
-                                                           externalStoragePath, virtualFileManager) as JpsProjectSerializersImpl
+                                                           externalStoragePath, true, virtualFileManager) as JpsProjectSerializersImpl
 }
 
 fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storage: WorkspaceEntityStorage, virtualFileManager: VirtualFileUrlManager) {
