@@ -63,9 +63,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
   init {
     Disposer.register(myProject, this)
     Registry.get(navBarKey).addListener(registryListener, this)
-    revalidate()
     myProject.messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener { revalidate() })
-
   }
 
   private fun addGroupComponent(panel: JPanel, layoutConstrains: String, vararg children: AnAction) {
