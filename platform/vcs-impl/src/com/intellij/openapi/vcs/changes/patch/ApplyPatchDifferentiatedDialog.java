@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -55,7 +56,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsUser;
@@ -434,36 +434,25 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   @Nullable
   private PatchReader loadPatches(@NotNull VirtualFile patchFile) {
-    PatchReader reader;
     try {
-      reader = ReadAction.compute(() -> {
+      String text = ReadAction.compute(() -> {
         try (InputStreamReader inputStreamReader = new InputStreamReader(patchFile.getInputStream(), patchFile.getCharset())) {
-          char[] chars = new char[(int)patchFile.getLength()];
-          int count = 0;
-          while (count < chars.length) {
-            int n = inputStreamReader.read(chars, count, chars.length - count);
-            if (n <= 0) {
-              break;
-            }
-            count += n;
-          }
-          return new PatchReader(new CharArrayCharSequence(chars, 0, count));
+          return StreamUtil.readText(inputStreamReader);
         }
       });
-    }
-    catch (Exception e) {
-      addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", patchFile.getPresentableName(), e.getMessage()));
-      return null;
-    }
-    try {
+
+      PatchReader reader = new PatchReader(text);
       reader.parseAllPatches();
+      return reader;
     }
     catch (PatchSyntaxException e) {
       addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", "", e.getMessage()));
       return null;
     }
-
-    return reader;
+    catch (Exception e) {
+      addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", patchFile.getPresentableName(), e.getMessage()));
+      return null;
+    }
   }
 
   private void addNotificationAndWarn(@NotNull @NlsContexts.Label String errorMessage) {
