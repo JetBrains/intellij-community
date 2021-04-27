@@ -104,27 +104,24 @@ public final class IdeaTextPatchBuilder {
 
     FilePath filePath = cr.getFile();
     if (actualTextContent != null) {
-      return new PartialTextAirContentRevision(actualTextContent, cr, filePath, null);
+      return new PartialTextAirContentRevision(actualTextContent, cr, filePath);
     }
     else if (cr instanceof BinaryContentRevision) {
-      return new BinaryAirContentRevision((BinaryContentRevision)cr, filePath, null);
+      return new BinaryAirContentRevision((BinaryContentRevision)cr, filePath);
     }
     else {
-      return new TextAirContentRevision(cr, filePath, null);
+      return new TextAirContentRevision(cr, filePath);
     }
   }
 
   private static class BinaryAirContentRevision implements AirContentRevision {
     @NotNull private final BinaryContentRevision myRevision;
     @NotNull private final FilePath myFilePath;
-    @Nullable private final Long myTimestamp;
 
     BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
-                             @NotNull FilePath filePath,
-                             @Nullable Long timestamp) {
+                             @NotNull FilePath filePath) {
       myRevision = revision;
       myFilePath = filePath;
-      myTimestamp = timestamp;
     }
 
     @Override
@@ -144,7 +141,7 @@ public final class IdeaTextPatchBuilder {
 
     @Override
     public String getRevisionNumber() {
-      return myTimestamp != null ? null : myRevision.getRevisionNumber().asString();
+      return myRevision.getRevisionNumber().asString();
     }
 
     @Override
@@ -157,14 +154,11 @@ public final class IdeaTextPatchBuilder {
   private static class TextAirContentRevision implements AirContentRevision {
     @NotNull private final ContentRevision myRevision;
     @NotNull private final FilePath myFilePath;
-    @Nullable private final Long myTimestamp;
 
     TextAirContentRevision(@NotNull ContentRevision revision,
-                           @NotNull FilePath filePath,
-                           @Nullable Long timestamp) {
+                           @NotNull FilePath filePath) {
       myRevision = revision;
       myFilePath = filePath;
-      myTimestamp = timestamp;
     }
 
     @Override
@@ -184,7 +178,7 @@ public final class IdeaTextPatchBuilder {
 
     @Override
     public String getRevisionNumber() {
-      return myTimestamp != null ? null : myRevision.getRevisionNumber().asString();
+      return myRevision.getRevisionNumber().asString();
     }
 
     @Override
@@ -212,9 +206,8 @@ public final class IdeaTextPatchBuilder {
 
     PartialTextAirContentRevision(@NotNull String content,
                                   @NotNull ContentRevision delegateRevision,
-                                  @NotNull FilePath filePath,
-                                  @Nullable Long timestamp) {
-      super(delegateRevision, filePath, timestamp);
+                                  @NotNull FilePath filePath) {
+      super(delegateRevision, filePath);
       myContent = content;
     }
 
