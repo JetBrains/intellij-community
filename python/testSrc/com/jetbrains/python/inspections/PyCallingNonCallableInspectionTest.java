@@ -52,7 +52,7 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-3892
-  public void testCallableCheck() {
+  public void _testCallableCheck() {
     doTest();
   }
 
