@@ -109,7 +109,7 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
 
   @Override
   protected void doClear() throws StorageException, IOException {
-    final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
+    final StubIndexImpl stubIndex = (StubIndexImpl)StubIndexImpl.getInstance();
     if (stubIndex != null) {
       stubIndex.clearAllIndices();
     }
