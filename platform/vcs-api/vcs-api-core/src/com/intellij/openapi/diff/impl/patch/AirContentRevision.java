@@ -24,12 +24,17 @@ import java.nio.charset.Charset;
 
 public interface AirContentRevision {
   boolean isBinary();
+
   @Nullable
   String getContentAsString() throws VcsException;
+
   byte @Nullable [] getContentAsBytes() throws VcsException;
-  
+
   @Nullable
   String getRevisionNumber();
+
+  @Nullable
+  Long getLastModifiedTimestamp();
 
   @NotNull
   FilePath getPath();

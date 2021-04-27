@@ -15,7 +15,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -114,6 +116,22 @@ public final class IdeaTextPatchBuilder {
     }
   }
 
+  @Nullable
+  private static Long getRevisionTimestamp(@NotNull ContentRevision revision) {
+    if (revision instanceof CurrentContentRevision) {
+      try {
+        FilePath filePath = revision.getFile();
+        Path path = filePath.getIOFile().toPath();
+        return Files.getLastModifiedTime(path).toMillis();
+      }
+      catch (IOException e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+
   private static class BinaryAirContentRevision implements AirContentRevision {
     @NotNull private final BinaryContentRevision myRevision;
     @NotNull private final FilePath myFilePath;
@@ -142,6 +160,11 @@ public final class IdeaTextPatchBuilder {
     @Override
     public String getRevisionNumber() {
       return myRevision.getRevisionNumber().asString();
+    }
+
+    @Override
+    public @Nullable Long getLastModifiedTimestamp() {
+      return getRevisionTimestamp(myRevision);
     }
 
     @Override
@@ -179,6 +202,11 @@ public final class IdeaTextPatchBuilder {
     @Override
     public String getRevisionNumber() {
       return myRevision.getRevisionNumber().asString();
+    }
+
+    @Override
+    public @Nullable Long getLastModifiedTimestamp() {
+      return getRevisionTimestamp(myRevision);
     }
 
     @Override

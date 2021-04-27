@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -374,15 +372,12 @@ public final class TextPatchBuilder {
       return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
     }
 
-    try {
-      FilePath filePath = revision.getPath();
-      Path path = filePath.getIOFile().toPath();
-      long lastModified = Files.getLastModifiedTime(path).toMillis();
+    Long lastModified = revision.getLastModifiedTimestamp();
+    if (lastModified != null) {
       return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(lastModified));
     }
-    catch (IOException e) {
-      return null;
-    }
+
+    return null;
   }
 
   @NotNull
