@@ -537,7 +537,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     VirtualFile testOutput = compilerExt.getCompilerOutputPathForTests();
     if (testOutput != null) {
       vmParametersList.add("--patch-module");
-      vmParametersList.add(prodModuleName + "=" + testOutput.getPath());
+      vmParametersList.add(new CompositeParameterTargetedValue().addLocalPart(prodModuleName + "=").addPathPart(testOutput.getPath()));
     }
 
     //ensure test dependencies missing from production module descriptor are available in tests
