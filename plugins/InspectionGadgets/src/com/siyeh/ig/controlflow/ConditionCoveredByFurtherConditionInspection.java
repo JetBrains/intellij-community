@@ -8,6 +8,8 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.CheckNotNullInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -135,6 +137,24 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
   @NotNull
   private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
     StandardDataFlowRunner runner = new StandardDataFlowRunner(expressionToAnalyze.getProject(), expressionToAnalyze) {
+      @Override
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor<?> visitor,
+                                                                  @NotNull DfaInstructionState instructionState) {
+        Instruction instruction = instructionState.getInstruction();
+        if (instruction instanceof CheckNotNullInstruction) {
+          DfaMemoryState state = instructionState.getMemoryState();
+          DfaValue value = state.peek();
+          if (value instanceof DfaVariableValue) {
+            DfType dfType = state.getDfType(value);
+            if (dfType instanceof DfReferenceType) {
+              state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
+              return new DfaInstructionState[]{new DfaInstructionState(getInstruction(instruction.getIndex() + 1), state)};
+            }
+          }
+        }
+        return super.acceptInstruction(visitor, instructionState);
+      }
+
       @NotNull
       @Override
       protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
@@ -167,20 +187,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       }
     };
     Map<PsiExpression, ThreeState> values = new HashMap<>();
-    class MyVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
-      @Override
-      protected ThreeState checkNotNullable(DfaMemoryState state,
-                                            @NotNull DfaValue value,
-                                            @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
-        if (value instanceof DfaVariableValue) {
-          DfType dfType = state.getDfType(value);
-          if (dfType instanceof DfReferenceType) {
-            state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
-          }
-        }
-        return ThreeState.YES;
-      }
-
+    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, new JavaDfaInstructionVisitor(new DfaInterceptor<>() {
       @Override
       public void beforeExpressionPush(@NotNull DfaValue value,
                                        @NotNull PsiExpression expression,
@@ -196,8 +203,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         }
         values.put(expression, old == null || old == result ? result : ThreeState.UNSURE);
       }
-    }
-    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, new MyVisitor());
+    }));
     return result == RunnerResult.OK ? values : Collections.emptyMap();
   }
 }
