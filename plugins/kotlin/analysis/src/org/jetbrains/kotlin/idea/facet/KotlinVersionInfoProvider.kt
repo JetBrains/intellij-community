@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.platform.orDefault
 
 interface KotlinVersionInfoProvider {
     companion object {
-        val EP_NAME: ExtensionPointName<KotlinVersionInfoProvider> = ExtensionPointName.create("org.jetbrains.kotlin.versionInfoProvider")
+        val EP_NAME: ExtensionPointName<KotlinVersionInfoProvider> = ExtensionPointName("org.jetbrains.kotlin.versionInfoProvider")
     }
 
     fun getCompilerVersion(module: Module): String?
@@ -34,10 +34,11 @@ fun getRuntimeLibraryVersions(
     module: Module,
     rootModel: ModuleRootModel?,
     platformKind: IdePlatformKind<*>
-): Collection<String> = KotlinVersionInfoProvider.EP_NAME
-    .extensions
-    .map { it.getLibraryVersions(module, platformKind, rootModel) }
-    .firstOrNull { it.isNotEmpty() } ?: emptyList()
+): Collection<String> {
+    return KotlinVersionInfoProvider.EP_NAME.extensionList.asSequence()
+        .map { it.getLibraryVersions(module, platformKind, rootModel) }
+        .firstOrNull { it.isNotEmpty() } ?: emptyList()
+}
 
 fun getLibraryLanguageLevel(
     module: Module,
