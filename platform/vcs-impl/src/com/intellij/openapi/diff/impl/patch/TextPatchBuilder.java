@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -20,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -110,7 +113,7 @@ public final class TextPatchBuilder {
     }
 
     // skip empty patch
-    if (hunks.isEmpty() && beforeRevision.getPath().getPath().equals(afterRevision.getPath().getPath())) return null;
+    if (hunks.isEmpty() && beforeRevision.getPath().equals(afterRevision.getPath())) return null;
 
     return patch;
   }
@@ -358,17 +361,27 @@ public final class TextPatchBuilder {
     result.setAfterVersionId(getRevisionName(afterRevision));
   }
 
-  public static @NotNull String getRelativePath(@NotNull Path basePath, @NotNull PathDescription path) {
-    return basePath.relativize(path.getPath()).toString().replace(File.separatorChar, '/');
+  public static @NotNull String getRelativePath(@NotNull Path basePath, @NotNull FilePath filePath) {
+    Path path = filePath.getIOFile().toPath();
+    return basePath.relativize(path).toString().replace(File.separatorChar, '/');
   }
 
-  @NotNull
+  @Nullable
   private static String getRevisionName(@NotNull AirContentRevision revision) {
     String revisionName = revision.getRevisionNumber();
     if (!StringUtil.isEmptyOrSpaces(revisionName)) {
       return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
     }
-    return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(revision.getPath().lastModified()));
+
+    try {
+      FilePath filePath = revision.getPath();
+      Path path = filePath.getIOFile().toPath();
+      long lastModified = Files.getLastModifiedTime(path).toMillis();
+      return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(lastModified));
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   @NotNull

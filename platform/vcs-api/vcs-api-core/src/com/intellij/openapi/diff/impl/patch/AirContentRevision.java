@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,7 @@ public interface AirContentRevision {
   String getRevisionNumber();
 
   @NotNull
-  PathDescription getPath();
+  FilePath getPath();
 
   @Nullable
   default Charset getCharset() {

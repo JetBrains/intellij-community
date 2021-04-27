@@ -103,28 +103,27 @@ public final class IdeaTextPatchBuilder {
     }
 
     FilePath filePath = cr.getFile();
-    StaticPathDescription description = new StaticPathDescription(filePath.isDirectory(), filePath.getIOFile().toPath());
     if (actualTextContent != null) {
-      return new PartialTextAirContentRevision(actualTextContent, cr, description, null);
+      return new PartialTextAirContentRevision(actualTextContent, cr, filePath, null);
     }
     else if (cr instanceof BinaryContentRevision) {
-      return new BinaryAirContentRevision((BinaryContentRevision)cr, description, null);
+      return new BinaryAirContentRevision((BinaryContentRevision)cr, filePath, null);
     }
     else {
-      return new TextAirContentRevision(cr, description, null);
+      return new TextAirContentRevision(cr, filePath, null);
     }
   }
 
   private static class BinaryAirContentRevision implements AirContentRevision {
     @NotNull private final BinaryContentRevision myRevision;
-    @NotNull private final StaticPathDescription myDescription;
+    @NotNull private final FilePath myFilePath;
     @Nullable private final Long myTimestamp;
 
     BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
-                                    @NotNull StaticPathDescription description,
-                                    @Nullable Long timestamp) {
+                             @NotNull FilePath filePath,
+                             @Nullable Long timestamp) {
       myRevision = revision;
-      myDescription = description;
+      myFilePath = filePath;
       myTimestamp = timestamp;
     }
 
@@ -150,21 +149,21 @@ public final class IdeaTextPatchBuilder {
 
     @Override
     @NotNull
-    public PathDescription getPath() {
-      return myDescription;
+    public FilePath getPath() {
+      return myFilePath;
     }
   }
 
   private static class TextAirContentRevision implements AirContentRevision {
     @NotNull private final ContentRevision myRevision;
-    @NotNull private final StaticPathDescription myDescription;
+    @NotNull private final FilePath myFilePath;
     @Nullable private final Long myTimestamp;
 
     TextAirContentRevision(@NotNull ContentRevision revision,
-                                  @NotNull StaticPathDescription description,
-                                  @Nullable Long timestamp) {
+                           @NotNull FilePath filePath,
+                           @Nullable Long timestamp) {
       myRevision = revision;
-      myDescription = description;
+      myFilePath = filePath;
       myTimestamp = timestamp;
     }
 
@@ -190,8 +189,8 @@ public final class IdeaTextPatchBuilder {
 
     @Override
     @NotNull
-    public PathDescription getPath() {
-      return myDescription;
+    public FilePath getPath() {
+      return myFilePath;
     }
 
     @NotNull
@@ -212,10 +211,10 @@ public final class IdeaTextPatchBuilder {
     @NotNull private final String myContent;
 
     PartialTextAirContentRevision(@NotNull String content,
-                                         @NotNull ContentRevision delegateRevision,
-                                         @NotNull StaticPathDescription description,
-                                         @Nullable Long timestamp) {
-      super(delegateRevision, description, timestamp);
+                                  @NotNull ContentRevision delegateRevision,
+                                  @NotNull FilePath filePath,
+                                  @Nullable Long timestamp) {
+      super(delegateRevision, filePath, timestamp);
       myContent = content;
     }
 
