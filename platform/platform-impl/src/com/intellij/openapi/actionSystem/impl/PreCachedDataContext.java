@@ -37,7 +37,7 @@ import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
 /**
  * @author gregsh
  */
-class PreCachedDataContext implements DataContext, UserDataHolder {
+class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier {
 
   private static int ourPrevMapEventCount;
   private static final Map<Component, Map<String, Object>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
@@ -79,19 +79,26 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
 
   private PreCachedDataContext(@NotNull Map<String, Object> cachedData,
                                @NotNull AtomicReference<KeyFMap> userData,
-                               @NotNull Consumer<? super String> missedKeys) {
+                               @Nullable Consumer<? super String> missedKeys) {
     myCachedData = cachedData;
     myUserData = userData;
     myMissedKeysIfFrozen = missedKeys;
   }
 
-  @NotNull
-  PreCachedDataContext frozenCopy(@Nullable Consumer<? super String> missedKeys) {
-    return new PreCachedDataContext(myCachedData, myUserData, missedKeys == null ? s -> {} : missedKeys);
+  final @NotNull PreCachedDataContext frozenCopy(@Nullable Consumer<? super String> missedKeys) {
+    Consumer<? super String> missedKeysNotNull = missedKeys == null ? s -> { } : missedKeys;
+    return this instanceof InjectedDataContext
+           ? new InjectedDataContext(myCachedData, myUserData, missedKeysNotNull)
+           : new PreCachedDataContext(myCachedData, myUserData, missedKeysNotNull);
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
+  public final @NotNull DataContext getInjectedDataContext() {
+    return this instanceof InjectedDataContext ? this : new InjectedDataContext(myCachedData, myUserData, null);
+  }
+
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
     ProgressManager.checkCanceled();
     Object answer = myCachedData.get(dataId);
     if (answer != null && answer != NullResult.Initial) {
@@ -193,7 +200,9 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
 
   @Override
   public String toString() {
-    return "component=" + getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    return (this instanceof InjectedDataContext ? "injected:" : "") +
+           (myMissedKeysIfFrozen != null ? "frozen:" : "") +
+           "component=" + getData(PlatformDataKeys.CONTEXT_COMPONENT);
   }
 
   @Override
@@ -214,5 +223,20 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
 
   private enum NullResult {
     Initial, Final
+  }
+
+  private static class InjectedDataContext extends PreCachedDataContext {
+    InjectedDataContext(@NotNull Map<String, Object> cachedData,
+                        @NotNull AtomicReference<KeyFMap> userData,
+                        @Nullable Consumer<? super String> missedKeys) {
+      super(cachedData, userData, missedKeys);
+    }
+
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      Object injected = super.getData(AnActionEvent.injectedId(dataId));
+      if (injected != null) return injected;
+      return super.getData(dataId);
+    }
   }
 }

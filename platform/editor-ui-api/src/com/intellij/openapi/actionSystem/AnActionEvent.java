@@ -166,16 +166,11 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   @NotNull
-  public static DataContext getInjectedDataContext(@NotNull DataContext context) {
-    return new DataContextWrapper(context) {
-      @Nullable
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        Object injected = super.getData(injectedId(dataId));
-        if (injected != null) return injected;
-        return super.getData(dataId);
-      }
-    };
+  public static DataContext getInjectedDataContext(@NotNull DataContext dataContext) {
+    if (dataContext instanceof InjectedDataContextSupplier) {
+      return ((InjectedDataContextSupplier)dataContext).getInjectedDataContext();
+    }
+    return new InjectedDataContext(dataContext);
   }
 
   /**
@@ -295,5 +290,21 @@ public class AnActionEvent implements PlaceProvider {
 
   public void setUpdateSession(@Nullable UpdateSession updateSession) {
     myUpdateSession = updateSession;
+  }
+
+  @ApiStatus.Internal
+  public interface InjectedDataContextSupplier {
+    @NotNull DataContext getInjectedDataContext();
+  }
+
+  private static class InjectedDataContext extends DataContextWrapper {
+    InjectedDataContext(@NotNull DataContext context) { super(context); }
+
+    @Override
+    public @Nullable Object getData(@NotNull @NonNls String dataId) {
+      Object injected = super.getData(injectedId(dataId));
+      if (injected != null) return injected;
+      return super.getData(dataId);
+    }
   }
 }
