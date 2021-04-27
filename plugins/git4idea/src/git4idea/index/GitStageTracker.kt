@@ -210,6 +210,10 @@ class GitStageTracker(val project: Project) : Disposable {
       return statuses.values.any { line -> line.isTracked() }
     }
 
+    fun hasConflictedFiles(): Boolean {
+      return statuses.values.any { line -> line.isConflicted() }
+    }
+
     fun isEmpty(): Boolean {
       return statuses.isEmpty()
     }

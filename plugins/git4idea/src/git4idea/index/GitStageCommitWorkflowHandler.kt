@@ -53,8 +53,9 @@ class GitStageCommitWorkflowHandler(
 
   override fun checkCommit(executor: CommitExecutor?): Boolean {
     ui.commitProgressUi.isEmptyRoots = ui.includedRoots.isEmpty()
+    ui.commitProgressUi.isUnmerged = ui.conflictedRoots.any { ui.rootsToCommit.contains(it) }
     val superCheckResult = super.checkCommit(executor)
-    return superCheckResult && !ui.commitProgressUi.isEmptyRoots
+    return superCheckResult && !ui.commitProgressUi.isEmptyRoots && !ui.commitProgressUi.isUnmerged
   }
 
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {

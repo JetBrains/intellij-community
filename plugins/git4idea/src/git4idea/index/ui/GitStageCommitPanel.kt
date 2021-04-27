@@ -38,6 +38,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
   val rootsToCommit get() = state.rootsToCommit
   val includedRoots get() = state.includedRoots
+  val conflictedRoots get() = state.conflictedRoots
 
   private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
   override var editedCommit: EditedCommitDetails? by observable(null) { _, _, _ ->
@@ -89,6 +90,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
   private inner class InclusionState(val includedRoots: Collection<VirtualFile>, val trackerState: GitStageTracker.State) {
     private val stagedStatuses: Set<GitFileStatus> = trackerState.getStaged()
+    val conflictedRoots: Set<VirtualFile> = trackerState.rootStates.filter { it.value.hasConflictedFiles() }.keys
     val stagedChanges by lazy {
       trackerState.rootStates.filterKeys {
         includedRoots.contains(it)
@@ -104,6 +106,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
       if (includedRoots != other.includedRoots) return false
       if (stagedStatuses != other.stagedStatuses) return false
+      if (conflictedRoots != other.conflictedRoots) return false
 
       return true
     }
@@ -111,6 +114,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
     override fun hashCode(): Int {
       var result = includedRoots.hashCode()
       result = 31 * result + stagedStatuses.hashCode()
+      result = 31 * result + conflictedRoots.hashCode()
       return result
     }
   }
@@ -118,15 +122,18 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
 class GitStageCommitProgressPanel : CommitProgressPanel() {
   var isEmptyRoots by stateFlag()
+  var isUnmerged by stateFlag()
 
   override fun clearError() {
     super.clearError()
     isEmptyRoots = false
+    isUnmerged = false
   }
 
   override fun buildErrorText(): String? =
     when {
       isEmptyRoots -> GitBundle.message("error.no.selected.roots.to.commit")
+      isUnmerged -> GitBundle.message("error.unresolved.conflicts")
       isEmptyChanges && isEmptyMessage -> GitBundle.message("error.no.staged.changes.no.commit.message")
       isEmptyChanges -> GitBundle.message("error.no.staged.changes.to.commit")
       isEmptyMessage -> VcsBundle.message("error.no.commit.message")
