@@ -61,11 +61,11 @@ class DebuggerDfaInterceptor implements DfaInterceptor<PsiExpression> {
                           @NotNull DfaValue value,
                           @NotNull ThreeState failed,
                           @NotNull DfaMemoryState state) {
-    if (problem instanceof ArrayStoreProblem) {
-      addHint(((ArrayStoreProblem)problem).getAnchor().getLExpression(), failed == ThreeState.YES ? DfaHint.ASE : DfaHint.NONE);
+    if (problem instanceof ArrayStoreProblem && failed == ThreeState.YES) {
+      addHint(((ArrayStoreProblem)problem).getAnchor().getLExpression(), DfaHint.ASE);
     }
-    else if (problem instanceof ArrayIndexProblem) {
-      addHint(((ArrayIndexProblem)problem).getAnchor(), failed == ThreeState.YES ? DfaHint.AIOOBE : DfaHint.NONE);
+    else if (problem instanceof ArrayIndexProblem && failed == ThreeState.YES) {
+      addHint(((ArrayIndexProblem)problem).getAnchor(), DfaHint.AIOOBE);
     }
     else if (problem instanceof ClassCastProblem) {
       addHint(((ClassCastProblem)problem).getAnchor(), failed == ThreeState.YES ? DfaHint.CCE : DfaHint.NONE);
