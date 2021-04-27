@@ -9,6 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.AnalysisFlag
+import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -18,9 +21,11 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.*
 import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
+import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.expectedDescriptors
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
@@ -33,6 +38,8 @@ import org.jetbrains.kotlin.renderer.DescriptorRendererModifier.*
 import org.jetbrains.kotlin.renderer.OverrideRenderingPolicy
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.checkers.ExperimentalUsageChecker
+import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
+import org.jetbrains.kotlin.resolve.checkers.explicitApiEnabled
 import org.jetbrains.kotlin.resolve.descriptorUtil.setSingleOverridden
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
@@ -129,6 +136,12 @@ fun OverrideMemberChooserObject.generateMember(
             if (containingClass.kind == ClassKind.ANNOTATION_CLASS || containingClass.isInline || containingClass.isValue) {
                 renderPrimaryConstructorParametersAsProperties = true
             }
+        }
+
+        if (MemberGenerateMode.OVERRIDE != mode &&
+            project.getLanguageVersionSettings(targetClass?.module).explicitApiEnabled
+        ) {
+            if (!ExplicitApiDeclarationChecker.explicitVisibilityIsNotRequired(this@generateMember.descriptor)) renderDefaultVisibility = true
         }
     }
 
