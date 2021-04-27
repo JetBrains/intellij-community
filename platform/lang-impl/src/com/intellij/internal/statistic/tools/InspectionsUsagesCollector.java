@@ -67,7 +67,7 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
     new StringEventField.ValidatedByAllowedValues("option_type", Arrays.asList("boolean", "integer"));
   private static final StringEventField OPTION_NAME_FIELD = EventFields.StringValidatedByCustomRule("option_name", "plugin_info");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 6);
+  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 7);
 
   private static final VarargEventId NOT_DEFAULT_STATE =
     GROUP.registerVarargEvent("not.default.state",
