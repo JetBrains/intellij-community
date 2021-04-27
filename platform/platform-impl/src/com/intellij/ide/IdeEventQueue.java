@@ -939,6 +939,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Future<?> exitCondition, @NotNull Predicate<? super AWTEvent> isCancelEvent) {
+    assert EventQueue.isDispatchThread();
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
     }
@@ -948,6 +949,9 @@ public final class IdeEventQueue extends EventQueue {
         boolean consumed = consumeUnrelatedEvent(modalComponent, event);
         if (!consumed) {
           dispatchEvent(event);
+        }
+        if (isCancelEvent.test(event)) {
+          break;
         }
       }
       catch (Throwable e) {
