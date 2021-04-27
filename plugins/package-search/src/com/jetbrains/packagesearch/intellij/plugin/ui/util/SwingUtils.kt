@@ -1,11 +1,6 @@
 @file:Suppress("MagicNumber") // Swing dimension constants
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.ui.render.RenderingUtil
-import com.intellij.ui.table.JBTable
-import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.UIManager

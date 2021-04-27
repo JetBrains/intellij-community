@@ -74,6 +74,6 @@ private fun Throwable.log() = apply {
     }
 }
 
-internal class EmptyBodyException: RuntimeException(
+internal class EmptyBodyException : RuntimeException(
     PackageSearchBundle.message("packagesearch.search.client.response.body.is.empty")
 )

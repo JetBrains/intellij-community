@@ -7,7 +7,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
-import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
 
 internal fun PackageModel.toUnifiedDependency(version: PackageVersion, scope: PackageScope) = UnifiedDependency(
     coordinates = UnifiedCoordinates(groupId, artifactId, version.versionName),

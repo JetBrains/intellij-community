@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 
 fun packageSearchGradleConfigurationForProject(project: Project): PackageSearchGradleConfiguration =
-  project.getService(PackageSearchGradleConfiguration::class.java)
+    project.getService(PackageSearchGradleConfiguration::class.java)
 
 @State(
     name = "PackageSearchGradleConfiguration",
@@ -17,7 +17,7 @@ fun packageSearchGradleConfigurationForProject(project: Project): PackageSearchG
 )
 class PackageSearchGradleConfiguration : BaseState(), PersistentStateComponent<PackageSearchGradleConfiguration> {
 
-    override fun getState(): PackageSearchGradleConfiguration? = this
+    override fun getState(): PackageSearchGradleConfiguration = this
 
     override fun loadState(state: PackageSearchGradleConfiguration) {
         this.copyFrom(state)

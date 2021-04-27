@@ -12,11 +12,12 @@ internal sealed class ApiResult<T : Any> {
     val isFailure: Boolean
         get() = this !is Success
 
-    fun <V: Any> mapSuccess(action: (T) -> V) = if (isSuccess) {
-        Success(action((this as Success<T>).result))
-    } else {
-        this as Failure<V>
-    }
+    fun <V : Any> mapSuccess(action: (T) -> V) =
+        if (isSuccess) {
+            Success(action((this as Success<T>).result))
+        } else {
+            this as Failure<V>
+        }
 
     fun onFailure(action: (Throwable) -> Unit) = apply {
         if (this is Failure<*>) action(throwable)

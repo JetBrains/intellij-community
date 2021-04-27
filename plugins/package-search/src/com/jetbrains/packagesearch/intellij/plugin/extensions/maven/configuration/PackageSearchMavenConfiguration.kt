@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 
 fun packageSearchMavenConfigurationForProject(project: Project): PackageSearchMavenConfiguration =
-  project.getService(PackageSearchMavenConfiguration::class.java)
+    project.getService(PackageSearchMavenConfiguration::class.java)
 
 @State(
     name = "PackageSearchMavenConfiguration",
@@ -17,7 +17,7 @@ fun packageSearchMavenConfigurationForProject(project: Project): PackageSearchMa
 )
 class PackageSearchMavenConfiguration : BaseState(), PersistentStateComponent<PackageSearchMavenConfiguration> {
 
-    override fun getState(): PackageSearchMavenConfiguration? = this
+    override fun getState(): PackageSearchMavenConfiguration = this
 
     override fun loadState(state: PackageSearchMavenConfiguration) {
         this.copyFrom(state)

@@ -1,8 +1,8 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations
 
+import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.intellij.buildsystem.model.unified.UnifiedDependency
 
 internal sealed class OperationException(
     override val message: String? = "Operation failed: generic failure",

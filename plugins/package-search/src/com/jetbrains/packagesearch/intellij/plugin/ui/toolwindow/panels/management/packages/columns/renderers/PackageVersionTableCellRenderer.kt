@@ -71,7 +71,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
                 val latestAvailableVersion = packageModel.getLatestAvailableVersion(onlyStable)
                     ?: return@buildString
                 append(" → ")
-                append(latestAvailableVersion?.displayName)
+                append(latestAvailableVersion.displayName)
             }
         }
     }

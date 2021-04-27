@@ -12,7 +12,8 @@ class ShowSettingsAction(private val currentProject: Project? = null) :
     AnAction(
         PackageSearchBundle.message("packagesearch.actions.showSettings.text"),
         PackageSearchBundle.message("packagesearch.actions.showSettings.description"),
-        AllIcons.General.Settings) {
+        AllIcons.General.Settings
+    ) {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: currentProject ?: return

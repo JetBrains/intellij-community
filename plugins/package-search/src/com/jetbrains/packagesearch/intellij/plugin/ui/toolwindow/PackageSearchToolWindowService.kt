@@ -26,8 +26,8 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.SimpleTo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories.RepositoryManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.dataService
+import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel

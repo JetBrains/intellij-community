@@ -9,16 +9,17 @@ interface ConfigurableContributor {
     companion object {
 
         private val extensionPointName: ExtensionPointName<ConfigurableContributor> =
-                ExtensionPointName.create("com.intellij.packagesearch.configurableContributor")
+            ExtensionPointName.create("com.intellij.packagesearch.configurableContributor")
 
         fun extensionsForProject(project: Project): List<ConfigurableContributor> =
-                extensionPointName.getExtensionList(project)
+            extensionPointName.getExtensionList(project)
     }
 
     fun createDriver(): ConfigurableContributorDriver
 }
 
 interface ConfigurableContributorDriver {
+
     fun contributeUserInterface(builder: FormBuilder)
     fun isModified(): Boolean
     fun reset()

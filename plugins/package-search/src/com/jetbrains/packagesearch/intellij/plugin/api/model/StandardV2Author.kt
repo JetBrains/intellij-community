@@ -3,7 +3,6 @@ package com.jetbrains.packagesearch.intellij.plugin.api.model
 import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.packagesearch.intellij.plugin.api.RequiresWhitespaceCleanup
-import org.jetbrains.annotations.NonNls
 
 internal data class StandardV2Author(
 

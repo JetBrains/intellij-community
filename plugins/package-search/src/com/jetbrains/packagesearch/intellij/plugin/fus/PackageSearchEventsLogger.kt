@@ -4,9 +4,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
+import java.util.Locale
 
 // See the documentation at https://confluence.jetbrains.com/display/FUS/IntelliJ+Reporting+API
 internal object PackageSearchEventsLogger {
@@ -18,16 +18,16 @@ internal object PackageSearchEventsLogger {
     }
 
     fun onToolWindowClose(project: Project) = tryDoing {
-        logDialogEvent(project = project, event = "close", version = "1", extras = *arrayOf("ok" to true))
+        logDialogEvent(project = project, event = "close", version = "1", extras = arrayOf("ok" to true))
     }
 
     // TODO no longer in use - deprecate in FUS whitelist?
     fun onSearchDialogCancel(project: Project) = tryDoing {
-        logDialogEvent(project = project, event = "close-cancel", version = "1", extras = *arrayOf("ok" to false))
+        logDialogEvent(project = project, event = "close-cancel", version = "1", extras = arrayOf("ok" to false))
     }
 
     fun onSearchRequest(project: Project, query: String) = tryDoing {
-        logDialogEvent(project = project, event = "request", version = "1", extras = *queryStats(query))
+        logDialogEvent(project = project, event = "request", version = "1", extras = queryStats(query))
     }
 
     fun onProjectInfo(
@@ -44,7 +44,7 @@ internal object PackageSearchEventsLogger {
             project = project,
             event = "project-info",
             version = "1",
-            extras = *arrayOf("ij" to ideaModules.size, *countPerBuildSystem)
+            extras = arrayOf("ij" to ideaModules.size) + countPerBuildSystem
         )
     }
 
@@ -56,7 +56,7 @@ internal object PackageSearchEventsLogger {
             project = project,
             event = "response",
             version = "1",
-            extras = *arrayOf(*queryStats(query), matchItems, matchGroups)
+            extras = queryStats(query) + matchItems + matchGroups
         )
     }
 
@@ -65,7 +65,7 @@ internal object PackageSearchEventsLogger {
             project = project,
             event = "response-failed",
             version = "1",
-            extras = *queryStats(query)
+            extras = queryStats(query)
         )
     }
 
@@ -77,7 +77,7 @@ internal object PackageSearchEventsLogger {
         )
     }
 
-    private fun queryStats(query: String): Array<Pair<String, out Any>> {
+    private fun queryStats(query: String): Array<Pair<String, Any>> {
         val tokens = query.split(Regex("[\\s\\r\\n]+"))
         val wordsCount = tokens.size
         val querySize = query.length
@@ -99,10 +99,10 @@ internal object PackageSearchEventsLogger {
             project = project,
             event = "installed",
             version = "1",
-            extras = *arrayOf(
+            extras = arrayOf(
                 "build-system" to buildSystem.statisticsKey,
-                "hit-min-order" to (items.withIndex().firstOrNull { it.value === dependency }?.index ?: -1),
-                "match-groups" to items.distinctBy { it.groupId.toLowerCase() }.size,
+                "hit-min-order" to (items.withIndex().find { it.value === dependency }?.index ?: -1),
+                "match-groups" to items.distinctBy { it.groupId.toLowerCase(Locale.ROOT) }.size,
                 "match-items" to items.size
             )
         )
@@ -112,7 +112,7 @@ internal object PackageSearchEventsLogger {
         project: Project,
         event: String,
         @Suppress("SameParameterValue") version: String,
-        vararg extras: Pair<String, out Any>
+        vararg extras: Pair<String, Any>
     ) = tryDoing {
         loggerProvider.logEvent(
             project = project,

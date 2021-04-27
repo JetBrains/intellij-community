@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations
 
 import com.intellij.buildsystem.model.OperationFailure
+import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
@@ -11,7 +12,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
-import com.intellij.buildsystem.model.unified.UnifiedDependency
 
 internal class ModuleOperationExecutor(private val project: Project) {
 
