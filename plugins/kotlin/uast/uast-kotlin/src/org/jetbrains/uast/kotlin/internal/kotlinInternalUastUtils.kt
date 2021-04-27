@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
@@ -75,8 +74,6 @@ import java.text.StringCharacterIterator
 internal inline fun String?.orAnonymous(kind: String = ""): String =
     this ?: ("<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">")
 
-internal fun <T> lz(initializer: () -> T) = lazy(LazyThreadSafetyMode.SYNCHRONIZED, initializer)
-
 internal fun KtExpression.unwrapBlockOrParenthesis(): KtExpression {
     val innerExpression = KtPsiUtil.safeDeparenthesize(this)
     if (innerExpression is KtBlockExpression) {
@@ -86,16 +83,8 @@ internal fun KtExpression.unwrapBlockOrParenthesis(): KtExpression {
     return innerExpression
 }
 
-internal inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(element: P): P {
-    val unwrapped = if (element is T) element.javaPsi else element
-    assert(unwrapped !is UElement)
-    return unwrapped as P
-}
-
 internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
     (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
-
-internal fun unwrapFakeFileForLightClass(file: PsiFile): PsiFile = (file as? FakeFileForLightClass)?.ktFile ?: file
 
 // mb merge with org.jetbrains.kotlin.idea.references.ReferenceAccess ?
 internal enum class ReferenceAccess(val isRead: Boolean, val isWrite: Boolean) {

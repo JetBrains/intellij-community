@@ -175,21 +175,6 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
         get() = UastAnalysisPlugin.byLanguage(KotlinLanguage.INSTANCE)
 }
 
-internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?): UElement? {
-    return if (this == null || isAssignableFrom(ActualT::class.java)) f() else null
-}
-
-internal inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.el(f: () -> UElement?): UElement? {
-    return if (isAssignableFrom(ActualT::class.java)) f() else null
-}
-
-internal inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.expr(f: () -> UExpression?): UExpression? {
-    return if (isAssignableFrom(ActualT::class.java)) f() else null
-}
-
-internal fun Array<out Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
-
-
 @ApiStatus.Internal
 object KotlinConverter {
     internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
@@ -753,12 +738,3 @@ val kotlinUastPlugin: UastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
         ?: KotlinUastLanguagePlugin()
 }
-
-private fun expressionTypes(requiredType: Class<out UElement>?) = requiredType?.let { arrayOf(it) } ?: DEFAULT_EXPRESSION_TYPES_LIST
-
-private fun elementTypes(requiredType: Class<out UElement>?) = requiredType?.let { arrayOf(it) } ?: DEFAULT_TYPES_LIST
-
-private fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out UElement>>) = takeIf { it.isNotEmpty() }
-    ?: default
-
-
