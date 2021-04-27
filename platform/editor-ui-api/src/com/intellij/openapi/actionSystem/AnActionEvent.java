@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PlaceProvider;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
@@ -20,7 +19,6 @@ import java.awt.event.InputEvent;
  * @see AnAction#update(AnActionEvent)
  */
 public class AnActionEvent implements PlaceProvider {
-  private static final String ourInjectedPrefix = "$injected$.";
 
   private final InputEvent myInputEvent;
   private final ActionManager myActionManager;
@@ -150,19 +148,6 @@ public class AnActionEvent implements PlaceProvider {
   @Nullable
   public Project getProject() {
     return getData(CommonDataKeys.PROJECT);
-  }
-
-  /** Use {@link com.intellij.openapi.actionSystem.InjectedDataKeys} if possible */
-  @NonNls
-  @NotNull
-  public static String injectedId(@NotNull String dataId) {
-    return ourInjectedPrefix + dataId;
-  }
-
-  @NonNls
-  @NotNull
-  public static String uninjectedId(@NotNull String dataId) {
-    return StringUtil.trimStart(dataId, ourInjectedPrefix);
   }
 
   @NotNull
@@ -302,9 +287,9 @@ public class AnActionEvent implements PlaceProvider {
 
     @Override
     public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      Object injected = super.getData(injectedId(dataId));
-      if (injected != null) return injected;
-      return super.getData(dataId);
+      String injectedId = InjectedDataKeys.injectedId(dataId);
+      Object injected = injectedId != null ? super.getData(injectedId) : null;
+      return injected != null ? injected : super.getData(dataId);
     }
   }
 }

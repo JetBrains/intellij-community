@@ -7,7 +7,6 @@ import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.impl.dataRules.GetDataRule;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -108,12 +107,8 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
       // allow slow data providers and rules to re-calc the value
     }
     else if (answer == null) {
-      if (dataId == AnActionEvent.uninjectedId(dataId)) {
-        return null; // a newly created data key => no data provider => no value
-      }
-      else if (!(myCachedData.get(InjectedDataKeys.EDITOR.getName()) instanceof EditorWindow)) {
-        return null; // no injected editor => no other injected values => no value
-      }
+      // a newly created data key => no data provider => no value
+      return null;
     }
 
     if (myMissedKeysIfFrozen != null) {
@@ -147,10 +142,6 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
     cachedData.put(PlatformDataKeys.MODALITY_STATE.getName(), ModalityState.stateForComponent(component));
     cachedData.put(PlatformDataKeys.IS_MODAL_CONTEXT.getName(), IdeKeyEventDispatcher.isModalContext(component));
     cachedData.put(PlatformDataKeys.SLOW_DATA_PROVIDERS.getName(), slowProviders);
-
-    // Ignore injected data keys, injections are slow, and slow parts must be in slow providers.
-    // But make `injectedId(EDITOR)` known for `getData` and `ActionUpdater.ensureSlowDataKeysPreCached`.
-    cachedData.put(InjectedDataKeys.EDITOR.getName(), NullResult.Initial);
 
     DataKey<?>[] keys = DataKey.allKeys();
     BitSet computed = new BitSet(keys.length);
@@ -234,9 +225,9 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
 
     @Override
     public @Nullable Object getData(@NotNull String dataId) {
-      Object injected = super.getData(AnActionEvent.injectedId(dataId));
-      if (injected != null) return injected;
-      return super.getData(dataId);
+      String injectedId = InjectedDataKeys.injectedId(dataId);
+      Object injected = injectedId != null ? super.getData(injectedId) : null;
+      return injected != null ? injected : super.getData(dataId);
     }
   }
 }

@@ -7,12 +7,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.actionSystem.AnActionEvent.injectedId;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class InjectedDataKeys {
   private InjectedDataKeys() { }
+
+  private static final String ourInjectedPrefix = "$injected$.";
+  private static final Map<String, String> ourInjectableIds = new HashMap<>();
 
   public static final DataKey<Editor> EDITOR = injectedKey(CommonDataKeys.EDITOR);
   public static final DataKey<Caret> CARET = injectedKey(CommonDataKeys.CARET);
@@ -21,7 +27,19 @@ public final class InjectedDataKeys {
   public static final DataKey<PsiElement> PSI_ELEMENT = injectedKey(CommonDataKeys.PSI_ELEMENT);
   public static final DataKey<Language> LANGUAGE = injectedKey(CommonDataKeys.LANGUAGE);
 
+  @ApiStatus.Internal
+  public static @Nullable String injectedId(@NotNull String dataId) {
+    return ourInjectableIds.get(dataId);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable String uninjectedId(@NotNull String dataId) {
+    return dataId.startsWith(ourInjectedPrefix) ? dataId.substring(ourInjectedPrefix.length()) : null;
+  }
+
   private static <T> @NotNull DataKey<T> injectedKey(@NotNull DataKey<T> key) {
-    return DataKey.create(injectedId(key.getName()));
+    String injectedId = ourInjectedPrefix + key.getName();
+    ourInjectableIds.put(key.getName(), injectedId);
+    return DataKey.create(injectedId);
   }
 }

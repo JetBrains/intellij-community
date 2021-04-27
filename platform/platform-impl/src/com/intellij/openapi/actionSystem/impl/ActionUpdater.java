@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -322,12 +321,6 @@ final class ActionUpdater {
     long start = System.currentTimeMillis();
     for (DataKey<?> key : DataKey.allKeys()) {
       myDataContext.getData(key);
-    }
-    // pre-cache injected data only if an injected editor is present
-    if (myDataContext.getData(InjectedDataKeys.EDITOR.getName()) instanceof EditorWindow) {
-      for (DataKey<?> key : DataKey.allKeys()) {
-        myDataContext.getData(AnActionEvent.injectedId(key.getName()));
-      }
     }
     myPreCacheSlowDataKeys = false;
     long time = System.currentTimeMillis() - start;

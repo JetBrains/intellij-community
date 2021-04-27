@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -31,7 +30,6 @@ public abstract class DataValidators {
 
   interface Registry {
     <T> void register(@NotNull DataKey<T> key, @NotNull Validator<? super T> validator);
-    <T> void registerInjected(@NotNull DataKey<T> key, @NotNull Validator<? super T> validator);
   }
 
   public static <T> @NotNull Validator<T[]> arrayValidator(@NotNull Validator<? super T> validator) {
@@ -101,12 +99,6 @@ public abstract class DataValidators {
       public <T> void register(@NotNull DataKey<T> key,
                                @NotNull Validator<? super T> validator) {
         map.get(key.getName()).add(validator);
-      }
-
-      @Override
-      public <T> void registerInjected(@NotNull DataKey<T> key,
-                                       @NotNull Validator<? super T> validator) {
-        map.get(AnActionEvent.injectedId(key.getName())).add(validator);
       }
     };
     for (DataValidators validators : EP_NAME.getExtensionList()) {
