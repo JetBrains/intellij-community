@@ -16,7 +16,7 @@
 package com.intellij.java.codeInsight.editorActions
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.editorActions.PasteHandler
+import com.intellij.codeInsight.editorActions.DefaultCopyPasteExtension
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.FileType
@@ -765,7 +765,7 @@ class Test {
       def column = myFixture.editor.caretModel.logicalPosition.column
       WriteCommandAction.runWriteCommandAction project, {
         myFixture.editor.document.insertString(offset, toPaste)
-        PasteHandler.indentBlock(project, myFixture.editor, offset, offset + toPaste.length(), column)
+        DefaultCopyPasteExtension.indentBlock(project, myFixture.editor, offset, offset + toPaste.length(), column)
       }
     }
     finally {
