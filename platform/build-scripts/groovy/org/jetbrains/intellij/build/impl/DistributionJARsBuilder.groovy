@@ -1037,8 +1037,8 @@ final class DistributionJARsBuilder {
   }
 
   @SuppressWarnings('SpellCheckingInspection')
-  private static Set<String> excludedFromMergeLibs = Set.of(
-    "JDOM", "aalto-xml", "jna", "Log4J", "sqlite", "Slf4j", "Trove4j", "async-profiler", "precompiled_jshell-frontend",
+  private static final Set<String> excludedFromMergeLibs = Set.of(
+    "JDOM", "jna", "Log4J", "sqlite", "Slf4j", "async-profiler", "precompiled_jshell-frontend",
     "dexlib2", // android-only lib
     "intellij-coverage", "intellij-test-discovery", // used as agent
     "winp", "junixsocket-core", "pty4j" // contains native library
@@ -1085,10 +1085,8 @@ final class DistributionJARsBuilder {
         String lowerCasedLibName = libName.toLowerCase()
         if (mergeLibs) {
           String key
-          if (libName.startsWith("netty-")) {
-            key = "netty"
-          }
-          else if (!excludedFromMergeLibs.contains(libName) && !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
+          if (!excludedFromMergeLibs.contains(libName) &&
+                   !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
                    !lowerCasedLibName.contains("annotations") &&
                    !lowerCasedLibName.startsWith("junit") &&
                    !lowerCasedLibName.startsWith("cucumber-") &&

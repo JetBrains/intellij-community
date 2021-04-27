@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -90,6 +89,7 @@ final class PlatformModules {
   )
 
   private static final String PLATFORM_JAR = "platform-impl.jar"
+  private static final String UTIL_JAR = "util.jar"
 
   @CompileDynamic
   static PlatformLayout createPlatformLayout(ProductModulesLayout productLayout,
@@ -136,18 +136,18 @@ final class PlatformModules {
         layout.moduleExcludes.putValues(it.key, it.value)
       }
 
-      addModule("intellij.platform.util", "util.jar")
-      addModule("intellij.platform.util.rt", "util.jar")
-      addModule("intellij.platform.util.zip", "util.jar")
-      addModule("intellij.platform.util.classLoader", "util.jar")
-      addModule("intellij.platform.util.text.matching", "util.jar")
-      addModule("intellij.platform.util.collections", "util.jar")
-      addModule("intellij.platform.util.strings", "util.jar")
-      addModule("intellij.platform.util.diagnostic", "util.jar")
-      addModule("intellij.platform.util.ui", "util.jar")
-      addModule("intellij.platform.util.ex", "util.jar")
-      addModule("intellij.platform.ide.util.io", "util.jar")
-      addModule("intellij.platform.extensions", "util.jar")
+      addModule("intellij.platform.util", UTIL_JAR)
+      addModule("intellij.platform.util.rt", UTIL_JAR)
+      addModule("intellij.platform.util.zip", UTIL_JAR)
+      addModule("intellij.platform.util.classLoader", UTIL_JAR)
+      addModule("intellij.platform.util.text.matching", UTIL_JAR)
+      addModule("intellij.platform.util.collections", UTIL_JAR)
+      addModule("intellij.platform.util.strings", UTIL_JAR)
+      addModule("intellij.platform.util.diagnostic", UTIL_JAR)
+      addModule("intellij.platform.util.ui", UTIL_JAR)
+      addModule("intellij.platform.util.ex", UTIL_JAR)
+      addModule("intellij.platform.ide.util.io", UTIL_JAR)
+      addModule("intellij.platform.extensions", UTIL_JAR)
 
       withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
       addModule("intellij.platform.statistics", "stats.jar")
@@ -193,23 +193,31 @@ final class PlatformModules {
         addModule("intellij.platform.coverage")
       }
 
-      additionalProjectLevelLibraries.each {
-        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name) && !layout.excludedProjectLibraries.contains(it.name)) {
-          withProjectLibrary(it.name)
+      for (String libraryName in productLayout.projectLibrariesToUnpackIntoMainJar) {
+        withProjectLibraryUnpackedIntoJar(libraryName, productLayout.mainJarName)
+      }
+
+      layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
+        "Trove4j",
+        "aalto-xml",
+        "netty-buffer",
+        "netty-codec-http",
+        "netty-handler-proxy"
+      ))
+
+      for (JpsLibrary library in additionalProjectLevelLibraries) {
+        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(library.name) &&
+            !layout.projectLibrariesToUnpack.values().contains(library.name) &&
+            !layout.excludedProjectLibraries.contains(library.name)) {
+          withProjectLibrary(library.name)
         }
       }
-      productLayout.projectLibrariesToUnpackIntoMainJar.each {
-        withProjectLibraryUnpackedIntoJar(it, productLayout.mainJarName)
-      }
+
       withProjectLibrariesFromIncludedModules(buildContext)
 
-      for (String toRemoveVersion : getLibsToRemoveVersion()) {
+      for (String toRemoveVersion : List.of("Log4J", "jna", "jetbrains-annotations-java5", "JDOM")) {
         removeVersionFromProjectLibraryJarNames(toRemoveVersion)
       }
     }
-  }
-
-  private static @NotNull Set<String> getLibsToRemoveVersion() {
-    return Set.of("Trove4j", "Log4J", "jna", "jetbrains-annotations-java5", "JDOM")
   }
 }

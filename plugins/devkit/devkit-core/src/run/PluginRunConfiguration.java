@@ -212,7 +212,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
         else {
-          for (String path : List.of("log4j.jar", "jdom.jar", "trove4j.jar", "openapi.jar", "util.jar", "bootstrap.jar",
+          for (String path : List.of("log4j.jar", "jdom.jar", "openapi.jar", "util.jar", "bootstrap.jar",
                                      "idea_rt.jar", "idea.jar")) {
             params.getClassPath().add(ideaJdkHome + toSystemDependentName("/lib/" + path));
           }
