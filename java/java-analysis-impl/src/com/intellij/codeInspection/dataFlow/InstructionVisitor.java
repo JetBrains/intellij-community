@@ -487,6 +487,11 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       state.applyCondition(value.cond(RelationType.NE, NULL));
     }
     boolean unknown = nullability == DfaNullability.UNKNOWN;
+    if (problem != null) {
+      ThreeState failed = nullability == DfaNullability.NOT_NULL ? ThreeState.NO :
+                          nullability == DfaNullability.NULL ? ThreeState.YES : ThreeState.UNSURE;
+      myInterceptor.onCondition(problem, value, failed, state);
+    }
     return notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
   }
 

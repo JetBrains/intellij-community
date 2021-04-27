@@ -4,7 +4,6 @@ package com.intellij.debugger.engine.dfaassist;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ClassCastProblem;
@@ -25,15 +24,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-class DebuggerInstructionVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
+class DebuggerDfaInterceptor implements DfaInterceptor<PsiExpression> {
   private static final TokenSet BOOLEAN_TOKENS = TokenSet.create(
     JavaTokenType.ANDAND, JavaTokenType.OROR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.OR, JavaTokenType.EQEQ, JavaTokenType.NE);
 
   private final Map<PsiExpression, DfaHint> myHints = new HashMap<>();
-
-  DebuggerInstructionVisitor() {
-    super(true);
-  }
 
   private void addHint(@NotNull PsiExpression expression, @Nullable DfaHint hint) {
     if (hint != null) {
@@ -75,18 +70,13 @@ class DebuggerInstructionVisitor extends JavaDfaInstructionVisitor implements Df
     else if (problem instanceof ClassCastProblem) {
       addHint(((ClassCastProblem)problem).getAnchor(), failed == ThreeState.YES ? DfaHint.CCE : DfaHint.NONE);
     }
-  }
-
-  @Override
-  protected ThreeState checkNotNullable(DfaMemoryState state,
-                                        @NotNull DfaValue value,
-                                        @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
-    if (problem != null) {
-      PsiExpression expression = problem.getDereferencedExpression();
-      if (expression != null && problem.thrownException() != null) {
+    else if (problem instanceof NullabilityProblemKind.NullabilityProblem<?>) {
+      var npeProblem = (NullabilityProblemKind.NullabilityProblem<?>) problem;
+      PsiExpression expression = npeProblem.getDereferencedExpression();
+      if (expression != null && npeProblem.thrownException() != null) {
         DfaHint hint;
-        if (state.isNull(value)) {
-          hint = problem.thrownException().equals(CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
+        if (failed == ThreeState.YES) {
+          hint = npeProblem.thrownException().equals(CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
                  ? DfaHint.NPE
                  : DfaHint.NULL_AS_NOT_NULL;
         } else {
@@ -95,7 +85,6 @@ class DebuggerInstructionVisitor extends JavaDfaInstructionVisitor implements Df
         addHint(expression, hint);
       }
     }
-    return super.checkNotNullable(state, value, problem);
   }
 
   private static boolean shouldTrackExpressionValue(@NotNull PsiExpression expr) {
