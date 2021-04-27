@@ -4,6 +4,7 @@ package org.jetbrains.idea.eclipse.detect;
 import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,27 +24,27 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Consumer;
 
 class EclipseProjectDetector extends ProjectDetector {
   private final static Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
 
   protected void collectProjectPaths(List<String> projects) throws Exception {
-    Path path = Path.of(System.getProperty("user.home"), ".eclipse/org.eclipse.oomph.setup/setups/locations.setup");
+    String home = System.getProperty("user.home");
+    Path path = Path.of(home, ".eclipse/org.eclipse.oomph.setup/setups/locations.setup");
     File file = path.toFile();
     if (file.exists()) {
       List<String> workspaceUrls = parseOomphLocations(FileUtil.loadFile(file));
       for (String url : workspaceUrls) {
-        projects.addAll(scanForProjects(URI.create(url).getPath()));
+        scanForProjects(URI.create(url).getPath(), projects);
       }
-      return;
     }
     for (String appLocation : getStandardAppLocations()) {
       collectProjects(projects, Path.of(appLocation));
+    }
+    if (PropertiesComponent.getInstance().getBoolean("eclipse.scan.home.directory", false)) {
+      visitFiles(new File(home), file1 -> scanForProjects(file1.getPath(), projects), 3);
     }
   }
 
@@ -81,8 +82,9 @@ class EclipseProjectDetector extends ProjectDetector {
           group.setBottomGroup(true);
           manager.addGroup(group);
         }
-        group.setProjects(projects);
-        ApplicationManager.getApplication().invokeLater(() -> onFinish.accept(projects));
+        ArrayList<String> list = new ArrayList<>(new HashSet<>(projects));
+        group.setProjects(list);
+        ApplicationManager.getApplication().invokeLater(() -> onFinish.accept(list));
       }
       catch (Exception e) {
         LOG.error(e);
@@ -96,7 +98,7 @@ class EclipseProjectDetector extends ProjectDetector {
     String prefs = FileUtil.loadFile(file);
     String[] workspaces = getWorkspaces(prefs);
     for (String workspace : workspaces) {
-      projects.addAll(scanForProjects(workspace));
+      scanForProjects(workspace, projects);
     }
   }
 
@@ -107,14 +109,13 @@ class EclipseProjectDetector extends ProjectDetector {
     return workspaces == null ? ArrayUtil.EMPTY_STRING_ARRAY : workspaces.split("\\n");
   }
 
-  static List<String> scanForProjects(String workspace) {
-    List<String> projects = new ArrayList<>();
+  static void scanForProjects(String workspace, List<String> projects) {
     if (isInSpecialMacFolder(workspace)) {
-      return projects;
+      return;
     }
     File[] files = new File(workspace).listFiles();
     if (files == null) {
-      return projects;
+      return;
     }
     for (File file : files) {
       String[] list = file.list();
@@ -122,7 +123,6 @@ class EclipseProjectDetector extends ProjectDetector {
         projects.add(file.getPath());
       }
     }
-    return projects;
   }
 
   static List<String> parseOomphLocations(String fileContent) throws Exception {
@@ -138,7 +138,19 @@ class EclipseProjectDetector extends ProjectDetector {
     String home = System.getProperty("user.home");
     Path path = Path.of(file);
     return path.startsWith(Path.of(home, "Documents")) ||
+           path.startsWith(Path.of(home, "Pictures")) ||
            path.startsWith(Path.of(home, "Downloads")) ||
-           path.startsWith(Path.of(home, "Desktop"));
+           path.startsWith(Path.of(home, "Desktop")) ||
+           path.startsWith(Path.of(home, "Library"));
+  }
+
+  private static void visitFiles(File file, Consumer<File> processor, int depth) {
+    if (depth == 0) return;
+    processor.accept(file);
+    File[] files = file.listFiles(pathname -> !pathname.getName().startsWith("."));
+    if (files == null) return;
+    for (File child : files) {
+      visitFiles( child, processor, depth - 1);
+    }
   }
 }
