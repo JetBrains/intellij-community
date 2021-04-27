@@ -183,14 +183,18 @@ object JavaCompletionFeatures {
     val packageName = PsiUtil.getPackageName(psiClass)
     if (packageName == null || packageName.isEmpty()) return emptyMap()
     val packagePartsCount = packageName.split(".").size
+    val result = mutableMapOf<String, MLFeatureValue>()
     val packageMatchedParts = packagesInfo.packageName.matchedParts(packageName)
+    if (packageMatchedParts != 0) {
+      result["package_matched_parts"] = MLFeatureValue.numerical(packageMatchedParts)
+      result["package_matched_parts_relative"] = MLFeatureValue.numerical(packageMatchedParts.toDouble() / packagePartsCount)
+    }
     val maxImportMatchedParts = packagesInfo.importPackages.matchedParts(packageName)
-    return mapOf(
-      "package_matched_parts" to MLFeatureValue.numerical(packageMatchedParts),
-      "package_matched_parts_relative" to MLFeatureValue.numerical(packageMatchedParts.toDouble() / packagePartsCount),
-      "imports_max_matched_parts" to MLFeatureValue.numerical(maxImportMatchedParts),
-      "imports_max_matched_parts_relative" to MLFeatureValue.numerical(maxImportMatchedParts.toDouble() / packagePartsCount)
-    )
+    if (maxImportMatchedParts != 0) {
+      result["imports_max_matched_parts"] = MLFeatureValue.numerical(maxImportMatchedParts)
+      result["imports_max_matched_parts_relative"] = MLFeatureValue.numerical(maxImportMatchedParts.toDouble() / packagePartsCount)
+    }
+    return result
   }
 
   private fun getVariablesInScope(position: PsiElement, maxScope: PsiElement?, maxVariables: Int = 100): List<PsiVariable> {
