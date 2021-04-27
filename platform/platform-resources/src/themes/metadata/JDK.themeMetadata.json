@@ -595,9 +595,6 @@
       "description": "Border under the main menu bar on Windows/Linux"
     },
     {
-      "key": "Menu.borderCornerRadius"
-    },
-    {
       "key": "MenuBar.darcula.borderColor",
       "deprecated": true
     },

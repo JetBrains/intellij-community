@@ -35,7 +35,6 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -1223,10 +1222,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             DialogWrapper.cleanupWindowListeners(window);
           }
         });
-        if (contents instanceof JBPopupMenu) {
-          window.setBackground(Gray.TRANSPARENT);
-          window.setOpacity(1);
-        }
       }
       return popup;
     }

@@ -23,7 +23,7 @@
   "ui": {
     "*": {
       "foreground": "foreground",
-      "acceleratorForeground": "#808080",
+      "acceleratorForeground": "foreground",
       "caretForeground": "foreground",
       "selectedForeground": "foreground",
       "selectionInactiveForeground": "foreground",
