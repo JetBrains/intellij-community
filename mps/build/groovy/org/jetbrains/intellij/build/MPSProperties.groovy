@@ -22,10 +22,10 @@ class MPSProperties extends JetBrainsProductProperties {
         productLayout.mainJarName = "platform.jar"
         productLayout.mainModules = ["intellij.idea.community.main"]
 
-        productLayout.productApiModules = BaseIdeaProperties.JAVA_IDE_API_MODULES + [
+        productLayout.productApiModules = [
                 "intellij.java.execution"
         ]
-        productLayout.productImplementationModules = BaseIdeaProperties.JAVA_IDE_IMPLEMENTATION_MODULES + [
+        productLayout.productImplementationModules = [
                 "intellij.platform.main",
                 "intellij.java.execution.impl",
                 "intellij.java.compiler.instrumentationUtil",
@@ -72,6 +72,14 @@ class MPSProperties extends JetBrainsProductProperties {
 
         productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
             layout.customize {
+                for (String name : BaseIdeaProperties.JAVA_IDE_API_MODULES) {
+                    withModule(name)
+                }
+                for (String name : BaseIdeaProperties.JAVA_IDE_IMPLEMENTATION_MODULES) {
+                    withModule(name)
+                }
+                excludeFromModule("intellij.platform.testFramework", "mockito-extensions/**")
+
                 withModule("intellij.platform.coverage", productLayout.mainJarName)
 
                 withModule("intellij.java.rt", "idea_rt.jar", null)
