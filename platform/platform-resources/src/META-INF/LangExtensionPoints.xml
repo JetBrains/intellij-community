@@ -218,6 +218,12 @@
       <with attribute="forClass" implements="com.intellij.model.Symbol"/>
       <with attribute="implementationClass" implements="com.intellij.navigation.SymbolNavigationProvider"/>
     </extensionPoint>
+    <extensionPoint name="symbolDeclarationPresentationProvider" dynamic="true"
+                    beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="forClass" implements="com.intellij.model.SymbolDeclaration"/>
+      <with attribute="implementationClass"
+            implements="com.intellij.model.presentation.SymbolDeclarationPresentationProvider"/>
+    </extensionPoint>
     <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider" dynamic="true"/>
 
     <extensionPoint name="structureViewBuilder" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean" dynamic="true">
