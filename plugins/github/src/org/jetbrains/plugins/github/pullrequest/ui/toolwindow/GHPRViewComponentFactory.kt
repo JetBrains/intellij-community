@@ -9,6 +9,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.DiffPreview
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
@@ -40,7 +42,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsBrowserComponentFactory
-import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRDiffRequestChainProducer
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
@@ -49,6 +50,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
@@ -347,15 +349,22 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private fun createChangesTree(parentPanel: JPanel,
                                 model: SingleValueModel<List<Change>>,
                                 emptyTextText: String): JComponent {
+    val editorDiffPreview = object : DiffPreview {
+      override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
+        if (isPreviewVisible) {
+          viewController.openPullRequestDiff(dataProvider.id, focus)
+        }
+      }
+    }
 
     val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText).also {
       it.doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(it, e)) return@Processor false
-        viewController.openPullRequestDiff(dataProvider.id, true)
+        editorDiffPreview.setPreviewVisible(true, true)
         true
       }
       it.enterKeyHandler = Processor {
-        viewController.openPullRequestDiff(dataProvider.id, true)
+        editorDiffPreview.setPreviewVisible(true, true)
         true
       }
     }
@@ -364,6 +373,8 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
 
     DataManager.registerDataProvider(parentPanel) {
+      if (EDITOR_TAB_DIFF_PREVIEW.`is`(it)) return@registerDataProvider editorDiffPreview
+
       if (tree.isShowing) tree.getData(it) else null
     }
     return ScrollPaneFactory.createScrollPane(tree, true)
