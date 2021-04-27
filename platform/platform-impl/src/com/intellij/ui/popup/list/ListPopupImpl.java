@@ -709,23 +709,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     @Override
     public Object getData(@NotNull String dataId) {
-       if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
-        return myList.getSelectedValue();
-      }
-      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
-        Object[] values = myList.getSelectedValues();
-        if (values != null && values.length == 1 && values[0] == null) {
-          return null;
-        }
-        return values;
-      }
       if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId)) {
         if (mySpeedSearchPatternField != null && mySpeedSearchPatternField.isVisible()) {
           return mySpeedSearchPatternField;
         }
       }
-
-      return null;
+      return PopupImplUtil.getDataImplForList(myList, dataId);
     }
   }
 
