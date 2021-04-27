@@ -363,6 +363,7 @@ public final class TextPatchBuilder {
 
   public static @NotNull String getRelativePath(@NotNull Path basePath, @NotNull FilePath filePath) {
     Path path = filePath.getIOFile().toPath();
+    if (!path.isAbsolute()) return filePath.getPath();
     return basePath.relativize(path).toString().replace(File.separatorChar, '/');
   }
 
