@@ -22,6 +22,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.mapInPlace
+import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
@@ -160,14 +161,7 @@ class ArtifactModifiableModelBridge(
   }
 
   private fun generateUniqueName(baseName: String): String {
-    var name = baseName
-    var i = 2
-    while (true) {
-      if (findArtifact(name) == null) {
-        return name
-      }
-      name = baseName + i++
-    }
+    return UniqueNameGenerator.generateUniqueName(baseName) { findArtifact(it) == null }
   }
 
   override fun removeArtifact(artifact: Artifact) {
