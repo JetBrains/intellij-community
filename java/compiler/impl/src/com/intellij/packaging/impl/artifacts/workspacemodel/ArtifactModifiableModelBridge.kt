@@ -196,8 +196,7 @@ class ArtifactModifiableModelBridge(
     return modifiableArtifact
   }
 
-  override fun getModifiableCopy(artifact: Artifact?): Artifact? {
-    if (artifact == null) return null
+  override fun getModifiableCopy(artifact: Artifact): Artifact? {
     return modifiableToOriginal.getKeysByValue(artifact as ArtifactBridge)?.singleOrNull()
   }
 

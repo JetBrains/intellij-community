@@ -172,7 +172,7 @@ public final class ArtifactModelImpl extends ArtifactModelBase implements Modifi
 
   @Override
   @Nullable
-  public ArtifactImpl getModifiableCopy(Artifact artifact) {
+  public ArtifactImpl getModifiableCopy(@NotNull Artifact artifact) {
     //noinspection SuspiciousMethodCalls
     return myArtifact2ModifiableCopy.get(artifact);
   }
