@@ -19,6 +19,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
@@ -59,10 +60,10 @@ final class ContractChecker {
     }
 
     @Override
-    public void onConditionFailure(@NotNull UnsatisfiedConditionProblem problem,
-                                   @NotNull DfaValue value,
-                                   boolean alwaysFailed) {
-      if (problem instanceof ContractFailureProblem) {
+    public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                            @NotNull DfaValue value,
+                            @NotNull ThreeState failed) {
+      if (problem instanceof ContractFailureProblem && failed != ThreeState.NO) {
         ContainerUtil.addIfNotNull(myFailures, ((ContractFailureProblem)problem).getAnchor());
       }
     }

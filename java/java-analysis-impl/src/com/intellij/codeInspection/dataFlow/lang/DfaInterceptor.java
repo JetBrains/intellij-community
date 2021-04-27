@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,14 +67,15 @@ public interface DfaInterceptor<EXPR extends PsiElement> {
   }
 
   /**
-   * Called for every expression that fails to satisfy the condition required by EnsureInstruction
+   * Called for every expression that fails to satisfy the condition required by EnsureInstruction.
+   * Note that it can be called for the same place several times (once per memory state).
    * @param problem a problem descriptor
    * @param value top-of-stack value that failed the condition
-   * @param alwaysFailed true if condition failed always; false if it fails only sometimes
+   * @param failed YES if condition failed always; NO if it's satisfied; UNSURE if it may fail.
    */
-  default void onConditionFailure(@NotNull UnsatisfiedConditionProblem problem, 
-                                  @NotNull DfaValue value,
-                                  boolean alwaysFailed) {
+  default void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                           @NotNull DfaValue value,
+                           @NotNull ThreeState failed) {
 
   }
 

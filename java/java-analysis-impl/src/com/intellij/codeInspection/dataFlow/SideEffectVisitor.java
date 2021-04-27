@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -50,8 +51,10 @@ public class SideEffectVisitor extends JavaDfaInstructionVisitor implements DfaI
   }
 
   @Override
-  public void onConditionFailure(@NotNull UnsatisfiedConditionProblem problem, @NotNull DfaValue value, boolean alwaysFailed) {
-    myRunner.cancel();
+  public void onCondition(@NotNull UnsatisfiedConditionProblem problem, @NotNull DfaValue value, @NotNull ThreeState failed) {
+    if (failed != ThreeState.NO) {
+      myRunner.cancel();
+    }
   }
 
   @Override

@@ -311,16 +311,16 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   }
 
   @Override
-  public void onConditionFailure(@NotNull UnsatisfiedConditionProblem problem,
-                                 @NotNull DfaValue value,
-                                 boolean alwaysFailed) {
-    if (problem instanceof MutabilityProblem) {
+  public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                          @NotNull DfaValue value,
+                          @NotNull ThreeState failed) {
+    if (problem instanceof MutabilityProblem && failed == ThreeState.YES) {
       reportMutabilityViolation(((MutabilityProblem)problem).isReceiver(), ((MutabilityProblem)problem).getAnchor());
     }
     else if (problem instanceof NegativeArraySizeProblem) {
-      myNegativeArraySizes.merge(((NegativeArraySizeProblem)problem).getAnchor(), ThreeState.fromBoolean(alwaysFailed), ThreeState::merge);
+      myNegativeArraySizes.merge(((NegativeArraySizeProblem)problem).getAnchor(), failed, ThreeState::merge);
     }
-    else if (problem instanceof ArrayStoreProblem) {
+    else if (problem instanceof ArrayStoreProblem && failed == ThreeState.YES) {
       myArrayStoreProblems.put(((ArrayStoreProblem)problem).getAnchor(), 
                                Pair.create(((ArrayStoreProblem)problem).getFromType(), ((ArrayStoreProblem)problem).getToType()));
     }

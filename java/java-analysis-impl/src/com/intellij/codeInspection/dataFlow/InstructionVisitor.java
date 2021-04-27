@@ -208,7 +208,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         if (!Mutability.fromDfType(dfType).canBeModified() &&
             // Empty array cannot be modified at all
             !memState.getDfType(JvmSpecialField.ARRAY_LENGTH.createValue(factory, arg)).equals(intValue(0))) {
-          myInterceptor.onConditionFailure(new MutabilityProblem(anchor, false), arg, true);
+          myInterceptor.onCondition(new MutabilityProblem(anchor, false), arg, ThreeState.YES);
           if (dfType instanceof DfReferenceType) {
             memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
           }
@@ -235,7 +235,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       // Inferred mutation annotation may infer mutates="this" if invisible state is mutated (e.g. cached hashCode is stored).
       // So let's conservatively skip the warning here. Such contract is still useful because it assures that nothing else is mutated.
       if (method != null && JavaMethodContractUtil.getContractInfo(method).isExplicit()) {
-        myInterceptor.onConditionFailure(new MutabilityProblem(instruction.getContext(), true), value, true);
+        myInterceptor.onCondition(new MutabilityProblem(instruction.getContext(), true), value, ThreeState.YES);
         if (dfType instanceof DfReferenceType) {
           memState.setDfType(value, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
         }
@@ -572,13 +572,13 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     if (toType == DfType.BOTTOM) return;
     DfType fromType = memState.getDfType(dfaSource);
     DfType meet = fromType.meet(toType);
-    if (meet != DfType.BOTTOM) return;
     Project project = lValue.getProject();
     PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(rValue, PsiAssignmentExpression.class);
     PsiType psiFromType = TypeConstraint.fromDfType(fromType).getPsiType(project);
     PsiType psiToType = TypeConstraint.fromDfType(toType).getPsiType(project);
     if (assignmentExpression == null || psiFromType == null || psiToType == null) return;
-    myInterceptor.onConditionFailure(new ArrayStoreProblem(assignmentExpression, psiFromType, psiToType), dfaSource, true);
+    myInterceptor.onCondition(new ArrayStoreProblem(assignmentExpression, psiFromType, psiToType), dfaSource,
+                              meet == DfType.BOTTOM ? ThreeState.YES : ThreeState.UNSURE);
   }
 
   protected static DfaInstructionState[] nextInstruction(Instruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -945,14 +945,17 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaCondition cond = instruction.createCondition(tosValue);
     Instruction nextInstruction = runner.getInstruction(instruction.getIndex() + 1);
     DfaInstructionState nextState = new DfaInstructionState(nextInstruction, memState);
+    UnsatisfiedConditionProblem problem = instruction.getProblem();
     if (cond.equals(DfaCondition.getTrue())) {
+      if (problem != null) {
+        myInterceptor.onCondition(problem, tosValue, ThreeState.NO);
+      }
       return new DfaInstructionState[]{nextState};
     }
-    UnsatisfiedConditionProblem problem = instruction.getProblem();
     if (transfer == null) {
       boolean satisfied = memState.applyCondition(cond);
       if (problem != null) {
-        myInterceptor.onConditionFailure(problem, tosValue, !satisfied);
+        myInterceptor.onCondition(problem, tosValue, satisfied ? ThreeState.UNSURE : ThreeState.YES);
       }
       if (!satisfied) {
         return DfaInstructionState.EMPTY_ARRAY;
@@ -966,10 +969,12 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     if (trueStatePossible) {
       result.add(nextState);
     }
+    if (problem != null) {
+      myInterceptor.onCondition(problem, tosValue,
+                                !trueStatePossible ? ThreeState.YES :
+                                !falseStatePossible ? ThreeState.NO : ThreeState.UNSURE);
+    }
     if (falseStatePossible) {
-      if (problem != null) {
-        myInterceptor.onConditionFailure(problem, tosValue, !trueStatePossible);
-      }
       List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, runner, transfer);
       if (instruction.isMakeEphemeral()) {
         for (DfaInstructionState negState : states) {

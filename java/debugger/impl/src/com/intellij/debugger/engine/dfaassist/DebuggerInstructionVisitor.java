@@ -75,10 +75,10 @@ class DebuggerInstructionVisitor extends JavaDfaInstructionVisitor implements Df
   }
 
   @Override
-  public void onConditionFailure(@NotNull UnsatisfiedConditionProblem problem,
-                                 @NotNull DfaValue value, boolean alwaysFailed) {
+  public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                          @NotNull DfaValue value, @NotNull ThreeState failed) {
     if (problem instanceof ArrayStoreProblem) {
-      addHint(((ArrayStoreProblem)problem).getAnchor().getLExpression(), DfaHint.ASE);
+      addHint(((ArrayStoreProblem)problem).getAnchor().getLExpression(), failed == ThreeState.YES ? DfaHint.ASE : DfaHint.NONE);
     }
   }
 
