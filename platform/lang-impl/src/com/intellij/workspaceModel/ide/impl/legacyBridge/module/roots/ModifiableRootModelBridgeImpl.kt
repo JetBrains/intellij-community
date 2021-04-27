@@ -515,7 +515,7 @@ class ModifiableRootModelBridgeImpl(
 
   override fun dispose() {
     disposeWithoutLibraries()
-    moduleLibraryTable.disposeLibraryCopies()
+    moduleLibraryTable.restoreLibraryMappingsAndDisposeCopies()
     Disposer.dispose(moduleLibraryTable)
   }
 
