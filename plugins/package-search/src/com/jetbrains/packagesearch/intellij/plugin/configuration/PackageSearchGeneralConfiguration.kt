@@ -36,4 +36,10 @@ class PackageSearchGeneralConfiguration : BaseState(), PersistentStateComponent<
 
     @get:OptionTag("PACKAGE_DETAILS_SPLITTER_PROPORTION")
     var packageDetailsSplitterProportion by property(DefaultPackageDetailsSplitterProportion)
+
+    @get:OptionTag("ONLY_STABLE")
+    var onlyStable by property(true)
+
+    @get:OptionTag("ONLY_KOTLIN_MULTIPLATFORM")
+    var onlyKotlinMultiplatform by property(false)
 }

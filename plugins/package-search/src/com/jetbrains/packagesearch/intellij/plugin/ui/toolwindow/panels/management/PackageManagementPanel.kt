@@ -49,8 +49,10 @@ internal class PackageManagementPanel(
         JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     )
 
+    private val project = rootDataModelProvider.project
+
     private val packagesListPanel = PackagesListPanel(
-        project = rootDataModelProvider.project,
+        project = project,
         searchClient = searchClient,
         lifetimeProvider = lifetimeProvider,
         operationExecutor = operationExecutor,
@@ -77,7 +79,7 @@ internal class PackageManagementPanel(
     }
 
     init {
-        updatePackageDetailsVisible(PackageSearchGeneralConfiguration.getInstance(rootDataModelProvider.project).packageDetailsVisible)
+        updatePackageDetailsVisible(PackageSearchGeneralConfiguration.getInstance(project).packageDetailsVisible)
 
         modulesScrollPanel.apply {
             border = BorderFactory.createEmptyBorder()
@@ -139,22 +141,22 @@ internal class PackageManagementPanel(
 
         if (!wasVisible && becomeVisible) {
             packagesSplitter.proportion =
-                PackageSearchGeneralConfiguration.getInstance(rootDataModelProvider.project).packageDetailsSplitterProportion
+                PackageSearchGeneralConfiguration.getInstance(project).packageDetailsSplitterProportion
         }
 
         if (!becomeVisible) {
-            PackageSearchGeneralConfiguration.getInstance(rootDataModelProvider.project).packageDetailsSplitterProportion =
+            PackageSearchGeneralConfiguration.getInstance(project).packageDetailsSplitterProportion =
                 packagesSplitter.proportion
             packagesSplitter.proportion = 1.0f
         }
     }
 
-    private val togglePackageDetailsAction = TogglePackageDetailsAction(rootDataModelProvider.project, ::updatePackageDetailsVisible)
+    private val togglePackageDetailsAction = TogglePackageDetailsAction(project, ::updatePackageDetailsVisible)
 
     override fun build() = mainSplitter
 
     override fun buildGearActions() = DefaultActionGroup(
-        ShowSettingsAction(rootDataModelProvider.project),
+        ShowSettingsAction(project),
         togglePackageDetailsAction
     )
 

@@ -1,15 +1,14 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations
 
-import com.intellij.buildsystem.model.unified.UnifiedCoordinates
+import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
-import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
+import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedRepository
 
 internal class PackageSearchOperationFactory {
 
@@ -145,18 +144,11 @@ internal class PackageSearchOperationFactory {
                 .map { usageInfo -> module to usageInfo }
         }
 
-    private fun PackageModel.toUnifiedDependency(version: PackageVersion, scope: PackageScope) = UnifiedDependency(
-        coordinates = UnifiedCoordinates(groupId, artifactId, version.versionName),
-        scope = scope.scopeName.nullIfBlank()
-    )
-
-    fun createAddRepositoryOperation(
+    private fun createAddRepositoryOperation(
         repoToInstall: RepositoryModel,
         projectModule: ProjectModule
     ) = PackageSearchOperation.Repository.Install(
         model = repoToInstall.toUnifiedRepository(),
         projectModule = projectModule
     )
-
-    private fun RepositoryModel.toUnifiedRepository() = UnifiedDependencyRepository(id, name, url)
 }

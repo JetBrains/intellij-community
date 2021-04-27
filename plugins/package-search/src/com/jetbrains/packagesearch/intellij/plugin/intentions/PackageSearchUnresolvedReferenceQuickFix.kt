@@ -13,7 +13,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.dataService
 import icons.PackageSearchIcons
 import java.util.regex.Pattern
 
-class PackageSearchQuickFix(private val ref: PsiReference) : IntentionAction, LowPriorityAction, Iconable {
+class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : IntentionAction, LowPriorityAction, Iconable {
 
     private val classnamePattern =
         Pattern.compile("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{Lu}\\p{javaJavaIdentifierPart}+")

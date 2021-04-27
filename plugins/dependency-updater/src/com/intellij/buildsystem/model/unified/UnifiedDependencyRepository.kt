@@ -1,6 +1,7 @@
 package com.intellij.buildsystem.model.unified
 
 import com.intellij.buildsystem.model.BuildDependencyRepository
+import com.intellij.openapi.util.NlsSafe
 
 
 data class UnifiedDependencyRepository(
@@ -9,6 +10,7 @@ data class UnifiedDependencyRepository(
   val url: String?
 ) : BuildDependencyRepository {
 
+  @get:NlsSafe
   val displayName: String = buildString {
     append('[')
     if (!name.isNullOrBlank()) append("name='$name'")

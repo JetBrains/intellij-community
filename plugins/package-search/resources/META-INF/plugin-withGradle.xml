@@ -3,9 +3,9 @@
         <localInspection
                 bundle="messages.packageSearchBundle"
                 enabledByDefault="true"
-                groupKey="packagesearch.inspection.update.group"
+                groupKey="packagesearch.inspection.upgrade.group"
                 implementationClass="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradlePackageUpdateInspection"
-                key="packagesearch.inspection.update.key.gradle"
+                key="packagesearch.inspection.upgrade.key.gradle"
                 hasStaticDescription="true"
                 level="WARNING"/>
 
@@ -13,6 +13,9 @@
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleProjectModuleOperationProvider"/>
         <packagesearch.projectModuleProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleProjectModuleProvider"/>
+
+        <packagesearch.moduleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleModuleChangesSignalProvider"/>
 
         <packagesearch.configurableContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.ui.GradleConfigurableContributor"/>

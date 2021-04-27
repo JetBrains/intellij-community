@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import org.apache.commons.lang3.StringUtils
 import java.util.Locale
 
@@ -58,9 +59,12 @@ internal sealed class PackageModel(
 
         override fun additionalAvailableVersions(): List<PackageVersion> = usageInfo.map { it.version }
 
-        fun findUsagesIn(modules: List<ModuleModel>): List<DependencyUsageInfo> {
-            if (modules.isEmpty()) return emptyList()
-            return usageInfo.filter { usageInfo -> modules.any { it.projectModule == usageInfo.projectModule } }
+        fun findUsagesIn(moduleModels: List<ModuleModel>): List<DependencyUsageInfo> =
+            findUsagesIn(moduleModels.map { it.projectModule })
+
+        fun findUsagesIn(projectModules: Collection<ProjectModule>): List<DependencyUsageInfo> {
+            if (projectModules.isEmpty()) return emptyList()
+            return usageInfo.filter { usageInfo -> projectModules.any { it == usageInfo.projectModule } }
         }
 
         fun canBeUpgraded(onlyStable: Boolean): Boolean {
