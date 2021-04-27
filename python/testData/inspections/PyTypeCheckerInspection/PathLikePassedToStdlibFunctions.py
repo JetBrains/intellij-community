@@ -4,7 +4,7 @@ from pathlib import Path, PurePath
 
 # os.PathLike
 class A:
-    def __fspath__(self):
+    def __fspath__(self) -> str:
         pass
 
 a = A()
