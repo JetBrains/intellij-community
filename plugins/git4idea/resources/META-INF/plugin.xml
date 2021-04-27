@@ -598,6 +598,7 @@
                         preloaderClassName="git4idea.index.GitStageContentPreloader"
                         displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"
                         isInCommitToolWindow="true"/>
+    <vcs.changes.changesViewNodeAction implementation="git4idea.merge.GitChangesViewNodeAction"/>
     <projectService serviceImplementation="git4idea.index.ui.GitStageUiSettingsImpl"/>
 
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>

@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_TOOLBAR
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.HoverIcon
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -25,7 +27,7 @@ import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
 
 class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
-  val changesView: ChangesListView = ChangesListView(project, false).apply {
+  val changesView: ChangesListView = MyChangesListView(project).apply {
     treeExpander = object : DefaultTreeExpander(this) {
       override fun collapseAll(tree: JTree, keepSelectionLevel: Int) {
         super.collapseAll(tree, 2)
@@ -81,6 +83,12 @@ class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
       toolbar.setOrientation(SwingConstants.VERTICAL)
       centerPanel.border = createBorder(JBColor.border(), SideBorder.LEFT)
       addToLeft(toolbar.component)
+    }
+  }
+
+  private class MyChangesListView(project: Project) : ChangesListView(project, false) {
+    override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
+      return ChangesViewNodeAction.EP_NAME.computeSafeIfAny(project) { it.createNodeHoverIcon(node) }
     }
   }
 }
