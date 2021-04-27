@@ -15,9 +15,7 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.inspections.findExistingEditor
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.allKotlinFiles
-import org.jetbrains.kotlin.idea.test.findFileWithCaret
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
@@ -40,7 +38,10 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
 
     fun doTest(unused: String) {
         setupMppProjectFromDirStructure(testDataFile())
-        doQuickFixTest(fileName())
+        val directiveFileText = project.findFileWithCaret().text
+        withCustomCompilerOptions(directiveFileText, project, module) {
+            doQuickFixTest(fileName())
+        }
     }
 
     private fun doQuickFixTest(dirPath: String) {
