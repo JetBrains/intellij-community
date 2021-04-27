@@ -27,7 +27,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -889,28 +888,7 @@ class ArtifactsPropertyTest {
     }
   }
 
-  private val names = listOf(
-    "Name-1",
-    "Name-2",
-    "Name-3",
-    "Name-4",
-    "Name-5",
-    "Name-6",
-    "Name-7",
-    "Name-8",
-    "Name-9",
-    "Name-10",
-    "Name-11",
-    "Name-12",
-    "Name-13",
-    "Name-14",
-    "Name-15",
-    "Name-16",
-    "Name-17",
-    "Name-18",
-    "Name-19",
-    "Name-20",
-  )
+  private val names = List(20) { "Name-$it" }
 
   private fun <T> makeChecksHappy(action: () -> T): T {
     return invokeAndWaitIfNeeded {
