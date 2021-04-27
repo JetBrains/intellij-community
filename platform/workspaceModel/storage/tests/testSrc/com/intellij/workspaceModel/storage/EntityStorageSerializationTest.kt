@@ -23,6 +23,16 @@ class EntityStorageSerializationTest {
   }
 
   @Test
+  fun `entity properties serialization`() {
+    val builder = createEmptyBuilder()
+    builder.addSampleEntity(stringProperty = "MyEntity",
+                            stringListProperty = mutableListOf("a", "b"),
+                            stringSetProperty = mutableSetOf("c", "d"))
+
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toStorage(), VirtualFileUrlManagerImpl())
+  }
+
+  @Test
   fun `serialization with version changing`() {
     val builder = createEmptyBuilder()
     builder.addSampleEntity("MyEntity")
