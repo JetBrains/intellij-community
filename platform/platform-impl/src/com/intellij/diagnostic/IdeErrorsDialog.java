@@ -1036,6 +1036,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     @Override
     public void actionPerformed(ActionEvent e) {
       if (isEnabled()) {
+        IdeErrorDialogUsageCollector.logReport();
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.DEFAULT.name());
         boolean closeDialog = myMessageClusters.size() == 1;
         boolean reportingStarted = reportMessage(selectedCluster(), closeDialog);
@@ -1058,6 +1059,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     @Override
     public void actionPerformed(ActionEvent e) {
       if (isEnabled()) {
+        IdeErrorDialogUsageCollector.logReportAll();
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_ALL.name());
         boolean reportingStarted = reportAll();
         if (reportingStarted) {
@@ -1076,6 +1078,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     @Override
     public void actionPerformed(ActionEvent e) {
       if (isEnabled()) {
+        IdeErrorDialogUsageCollector.logReportAndClearAll();
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_AND_CLEAR_ALL.name());
         boolean reportingStarted = reportAll();
         if (reportingStarted) {
