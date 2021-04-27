@@ -5,9 +5,9 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,38 +15,38 @@ import org.jetbrains.annotations.Nullable;
  * Instruction to ensure that a specific condition is hold on top-of-stack value
  */
 public class EnsureInstruction extends Instruction {
-  private final @Nullable PsiElement myExpression;
+  private final @Nullable UnsatisfiedConditionProblem myProblem;
   private final @NotNull RelationType myRelation;
   private final @NotNull DfType myCompareTo;
   private final @Nullable DfaControlTransferValue myTransferValue;
   private final boolean myMakeEphemeral;
 
   /**
-   * @param expression psi anchor
+   * @param problem problem descriptor to report when condition is not satisfied
    * @param relation relation to apply to top-of-stack value
    * @param compareTo right operand of relation
    * @param value transfer to use if relation is not satisfied (can be null, in this case the interpretation simply finishes)
    */
-  public EnsureInstruction(@Nullable PsiElement expression,
+  public EnsureInstruction(@Nullable UnsatisfiedConditionProblem problem,
                            @NotNull RelationType relation,
                            @NotNull DfType compareTo,
                            @Nullable DfaControlTransferValue value) {
-    this(expression, relation, compareTo, value, false);
+    this(problem, relation, compareTo, value, false);
   }
 
   /**
-   * @param expression psi anchor
+   * @param problem problem descriptor to report when condition is not satisfied
    * @param relation relation to apply to top-of-stack value
    * @param compareTo right operand of relation
    * @param value transfer to use if relation is not satisfied (can be null, in this case the interpretation simply finishes)
    * @param makeEphemeral if true, memory states on unsatisfied condition will be marked as ephemeral
    */
-  public EnsureInstruction(@Nullable PsiElement expression,
+  public EnsureInstruction(@Nullable UnsatisfiedConditionProblem problem,
                            @NotNull RelationType relation,
                            @NotNull DfType compareTo,
                            @Nullable DfaControlTransferValue value,
                            boolean makeEphemeral) {
-    myExpression = expression;
+    myProblem = problem;
     myRelation = relation;
     myCompareTo = compareTo;
     myTransferValue = value;
@@ -56,8 +56,7 @@ public class EnsureInstruction extends Instruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myTransferValue == null) return this;
-    var instruction = new EnsureInstruction(myExpression, myRelation, myCompareTo,
-                                            myTransferValue.bindToFactory(factory));
+    var instruction = new EnsureInstruction(myProblem, myRelation, myCompareTo, myTransferValue.bindToFactory(factory));
     instruction.setIndex(getIndex());
     return instruction;
   }
@@ -66,8 +65,8 @@ public class EnsureInstruction extends Instruction {
     return myMakeEphemeral;
   }
 
-  public @Nullable PsiElement getPsiAnchor() {
-    return myExpression;
+  public @Nullable UnsatisfiedConditionProblem getProblem() {
+    return myProblem;
   }
 
   /**

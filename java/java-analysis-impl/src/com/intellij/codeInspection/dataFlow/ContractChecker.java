@@ -5,11 +5,16 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.ControlTransferInstruction;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
@@ -25,7 +30,7 @@ import java.util.*;
 * @author peter
 */
 final class ContractChecker {
-  private static class ContractCheckerVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
+  private static class ContractCheckInterceptor implements DfaInterceptor<PsiExpression> {
     private final PsiMethod myMethod;
     private final StandardMethodContract myContract;
     private final boolean myOwnContract;
@@ -34,8 +39,7 @@ final class ContractChecker {
     private final Set<PsiElement> myFailures = new HashSet<>();
     private boolean myMayReturnNormally = false;
 
-    ContractCheckerVisitor(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
-      super(true);
+    ContractCheckInterceptor(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
       myMethod = method;
       myContract = contract;
       myOwnContract = ownContract;
@@ -55,46 +59,12 @@ final class ContractChecker {
     }
 
     @Override
-    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
-                                                 DataFlowRunner runner,
-                                                 DfaMemoryState memState) {
-      PsiCall call = instruction.getCallExpression();
-      if (!memState.isEphemeral() && call != null) {
-        if (myContract.getReturnValue().isFail()) {
-          myFailures.add(call);
-          return DfaInstructionState.EMPTY_ARRAY;
-        }
-        if (weCannotInferAnythingAboutMethodReturnValue(instruction)) {
-          DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
-          for (DfaInstructionState state: states) {
-            state.getMemoryState().markEphemeral();
-          }
-          return states;
-        }
-      }
-      return super.visitMethodCall(instruction, runner, memState);
-    }
-
-    @Override
-    public void onConditionFailure(@NotNull PsiExpression anchor,
+    public void onConditionFailure(@NotNull UnsatisfiedConditionProblem problem,
                                    @NotNull DfaValue value,
                                    boolean alwaysFailed) {
-      if (DfaTypeValue.isContractFail(value)) {
-        ContainerUtil.addIfNotNull(myFailures, anchor);
+      if (problem instanceof ContractFailureProblem) {
+        ContainerUtil.addIfNotNull(myFailures, ((ContractFailureProblem)problem).getAnchor());
       }
-    }
-
-    @Override
-    public DfaInstructionState @NotNull [] visitControlTransfer(@NotNull ControlTransferInstruction instruction,
-                                                                @NotNull DataFlowRunner runner,
-                                                                @NotNull DfaMemoryState state) {
-      if (instruction instanceof ReturnInstruction && ((ReturnInstruction)instruction).isViaException()) {
-        ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
-      }
-      else {
-        myMayReturnNormally = true;
-      }
-      return super.visitControlTransfer(instruction, runner, state);
     }
 
     private Map<PsiElement, @InspectionMessage String> getErrors() {
@@ -136,7 +106,40 @@ final class ContractChecker {
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
 
-    StandardDataFlowRunner runner = new StandardDataFlowRunner(method.getProject(), null);
+    ContractCheckInterceptor interceptor = new ContractCheckInterceptor(method, contract, ownContract);
+    StandardDataFlowRunner runner = new StandardDataFlowRunner(method.getProject(), null) {
+      @Override
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor<?> visitor,
+                                                                  @NotNull DfaInstructionState instructionState) {
+        Instruction instruction = instructionState.getInstruction();
+        DfaMemoryState memState = instructionState.getMemoryState();
+        if (instruction instanceof ReturnInstruction) {
+          if (((ReturnInstruction)instruction).isViaException()) {
+            ContainerUtil.addIfNotNull(interceptor.myFailures, ((ReturnInstruction)instruction).getAnchor());
+          }
+          else {
+            interceptor.myMayReturnNormally = true;
+          }
+        }
+        else if (instruction instanceof MethodCallInstruction) {
+          PsiCall call = ((MethodCallInstruction)instruction).getCallExpression();
+          if (!memState.isEphemeral() && call != null) {
+            if (interceptor.myContract.getReturnValue().isFail()) {
+              interceptor.myFailures.add(call);
+              return DfaInstructionState.EMPTY_ARRAY;
+            }
+            if (ContractCheckInterceptor.weCannotInferAnythingAboutMethodReturnValue((MethodCallInstruction)instruction)) {
+              DfaInstructionState[] states = super.acceptInstruction(visitor, instructionState);
+              for (DfaInstructionState state: states) {
+                state.getMemoryState().markEphemeral();
+              }
+              return states;
+            }
+          }
+        }
+        return super.acceptInstruction(visitor, instructionState);
+      }
+    };
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final DfaMemoryState initialState = runner.createMemoryState();
@@ -151,8 +154,7 @@ final class ContractChecker {
       }
     }
 
-    ContractCheckerVisitor visitor = new ContractCheckerVisitor(method, contract, ownContract);
-    runner.analyzeMethod(body, visitor, Collections.singletonList(initialState));
-    return visitor.getErrors();
+    runner.analyzeMethod(body, new JavaDfaInstructionVisitor(interceptor, true), Collections.singletonList(initialState));
+    return interceptor.getErrors();
   }
 }

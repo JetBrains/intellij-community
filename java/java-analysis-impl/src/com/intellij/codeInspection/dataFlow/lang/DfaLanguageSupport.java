@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow.lang;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.EnsureInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiElement;
@@ -25,16 +24,4 @@ public interface DfaLanguageSupport<EXPR extends PsiElement> {
                              @NotNull DfaValue value,
                              @NotNull ExpressionPushingInstruction<?> instruction,
                              @NotNull DfaMemoryState state);
-
-  /**
-   * Calls interceptor on condition failure
-   * @param interceptor interceptor to delegate to
-   * @param tosValue top of stack value that failed the condition
-   * @param instruction instruction whose condition is failed
-   * @param alwaysFails if true then the condition fails always
-   */
-  void processConditionFailure(@NotNull DfaInterceptor<? super EXPR> interceptor,
-                               @NotNull DfaValue tosValue,
-                               @NotNull EnsureInstruction instruction,
-                               boolean alwaysFails);
 }

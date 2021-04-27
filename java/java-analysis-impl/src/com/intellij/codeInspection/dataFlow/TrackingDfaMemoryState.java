@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -401,7 +403,10 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         return ObjectUtils.tryCast(((ConditionalGotoInstruction)myInstruction).getPsiAnchor(), PsiExpression.class);
       }
       if (myInstruction instanceof EnsureInstruction) {
-        return (PsiExpression)((EnsureInstruction)myInstruction).getPsiAnchor();
+        UnsatisfiedConditionProblem problem = ((EnsureInstruction)myInstruction).getProblem();
+        if (problem instanceof JvmDfaProblem) {
+          return ObjectUtils.tryCast(((JvmDfaProblem)problem).getAnchor(), PsiExpression.class);
+        }
       }
       return null;
     }

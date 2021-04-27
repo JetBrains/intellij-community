@@ -22,8 +22,11 @@ import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
+import com.intellij.codeInspection.dataFlow.jvm.problems.MutabilityProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaLanguageSupport;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -205,7 +208,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         if (!Mutability.fromDfType(dfType).canBeModified() &&
             // Empty array cannot be modified at all
             !memState.getDfType(JvmSpecialField.ARRAY_LENGTH.createValue(factory, arg)).equals(intValue(0))) {
-          reportMutabilityViolation(false, anchor);
+          myInterceptor.onConditionFailure(new MutabilityProblem(anchor, false), arg, true);
           if (dfType instanceof DfReferenceType) {
             memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
           }
@@ -216,9 +219,6 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       }
     }
     return argValues;
-  }
-
-  protected void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {
   }
 
   private DfaValue popQualifier(@NotNull MethodCallInstruction instruction,
@@ -235,7 +235,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       // Inferred mutation annotation may infer mutates="this" if invisible state is mutated (e.g. cached hashCode is stored).
       // So let's conservatively skip the warning here. Such contract is still useful because it assures that nothing else is mutated.
       if (method != null && JavaMethodContractUtil.getContractInfo(method).isExplicit()) {
-        reportMutabilityViolation(true, instruction.getContext());
+        myInterceptor.onConditionFailure(new MutabilityProblem(instruction.getContext(), true), value, true);
         if (dfType instanceof DfReferenceType) {
           memState.setDfType(value, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
         }
@@ -504,10 +504,11 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaValue dfaDest = memState.pop();
 
     if (!(dfaDest instanceof DfaVariableValue) && instruction.getAssignedValue() != null) {
-      // It's possible that dfaDest on the stack is cleared to DfaFactMapValue due to variable flush
+      // It's possible that dfaDest on the stack is cleared to DfaTypeValue due to variable flush
       // (e.g. during StateMerger#mergeByFacts), so we try to restore the original destination.
       dfaDest = instruction.getAssignedValue();
     }
+    myInterceptor.beforeAssignment(dfaSource, dfaDest, memState, instruction.getExpression());
     if (dfaSource == dfaDest) {
       memState.push(dfaDest);
       flushArrayOnUnknownAssignment(instruction, runner.getFactory(), dfaDest, memState);
@@ -576,11 +577,8 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(rValue, PsiAssignmentExpression.class);
     PsiType psiFromType = TypeConstraint.fromDfType(fromType).getPsiType(project);
     PsiType psiToType = TypeConstraint.fromDfType(toType).getPsiType(project);
-    if (psiFromType == null || psiToType == null) return;
-    processArrayStoreTypeMismatch(assignmentExpression, psiFromType, psiToType);
-  }
-
-  protected void processArrayStoreTypeMismatch(PsiAssignmentExpression assignmentExpression, PsiType fromType, PsiType toType) {
+    if (assignmentExpression == null || psiFromType == null || psiToType == null) return;
+    myInterceptor.onConditionFailure(new ArrayStoreProblem(assignmentExpression, psiFromType, psiToType), dfaSource, true);
   }
 
   protected static DfaInstructionState[] nextInstruction(Instruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -950,9 +948,12 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     if (cond.equals(DfaCondition.getTrue())) {
       return new DfaInstructionState[]{nextState};
     }
+    UnsatisfiedConditionProblem problem = instruction.getProblem();
     if (transfer == null) {
       boolean satisfied = memState.applyCondition(cond);
-      myLanguageSupport.processConditionFailure(myInterceptor, tosValue, instruction, !satisfied);
+      if (problem != null) {
+        myInterceptor.onConditionFailure(problem, tosValue, !satisfied);
+      }
       if (!satisfied) {
         return DfaInstructionState.EMPTY_ARRAY;
       }
@@ -966,7 +967,9 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       result.add(nextState);
     }
     if (falseStatePossible) {
-      myLanguageSupport.processConditionFailure(myInterceptor, tosValue, instruction, !trueStatePossible);
+      if (problem != null) {
+        myInterceptor.onConditionFailure(problem, tosValue, !trueStatePossible);
+      }
       List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, runner, transfer);
       if (instruction.isMakeEphemeral()) {
         for (DfaInstructionState negState : states) {

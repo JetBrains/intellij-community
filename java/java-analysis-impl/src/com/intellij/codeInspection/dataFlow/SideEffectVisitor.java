@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -49,7 +50,7 @@ public class SideEffectVisitor extends JavaDfaInstructionVisitor implements DfaI
   }
 
   @Override
-  public void onConditionFailure(@NotNull PsiExpression anchor, @NotNull DfaValue value, boolean alwaysFailed) {
+  public void onConditionFailure(@NotNull UnsatisfiedConditionProblem problem, @NotNull DfaValue value, boolean alwaysFailed) {
     myRunner.cancel();
   }
 
@@ -75,9 +76,7 @@ public class SideEffectVisitor extends JavaDfaInstructionVisitor implements DfaI
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    DfaValue dest = memState.pop();
-    DfaValue src = memState.peek();
-    memState.push(dest);
+    DfaValue src = memState.getStackValue(1);
     if (!(src instanceof DfaVariableValue) || !isModificationAllowed((DfaVariableValue)src)) {
       runner.cancel();
     }

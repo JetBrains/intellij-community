@@ -5,7 +5,9 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -70,13 +72,14 @@ class DebuggerInstructionVisitor extends JavaDfaInstructionVisitor implements Df
     if (alwaysOutOfBounds) {
       addHint(expression, DfaHint.AIOOBE);
     }
-    super.processArrayAccess(expression, alwaysOutOfBounds);
   }
 
   @Override
-  protected void processArrayStoreTypeMismatch(PsiAssignmentExpression assignmentExpression, PsiType fromType, PsiType toType) {
-    addHint(assignmentExpression.getLExpression(), DfaHint.ASE);
-    super.processArrayStoreTypeMismatch(assignmentExpression, fromType, toType);
+  public void onConditionFailure(@NotNull UnsatisfiedConditionProblem problem,
+                                 @NotNull DfaValue value, boolean alwaysFailed) {
+    if (problem instanceof ArrayStoreProblem) {
+      addHint(((ArrayStoreProblem)problem).getAnchor().getLExpression(), DfaHint.ASE);
+    }
   }
 
   @Override

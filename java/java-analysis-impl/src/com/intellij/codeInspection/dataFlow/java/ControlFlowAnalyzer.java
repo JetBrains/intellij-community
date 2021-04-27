@@ -13,6 +13,8 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescript
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
+import com.intellij.codeInspection.dataFlow.jvm.problems.NegativeArraySizeProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.ControlFlowOffset;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
@@ -1350,11 +1352,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  private void checkZeroDivisor(PsiExpression anchor, PsiType resType) {
+  private void checkZeroDivisor(PsiType resType) {
     DfaControlTransferValue transfer =
       shouldHandleException() ?
       myFactory.controlTransfer(myExceptionCache.get("java.lang.ArithmeticException"), myTrapStack) : null;
-    addInstruction(new EnsureInstruction(anchor, RelationType.NE, PsiType.LONG.equals(resType) ? DfTypes.longValue(0) : DfTypes.intValue(0),
+    addInstruction(new EnsureInstruction(null, RelationType.NE, PsiType.LONG.equals(resType) ? DfTypes.longValue(0) : DfTypes.intValue(0),
                                          transfer, true));
   }
 
@@ -1380,7 +1382,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if ((op == JavaTokenType.DIV || op == JavaTokenType.PERC) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
       Object divisorValue = ExpressionUtils.computeConstantExpression(rExpr);
       if (!(divisorValue instanceof Number) || (((Number)divisorValue).longValue() == 0)) {
-        checkZeroDivisor(rExpr, resType);
+        checkZeroDivisor(resType);
       }
     }
     Instruction inst;
@@ -1616,7 +1618,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     allExceptions
       .map(exc -> myFactory.controlTransfer(new ExceptionTransfer(exc), myTrapStack))
-      .map(transfer -> new EnsureInstruction(explicitCall, RelationType.EQ, DfType.TOP, transfer))
+      .map(transfer -> new EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer))
       .forEach(this::addInstruction);
   }
 
@@ -1734,7 +1736,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       DfaControlTransferValue transfer = shouldHandleException() ?
                                          myFactory.controlTransfer(myExceptionCache.get(JAVA_LANG_THROWABLE), myTrapStack) : null;
       // if a contract resulted in 'fail', handle it
-      addInstruction(new EnsureInstruction(anchor, RelationType.NE, DfType.FAIL, transfer));
+      addInstruction(new EnsureInstruction(new ContractFailureProblem(anchor), RelationType.NE, DfType.FAIL, transfer));
     }
   }
 
@@ -1769,7 +1771,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           shouldHandleException() ?
           myFactory.controlTransfer(myExceptionCache.get("java.lang.NegativeArraySizeException"), myTrapStack) : null;
         for (int i = dims - 1; i >= 0; i--) {
-          addInstruction(new EnsureInstruction(dimensions[i], RelationType.GE, DfTypes.intValue(0), transfer, true));
+          addInstruction(new EnsureInstruction(new NegativeArraySizeProblem(dimensions[i]), 
+                                               RelationType.GE, DfTypes.intValue(0), transfer, true));
           if (i != 0) {
             addInstruction(new PopInstruction());
           }
