@@ -70,12 +70,14 @@ public interface DfaInterceptor<EXPR extends PsiElement> {
    * Called for every expression that fails to satisfy the condition required by EnsureInstruction.
    * Note that it can be called for the same place several times (once per memory state).
    * @param problem a problem descriptor
-   * @param value top-of-stack value that failed the condition
+   * @param value value that was checked
    * @param failed YES if condition failed always; NO if it's satisfied; UNSURE if it may fail.
+   * @param state memory state
    */
   default void onCondition(@NotNull UnsatisfiedConditionProblem problem,
                            @NotNull DfaValue value,
-                           @NotNull ThreeState failed) {
+                           @NotNull ThreeState failed,
+                           @NotNull DfaMemoryState state) {
 
   }
 

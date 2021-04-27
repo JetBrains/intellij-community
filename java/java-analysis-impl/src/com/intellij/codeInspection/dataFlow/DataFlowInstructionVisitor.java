@@ -6,9 +6,7 @@ import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
-import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
-import com.intellij.codeInspection.dataFlow.jvm.problems.MutabilityProblem;
-import com.intellij.codeInspection.dataFlow.jvm.problems.NegativeArraySizeProblem;
+import com.intellij.codeInspection.dataFlow.jvm.problems.*;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.InstanceofInstruction;
@@ -161,11 +159,6 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
     return EntryStream.of(mySameArguments).filterValues(ArgResultEquality::hasEquality);
   }
 
-  @Override
-  protected void onTypeCast(PsiTypeCastExpression castExpression, DfaMemoryState state, boolean castPossible) {
-    myClassCastProblems.computeIfAbsent(castExpression, e -> new StateInfo()).update(state, ThreeState.fromBoolean(castPossible));
-  }
-
   StreamEx<NullabilityProblemKind.NullabilityProblem<?>> problems() {
     return EntryStream.of(myStateInfos).filterValues(StateInfo::shouldReport).mapKeyValue((np, si) -> si.unknown ? np.makeUnknown() : np);
   }
@@ -306,22 +299,25 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   }
 
   @Override
-  protected void processArrayAccess(PsiArrayAccessExpression expression, boolean alwaysOutOfBounds) {
-    myOutOfBoundsArrayAccesses.merge(expression, ThreeState.fromBoolean(alwaysOutOfBounds), ThreeState::merge);
-  }
-
-  @Override
   public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
                           @NotNull DfaValue value,
-                          @NotNull ThreeState failed) {
+                          @NotNull ThreeState failed,
+                          @NotNull DfaMemoryState state) {
     if (problem instanceof MutabilityProblem && failed == ThreeState.YES) {
       reportMutabilityViolation(((MutabilityProblem)problem).isReceiver(), ((MutabilityProblem)problem).getAnchor());
     }
     else if (problem instanceof NegativeArraySizeProblem) {
       myNegativeArraySizes.merge(((NegativeArraySizeProblem)problem).getAnchor(), failed, ThreeState::merge);
     }
+    else if (problem instanceof ArrayIndexProblem) {
+      myOutOfBoundsArrayAccesses.merge(((ArrayIndexProblem)problem).getAnchor(), failed, ThreeState::merge);
+    }
+    else if (problem instanceof ClassCastProblem) {
+      myClassCastProblems.computeIfAbsent(((ClassCastProblem)problem).getAnchor(), e -> new StateInfo())
+        .update(state, ThreeState.fromBoolean(failed != ThreeState.YES));
+    }
     else if (problem instanceof ArrayStoreProblem && failed == ThreeState.YES) {
-      myArrayStoreProblems.put(((ArrayStoreProblem)problem).getAnchor(), 
+      myArrayStoreProblems.put(((ArrayStoreProblem)problem).getAnchor(),
                                Pair.create(((ArrayStoreProblem)problem).getFromType(), ((ArrayStoreProblem)problem).getToType()));
     }
   }

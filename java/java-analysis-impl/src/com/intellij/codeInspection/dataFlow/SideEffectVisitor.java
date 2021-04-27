@@ -51,7 +51,10 @@ public class SideEffectVisitor extends JavaDfaInstructionVisitor implements DfaI
   }
 
   @Override
-  public void onCondition(@NotNull UnsatisfiedConditionProblem problem, @NotNull DfaValue value, @NotNull ThreeState failed) {
+  public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                          @NotNull DfaValue value,
+                          @NotNull ThreeState failed,
+                          @NotNull DfaMemoryState state) {
     if (failed != ThreeState.NO) {
       myRunner.cancel();
     }

@@ -62,7 +62,8 @@ final class ContractChecker {
     @Override
     public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
                             @NotNull DfaValue value,
-                            @NotNull ThreeState failed) {
+                            @NotNull ThreeState failed,
+                            @NotNull DfaMemoryState state) {
       if (problem instanceof ContractFailureProblem && failed != ThreeState.NO) {
         ContainerUtil.addIfNotNull(myFailures, ((ContractFailureProblem)problem).getAnchor());
       }

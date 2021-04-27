@@ -5,7 +5,9 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ClassCastProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -60,25 +62,18 @@ class DebuggerInstructionVisitor extends JavaDfaInstructionVisitor implements Df
   }
 
   @Override
-  protected void onTypeCast(PsiTypeCastExpression castExpression, DfaMemoryState state, boolean castPossible) {
-    if (!castPossible) {
-      addHint(castExpression, DfaHint.CCE);
-    }
-    super.onTypeCast(castExpression, state, castPossible);
-  }
-
-  @Override
-  protected void processArrayAccess(PsiArrayAccessExpression expression, boolean alwaysOutOfBounds) {
-    if (alwaysOutOfBounds) {
-      addHint(expression, DfaHint.AIOOBE);
-    }
-  }
-
-  @Override
   public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
-                          @NotNull DfaValue value, @NotNull ThreeState failed) {
+                          @NotNull DfaValue value,
+                          @NotNull ThreeState failed,
+                          @NotNull DfaMemoryState state) {
     if (problem instanceof ArrayStoreProblem) {
       addHint(((ArrayStoreProblem)problem).getAnchor().getLExpression(), failed == ThreeState.YES ? DfaHint.ASE : DfaHint.NONE);
+    }
+    else if (problem instanceof ArrayIndexProblem) {
+      addHint(((ArrayIndexProblem)problem).getAnchor(), failed == ThreeState.YES ? DfaHint.AIOOBE : DfaHint.NONE);
+    }
+    else if (problem instanceof ClassCastProblem) {
+      addHint(((ClassCastProblem)problem).getAnchor(), failed == ThreeState.YES ? DfaHint.CCE : DfaHint.NONE);
     }
   }
 
