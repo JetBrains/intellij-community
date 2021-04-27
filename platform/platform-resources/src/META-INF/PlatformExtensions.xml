@@ -1205,6 +1205,24 @@
     <applicationService serviceImplementation="com.intellij.terminal.TerminalUiSettingsManager"/>
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
+
+    <applicationConfigurable id="advanced.settings"
+                             key="title.advanced.settings"
+                             bundle="messages.ApplicationBundle"
+                             instance="com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable"
+                             groupId="root"/>
+
+    <advancedSetting id="ide.show.fileType.icon.in.titleBar"
+                     titleKey="option.ide.show.fileType.icon.in.titleBar"
+                     descriptionKey="option.ide.show.fileType.icon.in.titleBar.description"
+                     groupKey="group.advanced.settings.ide"
+                     bundle="messages.ApplicationBundle"/>
+
+    <advancedSetting id="ide.max.recent.projects"
+                     default="50"
+                     titleKey="option.ide.max.recent.projects"
+                     groupKey="group.advanced.settings.ide"
+                     bundle="messages.ApplicationBundle"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

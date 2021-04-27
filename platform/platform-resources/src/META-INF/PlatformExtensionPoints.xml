@@ -418,5 +418,6 @@
     <extensionPoint name="settingsEntryPointActionProvider" interface="com.intellij.ide.actions.SettingsEntryPointAction$ActionProvider" dynamic="true"/>
     <extensionPoint name="jbProtocolRevisionResolver" interface="com.intellij.navigation.JBProtocolRevisionResolver" dynamic="true"/>
 
+    <extensionPoint name="advancedSetting" beanClass="com.intellij.openapi.options.advanced.AdvancedSettingBean" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
