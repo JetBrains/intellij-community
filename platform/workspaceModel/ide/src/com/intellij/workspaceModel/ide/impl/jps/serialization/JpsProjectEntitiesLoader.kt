@@ -156,9 +156,24 @@ object JpsProjectEntitiesLoader {
     return JpsImportedEntitySource(internalFile, externalSource.id, project.isExternalStorageEnabled)
   }
 
-  fun createJpsEntitySourceForProjectLibrary(configLocation: JpsProjectConfigLocation) = when (configLocation) {
-    is JpsProjectConfigLocation.DirectoryBased ->
-      JpsFileEntitySource.FileInDirectory(configLocation.projectDir.append(".idea/libraries"), configLocation)
+  fun createEntitySourceForArtifact(project: Project, externalSource: ProjectModelExternalSource?): EntitySource {
+    val location = getJpsProjectConfigLocation(project) ?: return NonPersistentEntitySource
+    val internalFile = createJpsEntitySourceForArtifact(location)
+    if (externalSource == null) return internalFile
+    return JpsImportedEntitySource(internalFile, externalSource.id, project.isExternalStorageEnabled)
+  }
+
+  fun createJpsEntitySourceForProjectLibrary(configLocation: JpsProjectConfigLocation): JpsFileEntitySource {
+    return createJpsEntitySource(configLocation, ".idea/libraries")
+  }
+
+  fun createJpsEntitySourceForArtifact(configLocation: JpsProjectConfigLocation): JpsFileEntitySource {
+    return createJpsEntitySource(configLocation, ".idea/artifacts")
+  }
+
+  private fun createJpsEntitySource(configLocation: JpsProjectConfigLocation, directoryLocation: String) = when (configLocation) {
+    is JpsProjectConfigLocation.DirectoryBased -> JpsFileEntitySource.FileInDirectory(configLocation.projectDir.append(directoryLocation),
+                                                                                      configLocation)
     is JpsProjectConfigLocation.FileBased -> JpsFileEntitySource.ExactFile(configLocation.iprFile, configLocation)
   }
 }

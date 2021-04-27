@@ -4,7 +4,6 @@ package com.intellij.packaging.impl.artifacts.workspacemodel
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.packaging.artifacts.*
@@ -23,7 +22,9 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.mapInPlace
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -132,18 +133,7 @@ class ArtifactModifiableModelBridge(
 
     val fileManager = VirtualFileUrlManager.getInstance(project)
 
-    val location = getJpsProjectConfigLocation(project)
-    val source = if (location != null) {
-      // TODO: 05.02.2021 Not really clear about entity source
-      val internalSource = JpsFileEntitySource.FileInDirectory(location.baseDirectoryUrl.append(".idea/artifacts"), location)
-      if (externalSource != null) {
-        JpsImportedEntitySource(internalSource, externalSource.id, project.isExternalStorageEnabled)
-      }
-      else internalSource
-    }
-    else {
-      NonPersistentEntitySource
-    }
+    val source = JpsProjectEntitiesLoader.createEntitySourceForArtifact(project, externalSource)
 
     val rootElementEntity = rootElement.getOrAddEntity(diff, source, project) as CompositePackagingElementEntity
     rootElement.forThisAndFullTree {
@@ -473,6 +463,7 @@ private fun CustomPackagingElementEntity.unpackCustomElement(storage: WorkspaceE
   // TODO: 09.04.2021 It should be invalid artifact instead of error
   val elementType = PackagingElementFactory.getInstance().findElementType(this.typeId)
                     ?: throw UnknownPackagingElementTypeException(this.typeId)
+  @Suppress("UNCHECKED_CAST")
   val packagingElement = elementType.createEmpty(project) as PackagingElement<Any>
   val state = packagingElement.state
   if (state != null) {
