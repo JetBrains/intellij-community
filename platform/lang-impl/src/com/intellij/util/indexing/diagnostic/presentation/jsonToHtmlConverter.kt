@@ -151,12 +151,18 @@ private const val SECTION_SCANNING_TITLE = "Scanning"
 private const val SECTION_INDEXING_ID = "id-indexing"
 private const val SECTION_INDEXING_TITLE = "Indexing"
 
+/**
+ * For now we have only Shared Indexes implementation of FileBasedIndexInfrastructureExtension,
+ * so for simplicity let's use this name instead of a general "index infrastructure extensions".
+ */
+private const val INDEX_INFRA_EXTENSIONS = "shared indexes"
+
 private const val TITLE_NUMBER_OF_FILE_PROVIDERS = "Number of file providers"
 private const val TITLE_NUMBER_OF_SCANNED_FILES = "Number of scanned files"
-private const val TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN = "Number of files indexed by infrastructure extensions during the scan (without loading content)"
+private const val TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN = "Number of files indexed by $INDEX_INFRA_EXTENSIONS during the scan (without loading content)"
 private const val TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN = "Number of files scheduled for indexing after scanning"
-private const val TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING = "Number of files indexed by infrastructure extensions during the indexing stage (with loading content)"
-private const val TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT = "Number of files indexed during the indexing stage with loading content (including indexed by infrastructure extension)"
+private const val TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING = "Number of files indexed by $INDEX_INFRA_EXTENSIONS during the indexing stage (with loading content)"
+private const val TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT = "Number of files indexed during the indexing stage with loading content (including indexed by $INDEX_INFRA_EXTENSIONS)"
 
 private fun HtmlBuilder.printRuntimeInfo(runtimeInfo: JsonRuntimeInfo) {
   div(id = SECTION_RUNTIME_INFO_ID) {
@@ -370,7 +376,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                 th("Index")
                 th("Number of files")
                 th("Part of total indexing time")
-                th("Total number of files indexed by extensions")
+                th("Total number of files indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Total files size")
                 th("Indexing speed")
                 th("Snapshot input mapping statistics")
@@ -409,7 +415,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                 th("Provider name")
                 th("Number of scanned files")
                 th("Number of files scheduled for indexing")
-                th("Number of files fully indexed by infrastructure extensions")
+                th("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Number of double-scanned skipped files")
                 th("Scanning time")
                 th("Time processing up-to-date files")
@@ -463,7 +469,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                 th("Indexing time")
                 th("Content loading time")
                 th("Number of indexed files")
-                th("Number of files indexed by infrastructure extensions")
+                th("Number of files indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Number of too large for indexing files")
                 if (shouldPrintIndexedFiles) {
                   th("Indexed files")
