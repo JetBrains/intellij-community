@@ -48,13 +48,25 @@ public class TouchbarSupport {
 
       NST.loadLibrary();
 
-      // read isEnabled from OS (i.e. NSDefaults)
-      String appId = Helpers.getAppId();
-      if (appId == null || appId.isEmpty()) {
-        LOG.info("can't obtain application id from NSBundle");
-      } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
-        LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
+      if (!Registry.is(IS_ENABLED_KEY)) {
+        LOG.info("touchbar disabled: registry");
         isEnabled = false;
+      } else {
+        // read isEnabled from OS (i.e. NSDefaults)
+        String appId = Helpers.getAppId();
+        if (appId == null || appId.isEmpty()) {
+          LOG.info("can't obtain application id from NSBundle (touchbar enabled)");
+        } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
+          // user has enabled setting "FN-keys in touchbar" (global or per-app)
+          if (NSDefaults.isFnShowsAppControls()) {
+            LOG.info("touchbar enabled: show FN-keys but pressing fn-key toggle to show app-controls");
+            isEnabled = true;
+          } else {
+            LOG.info("touchbar disabled: show fn-keys");
+            isEnabled = false;
+          }
+        } else
+          LOG.info("touchbar support is enabled");
       }
 
       isInitialized = true;
