@@ -20,7 +20,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.ProjectIndexableFilesFilter;
+import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,15 +48,19 @@ final class DirectoryPathMatcher {
 
     FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     Project project = model.getProject();
-    ProjectIndexableFilesFilter projectIndexableFilesFilter = fileBasedIndex instanceof FileBasedIndexImpl
-                                                              ? ((FileBasedIndexImpl)fileBasedIndex).projectIndexableFiles(project)
-                                                              : null;
+    IdFilter projectIndexableFilesFilter = fileBasedIndex instanceof FileBasedIndexImpl
+                                           ? ((FileBasedIndexImpl)fileBasedIndex).projectIndexableFiles(project)
+                                           : null;
+    var allScope = GlobalSearchScope.allScope(project);
     if (projectIndexableFilesFilter == null) {
-      var allScope = GlobalSearchScope.allScope(project);
       myProjectFileFilter = vFile -> allScope.contains(vFile);
     }
     else {
-      myProjectFileFilter = vFile -> projectIndexableFilesFilter.containsFileId(((VirtualFileWithId)vFile).getId());
+      myProjectFileFilter = vFile -> {
+        return vFile instanceof VirtualFileWithId
+               ? projectIndexableFilesFilter.containsFileId(((VirtualFileWithId)vFile).getId())
+               : allScope.contains(vFile);
+      };
     }
 
     myService = DirectoryPathMatcherService.getInstance(project);
