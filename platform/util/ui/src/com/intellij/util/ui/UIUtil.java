@@ -56,8 +56,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -2656,7 +2654,7 @@ public final class UIUtil {
   }
 
   public static int getLcdContrastValue() {
-    int lcdContrastValue  = Registry.intValue("lcd.contrast.value", 0);
+    int lcdContrastValue = Registry.intValue("lcd.contrast.value", 0);
     if (lcdContrastValue == 0) {
       return StartupUiUtil.doGetLcdContrastValueForSplash(StartupUiUtil.isUnderDarcula());
     }

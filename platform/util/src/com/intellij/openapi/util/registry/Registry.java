@@ -52,7 +52,7 @@ public final class Registry  {
   }
 
   public static boolean is(@NonNls @NotNull String key, boolean defaultValue) {
-    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
       LoadingState.LAF_INITIALIZED.checkOccurred();
       return defaultValue;
     }
@@ -70,7 +70,7 @@ public final class Registry  {
   }
 
   public static int intValue(@NonNls @NotNull String key, int defaultValue) {
-    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
       LoadingState.LAF_INITIALIZED.checkOccurred();
       return defaultValue;
     }
@@ -154,7 +154,7 @@ public final class Registry  {
   }
 
   public static @NotNull Registry getInstance() {
-    LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
+    LoadingState.COMPONENTS_LOADED.checkOccurred();
     return ourInstance;
   }
 
