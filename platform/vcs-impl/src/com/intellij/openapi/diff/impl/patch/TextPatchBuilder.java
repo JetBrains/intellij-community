@@ -351,11 +351,15 @@ public final class TextPatchBuilder {
   private void setPatchHeading(@NotNull FilePatch result,
                                @NotNull AirContentRevision beforeRevision,
                                @NotNull AirContentRevision afterRevision) {
-    result.setBeforeName(myBasePath.relativize(beforeRevision.getPath().getPath()).toString().replace(File.separatorChar, '/'));
+    result.setBeforeName(getRelativePath(myBasePath, beforeRevision.getPath()));
     result.setBeforeVersionId(getRevisionName(beforeRevision));
 
-    result.setAfterName(myBasePath.relativize(afterRevision.getPath().getPath()).toString().replace(File.separatorChar, '/'));
+    result.setAfterName(getRelativePath(myBasePath, afterRevision.getPath()));
     result.setAfterVersionId(getRevisionName(afterRevision));
+  }
+
+  public static @NotNull String getRelativePath(@NotNull Path basePath, @NotNull PathDescription path) {
+    return basePath.relativize(path.getPath()).toString().replace(File.separatorChar, '/');
   }
 
   @NotNull
