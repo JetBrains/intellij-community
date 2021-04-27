@@ -267,7 +267,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
           }
         }
         catch (IOException e) {
-          myEnumerator.markCorrupted();
+          markCorrupted();
           throw new RuntimeException(e);
         }
         finally {
@@ -369,7 +369,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
         doPut(key, value);
       }
       catch (IOException ex) {
-        myEnumerator.markCorrupted();
+        markCorrupted();
         throw ex;
       }
     }
@@ -449,7 +449,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
         doAppendData(key, appender);
       }
       catch (IOException ex) {
-        myEnumerator.markCorrupted();
+        markCorrupted();
         throw ex;
       }
     }
@@ -489,7 +489,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
         return myEnumerator.iterateData(processor);
       }
       catch (IOException e) {
-        myEnumerator.markCorrupted();
+        markCorrupted();
         throw e;
       }
     }
@@ -525,7 +525,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
         });
       }
       catch (IOException e) {
-        myEnumerator.markCorrupted();
+        markCorrupted();
         throw e;
       }
     }
@@ -538,12 +538,18 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
         return doGet(key);
       }
       catch (IOException ex) {
-        try {
-          myEnumerator.markCorrupted();
-        } catch (Exception e) {
-          LOG.warn(e);
-        }
+        markCorrupted();
         throw ex;
+      }
+    }
+  }
+
+  private void markCorrupted() {
+    if (!myStorageFile.getFileSystem().isReadOnly()) {
+      try {
+        myEnumerator.markCorrupted();
+      } catch (Exception e) {
+        LOG.warn(e);
       }
     }
   }
