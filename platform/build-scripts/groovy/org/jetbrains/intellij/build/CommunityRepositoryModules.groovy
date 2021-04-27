@@ -210,10 +210,10 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.gauge"),
     plugin("intellij.protoeditor") {
-      withModule("intellij.protoeditor-core")
-      withModule("intellij.protoeditor-go")
-      withModule("intellij.protoeditor-jvm")
-      withModule("intellij.protoeditor-python")
+      withModule("intellij.protoeditor.core")
+      withModule("intellij.protoeditor.go")
+      withModule("intellij.protoeditor.jvm")
+      withModule("intellij.protoeditor.python")
     }
   ]
 
