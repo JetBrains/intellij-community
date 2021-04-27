@@ -9,11 +9,11 @@ import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.library.JpsLibrary
 
 @CompileStatic
-class PlatformModules {
+final class PlatformModules {
   /**
    * List of modules which are included into lib/platform-api.jar in all IntelliJ based IDEs.
    */
-  static List<String> PLATFORM_API_MODULES = [
+  static List<String> PLATFORM_API_MODULES = List.of(
     "intellij.platform.analysis",
     "intellij.platform.builtInServer",
     "intellij.platform.core",
@@ -42,12 +42,12 @@ class PlatformModules {
     "intellij.xml.psi",
     "intellij.xml.structureView",
     "intellij.platform.concurrency",
-  ]
+  )
 
   /**
    * List of modules which are included into lib/platform-impl.jar in all IntelliJ based IDEs.
    */
-  static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
+  static List<String> PLATFORM_IMPLEMENTATION_MODULES = List.of(
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
@@ -87,7 +87,8 @@ class PlatformModules {
     "intellij.platform.credentialStore",
     "intellij.platform.rd.community",
     "intellij.platform.ml.impl"
-  ]
+  )
+
   private static final String PLATFORM_JAR = "platform-impl.jar"
 
   @CompileDynamic
@@ -108,20 +109,20 @@ class PlatformModules {
       }
 
       productLayout.additionalPlatformJars.entrySet().each {
-        def jarName = it.key
+        String jarName = it.key
         it.value.each {
           addModule(it, jarName)
         }
       }
-      PLATFORM_API_MODULES.each {
-        addModule(it, "platform-api.jar")
-      }
 
+      for (String module in PLATFORM_API_MODULES) {
+        addModule(module, "platform-api.jar")
+      }
       for (String module in PLATFORM_IMPLEMENTATION_MODULES) {
         addModule(module, PLATFORM_JAR)
       }
-      productLayout.productApiModules.each {
-        addModule(it, "openapi.jar")
+      for (String module in productLayout.productApiModules) {
+        addModule(module, "openapi.jar")
       }
 
       for (String module in productLayout.productImplementationModules) {
@@ -202,7 +203,7 @@ class PlatformModules {
       }
       withProjectLibrariesFromIncludedModules(buildContext)
 
-      for (def toRemoveVersion : getLibsToRemoveVersion()) {
+      for (String toRemoveVersion : getLibsToRemoveVersion()) {
         removeVersionFromProjectLibraryJarNames(toRemoveVersion)
       }
     }
