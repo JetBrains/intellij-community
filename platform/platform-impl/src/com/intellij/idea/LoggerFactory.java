@@ -92,16 +92,20 @@ public final class LoggerFactory implements Logger.Factory {
 
     PatternLayout layout = new PatternLayout("%d [%7r] %6p - %30.30c - %m \n");
 
-    RollingFileAppender ideaLog = new RollingFileAppender(layout, getLogFilePath().toString(), true) {
+    RollingFileAppender ideaLog = new RollingFileAppender() {
       @Override
       public void rollOver() {
         super.rollOver();
         MutedErrorLogger.dropCaches();
       }
     };
+    ideaLog.setFile(getLogFilePath().toString());
+    ideaLog.setLayout(layout);
+    ideaLog.setAppend(true);
     ideaLog.setEncoding(StandardCharsets.UTF_8.name());
     ideaLog.setMaxBackupIndex(12);
     ideaLog.setMaximumFileSize(10_000_000);
+    ideaLog.activateOptions();
     root.addAppender(ideaLog);
 
     ConsoleAppender consoleWarn = new ConsoleAppender(layout, ConsoleAppender.SYSTEM_ERR);
