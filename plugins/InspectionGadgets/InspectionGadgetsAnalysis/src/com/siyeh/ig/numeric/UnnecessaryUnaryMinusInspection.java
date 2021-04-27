@@ -56,8 +56,12 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element.getParent();
+      final PsiExpression operand = prefixExpression.getOperand();
+      if (operand == null) {
+        return;
+      }
       final PsiExpression parentExpression = (PsiExpression)prefixExpression.getParent();
-      CommentTracker commentTracker = new CommentTracker();
+      final CommentTracker commentTracker = new CommentTracker();
       @NonNls final StringBuilder newExpression = new StringBuilder();
       if (parentExpression instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parentExpression;
@@ -70,33 +74,43 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
         else {
           newExpression.append("+=");
         }
+        newExpression.append(commentTracker.text(operand));
       }
-      else if (parentExpression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parentExpression;
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        newExpression.append(commentTracker.text(lhs));
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
-        if (tokenType.equals(JavaTokenType.PLUS)) {
-          newExpression.append('-');
+      else if (parentExpression instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parentExpression;
+        int lastOperatorIndex = -1;
+        IElementType lastOperator = null;
+        for (PsiElement child = polyadicExpression.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (child == prefixExpression) {
+            if (lastOperatorIndex == -1) {
+              return;
+            }
+            newExpression.replace(lastOperatorIndex, lastOperatorIndex + 1, lastOperator == JavaTokenType.PLUS ? "-" : "+");
+            newExpression.append(commentTracker.text(operand));
+            continue;
+          }
+          if (PsiUtil.isJavaToken(child, JavaTokenType.PLUS)) {
+            lastOperatorIndex = newExpression.length();
+            lastOperator = JavaTokenType.PLUS;
+          }
+          else if (PsiUtil.isJavaToken(child, JavaTokenType.MINUS)) {
+            lastOperatorIndex = newExpression.length();
+            lastOperator = JavaTokenType.MINUS;
+          }
+          newExpression.append(commentTracker.text(child));
         }
-        else {
-          newExpression.append('+');
+        if (lastOperatorIndex == -1) {
+          return;
         }
       }
-      final PsiExpression operand = prefixExpression.getOperand();
-      if (operand == null) {
-        return;
-      }
-
-      newExpression.append(commentTracker.text(operand));
       PsiReplacementUtil.replaceExpression(parentExpression, newExpression.toString(), commentTracker);
     }
   }
 
-  private static class RemoveDoubleUnaryMinusesFix extends InspectionGadgetsFix {
+  private static class RemoveDoubleUnaryMinusFix extends InspectionGadgetsFix {
     private final boolean myMinusOnTheLeft;
 
-    private RemoveDoubleUnaryMinusesFix(boolean minusOnTheLeft) {
+    private RemoveDoubleUnaryMinusFix(boolean minusOnTheLeft) {
       myMinusOnTheLeft = minusOnTheLeft;
     }
 
@@ -164,7 +178,7 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
         if (decrementFix != null) {
           fixes.add(decrementFix);
         }
-        addRemoveDoubleUnaryMinusesFix(fixes, prefixExpr);
+        addRemoveDoubleUnaryMinusFix(fixes, prefixExpr);
       }
       if (!fixes.isEmpty()) {
         myProblemsHolder.registerProblem(prefixExpr.getOperationSign(),
@@ -184,8 +198,8 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
         if (token == null) {
           return;
         }
-        final IElementType binaryExpressionTokenType = token.getTokenType();
-        if (!JavaTokenType.PLUS.equals(binaryExpressionTokenType)) {
+        final IElementType tokenType = token.getTokenType();
+        if (!JavaTokenType.PLUS.equals(tokenType) && !JavaTokenType.MINUS.equals(tokenType)) {
           return;
         }
         fixes.add(new ReplaceParentOperatorFix());
@@ -208,8 +222,8 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
       }
     }
 
-    private static void addRemoveDoubleUnaryMinusesFix(@NotNull List<LocalQuickFix> fixes,
-                                                       @NotNull PsiPrefixExpression prefixExpr) {
+    private static void addRemoveDoubleUnaryMinusFix(@NotNull List<LocalQuickFix> fixes,
+                                                     @NotNull PsiPrefixExpression prefixExpr) {
       final PsiElement parent = PsiUtil.skipParenthesizedExprUp(prefixExpr.getParent());
       final PsiExpression operandExpr;
       final PsiExpression expr;
@@ -240,7 +254,7 @@ public final class UnnecessaryUnaryMinusInspection extends LocalInspectionTool {
       if (TypeUtils.unaryNumericPromotion(type) != type && MethodCallUtils.isNecessaryForSurroundingMethodCall(expr, operandExpr)) {
         return;
       }
-      fixes.add(new RemoveDoubleUnaryMinusesFix(minusOnTheLeft));
+      fixes.add(new RemoveDoubleUnaryMinusFix(minusOnTheLeft));
     }
   }
 }

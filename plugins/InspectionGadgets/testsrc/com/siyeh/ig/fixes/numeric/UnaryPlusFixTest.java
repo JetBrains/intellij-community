@@ -21,18 +21,18 @@ public class UnaryPlusFixTest extends IGQuickFixesTestCase {
   }
 
   public void testFinalVariable() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unary.increment.quickfix", "i"));
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("convert.double.unary.quickfix", "++", "i"));
   }
 
   public void testLocalVariable() {
-    doTest(InspectionGadgetsBundle.message("unary.increment.quickfix", "i"));
+    doTest(InspectionGadgetsBundle.message("convert.double.unary.quickfix", "++", "i"));
   }
 
   public void testMethodCall() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unary.increment.quickfix", "i"));
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("convert.double.unary.quickfix", "++", "i"));
   }
 
   public void testCommentBetweenOperatorAndOperand() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unary.increment.quickfix", "i"));
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("convert.double.unary.quickfix", "++", "i"));
   }
 }
