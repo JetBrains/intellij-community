@@ -7,8 +7,8 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$USER_HOME$/.ideaLibSources/aalto-xml-1.2.2-sources.jar!/" />
-      <root url="jar://$USER_HOME$/.ideaLibSources/stax2-api-4.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.2.2/aalto-xml-1.2.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2/stax2-api-4.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
