@@ -18,7 +18,7 @@ class InlayScratchFileRenderer(val text: String, private val outputType: Scratch
         val attributes = getAttributesForOutputType(outputType)
         val fontStyle = attributes.fontType
         return ComplementaryFontsRegistry.getFontAbleToDisplay(
-            'a'.code, fontStyle, fontPreferences, FontInfo.getFontRenderContext(editor.contentComponent)
+            'a'.toInt(), fontStyle, fontPreferences, FontInfo.getFontRenderContext(editor.contentComponent)
         )
     }
 
