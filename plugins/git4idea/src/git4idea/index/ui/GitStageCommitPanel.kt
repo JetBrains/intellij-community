@@ -117,10 +117,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 }
 
 class GitStageCommitProgressPanel : CommitProgressPanel() {
-  var isEmptyRoots: Boolean by observable(false) { _, oldValue, newValue ->
-    if (oldValue == newValue) return@observable
-    update()
-  }
+  var isEmptyRoots by stateFlag()
 
   override fun clearError() {
     super.clearError()
