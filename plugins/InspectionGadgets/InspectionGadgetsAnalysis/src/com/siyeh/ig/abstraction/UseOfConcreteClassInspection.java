@@ -119,9 +119,11 @@ public class UseOfConcreteClassInspection extends BaseInspection {
 
     @Override
     public void visitParameter(@NotNull PsiParameter parameter) {
-      boolean methodParameter = parameter.getDeclarationScope() instanceof PsiMethod;
+      PsiElement scope = parameter.getDeclarationScope();
+      boolean methodParameter = scope instanceof PsiMethod;
+      boolean catchParameter = scope instanceof PsiCatchSection;
       boolean report = methodParameter && reportMethodParameters ||
-                       !methodParameter && reportLocalVariables;
+                       !methodParameter && !catchParameter && reportLocalVariables;
       if (!report) return;
       final PsiTypeElement typeElement = parameter.getTypeElement();
       if (!typeIsConcreteClass(typeElement, ignoreAbstractClasses)) return;

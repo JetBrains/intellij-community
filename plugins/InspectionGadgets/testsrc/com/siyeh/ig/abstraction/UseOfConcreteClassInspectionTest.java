@@ -42,6 +42,10 @@ public class UseOfConcreteClassInspectionTest extends LightJavaInspectionTestCas
   public void testParameter() {
     doMemberTest("void m(/*Parameter 'a' of concrete class 'A'*/A/**/ a) {}");
   }
+  
+  public void testCatchParameter() {
+    doMemberTest("void m() {try {toString();} catch (MyEx ex) {}} static class MyEx extends Error {}");
+  }
 
   public void testStaticField() {
     doMemberTest("static /*Static field 'myA' of concrete class 'A'*/A/**/ myA;");

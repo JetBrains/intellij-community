@@ -2,6 +2,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,5 +23,15 @@ public class UseOfConcreteClassMerger extends InspectionElementsMergerBase {
     return new String[] {"LocalVariableOfConcreteClass", "ParameterOfConcreteClass", "MethodParameterOfConcreteClass",
       "MethodReturnOfConcreteClass", "CastToConcreteClass", "StaticVariableOfConcreteClass", "InstanceVariableOfConcreteClass",
       "InstanceofConcreteClass", "InstanceofInterfaces"};
+  }
+
+  @Override
+  protected boolean isEnabledByDefault(@NotNull String sourceToolName) {
+    return false;
+  }
+
+  @Override
+  protected boolean writeMergedContent(@NotNull Element toolElement) {
+    return true;
   }
 }
