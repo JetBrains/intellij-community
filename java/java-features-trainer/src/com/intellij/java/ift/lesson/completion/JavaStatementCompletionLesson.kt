@@ -9,13 +9,11 @@ import training.dsl.LessonContext
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.TaskRuntimeContext
-import training.dsl.TaskTestContext
 import training.dsl.parseLessonSample
 import training.learn.course.KLesson
 
-class JavaStatementCompletionLesson : KLesson("Statement completion", JavaLessonsBundle.message("java.statement.completion.lesson.name")) {
-
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
+class JavaStatementCompletionLesson
+  : KLesson("Statement completion", JavaLessonsBundle.message("java.statement.completion.lesson.name")) {
 
   val sample = parseLessonSample("""
     class PrimeNumbers {
@@ -49,12 +47,30 @@ class JavaStatementCompletionLesson : KLesson("Statement completion", JavaLesson
       proposeRestore {
         checkExpectedStateOfEditor(previous.sample) { typedString -> "if".startsWith(typedString) }
       }
+      test {
+        type("if")
+        actions(it)
+      }
     }
-    actionTask("EditorCompleteStatement") {
-      JavaLessonsBundle.message("java.statement.completion.complete.condition", code("i % j == 0"), action(it), code("if"))
+    task("EditorCompleteStatement") {
+      val code = "i % j == 0"
+      text(JavaLessonsBundle.message("java.statement.completion.complete.condition",
+                                     code(code), action(it), code("if")))
+      trigger(it)
+      test {
+        type(code)
+        actions(it)
+      }
     }
-    actionTask("EditorCompleteStatement") {
-      JavaLessonsBundle.message("java.statement.completion.complete.finish.body", code("isPrime = false; break"), action(it))
+    task("EditorCompleteStatement") {
+      val code = "isPrime = false; break"
+      text(JavaLessonsBundle.message("java.statement.completion.complete.finish.body",
+                                code(code), action(it)))
+      trigger(it)
+      test {
+        type(code)
+        actions(it)
+      }
     }
   }
 
