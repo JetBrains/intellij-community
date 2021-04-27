@@ -3,7 +3,6 @@ package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -13,6 +12,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -77,6 +77,12 @@ class IndexDiagnosticDumper : Disposable {
       val logPath = PathManager.getLogPath()
       Paths.get(logPath).resolve("indexing-diagnostic")
     }
+
+    fun getProjectDiagnosticDirectory(project: Project): Path {
+      val directory = project.getProjectCachePath(indexingDiagnosticDir)
+      directory.createDirectories()
+      return directory
+    }
   }
 
   private var isDisposed = false
@@ -132,8 +138,7 @@ class IndexDiagnosticDumper : Disposable {
     try {
       check(!isDisposed)
 
-      val indexDiagnosticDirectory = projectIndexingHistory.project.getProjectCachePath(indexingDiagnosticDir)
-      indexDiagnosticDirectory.createDirectories()
+      val indexDiagnosticDirectory = getProjectDiagnosticDirectory(projectIndexingHistory.project)
 
       val (diagnosticJson: Path, diagnosticHtml: Path) = getFilesForNewJsonAndHtmlDiagnostics(indexDiagnosticDirectory)
 
@@ -143,8 +148,9 @@ class IndexDiagnosticDumper : Disposable {
 
       val existingDiagnostics = parseExistingDiagnostics(indexDiagnosticDirectory)
       val survivedDiagnostics = deleteOutdatedDiagnostics(existingDiagnostics)
+      val sharedIndexEvents = SharedIndexDiagnostic.readEvents(projectIndexingHistory.project)
       indexDiagnosticDirectory.resolve("report.html").writeText(
-        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics)
+        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents)
       )
     }
     catch (e: Exception) {
