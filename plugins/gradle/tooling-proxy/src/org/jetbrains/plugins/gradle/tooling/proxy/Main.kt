@@ -43,7 +43,7 @@ object Main {
     serverConnector = TargetTcpServerConnector(DaemonMessageSerializer.create(BuildActionSerializer.create()))
     incomingConnectionHandler = TargetIncomingConnectionHandler()
     val address = serverConnector.start(incomingConnectionHandler) { LOG.error("connection error") } as InetEndpoint
-    println("Gradle target server hostName: ${address.candidates.first().hostName} port: ${address.port}")
+    println("Gradle target server hostAddress: ${address.candidates.first().hostAddress} port: ${address.port}")
     waitForIncomingConnection()
     waitForBuildParameters()
 
