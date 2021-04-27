@@ -24,6 +24,7 @@ import java.util.Map;
  * @see com.intellij.openapi.application.Application
  * @see com.intellij.openapi.project.Project
  */
+@ApiStatus.NonExtendable
 public interface ComponentManager extends UserDataHolder, Disposable, AreaInstance {
   /**
    * @deprecated Use {@link #getComponent(Class)} instead.
