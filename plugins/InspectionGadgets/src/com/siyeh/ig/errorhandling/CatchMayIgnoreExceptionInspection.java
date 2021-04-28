@@ -8,9 +8,13 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -30,6 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
@@ -163,57 +168,40 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         PsiClass exceptionClass = exception.resolve();
         if (exceptionClass == null) return false;
 
-        class CatchDataFlowRunner extends StandardDataFlowRunner {
-          final DfaVariableValue myExceptionVar;
-          final DfaVariableValue myStableExceptionVar;
-
-          CatchDataFlowRunner() {
-            super(holder.getProject(), block);
-            DfaValueFactory factory = getFactory();
-            myExceptionVar = PlainDescriptor.createVariableValue(factory, parameter);
-            myStableExceptionVar = PlainDescriptor.createVariableValue(factory, new LightParameter("tmp", exception, block));
-          }
-
-          @NotNull
+        CatchDataFlowRunner runner = new CatchDataFlowRunner(exception, parameter, block);
+        DfaInterceptor<PsiExpression> interceptor = new DfaInterceptor<>() {
           @Override
-          protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                             @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                             @NotNull ControlFlow flow) {
-            for (DfaMemoryState memState : memStates) {
-              memState.applyCondition(myExceptionVar.eq(myStableExceptionVar));
-              memState.applyCondition(myExceptionVar.cond(RelationType.IS, DfTypes.typedObject(exception, Nullability.NOT_NULL)));
+          public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                                  @NotNull DfaValue value,
+                                  @NotNull ThreeState failed,
+                                  @NotNull DfaMemoryState state) {
+            if (failed != ThreeState.NO && problem instanceof ContractFailureProblem) {
+              runner.cancel();
             }
-            return super.createInitialInstructionStates(psiBlock, memStates, flow);
           }
-        }
-
-        CatchDataFlowRunner runner = new CatchDataFlowRunner();
-        var visitor = new IgnoredExceptionVisitor(runner, parameter, block, exceptionClass, runner.myStableExceptionVar);
-        return runner.analyzeCodeBlock(block, visitor) == RunnerResult.OK;
+        };
+        return runner.analyzeCodeBlock(block, new JavaDfaInstructionVisitor(interceptor)) == RunnerResult.OK;
       }
     };
   }
 
-  @NotNull
-  private static String generateName(PsiCodeBlock block) {
-    return new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName(IGNORED_PARAMETER_NAME).generate(true);
-  }
+  private static class CatchDataFlowRunner extends StandardDataFlowRunner {
+    final DfaVariableValue myExceptionVar;
+    final DfaVariableValue myStableExceptionVar;
+    final @NotNull List<PsiMethod> myMethods;
+    final @NotNull PsiParameter myParameter;
+    final @NotNull PsiCodeBlock myBlock;
+    final @NotNull PsiClassType myException;
 
-  static class IgnoredExceptionVisitor extends SideEffectVisitor {
-    private final @NotNull PsiParameter myParameter;
-    private final @NotNull PsiCodeBlock myBlock;
-    @NonNls private final @NotNull List<PsiMethod> myMethods;
-    private final @NotNull DfaVariableValue myExceptionVar;
-
-    IgnoredExceptionVisitor(@NotNull DataFlowRunner runner,
-                            @NotNull PsiParameter parameter,
-                            @NotNull PsiCodeBlock block,
-                            @NotNull PsiClass exceptionClass,
-                            @NotNull DfaVariableValue exceptionVar) {
-      super(runner);
+    CatchDataFlowRunner(@NotNull PsiClassType exception, @NotNull PsiParameter parameter, @NotNull PsiCodeBlock block) {
+      super(block.getProject(), block);
       myParameter = parameter;
       myBlock = block;
-      myExceptionVar = exceptionVar;
+      DfaValueFactory factory = getFactory();
+      myException = exception;
+      PsiClass exceptionClass = Objects.requireNonNull(myException.resolve());
+      myExceptionVar = PlainDescriptor.createVariableValue(factory, parameter);
+      myStableExceptionVar = PlainDescriptor.createVariableValue(factory, new LightParameter("tmp", exception, block));
       myMethods = StreamEx.of("getMessage", "getLocalizedMessage", "getCause")
         .flatArray(name -> exceptionClass.findMethodsByName(name, true))
         .filter(m -> m.getParameterList().isEmpty())
@@ -221,24 +209,69 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      if (myMethods.contains(instruction.getTargetMethod())) {
-        DfaValue qualifier = memState.peek();
-        // Methods like "getCause" and "getMessage" return "null" for our test exception
-        if (memState.areEqual(qualifier, myExceptionVar)) {
-          memState.pop();
-          memState.push(runner.getFactory().fromDfType(DfTypes.NULL));
-          return nextInstruction(instruction, runner, memState);
+    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor<?> visitor,
+                                                                @NotNull DfaInstructionState instructionState) {
+      Instruction instruction = instructionState.getInstruction();
+      DfaMemoryState memState = instructionState.getMemoryState();
+      if (instruction instanceof MethodCallInstruction) {
+        if (myMethods.contains(((MethodCallInstruction)instruction).getTargetMethod())) {
+          DfaValue qualifier = memState.peek();
+          // Methods like "getCause" and "getMessage" return "null" for our test exception
+          if (memState.areEqual(qualifier, myExceptionVar)) {
+            memState.pop();
+            memState.push(getFactory().fromDfType(DfTypes.NULL));
+            return instructionState.nextInstruction(this);
+          }
         }
       }
-      return super.visitMethodCall(instruction, runner, memState);
+      if (isSideEffect(instruction, memState)) {
+        cancel();
+      }
+      return super.acceptInstruction(visitor, instructionState);
     }
 
+    private boolean isSideEffect(Instruction instruction, DfaMemoryState memState) {
+      if (instruction instanceof FlushFieldsInstruction) {
+        return true;
+      }
+      if (instruction instanceof FlushVariableInstruction) {
+        return !isModificationAllowed(((FlushVariableInstruction)instruction).getVariable());
+      }
+      if (instruction instanceof AssignInstruction) {
+        return !isModificationAllowed(memState.getStackValue(1));
+      }
+      if (instruction instanceof ReturnInstruction) {
+        return ((ReturnInstruction)instruction).getAnchor() != null ||
+               ((ReturnInstruction)instruction).isViaException();
+      }
+      if (instruction instanceof MethodCallInstruction) {
+        return !((MethodCallInstruction)instruction).getMutationSignature().isPure();
+      }
+      return false;
+    }
+
+    @NotNull
     @Override
-    protected boolean isModificationAllowed(DfaVariableValue variable) {
-      PsiElement owner = variable.getPsiVariable();
+    protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                       @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                       @NotNull ControlFlow flow) {
+      for (DfaMemoryState memState : memStates) {
+        memState.applyCondition(myExceptionVar.eq(myStableExceptionVar));
+        memState.applyCondition(myExceptionVar.cond(RelationType.IS, DfTypes.typedObject(myException, Nullability.NOT_NULL)));
+      }
+      return super.createInitialInstructionStates(psiBlock, memStates, flow);
+    }
+
+    protected boolean isModificationAllowed(DfaValue variable) {
+      if (!(variable instanceof DfaVariableValue)) return true;
+      PsiElement owner = ((DfaVariableValue)variable).getPsiVariable();
       return owner == myParameter || owner != null && PsiTreeUtil.isAncestor(myBlock, owner, false);
     }
+  }
+
+  @NotNull
+  private static String generateName(PsiCodeBlock block) {
+    return new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName(IGNORED_PARAMETER_NAME).generate(true);
   }
 
   private static class AddCatchBodyFix implements LocalQuickFix, LowPriorityAction {
