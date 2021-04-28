@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -39,31 +39,47 @@ public class ExpectedExceptionNeverThrownTestNGInspection extends AbstractBaseJa
         return;
       }
       final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("expectedExceptions");
-      if (!(value instanceof PsiClassObjectAccessExpression)) {
+      if (value == null) {
         return;
       }
       final PsiCodeBlock body = method.getBody();
       if (body == null) {
         return;
       }
-      final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)value;
+      final List<PsiClassType> exceptionsThrown = ExceptionUtil.getThrownExceptions(body);
+      if (value instanceof PsiClassObjectAccessExpression) {
+        checkAnnotationMemberValue(value, method, exceptionsThrown);
+      }
+      else if (value instanceof PsiArrayInitializerMemberValue) {
+        final PsiArrayInitializerMemberValue arrayInitializerMemberValue = (PsiArrayInitializerMemberValue)value;
+        for (PsiAnnotationMemberValue memberValue : arrayInitializerMemberValue.getInitializers()) {
+          checkAnnotationMemberValue(memberValue, method, exceptionsThrown);
+        }
+      }
+    }
+
+    private void checkAnnotationMemberValue(PsiAnnotationMemberValue annotationMemberValue, PsiMethod method,
+                                            List<PsiClassType> exceptionsThrown) {
+      if (!(annotationMemberValue instanceof PsiClassObjectAccessExpression))  {
+        return;
+      }
+      final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)annotationMemberValue;
       final PsiTypeElement operand = classObjectAccessExpression.getOperand();
       final PsiType type = operand.getType();
       if (!(type instanceof PsiClassType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
-      if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
+      final PsiClassType expectedType = (PsiClassType)type;
+      if (InheritanceUtil.isInheritor(expectedType, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
         return;
       }
-      final List<PsiClassType> exceptionsThrown = ExceptionUtil.getThrownExceptions(body);
-      for (PsiClassType psiClassType : exceptionsThrown) {
-        if (psiClassType.isAssignableFrom(classType)) {
+      for (PsiClassType exceptionType : exceptionsThrown) {
+        if (exceptionType.isAssignableFrom(expectedType)) {
           return;
         }
       }
-      myProblemsHolder.registerProblem(operand, TestngBundle.message("inspection.testng.expected.exception.never.thrown.problem", method.getName()));
+      myProblemsHolder.registerProblem(operand, TestngBundle.message("inspection.testng.expected.exception.never.thrown.problem",
+                                                                     method.getName()));
     }
   }
 }
