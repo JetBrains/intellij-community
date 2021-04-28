@@ -346,12 +346,11 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
   private <T extends PsiElement> DfaValue dereference(DfaMemoryState memState,
                                                       DfaValue value,
                                                       @Nullable NullabilityProblemKind.NullabilityProblem<T> problem) {
-    ThreeState ok = checkNotNullable(memState, value, problem);
+    checkNotNullable(memState, value, problem);
     if (value instanceof DfaTypeValue) {
       DfType dfType = value.getDfType().meet(NOT_NULL_OBJECT);
       return value.getFactory().fromDfType(dfType == DfType.BOTTOM ? NOT_NULL_OBJECT : dfType);
     }
-    if (ok != ThreeState.NO) return value;
     if (memState.isNull(value) && problem != null && problem.getKind() == NullabilityProblemKind.nullableFunctionReturn) {
       return value.getFactory().fromDfType(NOT_NULL_OBJECT);
     }
@@ -480,19 +479,15 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     return returnType;
   }
 
-  protected ThreeState checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
-    DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
-    boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
+  private void checkNotNullable(DfaMemoryState state,
+                                @NotNull DfaValue value,
+                                @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     if (problem != null) {
+      DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
       ThreeState failed = nullability == DfaNullability.NOT_NULL ? ThreeState.NO :
                           nullability == DfaNullability.NULL ? ThreeState.YES : ThreeState.UNSURE;
       myInterceptor.onCondition(problem, value, failed, state);
     }
-    if (notNullable && problem != null && problem.thrownException() != null) {
-      state.applyCondition(value.cond(RelationType.NE, NULL));
-    }
-    boolean unknown = nullability == DfaNullability.UNKNOWN;
-    return notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
   }
 
   public DfaInstructionState @NotNull [] visitControlTransfer(@NotNull ControlTransferInstruction controlTransferInstruction,
@@ -753,8 +748,10 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaValue index = memState.pop();
     DfaValue array = memState.pop();
     boolean alwaysOutOfBounds = !applyBoundsCheck(memState, array, index);
-    myInterceptor.onCondition(new ArrayIndexProblem(arrayExpression), index, alwaysOutOfBounds ? ThreeState.YES : ThreeState.UNSURE,
-                              memState);
+    if (arrayExpression != null) {
+      ThreeState failed = alwaysOutOfBounds ? ThreeState.YES : ThreeState.UNSURE;
+      myInterceptor.onCondition(new ArrayIndexProblem(arrayExpression), index, failed, memState);
+    }
     if (alwaysOutOfBounds) {
       DfaControlTransferValue transfer = instruction.getOutOfBoundsExceptionTransfer();
       if (transfer != null) {
