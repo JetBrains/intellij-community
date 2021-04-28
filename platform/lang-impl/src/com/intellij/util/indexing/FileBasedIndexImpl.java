@@ -1339,57 +1339,43 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
       ProgressManager.checkCanceled();
-
       FileContentImpl fc = null;
-      PsiFile psiFile = null;
 
       int inputId = getFileId(file);
       Set<ID<?, ?>> currentIndexedStates = new HashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
       List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(indexedFile);
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
-        try {
+        ProgressManager.checkCanceled();
+
+        if (fc == null) {
+          fc = (FileContentImpl)FileContentImpl.createByContent(file, () -> getBytesOrNull(content), guessedProject);
+          fc.setSubstituteFileType(indexedFile.getFileType());
           ProgressManager.checkCanceled();
 
-          if (fc == null) {
-            fc = (FileContentImpl)FileContentImpl.createByContent(file, () -> getBytesOrNull(content), guessedProject);
-            fc.setSubstituteFileType(indexedFile.getFileType());
-            ProgressManager.checkCanceled();
+          fileTypeRef.set(fc.getFileType());
 
-            initFileContent(fc, psiFile);
+          ProgressManager.checkCanceled();
+        }
 
-            fileTypeRef.set(fc.getFileType());
-
-            ProgressManager.checkCanceled();
+        final ID<?, ?> indexId = affectedIndexCandidates.get(i);
+        if (acceptsInput(indexId, fc) && getIndexingState(fc, indexId).updateRequired()) {
+          ProgressManager.checkCanceled();
+          SingleIndexUpdateStats updateStats = updateSingleIndex(indexId, file, inputId, fc);
+          if (updateStats == null) {
+            setIndexedStatus.set(Boolean.FALSE);
           }
-
-          final ID<?, ?> indexId = affectedIndexCandidates.get(i);
-          if (acceptsInput(indexId, fc) && getIndexingState(fc, indexId).updateRequired()) {
-            ProgressManager.checkCanceled();
-            SingleIndexUpdateStats updateStats = updateSingleIndex(indexId, file, inputId, fc);
-            if (updateStats == null) {
-              setIndexedStatus.set(Boolean.FALSE);
+          else {
+            perIndexerUpdateTimes.put(indexId, updateStats.mapInputTime);
+            if (updateStats.indexWasProvidedByExtension) {
+              indexesProvidedByExtensions.add(indexId);
             }
             else {
-              perIndexerUpdateTimes.put(indexId, updateStats.mapInputTime);
-              if (updateStats.indexWasProvidedByExtension) {
-                indexesProvidedByExtensions.add(indexId);
-              }
-              else {
-                wasFullyIndexedByInfrastructureExtensions.set(false);
-              }
+              wasFullyIndexedByInfrastructureExtensions.set(false);
             }
-            currentIndexedStates.remove(indexId);
           }
+          currentIndexedStates.remove(indexId);
         }
-        catch (ProcessCanceledException e) {
-          cleanFileContent(fc, psiFile);
-          throw e;
-        }
-      }
-
-      if (psiFile != null) {
-        psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
       }
 
       boolean shouldClearAllIndexedStates = fc == null;
