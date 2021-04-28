@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,33 +19,33 @@ import com.google.common.collect.ImmutableMap
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.KotlinJvmBundle.message
-import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 import javax.swing.JOptionPane
+import kotlin.io.path.*
 
 object FileUIUtils {
     fun copyWithOverwriteDialog(
         messagesTitle: String,
         destinationFolder: String,
-        file: File
-    ): File? = copyWithOverwriteDialog(messagesTitle, ImmutableMap.of(file, destinationFolder))?.getValue(file)
+        file: Path
+    ): Path? = copyWithOverwriteDialog(messagesTitle, ImmutableMap.of(file, destinationFolder))?.getValue(file)
 
     fun copyWithOverwriteDialog(
         messagesTitle: String,
-        filesWithDestinations: Map<File, String>
-    ): Map<File, File>? {
+        filesWithDestinations: Map<Path, String>
+    ): Map<Path, Path>? {
         val fileNames = mutableSetOf<String>()
-        val targetFiles = LinkedHashMap<File, File>(filesWithDestinations.size)
+        val targetFiles = LinkedHashMap<Path, Path>(filesWithDestinations.size)
         for ((file, destinationPath) in filesWithDestinations) {
             val fileName = file.name
             require(fileNames.add(fileName)) { "There are several files with the same name: $fileName" }
-            targetFiles[file] = File(destinationPath, fileName)
+            targetFiles[file] = Path(destinationPath, fileName)
         }
 
         val existentFiles = targetFiles.entries.filter { (_, value) -> value.exists() }
@@ -54,10 +54,10 @@ object FileUIUtils {
                 val conflictingFile = existentFiles.iterator().next().value
                 message(
                     "file.exists.single",
-                    conflictingFile.name, conflictingFile.parentFile.absolutePath
+                    conflictingFile.name, conflictingFile.parent.absolutePathString()
                 )
             } else {
-                val conflictFiles: Collection<File?> = existentFiles.map { (_, value) -> value }
+                val conflictFiles: Collection<Path?> = existentFiles.map { (_, value) -> value }
                 message("file.exists", StringUtil.join(conflictFiles, "\n"))
             }
 
@@ -76,13 +76,14 @@ object FileUIUtils {
 
         for ((key, value) in targetFiles) {
             try {
-                val destinationPath = value.parentFile.absolutePath
+                val destinationPath = value.parent.absolutePathString()
                 if (!ProjectWizardUtil.createDirectoryIfNotExists(message("file.destination.folder"), destinationPath, false)) {
                     Messages.showErrorDialog(message("file.error.new.folder", destinationPath), messagesTitle)
                     return null
                 }
-                FileUtil.copy(key, value)
-                LocalFileSystem.getInstance().refreshAndFindFileByIoFile(value)
+
+                key.copyTo(value, overwrite = true)
+                LocalFileSystem.getInstance().refreshAndFindFileByNioFile(value)
             } catch (e: IOException) {
                 Messages.showErrorDialog(message("file.error.copy", key.name), messagesTitle)
                 return null
@@ -91,18 +92,9 @@ object FileUIUtils {
         return targetFiles
     }
 
-    fun createRelativePath(project: Project?, contextDirectory: VirtualFile?, relativePath: String?): String {
-        var path: String? = null
-        if (contextDirectory != null) {
-            path = PathUtil.getLocalPath(contextDirectory)
-        } else if (project != null) {
-            path = PathUtil.getLocalPath(project.baseDir)
-        }
-        path = if (path != null) {
-            File(path, relativePath).absolutePath
-        } else {
-            ""
-        }
-        return path!!
-    }
+    fun createRelativePath(project: Project?, contextDirectory: VirtualFile?, relativePath: String): String = when {
+        contextDirectory != null -> PathUtil.getLocalPath(contextDirectory)
+        project != null -> PathUtil.getLocalPath(project.baseDir)
+        else -> null
+    }?.let { Path(it, relativePath).absolutePathString() } ?: ""
 }

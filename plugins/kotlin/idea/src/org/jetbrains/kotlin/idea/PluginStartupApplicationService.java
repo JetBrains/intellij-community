@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static com.intellij.util.io.PathKt.exists;
+import static com.intellij.util.io.PathKt.isFile;
+import static java.nio.file.Files.deleteIfExists;
+
 public class PluginStartupApplicationService implements Disposable {
 
     public static PluginStartupApplicationService getInstance() {
@@ -45,8 +49,7 @@ public class PluginStartupApplicationService implements Disposable {
                     }
                 });
                 this.aliveFlagPath = flagFile.toAbsolutePath().toString();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 this.aliveFlagPath = "";
             }
         }
@@ -55,9 +58,12 @@ public class PluginStartupApplicationService implements Disposable {
 
     public synchronized void resetAliveFlag() {
         if (aliveFlagPath != null && !aliveFlagPath.isEmpty()) {
-            File flagFile = new File(aliveFlagPath);
-            if (flagFile.isFile() && flagFile.exists() && flagFile.delete()) {
-                this.aliveFlagPath = null;
+            Path flagFile = Path.of(aliveFlagPath);
+            try {
+                if (isFile(flagFile) && exists(flagFile) && deleteIfExists(flagFile)) {
+                    this.aliveFlagPath = null;
+                }
+            } catch (IOException ignored) {
             }
         }
     }

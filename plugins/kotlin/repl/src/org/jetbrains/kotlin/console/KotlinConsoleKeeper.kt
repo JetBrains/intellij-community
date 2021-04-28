@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -26,6 +26,9 @@ import org.jetbrains.kotlin.idea.util.projectStructure.version
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.notExists
 
 class KotlinConsoleKeeper(val project: Project) {
     private val consoleMap: MutableMap<VirtualFile, KotlinConsoleRunner> = ConcurrentHashMap()
@@ -83,9 +86,10 @@ class KotlinConsoleKeeper(val project: Project) {
 
             javaParameters.classPath.apply {
                 val classPath = KotlinClassPath.CompilerWithScripting.computeClassPath()
-                addAll(classPath.map {
-                    val absolutePath = it.absolutePath
-                    if (!it.exists()) {
+                addAll(classPath.map { file ->
+                    val path = file.toPath()
+                    val absolutePath = path.absolutePathString()
+                    if (path.notExists()) {
                         LOG.warn("Compiler dependency classpath $absolutePath does not exist")
                     }
                     absolutePath
@@ -118,11 +122,11 @@ class KotlinConsoleKeeper(val project: Project) {
 
             with(javaParameters.programParametersList) {
                 add("-kotlin-home")
-                val kotlinHome = KotlinArtifacts.instance.kotlincDirectory.also {
+                val kotlinHome = KotlinArtifacts.instance.kotlincDirectory.toPath().also {
                     check(it.exists()) {
                         "Kotlinc directory does not exist"
                     }
-                }.absolutePath
+                }.absolutePathString()
                 add(CompositeParameterTargetedValue().addPathPart(kotlinHome))
             }
 

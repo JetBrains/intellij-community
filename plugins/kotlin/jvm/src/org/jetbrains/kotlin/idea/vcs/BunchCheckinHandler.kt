@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -26,9 +26,10 @@ import com.intellij.util.PairConsumer
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import java.awt.GridLayout
-import java.io.File
+import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.io.path.*
 
 private val BUNCH_PLUGIN_ID = PluginId.getId("org.jetbrains.bunch.tool.idea.plugin")
 
@@ -77,15 +78,15 @@ class BunchFileCheckInHandlerFactory : CheckinHandlerFactory() {
 
             val extensions = BunchFileUtils.bunchExtension(project)?.toSet() ?: return ReturnResult.COMMIT
 
-            val forgottenFiles = HashSet<File>()
-            val commitFiles = checkInProjectPanel.files.filter { it.isFile }.toSet()
+            val forgottenFiles = HashSet<Path>()
+            val commitFiles = checkInProjectPanel.files.mapNotNull { file -> file.toPath().takeIf { it.isRegularFile() } }.toSet()
             for (file in commitFiles) {
                 if (file.extension in extensions) continue
 
                 val parent = file.parent ?: continue
                 val name = file.name
                 for (extension in extensions) {
-                    val bunchFile = File(parent, "$name.$extension")
+                    val bunchFile = parent.resolve("$name.$extension")
                     if (bunchFile !in commitFiles && bunchFile.exists()) {
                         forgottenFiles.add(bunchFile)
                     }
@@ -94,8 +95,11 @@ class BunchFileCheckInHandlerFactory : CheckinHandlerFactory() {
 
             if (forgottenFiles.isEmpty()) return ReturnResult.COMMIT
 
-            val projectBaseFile = File(project.basePath)
-            var filePaths = forgottenFiles.map { it.relativeTo(projectBaseFile).path }.sorted()
+            val paths = project.basePath?.let(::Path)?.let { projectBasePath ->
+                forgottenFiles.map { it.relativeTo(projectBasePath) }
+            } ?: forgottenFiles
+
+            var filePaths = paths.map(Path::pathString).sorted()
             if (filePaths.size > 15) {
                 filePaths = filePaths.take(15) + "..."
             }
@@ -131,8 +135,8 @@ object BunchFileUtils {
 
     fun bunchExtension(project: Project): List<String>? {
         val bunchFile: VirtualFile = bunchFile(project) ?: return null
-        val file = File(bunchFile.path)
-        if (!file.exists()) return null
+        val file = bunchFile.toNioPath()
+        if (file.notExists()) return null
 
         val lines = file.readLines().map { it.trim() }.filter { it.isNotEmpty() }
         if (lines.size <= 1) return null

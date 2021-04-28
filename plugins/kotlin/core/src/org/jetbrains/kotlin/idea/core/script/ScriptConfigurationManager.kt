@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package org.jetbrains.kotlin.idea.core.script
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -34,6 +34,11 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.notExists
+import kotlin.io.path.pathString
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.makeFailureResult
 
@@ -111,26 +116,19 @@ interface ScriptConfigurationManager {
     fun getAllScriptDependenciesSources(): Collection<VirtualFile>
 
     companion object {
-        fun getServiceIfCreated(project: Project): ScriptConfigurationManager? =
-            ServiceManager.getServiceIfCreated(project, ScriptConfigurationManager::class.java)
+        fun getServiceIfCreated(project: Project): ScriptConfigurationManager? = project.serviceIfCreated()
 
         @JvmStatic
-        fun getInstance(project: Project): ScriptConfigurationManager =
-            ServiceManager.getService(project, ScriptConfigurationManager::class.java)
+        fun getInstance(project: Project): ScriptConfigurationManager = project.service()
 
-        fun toVfsRoots(roots: Iterable<File>): List<VirtualFile> {
-            return roots.mapNotNull { classpathEntryToVfs(it) }
-        }
+        fun toVfsRoots(roots: Iterable<File>): List<VirtualFile> = roots.mapNotNull { classpathEntryToVfs(it.toPath()) }
 
-        fun classpathEntryToVfs(file: File): VirtualFile? {
-            val res = when {
-                !file.exists() -> null
-                file.isDirectory -> StandardFileSystems.local()?.findFileByPath(file.canonicalPath)
-                file.isFile -> StandardFileSystems.jar()?.findFileByPath(file.canonicalPath + URLUtil.JAR_SEPARATOR)
-                else -> null
-            }
-            // TODO: report this somewhere, but do not throw: assert(res != null, { "Invalid classpath entry '$this': exists: ${exists()}, is directory: $isDirectory, is file: $isFile" })
-            return res
+        // TODO: report this somewhere, but do not throw: assert(res != null, { "Invalid classpath entry '$this': exists: ${exists()}, is directory: $isDirectory, is file: $isFile" })
+        fun classpathEntryToVfs(path: Path): VirtualFile? = when {
+            path.notExists() -> null
+            path.isDirectory() -> StandardFileSystems.local()?.findFileByPath(path.pathString)
+            path.isRegularFile() -> StandardFileSystems.jar()?.findFileByPath(path.pathString + URLUtil.JAR_SEPARATOR)
+            else -> null
         }
 
         @TestOnly

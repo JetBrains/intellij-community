@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -18,9 +18,11 @@ import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.onTextChange
-import java.io.File
 import javax.swing.InputVerifier
 import javax.swing.JComponent
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 class MoveRefactoringActionDialog(
     private val project: Project, private val defaultDirectory: String
@@ -97,7 +99,7 @@ class MoveRefactoringActionDialog(
         }
 
         val isCorrectPath = tfTargetDirectory.childComponent.text
-            ?.let { it.isNotEmpty() && File(it).let { path -> path.exists() && path.isDirectory } }
+            ?.let { it.isNotEmpty() && Path(it).let { path -> path.exists() && path.isDirectory() } }
             ?: false
 
         isOKActionEnabled = isCorrectPath

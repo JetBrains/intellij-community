@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.script.ScriptContext
 import javax.script.ScriptEngineFactory
 import javax.script.ScriptException
+import kotlin.io.path.exists
 import kotlin.reflect.KClass
 
 // TODO: need to manage resources here, i.e. call replCompiler.dispose when engine is collected
@@ -48,7 +49,7 @@ class KotlinJsr223JvmScriptEngine4Idea(
     private val daemon by lazy {
         val libPath = KotlinPathsFromHomeDir(KotlinArtifacts.instance.kotlincDirectory)
         val classPath = libPath.classPath(KotlinPaths.ClassPaths.CompilerWithScripting)
-        assert(classPath.all { it.exists() })
+        assert(classPath.all { it.toPath().exists() })
         val compilerId = CompilerId.makeCompilerId(classPath)
         val daemonOptions = configureDaemonOptions()
         val daemonJVMOptions = DaemonJVMOptions()

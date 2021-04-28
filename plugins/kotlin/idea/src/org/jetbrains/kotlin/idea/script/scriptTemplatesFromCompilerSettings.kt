@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,12 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsLi
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplates
+import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import java.io.File
+import kotlin.io.path.Path
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
@@ -50,12 +51,11 @@ class ScriptTemplatesFromCompilerSettingsProvider(
     }
 
     override val definitions: Sequence<ScriptDefinition>
-        get() {
-            val kotlinSettings = KotlinCompilerSettings.getInstance(project).settings
-            return if (kotlinSettings.scriptTemplates.isBlank()) emptySequence()
-            else loadDefinitionsFromTemplates(
+        get() = KotlinCompilerSettings.getInstance(project).settings.let { kotlinSettings ->
+            if (kotlinSettings.scriptTemplates.isBlank()) emptySequence()
+            else loadDefinitionsFromTemplatesByPaths(
                 templateClassNames = kotlinSettings.scriptTemplates.split(',', ' '),
-                templateClasspath = kotlinSettings.scriptTemplatesClasspath.split(File.pathSeparator).map(::File),
+                templateClasspath = kotlinSettings.scriptTemplatesClasspath.split(File.pathSeparator).map(::Path),
                 baseHostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
                     getEnvironment {
                         mapOf(

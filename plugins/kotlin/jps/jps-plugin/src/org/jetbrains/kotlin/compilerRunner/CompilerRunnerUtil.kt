@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
 
 package org.jetbrains.kotlin.compilerRunner
 
+import org.jetbrains.kotlin.idea.artifacts.KotlinClassPath
 import org.jetbrains.kotlin.preloading.ClassPreloadingUtils
 import org.jetbrains.kotlin.preloading.Preloader
-import org.jetbrains.kotlin.idea.artifacts.KotlinClassPath
 import java.io.File
 import java.io.PrintStream
 import java.lang.ref.SoftReference
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
 object CompilerRunnerUtil {
     private var ourClassLoaderRef = SoftReference<ClassLoader>(null)
@@ -32,17 +35,17 @@ object CompilerRunnerUtil {
             if (javaHomePath == null || javaHomePath.isEmpty()) {
                 return null
             }
-            val javaHome = File(javaHomePath)
-            var toolsJar = File(javaHome, "lib/tools.jar")
+            val javaHome = Path(javaHomePath)
+            var toolsJar = javaHome.resolve("lib/tools.jar")
             if (toolsJar.exists()) {
-                return toolsJar.canonicalFile
+                return toolsJar.toFile()
             }
 
             // We might be inside jre.
             if (javaHome.name == "jre") {
-                toolsJar = File(javaHome.parent, "lib/tools.jar")
+                toolsJar = javaHome.parent.resolve("lib/tools.jar")
                 if (toolsJar.exists()) {
-                    return toolsJar.canonicalFile
+                    return toolsJar.toFile()
                 }
             }
 

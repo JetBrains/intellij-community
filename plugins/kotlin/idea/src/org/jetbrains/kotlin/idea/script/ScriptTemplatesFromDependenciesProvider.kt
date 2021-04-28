@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -17,11 +18,12 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplates
+import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -80,7 +82,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
 
     private data class TemplatesWithCp(
         val templates: List<String>,
-        val classpath: List<File>,
+        val classpath: List<Path>,
     )
 
     private val inProgress = AtomicBoolean(false)
@@ -98,7 +100,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
         }
 
         ReadAction
-            .nonBlocking<TemplatesWithCp?>{
+            .nonBlocking<TemplatesWithCp?> {
                 val files = FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, GlobalSearchScope.allScope(project))
 
                 val (templates, classpath) = getTemplateClassPath(files)
@@ -132,7 +134,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                         }
                     }
 
-                    val newDefinitions = loadDefinitionsFromTemplates(
+                    val newDefinitions = loadDefinitionsFromTemplatesByPaths(
                         templateClassNames = newTemplates.templates,
                         templateClasspath = newTemplates.classpath,
                         baseHostConfiguration = hostConfiguration,
@@ -167,15 +169,15 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     }
 
     // public for tests
-    fun getTemplateClassPath(files: Collection<VirtualFile>): Pair<Collection<String>, Collection<File>> {
+    fun getTemplateClassPath(files: Collection<VirtualFile>): Pair<Collection<String>, Collection<Path>> {
         val rootDirToTemplates: MutableMap<VirtualFile, MutableList<VirtualFile>> = hashMapOf()
         for (file in files) {
             val dir = file.parent?.parent?.parent?.parent?.parent ?: continue
             rootDirToTemplates.getOrPut(dir) { arrayListOf() }.add(file)
         }
 
-        val templates = LinkedHashSet<String>()
-        val classpath = LinkedHashSet<File>()
+        val templates = linkedSetOf<String>()
+        val classpath = linkedSetOf<Path>()
 
         rootDirToTemplates.forEach { (root, templateFiles) ->
             if (logger.isDebugEnabled) {
@@ -196,8 +198,8 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                 }
                 .takeIf { it.isNotEmpty() } ?: return@forEach
 
-            templateFiles.forEach {
-                templates.add(it.name.removeSuffix(SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT))
+            for (virtualFile in templateFiles) {
+                templates.add(virtualFile.name.removeSuffix(SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT))
             }
 
             // assuming that all libraries are placed into classes roots
@@ -205,9 +207,10 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
             // minimizing the classpath needed to use the template by taking cp only from modules with new templates found
             // on the other hand the approach may fail if some module contains a template without proper classpath, while
             // the other has properly configured classpath, so assuming that the dependencies are set correctly everywhere
-            orderEntriesForFile.flatMap {
-                OrderEnumerator.orderEntries(it.ownerModule).withoutSdk().classesRoots.mapNotNull {
-                    classpath.add(it.canonicalPath?.removeSuffix("!/").let(::File))
+            for (orderEntry in orderEntriesForFile) {
+                for (virtualFile in OrderEnumerator.orderEntries(orderEntry.ownerModule).withoutSdk().classesRoots) {
+                    val localVirtualFile = VfsUtil.getLocalFile(virtualFile)
+                    localVirtualFile.fileSystem.getNioPath(localVirtualFile)?.let(classpath::add)
                 }
             }
         }

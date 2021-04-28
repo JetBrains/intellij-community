@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.io.File
+import java.nio.file.Path
 
 /**
  * Component forces update for built-in libraries in plugin directory. They are ignored because of
@@ -54,8 +55,8 @@ internal class KotlinUpdatePluginStartupActivity : StartupActivity.DumbAware {
         }
     }
 
-    private fun requestFullJarUpdate(jarFilePath: File) {
-        val localVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jarFilePath) ?: return
+    private fun requestFullJarUpdate(jarFilePath: Path) {
+        val localVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(jarFilePath) ?: return
 
         // Build and update JarHandler
         val jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localVirtualFile) ?: return

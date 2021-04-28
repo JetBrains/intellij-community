@@ -1,8 +1,17 @@
+/*
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
+import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.notExists
+import kotlin.io.path.pathString
 
 abstract class KotlinArtifacts(val kotlincDistDir: File) {
     companion object {
@@ -13,8 +22,10 @@ abstract class KotlinArtifacts(val kotlincDistDir: File) {
                 doesClassExist("com.intellij.openapi.application.ApplicationManager") && // ApplicationManager may absent in JPS process so we need to check it presence firstly
                 ApplicationManager.getApplication()?.isUnitTestMode == true
             ) {
-                getTestKotlinArtifacts() ?: error("We are in unit test mode! TestKotlinArtifacts must be available in such mode. " +
-                                                          "Probably class was renamed or broken classpath")
+                getTestKotlinArtifacts() ?: error(
+                    "We are in unit test mode! TestKotlinArtifacts must be available in such mode. " +
+                            "Probably class was renamed or broken classpath"
+                )
             } else {
                 // If TestKotlinArtifacts is presented in classpath then it must be test environment
                 getTestKotlinArtifacts() ?: ProductionKotlinArtifacts
@@ -74,24 +85,21 @@ abstract class KotlinArtifacts(val kotlincDistDir: File) {
 }
 
 private object ProductionKotlinArtifacts : KotlinArtifacts(run {
-    val pluginJar = PathUtil.getResourcePathForClass(ProductionKotlinArtifacts::class.java)
-    if (!pluginJar.exists()) {
-        throw IllegalStateException("Plugin JAR not found for class ${ProductionKotlinArtifacts::class.java}")
-    }
+    val pluginJar = PathUtil.getResourcePathForClass(ProductionKotlinArtifacts::class.java).toPath()
+    if (pluginJar.notExists()) throw IllegalStateException("Plugin JAR not found for class ${ProductionKotlinArtifacts::class.java}")
 
-    val libFile = pluginJar.parentFile.takeIf { it.name == "lib" }
+    val libFile = pluginJar.parent.takeIf { it.name == "lib" }
     if (libFile == null || !libFile.exists()) {
-        if ("compile-server" in pluginJar.path && File(pluginJar.parentFile, "kotlinc").exists()) {
+        if ("compile-server" in pluginJar.pathString && pluginJar.parent.resolve("kotlinc").exists()) {
             // WSL JPS build copies all JPS plugin jars to the cache directory, without an intervening 'lib' directory,
             // and the kotlinc directory becomes a subdirectory of the cache directory (see KotlinBuildProcessParametersProvider.getAdditionalPluginPaths())
-            pluginJar.parentFile
-        }
-        else {
+            pluginJar.parent.toFile()
+        } else {
             // Don't throw exception because someone may want to just try to initialize
             // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
             File("<invalid_kotlinc_path>")
         }
     } else {
-        libFile.parentFile
+        libFile.parent.toFile()
     }
 })

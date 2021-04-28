@@ -1,16 +1,16 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.jps.incremental
 
 import org.junit.Test
-import java.io.File
+import kotlin.io.path.Path
 import kotlin.test.assertEquals
 
 class CompositeLookupsCacheAttributesManagerTest {
-    val manager = CompositeLookupsCacheAttributesManager(File("not-used"), setOf())
+    val manager = CompositeLookupsCacheAttributesManager(Path("not-used"), setOf())
 
     @Test
     fun testNothingToJava() {

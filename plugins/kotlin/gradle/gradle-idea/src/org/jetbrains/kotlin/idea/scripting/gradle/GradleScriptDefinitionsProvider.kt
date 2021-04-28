@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.scripting.gradle
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.PathUtil
+import com.intellij.util.io.systemIndependentPath
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
@@ -28,8 +28,12 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
+import java.nio.file.DirectoryStream
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.*
 import kotlin.reflect.KClass
 import kotlin.script.dependencies.Environment
 import kotlin.script.dependencies.ScriptContents
@@ -77,37 +81,29 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
             return definitions
         }
 
-        fun getDefinitionsTemplateClasspath(gradleHome: String?): List<String> {
-            return try {
-                getFullDefinitionsClasspath(gradleHome).first.map {
-                    PathUtil.toSystemIndependentName(it.path)
-                }
-            } catch (e: Throwable) {
-                scriptingInfoLog("cannot get gradle classpath for Gradle Kotlin DSL scripts: ${e.message}")
+        fun getDefinitionsTemplateClasspath(gradleHome: String?): List<String> = try {
+            getFullDefinitionsClasspath(gradleHome).first.map(Path::systemIndependentPath)
+        } catch (e: Throwable) {
+            scriptingInfoLog("cannot get gradle classpath for Gradle Kotlin DSL scripts: ${e.message}")
 
-                emptyList()
-            }
+            emptyList()
         }
 
         private val kotlinDslDependencySelector = Regex("^gradle-(?:kotlin-dsl|core).*\\.jar\$")
 
-        private fun getFullDefinitionsClasspath(gradleHome: String?): Pair<List<File>, List<File>> {
+        private fun getFullDefinitionsClasspath(gradleHome: String?): Pair<List<Path>, List<Path>> {
             if (gradleHome == null) {
                 error(KotlinIdeaGradleBundle.message("error.text.unable.to.get.gradle.home.directory"))
             }
 
-            val gradleLibDir = File(gradleHome, "lib")
-                .let {
-                    it.takeIf { it.exists() && it.isDirectory }
-                        ?: error(KotlinIdeaGradleBundle.message("error.text.invalid.gradle.libraries.directory", it))
-                }
+            val gradleLibDir = Path(gradleHome, "lib").let {
+                it.takeIf { it.exists() && it.isDirectory() }
+                    ?: error(KotlinIdeaGradleBundle.message("error.text.invalid.gradle.libraries.directory", it))
+            }
 
-            val templateClasspath = gradleLibDir
-                /* an inference problem without explicit 'it', TODO: remove when fixed */
-                .listFiles { it -> kotlinDslDependencySelector.matches(it.name) }
-                ?.takeIf { it.isNotEmpty() }
-                ?.asList()
-                ?: error(KotlinIdeaGradleBundle.message("error.text.missing.jars.in.gradle.directory"))
+            val templateClasspath = Files.newDirectoryStream(gradleLibDir) { kotlinDslDependencySelector.matches(it.name) }
+                .use(DirectoryStream<Path>::toList)
+                .ifEmpty { error(KotlinIdeaGradleBundle.message("error.text.missing.jars.in.gradle.directory")) }
 
             scriptingDebugLog { "gradle script templates classpath $templateClasspath" }
 
@@ -119,25 +115,20 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
         }
 
         // TODO: check this against kotlin-dsl branch that uses daemon
-        private fun kotlinStdlibAndCompiler(gradleLibDir: File): List<File> {
+        private fun kotlinStdlibAndCompiler(gradleLibDir: Path): List<Path> {
             // additionally need compiler jar to load gradle resolver
-            return gradleLibDir.listFiles { file ->
-                file?.name?.startsWith("kotlin-compiler-embeddable") == true || file?.name?.startsWith("kotlin-stdlib") == true
-            }?.firstOrNull()?.let(::listOf).orEmpty()
+            return gradleLibDir.listDirectoryEntries("{kotlin-compiler-embeddable,kotlin-stdlib}*").firstOrNull()?.let(::listOf).orEmpty()
         }
 
         private val kotlinStdLibSelector = Regex("^(kotlin-compiler-embeddable|kotlin-stdlib)-(\\d+\\.\\d+).*\\.jar\$")
 
-        fun findStdLibLanguageVersion(classpath: List<File>): LanguageVersion? {
-            return classpath.map { it.parentFile }.toSet().map {
-                it.listFiles { file ->
-                    kotlinStdLibSelector.find(file.name) != null
-                }.firstOrNull()?.let { file ->
-                    val matchResult = kotlinStdLibSelector.find(file.name) ?: return@let null
-                    LanguageVersion.fromVersionString(matchResult.groupValues[2])
-                }
-            }.firstOrNull()
-        }
+        fun findStdLibLanguageVersion(classpath: List<Path>): LanguageVersion? = classpath.map { it.parent }.toSet().mapNotNull { path ->
+            Files.newDirectoryStream(path) { kotlinStdLibSelector.find(it.name) != null }.use {
+                val resultPath = it.firstOrNull() ?: return@use null
+                val matchResult = kotlinStdLibSelector.find(resultPath.name) ?: return@use null
+                LanguageVersion.fromVersionString(matchResult.groupValues[2])
+            }
+        }.firstOrNull()
     }
 
     override val id: String = "Gradle Kotlin DSL"
@@ -241,8 +232,8 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
         templateClass: String,
         gradleHome: String?,
         javaHome: String?,
-        templateClasspath: List<File>,
-        additionalClassPath: List<File>
+        templateClasspath: List<Path>,
+        additionalClassPath: List<Path>
     ): List<ScriptDefinition> {
         val gradleExeSettings = ExternalSystemApiUtil.getExecutionSettings<GradleExecutionSettings>(
             project,
@@ -251,9 +242,10 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
         )
         val defaultCompilerOptions = findStdLibLanguageVersion(templateClasspath)?.let {
             listOf("-language-version", it.versionString)
-        } ?: emptyList<String>()
+        } ?: emptyList()
+
         val hostConfiguration = createHostConfiguration(projectPath, gradleHome, javaHome, gradleExeSettings)
-        return loadDefinitionsFromTemplates(
+        return loadDefinitionsFromTemplatesByPaths(
             listOf(templateClass),
             templateClasspath,
             hostConfiguration,

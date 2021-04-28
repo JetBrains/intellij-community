@@ -1,17 +1,18 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.versions
 
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.configuration.*
@@ -19,8 +20,9 @@ import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
 import org.jetbrains.kotlin.idea.framework.isExternalLibrary
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
-import java.io.File
 import java.io.IOException
+import java.nio.file.Path
+import kotlin.io.path.*
 
 fun updateLibraries(project: Project, libraries: Collection<Library>) {
     if (project.allModules().any { module -> module.getBuildSystemType() != BuildSystemType.JPS }) {
@@ -80,14 +82,13 @@ private fun updateJar(
     }
 
     val oldUrl = fileToReplace.url
-    val jarPath: File = libraryJarDescriptor.getPathInPlugin()
-
-    if (!jarPath.exists()) {
+    val jarPath: Path = libraryJarDescriptor.getPathInPlugin()
+    if (jarPath.notExists()) {
         showRuntimeJarNotFoundDialog(project, libraryJarDescriptor.jarName)
         return
     }
 
-    val jarFileToReplace = getLocalJar(fileToReplace) ?: error("Couldn't find local jar for ${fileToReplace.canonicalPath}")
+    val jarFileToReplace = VfsUtil.getLocalFile(fileToReplace)
     val newVFile = try {
         replaceFile(jarPath, jarFileToReplace)
     } catch (e: IOException) {
@@ -122,30 +123,35 @@ private fun updateJar(
     }
 }
 
-internal fun replaceFile(updatedFile: File, jarFileToReplace: VirtualFile): VirtualFile? {
-    val jarIoFileToReplace = File(jarFileToReplace.path)
-
-    if (FileUtil.filesEqual(updatedFile, jarIoFileToReplace)) {
+internal fun replaceFile(updatedFile: Path, jarFileToReplace: VirtualFile): VirtualFile? {
+    val jarNioFileToReplace = VfsUtil.getLocalFile(jarFileToReplace).toNioPath()
+    if (updatedFile == jarNioFileToReplace) {
         return null
     }
 
-    FileUtil.copy(updatedFile, jarIoFileToReplace)
-    if (jarIoFileToReplace.name != updatedFile.name) {
-        val newFile = File(jarIoFileToReplace.parent, updatedFile.name)
-        if (!newFile.exists()) {
-            if (!jarIoFileToReplace.renameTo(newFile)) {
-                LOG.info("Failed to rename ${jarIoFileToReplace.path} to ${newFile.path}")
+    updatedFile.copyTo(jarNioFileToReplace, overwrite = true)
+    if (jarNioFileToReplace.name != updatedFile.name) {
+        val newFile = jarNioFileToReplace.parent.resolve(updatedFile.name)
+        if (newFile.notExists()) {
+            try {
+                jarNioFileToReplace.moveTo(newFile, overwrite = true)
+            } catch (e: Throwable) {
+                if (e is ControlFlowException) throw e
+                LOG.info("Failed to rename ${jarNioFileToReplace.pathString} to ${newFile.pathString}")
                 return null
             }
-            val newVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(newFile)
+
+            val newVFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newFile)
             if (newVFile == null) {
-                LOG.info("Failed to find ${newFile.path} in VFS")
+                LOG.info("Failed to find ${newFile.pathString} in VFS")
                 return null
             }
+
             newVFile.refresh(false, true)
             return newVFile
         }
     }
+
     jarFileToReplace.refresh(false, true)
     return null
 }
