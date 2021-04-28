@@ -41,6 +41,15 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS ? 30 : -1;
   }
 
+  /**
+   * Customize settings in the given consumer. The consumer is, for example, a UI panel or a supported settings collector. Even if the
+   * settings are not exposed to the UI via standard Spaces, Wrapping and Braces etc. panels, the method is still important for the platform
+   * to collect settings from {@link CommonCodeStyleSettings} and {@link CommonCodeStyleSettings.IndentOptions} which the plug-in
+   * supports. This information is used, for example, to generate lanugage-specific {@code .editorconfig} properties.
+   *
+   * @param consumer Customized settings consumer.
+   * @param settingsType The settings type.
+   */
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
   }
 
