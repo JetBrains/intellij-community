@@ -60,7 +60,6 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
   protected final @NotNull DfaLanguageSupport<EXPR> myLanguageSupport;
   protected final @NotNull DfaInterceptor<EXPR> myInterceptor;
   protected final boolean myStopAnalysisOnNpe;
-  protected final Set<InstanceofInstruction> myReachable = new HashSet<>();
   protected final Set<InstanceofInstruction> myUsefulInstanceofs = new HashSet<>();
 
   protected InstructionVisitor(@NotNull DfaLanguageSupport<EXPR> support,
@@ -997,8 +996,6 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
   }
 
   public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    myReachable.add(instruction);
-
     DfaValue dfaRight = memState.pop();
     DfaValue dfaLeft = memState.pop();
     DfaValueFactory factory = runner.getFactory();

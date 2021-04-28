@@ -41,10 +41,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
   private static final Logger LOG = Logger.getInstance(DataFlowInstructionVisitor.class);
+  private static final CallMatcher IS_INSTANCE = CallMatcher.instanceCall(JAVA_LANG_CLASS, "isInstance").parameterTypes(
+    JAVA_LANG_OBJECT);
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
   private final Map<PsiTypeCastExpression, TypeConstraint> myRealOperandTypes = new HashMap<>();
@@ -63,6 +67,7 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
   private final boolean myStrictMode;
+  private final Set<PsiExpression> myRedundantInstanceOfCandidates = new HashSet<>();
 
   private static final CallMatcher USELESS_SAME_ARGUMENTS = CallMatcher.anyOf(
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_MATH, "min", "max").parameterCount(2),
@@ -220,7 +225,7 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
 
   public boolean isInstanceofRedundant(InstanceofInstruction instruction) {
     PsiExpression expression = instruction.getExpression();
-    if (expression == null || myUsefulInstanceofs.contains(instruction) || !myReachable.contains(instruction)) return false;
+    if (expression == null || myUsefulInstanceofs.contains(instruction) || !myRedundantInstanceOfCandidates.contains(expression)) return false;
     ConstantResult result = expression instanceof PsiMethodReferenceExpression ?
                             myMethodReferenceResults.get(expression) : myConstantExpressions.get(new ExpressionChunk(expression, null));
     return result != ConstantResult.TRUE && result != ConstantResult.FALSE;
@@ -271,6 +276,9 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
     }
     else if (context instanceof PsiMethodReferenceExpression) {
       var methodRef = (PsiMethodReferenceExpression)context;
+      if (IS_INSTANCE.methodReferenceMatches(methodRef)) {
+        myRedundantInstanceOfCandidates.add(methodRef);
+      }
       if (OptionalUtil.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
         processOfNullableResult(value, state, methodRef.getReferenceNameElement());
       }
@@ -406,8 +414,16 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
     }
 
     @Override
+    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+      myRedundantInstanceOfCandidates.add(expression);
+    }
+
+    @Override
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
+      if (IS_INSTANCE.test(call)) {
+        myRedundantInstanceOfCandidates.add(call);
+      }
       if (OptionalUtil.OPTIONAL_OF_NULLABLE.test(call)) {
         processOfNullableResult(myValue, myMemState, call.getArgumentList().getExpressions()[0]);
       }
