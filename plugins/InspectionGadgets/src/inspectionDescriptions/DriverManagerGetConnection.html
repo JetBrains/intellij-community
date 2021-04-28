@@ -1,11 +1,13 @@
 <html>
 <body>
-Reports any uses of <b>java.sql.DriverManager</b>
-to acquire a JDBC connection. The <b>java.sql.DriverManager</b>
-has been superseded by <b>javax.sql.Datasource</b>, which
+Reports any uses of <code>java.sql.DriverManager</code>
+to acquire a JDBC connection. The <code>java.sql.DriverManager</code>
+has been superseded by <code>javax.sql.Datasource</code>, which
 allows for connection pooling and other optimizations.
+<p>Example:</p>
+<pre><code>
+  Connection conn = DriverManager.getConnection(url, username, password);
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>
