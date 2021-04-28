@@ -997,7 +997,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
       boolean exactlyNull = isNullLiteralExpression(expr) || expressions.get(expr) == ConstantResult.NULL;
       if (!REPORT_UNSOUND_WARNINGS && !exactlyNull) continue;
-      if (nullability == Nullability.NOT_NULL) {
+      if (nullability == Nullability.NOT_NULL && !info.isInferred()) {
         String presentable = NullableStuffInspectionBase.getPresentableAnnoName(anno);
         final String text = exactlyNull
                             ? JavaAnalysisBundle.message("dataflow.message.return.null.from.notnull", presentable)
