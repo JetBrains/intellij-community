@@ -10,10 +10,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaDeprecationInspection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -1085,13 +1087,20 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                        "}");
   }
 
-  public void testDeprecation() {
-    doTest("{\"properties\": {\n" +
-           "    \"myPropertyXxx\": {\n" +
-           "      \"deprecationMessage\": \"Baz\",\n" +
-           "      \"description\": \"Foo bar\"\n" +
-           "    }\n" +
-           "  }}", "{ <weak_warning descr=\"Property 'myPropertyXxx' is deprecated: Baz\">\"myPropertyXxx\"</weak_warning>: \"a\" }");
+  public void testDeprecation() throws IOException {
+    myFixture.enableInspections(JsonSchemaDeprecationInspection.class);
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/deprecation.json"));
+    configureInitially(schemaText,
+                       "  {\n" +
+                       "    \"framework\": \"vue\",\n" +
+                       "    <weak_warning descr=\"Property 'directProperty' is deprecated: Baz\">\"directProperty\"</weak_warning>: <warning descr=\"Incompatible types.\n" +
+                       " Required: number. Actual: string.\">\"foo\"</warning>,\n" +
+                       "    <weak_warning descr=\"Property 'vue-modifiers' is deprecated: Contribute Vue directives to /contributions/html/vue-directives\">\"vue-modifiers\"</weak_warning>: [{\n" +
+                       "      \"name\": \"foo\"\n" +
+                       "    }],\n" +
+                       "    <weak_warning descr=\"Property 'description-markup' is deprecated: Use top-level property.\">\"description-markup\"</weak_warning>: \"html\"\n" +
+                       "  }", "json");
+    myFixture.checkHighlighting(true, false, true);
   }
 
   public void testIfThenElseFlat() throws Exception {
