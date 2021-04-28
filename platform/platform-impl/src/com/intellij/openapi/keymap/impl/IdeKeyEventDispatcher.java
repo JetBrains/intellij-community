@@ -690,7 +690,7 @@ public final class IdeKeyEventDispatcher {
         ((DataManagerImpl.MyDataContext)context).setEventCount(eventCount);
       }
       try (AccessToken ignore = ProhibitAWTEvents.start("fireBeforeActionPerformed")) {
-        actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
+        actionManager.fireBeforeActionPerformed(action, actionEvent);
       }
       if (isContextComponentNotVisible(actionEvent)) {
         logTimeMillis(startedAt, action);

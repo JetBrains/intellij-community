@@ -274,10 +274,10 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
             return false
         }
 
-        managerEx.fireBeforeActionPerformed(action, dataContext, event)
+        managerEx.fireBeforeActionPerformed(action, event)
         action.actionPerformed(event)
 
-        managerEx.fireAfterActionPerformed(action, dataContext, event)
+        managerEx.fireAfterActionPerformed(action, event)
         return true
     }
 

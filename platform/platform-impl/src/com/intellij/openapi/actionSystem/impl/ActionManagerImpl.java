@@ -1544,7 +1544,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+  public void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
     myPrevPerformedActionId = myLastPreformedActionId;
     myLastPreformedActionId = getId(action);
     if (myLastPreformedActionId == null && action instanceof ActionIdProvider) {
@@ -1552,13 +1552,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     for (AnActionListener listener : myActionListeners) {
       //noinspection deprecation
-      listener.beforeActionPerformed(action, dataContext, event);
+      listener.beforeActionPerformed(action, event.getDataContext(), event);
     }
     //noinspection deprecation
-    publisher().beforeActionPerformed(action, dataContext, event);
+    publisher().beforeActionPerformed(action, event.getDataContext(), event);
   }
 
   private static @Nullable Language getHostFileLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
@@ -1570,17 +1569,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
     myPrevPerformedActionId = myLastPreformedActionId;
     myLastPreformedActionId = getId(action);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
     for (AnActionListener listener : myActionListeners) {
       //noinspection deprecation
-      listener.afterActionPerformed(action, dataContext, event);
+      listener.afterActionPerformed(action, event.getDataContext(), event);
     }
     //noinspection deprecation
-    publisher().afterActionPerformed(action, dataContext, event);
+    publisher().afterActionPerformed(action, event.getDataContext(), event);
   }
 
   @Override
@@ -1727,7 +1726,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           return;
         }
 
-        fireBeforeActionPerformed(action, context, event);
+        fireBeforeActionPerformed(action, event);
 
         UIUtil.addAwtListener(event1 -> {
           if (event1.getID() == WindowEvent.WINDOW_OPENED || event1.getID() == WindowEvent.WINDOW_ACTIVATED) {
@@ -1741,7 +1740,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
         ActionUtil.performActionDumbAware(action, event);
         result.setDone();
-        fireAfterActionPerformed(action, context, event);
+        fireAfterActionPerformed(action, event);
       });
     }, ModalityState.defaultModalityState());
   }

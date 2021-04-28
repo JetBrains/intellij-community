@@ -33,11 +33,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
 
 public final class ActionUtil {
@@ -228,9 +225,9 @@ public final class ActionUtil {
 
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e) {
     ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-    manager.fireBeforeActionPerformed(action, e.getDataContext(), e);
+    manager.fireBeforeActionPerformed(action, e);
     performActionDumbAware(action, e);
-    manager.fireAfterActionPerformed(action, e.getDataContext(), e);
+    manager.fireAfterActionPerformed(action, e);
   }
 
   public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent e) {
@@ -410,12 +407,12 @@ public final class ActionUtil {
     performDumbAwareUpdate(false, action, event, true);
     final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-      manager.fireBeforeActionPerformed(action, dataContext, event);
+      manager.fireBeforeActionPerformed(action, event);
       performActionDumbAware(action, event);
       if (onDone != null) {
         onDone.run();
       }
-      manager.fireAfterActionPerformed(action, dataContext, event);
+      manager.fireAfterActionPerformed(action, event);
     }
   }
 

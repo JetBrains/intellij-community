@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.TriConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,9 +22,24 @@ public abstract class ActionManagerEx extends ActionManager {
   @NotNull
   public abstract ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
 
-  public abstract void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event);
+  public abstract void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event);
 
-  public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event);
+  public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event);
+
+
+  /** @deprecated implement {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public final void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    fireBeforeActionPerformed(action, event);
+  }
+
+  /** @deprecated implement {@link #fireAfterActionPerformed(AnAction, AnActionEvent)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public final void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    fireAfterActionPerformed(action, event);
+  }
 
   public abstract void fireFinallyActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event, long durationMillis);
 
@@ -82,11 +98,11 @@ public abstract class ActionManagerEx extends ActionManager {
   public abstract boolean isActionPopupStackEmpty();
 
   public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
-    fireActionPerformed(actionId, event, place, this::fireBeforeActionPerformed);
+    fireActionPerformed(actionId, event, place, (action, dataContext, event1) -> fireBeforeActionPerformed(action, event1));
   }
 
   public void fireAfterActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
-    fireActionPerformed(actionId, event, place, this::fireAfterActionPerformed);
+    fireActionPerformed(actionId, event, place, (action, dataContext, event1) -> fireAfterActionPerformed(action, event1));
   }
 
   private void fireActionPerformed(@NotNull String actionId,

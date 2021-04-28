@@ -52,7 +52,7 @@ public final class MacGestureSupportForEditor {
         action.beforeActionPerformedUpdate(actionEvent);
 
         if (presentation.isEnabled()) {
-          actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
+          actionManager.fireBeforeActionPerformed(action, actionEvent);
           final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
 
           if (context != null && !context.isShowing()) continue;

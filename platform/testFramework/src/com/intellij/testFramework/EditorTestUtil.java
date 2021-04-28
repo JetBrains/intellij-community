@@ -113,9 +113,9 @@ public final class EditorTestUtil {
       return;
     }
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
+    actionManager.fireBeforeActionPerformed(action, event);
     ActionUtil.performAction(action, event);
-    actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
+    actionManager.fireAfterActionPerformed(action, event);
   }
 
   @NotNull

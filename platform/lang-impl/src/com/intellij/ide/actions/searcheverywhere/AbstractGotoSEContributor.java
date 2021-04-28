@@ -543,7 +543,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
           AnActionEvent event = AnActionEvent.createFromAnAction(
             ScopeChooserAction.this, inputEvent, ActionPlaces.TOOLBAR, dataContext);
           ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-          actionManager.fireBeforeActionPerformed(ScopeChooserAction.this, dataContext, event);
+          actionManager.fireBeforeActionPerformed(ScopeChooserAction.this, event);
           long startNanoTime = System.nanoTime();
           try {
             onProjectScopeToggled();
@@ -552,7 +552,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
             long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
             actionManager.fireFinallyActionPerformed(ScopeChooserAction.this, event.getDataContext(), event, durationMillis);
           }
-          actionManager.fireAfterActionPerformed(ScopeChooserAction.this, dataContext, event);
+          actionManager.fireAfterActionPerformed(ScopeChooserAction.this, event);
         }
       });
       return component;

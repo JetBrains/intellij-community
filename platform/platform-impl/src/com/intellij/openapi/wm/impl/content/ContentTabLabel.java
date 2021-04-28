@@ -153,7 +153,7 @@ class ContentTabLabel extends BaseLabel {
         for (AnAction action : myLayout.myDoubleClickActions) {
           AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(action, dataContext, event);
+            ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(action, event);
             ActionUtil.performActionDumbAware(action, event);
           }
         }

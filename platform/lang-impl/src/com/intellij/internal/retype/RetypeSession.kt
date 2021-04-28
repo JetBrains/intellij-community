@@ -538,10 +538,10 @@ class RetypeSession(
                                                  DataManager.getInstance().getDataContext(
                                                    editor.component))
     action.beforeActionPerformedUpdate(event)
-    actionManager.fireBeforeActionPerformed(action, event.dataContext, event)
+    actionManager.fireBeforeActionPerformed(action, event)
     LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, timerTick)
     ActionUtil.performAction(action, event);
-    actionManager.fireAfterActionPerformed(action, event.dataContext, event)
+    actionManager.fireAfterActionPerformed(action, event)
   }
 
   private fun logThreadDump() {

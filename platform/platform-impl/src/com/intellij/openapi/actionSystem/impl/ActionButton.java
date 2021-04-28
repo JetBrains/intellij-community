@@ -166,13 +166,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (isEnabled()) {
       final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
       final DataContext dataContext = event.getDataContext();
-      manager.fireBeforeActionPerformed(myAction, dataContext, event);
+      manager.fireBeforeActionPerformed(myAction, event);
       Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component != null && checkIsShowing && !component.isShowing()) {
         return;
       }
       actionPerformed(event);
-      manager.fireAfterActionPerformed(myAction, dataContext, event);
+      manager.fireAfterActionPerformed(myAction, event);
       if (event.getInputEvent() instanceof MouseEvent) {
         ToolbarClicksCollector.record(myAction, myPlace, e, dataContext);
       }
@@ -199,7 +199,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     else {
       ActionUtil.performActionDumbAware(myAction, event);
-      ActionManagerEx.getInstanceEx().fireAfterActionPerformed(myAction, event.getDataContext(), event);
+      ActionManagerEx.getInstanceEx().fireAfterActionPerformed(myAction, event);
     }
   }
 
