@@ -164,8 +164,8 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     boolean finalMatch = fragments.get(fragments.size() - 1).getEndOffset() == name.length();
 
     return (wordStart ? 1000 : 0) +
-           matchingCase +
-           -fragments.size() +
+           matchingCase -
+           fragments.size() +
            -skippedHumps * 10 +
            (afterSeparator ? 0 : 2) +
            (startMatch ? 1 : 0) +

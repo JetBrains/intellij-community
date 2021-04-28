@@ -170,10 +170,10 @@ class TypoTolerantMatcher extends MinusculeMatcher {
     boolean finalMatch = fragments.get(fragments.size() - 1).getEndOffset() == name.length();
 
     return (wordStart ? 1000 : 0) +
-           matchingCase +
-           -fragments.size() +
-           -skippedHumps * 10 +
-           -errors +
+           matchingCase -
+           fragments.size() +
+           -skippedHumps * 10 -
+           errors +
            (afterSeparator ? 0 : 2) +
            (startMatch ? 1 : 0) +
            (finalMatch ? 1 : 0);
