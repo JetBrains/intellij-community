@@ -101,12 +101,12 @@ class GradleNativeLibrariesPropagationTest : TestCaseWithFakeKotlinNative() {
 
     private fun ModuleInfo.noPlatformLibrary(libraryName: String, targets: Collection<String> = testedTargets) {
         targets.forEach { target ->
-            assertNoLibraryDepForModule(module.name, "Kotlin/Native $kotlinVersion - $libraryName [$target]")
+            assertNoLibraryDepForModule(module.name, "Kotlin/Native $kotlinVersion - $libraryName | $target")
         }
     }
 
     private fun ModuleInfo.hasPlatformLibrary(libraryName: String, target: String) {
-        libraryDependency("Kotlin/Native $kotlinVersion - $libraryName [$target]", DependencyScope.PROVIDED)
+        libraryDependency("Kotlin/Native $kotlinVersion - $libraryName | $target", DependencyScope.PROVIDED)
         noPlatformLibrary(libraryName, testedTargets - target)
     }
 

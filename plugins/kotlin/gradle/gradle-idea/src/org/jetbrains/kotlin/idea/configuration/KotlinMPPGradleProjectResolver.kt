@@ -583,7 +583,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 get() = compilation.nativeExtensions?.konanTarget
 
             val dependencyNames: Map<String, ExternalDependency> by lazy {
-                substitutedDependencies.associateBy { it.name.removeSuffixIfPresent(" [$konanTarget]") }
+                substitutedDependencies.associateBy { it.name.removeSuffixIfPresent(" | $konanTarget") }
             }
         }
 
