@@ -49,7 +49,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   private void setupListeners() {
     ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         cancelAllRequests();
       }
 

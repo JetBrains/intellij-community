@@ -584,7 +584,7 @@ public final class DaemonListeners implements Disposable {
     private AnAction cachedEscapeAction;
 
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
       if (cachedEscapeAction == null) {
         myEscPressed = IdeActions.ACTION_EDITOR_ESCAPE.equals(event.getActionManager().getId(action));
         if (myEscPressed) {

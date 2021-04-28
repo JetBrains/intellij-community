@@ -258,8 +258,8 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       myConnection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
       myConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
-        public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-          if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
+        public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+          if (event.getDataContext().getData(PlatformDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
             selectedAction = action;
             copyPresentation(event.getPresentation());
             repaint();

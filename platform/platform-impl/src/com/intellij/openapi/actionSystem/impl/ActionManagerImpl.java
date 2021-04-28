@@ -1554,8 +1554,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     for (AnActionListener listener : myActionListeners) {
+      //noinspection deprecation
       listener.beforeActionPerformed(action, dataContext, event);
     }
+    //noinspection deprecation
     publisher().beforeActionPerformed(action, dataContext, event);
   }
 
@@ -1574,12 +1576,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
     for (AnActionListener listener : myActionListeners) {
-      try {
-        listener.afterActionPerformed(action, dataContext, event);
-      }
-      catch (AbstractMethodError ignored) {
-      }
+      //noinspection deprecation
+      listener.afterActionPerformed(action, dataContext, event);
     }
+    //noinspection deprecation
     publisher().afterActionPerformed(action, dataContext, event);
   }
 

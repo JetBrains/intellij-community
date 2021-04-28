@@ -66,12 +66,12 @@ class ActionsRecorder(private val project: Project,
     // So the simple solution is to use a proxy
 
     busConnection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
-      override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-        actionListeners.forEach { it.beforeActionPerformed(action, dataContext, event) }
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+        actionListeners.forEach { it.beforeActionPerformed(action, event) }
       }
 
-      override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-        actionListeners.forEach { it.afterActionPerformed(action, dataContext, event) }
+      override fun afterActionPerformed(action: AnAction, event: AnActionEvent) {
+        actionListeners.forEach { it.afterActionPerformed(action, event) }
       }
 
       override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
@@ -135,7 +135,7 @@ class ActionsRecorder(private val project: Project,
   fun futureActionOnStart(actionId: String, check: () -> Boolean): CompletableFuture<Boolean> {
     val future: CompletableFuture<Boolean> = CompletableFuture()
     val actionListener = object : AnActionListener {
-      override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         checkAndCancelForException(future) { getActionId(action) == actionId && check() }
       }
     }
@@ -146,7 +146,7 @@ class ActionsRecorder(private val project: Project,
   fun futureActionAndCheckAround(actionId: String, before: () -> Unit, check: () -> Boolean): CompletableFuture<Boolean> {
     val future: CompletableFuture<Boolean> = CompletableFuture()
     val actionListener = object : AnActionListener {
-      override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         val caughtActionId: String? = ActionManager.getInstance().getId(action)
         if (actionId == caughtActionId) {
           before()
@@ -157,7 +157,7 @@ class ActionsRecorder(private val project: Project,
         }
       }
 
-      override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      override fun afterActionPerformed(action: AnAction, event: AnActionEvent) {
         if (actionId == ActionManager.getInstance().getId(action)) {
           val complete = checkComplete()
           if (!complete) {
@@ -214,7 +214,7 @@ class ActionsRecorder(private val project: Project,
     document?.addDocumentListener(createDocumentListener { check() })
     addSimpleCommandListener(check)
     actionListeners.add(object : AnActionListener {
-      override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      override fun afterActionPerformed(action: AnAction, event: AnActionEvent) {
         check()
       }
     })
@@ -271,7 +271,7 @@ class ActionsRecorder(private val project: Project,
 
   private fun registerActionListener(processAction: (actionId: String, project: Project) -> Unit): AnActionListener {
     val actionListener = object : AnActionListener {
-      override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         processAction(getActionId(action), project)
       }
     }

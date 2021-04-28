@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -260,7 +259,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       })
 
       connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
-        override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+        override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
           process { manager ->
             if (manager.currentState != KeyState.HOLD) {
               manager.resetHoldState()

@@ -321,7 +321,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(resourcesDisposable);
     connection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         if (action instanceof HintManagerImpl.ActionToIgnore) {
           return;
         }
