@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.maven.compilerPlugin.allopen
 
 import org.jetbrains.kotlin.allopen.AllOpenCommandLineProcessor
-import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
-import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.plugin.ide.CompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.plugin.ide.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 
 class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {
@@ -14,7 +14,6 @@ class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {
 
     override val compilerPluginId = AllOpenCommandLineProcessor.PLUGIN_ID
     override val pluginName = "allopen"
-    override val mavenPluginArtifactName = "kotlin-maven-allopen"
     override val pluginJarFileFromIdea = KotlinArtifacts.instance.allopenCompilerPlugin
 
     override fun getOptions(enabledCompilerPlugins: List<String>, compilerPluginOptions: List<String>): List<PluginOption>? {

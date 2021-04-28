@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.gradle.compilerPlugin.noarg
 
-import org.jetbrains.kotlin.idea.gradle.compilerPlugin.AbstractGradleImportHandler
-import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.annotation.plugin.ide.AbstractAnnotationPluginGradleImportHandler
+import org.jetbrains.kotlin.plugin.ide.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor
 import org.jetbrains.kotlin.noarg.ide.NoArgModel
 
-class NoArgGradleProjectImportHandler : AbstractGradleImportHandler<NoArgModel>() {
+class NoArgGradleProjectImportHandler : AbstractAnnotationPluginGradleImportHandler<NoArgModel>() {
     override val compilerPluginId = NoArgCommandLineProcessor.PLUGIN_ID
     override val pluginName = "noarg"
     override val annotationOptionName = NoArgCommandLineProcessor.ANNOTATION_OPTION.optionName
