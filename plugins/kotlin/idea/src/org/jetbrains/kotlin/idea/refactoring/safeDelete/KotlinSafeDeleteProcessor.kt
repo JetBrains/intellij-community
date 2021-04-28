@@ -485,8 +485,6 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                 return checkParametersInMethodHierarchy(element)
         }
 
-        if (ApplicationManager.getApplication()!!.isUnitTestMode) return Collections.singletonList(element)
-
         return when (element) {
             is KtNamedFunction, is KtProperty -> {
                 if (ApplicationManager.getApplication()!!.isUnitTestMode) return Collections.singletonList(element)

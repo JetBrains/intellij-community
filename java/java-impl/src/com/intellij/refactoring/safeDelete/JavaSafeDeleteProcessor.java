@@ -119,6 +119,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       return Arrays.asList(directories);
     }
     if (element instanceof PsiMethod) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return Collections.singletonList(element);
+      }
       final PsiMethod[] methods =
         SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element,
                                                  allElementsToDelete);
@@ -170,13 +173,14 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
               }
               return true;
             });
-            if (overriders.size() > 1) {
+            if (overriders.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
               String message = JavaRefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.type.parameters", UsageViewUtil.getLongName(owner));
               int result = ApplicationManager.getApplication().isUnitTestMode()
                            ? Messages.YES :Messages.showYesNoCancelDialog(project, message, SafeDeleteHandler.getRefactoringName(), Messages.getQuestionIcon());
               if (result == Messages.CANCEL) return null;
-              if (result == Messages.YES) return overriders;
+              if (result == Messages.NO) return Collections.singletonList(element);
             }
+            return overriders;
           }
         }
       }
