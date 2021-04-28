@@ -271,9 +271,24 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("idea/testData/quickfix/addExclExclCall/iterable.kt");
         }
 
+        @TestMetadata("iterableDoesNotInheritIterableInterface.kt")
+        public void testIterableDoesNotInheritIterableInterface() throws Exception {
+            runTest("idea/testData/quickfix/addExclExclCall/iterableDoesNotInheritIterableInterface.kt");
+        }
+
+        @TestMetadata("iterableGeneric.kt")
+        public void testIterableGeneric() throws Exception {
+            runTest("idea/testData/quickfix/addExclExclCall/iterableGeneric.kt");
+        }
+
         @TestMetadata("iterableInExtension.kt")
         public void testIterableInExtension() throws Exception {
             runTest("idea/testData/quickfix/addExclExclCall/iterableInExtension.kt");
+        }
+
+        @TestMetadata("iterableWithBadIterator.kt")
+        public void testIterableWithBadIterator() throws Exception {
+            runTest("idea/testData/quickfix/addExclExclCall/iterableWithBadIterator.kt");
         }
 
         @TestMetadata("normal.kt")
@@ -296,14 +311,14 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("idea/testData/quickfix/addExclExclCall/nullExpression.kt");
         }
 
+        @TestMetadata("operationBinary.kt")
+        public void testOperationBinary() throws Exception {
+            runTest("idea/testData/quickfix/addExclExclCall/operationBinary.kt");
+        }
+
         @TestMetadata("operationIn.kt")
         public void testOperationIn() throws Exception {
             runTest("idea/testData/quickfix/addExclExclCall/operationIn.kt");
-        }
-
-        @TestMetadata("operationPlus.kt")
-        public void testOperationPlus() throws Exception {
-            runTest("idea/testData/quickfix/addExclExclCall/operationPlus.kt");
         }
 
         @TestMetadata("operationUnary.kt")
@@ -516,41 +531,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     public static class Expressions extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("fixNullableBinaryWithExclExcl.kt")
-        public void testFixNullableBinaryWithExclExcl() throws Exception {
-            runTest("../idea/tests/testData/quickfix/expressions/fixNullableBinaryWithExclExcl.kt");
-        }
-
-        @TestMetadata("fixNullableInfixWithExclExcl.kt")
-        public void testFixNullableInfixWithExclExcl() throws Exception {
-            runTest("../idea/tests/testData/quickfix/expressions/fixNullableInfixWithExclExcl.kt");
-        }
-
-        @TestMetadata("fixNullableIterableGenericWithExclExcl.kt")
-        public void testFixNullableIterableGenericWithExclExcl() throws Exception {
-            runTest("../idea/tests/testData/quickfix/expressions/fixNullableIterableGenericWithExclExcl.kt");
-        }
-
-        @TestMetadata("fixNullableIterableWithExclExcl.kt")
-        public void testFixNullableIterableWithExclExcl() throws Exception {
-            runTest("../idea/tests/testData/quickfix/expressions/fixNullableIterableWithExclExcl.kt");
-        }
-
-        @TestMetadata("fixNullableUnaryWithExclExcl.kt")
-        public void testFixNullableUnaryWithExclExcl() throws Exception {
-            runTest("../idea/tests/testData/quickfix/expressions/fixNullableUnaryWithExclExcl.kt");
-        }
-
-        @TestMetadata("fixNullableWithExclExclAbsentWithBadIterator.kt")
-        public void testFixNullableWithExclExclAbsentWithBadIterator() throws Exception {
-            runTest("../idea/tests/testData/quickfix/expressions/fixNullableWithExclExclAbsentWithBadIterator.kt");
-        }
-
-        @TestMetadata("fixNullableWithIteratorWithExclExcl.kt")
-        public void testFixNullableWithIteratorWithExclExcl() throws Exception {
-            runTest("../idea/tests/testData/quickfix/expressions/fixNullableWithIteratorWithExclExcl.kt");
         }
 
         @TestMetadata("kt11594.kt")
