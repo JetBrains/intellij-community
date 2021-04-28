@@ -353,14 +353,6 @@ object PluginDescriptorLoader {
 
   @JvmStatic
   fun loadDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boolean): DescriptorListLoadingContext {
-    var flags = DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR
-    if (isUnitTestMode) {
-      flags = flags or DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE
-    }
-    if (isUnitTestMode || isRunningFromSources) {
-      flags = flags or DescriptorListLoadingContext.CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS
-    }
-
     val result = PluginManagerCore.createLoadingResult(null)
     val bundledPluginPath: Path? = if (isUnitTestMode) {
       null
@@ -372,7 +364,11 @@ object PluginDescriptorLoader {
       Paths.get(PathManager.getPreInstalledPluginsPath())
     }
 
-    val context = DescriptorListLoadingContext(flags, DisabledPluginsState.disabledPlugins(), result)
+    val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
+                                               isMissingIncludeIgnored = isUnitTestMode,
+                                               checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
+                                               disabledPlugins = DisabledPluginsState.disabledPlugins(),
+                                               result = result)
     context.use {
       loadBundledDescriptorsAndDescriptorsFromDir(context = context,
                                                   customPluginDir = Paths.get(PathManager.getPluginsPath()),
@@ -488,9 +484,9 @@ object PluginDescriptorLoader {
   @Throws(IOException::class)
   @JvmStatic
   fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
-    val context = DescriptorListLoadingContext(DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR,
-                                               DisabledPluginsState.disabledPlugins(),
-                                               PluginManagerCore.createLoadingResult(buildNumber))
+    val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
+                                               disabledPlugins = DisabledPluginsState.disabledPlugins(),
+                                               result = PluginManagerCore.createLoadingResult(buildNumber))
     var outputDir: Path? = null
     try {
       var descriptor = loadDescriptorFromFileOrDir(file = file,
@@ -595,7 +591,8 @@ object PluginDescriptorLoader {
     val urlsFromClassPath = LinkedHashMap<URL, String>()
     collectPluginFilesInClassPath(loader, urlsFromClassPath)
     val buildNumber = BuildNumber.fromString("2042.42")
-    val context = DescriptorListLoadingContext(0, emptySet(), PluginLoadingResult(emptyMap(), Supplier { buildNumber }, false))
+    val context = DescriptorListLoadingContext(disabledPlugins = emptySet(),
+                                               result = PluginLoadingResult(emptyMap(), Supplier { buildNumber }, false))
     LoadDescriptorsFromClassPathAction(urlsFromClassPath, context, null, ClassPathXmlPathResolver(loader)).compute()
     context.result.finishLoading()
     return context.result.enabledPlugins

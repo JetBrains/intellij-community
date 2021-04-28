@@ -23,25 +23,9 @@ class DescriptorListLoadingContext constructor(
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
 ) : AutoCloseable, ReadModuleContext {
-  internal constructor(
-    flags: Int,
-    disabledPlugins: Set<PluginId>,
-    @Suppress("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR") result: PluginLoadingResult
-  ) : this(
-    disabledPlugins = disabledPlugins,
-    result = result,
-    isMissingIncludeIgnored = flags and IGNORE_MISSING_INCLUDE == IGNORE_MISSING_INCLUDE,
-    isMissingSubDescriptorIgnored = flags and IGNORE_MISSING_SUB_DESCRIPTOR == IGNORE_MISSING_SUB_DESCRIPTOR,
-    checkOptionalConfigFileUniqueness = flags and CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS,
-  )
-
   companion object {
     @JvmStatic
     private val unitTestWithBundledPlugins = java.lang.Boolean.getBoolean("idea.run.tests.with.bundled.plugins")
-
-    const val IGNORE_MISSING_INCLUDE = 2
-    const val IGNORE_MISSING_SUB_DESCRIPTOR = 4
-    const val CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS = 8
 
     @JvmField val LOG = PluginManagerCore.getLogger()
 

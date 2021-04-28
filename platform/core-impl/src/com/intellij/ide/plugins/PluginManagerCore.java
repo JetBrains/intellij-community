@@ -709,14 +709,13 @@ public final class PluginManagerCore {
                                              @Nullable BuildNumber compatibleBuildNumber,
                                              @Nullable Path bundledPluginsPath,
                                              @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
-                                             List<? super IdeaPluginDescriptorImpl> pluginsToMigrate,
-                                             List<? super IdeaPluginDescriptorImpl> incompatiblePlugins) throws ExecutionException, InterruptedException {
+                                             List<IdeaPluginDescriptorImpl> pluginsToMigrate,
+                                             List<IdeaPluginDescriptorImpl> incompatiblePlugins) throws ExecutionException, InterruptedException {
     PluginLoadingResult loadingResult = new PluginLoadingResult(
       brokenPluginVersions != null ? brokenPluginVersions : getBrokenPluginVersions(),
       () -> compatibleBuildNumber == null ? getBuildNumber() : compatibleBuildNumber
     );
-    int flags = DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR | DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
-    DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, Collections.emptySet(), loadingResult);
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(Collections.emptySet(), loadingResult, true, true, false);
 
     Path effectiveBundledPluginPath;
     if (bundledPluginsPath != null || isUnitTestMode) {
