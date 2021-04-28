@@ -70,12 +70,12 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
       PLUGIN_INSTALLATION_FINISHED.log(it)
     }
 
-    fun signatureCheckResult(pluginId: PluginId, result: SignatureVerificationResult) = PLUGIN_SIGNATURE_CHECK_RESULT.log(
-      pluginId.pluginInfoIfSafeToReport(), result
+    fun signatureCheckResult(descriptor: IdeaPluginDescriptor, result: SignatureVerificationResult) = PLUGIN_SIGNATURE_CHECK_RESULT.log(
+      descriptor.pluginInfoIfSafeToReport(), result
     )
 
-    fun signatureWarningShown(pluginId: PluginId, result: DialogAcceptanceResultEnum) = PLUGIN_SIGNATURE_WARNING.log(
-      pluginId.pluginInfoIfSafeToReport(), result
+    fun signatureWarningShown(descriptor: IdeaPluginDescriptor, result: DialogAcceptanceResultEnum) = PLUGIN_SIGNATURE_WARNING.log(
+      descriptor.pluginInfoIfSafeToReport(), result
     )
 
     private fun PluginId.pluginInfoIfSafeToReport() = getPluginInfoById(this).takeIf { it.isSafeToReport() }

@@ -55,21 +55,21 @@ internal object PluginSignatureChecker {
   }
 
   private fun isSignedBy(descriptor: IdeaPluginDescriptor, pluginFile: File, vararg certificate: Certificate): Boolean {
-    val errorMessage = verifyPluginAndGetErrorMessage(descriptor.pluginId, pluginFile, *certificate)
+    val errorMessage = verifyPluginAndGetErrorMessage(descriptor, pluginFile, *certificate)
     if (errorMessage != null) {
       return processSignatureWarning(descriptor, errorMessage)
     }
     return true
   }
 
-  private fun verifyPluginAndGetErrorMessage(pluginId: PluginId, file: File, vararg certificates: Certificate): String? {
+  private fun verifyPluginAndGetErrorMessage(descriptor: IdeaPluginDescriptor, file: File, vararg certificates: Certificate): String? {
     return when (val verificationResult = ZipVerifier.verify(file)) {
       is InvalidSignatureResult -> {
-        PluginManagerUsageCollector.signatureCheckResult(pluginId, SignatureVerificationResult.INVALID_SIGNATURE)
+        PluginManagerUsageCollector.signatureCheckResult(descriptor, SignatureVerificationResult.INVALID_SIGNATURE)
         verificationResult.errorMessage
       }
       is MissingSignatureResult -> {
-        PluginManagerUsageCollector.signatureCheckResult(pluginId, SignatureVerificationResult.MISSING_SIGNATURE)
+        PluginManagerUsageCollector.signatureCheckResult(descriptor, SignatureVerificationResult.MISSING_SIGNATURE)
         IdeBundle.message("plugin.signature.not.signed")
       }
       is SuccessfulVerificationResult -> {
@@ -77,11 +77,11 @@ internal object PluginSignatureChecker {
           certificate is X509Certificate && verificationResult.isSignedBy(certificate)
         }
         if (!isSigned) {
-          PluginManagerUsageCollector.signatureCheckResult(pluginId, SignatureVerificationResult.WRONG_SIGNATURE)
+          PluginManagerUsageCollector.signatureCheckResult(descriptor, SignatureVerificationResult.WRONG_SIGNATURE)
           IdeBundle.message("plugin.signature.not.signed.by")
         }
         else {
-          PluginManagerUsageCollector.signatureCheckResult(pluginId, SignatureVerificationResult.SUCCESSFUL)
+          PluginManagerUsageCollector.signatureCheckResult(descriptor, SignatureVerificationResult.SUCCESSFUL)
           null
         }
       }
@@ -99,7 +99,7 @@ internal object PluginSignatureChecker {
       ModalityState.any()
     )
     PluginManagerUsageCollector.signatureWarningShown(
-      descriptor.pluginId,
+      descriptor,
       if (result == Messages.YES) DialogAcceptanceResultEnum.ACCEPTED else DialogAcceptanceResultEnum.DECLINED
     )
     return result == Messages.YES
