@@ -184,7 +184,7 @@ public final class RepositoryHelper {
   public static @NotNull Collection<PluginNode> mergePluginsFromRepositories(@NotNull List<PluginNode> marketplacePlugins,
                                                                              @NotNull List<PluginNode> customPlugins,
                                                                              boolean addMissing) {
-    Map<PluginId, PluginNode> compatiblePluginMap = new HashMap<>(marketplacePlugins.size());
+    Map<PluginId, PluginNode> compatiblePluginMap = new LinkedHashMap<>(marketplacePlugins.size());
 
     for (PluginNode marketplacePlugin : marketplacePlugins) {
       compatiblePluginMap.put(marketplacePlugin.getPluginId(), marketplacePlugin);
