@@ -7,15 +7,12 @@ import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 
-import static com.intellij.util.ui.UIUtil.*;
+import static com.intellij.util.ui.UIUtil.BR;
+import static com.intellij.util.ui.UIUtil.LINE_SEPARATOR;
 
 public class VcsNotifier {
   public static final NotificationGroup NOTIFICATION_GROUP_ID = NotificationGroup.toolWindowGroup(
@@ -442,14 +439,8 @@ public class VcsNotifier {
   @NotNull
   private static String buildNotificationMessage(@Nls String message,
                                                  @Nullable Collection<? extends Exception> errors) {
-    @Nls StringBuilder desc = new StringBuilder(message.replace(LINE_SEPARATOR, BR));
-
-    String messages = stringifyErrors(errors);
-    if (!messages.isEmpty()) {
-      desc.append(StringUtil.join(messages, HR, BR));
-    }
-
-    return desc.toString();
+    return message.replace(LINE_SEPARATOR, BR) +
+           stringifyErrors(errors);
   }
 
   /**
@@ -457,11 +448,11 @@ public class VcsNotifier {
    * Line separator is also replaced by &lt;br/&gt;
    */
   @NotNull
-  private static String stringifyErrors(@Nullable Collection<? extends Exception> errors) {
+  private static @Nls String stringifyErrors(@Nullable Collection<? extends Exception> errors) {
     if (errors == null || errors.isEmpty()) {
       return "";
     }
-    StringBuilder content = new StringBuilder();
+    @Nls StringBuilder content = new StringBuilder();
     for (Exception e : errors) {
       if (e instanceof VcsException) {
         VcsException vcsException = (VcsException)e;
