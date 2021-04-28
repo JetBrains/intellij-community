@@ -48,27 +48,27 @@ class GradleNativeLibrariesInIDENamingTest : TestCaseWithFakeKotlinNative() {
     }
 }
 
-private val NATIVE_LIBRARY_NAME_REGEX = Regex("^Kotlin/Native ([\\d\\w\\.-]+) - ([\\w\\d]+)( \\[([\\w\\d_]+)\\])?$")
+private val NATIVE_LIBRARY_NAME_REGEX = Regex("^Kotlin/Native ([\\d\\w.-]+) - ([\\w\\d]+)( \\| \\[?([\\w\\d_]+)]?)?$")
 
 private val NATIVE_LINUX_LIBRARIES = listOf(
     "Kotlin/Native {version} - stdlib",
-    "Kotlin/Native {version} - linux [linux_x64]",
-    "Kotlin/Native {version} - posix [linux_x64]",
-    "Kotlin/Native {version} - zlib [linux_x64]"
+    "Kotlin/Native {version} - linux | linux_x64",
+    "Kotlin/Native {version} - posix | linux_x64",
+    "Kotlin/Native {version} - zlib | linux_x64"
 )
 
 private val NATIVE_MACOS_LIBRARIES = listOf(
     "Kotlin/Native {version} - stdlib",
-    "Kotlin/Native {version} - Foundation [macos_x64]",
-    "Kotlin/Native {version} - UIKit [macos_x64]",
-    "Kotlin/Native {version} - objc [macos_x64]"
+    "Kotlin/Native {version} - Foundation | macos_x64",
+    "Kotlin/Native {version} - UIKit | macos_x64",
+    "Kotlin/Native {version} - objc | macos_x64"
 )
 
 private val NATIVE_MINGW_LIBRARIES = listOf(
     "Kotlin/Native {version} - stdlib",
-    "Kotlin/Native {version} - iconv [mingw_x64]",
-    "Kotlin/Native {version} - opengl32 [mingw_x64]",
-    "Kotlin/Native {version} - windows [mingw_x64]"
+    "Kotlin/Native {version} - iconv | mingw_x64",
+    "Kotlin/Native {version} - opengl32 | mingw_x64",
+    "Kotlin/Native {version} - windows | mingw_x64"
 )
 
 private val Module.libraries
