@@ -89,6 +89,7 @@
     <keyboard-shortcut first-keystroke="F3"/><!--VS Edit.FindNext-->
     <keyboard-shortcut first-keystroke="control shift DOWN"/><!--VS Edit.NextHighlightedReference-->
     <keyboard-shortcut first-keystroke="control alt PAGE_DOWN"/><!--ReSharper_ResultListGoToNextLocation-->
+    <keyboard-shortcut first-keystroke="alt shift SLASH"/><!--VS Edit.MoveLastCaretDown-->
   </action>
   <action id="Print">
     <keyboard-shortcut first-keystroke="control P"/>
@@ -296,10 +297,12 @@
     <keyboard-shortcut first-keystroke="control shift H"/>
   </action>
   <action id="EditorSelectWord">
+    <keyboard-shortcut first-keystroke="shift alt EQUALS"/>
     <keyboard-shortcut first-keystroke="control alt RIGHT"/>
     <keyboard-shortcut first-keystroke="control W"/>
   </action>
   <action id="EditorUnSelectWord">
+    <keyboard-shortcut first-keystroke="shift alt MINUS"/>
     <keyboard-shortcut first-keystroke="control alt LEFT"/>
     <keyboard-shortcut first-keystroke="control shift W"/>
   </action>
@@ -515,6 +518,7 @@
   <action id="BuildProject">
     <keyboard-shortcut first-keystroke="control shift B"/>
   </action>
+  <action id="HippieBackwardCompletion"/>
 
   <!--  Rider-specific actions-->
 
