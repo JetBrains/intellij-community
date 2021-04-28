@@ -4,6 +4,26 @@ Reports accesses of inner and nested classes where the call is qualified
 by a subclass of the declaring class, rather than the declaring class itself. Java
 allows such qualification, but such accesses
 may be confusing, and may indicate a subtle confusion of inheritance and overriding.
+<p>Example:</p>
+<pre>
+  class Super {
+    static class Inner {}
+  }
+
+  class Sub extends Super {
+    void test() {
+      Sub.Inner s = new Sub.Inner(); // here 'Inner' class is declared in 'Super' class, but referenced via 'Sub' class
+    }
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  class Sub extends Super {
+    void test() {
+      Super.Inner s = new Super.Inner();
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 </body>
