@@ -8,6 +8,7 @@ import com.intellij.notification.impl.NotificationGroupManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -603,15 +604,17 @@ internal class PackageSearchDataService(
         val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
         val psiManager = PsiManager.getInstance(project)
 
-        FileEditorManager.getInstance(project).openFiles.asSequence()
-            .filter { virtualFile ->
-                val file = PsiUtil.getPsiFile(project, virtualFile)
-                ProjectModuleOperationProvider.forProjectPsiFile(project, file)
-                    ?.hasSupportFor(project, file)
-                    ?: false
-            }
-            .mapNotNull { psiManager.findFile(it) }
-            .forEach { daemonCodeAnalyzer.restart(it) }
+        runReadAction {
+            FileEditorManager.getInstance(project).openFiles.asSequence()
+                .filter { virtualFile ->
+                    val file = PsiUtil.getPsiFile(project, virtualFile)
+                    ProjectModuleOperationProvider.forProjectPsiFile(project, file)
+                        ?.hasSupportFor(project, file)
+                        ?: false
+                }
+                .mapNotNull { psiManager.findFile(it) }
+                .forEach { daemonCodeAnalyzer.restart(it) }
+        }
     }
 
     override fun setTargetModules(targetModules: TargetModules) = AppUIExecutor.onUiThread().execute {
