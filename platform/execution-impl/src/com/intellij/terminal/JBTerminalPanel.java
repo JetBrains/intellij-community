@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
+import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
@@ -97,9 +98,12 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     "ResizeToolWindowDown",
     "MaximizeToolWindow",
     
-    "MaintenanceAction"
+    "MaintenanceAction",
+
+    "TerminalIncreaseFontSize",
+    "TerminalDecreaseFontSize",
+    "TerminalResetFontSize"
   };
-  private static final int MIN_FONT_SIZE = 8;
 
   private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
@@ -294,7 +298,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   protected void processMouseWheelEvent(MouseWheelEvent e) {
     if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
-      if (newFontSize >= MIN_FONT_SIZE) {
+      if (newFontSize >= EditorFontsConstants.getMinEditorFontSize() && newFontSize <= EditorFontsConstants.getMaxEditorFontSize()) {
         mySettingsProvider.getUiSettingsManager().setFontSize(newFontSize);
       }
       return;

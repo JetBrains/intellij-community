@@ -103,6 +103,10 @@ final class TerminalUiSettingsManager implements Disposable {
     }
   }
 
+  public void resetFontSize() {
+    setFontSize(detectFontSize());
+  }
+
   @Override
   public void dispose() {}
 }

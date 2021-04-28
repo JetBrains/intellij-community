@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
+import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkWithHoverInfo;
@@ -15,12 +16,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
@@ -250,6 +253,18 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   private boolean isInTerminalToolWindow() {
     return isTerminalToolWindow(getTerminalPanel().getContextToolWindow());
+  }
+
+  public int getFontSize() {
+    return getSettingsProvider().getUiSettingsManager().getFontSize();
+  }
+
+  public void setFontSize(int fontSize) {
+    getSettingsProvider().getUiSettingsManager().setFontSize(fontSize);
+  }
+
+  public void resetFontSize() {
+    getSettingsProvider().getUiSettingsManager().resetFontSize();
   }
 
   static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {

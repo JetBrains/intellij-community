@@ -13,7 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="/META-INF/PlatformExecutionActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <actions>
     <action id="QuickActionPopup" class="com.intellij.ui.switcher.ShowQuickActionPopupAction"/>
     <action id="RunConfigurationTemplatesForNewProjects"
