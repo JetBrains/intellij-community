@@ -62,7 +62,7 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
     app.registerComponents(plugins, app, null)
     initConfigurationStore(app)
     RegistryKeyBean.addKeysFromPlugins()
-    Registry.getInstance().markAsLoaded()
+    Registry.markAsLoaded()
     val preloadServiceFuture = preloadServices(plugins, app, activityPrefix = "")
     app.loadComponents(null)
 

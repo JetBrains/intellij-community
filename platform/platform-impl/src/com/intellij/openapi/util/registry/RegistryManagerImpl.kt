@@ -11,7 +11,7 @@ import com.intellij.util.ArrayUtilRt
 import org.jdom.Element
 import java.util.*
 
-@State(name = "Registry", storages = [Storage("ide.general.xml")])
+@State(name = "Registry", storages = [Storage("ide.general.xml")], useLoadedStateAsExisting = false)
 private class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryManager {
   init {
     runActivity("registry keys adding") {
@@ -20,26 +20,26 @@ private class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryM
   }
 
   override fun `is`(key: String): Boolean {
-    return Registry.get(key).asBoolean()
+    return Registry._getWithoutStateCheck(key).asBoolean()
   }
 
-  override fun intValue(key: String) = Registry.get(key).asInteger()
+  override fun intValue(key: String) = Registry._getWithoutStateCheck(key).asInteger()
 
   override fun intValue(key: String, defaultValue: Int): Int {
     return try {
-      intValue(key)
+      Registry._getWithoutStateCheck(key).asInteger()
     }
     catch (ignore: MissingResourceException) {
       defaultValue
     }
   }
 
-  override fun get(key: String) = Registry.get(key)
+  override fun get(key: String) = Registry._getWithoutStateCheck(key)
 
   override fun getState() = Registry.getInstance().state
 
   override fun noStateLoaded() {
-    Registry.getInstance().markAsLoaded()
+    Registry.markAsLoaded()
   }
 
   override fun loadState(state: Element) {

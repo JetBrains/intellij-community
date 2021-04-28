@@ -43,6 +43,11 @@ public final class Registry  {
     return getInstance().doGet(key);
   }
 
+  @ApiStatus.Internal
+  public static @NotNull RegistryValue _getWithoutStateCheck(@NonNls @NotNull String key) {
+    return ourInstance.doGet(key);
+  }
+
   private @NotNull RegistryValue doGet(@NonNls @NotNull String key) {
     return myValues.computeIfAbsent(key, s -> new RegistryValue(this, s, myContributedKeys.get(s)));
   }
@@ -183,13 +188,13 @@ public final class Registry  {
         }
       }
     }
-    markAsLoaded();
+    myLoaded = true;
     return myUserProperties;
   }
 
   @ApiStatus.Internal
-  public void markAsLoaded() {
-    myLoaded = true;
+  public static void markAsLoaded() {
+    ourInstance.myLoaded = true;
   }
 
   public boolean isLoaded() {

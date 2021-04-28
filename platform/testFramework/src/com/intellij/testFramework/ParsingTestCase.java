@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -142,7 +142,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
     // That's for reparse routines
     myProject.registerService(PomModel.class, new PomModelImpl(myProject));
-    Registry.getInstance().markAsLoaded();
+    Registry.markAsLoaded();
   }
 
   protected final void registerParserDefinition(@NotNull ParserDefinition definition) {
