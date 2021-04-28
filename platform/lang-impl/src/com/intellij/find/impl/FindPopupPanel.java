@@ -355,7 +355,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
           // At the moment of deactivation there is just "temporary" focus owner (main frame),
           // true focus owner (Search Everywhere popup etc.) appears later so the check should postponed too
           ApplicationManager.getApplication().invokeLater(() -> {
-            Window w = ComponentUtil.getWindow(IdeFocusManager.getInstance(myProject).getFocusOwner());
+            Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+            if (SwingUtilities.isDescendingFrom(focusOwner, FindPopupPanel.this)) return;
+            Window w = ComponentUtil.getWindow(focusOwner);
             if (w != null && w.getOwner() != dialogWindow) {
               closeIfPossible();
             }
