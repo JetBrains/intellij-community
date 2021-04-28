@@ -13,137 +13,96 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.kotlin.idea.framework.ui
 
-package org.jetbrains.kotlin.idea.framework.ui;
+import com.google.common.collect.ImmutableMap
+import com.intellij.ide.util.projectWizard.ProjectWizardUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
+import org.jetbrains.kotlin.idea.KotlinJvmBundle.message
+import java.io.File
+import java.io.IOException
+import javax.swing.JOptionPane
 
-import com.google.common.collect.ImmutableMap;
-import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
-import kotlin.collections.CollectionsKt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.KotlinJvmBundle;
+object FileUIUtils {
+    fun copyWithOverwriteDialog(
+        messagesTitle: String,
+        destinationFolder: String,
+        file: File
+    ): File? = copyWithOverwriteDialog(messagesTitle, ImmutableMap.of(file, destinationFolder))?.getValue(file)
 
-import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
-public class FileUIUtils {
-    private FileUIUtils() {
-    }
-
-    @Nullable
-    public static File copyWithOverwriteDialog(
-            @NotNull String messagesTitle,
-            @NotNull String destinationFolder,
-            @NotNull File file
-    ) {
-        Map<File, File> copiedFiles = copyWithOverwriteDialog(messagesTitle, ImmutableMap.of(file, destinationFolder));
-        if (copiedFiles == null) {
-            return null;
+    fun copyWithOverwriteDialog(
+        messagesTitle: String,
+        filesWithDestinations: Map<File, String>
+    ): Map<File, File>? {
+        val fileNames = mutableSetOf<String>()
+        val targetFiles = LinkedHashMap<File, File>(filesWithDestinations.size)
+        for ((file, destinationPath) in filesWithDestinations) {
+            val fileName = file.name
+            require(fileNames.add(fileName)) { "There are several files with the same name: $fileName" }
+            targetFiles[file] = File(destinationPath, fileName)
         }
 
-        File copy = copiedFiles.get(file);
-        assert copy != null;
-
-        return copy;
-    }
-
-    @Nullable
-    public static Map<File, File> copyWithOverwriteDialog(
-            @NotNull String messagesTitle,
-            @NotNull Map<File, String> filesWithDestinations
-    ) {
-        Set<String> fileNames = new HashSet<String>();
-        Map<File, File> targetFiles = new LinkedHashMap<File, File>(filesWithDestinations.size());
-        for (Map.Entry<File, String> sourceToDestination : filesWithDestinations.entrySet()) {
-            File file = sourceToDestination.getKey();
-            String destinationPath = sourceToDestination.getValue();
-
-            String fileName = file.getName();
-
-            if (!fileNames.add(fileName)) {
-                throw new IllegalArgumentException("There are several files with the same name: " + fileName);
+        val existentFiles = targetFiles.entries.filter { (_, value) -> value.exists() }
+        if (existentFiles.isNotEmpty()) {
+            val message: String = if (existentFiles.size == 1) {
+                val conflictingFile = existentFiles.iterator().next().value
+                message(
+                    "file.exists.single",
+                    conflictingFile.name, conflictingFile.parentFile.absolutePath
+                )
+            } else {
+                val conflictFiles: Collection<File?> = existentFiles.map { (_, value) -> value }
+                message("file.exists", StringUtil.join(conflictFiles, "\n"))
             }
 
-            targetFiles.put(file, new File(destinationPath, fileName));
-        }
-
-        Collection<Map.Entry<File, File>> existentFiles =
-                CollectionsKt.filter(targetFiles.entrySet(), sourceToTarget -> sourceToTarget.getValue().exists());
-
-        if (!existentFiles.isEmpty()) {
-            String message;
-
-            if (existentFiles.size() == 1) {
-                File conflictingFile = existentFiles.iterator().next().getValue();
-                message = KotlinJvmBundle.message(
-                        "file.exists.single",
-                        conflictingFile.getName(), conflictingFile.getParentFile().getAbsolutePath())
-                ;
-            }
-            else {
-                Collection<File> conflictFiles = CollectionsKt.map(existentFiles, Map.Entry::getValue);
-                message = KotlinJvmBundle.message("file.exists", StringUtil.join(conflictFiles, "\n"));
-            }
-
-            int replaceIfExist = Messages.showYesNoDialog(
-                    null,
-                    message,
-                    messagesTitle + KotlinJvmBundle.message("file.overwrite.title"),
-                    KotlinJvmBundle.message("file.overwrite.overwrite"),
-                    KotlinJvmBundle.message("file.overwrite.cancel"),
-                    Messages.getWarningIcon());
-
+            val replaceIfExist = Messages.showYesNoDialog(
+                null,
+                message,
+                messagesTitle + message("file.overwrite.title"),
+                message("file.overwrite.overwrite"),
+                message("file.overwrite.cancel"),
+                Messages.getWarningIcon()
+            )
             if (replaceIfExist != JOptionPane.YES_OPTION) {
-                return null;
+                return null
             }
         }
 
-        for (Map.Entry<File, File> sourceToTarget : targetFiles.entrySet()) {
+        for ((key, value) in targetFiles) {
             try {
-                String destinationPath = sourceToTarget.getValue().getParentFile().getAbsolutePath();
-                if (!ProjectWizardUtil.createDirectoryIfNotExists(KotlinJvmBundle.message("file.destination.folder"), destinationPath, false)) {
-                    Messages.showErrorDialog(KotlinJvmBundle.message("file.error.new.folder", destinationPath), messagesTitle);
-                    return null;
+                val destinationPath = value.parentFile.absolutePath
+                if (!ProjectWizardUtil.createDirectoryIfNotExists(message("file.destination.folder"), destinationPath, false)) {
+                    Messages.showErrorDialog(message("file.error.new.folder", destinationPath), messagesTitle)
+                    return null
                 }
-
-                FileUtil.copy(sourceToTarget.getKey(), sourceToTarget.getValue());
-                LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceToTarget.getValue());
-            }
-            catch (IOException e) {
-                Messages.showErrorDialog(KotlinJvmBundle.message("file.error.copy", sourceToTarget.getKey().getName()), messagesTitle);
-                return null;
+                FileUtil.copy(key, value)
+                LocalFileSystem.getInstance().refreshAndFindFileByIoFile(value)
+            } catch (e: IOException) {
+                Messages.showErrorDialog(message("file.error.copy", key.name), messagesTitle)
+                return null
             }
         }
-
-        return targetFiles;
+        return targetFiles
     }
 
-    @NotNull
-    public static String createRelativePath(@Nullable Project project, @Nullable VirtualFile contextDirectory, String relativePath) {
-        String path = null;
+    fun createRelativePath(project: Project?, contextDirectory: VirtualFile?, relativePath: String?): String {
+        var path: String? = null
         if (contextDirectory != null) {
-            path = PathUtil.getLocalPath(contextDirectory);
-
+            path = PathUtil.getLocalPath(contextDirectory)
+        } else if (project != null) {
+            path = PathUtil.getLocalPath(project.baseDir)
         }
-        else if (project != null) {
-            path = PathUtil.getLocalPath(project.getBaseDir());
+        path = if (path != null) {
+            File(path, relativePath).absolutePath
+        } else {
+            ""
         }
-
-        if (path != null) {
-            path = new File(path, relativePath).getAbsolutePath();
-        }
-        else {
-            path = "";
-        }
-        return path;
+        return path!!
     }
 }
