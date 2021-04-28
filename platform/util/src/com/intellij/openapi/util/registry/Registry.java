@@ -37,7 +37,7 @@ public final class Registry  {
   private Map<String, RegistryKeyDescriptor> myContributedKeys = Collections.emptyMap();
 
   private static final Registry ourInstance = new Registry();
-  private volatile boolean myLoaded;
+  private volatile boolean isLoaded;
 
   public static @NotNull RegistryValue get(@NonNls @NotNull String key) {
     return getInstance().doGet(key);
@@ -175,30 +175,37 @@ public final class Registry  {
   }
 
   @ApiStatus.Internal
-  public @NotNull Map<String, String> loadState(@NotNull Element state) {
-    myUserProperties.clear();
+  public static @Nullable Map<String, String> loadState(@Nullable Element state) {
+    Registry registry = ourInstance;
+
+    if (state == null) {
+      registry.isLoaded = true;
+      return null;
+    }
+
+    registry.myUserProperties.clear();
     for (Element eachEntry : state.getChildren("entry")) {
       String key = eachEntry.getAttributeValue("key");
       String value = eachEntry.getAttributeValue("value");
       if (key != null && value != null) {
-        RegistryValue registryValue = doGet(key);
-        if (registryValue.isChangedFromDefault(value, this)) {
-          myUserProperties.put(key, value);
+        RegistryValue registryValue = registry.doGet(key);
+        if (registryValue.isChangedFromDefault(value, registry)) {
+          registry.myUserProperties.put(key, value);
           registryValue.resetCache();
         }
       }
     }
-    myLoaded = true;
-    return myUserProperties;
+    registry.isLoaded = true;
+    return registry.myUserProperties;
   }
 
   @ApiStatus.Internal
   public static void markAsLoaded() {
-    ourInstance.myLoaded = true;
+    ourInstance.isLoaded = true;
   }
 
   public boolean isLoaded() {
-    return myLoaded;
+    return isLoaded;
   }
 
   @NotNull Map<String, String> getUserProperties() {

@@ -43,7 +43,7 @@ private class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryM
   }
 
   override fun loadState(state: Element) {
-    log(Registry.getInstance().loadState(state))
+    log(Registry.loadState(state) ?: return)
   }
 
   private fun log(userProperties: Map<String, String>) {
