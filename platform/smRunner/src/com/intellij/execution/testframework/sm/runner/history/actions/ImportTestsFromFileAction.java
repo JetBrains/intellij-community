@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,13 @@ public class ImportTestsFromFileAction extends AbstractImportTestsAction {
   protected VirtualFile getFile(@NotNull Project project) {
     final FileChooserDescriptor xmlDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.XML);
     xmlDescriptor.setTitle(SmRunnerBundle.message("sm.test.runner.import.test.choose.test.file.title"));
-    return FileChooser.chooseFile(xmlDescriptor, project, null);
+    VirtualFile file = FileChooser.chooseFile(xmlDescriptor, project, null);
+    if (file != null && file.getFileType() != StdFileTypes.XML) {
+      Messages.showWarningDialog(project, 
+                                 SmRunnerBundle.message("dialog.message.unable.to.parse.test.results", file.getName()), 
+                                 SmRunnerBundle.message("sm.test.runner.import.test"));
+      return null;
+    }
+    return file;
   }
 }
