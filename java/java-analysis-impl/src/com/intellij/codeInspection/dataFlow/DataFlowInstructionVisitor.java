@@ -320,6 +320,14 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
       myArrayStoreProblems.put(((ArrayStoreProblem)problem).getAnchor(),
                                Pair.create(((ArrayStoreProblem)problem).getFromType(), ((ArrayStoreProblem)problem).getToType()));
     }
+    else if (problem instanceof NullabilityProblemKind.NullabilityProblem) {
+      DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
+      boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
+      boolean unknown = myStrictMode && nullability == DfaNullability.UNKNOWN;
+      ThreeState ok = notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
+      StateInfo info = myStateInfos.computeIfAbsent((NullabilityProblemKind.NullabilityProblem<?>)problem, k -> new StateInfo());
+      info.update(state, ok);
+    }
   }
 
   @Override
@@ -338,18 +346,6 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
     if (expression instanceof PsiLiteralExpression) return;
     ExpressionChunk chunk = new ExpressionChunk(expression, range);
     myConstantExpressions.compute(chunk, (c, curState) -> ConstantResult.mergeValue(curState, memState, value));
-  }
-
-  @Override
-  protected ThreeState checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
-    ThreeState ok = super.checkNotNullable(state, value, problem);
-    if (!myStrictMode && ok == ThreeState.UNSURE) {
-      ok = ThreeState.YES;
-    }
-    if (problem == null) return ok;
-    StateInfo info = myStateInfos.computeIfAbsent(problem, k -> new StateInfo());
-    info.update(state, ok);
-    return ok;
   }
 
   private void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {

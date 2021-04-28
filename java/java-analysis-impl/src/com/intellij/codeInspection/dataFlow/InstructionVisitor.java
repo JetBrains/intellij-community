@@ -483,15 +483,15 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
   protected ThreeState checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
     boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
-    if (notNullable && problem != null && problem.thrownException() != null) {
-      state.applyCondition(value.cond(RelationType.NE, NULL));
-    }
-    boolean unknown = nullability == DfaNullability.UNKNOWN;
     if (problem != null) {
       ThreeState failed = nullability == DfaNullability.NOT_NULL ? ThreeState.NO :
                           nullability == DfaNullability.NULL ? ThreeState.YES : ThreeState.UNSURE;
       myInterceptor.onCondition(problem, value, failed, state);
     }
+    if (notNullable && problem != null && problem.thrownException() != null) {
+      state.applyCondition(value.cond(RelationType.NE, NULL));
+    }
+    boolean unknown = nullability == DfaNullability.UNKNOWN;
     return notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
   }
 
