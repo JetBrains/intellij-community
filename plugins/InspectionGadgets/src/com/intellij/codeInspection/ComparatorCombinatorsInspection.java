@@ -43,6 +43,10 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
       public void visitLambdaExpression(PsiLambdaExpression lambda) {
         super.visitLambdaExpression(lambda);
         PsiType type = lambda.getFunctionalInterfaceType();
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(lambda.getParent());
+        if (parent instanceof PsiTypeCastExpression && ((PsiTypeCastExpression)parent).getType() instanceof PsiIntersectionType) {
+          return;
+        }
         PsiParameter[] parameters = lambda.getParameterList().getParameters();
         if (parameters.length != 2 || !PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_UTIL_COMPARATOR)) {
           return;
