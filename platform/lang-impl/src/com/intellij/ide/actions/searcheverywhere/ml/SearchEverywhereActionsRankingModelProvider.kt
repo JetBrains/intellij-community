@@ -5,10 +5,20 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.internal.ml.DecisionFunction
+import com.intellij.internal.ml.FeaturesInfo
+import com.intellij.internal.ml.ResourcesModelMetadataReader
+import com.intellij.searchEverywhere.model.PredictionModel
 
-class SearchEverywhereActionsRankingModelProvider : SearchEverywhereMLRankingModelProvider {
+
+class SearchEverywhereActionsRankingModelProvider(private val resourceDirectory: String) : SearchEverywhereMLRankingModelProvider {
   override val model: DecisionFunction
-    get() = TODO("Not yet implemented")
+    get() {
+      val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, resourceDirectory))
+      return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
+        override fun predict(features: DoubleArray?): Double = PredictionModel.makePredict(features)
+      }
+    }
+
   override val displayNameInSettings: String
     get() = IdeBundle.message("searcheverywhere.ml.display.name.in.settings")
 
