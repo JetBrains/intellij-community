@@ -22,7 +22,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
                                  dataLoader: DataLoader,
                                  jarFile: Path,
                                  relativePath: String,
-                                 base: String?): Boolean {
+                                 includeBase: String?): Boolean {
       val zipFile = ZipFile(jarFile.toFile())
       try {
         // do not use kotlin stdlib here
@@ -31,7 +31,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
                              readContext = readContext,
                              pathResolver = pathResolver,
                              dataLoader = dataLoader,
-                             includeBase = getChildBase(base = base, relativePath = relativePath),
+                             includeBase = includeBase,
                              readInto = readInto,
                              locationSource = jarFile.toString())
         return true
@@ -90,7 +90,11 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
       return true
     }
 
-    if (findInJarFiles(readInto = readInto, dataLoader = dataLoader, readContext = readContext, relativePath = path, base = base)) {
+    if (findInJarFiles(readInto = readInto,
+                       dataLoader = dataLoader,
+                       readContext = readContext,
+                       relativePath = path,
+                       includeBase = getChildBase(base = base, relativePath = relativePath))) {
       return true
     }
 
@@ -126,7 +130,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
     }
 
     val result = readInto ?: RawPluginDescriptor()
-    if (findInJarFiles(readInto = result, dataLoader = dataLoader, readContext = readContext, relativePath = path, base = null)) {
+    if (findInJarFiles(readInto = result, dataLoader = dataLoader, readContext = readContext, relativePath = path, includeBase = null)) {
       return result
     }
 
@@ -141,7 +145,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
                              readContext: ReadModuleContext,
                              dataLoader: DataLoader,
                              relativePath: String,
-                             base: String?): Boolean {
+                             includeBase: String?): Boolean {
     val pool = dataLoader.pool
     for (jarFile in pluginJarFiles) {
       if (dataLoader.isExcludedFromSubSearch(jarFile)) {
@@ -155,7 +159,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
                              dataLoader = dataLoader,
                              jarFile = jarFile,
                              relativePath = relativePath,
-                             base = base)) {
+                             includeBase = includeBase)) {
           return true
         }
       }
@@ -173,7 +177,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
                                readContext = readContext,
                                pathResolver = this,
                                dataLoader = dataLoader,
-                               includeBase = getChildBase(base = base, relativePath = relativePath),
+                               includeBase = includeBase,
                                readInto = readInto,
                                locationSource = jarFile.toString())
           return true
