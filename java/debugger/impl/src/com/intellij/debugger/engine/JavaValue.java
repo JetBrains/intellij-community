@@ -446,6 +446,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @NotNull
   @Override
   public ThreeState computeInlineDebuggerData(@NotNull final XInlineDebuggerDataCallback callback) {
+    // show fields only for 'this' node
+    if (myValueDescriptor instanceof FieldDescriptor && myParent != null && !(myParent.myValueDescriptor instanceof ThisDescriptorImpl)) {
+      return ThreeState.NO;
+    }
     computeSourcePosition(callback::computed, true);
     return ThreeState.YES;
   }
