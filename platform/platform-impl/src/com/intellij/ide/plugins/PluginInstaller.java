@@ -240,6 +240,10 @@ public final class PluginInstaller {
         return false;
       }
 
+      if (!PluginManagerMain.checkThirdPartyPluginsAllowed(List.of(pluginDescriptor))) {
+        return false;
+      }
+
       InstalledPluginsState ourState = InstalledPluginsState.getInstance();
       if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
         String message = IdeBundle.message("dialog.message.plugin.was.already.installed", pluginDescriptor.getName());
