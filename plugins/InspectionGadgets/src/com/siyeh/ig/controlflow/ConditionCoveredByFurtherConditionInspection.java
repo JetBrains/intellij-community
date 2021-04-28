@@ -148,7 +148,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
             DfType dfType = state.getDfType(value);
             if (dfType instanceof DfReferenceType) {
               state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
-              return new DfaInstructionState[]{new DfaInstructionState(getInstruction(instruction.getIndex() + 1), state)};
+              return instructionState.nextInstruction(this);
             }
           }
         }
