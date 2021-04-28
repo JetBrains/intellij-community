@@ -221,10 +221,10 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
   protected void updateLayout() {
     JPanel historyButtonWrapper = new NonOpaquePanel(new BorderLayout());
-    historyButtonWrapper.setBorder(JBUI.Borders.emptyTop(1));
+    historyButtonWrapper.setBorder(JBUI.Borders.empty(2, 3, 0, 0));
     historyButtonWrapper.add(myHistoryPopupButton, BorderLayout.NORTH);
     JPanel iconsPanelWrapper = new NonOpaquePanel(new BorderLayout());
-    iconsPanelWrapper.setBorder(JBUI.Borders.emptyTop(1));
+    iconsPanelWrapper.setBorder(JBUI.Borders.emptyTop(2));
     JPanel p = new NonOpaquePanel(new BorderLayout());
     p.add(myIconsPanel, BorderLayout.NORTH);
     myIconsPanel.setBorder(JBUI.Borders.emptyRight(5));
@@ -283,10 +283,11 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
         addedButtons.add(button);
         buttonsGrid.add(button);
       }
-      buttonsGrid.setBorder(JBUI.Borders.empty(1, 0, 0, 2));
+      buttonsGrid.setBorder(JBUI.Borders.emptyRight(2));
       myExtraActionsPanel.setLayout(new BorderLayout());
       myExtraActionsPanel.add(buttonsGrid, BorderLayout.NORTH);
       myExtraActionsPanel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 1, 0, 0), JBUI.Borders.emptyLeft(5)));
+      myExtraActionsPanel.setBorder(new PseudoSeparatorBorder());
     }
     return addedButtons;
   }
@@ -426,6 +427,24 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
         if (selectedIcon != null) return selectedIcon;
       }
       return super.getIcon();
+    }
+  }
+
+  private static class PseudoSeparatorBorder implements Border {
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      g.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+      g.fillRect(x + JBUI.scale(1), y + 1, 1, JBUI.scale(20));
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return new JBInsets(0, 7, 0, 0);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
     }
   }
 }
