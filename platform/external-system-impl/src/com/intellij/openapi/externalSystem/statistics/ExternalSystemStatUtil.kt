@@ -3,7 +3,9 @@ package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector.Companion.EXTERNAL_SYSTEM_ID
@@ -24,10 +26,21 @@ fun addExternalSystemId(data: FeatureUsageData,
 fun anonymizeSystemId(systemId: ProjectSystemId?) =
   systemId?.let { getAnonymizedSystemId(it) } ?: "undefined.system"
 
+fun findPluginInfoBySystemId(systemId: ProjectSystemId?): PluginInfo? {
+  if (systemId == null) return null
+  val manager = ExternalSystemApiUtil.getManager(systemId) ?: return null
+  val pluginInfo = getPluginInfo(manager.javaClass)
+  return if (pluginInfo.isDevelopedByJetBrains()) pluginInfo else null
+}
+
 fun importActivityStarted(project: Project, externalSystemId: ProjectSystemId,
                           dataSupplier: (() -> List<EventPair<*>>)?): StructuredIdeActivity {
   return IMPORT_ACTIVITY.started(project){
     val data: MutableList<EventPair<*>> = mutableListOf(EXTERNAL_SYSTEM_ID.with(anonymizeSystemId(externalSystemId)))
+    val pluginInfo = findPluginInfoBySystemId(externalSystemId)
+    if (pluginInfo != null) {
+      data.add(EventFields.PluginInfo.with(pluginInfo))
+    }
     if(dataSupplier != null) {
       data.addAll(dataSupplier())
     }
