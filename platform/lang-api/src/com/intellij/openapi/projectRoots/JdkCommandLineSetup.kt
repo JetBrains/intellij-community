@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
@@ -172,8 +173,15 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   private fun provideEnvironment(environment: TargetEnvironment,
                                  targetProgressIndicator: TargetProgressIndicator) {
     environmentPromise.setResult(environment to targetProgressIndicator)
-    for (upload in uploads) {
-      upload.volume.upload(upload.relativePath, targetProgressIndicator)
+    if (environment is TargetEnvironment.BatchUploader) {
+      environment.runBatchUpload(uploads = ContainerUtil.map(uploads) {
+        Pair(it.volume, it.relativePath)
+      }, targetProgressIndicator = targetProgressIndicator)
+    }
+    else {
+      for (upload in uploads) {
+        upload.volume.upload(upload.relativePath, targetProgressIndicator)
+      }
     }
     for (promise in dependingOnEnvironmentPromise) {
       promise.blockingGet(0)  // Just rethrows errors.

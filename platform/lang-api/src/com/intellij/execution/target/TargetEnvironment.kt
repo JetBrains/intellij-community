@@ -140,4 +140,12 @@ abstract class TargetEnvironment(
 
   //FIXME: document
   abstract fun shutdown()
+
+  interface BatchUploader {
+    fun canUploadInBatches(): Boolean
+
+    @Throws(IOException::class)
+    fun runBatchUpload(uploads: List<Pair<UploadableVolume, String>>,
+                       targetProgressIndicator: TargetProgressIndicator)
+  }
 }
