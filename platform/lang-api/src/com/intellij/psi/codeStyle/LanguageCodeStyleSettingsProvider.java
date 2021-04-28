@@ -45,7 +45,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * Customize settings in the given consumer. The consumer is, for example, a UI panel or a supported settings collector. Even if the
    * settings are not exposed to the UI via standard Spaces, Wrapping and Braces etc. panels, the method is still important for the platform
    * to collect settings from {@link CommonCodeStyleSettings} and {@link CommonCodeStyleSettings.IndentOptions} which the plug-in
-   * supports. This information is used, for example, to generate lanugage-specific {@code .editorconfig} properties.
+   * supports. This information is used, for example, to generate language-specific {@code .editorconfig} properties.
    *
    * @param consumer Customized settings consumer.
    * @param settingsType The settings type.
@@ -419,12 +419,14 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return new LanguageCodeStylePropertyMapper(settings, getLanguage(), getExternalLanguageId());
   }
 
+  @SuppressWarnings("rawtypes")
   @ApiStatus.Experimental
   @Nullable
   public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     return null;
   }
 
+  @SuppressWarnings("rawtypes")
   public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
     return Collections.emptyList();
   }
@@ -434,7 +436,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * code style settings use a standard way to define settings, namely via public fields which have a straightforward mapping
    * between the fields and human-readable stored values without extra transformation. If not, the provider must implement
    * {@code getAccessor()} method for fields using magic constants, specially encoded strings and etc. and
-   * {@code getAdditionalAccessors()} method for non-stanard properties using their own {@code writer/readExternal() methods}
+   * {@code getAdditionalAccessors()} method for non-standard properties using their own {@code writer/readExternal() methods}
    * for serialization.
    * @return True (default) if standard properties are supported, false to disable language settings to avoid export
    * partial, non-readable etc. data till proper accessors are implemented.
