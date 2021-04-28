@@ -50,13 +50,11 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
     val store = entityStorage.current
 
-    val artifacts = store
+    return store
       .entities(ArtifactEntity::class.java)
       .map { store.artifactsMap.getDataByEntity(it) ?: error("All artifact bridges should be already created at this moment") }
       .filter { ArtifactModelBase.VALID_ARTIFACT_CONDITION.value(it) }
       .toList().toTypedArray()
-
-    return artifacts
   }
 
   @RequiresReadLock
@@ -215,15 +213,15 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     artifactWithDiffs.clear()
 
     val entityStorage = WorkspaceModel.getInstance(project).entityStorage
-    added.forEach {
-      it.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
-      it.elementsWithDiff.clear()
+    added.forEach { bridge ->
+      bridge.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
+      bridge.elementsWithDiff.clear()
     }
-    changed.forEach {
-      it.third.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
-      it.third.elementsWithDiff.clear()
-      it.first.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
-      it.first.elementsWithDiff.clear()
+    changed.forEach { changedItem ->
+      changedItem.third.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
+      changedItem.third.elementsWithDiff.clear()
+      changedItem.first.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
+      changedItem.first.elementsWithDiff.clear()
     }
     artifactModel.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
     artifactModel.elementsWithDiff.clear()

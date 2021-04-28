@@ -8,7 +8,9 @@ import com.intellij.packaging.artifacts.ArtifactType
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
+import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.mutableArtifactsMap
+import com.intellij.packaging.impl.elements.*
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -22,9 +24,9 @@ internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: Workspa
 }
 
 internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEntityStorage, project: Project): ArtifactBridge {
-  val type = ArtifactType.findById(it.artifactType)
-  if (type == null) {
-    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null, JavaCompilerBundle.message("unknown.artifact.type.0", it.artifactType))
+  if (ArtifactType.findById(it.artifactType) == null) {
+    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null,
+                                 JavaCompilerBundle.message("unknown.artifact.type.0", it.artifactType))
   }
 
   fun findMissingArtifactType(element: PackagingElementEntity): String? {
@@ -45,22 +47,17 @@ internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEn
 
   val missingArtifactType = findMissingArtifactType(it.rootElement)
   if (missingArtifactType != null) {
-    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null, JavaCompilerBundle.message("unknown.element.0", missingArtifactType))
+    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null,
+                                 JavaCompilerBundle.message("unknown.element.0", missingArtifactType))
   }
 
   val unknownProperty = it.customProperties.firstOrNull { ArtifactPropertiesProvider.findById(it.providerType) == null }
   if (unknownProperty != null) {
-    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null, JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty))
+    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null,
+                                 JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty))
   }
 
   return ArtifactBridge(it.persistentId(), entityStorage, project, null)
-}
-
-inline fun PackagingElement<*>.forThisAndChildren(action: (PackagingElement<*>) -> Unit) {
-  action(this)
-  if (this is CompositePackagingElement<*>) {
-    this.children.forEach { action(it) }
-  }
 }
 
 fun PackagingElement<*>.forThisAndFullTree(action: (PackagingElement<*>) -> Unit) {
@@ -78,3 +75,21 @@ fun PackagingElement<*>.forThisAndFullTree(action: (PackagingElement<*>) -> Unit
 }
 
 fun WorkspaceEntityStorage.get(id: ArtifactId): ArtifactEntity = this.resolve(id) ?: error("Cannot find artifact by id: ${id.name}")
+
+internal fun PackagingElementEntity.sameTypeWith(type: PackagingElementType<out PackagingElement<*>>): Boolean {
+  return when (this) {
+    is ModuleOutputPackagingElementEntity -> type == ProductionModuleOutputElementType.ELEMENT_TYPE
+    is ModuleTestOutputPackagingElementEntity -> type == TestModuleOutputElementType.ELEMENT_TYPE
+    is ModuleSourcePackagingElementEntity -> type == ProductionModuleSourceElementType.ELEMENT_TYPE
+    is ArtifactOutputPackagingElementEntity -> type == PackagingElementFactoryImpl.ARCHIVE_ELEMENT_TYPE
+    is ExtractedDirectoryPackagingElementEntity -> type == PackagingElementFactoryImpl.EXTRACTED_DIRECTORY_ELEMENT_TYPE
+    is FileCopyPackagingElementEntity -> type == PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE
+    is DirectoryCopyPackagingElementEntity -> type == PackagingElementFactoryImpl.DIRECTORY_COPY_ELEMENT_TYPE
+    is DirectoryPackagingElementEntity -> type == PackagingElementFactoryImpl.DIRECTORY_ELEMENT_TYPE
+    is ArchivePackagingElementEntity -> type == PackagingElementFactoryImpl.ARCHIVE_ELEMENT_TYPE
+    is ArtifactRootElementEntity -> type == PackagingElementFactoryImpl.ARTIFACT_ROOT_ELEMENT_TYPE
+    is LibraryFilesPackagingElementEntity -> type == LibraryElementType.LIBRARY_ELEMENT_TYPE
+    is CustomPackagingElementEntity -> this.typeId == type.id
+    else -> error("Unexpected branch. $this")
+  }
+}

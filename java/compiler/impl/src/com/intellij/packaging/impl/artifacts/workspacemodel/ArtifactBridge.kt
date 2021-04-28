@@ -126,6 +126,7 @@ open class ArtifactBridge(
     val customProperty = artifactEntity.customProperties.find { it.providerType == providerId } ?: return null
     val propertiesXmlTag = customProperty.propertiesXmlTag ?: return null
 
+    @Suppress("UNCHECKED_CAST")
     val createdProperties: ArtifactProperties<Any> = propertiesProvider.createProperties(this.artifactType) as ArtifactProperties<Any>
     val state = createdProperties.state!!
     JDOMUtil.load(propertiesXmlTag).deserializeInto(state)
@@ -207,7 +208,8 @@ open class ArtifactBridge(
         val element = XmlSerializer.serialize(state)
         element.name = "options"
         JDOMUtil.write(element)
-      } else null
+      }
+      else null
 
       val entity = diff.get(artifactId)
       diff.addArtifactPropertiesEntity(entity, provider.id, tag, entity.entitySource)

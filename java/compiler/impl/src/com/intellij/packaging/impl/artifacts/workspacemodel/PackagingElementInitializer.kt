@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
 
-object PackagingElementInitializer: ElementInitializer {
+object PackagingElementInitializer : ElementInitializer {
   override fun initialize(entity: PackagingElementEntity, project: Project, storage: WorkspaceEntityStorage): PackagingElement<*> =
     entity.toElement(project, storage)
 

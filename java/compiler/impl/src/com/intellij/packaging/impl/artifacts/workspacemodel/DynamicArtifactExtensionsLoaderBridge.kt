@@ -39,7 +39,7 @@ internal class DynamicArtifactExtensionsLoaderBridge(private val artifactManager
         override fun extensionRemoved(extension: PackagingElementType<out PackagingElement<*>>, pluginDescriptor: PluginDescriptor) {
 
           // As I understand, this should be called already with write action (see prev version of this listener)
-          artifactManager.dropMappings {
+          artifactManager.dropMappings { artifactEntity ->
             fun shouldDrop(element: PackagingElementEntity): Boolean {
               if (element.sameTypeWith(extension)) return true
               if (element is CompositePackagingElementEntity) {
@@ -48,7 +48,7 @@ internal class DynamicArtifactExtensionsLoaderBridge(private val artifactManager
               return false
             }
 
-            return@dropMappings shouldDrop(it.rootElement)
+            return@dropMappings shouldDrop(artifactEntity.rootElement)
           }
         }
       }, false, disposable)
@@ -56,13 +56,13 @@ internal class DynamicArtifactExtensionsLoaderBridge(private val artifactManager
     ArtifactPropertiesProvider.EP_NAME.point.addExtensionPointListener(object : ExtensionPointListener<ArtifactPropertiesProvider> {
       override fun extensionAdded(extension: ArtifactPropertiesProvider, pluginDescriptor: PluginDescriptor) {
         runWriteAction {
-          artifactManager.dropMappings { it.customProperties.any { it.providerType == extension.id } }
+          artifactManager.dropMappings { entity -> entity.customProperties.any { it.providerType == extension.id } }
         }
       }
 
       override fun extensionRemoved(extension: ArtifactPropertiesProvider, pluginDescriptor: PluginDescriptor) {
         // As I understand, this should be called already with write action (see prev version of this listener)
-        artifactManager.dropMappings { it.customProperties.any { it.providerType == extension.id } }
+        artifactManager.dropMappings { entity -> entity.customProperties.any { it.providerType == extension.id } }
       }
     }, false, disposable)
   }
