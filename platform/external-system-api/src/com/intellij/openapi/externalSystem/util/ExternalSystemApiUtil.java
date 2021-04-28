@@ -8,6 +8,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -19,6 +20,8 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -735,5 +738,17 @@ public final class ExternalSystemApiUtil {
     if (linkedProjectSettings == null) return null;
     String rootProjectPath = linkedProjectSettings.getExternalProjectPath();
     return ProjectDataManager.getInstance().getExternalProjectData(project, systemId, rootProjectPath);
+  }
+
+  public static @NotNull FileChooserDescriptor getExternalProjectConfigDescriptor(@NotNull ProjectSystemId systemId) {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(systemId);
+    if (manager instanceof ExternalSystemUiAware) {
+      ExternalSystemUiAware uiAware = ((ExternalSystemUiAware)manager);
+      FileChooserDescriptor descriptor = uiAware.getExternalProjectConfigDescriptor();
+      if (descriptor != null) {
+        return descriptor;
+      }
+    }
+    return FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
   }
 }

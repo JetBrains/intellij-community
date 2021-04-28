@@ -11,7 +11,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
+/**
+ * @deprecated Use [com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtension] instead
+ * And [com.intellij.externalSystem.runConfigurationEx] extension point
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@SuppressWarnings("DeprecatedIsStillUsed")
 public interface ExternalSystemRunConfigurationExtension {
   void readExternal(@NotNull ExternalSystemRunConfiguration configuration, @NotNull Element element);
 
