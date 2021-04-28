@@ -6,13 +6,13 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.*
-import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.ui.list.createTargetPopup
 
 internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
 
@@ -45,7 +45,7 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
         gotoTarget(editor, file, actionResult.navigatable())
       }
       is GTTDActionResult.MultipleTargets -> {
-        val popup = chooseTargetPopup(
+        val popup = createTargetPopup(
           CodeInsightBundle.message("choose.type.popup.title"),
           actionResult.targets, SingleTargetWithPresentation::presentation
         ) { (navigatable, _) ->
