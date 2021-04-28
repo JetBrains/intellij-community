@@ -902,19 +902,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (multicaster instanceof EditorEventMulticasterEx) {
       EditorEventMulticasterEx ex = (EditorEventMulticasterEx)multicaster;
       ex.addFocusChangeListener(new FocusChangeListener() {
-        private final Alarm myAlarm = new Alarm(myProject);
-
         @Override
         public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
-          myAlarm.cancelAllRequests();
+          myAutoScrollFromSourceHandler.cancelAllRequests();
           myAutoScrollOnFocusEditor.set(true);
         }
 
         @Override
         public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
           if (isAutoscrollFromSourceAllowedHere()) {
-            myAlarm.cancelAllRequests();
-            myAlarm.addRequest(() -> {
+            myAutoScrollFromSourceHandler.addRequest(() -> {
               FileEditorManager manager = myProject.isDisposed() ? null : FileEditorManager.getInstance(myProject);
               if (manager != null) {
                 JComponent component = editor.getComponent();
@@ -925,7 +922,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                   }
                 }
               }
-            }, 20);
+            });
           }
         }
 
@@ -1900,6 +1897,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
     private MyAutoScrollFromSourceHandler() {
       super(ProjectViewImpl.this.myProject, myViewContentPanel, ProjectViewImpl.this.myProject);
+    }
+
+    void cancelAllRequests() {
+      myAlarm.cancelAllRequests();
+    }
+
+    void addRequest(@NotNull Runnable request) {
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(request, getAlarmDelay(), getModalityState());
     }
 
     @Override
