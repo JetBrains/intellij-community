@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.util.PathUtilRt
@@ -14,6 +14,8 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEnt
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.jps.model.artifact.JpsArtifactService
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.util.JpsPathUtil
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
@@ -117,6 +119,13 @@ private fun createLibClassPath(buildContext: BuildContext,
         classPath.add(entry.libraryFilePath)
       }
       else -> throw UnsupportedOperationException("Entry $entry is not supported")
+    }
+  }
+
+  for (libName in builder.platform.projectLibrariesToUnpack.values()) {
+    val library = buildContext.project.libraryCollection.findLibrary(libName) ?: throw IllegalStateException("Cannot find library $libName")
+    library.getRootUrls(JpsOrderRootType.COMPILED).mapTo(classPath) {
+      JpsPathUtil.urlToPath(it)
     }
   }
 
