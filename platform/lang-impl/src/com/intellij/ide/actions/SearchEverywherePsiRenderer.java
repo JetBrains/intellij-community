@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManagerListener;
@@ -45,7 +45,6 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   private EditorColorsScheme scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
 
   public SearchEverywherePsiRenderer(Disposable parent) {
-    setFocusBorderEnabled(false);
     setLayout(new BorderLayout() {
       @Override
       public void layoutContainer(Container target) {

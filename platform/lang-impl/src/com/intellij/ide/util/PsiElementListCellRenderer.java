@@ -59,7 +59,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   private static final SimpleTextAttributes DEFAULT_ERROR_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, UIUtil.getInactiveTextColor(), JBColor.RED);
 
-  private boolean myFocusBorderEnabled = Registry.is("psi.element.list.cell.renderer.focus.border.enabled");
   protected int myRightComponentWidth;
 
   private final ListCellRenderer<PsiElement> myBackgroundRenderer;
@@ -120,7 +119,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
       Color bgColor = UIUtil.getListBackground();
       Color color = list.getForeground();
-      setPaintFocusBorder(hasFocus && UIUtil.isToUseDottedCellBorder() && myFocusBorderEnabled);
 
       PsiElement target = NavigationItemListCellRenderer.getPsiElement(value);
       VirtualFile vFile = PsiUtilCore.getVirtualFile(target);
@@ -265,9 +263,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return new ItemMatchers(MatcherHolder.getAssociatedMatcher(list), null);
   }
 
-  protected void setFocusBorderEnabled(boolean enabled) {
-    myFocusBorderEnabled = enabled;
-  }
+  /**
+   * @deprecated method has no effect
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated
+  protected final void setFocusBorderEnabled(@SuppressWarnings("unused") boolean enabled) { }
 
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
                                                        JList list,
