@@ -110,14 +110,14 @@ final class DistributionJARsBuilder {
       exclude(name: "**/icon-robots.txt")
     }
 
-    def productLayout = buildContext.productProperties.productLayout
-    def enabledPluginModules = getEnabledPluginModules()
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+    Set<String> enabledPluginModules = getEnabledPluginModules()
     buildContext.messages.debug("Collecting project libraries used by plugins: ")
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       final Collection<String> libsToUnpack = plugin.projectLibrariesToUnpack.values()
       plugin.moduleJars.values().collectMany {
-        def module = buildContext.findRequiredModule(it)
-        def libraries =
+        JpsModule module = buildContext.findRequiredModule(it)
+        Set<JpsLibrary> libraries =
           JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
             !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
               it.libraryName == library.name && it.relativeOutputPath == ""
@@ -141,7 +141,6 @@ final class DistributionJARsBuilder {
 
     platform = PlatformModules.createPlatformLayout(productLayout, allProductDependencies, projectLibrariesUsedByPlugins, buildContext)
   }
-
 
   @NotNull Set<PluginLayout> filterPluginsToPublish(@NotNull Set<PluginLayout> plugins) {
     plugins = plugins.findAll {

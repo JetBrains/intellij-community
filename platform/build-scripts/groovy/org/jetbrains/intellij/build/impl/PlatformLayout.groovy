@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 
@@ -37,7 +38,7 @@ final class PlatformLayout extends BaseLayout {
     body()
   }
 
-  static class PlatformLayoutSpec extends BaseLayoutSpec {
+  static final class PlatformLayoutSpec extends BaseLayoutSpec {
     final PlatformLayout layout
 
     PlatformLayoutSpec(PlatformLayout layout) {
@@ -67,15 +68,19 @@ final class PlatformLayout extends BaseLayout {
      */
     void withProjectLibrariesFromIncludedModules(BuildContext context) {
       context.messages.debug("Collecting project libraries used by platform modules")
+
+      Collection<String> libsToUnpack = layout.projectLibrariesToUnpack.values()
       for (String moduleName in layout.moduleJars.values()) {
         JpsModule module = context.findRequiredModule(moduleName)
-        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll {
-          !(it.createReference().parentReference instanceof JpsModuleReference) &&
-          !layout.projectLibrariesToUnpack.values().contains(it.name) &&
-          !layout.excludedProjectLibraries.contains(it.name)
-        }.each {
-          context.messages.debug(" module '$module.name': '$it.name'")
-          withProjectLibrary(it.name)
+        for (JpsLibrary library : JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
+          if (library.createReference().parentReference instanceof JpsModuleReference ||
+              libsToUnpack.contains(library.name) ||
+              layout.excludedProjectLibraries.contains(library.name)) {
+            continue
+          }
+
+          context.messages.debug(" module '${module.name}': '${library.name}'")
+          withProjectLibrary(library.name)
         }
       }
     }
