@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.codeInsight.documentation.DocumentationComponent.COLOR_KEY;
+import static com.intellij.codeInsight.lookup.Lookup.LOOKUP_COLOR;
 
 /**
  * @author peter
@@ -68,7 +68,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private static final Key<Font> CUSTOM_TYPE_FONT = Key.create("CustomLookupElementTypeFont");
 
   static final Color BACKGROUND_COLOR =
-    new JBColor(() -> Objects.requireNonNullElse(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY),
+    new JBColor(() -> Objects.requireNonNullElse(EditorColorsUtil.getGlobalOrDefaultColor(LOOKUP_COLOR),
                                                  JBColor.namedColor("CompletionPopup.background",
                                                                     new JBColor(new Color(235, 244, 254), JBColor.background()))));
   private static final Color MATCHED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
