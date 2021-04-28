@@ -257,7 +257,14 @@ private fun readRootElementChild(reader: XMLStreamReader2,
       // deprecated and not used element
       reader.skipElement()
     }
-    else -> LOG.error("Unknown element: $localName")
+    "locale" -> {
+      // not used in descriptor
+      reader.skipElement()
+    }
+    else -> {
+      LOG.error("Unknown element: $localName")
+      reader.skipElement()
+    }
   }
 
   if (!reader.isEndElement) {
