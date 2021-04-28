@@ -25,8 +25,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
@@ -39,7 +37,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.KeyStrokeAdapter;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
@@ -60,7 +57,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.awt.im.InputContext;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -563,43 +559,19 @@ public final class IdeKeyEventDispatcher {
     }
 
     @Override
-    public void onUpdatePassed(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
+    public void onUpdatePassed(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
       setState(KeyState.STATE_PROCESSED);
       setPressedWasProcessed(inputEvent.getID() == KeyEvent.KEY_PRESSED);
     }
 
     @Override
-    public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
-      doPerformActionImpl(e, action, actionEvent);
+    public void performAction(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
+      super.performAction(inputEvent, action, event);
+      if (Registry.is("actionSystem.fixLostTyping")) {
+        IdeEventQueue.getInstance().doWhenReady(() -> IdeEventQueue.getInstance().getKeyEventDispatcher().resetState());
+      }
     }
   };
-
-  static void doPerformActionImpl(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
-    e.consume();
-
-    DataContext ctx = actionEvent.getDataContext();
-    if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
-      ActionGroup group = (ActionGroup)action;
-      String groupId = ActionManager.getInstance().getId(action);
-      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        group.getTemplatePresentation().getText(), group, ctx,
-        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-        false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(groupId));
-      if (e instanceof MouseEvent) {
-        popup.show(new RelativePoint((MouseEvent)e));
-      }
-      else {
-        popup.showInBestPositionFor(ctx);
-      }
-    }
-    else {
-      ActionUtil.performActionDumbAware(action, actionEvent);
-    }
-
-    if (e instanceof KeyEvent && Registry.is("actionSystem.fixLostTyping")) {
-      IdeEventQueue.getInstance().doWhenReady(() -> IdeEventQueue.getInstance().getKeyEventDispatcher().resetState());
-    }
-  }
 
   public boolean processAction(@NotNull InputEvent e, @NotNull ActionProcessor processor) {
     boolean result = processAction(
@@ -705,7 +677,7 @@ public final class IdeKeyEventDispatcher {
       try (AccessToken ignore = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(true)) {
         processor.performAction(e, action, actionEvent);
       }
-      actionManager.fireAfterActionPerformed(action, actionEvent.getDataContext(), actionEvent);
+      actionManager.fireAfterActionPerformed(action, actionEvent);
       logTimeMillis(startedAt, action);
       return;
     }

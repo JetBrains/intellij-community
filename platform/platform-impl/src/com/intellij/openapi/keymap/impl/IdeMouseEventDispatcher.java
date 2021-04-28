@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher.doPerformActionImpl;
 import static java.awt.event.MouseEvent.*;
 
 /**
@@ -273,21 +272,12 @@ public final class IdeMouseEventDispatcher {
     return new ActionProcessor() {
       @NotNull
       @Override
-      public AnActionEvent createEvent(InputEvent inputEvent,
+      public AnActionEvent createEvent(@NotNull InputEvent inputEvent,
                                        @NotNull DataContext context,
                                        @NotNull String place,
                                        @NotNull Presentation presentation,
                                        @NotNull ActionManager manager) {
         return new AnActionEvent(inputEvent, context, ActionPlaces.MOUSE_SHORTCUT, presentation, manager, modifiers);
-      }
-
-      @Override
-      public void onUpdatePassed(InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
-      }
-
-      @Override
-      public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
-        doPerformActionImpl(e, action, actionEvent);
       }
     };
   }
