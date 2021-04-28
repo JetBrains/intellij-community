@@ -455,7 +455,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     type.matchers.addAll(fileTypeBean.getMatchers());
     for (FileNameMatcher matcher : fileTypeBean.getMatchers()) {
-      myPatternsTable.addAssociation(matcher, coreDescriptorFor(type.fileType));
+      myPatternsTable.addAssociation(matcher, descriptorForStandard(type));
     }
     return type.fileType;
   }
@@ -1265,12 +1265,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   /**
    * Registers a standard file type. Doesn't notifyListeners any change events.
+   * returns list of shown conflict notifications.
    */
   @NotNull
   private List<ConflictingFileTypeMappingTracker.ResolveConflictResult> registerFileTypeWithoutNotification(@NotNull FileType newFileType,
-                                                   @NotNull PluginDescriptor newPluginDescriptor,
-                                                   @NotNull List<? extends FileNameMatcher> matchers,
-                                                   boolean addScheme) {
+                                                                                                            @NotNull PluginDescriptor newPluginDescriptor,
+                                                                                                            @NotNull List<? extends FileNameMatcher> matchers,
+                                                                                                            boolean addScheme) {
     List<ConflictingFileTypeMappingTracker.ResolveConflictResult> notificationsShown = new ArrayList<>();
     FileTypeWithDescriptor newFtd = new FileTypeWithDescriptor(newFileType, newPluginDescriptor);
     if (addScheme) {
@@ -1499,7 +1500,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private void associate(@NotNull FileTypeWithDescriptor ftd, @NotNull FileNameMatcher matcher, boolean fireChange) {
+  void associate(@NotNull FileTypeWithDescriptor ftd, @NotNull FileNameMatcher matcher, boolean fireChange) {
     FileType fileType = ftd.fileType;
     // delete "this matcher is removed from this file type" record
     myRemovedMappingTracker.removeIf(mapping -> matcher.equals(mapping.getFileNameMatcher()) && fileType.getName().equals(mapping.getFileTypeName()));

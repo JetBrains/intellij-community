@@ -26,6 +26,7 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     assertConflict(bundled1, bundled2, false, false);
     assertConflict(bundled1, core, false, true);
     assertConflict(bundled1, user1, true, true);
+    // plugin (even bundled) should win over core
     assertConflict(core, bundled1, true, true);
     assertConflict(core, user1, true, true);
     assertConflict(user1, bundled1, false, true);

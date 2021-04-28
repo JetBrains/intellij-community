@@ -1151,7 +1151,8 @@
     <notificationGroup id="Plugin Error" displayType="BALLOON" bundle="messages.IdeBundle" key="title.plugin.error"/>
     <notificationGroup id="Plugins updates" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Failed to remove BOM" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.failed.to.remove.bom"/>
-    <notificationGroup id="File type recognized" displayType="BALLOON" bundle="messages.FileTypesBundle" key="notification.title.file.type.recognized"/>
+    <notificationGroup id="File type conflict" displayType="BALLOON" bundle="messages.FileTypesBundle" key="notification.title.file.type.conflict"/>
+    <notificationGroup id="Pattern reassigned" displayType="BALLOON" bundle="messages.FileTypesBundle" key="dialog.title.pattern.reassigned"/>
     <notificationGroup id="Project Settings" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.project.settings"/>
     <notificationGroup id="Settings Error" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.settings.error"/>
     <notificationGroup id="Heap Dump Analysis" displayType="STICKY_BALLOON"/>
