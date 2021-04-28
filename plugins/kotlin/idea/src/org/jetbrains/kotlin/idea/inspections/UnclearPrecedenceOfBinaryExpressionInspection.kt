@@ -58,12 +58,14 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
                 current.dfs().any { doNeedToPutParentheses(it, reportEvenObviousCases = true) } -> ProblemHighlightType.INFORMATION
                 else -> return
             }
-            holder.registerProblem(
-                current.expression,
-                KotlinBundle.message("unclear.precedence.of.binary.expression.inspection"),
-                highlightType,
-                AddParenthesesFix(putParenthesesInObviousCases = reportEvenObviousCases || highlightType == ProblemHighlightType.INFORMATION)
-            )
+            if (holder.isOnTheFly || highlightType !== ProblemHighlightType.INFORMATION) {
+                holder.registerProblem(
+                    current.expression,
+                    KotlinBundle.message("unclear.precedence.of.binary.expression.inspection"),
+                    highlightType,
+                    AddParenthesesFix(putParenthesesInObviousCases = reportEvenObviousCases || highlightType == ProblemHighlightType.INFORMATION)
+                )
+            }
         }
     }
 
