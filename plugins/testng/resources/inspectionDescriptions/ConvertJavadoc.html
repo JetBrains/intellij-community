@@ -1,3 +1,17 @@
 <html><body>
     This inspection asserts your TestNG tests with Javadoc annotations and allows to convert them to JDK annotations.
+<p>Example: </p>
+<pre>
+    /**
+     * @testng.before-test
+     */
+    public void sample() {}
+</pre>
+<p>After applying the quick-fix the code looks as follows:</p>
+<pre>
+    @BeforeTest
+    public void sample() {}
+</pre>
+    <!-- tooltip end -->
+<p>
 </body></html>

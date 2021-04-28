@@ -1,9 +1,17 @@
 <html>
 <body>
-Reports any <b>synchronized</b>
-block which locks on an instance of <b>java.util.concurrent.locks.Lock</b>.
-Such synchronization is almost certainly inadvertent, and appropriate versions of <b>.lock()</b>
-and <b>.unlock()</b> should be used instead.
+Reports any <code>synchronized</code>
+block which locks on an instance of <code>java.util.concurrent.locks.Lock</code>.
+Such synchronization is almost certainly inadvertent, and appropriate versions of <code>.lock()</code>
+and <code>.unlock()</code> should be used instead.
+<p>Example: </p>
+<pre>
+  final ReentrantLock lock = new ReentrantLock();
+
+  public void foo() {
+    synchronized (lock) {}
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 
