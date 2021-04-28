@@ -113,12 +113,12 @@ class GitDeleteBranchOperation extends GitBranchOperation {
           markSuccessful(repository);
         }
         else {
-          fatalError(getErrorTitle(), forceDeleteResult.getErrorOutputAsHtmlString());
+          fatalError(getErrorTitle(), forceDeleteResult);
           fatalErrorHappened = true;
         }
       }
       else {
-        fatalError(getErrorTitle(), result.getErrorOutputAsJoinedString());
+        fatalError(getErrorTitle(), result);
         fatalErrorHappened = true;
       }
     }

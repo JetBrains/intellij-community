@@ -61,8 +61,7 @@ class GitRenameBranchOperation extends GitBranchOperation {
         markSuccessful(repository);
       }
       else {
-        fatalError(GitBundle.message("git.rename.branch.could.not.rename.from.to", myCurrentName, myNewName),
-                   result.getErrorOutputAsJoinedString());
+        fatalError(GitBundle.message("git.rename.branch.could.not.rename.from.to", myCurrentName, myNewName), result);
         return;
       }
     }

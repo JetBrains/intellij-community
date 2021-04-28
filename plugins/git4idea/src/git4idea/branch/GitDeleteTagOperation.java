@@ -76,7 +76,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
         markSuccessful(repository);
       }
       else {
-        fatalError(GitBundle.message("delete.tag.operation.tag.was.not.deleted", myTagName), result.getErrorOutputAsJoinedString());
+        fatalError(GitBundle.message("delete.tag.operation.tag.was.not.deleted", myTagName), result);
         return;
       }
     }
