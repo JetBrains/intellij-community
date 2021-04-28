@@ -147,7 +147,16 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static @NotNull @Nls String getActionTooltip() {
-    return IdeBundle.message("settings.entry.point.tooltip");
+    boolean updates = myShowPlatformUpdateIcon || myShowPluginsUpdateIcon;
+    if (!updates) {
+      for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
+        if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
+          updates = true;
+          break;
+        }
+      }
+    }
+    return IdeBundle.message(updates ? "settings.entry.point.with.updates.tooltip" : "settings.entry.point.tooltip");
   }
 
   private static void resetActionIcon() {
