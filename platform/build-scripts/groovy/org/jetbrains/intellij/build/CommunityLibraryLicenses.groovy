@@ -233,8 +233,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "DecentXML", libraryName: "decentxml",
                        license: "New BSD License", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php",
                        url: "https://code.google.com/p/decentxml"),
-    new LibraryLicense(name: "directory-watcher", libraryName: "directory-watcher",
-                       url: "https://github.com/gmethvin/directory-watcher/").apache(),
     new LibraryLicense(name: "docutils", attachedTo: "intellij.python.helpers", version: "0.8", license: "BSD",
                        url: "http://docutils.sourceforge.net/"),
     new LibraryLicense(libraryName: "DTDParser", version: "1.13", license: "LGPL", url: "http://sourceforge.net/projects/dtdparser/",

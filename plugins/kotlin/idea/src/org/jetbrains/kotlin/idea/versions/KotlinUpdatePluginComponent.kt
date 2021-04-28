@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vfs.JarFileSystem
@@ -32,13 +33,15 @@ import java.io.File
  * Component forces update for built-in libraries in plugin directory. They are ignored because of
  * com.intellij.util.indexing.FileBasedIndex.isUnderConfigOrSystem()
  */
-class KotlinUpdatePluginStartupActivity : StartupActivity {
+internal class KotlinUpdatePluginStartupActivity : StartupActivity.DumbAware {
+    init {
+        if (isUnitTestMode()) {
+            throw ExtensionNotApplicableException.INSTANCE
+        }
+    }
 
     override fun runActivity(project: Project) {
-        if (isUnitTestMode()) return
-
-        val propertiesComponent = PropertiesComponent.getInstance() ?: return
-
+        val propertiesComponent = PropertiesComponent.getInstance()
         val installedKotlinVersion = propertiesComponent.getValue(INSTALLED_KOTLIN_VERSION)
 
         if (KotlinPluginUtil.getPluginVersion() != installedKotlinVersion) {

@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import java.net.URLClassLoader
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
@@ -25,14 +26,52 @@ class IdeBuilder(val pluginBuilder: PluginBuilder,
                  builder: DistributionJARsBuilder,
                  homePath: Path,
                  runDir: Path,
-                 private val moduleNameToPlugin: Map<String, BuildItem>) {
-  fun moduleChanged(moduleName: String, reason: Any) {
-    val plugin = moduleNameToPlugin.get(moduleName) ?: return
-    pluginBuilder.addDirtyPluginDir(plugin, reason)
+                 outDir: Path,
+                 moduleNameToPlugin: Map<String, BuildItem>) {
+  private class ModuleChangeInfo(@JvmField val moduleName: String,
+                                 @JvmField var file: Path,
+                                 @JvmField var plugin: BuildItem,
+                                 @JvmField var timestamp: Long)
+
+  private val moduleChanges = moduleNameToPlugin.entries.map {
+    val file = outDir.resolve("${it.key}/classpath.index")
+    val timestamp = try {
+      Files.getLastModifiedTime(file).toMillis()
+    }
+    catch (e: NoSuchFileException) {
+      -1
+    }
+
+    ModuleChangeInfo(moduleName = it.key,
+                     file = file,
+                     plugin = it.value,
+                     timestamp = timestamp)
   }
 
   init {
     Files.writeString(runDir.resolve("libClassPath.txt"), createLibClassPath(pluginBuilder.buildContext, builder, homePath))
+  }
+
+  fun checkChanged() {
+    LOG.info("Checking changes...")
+    var changedModules = 0
+    for (item in moduleChanges) {
+      val lastModifiedTime = try {
+        Files.getLastModifiedTime(item.file).toMillis()
+      }
+      catch (e: NoSuchFileException) {
+        // means that compilation was performed and file was deleted
+        -1
+      }
+
+      if (item.timestamp != lastModifiedTime || lastModifiedTime == -1L) {
+        pluginBuilder.addDirtyPluginDir(item.plugin, item.moduleName)
+        changedModules++
+      }
+
+      item.timestamp = lastModifiedTime
+    }
+    LOG.info("$changedModules changed modules")
   }
 }
 
@@ -96,7 +135,12 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   LOG.info("Initial full build of ${pluginLayouts.size} plugins in ${TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start)}s")
 
   val pluginBuilder = PluginBuilder(builder, buildContext, outDir)
-  return IdeBuilder(pluginBuilder, builder, homePath, runDir, moduleNameToPlugin)
+  return IdeBuilder(pluginBuilder = pluginBuilder,
+                    builder = builder,
+                    homePath = homePath,
+                    runDir = runDir,
+                    outDir = outDir,
+                    moduleNameToPlugin = moduleNameToPlugin)
 }
 
 private fun createLibClassPath(buildContext: BuildContext,
