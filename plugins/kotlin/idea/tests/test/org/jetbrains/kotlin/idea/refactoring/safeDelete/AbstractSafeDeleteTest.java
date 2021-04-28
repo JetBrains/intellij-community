@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
@@ -58,6 +59,10 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
 
     public void doJavaMethodTest(@NotNull String path) throws Exception {
         doTest(path, PsiMethod.class, true);
+    }
+    
+    public void doJavaParameterTest(@NotNull String path) throws Exception {
+        doTest(path, PsiParameter.class, true);
     }
 
     public void doPropertyTest(@NotNull String path) throws Exception {

@@ -1125,4 +1125,17 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsagesExt2.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin")
+    public static class JavaParameterWithKotlin extends AbstractSafeDeleteTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doJavaParameterTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("hierarchyWithoutConflict.java")
+        public void testHierarchyWithoutConflict() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin/hierarchyWithoutConflict.java");
+        }
+    }
 }

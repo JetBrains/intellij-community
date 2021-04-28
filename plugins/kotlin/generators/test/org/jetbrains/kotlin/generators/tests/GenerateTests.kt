@@ -37,7 +37,10 @@ import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProv
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.AbstractSurroundWithTest
 import org.jetbrains.kotlin.idea.codeInsight.unwrap.AbstractUnwrapRemoveTest
 import org.jetbrains.kotlin.idea.completion.test.*
-import org.jetbrains.kotlin.idea.completion.test.handlers.*
+import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractBasicCompletionHandlerTest
+import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionCharFilterTest
+import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractKeywordCompletionHandlerTest
+import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractSmartCompletionHandlerTest
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletionWeigherTest
 import org.jetbrains.kotlin.idea.configuration.AbstractGradleConfigureProjectByChangingFileTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractJavaToKotlinCopyPasteConversionTest
@@ -70,9 +73,9 @@ import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
+import org.jetbrains.kotlin.idea.imports.AbstractAutoImportTest
 import org.jetbrains.kotlin.idea.imports.AbstractJsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
-import org.jetbrains.kotlin.idea.imports.AbstractAutoImportTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
@@ -87,14 +90,18 @@ import org.jetbrains.kotlin.idea.kdoc.AbstractKDocTypingTest
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
 import org.jetbrains.kotlin.idea.maven.configuration.AbstractMavenConfigureProjectByChangingFileTest
 import org.jetbrains.kotlin.idea.navigation.*
+import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
 import org.jetbrains.kotlin.idea.parameterInfo.AbstractParameterInfoTest
+import org.jetbrains.kotlin.idea.perf.synthetic.*
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.refactoring.AbstractNameSuggestionProviderTest
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractCopyTest
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractMultiModuleCopyTest
+import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineMultiFileTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTest
+import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTestWithSomeDescriptors
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractExtractionTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMoveTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMultiModuleMoveTest
@@ -122,6 +129,7 @@ import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.jps.build.*
 import org.jetbrains.kotlin.jps.incremental.AbstractJsProtoComparisonTest
 import org.jetbrains.kotlin.jps.incremental.AbstractJvmProtoComparisonTest
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.inference.common.AbstractCommonConstraintCollectorTest
 import org.jetbrains.kotlin.nj2k.inference.mutability.AbstractMutabilityInferenceTest
 import org.jetbrains.kotlin.nj2k.inference.nullability.AbstractNullabilityInferenceTest
@@ -129,11 +137,6 @@ import org.jetbrains.kotlin.pacelize.ide.test.AbstractParcelizeCheckerTest
 import org.jetbrains.kotlin.pacelize.ide.test.AbstractParcelizeQuickFixTest
 import org.jetbrains.kotlin.psi.patternMatching.AbstractPsiUnifierTest
 import org.jetbrains.kotlin.search.AbstractAnnotatedMembersSearchTest
-import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
-import org.jetbrains.kotlin.idea.perf.synthetic.*
-import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineMultiFileTest
-import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTestWithSomeDescriptors
-import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.search.AbstractInheritorsSearchTest
 import org.jetbrains.kotlin.shortenRefs.AbstractShortenRefsTest
 import org.jetbrains.kotlin.test.TargetBackend
@@ -540,6 +543,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava", testMethodName = "doTypeParameterTestWithJava")
             model("refactoring/safeDelete/deleteValueParameter/kotlinValueParameter", testMethodName = "doValueParameterTest")
             model("refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava", testMethodName = "doValueParameterTestWithJava")
+            model("refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin", pattern = JAVA, testMethodName = "doJavaParameterTest")
         }
 
         testClass<AbstractReferenceResolveTest> {

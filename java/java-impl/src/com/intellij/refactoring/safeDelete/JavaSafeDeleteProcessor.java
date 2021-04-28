@@ -129,8 +129,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
     if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
-      final Set<PsiParameter> parametersToDelete = new HashSet<>();
-      parametersToDelete.add((PsiParameter) element);
+      final Set<PsiElement> parametersToDelete = new HashSet<>();
+      parametersToDelete.add(element);
       final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter) element);
       final List<PsiMethod> superMethods = new ArrayList<>(Arrays.asList(method.findDeepestSuperMethods()));
       if (superMethods.isEmpty()) {
@@ -140,7 +140,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       for (PsiMethod superMethod : superMethods) {
         parametersToDelete.add(superMethod.getParameterList().getParameters()[parameterIndex]);
         OverridingMethodsSearch.search(superMethod).forEach(overrider -> {
-          parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex]);
+          parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex].getNavigationElement());
           return true;
         });
       }
