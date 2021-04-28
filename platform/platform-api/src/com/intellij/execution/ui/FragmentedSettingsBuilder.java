@@ -83,9 +83,15 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     }
   }
 
+  private @NotNull List<SettingsEditorFragment<Settings, ?>> getFragments() {
+    List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(myFragments);
+    fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getPriority));
+    return fragments;
+  }
+
   @Override
   public @NotNull Collection<SettingsEditor<Settings>> getEditors() {
-    return new ArrayList<>(myFragments);
+    return new ArrayList<>(getFragments());
   }
 
   @Override
@@ -94,10 +100,9 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
       myPanel.setBorder(JBUI.Borders.emptyLeft(5));
       addLine(new JSeparator());
     }
-    List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(myFragments);
+    List<SettingsEditorFragment<Settings, ?>> fragments = getFragments();
     List<SettingsEditorFragment<Settings, ?>> subGroups = ContainerUtil.filter(fragments, fragment -> !fragment.getChildren().isEmpty());
     fragments.removeAll(subGroups);
-    fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getCommandLinePosition));
     buildBeforeRun(fragments);
     addLine(buildHeader(fragments));
     myGroupInset = myMain == null ? 0 : GROUP_INSET;
@@ -150,7 +155,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   }
 
   private void buildBeforeRun(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
-    SettingsEditorFragment<Settings, ?> beforeRun = ContainerUtil.find(fragments, fragment -> fragment.getCommandLinePosition() == -2);
+    SettingsEditorFragment<Settings, ?> beforeRun = ContainerUtil.find(fragments, fragment -> fragment.isBeforeRun());
     if (beforeRun != null) {
       addLine(beforeRun.getComponent(), TOP_INSET, 0, TOP_INSET * 2);
       fragments.remove(beforeRun);
@@ -160,7 +165,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   private JComponent buildHeader(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(5, 0));
-    SettingsEditorFragment<Settings, ?> label = ContainerUtil.find(fragments, fragment -> fragment.getCommandLinePosition() == -1);
+    SettingsEditorFragment<Settings, ?> label = ContainerUtil.find(fragments, fragment -> fragment.isHeader());
     if (label != null) {
       panel.add(label.getComponent(), BorderLayout.WEST);
       fragments.remove(label);
@@ -276,7 +281,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   }
 
   private DefaultActionGroup buildGroup(Ref<? super JComponent> lastSelected) {
-    return buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null), lastSelected);
+    return buildGroup(ContainerUtil.filter(getFragments(), fragment -> fragment.getName() != null), lastSelected);
   }
 
   private List<SettingsEditorFragment<Settings, ?>> restoreGroups(List<? extends SettingsEditorFragment<Settings, ?>> fragments) {
@@ -290,7 +295,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   }
 
   private void buildCommandLinePanel(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
-    List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.getCommandLinePosition() > 0);
+    List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.isCommandLine());
     if (list.isEmpty()) return;
     fragments.removeAll(list);
     CommandLinePanel panel = new CommandLinePanel(list, myConfigId, this);
