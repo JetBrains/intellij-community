@@ -40,7 +40,6 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
             val dependency = result[i]
             val dependencySubstitute = when (dependency) {
                 is FileCollectionDependency -> getFileCollectionDependencySubstitute(dependency)
-                is ExternalLibraryDependency -> getExternalLibraryDependencySubstitute(dependency)
                 else -> DependencySubstitute.NoSubstitute
             }
 
@@ -106,11 +105,6 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
             buildSubstituteIfNecessary(libraryFile)
         }
 
-    private fun getExternalLibraryDependencySubstitute(dependency: ExternalLibraryDependency): DependencySubstitute =
-        resolverCtx.dependencySubstitutionCache.getOrPut(dependency.id) {
-            val libraryFile = dependency.file ?: return@getOrPut DependencySubstitute.NoSubstitute
-            buildSubstituteIfNecessary(libraryFile)
-        }
 
     private fun buildSubstituteIfNecessary(libraryFile: File): DependencySubstitute {
         // need to check whether `library` points to a real KLIB,
