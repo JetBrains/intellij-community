@@ -233,7 +233,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       VcsNotifier.getInstance(project)
         .notifyError(getNotificationErrorDisplayId(),
                      GitBundle.message("merge.action.operation.failed", getActionName()),
-                     result.getErrorOutputAsJoinedString());
+                     result.getErrorOutputAsHtmlString());
       repository.update();
     }
   }

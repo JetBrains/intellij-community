@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
@@ -307,7 +308,7 @@ final class GitPushResultNotification extends Notification {
         description = GitBundle.message("push.notification.description.rejected.by.remote", sourceBranch, targetBranch);
         break;
       case ERROR:
-        description = result.getError();
+        description = XmlStringUtil.escapeString(result.getError());
         break;
       default:
         LOG.error("Unexpected push result: " + result);

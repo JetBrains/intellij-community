@@ -40,6 +40,7 @@ import com.intellij.util.progress.ComponentVisibilityProgressManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -350,7 +351,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
             }
             else {
               myRepositoryTestValidationInfo =
-                new ValidationInfo(DvcsBundle.message("clone.repository.url.test.failed.message", myTestResult.myErrorMessage),
+                new ValidationInfo(DvcsBundle.message("clone.repository.url.test.failed.message",
+                                                      XmlStringUtil.escapeString(myTestResult.myErrorMessage)),
                                    myRepositoryUrlCombobox);
               startTrackingValidation();
             }
