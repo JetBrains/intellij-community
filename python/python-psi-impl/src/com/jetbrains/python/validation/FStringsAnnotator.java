@@ -23,7 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyFStringFragment;
 import com.jetbrains.python.psi.PyFStringFragmentFormatPart;
 import com.jetbrains.python.psi.PyFormattedStringElement;
@@ -42,16 +42,16 @@ public class FStringsAnnotator extends PyAnnotator {
     final List<PyFStringFragment> enclosingFragments = PsiTreeUtil.collectParents(node, PyFStringFragment.class, false,
                                                                                   PyStringLiteralExpression.class::isInstance);
     if (enclosingFragments.size() > 1) {
-      report(node, PyBundle.message("ANN.fstrings.expression.fragment.inside.fstring.nested.too.deeply"));
+      report(node, PyPsiBundle.message("ANN.fstrings.expression.fragment.inside.fstring.nested.too.deeply"));
     }
     final PsiElement typeConversion = node.getTypeConversion();
     if (typeConversion != null) {
       final String conversionChar = typeConversion.getText().substring(1);
       if (conversionChar.isEmpty()) {
-        report(typeConversion, PyBundle.message("ANN.fstrings.missing.conversion.character"));
+        report(typeConversion, PyPsiBundle.message("ANN.fstrings.missing.conversion.character"));
       }
       else if (conversionChar.length() > 1 || "sra".indexOf(conversionChar.charAt(0)) < 0) {
-        report(typeConversion, PyBundle.message("ANN.fstrings.illegal.conversion.character", conversionChar));
+        report(typeConversion, PyPsiBundle.message("ANN.fstrings.illegal.conversion.character", conversionChar));
       }
     }
 
@@ -67,7 +67,7 @@ public class FStringsAnnotator extends PyAnnotator {
         final TextRange range = fragment.getExpressionContentRange();
         for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
           if (wholeNodeText.charAt(i) == '\\') {
-            reportCharacter(fragment, i, PyBundle.message("ANN.fstrings.expression.fragments.cannot.include.backslashes"));
+            reportCharacter(fragment, i, PyPsiBundle.message("ANN.fstrings.expression.fragments.cannot.include.backslashes"));
           }
         }
       }
@@ -91,7 +91,7 @@ public class FStringsAnnotator extends PyAnnotator {
             i += 2;
             continue;
           }
-          reportCharacter(node, i, PyBundle.message("ANN.fstrings.single.right.brace.not.allowed.inside.fstrings"));
+          reportCharacter(node, i, PyPsiBundle.message("ANN.fstrings.single.right.brace.not.allowed.inside.fstrings"));
         }
         i++;
       }
@@ -110,7 +110,7 @@ public class FStringsAnnotator extends PyAnnotator {
   public void visitComment(@NotNull PsiComment comment) {
     final boolean insideFragment = PsiTreeUtil.getParentOfType(comment, PyFStringFragment.class) != null;
     if (insideFragment) {
-      report(comment, PyBundle.message("ANN.fstrings.expression.fragments.cannot.include.line.comments"));
+      report(comment, PyPsiBundle.message("ANN.fstrings.expression.fragments.cannot.include.line.comments"));
     }
   }
 

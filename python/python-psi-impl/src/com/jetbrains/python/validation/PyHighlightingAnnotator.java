@@ -21,7 +21,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
@@ -47,7 +46,7 @@ public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRan
         .ofNullable(node.getNode())
         .map(astNode -> astNode.findChildByType(PyTokenTypes.ASYNC_KEYWORD))
         .ifPresent(asyncNode -> getHolder().newAnnotation(HighlightSeverity.ERROR,
-                                                          PyBundle.message("ANN.function.cannot.be.async", node.getName())).range(asyncNode).create());
+                                                          PyPsiBundle.message("ANN.function.cannot.be.async", node.getName())).range(asyncNode).create());
     }
   }
 

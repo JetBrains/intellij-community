@@ -20,8 +20,8 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -50,7 +50,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression expression = node.getAssignedValue();
     if (expression instanceof PyAssignmentExpression) {
       getHolder()
-        .newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.unparenthesized.assignment.expression.value"))
+        .newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.unparenthesized.assignment.expression.value"))
         .range(expression)
         .create();
     }
@@ -82,7 +82,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression target = node.getForPart().getTarget();
     if (target != null) {
       target.accept(new ExprVisitor(Operation.For));
-      checkNotAssignmentExpression(target, PyBundle.message("ANN.assignment.expression.as.a.target"));
+      checkNotAssignmentExpression(target, PyPsiBundle.message("ANN.assignment.expression.as.a.target"));
     }
   }
 
@@ -99,7 +99,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression expression = node.getExpression();
     if (expression instanceof PyAssignmentExpression) {
       getHolder()
-        .newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.unparenthesized.assignment.expression.statement"))
+        .newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.unparenthesized.assignment.expression.statement"))
         .range(expression)
         .create();
     }
@@ -110,14 +110,14 @@ public class AssignTargetAnnotator extends PyAnnotator {
     final PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(node, PyComprehensionElement.class, true, ScopeOwner.class);
     if (ScopeUtil.getScopeOwner(comprehensionElement) instanceof PyClass) {
       getHolder().newAnnotation(HighlightSeverity.ERROR,
-                                PyBundle.message("ANN.assignment.expressions.within.a.comprehension.cannot.be.used.in.a.class.body")).create();
+                                PyPsiBundle.message("ANN.assignment.expressions.within.a.comprehension.cannot.be.used.in.a.class.body")).create();
     }
   }
 
   @Override
   public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
-    final String targetMessage = PyBundle.message("ANN.assignment.expression.as.a.target");
-    final String iterableMessage = PyBundle.message("ANN.assignment.expression.in.an.iterable");
+    final String targetMessage = PyPsiBundle.message("ANN.assignment.expression.as.a.target");
+    final String iterableMessage = PyPsiBundle.message("ANN.assignment.expression.in.an.iterable");
 
     node.getForComponents().forEach(
       it -> {
@@ -174,10 +174,10 @@ public class AssignTargetAnnotator extends PyAnnotator {
       }
       if (PyNames.DEBUG.equals(targetName)) {
         if (LanguageLevel.forElement(node).isPy3K()) {
-          getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.assignment.to.keyword")).range(node).create();
+          getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.assignment.to.keyword")).range(node).create();
         }
         else {
-          getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.cannot.assign.to.debug")).range(node).create();
+          getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.cannot.assign.to.debug")).range(node).create();
         }
       }
     }
@@ -285,12 +285,12 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.assignment.to.keyword")).range(node).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.assignment.to.keyword")).range(node).create();
     }
 
     @Override
     public void visitPyBoolLiteralExpression(@NotNull PyBoolLiteralExpression node) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.assignment.to.keyword")).range(node).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.assignment.to.keyword")).range(node).create();
     }
   }
 }

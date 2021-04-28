@@ -18,7 +18,7 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyStarExpression;
@@ -34,7 +34,7 @@ public class StarAnnotator extends PyAnnotator {
   public void visitPyStarExpression(@NotNull PyStarExpression node) {
     super.visitPyStarExpression(node);
     if (!node.isAssignmentTarget() && !allowedUnpacking(node) && !(node.getParent() instanceof PyParameterTypeList)) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.can.t.use.starred.expression.here")).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.can.t.use.starred.expression.here")).create();
     }
   }
 

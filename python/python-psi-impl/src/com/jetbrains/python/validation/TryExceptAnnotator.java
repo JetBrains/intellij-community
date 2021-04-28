@@ -3,7 +3,7 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ public class TryExceptAnnotator extends PyAnnotator {
     boolean haveDefaultExcept = false;
     for (PyExceptPart part : exceptParts) {
       if (haveDefaultExcept) {
-        getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.default.except.must.be.last")).range(part).create();
+        getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.default.except.must.be.last")).range(part).create();
       }
       if (part.getExceptClass() == null) {
         haveDefaultExcept = true;
@@ -31,7 +31,7 @@ public class TryExceptAnnotator extends PyAnnotator {
   public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
     if (node.getExpressions().length == 0 &&
         PsiTreeUtil.getParentOfType(node, PyExceptPart.class, PyFinallyPart.class, PyFunction.class) == null) {
-      markError(node, PyBundle.message("ANN.no.exception.to.reraise"));
+      markError(node, PyPsiBundle.message("ANN.no.exception.to.reraise"));
     }
   }
 }
