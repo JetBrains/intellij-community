@@ -14,7 +14,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.*;
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1545,17 +1548,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         private void showInspectionsHint(MouseEvent me) {
           DataContext context = getDataContext();
           AnActionEvent event = AnActionEvent.createFromInputEvent(me, place, presentation, context, false, true);
-          if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            return;
-          }
-
-          if (presentation.isEnabled()) {
-            ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-            manager.fireBeforeActionPerformed(action, event);
-
-            ActionUtil.performAction(action, event);
-
-            manager.fireAfterActionPerformed(action, event);
+          if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event);
             ActionsCollector.getInstance().record(event.getProject(), action, event, null);
 
             ActionToolbar toolbar = ActionToolbar.findToolbarBy(StatusButton.this);

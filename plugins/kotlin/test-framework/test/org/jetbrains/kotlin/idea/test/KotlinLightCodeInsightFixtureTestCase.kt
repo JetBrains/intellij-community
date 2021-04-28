@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Caret
@@ -269,16 +270,11 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         val action = managerEx.getAction(actionId)
         val event = AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, Presentation(), managerEx, 0)
 
-        action.update(event)
-        if (!event.presentation.isEnabled) {
-            return false
+        if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+            return true
         }
-
-        managerEx.fireBeforeActionPerformed(action, event)
-        action.actionPerformed(event)
-
-        managerEx.fireAfterActionPerformed(action, event)
-        return true
+        return false
     }
 
     fun JavaCodeInsightTestFixture.configureByFile(file: File): PsiFile {

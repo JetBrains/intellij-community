@@ -45,19 +45,16 @@ public final class MacGestureSupportForEditor {
       for (AnAction action : actions) {
         DataContext dataContext = DataManager.getInstance().getDataContext(component);
         Presentation presentation = myPresentationFactory.getPresentation(action);
-        AnActionEvent actionEvent =
-          new AnActionEvent(null, dataContext, ActionPlaces.FORCE_TOUCH, presentation,
-                            ActionManager.getInstance(),
-                            0);
+        AnActionEvent actionEvent = new AnActionEvent(null, dataContext, ActionPlaces.FORCE_TOUCH, presentation, actionManager, 0);
         action.beforeActionPerformedUpdate(actionEvent);
 
         if (presentation.isEnabled()) {
           actionManager.fireBeforeActionPerformed(action, actionEvent);
-          final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-
+          Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
           if (context != null && !context.isShowing()) continue;
 
           ActionUtil.performAction(action, actionEvent);
+          actionManager.fireAfterActionPerformed(action, actionEvent);
         }
       }
     }

@@ -112,10 +112,7 @@ public final class EditorTestUtil {
       assertFalse("Action " + action + " is disabled", assertActionIsEnabled);
       return;
     }
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.fireBeforeActionPerformed(action, event);
-    ActionUtil.performAction(action, event);
-    actionManager.fireAfterActionPerformed(action, event);
+    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
   }
 
   @NotNull

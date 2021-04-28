@@ -8,7 +8,6 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -153,8 +152,7 @@ class ContentTabLabel extends BaseLabel {
         for (AnAction action : myLayout.myDoubleClickActions) {
           AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(action, event);
-            ActionUtil.performActionDumbAware(action, event);
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event);
           }
         }
       }
