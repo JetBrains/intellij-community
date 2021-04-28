@@ -32,6 +32,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.swing.*;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.util.Arrays;
@@ -46,16 +48,11 @@ import java.util.Arrays;
 public abstract class AbstractImportTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(AbstractImportTestsAction.class);
   public static final String TEST_HISTORY_SIZE = "test_history_size";
-  private SMTRunnerConsoleProperties myProperties;
 
   public AbstractImportTestsAction(@Nullable @NlsActions.ActionText String text, @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public AbstractImportTestsAction(SMTRunnerConsoleProperties properties, @Nullable @NlsActions.ActionText String text, @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon) {
-    this(text, description, icon);
-    myProperties = properties;
-  }
 
   public static int getHistorySize() {
     int historySize;
@@ -141,7 +138,9 @@ public abstract class AbstractImportTestsAction extends AnAction {
       myProject = project;
       class TerminateParsingException extends SAXException { }
       try (InputStream inputStream = new BufferedInputStream(new FileInputStream(VfsUtilCore.virtualToIoFile(myFile)))) {
-        SAXParserFactory.newInstance().newSAXParser().parse(inputStream, new DefaultHandler() {
+        SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+        parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        parser.parse(inputStream, new DefaultHandler() {
           boolean isConfigContent = false;
           final StringBuilder builder = new StringBuilder();
 

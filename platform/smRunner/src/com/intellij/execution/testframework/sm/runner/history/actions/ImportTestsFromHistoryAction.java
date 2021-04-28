@@ -24,7 +24,7 @@ public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
   private final String myFileName;
 
   public ImportTestsFromHistoryAction(@Nullable SMTRunnerConsoleProperties properties, Project project, String name) {
-    super(properties, StringUtil.escapeMnemonics(getPresentableText(project, name)), getPresentableText(project, name), getIcon(project, name));
+    super(StringUtil.escapeMnemonics(getPresentableText(project, name)), getPresentableText(project, name), getIcon(project, name));
     myFileName = name;
   }
 
