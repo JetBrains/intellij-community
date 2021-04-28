@@ -43,6 +43,7 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
 
     for (lesson in lessons) {
       if (lesson !is KLesson || lesson.testScriptProperties.skipTesting) continue
+      if (durations.containsKey(lesson)) continue // Just duplicate from another module
       progress.checkCanceled()
       val duration = TimeoutUtil.measureExecutionTime<Throwable> {
         runSingleLesson(lesson)
