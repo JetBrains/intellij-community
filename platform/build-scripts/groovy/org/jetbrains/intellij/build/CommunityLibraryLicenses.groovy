@@ -512,6 +512,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "OWASP Java HTML Sanitizer", libraryName: "owasp-java-html-sanitizer",
                        url: "https://github.com/OWASP/java-html-sanitizer/",
                        licenseUrl: "https://github.com/OWASP/java-html-sanitizer/blob/master/COPYING").apache(),
+    new LibraryLicense(name: "package-search-version-utils", libraryName: "package-search-version-utils",
+                       url: "https://package-search.jetbrains.com", version: "1.0.0").apache(),
     new LibraryLicense(name: "PEPK", libraryName: "pepk", url: "http://source.android.com/",
                        version: LibraryLicense.CUSTOM_REVISION).apache(),
     new LibraryLicense(name: "Perfetto protos", libraryName: "perfetto-proto").apache(),

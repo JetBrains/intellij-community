@@ -51,5 +51,16 @@
     <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module-library">
+      <library name="package-search-version-utils">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/package-version-utils-1.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/src/package-version-utils-1.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
