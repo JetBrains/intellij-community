@@ -15263,9 +15263,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/wrapWithSafeLetCall/argumentNullable.kt");
         }
 
+        @TestMetadata("callWithLambdaArgument.kt")
+        public void testCallWithLambdaArgument() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/callWithLambdaArgument.kt");
+        }
+
         @TestMetadata("chainedCallTypeMismatch.kt")
         public void testChainedCallTypeMismatch() throws Exception {
             runTest("testData/quickfix/wrapWithSafeLetCall/chainedCallTypeMismatch.kt");
+        }
+
+        @TestMetadata("chainedCallTypeMismatch2.kt")
+        public void testChainedCallTypeMismatch2() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/chainedCallTypeMismatch2.kt");
         }
 
         @TestMetadata("chainedUnsafeCall.kt")
@@ -15296,6 +15306,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("extentionFunctionCall2.kt")
         public void testExtentionFunctionCall2() throws Exception {
             runTest("testData/quickfix/wrapWithSafeLetCall/extentionFunctionCall2.kt");
+        }
+
+        @TestMetadata("inOperator.kt")
+        public void testInOperator() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/inOperator.kt");
         }
 
         @TestMetadata("insideLet.kt")
@@ -15333,9 +15348,34 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/wrapWithSafeLetCall/invokeUnsafe.kt");
         }
 
+        @TestMetadata("nameAlreadyInScope.kt")
+        public void testNameAlreadyInScope() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/nameAlreadyInScope.kt");
+        }
+
+        @TestMetadata("nullableBinaryExpression.kt")
+        public void testNullableBinaryExpression() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/nullableBinaryExpression.kt");
+        }
+
+        @TestMetadata("nullableReceiver.kt")
+        public void testNullableReceiver() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/nullableReceiver.kt");
+        }
+
         @TestMetadata("objectQualifier.kt")
         public void testObjectQualifier() throws Exception {
             runTest("testData/quickfix/wrapWithSafeLetCall/objectQualifier.kt");
+        }
+
+        @TestMetadata("refactorNullableFunctionTypeProperty1.kt")
+        public void testRefactorNullableFunctionTypeProperty1() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/refactorNullableFunctionTypeProperty1.kt");
+        }
+
+        @TestMetadata("refactorNullableFunctionTypeProperty2.kt")
+        public void testRefactorNullableFunctionTypeProperty2() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/refactorNullableFunctionTypeProperty2.kt");
         }
 
         @TestMetadata("unsafe.kt")
@@ -15356,6 +15396,36 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("unstableValue.kt")
         public void testUnstableValue() throws Exception {
             runTest("testData/quickfix/wrapWithSafeLetCall/unstableValue.kt");
+        }
+
+        @TestMetadata("wrapAllNonNullablePositions1.kt")
+        public void testWrapAllNonNullablePositions1() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/wrapAllNonNullablePositions1.kt");
+        }
+
+        @TestMetadata("wrapAllNonNullablePositions2.kt")
+        public void testWrapAllNonNullablePositions2() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/wrapAllNonNullablePositions2.kt");
+        }
+
+        @TestMetadata("wrapAllNonNullablePositions3.kt")
+        public void testWrapAllNonNullablePositions3() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/wrapAllNonNullablePositions3.kt");
+        }
+
+        @TestMetadata("wrapAllNonNullablePositions4.kt")
+        public void testWrapAllNonNullablePositions4() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/wrapAllNonNullablePositions4.kt");
+        }
+
+        @TestMetadata("wrapAllNonNullablePositions5.kt")
+        public void testWrapAllNonNullablePositions5() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/wrapAllNonNullablePositions5.kt");
+        }
+
+        @TestMetadata("wrapAllNonNullablePositions6.kt")
+        public void testWrapAllNonNullablePositions6() throws Exception {
+            runTest("idea/testData/quickfix/wrapWithSafeLetCall/wrapAllNonNullablePositions6.kt");
         }
     }
 
