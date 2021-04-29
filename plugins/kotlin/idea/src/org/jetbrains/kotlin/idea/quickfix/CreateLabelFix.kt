@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,12 +74,10 @@ sealed class CreateLabelFix(
             containers,
             editor,
             chooserTitle,
-            true,
-            { it },
-            {
-                doCreateLabel(expression, it, project)
-            }
-        )
+            true
+        ) {
+            doCreateLabel(expression, it, project)
+        }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

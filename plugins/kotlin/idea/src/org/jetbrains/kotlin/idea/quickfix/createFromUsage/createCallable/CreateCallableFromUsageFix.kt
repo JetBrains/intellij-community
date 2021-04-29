@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,7 +225,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                 "No receiver type candidates: ${element.text} in ${file.text}"
             }
 
-            chooseContainerElementIfNecessary(callableInfo.possibleContainers, editorForBuilder, popupTitle, true, { it }) {
+            chooseContainerElementIfNecessary(callableInfo.possibleContainers, editorForBuilder, popupTitle, true) {
                 val container = if (it is KtClassBody) it.parent as KtClassOrObject else it
                 runBuilder(CallablePlacement.NoReceiver(container))
             }

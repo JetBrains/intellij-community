@@ -141,10 +141,10 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
             containers,
             editor,
             if (containers.first() is KtFile) KotlinBundle.message("select.target.file") else KotlinBundle.message("select.target.code.block.file"),
-            true,
-            { it },
-            { doApply(editor, element, it) }
-        )
+            true
+        ) {
+            doApply(editor, element, it)
+        }
     }
 }
 

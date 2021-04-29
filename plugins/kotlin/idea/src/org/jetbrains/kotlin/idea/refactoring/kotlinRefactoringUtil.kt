@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2000-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -239,40 +239,34 @@ fun reportDeclarationConflict(
     conflicts.putValue(declaration, message(RefactoringUIUtil.getDescription(declaration, true).capitalize()))
 }
 
-fun <T, E : PsiElement> getPsiElementPopup(
+fun <T : PsiElement> getPsiElementPopup(
     editor: Editor,
     elements: List<T>,
-    renderer: PsiElementListCellRenderer<E>,
+    renderer: PsiElementListCellRenderer<T>,
     title: String?,
     highlightSelection: Boolean,
-    toPsi: (T) -> E,
     processor: (T) -> Boolean
-): JBPopup {
-    val psiElements = elements.map(toPsi)
-    return with(JBPopupFactory.getInstance().createPopupChooserBuilder(psiElements)) {
-        val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
-        setRenderer(renderer)
-        setItemSelectedCallback { element: E? ->
-            highlighter?.dropHighlight()
-            element?.let {
-                highlighter?.highlight(element)
-            }
+): JBPopup = with(JBPopupFactory.getInstance().createPopupChooserBuilder(elements)) {
+    val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
+    setRenderer(renderer)
+    setItemSelectedCallback { element: T? ->
+        highlighter?.dropHighlight()
+        element?.let {
+            highlighter?.highlight(element)
         }
-
-        title?.let { setTitle(it) }
-        renderer.installSpeedSearch(this, true)
-        setItemChosenCallback { psiElement ->
-            psiElement?.let { psiElements.indexOf(it) }?.let { processor(elements[it]) }
-        }
-
-        addListener(object : JBPopupListener {
-            override fun onClosed(event: LightweightWindowEvent) {
-                highlighter?.dropHighlight()
-            }
-        })
-
-        createPopup()
     }
+
+    title?.let { setTitle(it) }
+    renderer.installSpeedSearch(this, true)
+    setItemChosenCallback { it?.let(processor) }
+
+    addListener(object : JBPopupListener {
+        override fun onClosed(event: LightweightWindowEvent) {
+            highlighter?.dropHighlight()
+        }
+    })
+
+    createPopup()
 }
 
 class SelectionAwareScopeHighlighter(val editor: Editor) {
@@ -358,68 +352,106 @@ fun <T> chooseContainerElement(
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
 ) {
+    val psiElements = containers.map(toPsi)
+    choosePsiContainerElement(
+        elements = psiElements,
+        editor = editor,
+        title = title,
+        highlightSelection = highlightSelection,
+        psi2Container = { containers[psiElements.indexOf(it)] },
+        onSelect = onSelect
+    )
+}
+
+fun <T : PsiElement> chooseContainerElement(
+    elements: List<T>,
+    editor: Editor,
+    title: String,
+    highlightSelection: Boolean,
+    onSelect: (T) -> Unit
+): Unit = choosePsiContainerElement(
+    elements = elements,
+    editor = editor,
+    title = title,
+    highlightSelection = highlightSelection,
+    psi2Container = { it },
+    onSelect = onSelect,
+)
+
+private fun psiElementRenderer() = object : PsiElementListCellRenderer<PsiElement>() {
+    private fun PsiElement.renderName(): String = when {
+        this is KtPropertyAccessor -> property.renderName() + if (isGetter) ".get" else ".set"
+        this is KtObjectDeclaration && isCompanion() -> {
+            val name = getStrictParentOfType<KtClassOrObject>()?.renderName() ?: "<anonymous>"
+            "Companion object of $name"
+        }
+
+        else -> (this as? PsiNamedElement)?.name ?: "<anonymous>"
+    }
+
+    private fun PsiElement.renderDeclaration(): String? {
+        if (this is KtFunctionLiteral || isFunctionalExpression()) return renderText()
+        val descriptor = when (this) {
+            is KtFile -> name
+            is KtElement -> analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, this]
+            is PsiMember -> getJavaMemberDescriptor()
+            else -> null
+        } ?: return null
+
+        val name = renderName()
+        val params = (descriptor as? FunctionDescriptor)?.valueParameters?.joinToString(
+            ", ",
+            "(",
+            ")"
+        ) { DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(it.type) } ?: ""
+
+        return "$name$params"
+    }
+
+    private fun PsiElement.renderText(): String = when (this) {
+        is SeparateFileWrapper -> KotlinBundle.message("refactoring.extract.to.separate.file.text")
+        is PsiPackageBase -> qualifiedName
+        else -> {
+            val text = text ?: "<invalid text>"
+            StringUtil.shortenTextWithEllipsis(text.collapseSpaces(), 53, 0)
+        }
+    }
+
+    private fun PsiElement.getRepresentativeElement(): PsiElement = when (this) {
+        is KtBlockExpression -> (parent as? KtDeclarationWithBody) ?: this
+        is KtClassBody -> parent as KtClassOrObject
+        else -> this
+    }
+
+    override fun getElementText(element: PsiElement): String {
+        val representativeElement = element.getRepresentativeElement()
+        return representativeElement.renderDeclaration() ?: representativeElement.renderText()
+    }
+
+    override fun getContainerText(element: PsiElement, name: String?): String? = null
+
+    override fun getIconFlags(): Int = 0
+
+    override fun getIcon(element: PsiElement): Icon? = super.getIcon(element.getRepresentativeElement())
+}
+
+private fun <T, E : PsiElement> choosePsiContainerElement(
+    elements: List<E>,
+    editor: Editor,
+    title: String,
+    highlightSelection: Boolean,
+    psi2Container: (E) -> T,
+    onSelect: (T) -> Unit,
+) {
     val popup = getPsiElementPopup(
         editor,
-        containers,
-        object : PsiElementListCellRenderer<PsiElement>() {
-            private fun PsiElement.renderName(): String = when {
-                this is KtPropertyAccessor -> property.renderName() + if (isGetter) ".get" else ".set"
-                this is KtObjectDeclaration && isCompanion() -> {
-                    val name = getStrictParentOfType<KtClassOrObject>()?.renderName() ?: "<anonymous>"
-                    "Companion object of $name"
-                }
-                else -> (this as? PsiNamedElement)?.name ?: "<anonymous>"
-            }
-
-            private fun PsiElement.renderDeclaration(): String? {
-                if (this is KtFunctionLiteral || isFunctionalExpression()) return renderText()
-
-                val descriptor = when (this) {
-                    is KtFile -> name
-                    is KtElement -> analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, this]
-                    is PsiMember -> getJavaMemberDescriptor()
-                    else -> null
-                } ?: return null
-                val name = renderName()
-                val params = (descriptor as? FunctionDescriptor)?.valueParameters?.joinToString(
-                    ", ",
-                    "(",
-                    ")"
-                ) { DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(it.type) } ?: ""
-                return "$name$params"
-            }
-
-            private fun PsiElement.renderText(): String = when (this) {
-                is SeparateFileWrapper -> KotlinBundle.message("refactoring.extract.to.separate.file.text")
-                is PsiPackageBase -> qualifiedName
-                else -> {
-                    val text = text ?: "<invalid text>"
-                    StringUtil.shortenTextWithEllipsis(text.collapseSpaces(), 53, 0)
-                }
-            }
-
-            private fun PsiElement.getRepresentativeElement(): PsiElement = when (this) {
-                is KtBlockExpression -> (parent as? KtDeclarationWithBody) ?: this
-                is KtClassBody -> parent as KtClassOrObject
-                else -> this
-            }
-
-            override fun getElementText(element: PsiElement): String {
-                val representativeElement = element.getRepresentativeElement()
-                return representativeElement.renderDeclaration() ?: representativeElement.renderText()
-            }
-
-            override fun getContainerText(element: PsiElement, name: String?): String? = null
-
-            override fun getIconFlags(): Int = 0
-
-            override fun getIcon(element: PsiElement): Icon? = super.getIcon(element.getRepresentativeElement())
-        },
+        elements,
+        psiElementRenderer(),
         title,
         highlightSelection,
-        toPsi
-    ) {
-        onSelect(it)
+    ) { psiElement ->
+        @Suppress("UNCHECKED_CAST")
+        onSelect(psi2Container(psiElement as E))
         true
     }
 
@@ -435,11 +467,32 @@ fun <T> chooseContainerElementIfNecessary(
     highlightSelection: Boolean,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
+): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, toPsi, onSelect)
+
+fun <T : PsiElement> chooseContainerElementIfNecessary(
+    containers: List<T>,
+    editor: Editor,
+    title: String,
+    highlightSelection: Boolean,
+    onSelect: (T) -> Unit
+): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, null, onSelect)
+
+private fun <T> chooseContainerElementIfNecessaryImpl(
+    containers: List<T>,
+    editor: Editor,
+    title: String,
+    highlightSelection: Boolean,
+    toPsi: ((T) -> PsiElement)?,
+    onSelect: (T) -> Unit
 ) {
     when {
         containers.isEmpty() -> return
         containers.size == 1 || ApplicationManager.getApplication()!!.isUnitTestMode -> onSelect(containers.first())
-        else -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
+        toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
+        else -> {
+            @Suppress("UNCHECKED_CAST")
+            chooseContainerElement(containers as List<PsiElement>, editor, title, highlightSelection, onSelect as (PsiElement) -> Unit)
+        }
     }
 }
 
@@ -485,6 +538,7 @@ private fun <T> copyTypeParameters(
         val newTypeParams = templateTypeParams.map {
             factory.createTypeParameter(it.name!!, it.extendsList.referencedTypes)
         }
+
         ChangeSignatureUtil.synchronizeList(
             targetTypeParamList,
             newTypeParams,
@@ -524,6 +578,7 @@ fun createJavaMethod(template: PsiMethod, targetClass: PsiClass): PsiMethod {
         copyModifierListItems(it.modifierList!!, param.modifierList!!)
         param
     }
+
     ChangeSignatureUtil.synchronizeList(
         targetParamList,
         newParams,
@@ -554,6 +609,7 @@ fun createJavaField(property: KtNamedDeclaration, targetClass: PsiClass): PsiFie
         if ((property as KtValVarKeywordOwner).valOrVarKeyword.toValVar() != KotlinValVar.Var || targetClass.isInterface) {
             setModifierProperty(PsiModifier.FINAL, true)
         }
+
         copyModifierListItems(templateModifiers, this, false)
     }
 
@@ -591,18 +647,21 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, forcePlainClass: Boo
             template.extendsList?.referenceElements ?: PsiJavaCodeReferenceElement.EMPTY_ARRAY,
             PsiReferenceList.Role.IMPLEMENTS_LIST
         )
+
         implementsList?.let { javaClass.implementsList?.replace(it) }
     } else {
         val extendsList = factory.createReferenceListWithRole(
             template.extendsList?.referenceElements ?: PsiJavaCodeReferenceElement.EMPTY_ARRAY,
             PsiReferenceList.Role.EXTENDS_LIST
         )
+
         extendsList?.let { javaClass.extendsList?.replace(it) }
 
         val implementsList = factory.createReferenceListWithRole(
             template.implementsList?.referenceElements ?: PsiJavaCodeReferenceElement.EMPTY_ARRAY,
             PsiReferenceList.Role.IMPLEMENTS_LIST
         )
+
         implementsList?.let { javaClass.implementsList?.replace(it) }
     }
 
@@ -612,6 +671,7 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, forcePlainClass: Boo
                 (template.superClass?.constructors ?: PsiMethod.EMPTY_ARRAY).all {
                     it.parameterList.parametersCount > 0
                 }
+
         if (method.isConstructor && !(hasParams || needSuperCall)) continue
         with(createJavaMethod(method, javaClass)) {
             if (isConstructor && needSuperCall) {

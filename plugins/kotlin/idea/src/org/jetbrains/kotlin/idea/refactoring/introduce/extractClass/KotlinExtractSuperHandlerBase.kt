@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,10 +97,10 @@ abstract class KotlinExtractSuperHandlerBase(private val isExtractInterface: Boo
                 KotlinBundle.message("text.select.target.file")
             else
                 KotlinBundle.message("text.select.target.code.block.file"),
-            true,
-            { it },
-            { doInvoke(klass, if (it is SeparateFileWrapper) klass.containingFile.parent!! else it) }
-        )
+            true
+        ) {
+            doInvoke(klass, if (it is SeparateFileWrapper) klass.containingFile.parent!! else it)
+        }
     }
 
     protected fun checkConflicts(originalClass: KtClassOrObject, dialog: KotlinExtractSuperDialogBase): Boolean {
