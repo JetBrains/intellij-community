@@ -205,6 +205,9 @@ final class UnindexedFilesFinder {
     for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
       if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
         FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
+        if (myDoTraceForFilesToBeIndexed) {
+          LOG.trace("File " + fileContent.getFile() + " indexed using extension for " + indexId + " without content");
+        }
         return true;
       }
     }
