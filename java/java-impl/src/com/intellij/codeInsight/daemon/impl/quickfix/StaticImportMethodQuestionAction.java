@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -153,58 +139,26 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       };
 
     final ListPopupImpl popup = new ListPopupImpl(project, step) {
-      final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
       @Override
-      protected ListCellRenderer getListElementRenderer() {
-        return new PsiElementListCellRenderer<T>() {
+      protected ListCellRenderer<T> getListElementRenderer() {
+        final PopupListElementRenderer<T> rightArrow = new PopupListElementRenderer<>(this);
+        final StaticMemberRenderer psiRenderer = new StaticMemberRenderer();
+        return new ListCellRenderer<>() {
           @Override
-          public String getElementText(T element) {
-            return getElementPresentableName(element);
-          }
-
-          @Override
-          public String getContainerText(final T element, final String name) {
-            return PsiClassListCellRenderer.getContainerTextStatic(element);
-          }
-
-          @Override
-          public int getIconFlags() {
-            return 0;
-          }
-
-          @Nullable
-          @Override
-          protected TextAttributes getNavigationItemAttributes(Object value) {
-            TextAttributes attrs = super.getNavigationItemAttributes(value);
-            if (value instanceof PsiDocCommentOwner && !((PsiDocCommentOwner)value).isDeprecated()) {
-              PsiClass psiClass = ((T)value).getContainingClass();
-              if (psiClass != null && psiClass.isDeprecated()) {
-                return TextAttributes.merge(attrs, super.getNavigationItemAttributes(psiClass));
-              }
-            }
-            return attrs;
-          }
-
-          @Override
-          protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-            final DefaultListCellRenderer moduleRenderer = super.getRightCellRenderer(value);
-            return new DefaultListCellRenderer(){
-              @Override
-              public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                JPanel panel = new JPanel(new BorderLayout());
-                if (moduleRenderer != null) {
-                  Component moduleComponent = moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                  if (!isSelected) {
-                    moduleComponent.setBackground(getBackgroundColor(value));
-                  }
-                  panel.add(moduleComponent, BorderLayout.CENTER);
-                }
-                rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                Component rightArrowComponent = rightArrow.getNextStepLabel();
-                panel.add(rightArrowComponent, BorderLayout.EAST);
-                return panel;
-              }
-            };
+          public Component getListCellRendererComponent(JList<? extends T> list,
+                                                        T value,
+                                                        int index,
+                                                        boolean isSelected,
+                                                        boolean cellHasFocus) {
+            JPanel panel = new JPanel(new BorderLayout());
+            Component psiRendererComponent = psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            JLabel arrowLabel = rightArrow.getNextStepLabel();
+            arrowLabel.setBackground(psiRendererComponent.getBackground());
+            panel.setBackground(psiRendererComponent.getBackground());
+            panel.add(psiRendererComponent, BorderLayout.CENTER);
+            panel.add(arrowLabel, BorderLayout.EAST);
+            return panel;
           }
         };
       }
@@ -212,11 +166,40 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     popup.showInBestPositionFor(editor);
   }
 
-  private @NlsSafe String getElementPresentableName(T element) {
+  private static final class StaticMemberRenderer extends PsiElementListCellRenderer<PsiMember> {
+
+    @Override
+    public String getElementText(PsiMember element) {
+      return getElementPresentableName(element);
+    }
+
+    @Override
+    public String getContainerText(final PsiMember element, final String name) {
+      return PsiClassListCellRenderer.getContainerTextStatic(element);
+    }
+
+    @Override
+    public int getIconFlags() {
+      return 0;
+    }
+
+    @Nullable
+    @Override
+    protected TextAttributes getNavigationItemAttributes(Object value) {
+      TextAttributes attrs = super.getNavigationItemAttributes(value);
+      if (value instanceof PsiDocCommentOwner && !((PsiDocCommentOwner)value).isDeprecated()) {
+        PsiClass psiClass = ((PsiMember)value).getContainingClass();
+        if (psiClass != null && psiClass.isDeprecated()) {
+          return TextAttributes.merge(attrs, super.getNavigationItemAttributes(psiClass));
+        }
+      }
+      return attrs;
+    }
+  }
+
+  private static @NlsSafe String getElementPresentableName(PsiMember element) {
     final PsiClass aClass = element.getContainingClass();
     LOG.assertTrue(aClass != null);
     return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();
   }
 }
-
-

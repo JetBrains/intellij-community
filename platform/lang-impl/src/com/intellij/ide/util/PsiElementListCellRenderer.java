@@ -89,14 +89,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return accessibleContext;
   }
 
-  @NotNull
-  protected static Color getBackgroundColor(@Nullable Object value) {
-    PsiElement psiElement = NavigationItemListCellRenderer.getPsiElement(value);
-    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
-    Color fileColor = virtualFile == null ? null : getFileBackgroundColor(psiElement.getProject(), virtualFile);
-    return fileColor != null ? fileColor : UIUtil.getListBackground();
-  }
-
   public static class ItemMatchers {
     @Nullable public final Matcher nameMatcher;
     @Nullable final Matcher locationMatcher;
