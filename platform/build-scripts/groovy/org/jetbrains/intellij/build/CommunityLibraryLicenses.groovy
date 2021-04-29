@@ -684,7 +684,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler-impl"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-jvm"),
-    jetbrainsLibrary("kotlinc.kotlin-stdlib-common"),
     jetbrainsLibrary("kotlinc.kotlinx-serialization-compiler-plugin"),
     jetbrainsLibrary("kotlinc.noarg-compiler-plugin"),
     jetbrainsLibrary("kotlinc.parcelize-compiler-plugin"),

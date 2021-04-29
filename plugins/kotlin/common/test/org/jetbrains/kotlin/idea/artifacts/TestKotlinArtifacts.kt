@@ -89,11 +89,11 @@ private fun findLibrary(
 
 object AdditionalKotlinArtifacts {
     val kotlinStdlibCommon: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlinc_kotlin_stdlib_common.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common")
+        findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common")
     }
 
     val kotlinStdlibCommonSources: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlinc_kotlin_stdlib_common.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common", LibraryFileKind.SOURCES)
+        findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common", LibraryFileKind.SOURCES)
     }
 
     val jsr305: File by lazy {
