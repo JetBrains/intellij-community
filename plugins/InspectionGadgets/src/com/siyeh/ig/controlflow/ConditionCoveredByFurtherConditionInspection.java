@@ -15,7 +15,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -33,7 +32,6 @@ import com.siyeh.ig.psiutils.ReorderingUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -190,7 +188,6 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       @Override
       public void beforeExpressionPush(@NotNull DfaValue value,
                                        @NotNull PsiExpression expression,
-                                       @Nullable TextRange range,
                                        @NotNull DfaMemoryState state) {
         if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) != expressionToAnalyze) return;
         ThreeState old = values.get(expression);

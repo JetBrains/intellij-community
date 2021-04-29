@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDes
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -341,12 +340,8 @@ public final class CommonDataflow {
     @Override
     public void beforeExpressionPush(@NotNull DfaValue value,
                                      @NotNull PsiExpression expression,
-                                     @Nullable TextRange range,
                                      @NotNull DfaMemoryState state) {
-      if (range == null) {
-        // Do not track instructions which cover part of expression
-        myResult.add(expression, state, value);
-      }
+      myResult.add(expression, state, value);
     }
   }
 }

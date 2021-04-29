@@ -12,7 +12,6 @@ import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -39,9 +38,8 @@ class DebuggerDfaInterceptor implements JavaDfaInterceptor {
   @Override
   public void beforeExpressionPush(@NotNull DfaValue value,
                                    @NotNull PsiExpression expression,
-                                   @Nullable TextRange range,
                                    @NotNull DfaMemoryState state) {
-    if (range != null || !shouldTrackExpressionValue(expression)) return;
+    if (!shouldTrackExpressionValue(expression)) return;
     DfaHint hint = DfaHint.ANY_VALUE;
     DfType dfType = state.getDfType(value);
     if (dfType == DfTypes.TRUE) {

@@ -8,7 +8,6 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -22,8 +21,7 @@ public interface JavaDfaInterceptor extends DfaInterceptor {
                                     @NotNull DfaAnchor anchor,
                                     @NotNull DfaMemoryState state) {
     if (anchor instanceof JavaPolyadicPartAnchor) {
-      beforeExpressionPush(value, ((JavaPolyadicPartAnchor)anchor).getExpression(), ((JavaPolyadicPartAnchor)anchor).getTextRange(),
-                           state);
+      // do not report by default
       return;
     }
     if (anchor instanceof JavaMethodReferenceReturnAnchor) {
@@ -41,7 +39,7 @@ public interface JavaDfaInterceptor extends DfaInterceptor {
                                         @NotNull PsiExpression expression,
                                         @NotNull DfaMemoryState state,
                                         PsiExpression anchor) {
-    beforeExpressionPush(value, anchor, null, state);
+    beforeExpressionPush(value, anchor, state);
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
     if (parent instanceof PsiLambdaExpression) {
       beforeValueReturn(value, expression, parent, state);
@@ -70,7 +68,6 @@ public interface JavaDfaInterceptor extends DfaInterceptor {
 
   default void beforeExpressionPush(@NotNull DfaValue value,
                                     @NotNull PsiExpression expression,
-                                    @Nullable TextRange range,
                                     @NotNull DfaMemoryState state) {
 
   }

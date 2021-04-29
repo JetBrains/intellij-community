@@ -23,7 +23,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -236,7 +235,6 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
   @Override
   public void beforeExpressionPush(@NotNull DfaValue value,
                                    @NotNull PsiExpression expression,
-                                   @Nullable TextRange range,
                                    @NotNull DfaMemoryState memState) {
     if (!expression.isPhysical()) {
       Application application = ApplicationManager.getApplication();

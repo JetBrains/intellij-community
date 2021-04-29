@@ -158,9 +158,8 @@ public final class GuessManagerImpl extends GuessManager {
       @Override
       public void beforeExpressionPush(@NotNull DfaValue value,
                                        @NotNull PsiExpression expression,
-                                       @Nullable TextRange range,
                                        @NotNull DfaMemoryState state) {
-        if (expression == forPlace && range == null) {
+        if (expression == forPlace) {
           if (!(value instanceof DfaVariableValue) || ((DfaVariableValue)value).isFlushableByCalls()) {
             value = runner.getFactory().getVarFactory().createVariableValue(new ExpressionVariableDescriptor(expression));
           }
@@ -598,9 +597,8 @@ public final class GuessManagerImpl extends GuessManager {
     @Override
     public void beforeExpressionPush(@NotNull DfaValue value,
                                      @NotNull PsiExpression expression,
-                                     @Nullable TextRange range,
                                      @NotNull DfaMemoryState state) {
-      if (range == null && myForPlace == expression) {
+      if (myForPlace == expression) {
         ((DfaMemoryStateImpl)state).forRecordedVariableTypes((var, dfType) -> {
           myResult.merge(var, TypeConstraint.fromDfType(dfType), TypeConstraint::join);
         });

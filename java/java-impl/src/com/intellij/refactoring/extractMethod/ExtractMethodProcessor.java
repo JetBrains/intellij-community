@@ -485,9 +485,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       @Override
       public void beforeExpressionPush(@NotNull DfaValue value,
                                        @NotNull PsiExpression expression,
-                                       @Nullable TextRange range,
                                        @NotNull DfaMemoryState state) {
-        if (expression == expr && range == null) {
+        if (expression == expr) {
           myVisited = true;
           myNullability = myNullability.unite(DfaNullability.fromDfType(state.getDfType(value)));
         }
