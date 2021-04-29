@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.amazon.ion.IonType
 import com.intellij.util.ArrayUtil
-import gnu.trove.THashMap
 import java.lang.reflect.Type
 import java.util.*
 
@@ -65,17 +64,7 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
       }
     }
     else {
-      if (map is THashMap) {
-        map.forEachEntry { k: Any?, v: Any? ->
-          writeEntry(k, v, isStringKey)
-          true
-        }
-      }
-      else {
-        map.forEach {
-          (key, value) -> writeEntry(key, value, isStringKey)
-        }
-      }
+      map.forEach { (key, value) -> writeEntry(key, value, isStringKey) }
     }
     writer.stepOut()
   }
@@ -92,14 +81,14 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
       result.clear()
     }
     else {
-      result = THashMap()
+      result = HashMap()
       property.set(hostObject, result)
     }
     readInto(result, context, hostObject)
   }
 
   override fun deserialize(context: ReadContext, hostObject: Any?): Any {
-    val result = THashMap<Any?, Any?>()
+    val result = HashMap<Any?, Any?>()
     readInto(result, context, hostObject)
     return result
   }
@@ -107,12 +96,12 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
   private fun readInto(result: MutableMap<Any?, Any?>, context: ReadContext, hostObject: Any?) {
     val reader = context.reader
 
-    if (reader.type == IonType.INT) {
+    if (reader.type === IonType.INT) {
       LOG.assertTrue(context.reader.intValue() == 0)
       return
     }
 
-    val isStringKeys = reader.type == IonType.STRUCT
+    val isStringKeys = reader.type === IonType.STRUCT
     reader.stepIn()
     while (true) {
       if (isStringKeys) {
