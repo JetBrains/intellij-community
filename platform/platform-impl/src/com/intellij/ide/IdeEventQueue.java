@@ -1035,6 +1035,11 @@ public final class IdeEventQueue extends EventQueue {
     return myKeyEventDispatcher;
   }
 
+  @NotNull
+  public IdeMouseEventDispatcher getMouseEventDispatcher() {
+    return myMouseEventDispatcher;
+  }
+
   /**
    * Same as {@link #blockNextEvents(MouseEvent, IdeEventQueue.BlockMode)} with {@code blockMode} equal to {@code COMPLETE}.
    */
