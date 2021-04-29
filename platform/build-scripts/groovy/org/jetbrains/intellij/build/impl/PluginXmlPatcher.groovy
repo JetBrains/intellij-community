@@ -51,7 +51,7 @@ class PluginXmlPatcher {
 
       setProductDescriptorEapAttribute(productDescriptor, myIsEap)
 
-      productDescriptor.setAttribute("release-date", myReleaseDate)
+      productDescriptor.setAttribute("release-date", releaseDate(pluginModuleName))
       productDescriptor.setAttribute("release-version", myReleaseVersion)
 
       if (!toPublish && !retainProductDescriptorForBundledPlugin) {
@@ -78,6 +78,14 @@ class PluginXmlPatcher {
     }
 
     Files.writeString(pluginXmlFile, doc.toXML())
+  }
+
+  /**
+   * Dirty hack for 'You cannot release updates with the same release versions but different release dates'
+   * caused by concurrent plugin publications by different products with different release dates
+   */
+  private String releaseDate(String pluginModuleName) {
+    pluginModuleName == "intellij.indexing.shared" ? "20210406" : myReleaseDate
   }
 
   private static void removeTextBeforeElement(Element element) {
