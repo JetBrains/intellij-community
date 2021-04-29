@@ -82,15 +82,21 @@ private sealed class DeclarationOrReference {
   abstract val rangeWithOffset: TextRange
 
   class Declaration(val declaration: PsiSymbolDeclaration) : DeclarationOrReference() {
+
     override val rangeWithOffset: TextRange get() = declaration.absoluteRange
+
+    override fun toString(): String = declaration.toString()
   }
 
   class Reference(val reference: PsiSymbolReference, private val offset: Int) : DeclarationOrReference() {
+
     override val rangeWithOffset: TextRange by lazy(LazyThreadSafetyMode.NONE) {
       referenceRanges(reference).find {
         it.containsOffset(offset)
       } ?: error("One of the ranges must contain offset at this point")
     }
+
+    override fun toString(): String = reference.toString()
   }
 }
 

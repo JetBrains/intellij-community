@@ -25,4 +25,6 @@ internal class EvaluatorReference(
   override fun resolveReference(): Collection<SymbolResolveResult> {
     return targetElements.map(PsiSymbolService.getInstance()::asSymbol).map(SymbolResolveResult::fromSymbol)
   }
+
+  override fun toString(): String = "EvaluatorReference(origin=$origin, targetElements=$targetElements)"
 }

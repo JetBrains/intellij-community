@@ -58,6 +58,8 @@ internal sealed class PsiOrigin {
     override val absoluteRanges: List<TextRange> get() = BaseCtrlMouseInfo.getReferenceRanges(leaf)
 
     override val elementAtPointer: PsiElement get() = leaf
+
+    override fun toString(): String = "Leaf($leaf)"
   }
 
   class Reference(val reference: PsiReference) : PsiOrigin() {
@@ -65,5 +67,7 @@ internal sealed class PsiOrigin {
     override val absoluteRanges: List<TextRange> get() = ReferenceRange.getAbsoluteRanges(reference)
 
     override val elementAtPointer: PsiElement get() = reference.element
+
+    override fun toString(): String = "Reference($reference)"
   }
 }
