@@ -19,7 +19,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -61,7 +60,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
 
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection(true)) {
-      if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
+      if (CopyAction.isSkipCopyPasteForEmptySelection()) {
         return;
       }
       editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
