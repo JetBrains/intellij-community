@@ -137,11 +137,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyStringExceptionInspection() {
-    LocalInspectionTool inspection = new PyStringExceptionInspection();
-    doTest(getTestName(false), inspection);
-  }
-
   public void testPySuperArgumentsInspection() {
     LocalInspectionTool inspection = new PySuperArgumentsInspection();
     doTest(getTestName(false), inspection);
