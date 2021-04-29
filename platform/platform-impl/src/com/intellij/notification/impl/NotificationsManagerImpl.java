@@ -12,6 +12,7 @@ import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -85,6 +86,17 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         TooltipController.getInstance().resetCurrent();
       }
     });
+  }
+
+  @Override
+  public void fire(@NotNull Notification notification,
+                   @NotNull AnAction action,
+                   @Nullable DataContext context) {
+    DataContext contextWrapper = dataId -> Notification.KEY.is(dataId) ? notification : context != null ? context.getData(dataId) : null;
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, contextWrapper);
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    }
   }
 
   @Override

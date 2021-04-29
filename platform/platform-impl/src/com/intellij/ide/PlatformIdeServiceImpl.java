@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import java.net.URL;
 
 public class PlatformIdeServiceImpl extends PlatformIdeService {
   @Override
@@ -28,5 +30,16 @@ public class PlatformIdeServiceImpl extends PlatformIdeService {
                                    @Nullable @NlsContexts.NotificationContent String content, @NotNull NotificationType notificationType) {
     Notification notification = new Notification(groupId, icon, title, subtitle, content, notificationType, null);
     Notifications.Bus.notify(notification);
+  }
+
+  @Override
+  public void browseHyperlinkEvent(HyperlinkEvent event) {
+    URL url = event.getURL();
+    if (url == null) {
+      BrowserUtil.browse(event.getDescription());
+    }
+    else {
+      BrowserUtil.browse(url);
+    }
   }
 }

@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -18,11 +18,11 @@ public enum NotificationDisplayType {
 
   private final String myKey;
 
-  NotificationDisplayType(@PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key) {
+  NotificationDisplayType(@PropertyKey(resourceBundle = AnalysisBundle.BUNDLE) String key) {
     myKey = key;
   }
 
   public @NlsContexts.ListItem String getTitle() {
-    return IdeBundle.message(myKey);
+    return AnalysisBundle.message(myKey);
   }
 }

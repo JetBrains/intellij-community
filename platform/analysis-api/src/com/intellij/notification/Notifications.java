@@ -4,8 +4,7 @@ package com.intellij.notification;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -13,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manage and show top-level notifications.
@@ -95,11 +95,7 @@ public interface Notifications {
     @ApiStatus.Experimental
     public static void notifyAndHide(@NotNull Notification notification, @Nullable Project project) {
       notify(notification);
-      Alarm alarm = new Alarm(project == null ? ApplicationManager.getApplication() : project);
-      alarm.addRequest(() -> {
-        notification.expire();
-        Disposer.dispose(alarm);
-      }, 5000);
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> notification.expire(), 5, TimeUnit.SECONDS);
     }
   }
 }

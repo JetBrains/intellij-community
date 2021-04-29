@@ -8,8 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 
 public class PlatformIdeService {
+  public void browseHyperlinkEvent(HyperlinkEvent event) {
+  }
+
   public static PlatformIdeService getInstance() {
     return ApplicationManager.getApplication().getService(PlatformIdeService.class);
   }

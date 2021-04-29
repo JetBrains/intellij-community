@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
-import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.PlatformIdeService;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
-import java.net.URL;
 
 /**
  * Consider using {@link NotificationAction} instead of "action" links in HTML content.
@@ -38,13 +37,8 @@ public interface NotificationListener {
 
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      URL url = event.getURL();
-      if (url == null) {
-        BrowserUtil.browse(event.getDescription());
-      }
-      else {
-        BrowserUtil.browse(url);
-      }
+      PlatformIdeService.getInstance().browseHyperlinkEvent(event);
+
       if (myExpireNotification) {
         notification.expire();
       }
