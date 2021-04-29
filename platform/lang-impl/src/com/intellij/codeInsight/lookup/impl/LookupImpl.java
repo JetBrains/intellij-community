@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.*;
@@ -120,6 +121,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   boolean myUpdating;
   private LookupUi myUi;
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
+  private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
     super(new JPanel(new BorderLayout()));
@@ -136,6 +138,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
     myCellRenderer = new LookupCellRenderer(this, myEditor.getContentComponent());
+    myCellRenderer.itemAdded(myDummyItem, LookupElementPresentation.renderElement(myDummyItem));
     myList.setCellRenderer(myCellRenderer);
 
     myList.setFocusable(false);
@@ -233,6 +236,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myList.ensureIndexIsVisible(index);
   }
 
+  public int getDummyItemCount() {
+    return myDummyItemCount.get();
+  }
+
   public void setDummyItemCount(int count) {
     myDummyItemCount.set(count);
   }
@@ -278,9 +285,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private void addDummyItems(int count) {
-    EmptyLookupItem dummy = new EmptyLookupItem("loading...", true);
     for (int i = count; i > 0; i--) {
-      getListModel().add(dummy);
+      getListModel().add(myDummyItem);
     }
   }
 
