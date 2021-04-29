@@ -145,14 +145,13 @@ private fun connectNio(bootstrap: Bootstrap,
                        stopCondition: Condition<Void>,
                        _attemptCount: Int): ConnectToChannelResult {
   var attemptCount = _attemptCount
-  val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
+  Logger.getInstance("com.intellij.util.io.netty").debug("connectNio: ${Thread.currentThread()} #$attemptCount, max:#$maxAttemptCount to $remoteAddress")
   while (true) {
-    if (unitTestMode) {
-      Logger.getInstance("com.intellij.util.io.netty").info("Connection attempt #$attemptCount to $remoteAddress")
-    }
+    Logger.getInstance("com.intellij.util.io.netty").debug("Connection attempt #$attemptCount to $remoteAddress")
     val future = bootstrap.connect(remoteAddress).awaitUninterruptibly()
     if (future.isSuccess) {
       if (!future.channel().isOpen) {
+        Logger.getInstance("com.intellij.util.io.netty").debug("connectNio: !future.channel().isOpen")
         continue
       }
       return ConnectToChannelResult(future.channel())
