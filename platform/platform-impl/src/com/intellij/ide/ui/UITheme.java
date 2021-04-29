@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.SVGLoader;
@@ -398,12 +398,13 @@ public final class UITheme {
                                             Map<String, Object> map,
                                             String key,
                                             UIDefaults defaults) {
-    String osKey = SystemInfo.isWindows ? OS_WINDOWS_KEY :
-                   SystemInfo.isMac ? OS_MACOS_KEY :
-                   SystemInfo.isLinux ? OS_LINUX_KEY : null;
+    String osKey = SystemInfoRt.isWindows ? OS_WINDOWS_KEY :
+                   SystemInfoRt.isMac ? OS_MACOS_KEY :
+                   SystemInfoRt.isLinux ? OS_LINUX_KEY : null;
     if (osKey != null && map.containsKey(osKey)) {
       apply(theme, key, map.get(osKey), defaults);
-    } else if (map.containsKey(OS_DEFAULT_KEY)) {
+    }
+    else if (map.containsKey(OS_DEFAULT_KEY)) {
       apply(theme, key, map.get(OS_DEFAULT_KEY), defaults);
     }
   }

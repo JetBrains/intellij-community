@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
@@ -37,8 +37,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
 import org.jetbrains.idea.maven.importing.worktree.IdeModifiableModelsProviderBridge;
@@ -75,9 +73,9 @@ public class MavenProjectImporter {
 
   private final List<Module> myCreatedModules = new ArrayList<>();
 
-  private final Map<MavenProject, Module> myMavenProjectToModule = new THashMap<>();
-  private final Map<MavenProject, String> myMavenProjectToModuleName = new THashMap<>();
-  private final Map<MavenProject, String> myMavenProjectToModulePath = new THashMap<>();
+  private final Map<MavenProject, Module> myMavenProjectToModule = new HashMap<>();
+  private final Map<MavenProject, String> myMavenProjectToModuleName = new HashMap<>();
+  private final Map<MavenProject, String> myMavenProjectToModulePath = new HashMap<>();
 
   public MavenProjectImporter(Project p,
                               MavenProjectsTree projectsTree,
@@ -306,7 +304,7 @@ public class MavenProjectImporter {
   }
 
   private Map<MavenProject, MavenProjectChanges> collectProjectsToImport(Map<MavenProject, MavenProjectChanges> projectsToImport) {
-    Map<MavenProject, MavenProjectChanges> result = new THashMap<>(projectsToImport);
+    Map<MavenProject, MavenProjectChanges> result = new HashMap<>(projectsToImport);
     result.putAll(collectNewlyCreatedProjects()); // e.g. when 'create modules fro aggregators' setting changes
 
     Set<MavenProject> allProjectsToImport = result.keySet();
@@ -321,7 +319,7 @@ public class MavenProjectImporter {
   }
 
   private Map<MavenProject, MavenProjectChanges> collectNewlyCreatedProjects() {
-    Map<MavenProject, MavenProjectChanges> result = new THashMap<>();
+    Map<MavenProject, MavenProjectChanges> result = new HashMap<>();
 
     for (MavenProject each : myAllProjects) {
       Module module = myFileToModuleMapping.get(each.getFile());
@@ -334,7 +332,7 @@ public class MavenProjectImporter {
   }
 
   private Set<MavenProject> selectProjectsToImport(Collection<MavenProject> originalProjects) {
-    Set<MavenProject> result = new THashSet<>();
+    Set<MavenProject> result = new HashSet<>();
     for (MavenProject each : originalProjects) {
       if (!shouldCreateModuleFor(each)) continue;
       result.add(each);
@@ -509,7 +507,7 @@ public class MavenProjectImporter {
       artifacts.addAll(each.getDependencies());
     }
 
-    final Set<File> files = new THashSet<>();
+    final Set<File> files = new HashSet<>();
     for (MavenArtifact each : artifacts) {
       if (each.isResolved()) files.add(each.getFile());
     }
@@ -556,7 +554,7 @@ public class MavenProjectImporter {
   private void importModules(final List<MavenProjectsProcessorTask> tasks) {
     Map<MavenProject, MavenProjectChanges> projectsWithChanges = myProjectsToImportWithChanges;
 
-    Set<MavenProject> projectsWithNewlyCreatedModules = new THashSet<>();
+    Set<MavenProject> projectsWithNewlyCreatedModules = new HashSet<>();
 
     for (MavenProject each : projectsWithChanges.keySet()) {
       if (ensureModuleCreated(each)) {
@@ -738,7 +736,7 @@ public class MavenProjectImporter {
   }
 
   private Collection<ModuleRootModel> collectModuleModels() {
-    Map<Module, ModuleRootModel> rootModels = new THashMap<>();
+    Map<Module, ModuleRootModel> rootModels = new HashMap<>();
     for (MavenProject each : myProjectsToImportWithChanges.keySet()) {
       Module module = myMavenProjectToModule.get(each);
       ModifiableRootModel rootModel = myModelsProvider.getModifiableRootModel(module);

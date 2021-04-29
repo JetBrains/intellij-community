@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
@@ -36,7 +36,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaModule
 import com.intellij.task.ExecuteRunConfigurationTask
-import gnu.trove.THashMap
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
@@ -47,8 +46,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 /**
  * @author Vladislav.Soroka
  */
-class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider {
-
+internal class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider {
   override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean = task.runProfile is ApplicationConfiguration
 
   override fun createExecutionEnvironment(project: Project,
@@ -92,7 +90,7 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
 
     val taskSettings = ExternalSystemTaskExecutionSettings()
     taskSettings.isPassParentEnvs = params.isPassParentEnvs
-    taskSettings.env = if (params.env.isEmpty()) emptyMap() else THashMap(params.env)
+    taskSettings.env = if (params.env.isEmpty()) emptyMap() else HashMap(params.env)
     taskSettings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     val projectPath = GradleRunnerUtil.resolveProjectPath(module)
     taskSettings.externalProjectPath = projectPath

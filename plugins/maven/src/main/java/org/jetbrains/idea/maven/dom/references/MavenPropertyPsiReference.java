@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -30,7 +30,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -362,7 +361,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   @Override
   public Object @NotNull [] getVariants() {
     List<Object> result = new ArrayList<>();
-    collectVariants(result, new THashSet<>());
+    collectVariants(result, new HashSet<>());
     return ArrayUtil.toObjectArray(result);
   }
 
@@ -521,7 +520,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     XmlDocument document = xmlFile.getDocument();
     XmlNSDescriptor desc = (XmlNSDescriptor)document.getMetaData();
     XmlElementDescriptor[] descriptors = desc.getRootElementsDescriptors(document);
-    return doProcessSchema(descriptors, null, processor, new THashSet<>());
+    return doProcessSchema(descriptors, null, processor, new HashSet<>());
   }
 
   private static <T> T doProcessSchema(XmlElementDescriptor[] descriptors,

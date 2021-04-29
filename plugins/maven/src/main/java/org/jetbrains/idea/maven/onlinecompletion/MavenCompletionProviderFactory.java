@@ -1,17 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.onlinecompletion;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenRepositoryProvider;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
-import org.jetbrains.idea.kpmsearch.PackageSearchService;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.reposearch.DependencySearchProvider;
 import org.jetbrains.idea.reposearch.DependencySearchProvidersFactory;
@@ -61,7 +58,7 @@ public class MavenCompletionProviderFactory implements DependencySearchProviders
   }
 
   private static Set<Pair<String, String>> collectRemoteRepositoriesIdsAndUrls(Project project) {
-    Set<Pair<String, String>> result = new THashSet<>();
+    Set<Pair<String, String>> result = new HashSet<>();
     Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(MavenProjectsManager.getInstance(project).getRemoteRepositories());
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
       remoteRepositories.addAll(repositoryProvider.getRemoteRepositories(project));
