@@ -2,7 +2,7 @@
 <body>
 Reports on any call to <code>Object.wait()</code> for which no call to a corresponding <code>Object.notify()</code> or
 <code>Object.notifyAll()</code> can be found.
-<p>This inspection only reports calls which target fields of the current class.</p>
+<p>This inspection only reports calls with qualifiers referencing fields of the current class.</p>
 <p>Example:</p>
 <pre><code>
   public class Foo {
