@@ -26,7 +26,6 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.accessibility.*;
 import javax.swing.*;
@@ -140,37 +139,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     performAction(makeClickMouseEvent());
   }
 
-  /**
-   * @param checkIsShowing If true, prevent action to be performed if the button is not showed.
-   */
-  @TestOnly
-  public void click(boolean checkIsShowing) {
-    performAction(makeClickMouseEvent(), checkIsShowing);
-  }
-
   @NotNull
   private MouseEvent makeClickMouseEvent() {
     return new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
   }
 
   private void performAction(MouseEvent e) {
-    performAction(e, true);
-  }
-
-  private void performAction(MouseEvent e, boolean checkIsShowing) {
     AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
-    if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
-      return;
-    }
-
-    if (isEnabled()) {
+    if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false) && isEnabled()) {
       final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
       final DataContext dataContext = event.getDataContext();
       manager.fireBeforeActionPerformed(myAction, event);
-      Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      if (component != null && checkIsShowing && !component.isShowing()) {
-        return;
-      }
       actionPerformed(event);
       manager.fireAfterActionPerformed(myAction, event);
       if (event.getInputEvent() instanceof MouseEvent) {
@@ -187,14 +166,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return ActionToolbar.getDataContextFor(this);
   }
 
-  protected void actionPerformed(final AnActionEvent event) {
+  protected void actionPerformed(@NotNull AnActionEvent event) {
     HelpTooltip.hide(this);
     if (isPopupMenuAction(event, myAction)) {
       showActionGroupPopup((ActionGroup)myAction, event);
     }
     else {
       ActionUtil.performActionDumbAware(myAction, event);
-      ActionManagerEx.getInstanceEx().fireAfterActionPerformed(myAction, event);
     }
   }
 
