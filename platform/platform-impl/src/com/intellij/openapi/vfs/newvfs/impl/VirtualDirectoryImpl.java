@@ -316,6 +316,27 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       PersistentFSImpl.executeChangeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
       // fire event asynchronously to avoid deadlocks with possibly currently-held VFP/Refresh queue locks
       RefreshQueue.getInstance().processSingleEvent(true, caseSensitivityEvent);
+      // when the case-sensitivity changes, the "children must be sorted by name" invariant must be restored
+      resortChildren();
+    }
+  }
+
+  private void resortChildren() {
+    boolean isCaseSensitive = isCaseSensitive();
+    synchronized (myData) {
+      VirtualFileSystemEntry[] children = getArraySafely(true);
+
+      Comparator<VirtualFile> byName = (v1, v2) -> compareNames(v1.getNameSequence(), v2.getNameSequence(), isCaseSensitive);
+
+      ContainerUtil.sort(children, byName);
+      int[] result = ArrayUtil.newIntArray(children.length);
+      for (int i = 0; i < children.length; i++) {
+        VirtualFileSystemEntry child = children[i];
+        result[i] = child.getId();
+      }
+
+      myData.myChildrenIds = result;
+      assertConsistency(isCaseSensitive, children, "afterCaseSensitivityChanged", isCaseSensitive);
     }
   }
 
@@ -612,17 +633,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       int indexInReal = findIndex(myData.myChildrenIds, childName, isCaseSensitive);
       if (indexInReal < 0) {
         int i = -indexInReal -1;
-        insertChildAt(child, i);
+        int id = child.getId();
+        assert id > 0 : child + ": " + id;
+        myData.myChildrenIds = ArrayUtil.insert(myData.myChildrenIds, i, id);
       }
       // else already stored
       assertConsistency(isCaseSensitive, child, "indexInReal", indexInReal, isCaseSensitive);
     }
-  }
-
-  private void insertChildAt(@NotNull VirtualFileSystemEntry file, int i) {
-    int id = file.getId();
-    assert id > 0 : file +": "+id;
-    myData.myChildrenIds = ArrayUtil.insert(myData.myChildrenIds, i, id);
   }
 
   public void removeChild(@NotNull VirtualFile file) {
