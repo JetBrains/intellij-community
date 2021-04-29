@@ -49,7 +49,7 @@ abstract class GitStageConflictAction(text: Supplier<@Nls String>) :
 abstract class GitStageAcceptConflictSideAction(text: Supplier<@Nls String>, private val takeTheirs: Boolean) : GitStageConflictAction(
   text) {
   override fun perform(project: Project, handler: GitMergeHandler, conflicts: List<GitConflict>) {
-    acceptConflictSide(project, handler, conflicts, takeTheirs, project::isReversedRoot)
+    acceptConflictSide(project, handler, conflicts, takeTheirs)
   }
 }
 
@@ -63,6 +63,6 @@ class GitStageMergeConflictAction : GitStageConflictAction(GitBundle.messagePoin
   }
 
   override fun perform(project: Project, handler: GitMergeHandler, conflicts: List<GitConflict>) {
-    showMergeWindow(project, handler, conflicts, project::isReversedRoot)
+    showMergeWindow(project, handler, conflicts)
   }
 }

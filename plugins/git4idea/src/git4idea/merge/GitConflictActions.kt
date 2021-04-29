@@ -14,7 +14,6 @@ import git4idea.conflicts.getConflictOperationLock
 import git4idea.conflicts.showMergeWindow
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.createMergeHandler
-import git4idea.index.ui.isReversedRoot
 import git4idea.repo.GitConflict
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.Nls
@@ -66,7 +65,7 @@ abstract class GitAcceptConflictSideAction(text: Supplier<@Nls String>, private 
   }
 
   override fun perform(project: Project, conflicts: List<GitConflict>) {
-    acceptConflictSide(project, createMergeHandler(project), conflicts, takeTheirs, project::isReversedRoot)
+    acceptConflictSide(project, createMergeHandler(project), conflicts, takeTheirs)
   }
 }
 
@@ -80,6 +79,6 @@ class GitMergeConflictAction : GitConflictAction(GitBundle.messagePointer("actio
   }
 
   override fun perform(project: Project, conflicts: List<GitConflict>) {
-    showMergeWindow(project, createMergeHandler(project), conflicts, project::isReversedRoot)
+    showMergeWindow(project, createMergeHandler(project), conflicts)
   }
 }

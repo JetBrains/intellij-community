@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ui.HoverIcon
 import git4idea.conflicts.showMergeWindow
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.createMergeHandler
-import git4idea.index.ui.isReversedRoot
 import git4idea.repo.GitRepositoryManager
 
 class GitChangesViewNodeAction(val project: Project) : ChangesViewNodeAction {
@@ -36,7 +35,7 @@ class GitChangesViewNodeAction(val project: Project) : ChangesViewNodeAction {
       val stagingAreaHolder = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(path)?.stagingAreaHolder
       val conflict = stagingAreaHolder?.findConflict(path) ?: return
 
-      showMergeWindow(project, createMergeHandler(project), listOf(conflict), project::isReversedRoot)
+      showMergeWindow(project, createMergeHandler(project), listOf(conflict))
     }
   }
 }

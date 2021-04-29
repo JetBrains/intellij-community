@@ -56,7 +56,6 @@ import git4idea.index.actions.GitResetOperation
 import git4idea.index.actions.StagingAreaOperation
 import git4idea.index.actions.performStageOperation
 import git4idea.merge.GitDefaultMergeDialogCustomizer
-import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitRefreshListener
@@ -426,12 +425,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     @NonNls
     private const val GROUPING_PROPERTY_NAME = "GitStage.ChangesTree.GroupingKeys"
   }
-}
-
-internal fun Project.isReversedRoot(root: VirtualFile): Boolean {
-  return GitRepositoryManager.getInstance(this).getRepositoryForRootQuick(root)?.let { repository ->
-    GitMergeUtil.isReverseRoot(repository)
-  } ?: false
 }
 
 internal fun createMergeHandler(project: Project) = GitMergeHandler(project, GitDefaultMergeDialogCustomizer(project))

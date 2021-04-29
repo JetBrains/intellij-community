@@ -35,6 +35,7 @@ import git4idea.repo.GitConflict.ConflictSide
 import git4idea.repo.GitConflict.Status
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -177,8 +178,12 @@ internal fun getConflictOperationLock(project: Project, conflict: GitConflict): 
   return BackgroundableActionLock.getLock(project, conflict.filePath)
 }
 
+internal fun acceptConflictSide(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, takeTheirs: Boolean) {
+  acceptConflictSide(project, handler, selectedConflicts, takeTheirs, { root -> isReversedRoot(project, root) })
+}
+
 internal fun acceptConflictSide(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, takeTheirs: Boolean,
-                                isReversed: (VirtualFile) -> Boolean) {
+                                isReversed: (root: VirtualFile) -> Boolean) {
   val conflicts = selectedConflicts.filterNot { getConflictOperationLock(project, it).isLocked }.toList()
   if (conflicts.isEmpty()) return
 
@@ -197,7 +202,14 @@ internal fun acceptConflictSide(project: Project, handler: GitMergeHandler, sele
   }.queue()
 }
 
-internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, isReversed: (VirtualFile) -> Boolean) {
+internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>) {
+  showMergeWindow(project, handler, selectedConflicts, { root -> isReversedRoot(project, root) })
+}
+
+internal fun showMergeWindow(project: Project,
+                             handler: GitMergeHandler,
+                             selectedConflicts: List<GitConflict>,
+                             isReversed: (root: VirtualFile) -> Boolean) {
   val conflicts = selectedConflicts.filter { handler.canResolveConflict(it) && !getConflictOperationLock(project, it).isLocked }.toList()
   if (conflicts.isEmpty()) return
 
@@ -231,6 +243,11 @@ internal fun getConflictType(conflict: GitConflict): String {
     theirsStatus == Status.ADDED -> GitBundle.message("conflicts.type.added.by.them")
     else -> throw IllegalStateException("ours: $oursStatus; theirs: $theirsStatus")
   }
+}
+
+internal fun isReversedRoot(project: Project, root: VirtualFile): Boolean {
+  val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) ?: return false
+  return GitMergeUtil.isReverseRoot(repository)
 }
 
 private class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory) : TreeModelBuilder(project, grouping) {
