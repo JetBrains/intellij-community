@@ -268,8 +268,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
       if (getLocalVariable() != null) {
         final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-          new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, true,
-                                                         myOccurrences);
+          new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, myOccurrences);
         fieldRunnable.run();
       }
       else {

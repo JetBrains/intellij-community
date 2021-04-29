@@ -96,6 +96,10 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
     doTest(introducer -> type("R"));
   }
 
+  public void testConstantBeforeUsage() {
+    doTest(introducer -> type("R"));
+  }
+
   public void testEscapePosition() {
     doTestEscape();
   }
