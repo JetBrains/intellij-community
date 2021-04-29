@@ -48,10 +48,11 @@ public class InheritanceToDelegationAction extends BaseJavaRefactoringAction {
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context,
                                                         @NotNull String place) {
-    if (ActionPlaces.isPopupPlace(place) || place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
+    if (place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
+      return super.isAvailableOnElementInEditorAndFile(element, editor, file, context, place);
+    } else {
       return isJavaClassHeader(element);
     }
-    return super.isAvailableOnElementInEditorAndFile(element, editor, file, context, place);
   }
 
   @Override

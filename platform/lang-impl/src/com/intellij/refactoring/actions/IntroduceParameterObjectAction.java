@@ -40,7 +40,8 @@ public class IntroduceParameterObjectAction extends BaseRefactoringAction {
                                                         @NotNull String place) {
     if (BaseRefactoringAction.getPsiElementArray(context).length == 0) return false;  // see BaseRefactoringAction.actionPerformed
     final IntroduceParameterObjectDelegate delegate = IntroduceParameterObjectDelegate.findDelegate(element);
-    return delegate != null && delegate.isEnabledOn(element);
+    if (delegate == null || ! delegate.isEnabledOn(element)) return false;
+    return super.isAvailableOnElementInEditorAndFile(element, editor, file, context, place);
   }
 
   @Override
