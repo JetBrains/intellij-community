@@ -27,7 +27,7 @@ abstract class AbstractFirSealedInheritorsTest : AbstractFirMultiModuleLazyResol
         val allClasses = firFile.listNestedClasses().closure { it.listNestedClasses() }
         val inheritorNames = allClasses.flatMap { firClass ->
             if (firClass.isSealed) {
-                firClass.getSealedClassInheritors(firFile.declarationSiteSession)
+                firClass.getSealedClassInheritors(firFile.moduleData.session)
             } else {
                 emptyList()
             }
