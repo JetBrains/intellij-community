@@ -35,12 +35,11 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaModule
 import com.intellij.task.ExecuteRunConfigurationTask
 import gnu.trove.THashMap
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
-import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils.getFilePartShortName
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.build.GradleExecutionEnvironmentProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
@@ -65,8 +64,9 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
 
         val applicationConfiguration = executeRunConfigurationTask.runProfile as KotlinRunConfiguration
 
-        val mainClassKtFile = applicationConfiguration.findMainClassFile() ?: return null
-        val virtualFile = mainClassKtFile.virtualFile
+        val mainClass = applicationConfiguration.configurationModule?.findClass(applicationConfiguration.runClass) ?: return null
+
+        val virtualFile = mainClass.containingFile.virtualFile
         val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile) ?: return null
 
         val params = JavaParameters().apply {
@@ -84,13 +84,14 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
             javaExePath = (type as JavaSdkType).getVMExecutablePath(jdk)?.let {
                 FileUtil.toSystemIndependentName(it)
             } ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-            javaModuleName = findJavaModuleName(jdk, applicationConfiguration.configurationModule!!, mainClassKtFile)
+            javaModuleName = findJavaModuleName(jdk, applicationConfiguration.configurationModule!!, mainClass)
         } catch (e: CantRunException) {
-            ExecutionErrorDialog.show(e, ExecutionBundle.message("run.configuration.cannot.use.specified.jre"), project)
+            ExecutionErrorDialog.show(e, "Cannot use specified JRE", project)
             throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
         }
 
-        val runAppTaskName = "${getFilePartShortName(mainClassKtFile.virtualFile.name)}.main()"
+        val className = mainClass.name ?: return null
+        val runAppTaskName = "$className.main()"
 
         val taskSettings = ExternalSystemTaskExecutionSettings().apply {
             isPassParentEnvs = params.isPassParentEnvs
@@ -116,7 +117,7 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
 
         val initScript = generateInitScript(
             applicationConfiguration, project, module, params, runAppTaskName,
-            mainClassKtFile, javaExePath, sourceSetName, javaModuleName
+            mainClass, javaExePath, sourceSetName, javaModuleName
         )
         gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
         gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, runAppTaskName)
@@ -138,17 +139,17 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
             return result.toString()
         }
 
-        private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClassKtFile: KtFile): String? {
+        private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: PsiClass): String? {
             return if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
                 DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule, RuntimeException> {
-                    JavaModuleGraphUtil.findDescriptorByElement(mainClassKtFile)
+                    JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
                 }?.name ?: return null
             } else null
         }
 
         private fun generateInitScript(
             applicationConfiguration: KotlinRunConfiguration, project: Project, module: Module,
-            params: JavaParameters, runAppTaskName: String, mainClassKtFile: KtFile, javaExePath: String,
+            params: JavaParameters, runAppTaskName: String, mainClass: PsiClass, javaExePath: String,
             sourceSetName: String, javaModuleName: String?
         ): String? {
             // Init script creates the run task only for the project matching 'applicationConfiguration'.
@@ -182,7 +183,7 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
             val initScript = """
     def gradleProjectId = '$gradleProjectId'
     def runAppTaskName = '$runAppTaskName'
-    def mainClass = '${mainClassKtFile.packageFqName}.${getFilePartShortName(mainClassKtFile.virtualFile.name)}'
+    def mainClass = '${mainClass.qualifiedName}'
     def javaExePath = '$javaExePath'
     def _workingDir = ${if (workingDir.isNullOrEmpty()) "null\n" else "'$workingDir'\n"}
     def sourceSetName = '$sourceSetName'
