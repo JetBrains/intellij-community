@@ -393,9 +393,8 @@ public final class PluginManagerMain {
       return true;
     }
 
-    PluginManager pluginManager = PluginManager.getInstance();
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (!pluginManager.isDevelopedByJetBrains(descriptor)) {
+      if (!PluginManagerCore.isDevelopedByJetBrains(descriptor)) {
         String title = IdeBundle.message("third.party.plugins.privacy.note.title");
         String message = IdeBundle.message("third.party.plugins.privacy.note.message");
         String yesText = IdeBundle.message("third.party.plugins.privacy.note.yes");

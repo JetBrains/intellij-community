@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformUtils;
@@ -361,6 +362,28 @@ public final class PluginManagerCore {
       }
     }
     return null;
+  }
+
+  public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
+    return isDevelopedByJetBrains(plugin.getVendor());
+  }
+
+  public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
+    if (vendorString == null) {
+      return false;
+    }
+
+    if (vendorString.equals(VENDOR_JETBRAINS) || vendorString.equals(VENDOR_JETBRAINS_SRO)) {
+      return true;
+    }
+
+    for (String vendor : StringUtil.split(vendorString, ",")) {
+      String vendorItem = vendor.trim();
+      if (VENDOR_JETBRAINS.equals(vendorItem) || VENDOR_JETBRAINS_SRO.equals(vendorItem)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static Path getUpdatedBrokenPluginFile(){

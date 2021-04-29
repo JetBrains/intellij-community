@@ -205,7 +205,7 @@ object DynamicPlugins {
     if (descriptor.isRequireRestart) {
       return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart"
     }
-    if (descriptor.productCode != null && !descriptor.isBundled && !PluginManager.getInstance().isDevelopedByJetBrains(descriptor)) {
+    if (descriptor.productCode != null && !descriptor.isBundled && !PluginManagerCore.isDevelopedByJetBrains(descriptor)) {
       return "Plugin ${descriptor.pluginId} is a paid plugin"
     }
 

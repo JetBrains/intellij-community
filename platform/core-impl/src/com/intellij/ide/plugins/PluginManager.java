@@ -171,28 +171,6 @@ public final class PluginManager {
     return PluginManagerCore.getLogger();
   }
 
-  public boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
-    return isDevelopedByJetBrains(plugin.getVendor());
-  }
-
-  public boolean isDevelopedByJetBrains(@Nullable String vendorString) {
-    if (vendorString == null) {
-      return false;
-    }
-
-    if (vendorString.equals(PluginManagerCore.VENDOR_JETBRAINS) || vendorString.equals(PluginManagerCore.VENDOR_JETBRAINS_SRO)) {
-      return true;
-    }
-
-    for (String vendor : StringUtil.split(vendorString, ",")) {
-      String vendorItem = vendor.trim();
-      if (PluginManagerCore.VENDOR_JETBRAINS.equals(vendorItem) || PluginManagerCore.VENDOR_JETBRAINS_SRO.equals(vendorItem)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
     List<IdeaPluginDescriptorImpl> result = PluginManagerCore.getLoadedPlugins(null);
     for (IdeaPluginDescriptor plugin : result) {

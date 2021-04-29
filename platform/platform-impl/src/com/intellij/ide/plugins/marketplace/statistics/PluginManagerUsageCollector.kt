@@ -51,35 +51,30 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun pluginsStateChanged(project: Project?, pluginIds: List<PluginId>, action: PluginEnableDisableAction) = pluginIds
-      .forEach { PLUGIN_STATE_CHANGED.log(project, it.pluginInfoIfSafeToReport(), action) }
+      .forEach { PLUGIN_STATE_CHANGED.log(project, getPluginInfoById(it), action) }
 
     @JvmStatic
-    fun pluginRemoved(pluginId: PluginId) = PLUGIN_REMOVED.log(pluginId.pluginInfoIfSafeToReport())
+    fun pluginRemoved(pluginId: PluginId) = PLUGIN_REMOVED.log(getPluginInfoById(pluginId))
 
     @JvmStatic
     fun pluginInstallationStarted(
       descriptor: IdeaPluginDescriptor,
       source: InstallationSourceEnum,
       previousVersion: String? = null
-    ) = descriptor.pluginInfoIfSafeToReport()?.let {
-      PLUGIN_INSTALLATION_STARTED.log(source, it, previousVersion)
-    } ?: PLUGIN_INSTALLATION_STARTED.log(source, null, null)
+    ) = PLUGIN_INSTALLATION_STARTED.log(source, getPluginInfoByDescriptor(descriptor), previousVersion)
 
     @JvmStatic
-    fun pluginInstallationFinished(descriptor: IdeaPluginDescriptor) = descriptor.pluginInfoIfSafeToReport().let {
+    fun pluginInstallationFinished(descriptor: IdeaPluginDescriptor) = getPluginInfoByDescriptor(descriptor).let {
       PLUGIN_INSTALLATION_FINISHED.log(it)
     }
 
     fun signatureCheckResult(descriptor: IdeaPluginDescriptor, result: SignatureVerificationResult) = PLUGIN_SIGNATURE_CHECK_RESULT.log(
-      descriptor.pluginInfoIfSafeToReport(), result
+      getPluginInfoByDescriptor(descriptor), result
     )
 
     fun signatureWarningShown(descriptor: IdeaPluginDescriptor, result: DialogAcceptanceResultEnum) = PLUGIN_SIGNATURE_WARNING.log(
-      descriptor.pluginInfoIfSafeToReport(), result
+      getPluginInfoByDescriptor(descriptor), result
     )
-
-    private fun PluginId.pluginInfoIfSafeToReport() = getPluginInfoById(this).takeIf { it.isSafeToReport() }
-    private fun IdeaPluginDescriptor.pluginInfoIfSafeToReport() = getPluginInfoByDescriptor(this).takeIf { it.isSafeToReport() }
   }
 
   private data class PluginVersionEventField(override val name: String): PrimitiveEventField<String?>() {

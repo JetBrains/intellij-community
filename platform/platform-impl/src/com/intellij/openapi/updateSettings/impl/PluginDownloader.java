@@ -5,8 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
-import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
-import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.internal.statistic.DeviceIdManager;
 import com.intellij.openapi.application.Application;
@@ -127,6 +125,8 @@ public final class PluginDownloader {
     return myReleaseVersion;
   }
 
+  public boolean isFromMarketplace() { return myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST); }
+
   public boolean isLicenseOptional() {
     return myLicenseOptional;
   }
@@ -185,23 +185,12 @@ public final class PluginDownloader {
       myOldFile = descriptor.isBundled() ? null : descriptor.getPluginPath();
     }
 
-    boolean isFromMarketplace = myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
-    String previousVersion = (descriptor == null) ? null : descriptor.getVersion();
-
-    if (ApplicationManager.getApplication() != null) {
-      PluginManagerUsageCollector.pluginInstallationStarted(
-        myDescriptor,
-        isFromMarketplace ? InstallationSourceEnum.MARKETPLACE : InstallationSourceEnum.CUSTOM_REPOSITORY,
-        previousVersion
-      );
-    }
-
     // download plugin
     myFile = tryDownloadPlugin(indicator, showMessageOnError);
     if (myFile != null) {
       if (Registry.is("marketplace.certificate.signature.check")) {
 
-        if (isFromMarketplace) {
+        if (isFromMarketplace()) {
           if (!PluginSignatureChecker.verifyPluginByJetBrains(myDescriptor, myFile)) {
             myShownErrors = true;
             return null;
