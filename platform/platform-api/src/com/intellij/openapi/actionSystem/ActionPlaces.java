@@ -167,8 +167,11 @@ public abstract class ActionPlaces {
   public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
 
   public static boolean isMainMenuOrActionSearch(String place) {
-    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) ||
-           KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
+    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place);
+  }
+
+  public static boolean isShortcutPlace(String place) {
+    return KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
   }
 
   private static final Set<String> ourCommonPlaces = ContainerUtil.newHashSet(
@@ -212,10 +215,6 @@ public abstract class ActionPlaces {
     return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place);
   }
 
-  public static boolean isMainMenuOrShortcut(@NotNull String place) {
-    return MAIN_MENU.equals(place) || KEYBOARD_SHORTCUT.equals(place);
-  }
-
   public static @NotNull String getActionGroupPopupPlace(@Nullable String actionId) {
     return actionId == null ? POPUP : POPUP_PREFIX + actionId;
   }
@@ -230,6 +229,6 @@ public abstract class ActionPlaces {
    */
   @ApiStatus.Internal
   public static boolean isMacSystemMenuAction(@NotNull AnActionEvent e) {
-    return SystemInfo.isMacSystemMenu && isMainMenuOrShortcut(e.getPlace());
+    return SystemInfo.isMacSystemMenu && (MAIN_MENU.equals(e.getPlace()) || KEYBOARD_SHORTCUT.equals(e.getPlace()));
   }
 }

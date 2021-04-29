@@ -49,7 +49,7 @@ public class StatusBarWidgetsActionGroup extends ActionGroup {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
-      if (ActionPlaces.isMainMenuOrShortcut(e.getPlace())) {
+      if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
         e.getPresentation().setEnabledAndVisible(myWidgetFactory.isConfigurable() && myWidgetFactory.isAvailable(project));
         return;
       }

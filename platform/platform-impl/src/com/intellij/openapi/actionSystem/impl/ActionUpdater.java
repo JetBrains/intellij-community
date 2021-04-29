@@ -114,12 +114,10 @@ final class ActionUpdater {
       group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(myDataContext)));
     myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> group.getChildren(null), group -> true);
 
-    LOG.assertTrue(myEventTransform == null || ActionPlaces.KEYBOARD_SHORTCUT.equals(myPlace) ||
-                   ActionPlaces.MOUSE_SHORTCUT.equals(myPlace), "beforeActionPerformed requested in '" + myPlace + "'");
+    LOG.assertTrue(myEventTransform == null || ActionPlaces.isShortcutPlace(myPlace),
+                   "beforeActionPerformed requested in '" + myPlace + "'");
 
-    myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) ||
-                        ActionPlaces.KEYBOARD_SHORTCUT.equals(myPlace) ||
-                        ActionPlaces.MOUSE_SHORTCUT.equals(myPlace) ?
+    myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) || ActionPlaces.isShortcutPlace(myPlace) ?
                         0 : Registry.intValue("actionSystem.update.actions.async.test.delay", 0);
   }
 
