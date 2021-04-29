@@ -43,7 +43,7 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
   abstract fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon?
 
   private fun getHoverData(point: Point): HoverData? {
-    val path = getClosestPathForLocation(point.x, point.y) ?: return null
+    val path = TreeUtil.getPathForLocation(this, point.x, point.y) ?: return null
     val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return null
     val hoverIcon = getHoverIcon(node) ?: return null
     val componentBounds = getComponentBounds(path, hoverIcon.icon) ?: return null
