@@ -1,5 +1,18 @@
 <html>
 <body>
-This inspection detects trailing semicolons in statements.
+<p>Reports trailing semicolons in statements.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+def my_func(a):
+    c = a ** 2;
+    return c
+</pre>
+<p>IDE provides a quick-fix that removes a trailing semicolon. When you
+  apply it, the code changes to:</p>
+<pre style="font-family: monospace">
+def my_func(a):
+    c = a ** 2
+    return c
+</pre>
 </body>
 </html>

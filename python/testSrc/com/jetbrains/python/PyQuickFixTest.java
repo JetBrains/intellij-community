@@ -133,7 +133,12 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-22045
   public void testBatchReplacePrintInsertsFutureImportOnlyOnce() {
-    doInspectionTest(PyCompatibilityInspection.class, "Fix all 'Code compatibility inspection' problems in file", true, true);
+    doInspectionTest(
+      PyCompatibilityInspection.class,
+      "Fix all 'Code is incompatible with specific Python versions' problems in file",
+      true,
+      true
+    );
   }
 
   // PY-4556
