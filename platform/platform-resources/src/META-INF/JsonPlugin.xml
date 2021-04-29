@@ -121,7 +121,7 @@
                                 id="JsonSchemaDocumentationProvider"
                                 implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
-    <statistics.counterUsagesCollector groupId="json.schema" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaUsageTriggerCollector"/>
 
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>
