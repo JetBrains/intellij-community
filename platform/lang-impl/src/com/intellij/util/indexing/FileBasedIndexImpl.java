@@ -102,6 +102,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   private static final ThreadLocal<VirtualFile> ourFileToBeIndexed = new ThreadLocal<>();
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
+  private final boolean myTraceIndexUpdates;
 
   private volatile RegisteredIndexes myRegisteredIndexes;
 
@@ -212,6 +213,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }, null);
 
     myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
+    myTraceIndexUpdates = LOG.isTraceEnabled();
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
@@ -1446,6 +1448,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Nullable("null in case index update is not necessary or the update has failed")
   SingleIndexUpdateStats updateSingleIndex(@NotNull ID<?, ?> indexId, @Nullable VirtualFile file, int inputId, @Nullable FileContent currentFC) {
+    if (myTraceIndexUpdates) {
+      if (file == null) {
+        LOG.trace("index " + indexId + " deletion requested for " + inputId);
+      }
+      else {
+        LOG.trace("index " + indexId + " update requested for " + file.getName());
+      }
+    }
     if (!myRegisteredIndexes.isExtensionsDataLoaded()) reportUnexpectedAsyncInitState();
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return null; // the index is scheduled for rebuild, no need to update
@@ -1498,6 +1508,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                  ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
 
       if (runUpdateForPersistentData(storageUpdate)) {
+        if (myTraceIndexUpdates) {
+          if (file == null) {
+            LOG.trace("index " + indexId + " deletion finished for " + inputId);
+          }
+          else {
+            LOG.trace("index " + indexId + " update finished for " + file.getName());
+          }
+        }
         ConcurrencyUtil.withLock(myReadLock, () -> {
           if (currentFC != null) {
             if (!isMock(currentFC.getFile())) {
