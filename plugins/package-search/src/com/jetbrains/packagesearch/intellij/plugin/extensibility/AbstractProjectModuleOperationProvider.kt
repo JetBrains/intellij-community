@@ -6,6 +6,7 @@ import com.intellij.buildsystem.model.OperationType
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.DependencyModifierService
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -87,7 +88,7 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
     }
 
     override fun listDependenciesInProject(project: Project, virtualFile: VirtualFile): Collection<UnifiedDependency> {
-        val module = ModuleUtilCore.findModuleForFile(virtualFile, project)
+        val module = runReadAction { ModuleUtilCore.findModuleForFile(virtualFile, project) }
         return module?.let {
             DependencyModifierService.getInstance(project).declaredDependencies(it).map { dep ->
                 dep.unifiedDependency
@@ -100,7 +101,7 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
         project: Project,
         virtualFile: VirtualFile
     ): List<OperationFailure<out OperationItem>> {
-        val module = ModuleUtilCore.findModuleForFile(virtualFile, project)
+        val module = runReadAction { ModuleUtilCore.findModuleForFile(virtualFile, project) }
             ?: return listOf(OperationFailure(OperationType.ADD, repository, IllegalArgumentException()))
 
         try {
@@ -116,7 +117,7 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
         project: Project,
         virtualFile: VirtualFile
     ): List<OperationFailure<out OperationItem>> {
-        val module = ModuleUtilCore.findModuleForFile(virtualFile, project)
+        val module = runReadAction { ModuleUtilCore.findModuleForFile(virtualFile, project) }
             ?: return listOf(OperationFailure(OperationType.ADD, repository, IllegalArgumentException()))
 
         try {
@@ -128,7 +129,7 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
     }
 
     override fun listRepositoriesInProject(project: Project, virtualFile: VirtualFile): Collection<UnifiedDependencyRepository> {
-        val module = ModuleUtilCore.findModuleForFile(virtualFile, project)
+        val module = runReadAction { ModuleUtilCore.findModuleForFile(virtualFile, project) }
         return module?.let { DependencyModifierService.getInstance(project).declaredRepositories(it) } ?: emptyList()
     }
 }
