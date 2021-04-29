@@ -24,14 +24,14 @@ object StatisticsUtil {
   }
 
   /**
-   * Anonymize sensitive project properties by rounding it to the next power of two
+   * Anonymizes sensitive project properties by rounding it to the next power of two
    * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
    */
   @JvmStatic
   fun getNextPowerOfTwo(value: Int): Int = if (value <= 1) 1 else Integer.highestOneBit(value - 1) shl 1
 
   /**
-   * Anonymize sensitive project properties by rounding it to the next power of two
+   * Anonymizes sensitive project properties by rounding it to the next power of two
    * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
    */
   @JvmStatic
