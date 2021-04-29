@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
@@ -45,9 +44,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
                                      @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
-    myComboBox = Registry.is("debugger.new.tool.window.layout", false)
-                 ? new XDebuggerEmbeddedComboBox<>(myModel, 100)
-                 : new ComboBox<>(myModel, 100);
+    myComboBox = createComboBox(myModel, 100);
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
@@ -57,6 +54,10 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     fillComboBox();
     myComponent = JBUI.Panels.simplePanel().addToTop(myComboBox);
     setExpression(myExpression);
+  }
+
+  protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
+    return new ComboBox<>(model, width);
   }
 
   public ComboBox getComboBox() {
