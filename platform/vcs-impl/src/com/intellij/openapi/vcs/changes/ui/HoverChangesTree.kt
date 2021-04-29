@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClickListener
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.LayeredIcon
+import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.UIUtil
@@ -126,10 +127,8 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
     }
 
     private fun Tree.getBackground(row: Int, selected: Boolean): Color {
-      val treeFocused = hasFocus()
-
-      if (selected) return UIUtil.getTreeBackground(selected, treeFocused)
-      return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: UIUtil.getTreeBackground(selected, treeFocused)
+      if (selected) return RenderingUtil.getBackground(this, selected)
+      return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: RenderingUtil.getBackground(this, selected)
     }
 
     private data class FloatingIcon(val icon: Icon, val location: Int)
