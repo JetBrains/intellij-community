@@ -483,7 +483,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
           .wrapWith(HtmlChunk.html()).toString();
       }
     }
-    return null;
+    return super.getToolTipText(event); // to allow tooltips from renderers
   }
 
   private boolean isShowRootNames() {
