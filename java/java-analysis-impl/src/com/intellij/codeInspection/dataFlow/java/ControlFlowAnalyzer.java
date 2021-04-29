@@ -1841,10 +1841,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (val instanceof Integer) {
       int lengthValue = (Integer)val;
       if (lengthValue > 0 && lengthValue <= MAX_UNROLL_SIZE) {
-        DfaVariableValue var = getTargetVariable(arrayExpression);
-        if (var == null) {
-          var = createTempVariable(type);
-        }
+        DfaVariableValue var = createTempVariable(type);
         addInstruction(new PushInstruction(var, null, true));
         addInstruction(new SwapInstruction());
         addInstruction(new AssignInstruction(null, var));

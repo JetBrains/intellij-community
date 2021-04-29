@@ -698,4 +698,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBoxedDivisionComparison() { doTest(); }
   public void testUnknownComparedToNullable() { doTest(); }
   public void testCastInCatch() { doTest(); }
+  public void testInitArrayInConstructor() { doTest(); }
 }
