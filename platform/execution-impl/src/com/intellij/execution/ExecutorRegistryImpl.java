@@ -33,10 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -366,19 +363,20 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  // TODO: make private as soon as IDEA-207986 will be fixed
-  // RunExecutorSettings configurations can be modified, so we request current childExecutors on each AnAction#update call
-  public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware {
+  @ApiStatus.Internal
+  public static class ExecutorGroupActionGroup extends ActionGroup implements DumbAware, UpdateInBackground {
     protected final ExecutorGroup<?> myExecutorGroup;
     private final Function<? super Executor, ? extends AnAction> myChildConverter;
 
-    protected ExecutorGroupActionGroup(@NotNull ExecutorGroup<?> executorGroup, @NotNull Function<? super Executor, ? extends AnAction> childConverter) {
+    protected ExecutorGroupActionGroup(@NotNull ExecutorGroup<?> executorGroup,
+                                       @NotNull Function<? super Executor, ? extends AnAction> childConverter) {
       myExecutorGroup = executorGroup;
       myChildConverter = childConverter;
     }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      // RunExecutorSettings configurations can be modified, so we request current childExecutors on each call
       List<Executor> childExecutors = myExecutorGroup.childExecutors();
       AnAction[] result = new AnAction[childExecutors.size()];
       for (int i = 0; i < childExecutors.size(); i++) {

@@ -34,7 +34,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.util.Objects;
 
-public final class SplitButtonAction extends ActionGroup implements CustomComponentAction {
+public final class SplitButtonAction extends ActionGroup implements CustomComponentAction, UpdateInBackground {
   private final ActionGroup myActionGroup;
   private final static Key<AnAction> FIRST_ACTION = Key.create("firstAction");
 
@@ -51,6 +51,11 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
   }
 
   @Override
+  public boolean isUpdateInBackground() {
+    return myActionGroup instanceof UpdateInBackground && ((UpdateInBackground)myActionGroup).isUpdateInBackground();
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), SplitButton.class);
@@ -60,7 +65,8 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     if (presentation.isVisible()) {
       AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
       if (action != null) {
-        action.update(e);
+        Presentation actionPresentation = Utils.getOrCreateUpdateSession(e).presentation(action);
+        presentation.copyFrom(actionPresentation, splitButton);
         if (splitButton != null) {
           boolean shouldRepaint = splitButton.actionEnabled != presentation.isEnabled();
           splitButton.actionEnabled = presentation.isEnabled();
@@ -73,7 +79,6 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     }
   }
 
-  // Get first enabled action from the group. It there are no enabled actions then returns first or null if no children.
   @Nullable
   private AnAction getFirstEnabledAction(@NotNull AnActionEvent e) {
     UpdateSession session = Utils.getOrCreateUpdateSession(e);
@@ -213,10 +218,10 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     protected void actionPerformed(@NotNull AnActionEvent event) {
       HelpTooltip.hide(this);
 
-      if (mousePressType == MousePressType.Popup) {
+      if (mousePressType == MousePressType.Popup || !selectedActionEnabled()) {
         showActionGroupPopup(myActionGroup, event);
       }
-      else if (selectedActionEnabled()) {
+      else {
         ActionUtil.performActionDumbAware(selectedAction, event);
       }
     }
