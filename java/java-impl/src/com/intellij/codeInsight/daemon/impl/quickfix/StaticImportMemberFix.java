@@ -45,15 +45,15 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   private final List<T> candidates;
   protected final SmartPsiElementPointer<R> myRef;
 
+  @SuppressWarnings("AbstractMethodCallInConstructor")
   StaticImportMemberFix(@NotNull PsiFile file, @NotNull R reference) {
     myRef = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(reference);
     // search for suitable candidates here, in the background thread
-    //noinspection AbstractMethodCallInConstructor
-    candidates = getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_2_MEMBERS);
+    List<T> applicableCandidates = getMembersToImport(true, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS);
+    candidates = !applicableCandidates.isEmpty() ? applicableCandidates 
+                                                 : getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_2_MEMBERS);
 
-    //noinspection AbstractMethodCallInConstructor
-    myApplicableCandidates = ContainerUtil.map(getMembersToImport(true, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS),
-                                               SmartPointerManager::createPointer);
+    myApplicableCandidates = ContainerUtil.map(applicableCandidates, SmartPointerManager::createPointer);
   }
 
   @NotNull
@@ -116,7 +116,9 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final List<T> methodsToImport = getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS);
+      List<T> applicableCandidates = ContainerUtil.mapNotNull(myApplicableCandidates, SmartPsiElementPointer::getElement);
+      final List<T> methodsToImport = !applicableCandidates.isEmpty() ? applicableCandidates 
+                                                                      : getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS);
       if (methodsToImport.isEmpty()) return;
       createQuestionAction(methodsToImport, project, editor).execute();
     });
