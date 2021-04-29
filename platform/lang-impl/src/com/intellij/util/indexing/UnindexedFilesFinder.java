@@ -104,6 +104,9 @@ final class UnindexedFilesFinder {
         FileIndexingState fileTypeIndexState = null;
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
+            if (myDoTraceForFilesToBeIndexed) {
+              LOG.trace("Scheduling full indexing of " + file + " because file type index is outdated");
+            }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
             shouldIndex.set(true);
           }
