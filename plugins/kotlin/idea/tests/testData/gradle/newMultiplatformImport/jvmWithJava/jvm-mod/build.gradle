@@ -9,5 +9,5 @@ repositories {
 }
 
 dependencies {
-    compile project(":mpp-mod-a")
+    implementation project(":mpp-mod-a")
 }
