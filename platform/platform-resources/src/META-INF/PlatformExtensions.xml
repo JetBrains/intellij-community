@@ -1216,7 +1216,9 @@
                              instance="com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable"
                              groupId="root"/>
 
-    <advancedSetting id="ide.show.fileType.icon.in.titleBar"
+    <postStartupActivity implementation="com.intellij.openapi.util.registry.RegistryToAdvancedSettingsMigration"/>
+
+    <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false"
                      titleKey="option.ide.show.fileType.icon.in.titleBar"
                      descriptionKey="option.ide.show.fileType.icon.in.titleBar.description"
                      groupKey="group.advanced.settings.ide"
