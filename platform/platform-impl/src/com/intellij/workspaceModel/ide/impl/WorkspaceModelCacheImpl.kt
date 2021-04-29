@@ -177,6 +177,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
         plugin.pluginClassLoader ?: ApplicationManager::class.java.classLoader
       }
 
+      if (name.startsWith("[")) return Class.forName(name)
       return classloader.loadClass(name)
     }
   }

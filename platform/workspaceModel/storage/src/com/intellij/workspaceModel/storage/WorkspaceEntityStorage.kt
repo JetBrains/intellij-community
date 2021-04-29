@@ -25,6 +25,7 @@ import kotlin.reflect.KProperty1
  * * [VirtualFileUrl];
  * * [WorkspaceEntity] or [PersistentEntityId];
  * * [List] of another allowed type;
+ * * [Array] of another allowed type;
  * * another data class with properties of the allowed types (references to entities must be wrapped into [EntityReference]);
  * * sealed abstract class where all implementations satisfy these requirements.
  *

@@ -20,6 +20,7 @@ class TestEntityTypesResolver : EntityTypesResolver {
   override fun getPluginId(clazz: Class<*>): String? = pluginPrefix + clazz.name
   override fun resolveClass(name: String, pluginId: String?): Class<*> {
     Assert.assertEquals(pluginPrefix + name, pluginId)
+    if (name.startsWith("[")) return Class.forName(name)
     return javaClass.classLoader.loadClass(name)
   }
 }

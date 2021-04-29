@@ -40,7 +40,7 @@ private val LOG = logger<EntityStorageSerializerImpl>()
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
                                   private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v16"
+    const val SERIALIZER_VERSION = "v17"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -216,6 +216,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     registerSingletonSerializer(kryo) { emptyMap<Any, Any>() }
     registerSingletonSerializer(kryo) { emptyList<Any>() }
     registerSingletonSerializer(kryo) { emptySet<Any>() }
+    registerSingletonSerializer(kryo) { emptyArray<Any>() }
 
     return kryo
   }
@@ -270,6 +271,17 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
       if (property is List<*>) {
         val type = (it.genericType as ParameterizedType).actualTypeArguments[0] as? Class<*>
+        if (type != null) {
+          registerKClass(type.kotlin, type, kryo, objectClasses, simpleClasses)
+        }
+
+        property.filterNotNull().forEach { listItem ->
+          recursiveClassFinder(kryo, listItem, simpleClasses, objectClasses)
+        }
+      }
+
+      if (property is Array<*>) {
+        val type = (it.genericType as Class<*>).componentType
         if (type != null) {
           registerKClass(type.kotlin, type, kryo, objectClasses, simpleClasses)
         }
