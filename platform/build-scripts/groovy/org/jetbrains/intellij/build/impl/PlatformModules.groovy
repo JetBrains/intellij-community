@@ -198,6 +198,7 @@ final class PlatformModules {
       }
 
       layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
+        "JDOM",
         "Trove4j",
         "aalto-xml",
         "netty-buffer",

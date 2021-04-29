@@ -1038,7 +1038,7 @@ final class DistributionJARsBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final Set<String> excludedFromMergeLibs = Set.of(
-    "JDOM", "jna", "Log4J", "sqlite", "Slf4j", "async-profiler", "precompiled_jshell-frontend",
+    "jna", "Log4J", "sqlite", "Slf4j", "async-profiler", "precompiled_jshell-frontend",
     "dexlib2", // android-only lib
     "intellij-coverage", "intellij-test-discovery", // used as agent
     "winp", "junixsocket-core", "pty4j" // contains native library
@@ -1086,11 +1086,11 @@ final class DistributionJARsBuilder {
         if (mergeLibs) {
           String key
           if (!excludedFromMergeLibs.contains(libName) &&
-                   !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
-                   !lowerCasedLibName.contains("annotations") &&
-                   !lowerCasedLibName.startsWith("junit") &&
-                   !lowerCasedLibName.startsWith("cucumber-") &&
-                   !lowerCasedLibName.contains("groovy")) {
+              !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
+              !lowerCasedLibName.contains("annotations") &&
+              !lowerCasedLibName.startsWith("junit") &&
+              !lowerCasedLibName.startsWith("cucumber-") &&
+              !lowerCasedLibName.contains("groovy")) {
             key = "3rd-party"
           }
           else {
