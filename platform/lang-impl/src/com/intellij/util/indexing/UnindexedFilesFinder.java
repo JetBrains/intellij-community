@@ -27,7 +27,7 @@ final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
 
   private final Project myProject;
-  private final boolean myDoTraceForFilesToBeIndexed = FileBasedIndexImpl.LOG.isTraceEnabled();
+  private final boolean myDoTraceForFilesToBeIndexed;
   private final FileBasedIndexImpl myFileBasedIndex;
   private final UpdatableIndex<FileType, Void, FileContent> myFileTypeIndex;
   private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
@@ -50,6 +50,7 @@ final class UnindexedFilesFinder {
     myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
 
     myIndexableFilesFilterHolder = fileBasedIndex.getIndexableFilesFilterHolder();
+    myDoTraceForFilesToBeIndexed = fileBasedIndex.isTraceIndexUpdates();
   }
 
   @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)")
@@ -105,7 +106,7 @@ final class UnindexedFilesFinder {
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
             if (myDoTraceForFilesToBeIndexed) {
-              LOG.trace("Scheduling full indexing of " + file + " because file type index is outdated");
+              LOG.info("Scheduling full indexing of " + file + " because file type index is outdated");
             }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
             shouldIndex.set(true);
@@ -138,7 +139,7 @@ final class UnindexedFilesFinder {
                   }
                   if (fileIndexingState.updateRequired()) {
                     if (myDoTraceForFilesToBeIndexed) {
-                      LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
+                      LOG.info("Scheduling indexing of " + file + " by request of index " + indexId);
                     }
 
                     long nowTime = System.nanoTime();
@@ -206,7 +207,7 @@ final class UnindexedFilesFinder {
       if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
         FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
         if (myDoTraceForFilesToBeIndexed) {
-          LOG.trace("File " + fileContent.getFile() + " indexed using extension for " + indexId + " without content");
+          LOG.info("File " + fileContent.getFile() + " indexed using extension for " + indexId + " without content");
         }
         return true;
       }

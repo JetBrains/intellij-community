@@ -213,7 +213,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }, null);
 
     myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
-    myTraceIndexUpdates = LOG.isTraceEnabled();
+    myTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
+  }
+
+  boolean isTraceIndexUpdates() {
+    return myTraceIndexUpdates;
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
@@ -1450,10 +1454,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   SingleIndexUpdateStats updateSingleIndex(@NotNull ID<?, ?> indexId, @Nullable VirtualFile file, int inputId, @Nullable FileContent currentFC) {
     if (myTraceIndexUpdates) {
       if (file == null) {
-        LOG.trace("index " + indexId + " deletion requested for " + inputId);
+        LOG.info("index " + indexId + " deletion requested for " + inputId);
       }
       else {
-        LOG.trace("index " + indexId + " update requested for " + file.getName());
+        LOG.info("index " + indexId + " update requested for " + file.getName());
       }
     }
     if (!myRegisteredIndexes.isExtensionsDataLoaded()) reportUnexpectedAsyncInitState();
@@ -1510,10 +1514,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (runUpdateForPersistentData(storageUpdate)) {
         if (myTraceIndexUpdates) {
           if (file == null) {
-            LOG.trace("index " + indexId + " deletion finished for " + inputId);
+            LOG.info("index " + indexId + " deletion finished for " + inputId);
           }
           else {
-            LOG.trace("index " + indexId + " update finished for " + file.getName());
+            LOG.info("index " + indexId + " update finished for " + file.getName());
           }
         }
         ConcurrencyUtil.withLock(myReadLock, () -> {
