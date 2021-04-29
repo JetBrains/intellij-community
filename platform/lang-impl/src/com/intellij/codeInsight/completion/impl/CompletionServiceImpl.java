@@ -96,7 +96,10 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
   private CompletionProcess getCurrentCompletion(@NotNull ClientId clientId) {
     CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator(clientId);
-    return indicator != null ? indicator : myApiCompletionProcess;  // TODO: not clientId-safe?
+    if (indicator != null) {
+      return indicator;
+    }
+    return clientId.equals(ClientId.getLocalId()) ? myApiCompletionProcess : null;
   }
 
   public static CompletionProgressIndicator getCurrentCompletionProgressIndicator() {
@@ -145,7 +148,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
     @Override
     public void addLookupAdvertisement(@NotNull String text) {
-      getCompletionService().setAdvertisementText(text);  // TODO: proper clientId?
+      getCompletionService().setAdvertisementText(text);
     }
 
     @Override
