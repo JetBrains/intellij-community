@@ -22,8 +22,12 @@ public abstract class ActionManagerEx extends ActionManager {
   @NotNull
   public abstract ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
 
+  /** Do not call directly, prefer {@link ActionUtil} methods. */
+  @ApiStatus.Internal
   public abstract void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event);
 
+  /** Do not call directly, prefer {@link ActionUtil} methods. */
+  @ApiStatus.Internal
   public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event);
 
 
@@ -40,9 +44,6 @@ public abstract class ActionManagerEx extends ActionManager {
   public final void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     fireAfterActionPerformed(action, event);
   }
-
-  public abstract void fireFinallyActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event, long durationMillis);
-
 
   public abstract void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext);
 

@@ -3,7 +3,10 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.*;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.KeyboardAwareFocusOwner;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -566,9 +569,13 @@ public final class IdeKeyEventDispatcher {
 
     @Override
     public void performAction(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
-      super.performAction(inputEvent, action, event);
-      if (Registry.is("actionSystem.fixLostTyping")) {
-        IdeEventQueue.getInstance().doWhenReady(() -> IdeEventQueue.getInstance().getKeyEventDispatcher().resetState());
+      try {
+        super.performAction(inputEvent, action, event);
+      }
+      finally {
+        if (Registry.is("actionSystem.fixLostTyping")) {
+          IdeEventQueue.getInstance().doWhenReady(() -> IdeEventQueue.getInstance().getKeyEventDispatcher().resetState());
+        }
       }
     }
   };
@@ -661,23 +668,16 @@ public final class IdeKeyEventDispatcher {
       if (context instanceof DataManagerImpl.MyDataContext) { // this is not true for test data contexts
         ((DataManagerImpl.MyDataContext)context).setEventCount(eventCount);
       }
-      try (AccessToken ignore = ProhibitAWTEvents.start("fireBeforeActionPerformed")) {
-        actionManager.fireBeforeActionPerformed(action, actionEvent);
-      }
-      if (isContextComponentNotVisible(actionEvent)) {
-        logTimeMillis(startedAt, action);
-        return;
-      }
-
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
-        myIgnoreNextKeyTypedEvent = true;
-      }
-      LOG.assertTrue(eventCount == IdeEventQueue.getInstance().getEventCount(),
-                     "Event counts do not match: " + eventCount + " != " + IdeEventQueue.getInstance().getEventCount());
-      try (AccessToken ignore = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(true)) {
-        processor.performAction(e, action, actionEvent);
-      }
-      actionManager.fireAfterActionPerformed(action, actionEvent);
+      ActionUtil.performDumbAwareWithCallbacks(action, actionEvent, () -> {
+        if (e.getID() == KeyEvent.KEY_PRESSED) {
+          myIgnoreNextKeyTypedEvent = true;
+        }
+        LOG.assertTrue(eventCount == IdeEventQueue.getInstance().getEventCount(),
+                       "Event counts do not match: " + eventCount + " != " + IdeEventQueue.getInstance().getEventCount());
+        try (AccessToken ignore = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(true)) {
+          processor.performAction(e, action, actionEvent);
+        }
+      });
       logTimeMillis(startedAt, action);
       return;
     }
@@ -693,11 +693,6 @@ public final class IdeKeyEventDispatcher {
       String message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb);
       showDumbModeBalloonLaterIfNobodyConsumesEvent(project, message, retryRunnable, __ -> e.isConsumed());
     }
-  }
-
-  private static boolean isContextComponentNotVisible(@NotNull AnActionEvent actionEvent) {
-    Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    return component != null && !component.isShowing();
   }
 
   private static void showDumbModeBalloonLaterIfNobodyConsumesEvent(@Nullable Project project,

@@ -147,13 +147,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private void performAction(MouseEvent e) {
     AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
     if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false) && isEnabled()) {
-      final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-      final DataContext dataContext = event.getDataContext();
-      manager.fireBeforeActionPerformed(myAction, event);
-      actionPerformed(event);
-      manager.fireAfterActionPerformed(myAction, event);
+      ActionUtil.performDumbAwareWithCallbacks(myAction, event, () -> actionPerformed(event));
       if (event.getInputEvent() instanceof MouseEvent) {
-        ToolbarClicksCollector.record(myAction, myPlace, e, dataContext);
+        ToolbarClicksCollector.record(myAction, myPlace, e, event.getDataContext());
       }
       ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
       if (toolbar != null) {
@@ -172,7 +168,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       showActionGroupPopup((ActionGroup)myAction, event);
     }
     else {
-      ActionUtil.performActionDumbAware(myAction, event);
+      myAction.actionPerformed(event);
     }
   }
 

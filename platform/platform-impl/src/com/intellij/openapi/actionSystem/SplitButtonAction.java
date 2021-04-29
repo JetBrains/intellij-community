@@ -6,7 +6,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -222,7 +221,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
         showActionGroupPopup(myActionGroup, event);
       }
       else {
-        ActionUtil.performActionDumbAware(selectedAction, event);
+        selectedAction.actionPerformed(event);
       }
     }
 

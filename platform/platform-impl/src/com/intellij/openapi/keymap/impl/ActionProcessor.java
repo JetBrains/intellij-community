@@ -16,7 +16,6 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.awt.RelativePoint;
@@ -63,7 +62,7 @@ public abstract class ActionProcessor {
       }
     }
     else {
-      ActionUtil.performActionDumbAware(action, event);
+      action.actionPerformed(event);
     }
   }
 }

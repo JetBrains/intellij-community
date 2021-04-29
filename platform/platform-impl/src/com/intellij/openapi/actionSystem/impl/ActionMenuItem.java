@@ -8,7 +8,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.application.Application;
@@ -277,12 +276,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
           myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers(), true, false
         );
-        final AnAction menuItemAction = myAction.getAction();
+        AnAction menuItemAction = myAction.getAction();
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
-          ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-          actionManager.fireBeforeActionPerformed(menuItemAction, event);
-          ActionUtil.performActionDumbAware(menuItemAction, event);
-          actionManager.fireAfterActionPerformed(menuItemAction, event);
+          ActionUtil.performActionDumbAwareWithCallbacks(menuItemAction, event);
         }
       });
     }

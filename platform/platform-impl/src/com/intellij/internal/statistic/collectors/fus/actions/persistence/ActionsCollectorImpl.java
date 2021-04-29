@@ -3,23 +3,29 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.internal.statistic.eventLog.*;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.internal.statistic.eventLog.events.FusInputEvent;
-import com.intellij.internal.statistic.eventLog.events.VarargEventId;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.FusAwareAction;
+import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
@@ -29,13 +35,14 @@ public class ActionsCollectorImpl extends ActionsCollector {
   public static final String DEFAULT_ID = "third.party";
 
   private static final ActionsBuiltInWhitelist ourWhitelist = ActionsBuiltInWhitelist.getInstance();
+  private static final Map<AnActionEvent, Stats> ourStats = ContainerUtil.createWeakMap();
 
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     recordCustomActionInvoked(null, actionId, event, context);
   }
 
-  public static void recordCustomActionInvoked(@Nullable Project project, @Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
+  public static void recordCustomActionInvoked(@Nullable Project project, @Nullable String actionId, @Nullable InputEvent event, @NotNull Class<?> context) {
     String recorded = StringUtil.isNotEmpty(actionId) && ourWhitelist.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
     ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(project, recorded, new FusInputEvent(event, null));
   }
@@ -156,5 +163,56 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   public static void onActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {
     ourWhitelist.addActionsLoadedFromKeymapXml(keymap, actionIds);
+  }
+
+  public static void onBeforeActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    Stats stats = new Stats();
+    stats.projectRef = new WeakReference<>(event.getProject());
+    ourStats.put(event, stats);
+  }
+
+  public static void onAfterActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    Stats stats = ourStats.get(event);
+    if (stats == null) return;
+    long durationMillis = TimeoutUtil.getDurationMillis(stats.start);
+    final List<EventPair<?>> customData = new ArrayList<>();
+    Project project = stats.projectRef.get();
+    // we try to avoid as many problems as possible, because
+    // 1. non-async dataContext can fail due to advanced event-count, or freeze EDT on slow GetDataRules
+    // 2. async dataContext can fail due to slow GetDataRules prohibition on EDT
+    DataContext dataContext = Utils.isAsyncDataContext(event.getDataContext()) ?
+                              Utils.freezeDataContext(event.getDataContext(), null) : DataContext.EMPTY_CONTEXT;
+    Language hostFileLanguage = getHostFileLanguage(dataContext, project);
+    customData.add(EventFields.CurrentFile.with(hostFileLanguage));
+    if (hostFileLanguage == null || hostFileLanguage == PlainTextLanguage.INSTANCE) {
+      PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+      Language language = file != null ? file.getLanguage() : null;
+      customData.add(EventFields.Language.with(language));
+    }
+    if (action instanceof FusAwareAction) {
+      List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
+      customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
+    }
+    if (durationMillis >= 0) {
+      // In order to successfully merge fast subsequent actions, we use 0ms as the duration value for all actions faster than 50ms
+      if (durationMillis < 50) {
+        durationMillis = 0;
+      }
+      customData.add(EventFields.DurationMs.with(durationMillis));
+    }
+    recordActionInvoked(project, action, event, customData);
+  }
+
+  private static @Nullable Language getHostFileLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
+    if (project == null) return null;
+    Editor editor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
+    if (editor == null) return null;
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    return file != null ? file.getLanguage() : null;
+  }
+
+  private static final class Stats {
+    final long start = System.nanoTime();
+    WeakReference<Project> projectRef;
   }
 }

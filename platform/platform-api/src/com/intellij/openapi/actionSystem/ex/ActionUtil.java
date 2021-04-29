@@ -25,7 +25,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -216,7 +215,7 @@ public final class ActionUtil {
     return !visibilityMatters || e.getPresentation().isVisible();
   }
 
-  /** @deprecated use {@link #performActionDumbAware(AnAction, AnActionEvent)} */
+  /** @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)} */
   @Deprecated
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
     LOG.assertTrue(e.getDataContext() == context, "event context does not match the argument");
@@ -224,31 +223,45 @@ public final class ActionUtil {
   }
 
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e) {
-    ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-    manager.fireBeforeActionPerformed(action, e);
-    performActionDumbAware(action, e);
-    manager.fireAfterActionPerformed(action, e);
+    performDumbAwareWithCallbacks(action, e, () -> action.actionPerformed(e));
   }
 
-  public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent e) {
-    Project project = e.getProject();
+  public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
+                                                   @NotNull AnActionEvent event,
+                                                   @NotNull Runnable performRunnable) {
+    Project project = event.getProject();
+    IndexNotReadyException indexError = null;
+    ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+    manager.fireBeforeActionPerformed(action, event);
+    Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    if (component != null && !component.isShowing() &&
+        !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
+        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return;
+    }
+    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+      performRunnable.run();
+    }
+    catch (IndexNotReadyException ex) {
+      indexError = ex;
+    }
+    finally {
+      manager.fireAfterActionPerformed(action, event);
+    }
+    if (indexError != null) {
+      LOG.info(indexError);
+      showDumbModeWarning(project, event);
+    }
+  }
+
+  public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    Project project = event.getProject();
     try {
-      performAction(action, e);
+      action.actionPerformed(event);
     }
     catch (IndexNotReadyException ex) {
       LOG.info(ex);
-      showDumbModeWarning(project, e);
-    }
-  }
-
-  public static void performAction(@NotNull AnAction action, @NotNull AnActionEvent e) {
-    long startNanoTime = System.nanoTime();
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
-      action.actionPerformed(e);
-    }
-    finally {
-      long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
-      ActionManagerEx.getInstanceEx().fireFinallyActionPerformed(action, e.getDataContext(), e, durationMillis);
+      showDumbModeWarning(project, event);
     }
   }
 
@@ -404,15 +417,15 @@ public final class ActionUtil {
     Presentation presentation = action.getTemplatePresentation().clone();
     AnActionEvent event = new AnActionEvent(
       inputEvent, dataContext, place, presentation, ActionManager.getInstance(), 0);
-    performDumbAwareUpdate(false, action, event, true);
-    final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-    if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-      manager.fireBeforeActionPerformed(action, event);
-      performActionDumbAware(action, event);
-      if (onDone != null) {
-        onDone.run();
+    if (lastUpdateAndCheckDumb(action, event, true)) {
+      try {
+        performActionDumbAwareWithCallbacks(action, event);
       }
-      manager.fireAfterActionPerformed(action, event);
+      finally {
+        if (onDone != null) {
+          onDone.run();
+        }
+      }
     }
   }
 

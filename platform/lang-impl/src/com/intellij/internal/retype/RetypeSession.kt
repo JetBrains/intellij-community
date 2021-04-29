@@ -11,7 +11,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.diagnostic.ThreadDumper
-import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.performance.LatencyDistributionRecordKey
 import com.intellij.internal.performance.TypingLatencyReportDialog
@@ -534,14 +533,13 @@ class RetypeSession(
   private fun executeEditorAction(actionId: String, timerTick: Long) {
     val actionManager = ActionManagerEx.getInstanceEx()
     val action = actionManager.getAction(actionId)
-    val event = AnActionEvent.createFromAnAction(action, null, "",
-                                                 DataManager.getInstance().getDataContext(
-                                                   editor.component))
-    action.beforeActionPerformedUpdate(event)
-    actionManager.fireBeforeActionPerformed(action, event)
-    LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, timerTick)
-    ActionUtil.performAction(action, event);
-    actionManager.fireAfterActionPerformed(action, event)
+    val event = AnActionEvent.createFromAnAction(action, null, "", editor.dataContext)
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performDumbAwareWithCallbacks(action, event) {
+        LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, timerTick)
+        action.actionPerformed(event)
+      }
+    }
   }
 
   private fun logThreadDump() {

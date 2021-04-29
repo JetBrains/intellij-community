@@ -10,17 +10,13 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
-import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -30,13 +26,11 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -44,15 +38,12 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -1552,20 +1543,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    for (AnActionListener listener : myActionListeners) {
+    try (AccessToken ignore = ProhibitAWTEvents.start("fireBeforeActionPerformed")) {
+      for (AnActionListener listener : myActionListeners) {
+        //noinspection deprecation
+        listener.beforeActionPerformed(action, event.getDataContext(), event);
+      }
       //noinspection deprecation
-      listener.beforeActionPerformed(action, event.getDataContext(), event);
+      publisher().beforeActionPerformed(action, event.getDataContext(), event);
+      ActionsCollectorImpl.onBeforeActionInvoked(action, event);
     }
-    //noinspection deprecation
-    publisher().beforeActionPerformed(action, event.getDataContext(), event);
-  }
-
-  private static @Nullable Language getHostFileLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
-    if (project == null) return null;
-    Editor editor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
-    if (editor == null) return null;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    return file != null ? file.getLanguage() : null;
   }
 
   @Override
@@ -1574,37 +1560,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     myLastPreformedActionId = getId(action);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    for (AnActionListener listener : myActionListeners) {
-      //noinspection deprecation
-      listener.afterActionPerformed(action, event.getDataContext(), event);
-    }
-    //noinspection deprecation
-    publisher().afterActionPerformed(action, event.getDataContext(), event);
-  }
-
-  @Override
-  public void fireFinallyActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event, long durationMillis) {
-    final List<EventPair<?>> customData = new ArrayList<>();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Language hostFileLanguage = getHostFileLanguage(dataContext, project);
-    customData.add(EventFields.CurrentFile.with(hostFileLanguage));
-    if (hostFileLanguage == null || hostFileLanguage == PlainTextLanguage.INSTANCE) {
-      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-      final Language language = file != null ? file.getLanguage() : null;
-      customData.add(EventFields.Language.with(language));
-    }
-    if (action instanceof FusAwareAction) {
-      List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
-      customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
-    }
-    if (durationMillis >= 0) {
-      // In order to successfully merge fast subsequent actions, we use 0ms as the duration value for all actions faster than 50ms
-      if (durationMillis < 50) {
-        durationMillis = 0;
+    try (AccessToken ignore = ProhibitAWTEvents.start("fireAfterActionPerformed")) {
+      ActionsCollectorImpl.onAfterActionInvoked(action, event);
+      for (AnActionListener listener : myActionListeners) {
+        //noinspection deprecation
+        listener.afterActionPerformed(action, event.getDataContext(), event);
       }
-      customData.add(EventFields.DurationMs.with(durationMillis));
+      //noinspection deprecation
+      publisher().afterActionPerformed(action, event.getDataContext(), event);
     }
-    ActionsCollectorImpl.recordActionInvoked(project, action, event, customData);
   }
 
   @Override
@@ -1719,28 +1683,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           result.setRejected();
           return;
         }
-
-        Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
-        if (component != null && !component.isShowing() && !ActionPlaces.TOUCHBAR_GENERAL.equals(place)) {
-          result.setRejected();
-          return;
-        }
-
-        fireBeforeActionPerformed(action, event);
-
         UIUtil.addAwtListener(event1 -> {
           if (event1.getID() == WindowEvent.WINDOW_OPENED || event1.getID() == WindowEvent.WINDOW_ACTIVATED) {
             if (!result.isProcessed()) {
               final WindowEvent we = (WindowEvent)event1;
-              IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(result.createSetDoneRunnable(),
-                                                                                             ModalityState.defaultModalityState());
+              IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(
+                result.createSetDoneRunnable(), ModalityState.defaultModalityState());
             }
           }
         }, AWTEvent.WINDOW_EVENT_MASK, result);
-
-        ActionUtil.performActionDumbAware(action, event);
-        result.setDone();
-        fireAfterActionPerformed(action, event);
+        try {
+          ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+        }
+        finally {
+          result.setDone();
+        }
       });
     }, ModalityState.defaultModalityState());
   }
