@@ -16,9 +16,8 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -129,7 +128,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
         }
       };
       var visitor = new ComparatorInterceptor(owner);
-      if (runner.analyzeMethod(body, new JavaDfaInstructionVisitor(visitor)) != RunnerResult.OK) return;
+      if (runner.analyzeMethod(body, new InstructionVisitor(visitor)) != RunnerResult.OK) return;
       if (visitor.myRange.contains(0) || visitor.myContexts.isEmpty()) return;
       PsiElement context = null;
       if (visitor.myContexts.size() == 1) {
@@ -153,7 +152,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                     InspectionGadgetsBundle.message("suspicious.comparator.compare.descriptor.non.reflexive"));
     }
 
-    private static final class ComparatorInterceptor implements DfaInterceptor<PsiExpression> {
+    private static final class ComparatorInterceptor implements JavaDfaInterceptor {
       private final PsiParameterListOwner myOwner;
       private final Set<PsiElement> myContexts = new HashSet<>();
       LongRangeSet myRange = LongRangeSet.empty();

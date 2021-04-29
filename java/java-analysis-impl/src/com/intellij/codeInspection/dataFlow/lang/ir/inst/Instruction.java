@@ -30,7 +30,7 @@ public abstract class Instruction {
     return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), stateBefore)};
   }
 
-  public abstract DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor<?> visitor);
+  public abstract DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor);
 
   public void setIndex(int index) {
     if (myIndex != -1) {

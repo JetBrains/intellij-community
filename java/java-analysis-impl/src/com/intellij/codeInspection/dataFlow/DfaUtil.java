@@ -2,10 +2,9 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
@@ -188,7 +187,7 @@ public final class DfaUtil {
 
     final var dfaRunner = new StandardDataFlowRunner(owner.getProject());
 
-    final class BlockNullabilityInterceptor implements DfaInterceptor<PsiExpression> {
+    final class BlockNullabilityInterceptor implements JavaDfaInterceptor {
       boolean hasNulls = false;
       boolean hasNotNulls = false;
       boolean hasUnknowns = false;
@@ -212,7 +211,7 @@ public final class DfaUtil {
       }
     }
     var interceptor = new BlockNullabilityInterceptor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, new JavaDfaInstructionVisitor(interceptor));
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, new InstructionVisitor(interceptor));
 
     if (rc == RunnerResult.OK) {
       if (interceptor.hasNulls) {

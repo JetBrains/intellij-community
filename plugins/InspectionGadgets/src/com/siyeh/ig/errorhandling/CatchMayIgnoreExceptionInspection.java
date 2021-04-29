@@ -8,10 +8,9 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
@@ -169,7 +168,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         if (exceptionClass == null) return false;
 
         CatchDataFlowRunner runner = new CatchDataFlowRunner(exception, parameter, block);
-        DfaInterceptor<PsiExpression> interceptor = new DfaInterceptor<>() {
+        var interceptor = new JavaDfaInterceptor() {
           @Override
           public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
                                   @NotNull DfaValue value,
@@ -180,7 +179,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
             }
           }
         };
-        return runner.analyzeCodeBlock(block, new JavaDfaInstructionVisitor(interceptor)) == RunnerResult.OK;
+        return runner.analyzeCodeBlock(block, new InstructionVisitor(interceptor)) == RunnerResult.OK;
       }
     };
   }
@@ -209,7 +208,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor<?> visitor,
+    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
                                                                 @NotNull DfaInstructionState instructionState) {
       Instruction instruction = instructionState.getInstruction();
       DfaMemoryState memState = instructionState.getMemoryState();

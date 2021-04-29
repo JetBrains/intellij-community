@@ -5,24 +5,24 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * An instruction that takes fixed number of operands from the stack and computes a single result without branching.
  * Assumed to be always successful (without exception branches).
  */
-public abstract class EvalInstruction extends ExpressionPushingInstruction<PsiExpression> {
+public abstract class EvalInstruction extends ExpressionPushingInstruction {
   private final int myOperands;
 
   /**
-   * @param expression PsiExpression to anchor to
+   * @param anchor PsiExpression to anchor to
    * @param operands number of operands
    */
-  protected EvalInstruction(PsiExpression expression, int operands) {
-    super(expression);
+  protected EvalInstruction(DfaAnchor anchor, int operands) {
+    super(anchor);
     myOperands = operands;
   }
 

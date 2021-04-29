@@ -84,7 +84,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
   }
 
   private @Nullable Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock,
-                                                                   @NotNull InstructionVisitor<?> visitor,
+                                                                   @NotNull InstructionVisitor visitor,
                                                                    boolean allowInlining) {
     PsiElement container = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class, PsiLambdaExpression.class);
     if (container != null && (!(container instanceof PsiClass) || PsiUtil.isLocalOrAnonymousClass((PsiClass)container))) {
@@ -120,7 +120,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
    * @param visitor a visitor to use
    * @return result status
    */
-  public final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor<?> visitor) {
+  public final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
     Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, false);
     return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, initialStates);
   }
@@ -133,7 +133,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
    * @param visitor a visitor to use
    * @return result status
    */
-  public final @NotNull RunnerResult analyzeMethodWithInlining(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor<?> visitor) {
+  public final @NotNull RunnerResult analyzeMethodWithInlining(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
     Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, true);
     if (initialStates == null) {
       return RunnerResult.NOT_APPLICABLE;
@@ -150,12 +150,12 @@ public class StandardDataFlowRunner implements DataFlowRunner {
    * @param visitor visitor to use
    * @return result status
    */
-  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block, @NotNull InstructionVisitor<?> visitor) {
+  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block, @NotNull InstructionVisitor visitor) {
     return analyzeMethod(block, visitor, Collections.singleton(createMemoryState()));
   }
 
   final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
-                                            @NotNull InstructionVisitor<?> visitor,
+                                            @NotNull InstructionVisitor visitor,
                                             @NotNull Collection<? extends DfaMemoryState> initialStates) {
     ControlFlow flow = buildFlow(psiBlock);
     if (flow == null) return RunnerResult.NOT_APPLICABLE;
@@ -181,7 +181,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
   }
 
   protected final @NotNull RunnerResult interpret(@NotNull PsiElement psiBlock,
-                                                  @NotNull InstructionVisitor<?> visitor,
+                                                  @NotNull InstructionVisitor visitor,
                                                   @NotNull ControlFlow flow,
                                                   @NotNull List<DfaInstructionState> startingStates) {
     int endOffset = flow.getInstructionCount();
@@ -392,7 +392,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
   }
 
-  public @NotNull RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull InstructionVisitor<?> visitor) {
+  public @NotNull RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull InstructionVisitor visitor) {
     Collection<DfaMemoryState> states = createInitialStates(block, visitor, false);
     if (states == null) return RunnerResult.NOT_APPLICABLE;
     return analyzeBlockRecursively(block, states, visitor);
@@ -400,7 +400,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
 
   public @NotNull RunnerResult analyzeBlockRecursively(@NotNull PsiElement block,
                                                        @NotNull Collection<? extends DfaMemoryState> states,
-                                                       @NotNull InstructionVisitor<?> visitor) {
+                                                       @NotNull InstructionVisitor visitor) {
     RunnerResult result = analyzeMethod(block, visitor, states);
     if (result != RunnerResult.OK) return result;
 
@@ -477,7 +477,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
     return loopNumber[nextInstruction.getIndex()] == loopNumber[prevInstruction.getIndex()];
   }
 
-  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor<?> visitor, @NotNull DfaInstructionState instructionState) {
+  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
     return instruction.accept(this, instructionState.getMemoryState(), visitor);
   }

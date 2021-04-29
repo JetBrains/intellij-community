@@ -8,6 +8,10 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
 import com.intellij.codeInspection.dataFlow.fix.*;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -283,8 +287,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     reportConstants(reporter, visitor);
 
-    reportMethodReferenceProblems(holder, visitor);
-
     reportArrayAccessProblems(holder, visitor);
 
     reportArrayStoreProblems(holder, visitor);
@@ -309,10 +311,16 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (instruction instanceof InstanceofInstruction) {
         InstanceofInstruction instanceOf = (InstanceofInstruction)instruction;
         if (visitor.isInstanceofRedundant(instanceOf)) {
-          PsiExpression expression = instanceOf.getExpression();
+          DfaAnchor anchor = instanceOf.getDfaAnchor();
+          PsiExpression expression =
+            anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() :
+            anchor instanceof JavaMethodReferenceReturnAnchor ? ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression() :
+            null;
           if (expression == null || shouldBeSuppressed(expression)) continue;
           if (JavaPsiPatternUtil.getExposedPatternVariables(expression).stream()
-            .anyMatch(var -> VariableAccessUtils.variableIsUsed(var, var.getDeclarationScope()))) continue;
+            .anyMatch(var -> VariableAccessUtils.variableIsUsed(var, var.getDeclarationScope()))) {
+            continue;
+          }
           reporter.registerProblem(expression,
                                    JavaAnalysisBundle.message("dataflow.message.redundant.instanceof"),
                                    new RedundantInstanceofFix(expression));
@@ -368,26 +376,40 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportConstants(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
-    visitor.getConstantExpressionChunks().forEach((chunk, result) -> {
+    visitor.getConstantExpressionChunks().forEach((anchor, result) -> {
       if (result == ConstantResult.UNKNOWN) return;
-      PsiExpression expression = chunk.myExpression;
-      if (chunk.myRange != null) {
-        if (result.value() instanceof Boolean) {
+      Object value = result.value();
+      if (anchor instanceof JavaPolyadicPartAnchor) {
+        if (value instanceof Boolean) {
           // report rare cases like a == b == c where "a == b" part is constant
           String message = JavaAnalysisBundle.message("dataflow.message.constant.condition",
-                                                     ((Boolean)result.value()).booleanValue() ? 1 : 0);
-          reporter.registerProblem(expression, chunk.myRange, message);
+                                                      ((Boolean)value).booleanValue() ? 1 : 0);
+          reporter.registerProblem(((JavaPolyadicPartAnchor)anchor).getExpression(),
+                                   ((JavaPolyadicPartAnchor)anchor).getTextRange(), message);
           // do not add to reported anchors if only part of expression was reported
         }
-        return;
       }
-      if (isCondition(expression)) {
-        if (result.value() instanceof Boolean) {
-          reportConstantBoolean(reporter, expression, (Boolean)result.value());
+      else if (anchor instanceof JavaExpressionAnchor) {
+        PsiExpression expression = ((JavaExpressionAnchor)anchor).getExpression();
+        if (isCondition(expression)) {
+          if (value instanceof Boolean) {
+            reportConstantBoolean(reporter, expression, (Boolean)value);
+          }
+        }
+        else {
+          reportConstantReferenceValue(reporter, expression, result);
         }
       }
-      else {
-        reportConstantReferenceValue(reporter, expression, result);
+      else if (anchor instanceof JavaMethodReferenceReturnAnchor) {
+        PsiMethodReferenceExpression methodRef = ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression();
+        PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
+        if (method != null && JavaMethodContractUtil.isPure(method)) {
+          List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
+          if (contracts.isEmpty() || !contracts.get(0).isTrivial()) {
+            reporter.registerProblem(methodRef, JavaAnalysisBundle.message("dataflow.message.constant.method.reference", value),
+                                     createReplaceWithTrivialLambdaFix(value));
+          }
+        }
       }
     });
   }
@@ -652,16 +674,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     visitor.getArrayStoreProblems().forEach(
       (assignment, types) -> holder.registerProblem(assignment.getOperationSign(), JavaAnalysisBundle
         .message("dataflow.message.arraystore", types.getFirst().getCanonicalText(), types.getSecond().getCanonicalText())));
-  }
-
-  private void reportMethodReferenceProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
-    visitor.getMethodReferenceResults().forEach((methodRef, result) -> {
-      if (result != ConstantResult.UNKNOWN) {
-        Object value = result.value();
-        holder.registerProblem(methodRef, JavaAnalysisBundle.message("dataflow.message.constant.method.reference", value),
-                               createReplaceWithTrivialLambdaFix(value));
-      }
-    });
   }
 
   private void reportAlwaysReturnsNotNull(ProblemsHolder holder, PsiElement scope) {

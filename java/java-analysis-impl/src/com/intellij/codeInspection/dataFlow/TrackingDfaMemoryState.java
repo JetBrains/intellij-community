@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
@@ -395,9 +397,11 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
     @Nullable
     PsiExpression getExpression() {
-      if (myInstruction instanceof ExpressionPushingInstruction &&
-          ((ExpressionPushingInstruction<?>)myInstruction).getExpressionRange() == null) {
-        return (PsiExpression)((ExpressionPushingInstruction<?>)myInstruction).getExpression();
+      if (myInstruction instanceof ExpressionPushingInstruction) {
+        DfaAnchor anchor = ((ExpressionPushingInstruction)myInstruction).getDfaAnchor();
+        if (anchor instanceof JavaExpressionAnchor) {
+          return ((JavaExpressionAnchor)anchor).getExpression();
+        }
       }
       if (myInstruction instanceof ConditionalGotoInstruction) {
         return ObjectUtils.tryCast(((ConditionalGotoInstruction)myInstruction).getPsiAnchor(), PsiExpression.class);
@@ -405,7 +409,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       if (myInstruction instanceof EnsureInstruction) {
         UnsatisfiedConditionProblem problem = ((EnsureInstruction)myInstruction).getProblem();
         if (problem instanceof JvmDfaProblem) {
-          return ObjectUtils.tryCast(((JvmDfaProblem)problem).getAnchor(), PsiExpression.class);
+          return ObjectUtils.tryCast(((JvmDfaProblem<?>)problem).getAnchor(), PsiExpression.class);
         }
       }
       return null;

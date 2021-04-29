@@ -11,8 +11,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.ide.DataManager;
@@ -443,7 +442,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (returnedExpressions.isEmpty()) return true;
 
     final var dfaRunner = new StandardDataFlowRunner(myProject);
-    final var returnChecker = new DfaInterceptor<PsiExpression>() {
+    final var returnChecker = new JavaDfaInterceptor() {
       @Override
       public void beforeValueReturn(@NotNull DfaValue value,
                                     @Nullable PsiExpression expression,
@@ -458,7 +457,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
       }
     };
-    return dfaRunner.analyzeMethod(body, new JavaDfaInstructionVisitor(returnChecker)) == RunnerResult.OK;
+    return dfaRunner.analyzeMethod(body, new InstructionVisitor(returnChecker)) == RunnerResult.OK;
   }
 
   protected boolean insertNotNullCheckIfPossible() {
@@ -479,7 +478,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private static Nullability inferNullability(@NotNull PsiCodeBlock block, @NotNull PsiExpression expr) {
     final var dfaRunner = new StandardDataFlowRunner(block.getProject());
 
-    var interceptor = new DfaInterceptor<PsiExpression>() {
+    var interceptor = new JavaDfaInterceptor() {
       DfaNullability myNullability = DfaNullability.NOT_NULL;
       boolean myVisited = false;
 
@@ -494,7 +493,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
       }
     };
-    final RunnerResult rc = dfaRunner.analyzeMethod(block, new JavaDfaInstructionVisitor(interceptor));
+    final RunnerResult rc = dfaRunner.analyzeMethod(block, new InstructionVisitor(interceptor));
     return rc == RunnerResult.OK && interceptor.myVisited ? DfaNullability.toNullability(interceptor.myNullability) : Nullability.UNKNOWN;
   }
 

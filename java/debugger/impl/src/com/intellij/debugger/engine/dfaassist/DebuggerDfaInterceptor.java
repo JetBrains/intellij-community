@@ -4,10 +4,10 @@ package com.intellij.debugger.engine.dfaassist;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ClassCastProblem;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-class DebuggerDfaInterceptor implements DfaInterceptor<PsiExpression> {
+class DebuggerDfaInterceptor implements JavaDfaInterceptor {
   private static final TokenSet BOOLEAN_TOKENS = TokenSet.create(
     JavaTokenType.ANDAND, JavaTokenType.OROR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.OR, JavaTokenType.EQEQ, JavaTokenType.NE);
 

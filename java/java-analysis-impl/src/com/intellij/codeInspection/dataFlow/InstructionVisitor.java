@@ -17,17 +17,16 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
-import com.intellij.codeInspection.dataFlow.jvm.problems.ClassCastProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.MutabilityProblem;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
-import com.intellij.codeInspection.dataFlow.lang.DfaLanguageSupport;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
@@ -55,28 +54,28 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author peter
  */
-public abstract class InstructionVisitor<EXPR extends PsiElement> {
-  private static final Logger LOG = Logger.getInstance(JavaDfaInstructionVisitor.class);
-  protected final @NotNull DfaLanguageSupport<EXPR> myLanguageSupport;
-  protected final @NotNull DfaInterceptor<EXPR> myInterceptor;
+public class InstructionVisitor {
+  private static final Logger LOG = Logger.getInstance(DataFlowInstructionVisitor.class);
+  protected final @NotNull DfaInterceptor myInterceptor;
   protected final boolean myStopAnalysisOnNpe;
   protected final Set<InstanceofInstruction> myUsefulInstanceofs = new HashSet<>();
 
-  protected InstructionVisitor(@NotNull DfaLanguageSupport<EXPR> support,
-                               @Nullable DfaInterceptor<EXPR> interceptor,
-                               boolean stopAnalysisOnNpe) {
-    myLanguageSupport = support;
-    //noinspection unchecked
-    myInterceptor = interceptor != null ? interceptor :
-                    this instanceof DfaInterceptor ? (DfaInterceptor<EXPR>)this :
-                    new DfaInterceptor<>() {};
+  public InstructionVisitor(@Nullable DfaInterceptor interceptor) {
+    this(interceptor, false);
+  }
+
+  public InstructionVisitor(@Nullable DfaInterceptor interceptor, boolean stopAnalysisOnNpe) {
+    myInterceptor = interceptor != null ? interceptor : (DfaInterceptor)this;
     myStopAnalysisOnNpe = stopAnalysisOnNpe;
   }
 
   void pushExpressionResult(@NotNull DfaValue value,
-                            @NotNull ExpressionPushingInstruction<?> instruction,
+                            @NotNull ExpressionPushingInstruction instruction,
                             @NotNull DfaMemoryState state) {
-    myLanguageSupport.processExpressionPush(myInterceptor, value, instruction, state);
+    DfaAnchor anchor = instruction.getDfaAnchor();
+    if (anchor != null) {
+      myInterceptor.beforeExpressionPush(value, anchor, state);
+    }
     state.push(value);
   }
 
@@ -111,10 +110,9 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaValue defaultResult = getMethodResultValue(instruction, callArguments, memState, factory, realMethod);
     DfaCallState initialState = new DfaCallState(memState, callArguments, defaultResult);
     Set<DfaCallState> currentStates = Collections.singleton(initialState);
-    PsiExpression expression = instruction.getExpression();
     if (callArguments.myArguments != null && !(defaultResult.getDfType() instanceof DfConstantType)) {
       for (MethodContract contract : instruction.getContracts()) {
-        currentStates = addContractResults(contract, currentStates, factory, finalStates, expression);
+        currentStates = addContractResults(contract, currentStates, factory, finalStates);
         if (currentStates.size() + finalStates.size() > runner.getComplexityLimit()) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
@@ -132,6 +130,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
 
     DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
     int i = 0;
+    PsiExpression expression = tryCast(instruction.getContext(), PsiExpression.class);
     for (DfaMemoryState state : finalStates) {
       if (expression != null) {
         onMethodCall(state.peek(), expression, callArguments, state);
@@ -297,15 +296,14 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     }
   }
 
-  private Set<DfaCallState> addContractResults(MethodContract contract,
-                                               Set<DfaCallState> states,
-                                               DfaValueFactory factory,
-                                               Set<DfaMemoryState> finalStates,
-                                               PsiExpression expression) {
-    if(contract.isTrivial()) {
+  private static Set<DfaCallState> addContractResults(@NotNull MethodContract contract,
+                                                      @NotNull Set<DfaCallState> states,
+                                                      @NotNull DfaValueFactory factory,
+                                                      @NotNull Set<DfaMemoryState> finalStates) {
+    if (contract.isTrivial()) {
       for (DfaCallState callState : states) {
         DfaValue result = contract.getReturnValue().getDfaValue(factory, callState);
-        pushExpressionResult(result, new ResultOfInstruction(expression), callState.myMemoryState);
+        callState.myMemoryState.push(result);
         finalStates.add(callState.myMemoryState);
       }
       return Collections.emptySet();
@@ -509,7 +507,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       // (e.g. during StateMerger#mergeByFacts), so we try to restore the original destination.
       dfaDest = instruction.getAssignedValue();
     }
-    myInterceptor.beforeAssignment(dfaSource, dfaDest, memState, instruction.getExpression());
+    myInterceptor.beforeAssignment(dfaSource, dfaDest, memState, instruction.getDfaAnchor());
     if (dfaSource == dfaDest) {
       memState.push(dfaDest);
       flushArrayOnUnknownAssignment(instruction, runner.getFactory(), dfaDest, memState);
@@ -844,10 +842,9 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       DfaValue value = memState.pop();
       pushExpressionResult(value, instruction, memState);
     }
-    PsiTypeCastExpression expression = instruction.getExpression();
-    if (expression != null) {
-      myInterceptor.onCondition(new ClassCastProblem(expression), memState.peek(), castPossible ? ThreeState.UNSURE : ThreeState.YES,
-                                memState);
+    UnsatisfiedConditionProblem problem = instruction.getConditionProblem();
+    if (problem != null) {
+      myInterceptor.onCondition(problem, memState.peek(), castPossible ? ThreeState.UNSURE : ThreeState.YES, memState);
     }
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
@@ -1051,7 +1048,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  private DfaInstructionState makeBooleanResult(ExpressionPushingInstruction<?> instruction,
+  private DfaInstructionState makeBooleanResult(ExpressionPushingInstruction instruction,
                                                 DataFlowRunner runner,
                                                 DfaMemoryState memState,
                                                 @NotNull ThreeState result) {
@@ -1062,7 +1059,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
   }
 
   public DfaInstructionState[] visitMethodReference(MethodReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    PsiMethodReferenceExpression expression = instruction.getExpression();
+    PsiMethodReferenceExpression expression = instruction.getMethodReference();
     final DfaValue qualifier = memState.pop();
     dropLocality(qualifier, memState);
     handleMethodReference(qualifier, expression, runner, memState);
@@ -1090,15 +1087,19 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     PsiType returnType = substitutor.substitute(method.getReturnType());
     DfaValue defaultResult = runner.getFactory().fromDfType(typedObject(returnType, DfaPsiUtil.getElementNullability(returnType, method)));
     Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments, defaultResult));
+    JavaMethodReferenceReturnAnchor anchor = new JavaMethodReferenceReturnAnchor(methodRef);
     for (MethodContract contract : contracts) {
       Set<DfaMemoryState> results = new HashSet<>();
-      currentStates = addContractResults(contract, currentStates, runner.getFactory(), results, methodRef);
+      currentStates = addContractResults(contract, currentStates, runner.getFactory(), results);
       for (DfaMemoryState result : results) {
-        pushExpressionResult(result.pop(), new ResultOfInstruction(methodRef), result);
+        DfaValue value = result.pop();
+        myInterceptor.beforeExpressionPush(value, anchor, result);
+        state.push(value);
       }
     }
     for (DfaCallState currentState: currentStates) {
-      pushExpressionResult(defaultResult, new ResultOfInstruction(methodRef), currentState.myMemoryState);
+      myInterceptor.beforeExpressionPush(defaultResult, anchor, currentState.myMemoryState);
+      state.push(defaultResult);
     }
   }
 

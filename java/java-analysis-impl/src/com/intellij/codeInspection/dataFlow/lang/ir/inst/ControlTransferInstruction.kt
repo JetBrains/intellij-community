@@ -30,7 +30,7 @@ open class ControlTransferInstruction : Instruction {
     return instruction
   }
 
-  override fun accept(runner: DataFlowRunner, state: DfaMemoryState, visitor: InstructionVisitor<*>): Array<out DfaInstructionState> {
+  override fun accept(runner: DataFlowRunner, state: DfaMemoryState, visitor: InstructionVisitor): Array<out DfaInstructionState> {
     return visitor.visitControlTransfer(this, runner, state)
   }
 

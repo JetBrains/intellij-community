@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow.lang;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * An interceptor that can peek into DFA analysis intermediate states and do something with them
  * @param <EXPR> type of expression element in the language
  */
-public interface DfaInterceptor<EXPR extends PsiElement> {
+public interface DfaInterceptor {
   /**
    * Called before conditional goto instruction is executed that has an associated anchor
    * @param anchor a PSI anchor that associated with conditional goto instruction
@@ -43,8 +42,7 @@ public interface DfaInterceptor<EXPR extends PsiElement> {
    * @param state      a memory state where expression is about to be pushed
    */
   default void beforeExpressionPush(@NotNull DfaValue value,
-                                    @NotNull EXPR expression,
-                                    @Nullable TextRange range,
+                                    @NotNull DfaAnchor expression,
                                     @NotNull DfaMemoryState state) {
 
   }
@@ -60,7 +58,7 @@ public interface DfaInterceptor<EXPR extends PsiElement> {
    * @param state      a memory state
    */
   default void beforeValueReturn(@NotNull DfaValue value,
-                                 @Nullable EXPR expression,
+                                 @Nullable DfaAnchor expression,
                                  @NotNull PsiElement context,
                                  @NotNull DfaMemoryState state) {
 
@@ -92,7 +90,7 @@ public interface DfaInterceptor<EXPR extends PsiElement> {
   default void beforeAssignment(@NotNull DfaValue source,
                                 @NotNull DfaValue dest,
                                 @NotNull DfaMemoryState state,
-                                @Nullable PsiElement anchor) {
+                                @Nullable DfaAnchor anchor) {
 
   }
 }

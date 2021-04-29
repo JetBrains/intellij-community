@@ -18,6 +18,8 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -31,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpression> {
+public class MethodCallInstruction extends ExpressionPushingInstruction {
   private static final Nullability[] EMPTY_NULLABILITY_ARRAY = new Nullability[0];
 
   private final @Nullable PsiType myType;
@@ -46,7 +48,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
   private final Nullability myReturnNullability;
 
   public MethodCallInstruction(@NotNull PsiMethodReferenceExpression reference, @NotNull List<? extends MethodContract> contracts) {
-    super(reference);
+    super(new JavaMethodReferenceReturnAnchor(reference));
     myContext = reference;
     JavaResolveResult resolveResult = reference.advancedResolve(false);
     myTargetMethod = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
@@ -78,7 +80,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
   }
 
   public MethodCallInstruction(@NotNull PsiCall call, @Nullable DfaValue precalculatedReturnValue, List<? extends MethodContract> contracts) {
-    super(ObjectUtils.tryCast(call, PsiExpression.class));
+    super(call instanceof PsiExpression ? new JavaExpressionAnchor((PsiExpression)call) : null);
     myContext = call;
     myContracts = Collections.unmodifiableList(contracts);
     final PsiExpressionList argList = call.getArgumentList();
@@ -105,7 +107,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
   }
 
   private MethodCallInstruction(@NotNull MethodCallInstruction from, @NotNull DfaValue precalculatedReturnValue) {
-    super(from.getExpression());
+    super(from.getDfaAnchor());
     myPrecalculatedReturnValue = precalculatedReturnValue;
     myContext = from.myContext;
     myContracts = from.myContracts;

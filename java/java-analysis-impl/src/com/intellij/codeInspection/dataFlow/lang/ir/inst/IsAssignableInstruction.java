@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class IsAssignableInstruction extends EvalInstruction {
   public IsAssignableInstruction(PsiMethodCallExpression expression) {
-    super(expression, 2);
+    super(new JavaExpressionAnchor(expression), 2);
   }
 
   @Override

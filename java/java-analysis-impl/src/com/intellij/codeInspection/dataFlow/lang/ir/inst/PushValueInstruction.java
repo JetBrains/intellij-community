@@ -17,10 +17,10 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class PushValueInstruction extends EvalInstruction {
   private final @NotNull DfType myValue;
 
-  public PushValueInstruction(@NotNull DfType value, PsiExpression place) {
+  public PushValueInstruction(@NotNull DfType value, DfaAnchor place) {
     super(place, 0);
     myValue = value;
   }

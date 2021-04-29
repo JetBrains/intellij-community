@@ -20,6 +20,10 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ClassCastProblem;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiExpression;
@@ -29,12 +33,19 @@ import com.intellij.psi.PsiTypeCastExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TypeCastInstruction extends ExpressionPushingInstruction<PsiTypeCastExpression> {
+public class TypeCastInstruction extends ExpressionPushingInstruction {
   private final PsiExpression myCasted;
   private final PsiType myCastTo;
   private final @Nullable DfaControlTransferValue myTransferValue;
 
   public TypeCastInstruction(PsiTypeCastExpression castExpression,
+                             PsiExpression casted,
+                             PsiType castTo,
+                             @Nullable DfaControlTransferValue value) {
+    this(new JavaExpressionAnchor(castExpression), casted, castTo, value);
+  }
+  
+  private TypeCastInstruction(DfaAnchor castExpression,
                              PsiExpression casted,
                              PsiType castTo,
                              @Nullable DfaControlTransferValue value) {
@@ -48,7 +59,7 @@ public class TypeCastInstruction extends ExpressionPushingInstruction<PsiTypeCas
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myTransferValue == null) return this;
-    var instruction = new TypeCastInstruction(getExpression(), myCasted, myCastTo,
+    var instruction = new TypeCastInstruction(getDfaAnchor(), myCasted, myCastTo,
                                               myTransferValue.bindToFactory(factory));
     instruction.setIndex(getIndex());
     return instruction;
@@ -65,6 +76,11 @@ public class TypeCastInstruction extends ExpressionPushingInstruction<PsiTypeCas
 
   public PsiType getCastTo() {
     return myCastTo;
+  }
+  
+  public @Nullable UnsatisfiedConditionProblem getConditionProblem() {
+    JavaExpressionAnchor anchor = (JavaExpressionAnchor)getDfaAnchor();
+    return anchor == null ? null : new ClassCastProblem(((PsiTypeCastExpression)anchor.getExpression()));
   }
 
   @Override

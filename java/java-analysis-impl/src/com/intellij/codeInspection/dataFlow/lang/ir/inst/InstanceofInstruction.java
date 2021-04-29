@@ -19,21 +19,26 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author peter
  */
-public class InstanceofInstruction extends ExpressionPushingInstruction<PsiExpression> implements BranchingInstruction {
+public class InstanceofInstruction extends ExpressionPushingInstruction implements BranchingInstruction {
   @Nullable private final PsiExpression myLeft;
   @Nullable private final PsiType myCastType;
 
-  public InstanceofInstruction(PsiExpression psiAnchor, @Nullable PsiExpression left, @NotNull PsiType castType) {
-    super(psiAnchor);
+  public InstanceofInstruction(@NotNull DfaAnchor anchor, @Nullable PsiExpression left,
+                               @NotNull PsiType castType) {
+    super(anchor);
     myLeft = left;
     myCastType = castType;
   }
@@ -42,8 +47,8 @@ public class InstanceofInstruction extends ExpressionPushingInstruction<PsiExpre
    * Construct a class object instanceof check (e.g. from Class.isInstance call); castType is not known
    * @param psiAnchor anchor call
    */
-  public InstanceofInstruction(PsiMethodCallExpression psiAnchor) {
-    super(psiAnchor);
+  public InstanceofInstruction(@NotNull PsiMethodCallExpression psiAnchor) {
+    super(new JavaExpressionAnchor(psiAnchor));
     myLeft = null;
     myCastType = null;
   }
@@ -62,6 +67,10 @@ public class InstanceofInstruction extends ExpressionPushingInstruction<PsiExpre
     return myLeft;
   }
 
+  public PsiExpression getExpression() {
+    return ((JavaExpressionAnchor)Objects.requireNonNull(getDfaAnchor())).getExpression();
+  }
+  
   @Nullable
   public PsiType getCastType() {
     return myCastType;
@@ -73,5 +82,10 @@ public class InstanceofInstruction extends ExpressionPushingInstruction<PsiExpre
    */
   public boolean isClassObjectCheck() {
     return myCastType == null;
+  }
+
+  @Override
+  public String toString() {
+    return "INSTANCE_OF" + (myCastType == null ? "" : " " + myCastType.getCanonicalText()); 
   }
 }

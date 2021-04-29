@@ -1,32 +1,24 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An instruction which pushes a result of expression {@link PsiElement} (or its part) evaluation to the stack
+ * An instruction which pushes a result of evaluation to the stack and has an anchor
  */
-public abstract class ExpressionPushingInstruction<T extends PsiElement> extends Instruction {
-  private final T myExpression;
+public abstract class ExpressionPushingInstruction extends Instruction {
+  private final @Nullable DfaAnchor myAnchor;
 
-  protected ExpressionPushingInstruction(T expression) {
-    myExpression = expression;
+  protected ExpressionPushingInstruction(@Nullable DfaAnchor anchor) {
+    myAnchor = anchor;
   }
 
   /**
-   * @return a PsiExpression which result is pushed to the stack, or null if this instruction is not bound to any particular PsiExpression
+   * @return a DfaAnchor that describes the value pushed to the stack, or null if this instruction is not bound to any particular anchor
    */
   @Nullable
-  public T getExpression() {
-    return myExpression;
+  public DfaAnchor getDfaAnchor() {
+    return myAnchor;
   }
-
-  /**
-   * @return if non-null, a part of PsiExpression, returned by {@link #getExpression()} which this instruction actually evaluates.
-   * Usable for polyadic expressions like {@code a == b == c}: here instruction may evaluate only {@code a == b} part.
-   */
-  @Nullable
-  public TextRange getExpressionRange() {return null;}
 }

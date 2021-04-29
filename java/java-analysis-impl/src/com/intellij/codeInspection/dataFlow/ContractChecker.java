@@ -3,10 +3,9 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
@@ -31,7 +30,7 @@ import java.util.*;
 * @author peter
 */
 final class ContractChecker {
-  private static class ContractCheckInterceptor implements DfaInterceptor<PsiExpression> {
+  private static class ContractCheckInterceptor implements JavaDfaInterceptor {
     private final PsiMethod myMethod;
     private final StandardMethodContract myContract;
     private final boolean myOwnContract;
@@ -111,7 +110,7 @@ final class ContractChecker {
     ContractCheckInterceptor interceptor = new ContractCheckInterceptor(method, contract, ownContract);
     StandardDataFlowRunner runner = new StandardDataFlowRunner(method.getProject(), null) {
       @Override
-      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor<?> visitor,
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
                                                                   @NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();
         DfaMemoryState memState = instructionState.getMemoryState();
@@ -156,7 +155,7 @@ final class ContractChecker {
       }
     }
 
-    runner.analyzeMethod(body, new JavaDfaInstructionVisitor(interceptor, true), Collections.singletonList(initialState));
+    runner.analyzeMethod(body, new InstructionVisitor(interceptor, true), Collections.singletonList(initialState));
     return interceptor.getErrors();
   }
 }

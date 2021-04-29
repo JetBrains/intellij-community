@@ -1,10 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -213,7 +212,7 @@ public final class CommonDataflow {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
     StandardDataFlowRunner runner = new StandardDataFlowRunner(block.getProject(), block, ThreeState.UNSURE);
     var interceptor = new CommonDataflowInterceptor();
-    RunnerResult result = runner.analyzeMethodRecursively(block, new JavaDfaInstructionVisitor(interceptor));
+    RunnerResult result = runner.analyzeMethodRecursively(block, new InstructionVisitor(interceptor));
     if (result != RunnerResult.OK) return new DataflowResult(result);
     if (!(block instanceof PsiClass)) return interceptor.myResult;
     DataflowResult dfr = interceptor.myResult.copy();
@@ -228,7 +227,7 @@ public final class CommonDataflow {
       } else {
         initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();
       }
-      if(runner.analyzeBlockRecursively(body, initialStates, new JavaDfaInstructionVisitor(interceptor)) == RunnerResult.OK) {
+      if(runner.analyzeBlockRecursively(body, initialStates, new InstructionVisitor(interceptor)) == RunnerResult.OK) {
         dfr = interceptor.myResult.copy();
       } else {
         interceptor.myResult = dfr;
@@ -328,7 +327,7 @@ public final class CommonDataflow {
     return getDfType(expressionToAnalyze).getConstantOfType(Object.class);
   }
 
-  private static class CommonDataflowInterceptor implements DfaInterceptor<PsiExpression> {
+  private static class CommonDataflowInterceptor implements JavaDfaInterceptor {
     private DataflowResult myResult = new DataflowResult(RunnerResult.OK);
     private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
 

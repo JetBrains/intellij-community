@@ -3,11 +3,12 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResult;
 import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.*;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
@@ -41,22 +42,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
+final class DataFlowInstructionVisitor extends InstructionVisitor implements JavaDfaInterceptor {
   private static final Logger LOG = Logger.getInstance(DataFlowInstructionVisitor.class);
-  private static final CallMatcher IS_INSTANCE = CallMatcher.instanceCall(JAVA_LANG_CLASS, "isInstance").parameterTypes(
-    JAVA_LANG_OBJECT);
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
   private final Map<PsiTypeCastExpression, TypeConstraint> myRealOperandTypes = new HashMap<>();
   private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
-  private final Map<ExpressionChunk, ConstantResult> myConstantExpressions = new HashMap<>();
+  private final Map<DfaAnchor, ConstantResult> myConstantExpressions = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
-  private final Map<PsiMethodReferenceExpression, ConstantResult> myMethodReferenceResults = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
   private final Map<PsiExpression, ThreeState> myNegativeArraySizes = new HashMap<>();
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
@@ -67,7 +63,6 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
   private final boolean myStrictMode;
-  private final Set<PsiExpression> myRedundantInstanceOfCandidates = new HashSet<>();
 
   private static final CallMatcher USELESS_SAME_ARGUMENTS = CallMatcher.anyOf(
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_MATH, "min", "max").parameterCount(2),
@@ -79,6 +74,7 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   );
 
   DataFlowInstructionVisitor(boolean strictMode) {
+    super(null, false);
     myStrictMode = strictMode;
   }
 
@@ -86,9 +82,11 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   public void beforeAssignment(@NotNull DfaValue value,
                                @NotNull DfaValue target,
                                @NotNull DfaMemoryState memState,
-                               @Nullable PsiElement anchor) {
-    if (!(anchor instanceof PsiAssignmentExpression)) return;
-    PsiExpression left = ((PsiAssignmentExpression)anchor).getLExpression();
+                               @Nullable DfaAnchor anchor) {
+    if (!(anchor instanceof JavaExpressionAnchor)) return;
+    PsiAssignmentExpression assignment = tryCast(((JavaExpressionAnchor)anchor).getExpression(), PsiAssignmentExpression.class);
+    if (assignment == null) return;
+    PsiExpression left = assignment.getLExpression();
     if (!Boolean.FALSE.equals(mySameValueAssigned.get(left))) {
       if (!left.isPhysical()) {
         if (LOG.isDebugEnabled()) {
@@ -101,7 +99,7 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
         if (memState.areEqual(value, target) &&
             !isFloatingZero(dfType.getConstantOfType(Number.class)) &&
             !(TypeUtils.isJavaLangString(left.getType()) && !memState.isNull(value)) &&
-            !isAssignmentToDefaultValueInConstructor(target, ((PsiAssignmentExpression)anchor).getRExpression())) {
+            !isAssignmentToDefaultValueInConstructor(target, assignment.getRExpression())) {
           mySameValueAssigned.merge(left, Boolean.TRUE, Boolean::logicalAnd);
         }
         else {
@@ -109,7 +107,6 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
         }
       }
     }
-
   }
 
   @Override
@@ -177,16 +174,12 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   }
 
   Map<PsiExpression, ConstantResult> getConstantExpressions() {
-    return EntryStream.of(myConstantExpressions).filterKeys(chunk -> chunk.myRange == null)
-      .mapKeys(chunk -> chunk.myExpression).toMap();
+    return EntryStream.of(myConstantExpressions).selectKeys(JavaExpressionAnchor.class)
+      .mapKeys(JavaExpressionAnchor::getExpression).toMap();
   }
 
-  Map<ExpressionChunk, ConstantResult> getConstantExpressionChunks() {
+  Map<DfaAnchor, ConstantResult> getConstantExpressionChunks() {
     return myConstantExpressions;
-  }
-
-  Map<PsiMethodReferenceExpression, ConstantResult> getMethodReferenceResults() {
-    return myMethodReferenceResults;
   }
 
   Map<PsiExpression, ThreeState> getSwitchLabelsReachability() {
@@ -224,11 +217,20 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   }
 
   public boolean isInstanceofRedundant(InstanceofInstruction instruction) {
-    PsiExpression expression = instruction.getExpression();
-    if (expression == null || myUsefulInstanceofs.contains(instruction) || !myRedundantInstanceOfCandidates.contains(expression)) return false;
-    ConstantResult result = expression instanceof PsiMethodReferenceExpression ?
-                            myMethodReferenceResults.get(expression) : myConstantExpressions.get(new ExpressionChunk(expression, null));
-    return result != ConstantResult.TRUE && result != ConstantResult.FALSE;
+    DfaAnchor anchor = instruction.getDfaAnchor();
+    if (anchor == null) return false;
+    if (myUsefulInstanceofs.contains(instruction)) return false;
+    ConstantResult result = myConstantExpressions.get(anchor);
+    return result == ConstantResult.UNKNOWN;
+  }
+
+  @Override
+  public void beforeExpressionPush(@NotNull DfaValue value,
+                                   @NotNull DfaAnchor anchor,
+                                   @NotNull DfaMemoryState state) {
+    JavaDfaInterceptor.super.beforeExpressionPush(value, anchor, state);
+    if (anchor instanceof JavaExpressionAnchor && ((JavaExpressionAnchor)anchor).getExpression() instanceof PsiLiteralExpression) return;
+    myConstantExpressions.compute(anchor, (c, curState) -> ConstantResult.mergeValue(curState, state, value));
   }
 
   @Override
@@ -248,7 +250,6 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
       TypeConstraint fact = TypeConstraint.fromDfType(memState.getDfType(value));
       myRealOperandTypes.merge((PsiTypeCastExpression)parent, fact, TypeConstraint::join);
     }
-    reportConstantExpressionValue(value, memState, expression, range);
   }
 
   @Override
@@ -276,18 +277,8 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
     }
     else if (context instanceof PsiMethodReferenceExpression) {
       var methodRef = (PsiMethodReferenceExpression)context;
-      if (IS_INSTANCE.methodReferenceMatches(methodRef)) {
-        myRedundantInstanceOfCandidates.add(methodRef);
-      }
       if (OptionalUtil.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
         processOfNullableResult(value, state, methodRef.getReferenceNameElement());
-      }
-      PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
-      if (method != null && JavaMethodContractUtil.isPure(method)) {
-        List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
-        if (contracts.isEmpty() || !contracts.get(0).isTrivial()) {
-          myMethodReferenceResults.compute(methodRef, (mr, curState) -> ConstantResult.mergeValue(curState, state, value));
-        }
       }
     }
   }
@@ -350,12 +341,6 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
     return contracts.size() == 1 && contracts.get(0).isTrivial() && contracts.get(0).getReturnValue().isFail();
   }
 
-  private void reportConstantExpressionValue(DfaValue value, DfaMemoryState memState, PsiExpression expression, TextRange range) {
-    if (expression instanceof PsiLiteralExpression) return;
-    ExpressionChunk chunk = new ExpressionChunk(expression, range);
-    myConstantExpressions.compute(chunk, (c, curState) -> ConstantResult.mergeValue(curState, memState, value));
-  }
-
   private void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {
     if (receiver) {
       if (anchor instanceof PsiMethodReferenceExpression) {
@@ -414,16 +399,8 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
     }
 
     @Override
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
-      myRedundantInstanceOfCandidates.add(expression);
-    }
-
-    @Override
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
-      if (IS_INSTANCE.test(call)) {
-        myRedundantInstanceOfCandidates.add(call);
-      }
       if (OptionalUtil.OPTIONAL_OF_NULLABLE.test(call)) {
         processOfNullableResult(myValue, myMemState, call.getArgumentList().getExpressions()[0]);
       }
@@ -436,36 +413,6 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
       if (isFailing != null || !hasTrivialFailContract(call)) {
         myFailingCalls.put(call, DfaTypeValue.isContractFail(myValue) && !Boolean.FALSE.equals(isFailing));
       }
-    }
-  }
-
-  static class ExpressionChunk {
-    final @NotNull PsiExpression myExpression;
-    final @Nullable TextRange myRange;
-
-    ExpressionChunk(@NotNull PsiExpression expression, @Nullable TextRange range) {
-      myExpression = expression;
-      myRange = range;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ExpressionChunk chunk = (ExpressionChunk)o;
-      return myExpression.equals(chunk.myExpression) &&
-             Objects.equals(myRange, chunk.myRange);
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * myExpression.hashCode() + Objects.hashCode(myRange);
-    }
-
-    @Override
-    public String toString() {
-      String text = myExpression.getText();
-      return myRange == null ? text : myRange.substring(text);
     }
   }
 

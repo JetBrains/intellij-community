@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -26,7 +27,7 @@ public class PrimitiveConversionInstruction extends EvalInstruction {
   @NotNull private final PsiPrimitiveType myTargetType;
 
   public PrimitiveConversionInstruction(@NotNull PsiPrimitiveType targetType, @Nullable PsiExpression expression) {
-    super(expression, 1);
+    super(expression == null ? null : new JavaExpressionAnchor(expression), 1);
     myTargetType = targetType;
   }
 

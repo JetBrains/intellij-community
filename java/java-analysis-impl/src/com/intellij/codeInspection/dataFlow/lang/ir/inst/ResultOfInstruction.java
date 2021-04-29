@@ -3,19 +3,19 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 /**
- * Instruction that does nothing but allows to attach an expression to the top-of-stack
+ * Instruction that does nothing but allows to attach an anchor to the top-of-stack
  */
 public class ResultOfInstruction extends EvalInstruction {
-  public ResultOfInstruction(@NotNull PsiExpression expression) {
-    super(expression, 1);
+  public ResultOfInstruction(@NotNull DfaAnchor anchor) {
+    super(anchor, 1);
   }
 
   @Override
@@ -24,12 +24,12 @@ public class ResultOfInstruction extends EvalInstruction {
   }
 
   public String toString() {
-    return "RESULT_OF "+getExpression().getText();
+    return "RESULT_OF " + getDfaAnchor();
   }
 
   @NotNull
   @Override
-  public PsiExpression getExpression() {
-    return Objects.requireNonNull(super.getExpression());
+  public DfaAnchor getDfaAnchor() {
+    return Objects.requireNonNull(super.getDfaAnchor());
   }
 }

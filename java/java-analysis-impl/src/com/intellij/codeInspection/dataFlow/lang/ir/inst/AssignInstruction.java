@@ -20,6 +20,8 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiAssignmentExpression;
@@ -30,7 +32,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AssignInstruction extends ExpressionPushingInstruction<PsiAssignmentExpression> {
+public class AssignInstruction extends ExpressionPushingInstruction {
   private final PsiExpression myRExpression;
   private final PsiExpression myLExpression;
   @Nullable private final DfaValue myAssignedValue;
@@ -40,10 +42,17 @@ public class AssignInstruction extends ExpressionPushingInstruction<PsiAssignmen
   }
 
   public AssignInstruction(PsiExpression lExpression, PsiExpression rExpression, @Nullable DfaValue assignedValue) {
-    super(rExpression == null ? null : ObjectUtils.tryCast(rExpression.getParent(), PsiAssignmentExpression.class));
+    super(getAnchor(rExpression));
     myLExpression = lExpression;
     myRExpression = rExpression;
     myAssignedValue = assignedValue;
+  }
+
+  @Nullable
+  private static DfaAnchor getAnchor(PsiExpression rExpression) {
+    if (rExpression == null) return null;
+    PsiAssignmentExpression expression = ObjectUtils.tryCast(rExpression.getParent(), PsiAssignmentExpression.class);
+    return expression == null ? null : new JavaExpressionAnchor(expression);
   }
 
   @Override

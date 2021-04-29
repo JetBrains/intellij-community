@@ -19,31 +19,42 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
-public class ArrayAccessInstruction extends ExpressionPushingInstruction<PsiArrayAccessExpression> {
+public class ArrayAccessInstruction extends ExpressionPushingInstruction {
   private final @NotNull DfaValue myValue;
+  private final @Nullable PsiArrayAccessExpression myExpression;
   private final @Nullable DfaControlTransferValue myTransferValue;
 
   public ArrayAccessInstruction(@NotNull DfaValue value,
-                                @NotNull PsiArrayAccessExpression expression,
+                                @Nullable PsiArrayAccessExpression expression,
                                 @Nullable DfaControlTransferValue transferValue) {
-    super(expression);
+    this(value, expression == null || PsiUtil.isAccessedForWriting(expression) && !PsiUtil.isAccessedForReading(expression) ? null : 
+                new JavaExpressionAnchor(expression), transferValue, expression);
+  }
+
+  private ArrayAccessInstruction(@NotNull DfaValue value,
+                                 @Nullable DfaAnchor anchor,
+                                 @Nullable DfaControlTransferValue transferValue,
+                                 @Nullable PsiArrayAccessExpression expression) {
+    super(anchor);
     myValue = value;
     myTransferValue = transferValue;
+    myExpression = expression;
   }
 
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     DfaControlTransferValue newTransfer = myTransferValue == null ? null : myTransferValue.bindToFactory(factory);
-    var instruction = new ArrayAccessInstruction(myValue.bindToFactory(factory), Objects.requireNonNull(getExpression()), newTransfer);
+    var instruction = new ArrayAccessInstruction(myValue.bindToFactory(factory), getDfaAnchor(), newTransfer, myExpression);
     instruction.setIndex(getIndex());
     return instruction;
   }
@@ -62,9 +73,13 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction<PsiArra
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     return visitor.visitArrayAccess(this, runner, stateBefore);
   }
+  
+  public @Nullable PsiArrayAccessExpression getExpression() {
+    return myExpression;
+  }
 
   @Override
   public String toString() {
-    return "ARRAY_ACCESS " + Objects.requireNonNull(getExpression()).getText();
+    return "ARRAY_ACCESS " + getDfaAnchor();
   }
 }

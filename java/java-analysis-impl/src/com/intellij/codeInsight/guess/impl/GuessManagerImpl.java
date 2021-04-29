@@ -4,8 +4,7 @@ package com.intellij.codeInsight.guess.impl;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
@@ -131,7 +130,7 @@ public final class GuessManagerImpl extends GuessManager {
     GuessManagerRunner runner = new GuessManagerRunner(scope.getProject(), honorAssignments, null);
 
     var interceptor = new ExpressionTypeInterceptor(runner, forPlace);
-    RunnerResult result = runner.analyzeMethodWithInlining(scope, new JavaDfaInstructionVisitor(interceptor));
+    RunnerResult result = runner.analyzeMethodWithInlining(scope, new InstructionVisitor(interceptor));
     if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
       return interceptor.getResult();
     }
@@ -153,7 +152,7 @@ public final class GuessManagerImpl extends GuessManager {
 
     GuessManagerRunner runner = new GuessManagerRunner(scope.getProject(), honorAssignments, forPlace);
 
-    class MyInterceptor implements DfaInterceptor<PsiExpression> {
+    class MyInterceptor implements JavaDfaInterceptor {
       TypeConstraint constraint = TypeConstraints.BOTTOM;
 
       @Override
@@ -171,7 +170,7 @@ public final class GuessManagerImpl extends GuessManager {
       }
     }
     var interceptor = new MyInterceptor();
-    RunnerResult result = runner.analyzeMethodWithInlining(scope, new JavaDfaInstructionVisitor(interceptor));
+    RunnerResult result = runner.analyzeMethodWithInlining(scope, new InstructionVisitor(interceptor));
     if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
       return interceptor.constraint.meet(initial).getPsiType(scope.getProject());
     }
@@ -220,7 +219,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor<?> visitor,
+    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
                                                                 @NotNull DfaInstructionState instructionState) {
       Instruction instruction = instructionState.getInstruction();
       DfaMemoryState memState = instructionState.getMemoryState();
@@ -566,7 +565,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
   }
 
-  private static final class ExpressionTypeInterceptor implements DfaInterceptor<PsiExpression> {
+  private static final class ExpressionTypeInterceptor implements JavaDfaInterceptor {
     private final Map<DfaVariableValue, TypeConstraint> myResult = new HashMap<>();
     private final GuessManagerRunner myRunner;
     private final PsiElement myForPlace;

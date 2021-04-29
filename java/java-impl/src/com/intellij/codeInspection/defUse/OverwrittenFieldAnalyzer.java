@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.defUse;
 
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.BaseVariableAnalyzer;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
@@ -105,7 +107,8 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
       boolean qualifierPush = false;
       if (instruction instanceof PushInstruction) {
         // Avoid forgetting about qualifier.field on qualifier.field = x;
-        PsiExpression expression = ((PushInstruction)instruction).getExpression();
+        DfaAnchor anchor = ((PushInstruction)instruction).getDfaAnchor();
+        PsiExpression expression = anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() : null;
         if (expression != null && PsiUtil.skipParenthesizedExprUp(expression).getParent() instanceof PsiReferenceExpression
             && ExpressionUtils.getCallForQualifier(expression) == null) {
           qualifierPush = true;

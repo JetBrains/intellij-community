@@ -8,11 +8,11 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactDefinitio
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactExtractor;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateChange;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -113,8 +113,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       killedStates.add(memState);
     }
     if (instruction instanceof ExpressionPushingInstruction) {
-      ExpressionPushingInstruction<?> pushing = (ExpressionPushingInstruction<?>)instruction;
-      if (pushing.getExpression() == myExpression && pushing.getExpressionRange() == null) {
+      ExpressionPushingInstruction pushing = (ExpressionPushingInstruction)instruction;
+      if (pushing.getDfaAnchor() instanceof JavaExpressionAnchor &&
+          ((JavaExpressionAnchor)pushing.getDfaAnchor()).getExpression() == myExpression) {
         for (DfaInstructionState state : states) {
           MemoryStateChange history = ((TrackingDfaMemoryState)state.getMemoryState()).getHistory();
           myHistoryForContext = myHistoryForContext == null ? history : myHistoryForContext.merge(history);
@@ -137,7 +138,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
 
   private boolean analyze(PsiExpression expression, PsiElement body) {
     List<DfaMemoryState> endOfInitializerStates = new ArrayList<>();
-    var visitor = new JavaDfaInstructionVisitor(new DfaInterceptor<>() {
+    var visitor = new InstructionVisitor(new JavaDfaInterceptor() {
       @Override
       public void beforeInitializerEnd(boolean isStatic, @NotNull DfaMemoryState state) {
         if (!isStatic) {
@@ -628,19 +629,22 @@ public final class TrackingRunner extends StandardDataFlowRunner {
               push = previous;
             }
           }
-          if (push.myInstruction instanceof PushValueInstruction &&
-              ((PushValueInstruction)push.myInstruction).getValue().isConst(value) &&
-              ((PushValueInstruction)push.myInstruction).getExpression() == expression) {
-            push = push.getPrevious();
+          if (push.myInstruction instanceof PushValueInstruction) {
+            PushValueInstruction pushValueInstruction = (PushValueInstruction)push.myInstruction;
+            if (pushValueInstruction.getValue().isConst(value) &&
+                pushValueInstruction.getDfaAnchor() instanceof JavaExpressionAnchor &&
+                ((JavaExpressionAnchor)pushValueInstruction.getDfaAnchor()).getExpression() == expression) {
+              push = push.getPrevious();
+            }
           }
           if (push != null && push.myInstruction instanceof ConditionalGotoInstruction) {
             push = push.getPrevious();
           }
           if (push != null && push.myInstruction instanceof ExpressionPushingInstruction) {
-            ExpressionPushingInstruction<?> instruction = (ExpressionPushingInstruction<?>)push.myInstruction;
-            if (instruction.getExpressionRange() == null) {
-              PsiExpression operand = (PsiExpression)instruction.getExpression();
-              if (operand != null && expression.equals(PsiUtil.skipParenthesizedExprUp(operand.getParent()))) {
+            ExpressionPushingInstruction instruction = (ExpressionPushingInstruction)push.myInstruction;
+            if (instruction.getDfaAnchor() instanceof JavaExpressionAnchor) {
+              PsiExpression operand = ((JavaExpressionAnchor)instruction.getDfaAnchor()).getExpression();
+              if (expression.equals(PsiUtil.skipParenthesizedExprUp(operand.getParent()))) {
                 int i = IntStreamEx.ofIndices(((PsiPolyadicExpression)expression).getOperands(), e -> PsiTreeUtil.isAncestor(e, operand, false))
                     .findFirst().orElse(-1);
                 if (i >= 0) {

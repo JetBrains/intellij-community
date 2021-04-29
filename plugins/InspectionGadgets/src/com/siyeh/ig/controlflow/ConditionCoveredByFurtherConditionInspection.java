@@ -5,8 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.CheckNotNullInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
@@ -138,7 +137,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
   private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
     StandardDataFlowRunner runner = new StandardDataFlowRunner(expressionToAnalyze.getProject(), expressionToAnalyze) {
       @Override
-      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor<?> visitor,
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
                                                                   @NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();
         if (instruction instanceof CheckNotNullInstruction) {
@@ -187,7 +186,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       }
     };
     Map<PsiExpression, ThreeState> values = new HashMap<>();
-    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, new JavaDfaInstructionVisitor(new DfaInterceptor<>() {
+    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, new InstructionVisitor(new JavaDfaInterceptor() {
       @Override
       public void beforeExpressionPush(@NotNull DfaValue value,
                                        @NotNull PsiExpression expression,

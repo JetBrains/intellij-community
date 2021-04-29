@@ -17,9 +17,9 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,19 +29,20 @@ public class PushInstruction extends EvalInstruction {
   private final @NotNull DfaValue myValue;
   private final boolean myReferenceWrite;
 
-  public PushInstruction(@NotNull DfaValue value, PsiExpression place) {
+  public PushInstruction(@NotNull DfaValue value, DfaAnchor place) {
     this(value, place, false);
   }
 
-  public PushInstruction(@NotNull DfaValue value, PsiExpression place, final boolean isReferenceWrite) {
+  public PushInstruction(@NotNull DfaValue value, DfaAnchor place, final boolean isReferenceWrite) {
     super(place, 0);
+    assert place == null || !isReferenceWrite;
     myValue = value;
     myReferenceWrite = isReferenceWrite;
   }
 
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new PushInstruction(myValue.bindToFactory(factory), getExpression(), myReferenceWrite);
+    var instruction = new PushInstruction(myValue.bindToFactory(factory), getDfaAnchor(), myReferenceWrite);
     instruction.setIndex(getIndex());
     return instruction;
   }

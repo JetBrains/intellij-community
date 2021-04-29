@@ -4,6 +4,8 @@ package com.intellij.codeInspection.dataFlow.java;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.jvm.JvmTrap;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
@@ -165,7 +167,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder push(DfaValue value, PsiExpression expression) {
-    return add(new PushInstruction(value, expression));
+    return add(new PushInstruction(value, expression == null ? null : new JavaExpressionAnchor(expression)));
   }
 
   /**
@@ -194,7 +196,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder push(DfType value, PsiExpression expression) {
-    return add(new PushValueInstruction(value, expression));
+    return add(new PushValueInstruction(value, expression == null ? null : new JavaExpressionAnchor(expression)));
   }
 
   /**
@@ -257,8 +259,8 @@ public class CFGBuilder {
    * @param expression expression to bind top-of-stack value to
    * @return this builder
    */
-  public CFGBuilder resultOf(PsiExpression expression) {
-    return add(new ResultOfInstruction(expression));
+  public CFGBuilder resultOf(@NotNull PsiExpression expression) {
+    return add(new ResultOfInstruction(new JavaExpressionAnchor(expression)));
   }
 
   /**
@@ -302,7 +304,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder isInstance(PsiExpression anchor, @Nullable PsiExpression operand, @NotNull PsiType castType) {
-    return add(new InstanceofInstruction(anchor, operand, castType));
+    return add(new InstanceofInstruction(new JavaExpressionAnchor(anchor), operand, castType));
   }
 
   /**
@@ -727,7 +729,7 @@ public class CFGBuilder {
     flushFields();
     myAnalyzer.addConditionalErrorThrow();
     PsiType functionalInterfaceType = functionalExpression.getType();
-    myAnalyzer.addMethodThrows(LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType), null);
+    myAnalyzer.addMethodThrows(LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType));
     PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
     if (returnType != null) {
       push(DfTypes.typedObject(returnType, DfaPsiUtil.getTypeNullability(returnType)));
@@ -782,7 +784,7 @@ public class CFGBuilder {
     if (qualifier == null) return false;
     PsiType type = qualifier.getOperand().getType();
     push(DfTypes.typedObject(type, Nullability.NOT_NULL));
-    add(new InstanceofInstruction(methodRef, null, type));
+    add(new InstanceofInstruction(new JavaMethodReferenceReturnAnchor(methodRef), null, type));
     return true;
   }
 
