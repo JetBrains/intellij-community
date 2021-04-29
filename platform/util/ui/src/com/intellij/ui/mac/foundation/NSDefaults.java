@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class NSDefaults {
   private static final Logger LOG = Logger.getInstance(NSDefaults.class);
@@ -22,17 +23,12 @@ public class NSDefaults {
 
     @Override
     public String toString() {
-      String res = "";
-      for (Node pn: myPath) {
-        if (!res.isEmpty()) res += " | ";
-        res += pn.toString();
-      }
-      return res;
+      return myPath.stream().map(Node::toString).collect(Collectors.joining(" | "));
     }
 
     String readStringVal(@NotNull String key) { return readStringVal(key, false); }
 
-    String readStringVal(@NotNull String key, boolean doSyncronize) {
+    String readStringVal(@NotNull String key, boolean doSynchronize) {
       if (myPath.isEmpty())
         return null;
 
@@ -42,7 +38,7 @@ public class NSDefaults {
         if (defaults.equals(ID.NIL))
           return null;
 
-        if (doSyncronize) {
+        if (doSynchronize) {
           // NOTE: AppleDoc proposes to skip call of Foundation.invoke(myDefaults, "synchronize") - "this method is unnecessary and shouldn't be used."
           Foundation.invoke(defaults, "synchronize");
         }
@@ -221,7 +217,7 @@ public class NSDefaults {
             final ID internalDict = Foundation.invoke("NSMutableDictionary", "new");
             Foundation.invoke(dict,"setObject:forKey:", internalDict, Foundation.nsString(me.getKey()));
           } else
-            LOG.error("unsupported type of domain value: " + String.valueOf(val));
+            LOG.error("unsupported type of domain value: " + val);
         }
       }
       Foundation.invoke(defaults, "setPersistentDomain:forName:", dict, Foundation.nsString(domainName));
@@ -315,7 +311,7 @@ public class NSDefaults {
     final String initDesc = "appId='" + appId
                             + "', value (requested be set) ='" + val
                             + "', initial path (tail) value = '" + sval
-                            + "', path='" + path.toString() + "'";
+                            + "', path='" + path + "'";
 
     if (val == settingEnabled) {
       if (performExtraDebugChecks) LOG.error("nothing to change: " + initDesc);
@@ -357,7 +353,7 @@ public class NSDefaults {
 
     final boolean enabled = isShowFnKeysEnabled(TEST_APP_ID);
     setShowFnKeysEnabled(TEST_APP_ID, !enabled);
-    if (isShowFnKeysEnabled(TEST_APP_ID) != !enabled)
+    if (isShowFnKeysEnabled(TEST_APP_ID) == enabled)
       return "can't write " + ourTouchBarDomain + "." + ourPerAppKey + "=" + !enabled;
 
     setShowFnKeysEnabled(TEST_APP_ID, enabled);
