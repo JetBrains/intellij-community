@@ -25,9 +25,7 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 @State(name = "IssueNavigationConfiguration", storages = @Storage("vcs.xml"))
 public class IssueNavigationConfiguration extends SimpleModificationTracker
   implements PersistentStateComponent<IssueNavigationConfiguration> {

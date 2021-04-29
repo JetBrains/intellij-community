@@ -20,9 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class DocStringParameterReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx {
   private final ReferenceType myType;
 

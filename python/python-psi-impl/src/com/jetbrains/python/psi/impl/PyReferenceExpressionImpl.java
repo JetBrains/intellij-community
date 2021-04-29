@@ -37,8 +37,6 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
 
 /**
  * Implements reference expression PSI.
- *
- * @author yole
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
 

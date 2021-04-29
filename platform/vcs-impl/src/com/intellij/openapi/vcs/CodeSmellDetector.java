@@ -9,9 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class CodeSmellDetector {
   public static CodeSmellDetector getInstance(Project project) {
     return project.getService(CodeSmellDetector.class);

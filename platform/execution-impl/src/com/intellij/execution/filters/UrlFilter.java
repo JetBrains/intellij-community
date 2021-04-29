@@ -22,9 +22,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public class UrlFilter implements Filter, DumbAware {
   private final Project myProject;
 

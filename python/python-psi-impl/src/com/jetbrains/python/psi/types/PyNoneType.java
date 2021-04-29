@@ -13,9 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyNoneType implements PyType { // TODO must extend ClassType. It's an honest instance.
   public static final PyNoneType INSTANCE = new PyNoneType();
 

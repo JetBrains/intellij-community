@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.java.JavaBundle;
@@ -26,9 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance(RenamePsiPackageProcessor.class);
 

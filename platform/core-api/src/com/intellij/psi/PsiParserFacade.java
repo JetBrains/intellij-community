@@ -9,9 +9,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
 public interface PsiParserFacade {
   /**
    * Creates an PsiWhiteSpace with the specified text.

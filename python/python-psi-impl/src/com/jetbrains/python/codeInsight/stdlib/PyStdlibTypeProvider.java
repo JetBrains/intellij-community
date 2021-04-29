@@ -22,9 +22,7 @@ import java.util.Set;
 import static com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getOpenFunctionCallType;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @NotNull

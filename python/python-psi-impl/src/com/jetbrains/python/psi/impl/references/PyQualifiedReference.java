@@ -52,9 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class PyQualifiedReference extends PyReferenceImpl {
   private static final Logger LOG = Logger.getInstance(PyQualifiedReference.class);
 

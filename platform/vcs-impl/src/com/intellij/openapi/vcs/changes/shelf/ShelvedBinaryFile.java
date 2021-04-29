@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.project.Project;
@@ -26,9 +26,7 @@ import java.io.File;
 
 import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 
-/**
- * @author yole
- */
+
 public final class ShelvedBinaryFile implements JDOMExternalizable {
   public String BEFORE_PATH;
   public String AFTER_PATH;

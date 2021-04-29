@@ -26,9 +26,7 @@ import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyYieldExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class StarAnnotator extends PyAnnotator {
   @Override
   public void visitPyStarExpression(@NotNull PyStarExpression node) {

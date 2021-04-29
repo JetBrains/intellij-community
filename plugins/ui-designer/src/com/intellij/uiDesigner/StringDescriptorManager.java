@@ -19,9 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public final class StringDescriptorManager {
   private Module myModule;
   private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = ContainerUtil.createSoftValueMap();

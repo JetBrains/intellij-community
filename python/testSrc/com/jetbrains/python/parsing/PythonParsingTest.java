@@ -18,9 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
+
 @TestDataPath("$CONTENT_ROOT/../testData/psi/")
 public class PythonParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();

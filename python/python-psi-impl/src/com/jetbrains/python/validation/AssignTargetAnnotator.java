@@ -33,9 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.PyPsiBundle.message;
 
-/**
- * @author yole
- */
+
 public class AssignTargetAnnotator extends PyAnnotator {
   private enum Operation {
     Assign, AugAssign, Delete, Except, For, With

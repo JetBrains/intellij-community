@@ -5,9 +5,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PythonIndentingLexer extends PythonIndentingProcessor {
   private static final TokenSet TOKENS_TO_MERGE = PyTokenTypes.FSTRING_TEXT_TOKENS;
 

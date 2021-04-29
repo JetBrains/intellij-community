@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
@@ -52,9 +52,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CreateListenerAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance(CreateListenerAction.class);
 

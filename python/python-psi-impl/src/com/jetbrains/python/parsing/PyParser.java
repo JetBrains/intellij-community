@@ -7,9 +7,7 @@ import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyParser extends PythonParser implements PsiParser {
 
   public PyParser() {

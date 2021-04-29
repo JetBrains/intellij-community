@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar
 
 import com.intellij.ide.structureView.StructureViewModel
@@ -21,9 +21,7 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
-/**
- * @author yole
- */
+
 abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension() {
   protected abstract val language: Language
   private var currentFile: SoftReference<PsiFile>? = null

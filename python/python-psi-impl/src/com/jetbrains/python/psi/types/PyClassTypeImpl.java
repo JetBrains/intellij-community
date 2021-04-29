@@ -36,9 +36,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
+
 public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @NotNull protected final PyClass myClass;

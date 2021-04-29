@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Searcher that searches for classes which have members annotated with the specified annotation.
- *
- * @author yole
  */
 public final class ClassesWithAnnotatedMembersSearch extends ExtensibleQueryFactory<PsiClass, ClassesWithAnnotatedMembersSearch.Parameters> {
   public static final ExtensionPointName<QueryExecutor<PsiClass, ClassesWithAnnotatedMembersSearch.Parameters>> EP_NAME = ExtensionPointName.create("com.intellij.classesWithAnnotatedMembersSearch");

@@ -91,9 +91,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
   private static Project ourProject;
   private static Module ourModule;

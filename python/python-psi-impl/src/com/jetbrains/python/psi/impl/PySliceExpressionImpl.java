@@ -27,9 +27,7 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpression {
   public PySliceExpressionImpl(ASTNode astNode) {
     super(astNode);

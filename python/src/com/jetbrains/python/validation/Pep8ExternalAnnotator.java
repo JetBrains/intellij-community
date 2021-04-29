@@ -65,9 +65,7 @@ import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.Results> {
   // Taken directly from the sources of pycodestyle.py
   private static final String DEFAULT_IGNORED_ERRORS = "E121,E123,E126,E226,E24,E704,W503,W504";

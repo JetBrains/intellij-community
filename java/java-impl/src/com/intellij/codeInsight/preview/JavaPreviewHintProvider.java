@@ -16,9 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public class JavaPreviewHintProvider implements PreviewHintProvider {
 
   private static final PsiMethodPattern DECODE_METHOD = PsiJavaPatterns.psiMethod()

@@ -12,9 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 final class CoreJarHandler extends ZipHandler {
   private final CoreJarFileSystem myFileSystem;
   private final VirtualFile myRoot;

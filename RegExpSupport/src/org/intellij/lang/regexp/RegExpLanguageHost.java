@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.psi.PsiElement;
@@ -8,9 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-/**
- * @author yole
- */
+
 public interface RegExpLanguageHost {
 
   EnumSet<RegExpGroup.Type> EMPTY_NAMED_GROUP_TYPES = EnumSet.noneOf(RegExpGroup.Type.class);

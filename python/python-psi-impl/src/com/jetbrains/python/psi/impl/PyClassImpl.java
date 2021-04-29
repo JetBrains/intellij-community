@@ -52,9 +52,7 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyClass {
   public static class MROException extends Exception {
     public MROException(String s) {

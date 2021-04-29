@@ -17,9 +17,7 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class ProjectSettingsService {
   public static ProjectSettingsService getInstance(Project project) {
     return project.getService(ProjectSettingsService.class);

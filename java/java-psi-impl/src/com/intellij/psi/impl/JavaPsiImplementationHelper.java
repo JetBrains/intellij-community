@@ -9,9 +9,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public abstract class JavaPsiImplementationHelper {
   public static JavaPsiImplementationHelper getInstance(@NotNull Project project) {
     return project.getService(JavaPsiImplementationHelper.class);

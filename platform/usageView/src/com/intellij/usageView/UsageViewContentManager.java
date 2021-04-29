@@ -8,9 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author yole
- */
+
 public abstract class UsageViewContentManager {
   public static UsageViewContentManager getInstance(Project project) {
     return project.getService(UsageViewContentManager.class);

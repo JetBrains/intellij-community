@@ -10,9 +10,7 @@ import com.intellij.psi.PsiDirectoryContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public abstract class PsiDirectoryFactory {
   public static PsiDirectoryFactory getInstance(Project project) {
     return project.getService(PsiDirectoryFactory.class);

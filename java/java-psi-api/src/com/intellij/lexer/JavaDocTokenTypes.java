@@ -1,13 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lexer;
 
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
-/**
- * @author yole
- */
 public final class JavaDocTokenTypes implements DocCommentTokenTypes {
   public static final DocCommentTokenTypes INSTANCE = new JavaDocTokenTypes();
   private final TokenSet mySpaceCommentsSet = TokenSet.create(JavaDocTokenType.DOC_SPACE, JavaDocTokenType.DOC_COMMENT_DATA);

@@ -32,9 +32,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author yole
- */
+
 final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   @NotNull
   @Override

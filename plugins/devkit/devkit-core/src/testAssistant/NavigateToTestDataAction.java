@@ -27,9 +27,7 @@ import org.jetbrains.uast.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction, UpdateInBackground {
 
   @Override

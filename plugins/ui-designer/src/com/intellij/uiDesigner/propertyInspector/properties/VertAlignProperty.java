@@ -4,9 +4,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.project.Project;
 
-/**
- * @author yole
- */
+
 public class VertAlignProperty extends AlignProperty {
   public static VertAlignProperty getInstance(Project project) {
     return project.getService(VertAlignProperty.class);

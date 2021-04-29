@@ -4,9 +4,7 @@ package com.jetbrains.python.lexer;
 import com.intellij.lexer.FlexAdapter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PythonLexer extends FlexAdapter {
   public PythonLexer() {
     this(PythonLexerKind.REGULAR);

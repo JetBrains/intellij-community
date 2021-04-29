@@ -14,9 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyWithStatementImpl extends PyElementImpl implements PyWithStatement {
   private static final TokenSet WITH_ITEM = TokenSet.create(PyElementTypes.WITH_ITEM);
 

@@ -92,8 +92,6 @@ import java.util.Set;
  * NOTE: Because of the performance difference, we recommend plugin developers to write light tests whenever possible.
  * <p/>
  * Please see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
- *
- * @author yole
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class HeavyPlatformTestCase extends UsefulTestCase implements DataProvider {

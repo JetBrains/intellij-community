@@ -26,9 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class PyImportedModuleType implements PyType {
   @NotNull private final PyImportedModule myImportedModule;
 

@@ -33,9 +33,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
+
 public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub> implements PyNamedParameter, ContributedReferenceHost {
   public PyNamedParameterImpl(ASTNode astNode) {
     super(astNode);

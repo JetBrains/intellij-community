@@ -9,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Marks misplaced default 'except' clauses.
- *
- * @author yole
  */
 public class TryExceptAnnotator extends PyAnnotator {
   @Override

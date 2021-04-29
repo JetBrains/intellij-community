@@ -18,9 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public final class TypeEvalContext {
 
   public static final class Key {

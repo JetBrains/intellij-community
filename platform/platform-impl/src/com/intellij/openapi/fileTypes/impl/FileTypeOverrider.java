@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -17,8 +17,6 @@ import org.jetbrains.annotations.Nullable;
  * If the override conditions for a given {@code FileTypeOverrider} change, it needs to call
  * {@link com.intellij.util.FileContentUtilCore#reparseFiles(VirtualFile...)} if it's possible to identify specific files affected
  * by the change, or {@link FileTypeManagerEx#fireFileTypesChanged()} if the change affects an unknown number of files.
- *
- * @author yole
  */
 @ApiStatus.Experimental
 public interface FileTypeOverrider {

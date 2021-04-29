@@ -36,9 +36,7 @@ import javax.swing.event.ListDataListener;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls private static final String ELEMENT_GROUPS = "group";
   @NonNls private static final String ATTRIBUTE_NAMES = "names";

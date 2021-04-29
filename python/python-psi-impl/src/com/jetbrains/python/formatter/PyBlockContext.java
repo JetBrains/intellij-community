@@ -7,9 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.PythonLanguage;
 
-/**
- * @author yole
- */
+
 public class PyBlockContext {
   private final CommonCodeStyleSettings mySettings;
   private final PyCodeStyleSettings myPySettings;

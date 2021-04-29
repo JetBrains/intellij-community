@@ -20,9 +20,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
 

@@ -21,9 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class ImportedResolveResult extends RatedResolveResult {
   @Nullable private final PyImportedNameDefiner myDefiner;
 

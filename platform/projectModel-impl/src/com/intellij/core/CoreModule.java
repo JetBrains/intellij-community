@@ -24,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-/**
- * @author yole
- */
+
 public class CoreModule extends MockComponentManager implements ModuleEx {
   private final Path myPath;
   @NotNull private final Disposable myLifetime;

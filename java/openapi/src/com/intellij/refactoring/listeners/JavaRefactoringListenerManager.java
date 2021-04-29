@@ -4,9 +4,7 @@ package com.intellij.refactoring.listeners;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public abstract class JavaRefactoringListenerManager {
   /**
    * Registers a listener for moving member by pull up, push down and extract super class/interface refactorings.

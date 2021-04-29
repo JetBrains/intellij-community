@@ -8,9 +8,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public abstract class FindUsagesHandlerFactory implements PluginAware {
   public static final ExtensionPointName<FindUsagesHandlerFactory> EP_NAME = new ExtensionPointName<>("com.intellij.findUsagesHandlerFactory");
   PluginDescriptor pluginDescriptor;

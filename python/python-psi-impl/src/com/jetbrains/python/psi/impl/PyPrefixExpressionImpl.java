@@ -23,9 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExpression {
   public PyPrefixExpressionImpl(ASTNode astNode) {
     super(astNode);

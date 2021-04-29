@@ -19,8 +19,6 @@ import java.util.List;
 
 /**
  * Manages the SDK model shared between PythonSdkConfigurable and PyActiveSdkConfigurable.
- *
- * @author yole
  */
 public class PyConfigurableInterpreterList {
   private ProjectSdksModel myModel;

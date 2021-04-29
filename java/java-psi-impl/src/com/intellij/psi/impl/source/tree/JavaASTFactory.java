@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
@@ -15,9 +15,7 @@ import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class JavaASTFactory extends ASTFactory {
   private final DefaultASTFactory myDefaultASTFactory = ApplicationManager.getApplication().getService(DefaultASTFactory.class);
 

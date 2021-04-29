@@ -11,9 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class EpydocString extends TagBasedDocString {
 
   public static String[] RTYPE_TAGS = new String[] { "rtype", "returntype" };

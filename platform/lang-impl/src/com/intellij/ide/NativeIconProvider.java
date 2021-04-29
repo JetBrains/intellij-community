@@ -27,9 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 public final class NativeIconProvider extends IconProvider implements DumbAware {
   private final Map<Ext, Icon> myIconCache = new HashMap<>();
   // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path

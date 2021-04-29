@@ -8,9 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 @State(name = "PyCodeInsightSettings", storages = @Storage("other.xml"))
 public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeInsightSettings> {
   public static PyCodeInsightSettings getInstance() {

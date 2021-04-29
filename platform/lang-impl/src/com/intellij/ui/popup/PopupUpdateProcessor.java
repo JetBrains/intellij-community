@@ -15,9 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
 
   private final Project myProject;

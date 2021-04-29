@@ -27,9 +27,7 @@ import javax.swing.*;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class DirectoryGroupingRule extends SingleParentUsageGroupingRule implements DumbAware, UsageGroupingRuleEx {
   public static DirectoryGroupingRule getInstance(Project project) {
     return project.getService(DirectoryGroupingRule.class);

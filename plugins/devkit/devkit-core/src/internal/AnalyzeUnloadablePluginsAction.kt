@@ -25,9 +25,6 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
-/**
- * @author yole
- */
 @Suppress("HardCodedStringLiteral")
 class AnalyzeUnloadablePluginsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {

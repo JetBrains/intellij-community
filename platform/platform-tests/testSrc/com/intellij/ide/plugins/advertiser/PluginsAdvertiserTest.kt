@@ -7,9 +7,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-/**
- * @author yole
- */
+
 class PluginsAdvertiserTest {
 
   companion object {

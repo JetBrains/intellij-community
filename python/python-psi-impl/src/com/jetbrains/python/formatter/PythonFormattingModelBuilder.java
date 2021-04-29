@@ -16,9 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.jetbrains.python.PyElementTypes.*;
 import static com.jetbrains.python.PyTokenTypes.*;
 
-/**
- * @author yole
- */
+
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PythonFormattingModelBuilder implements FormattingModelBuilder, CustomFormattingModelBuilder {
   private static final boolean DUMP_FORMATTING_AST = false;

@@ -4,9 +4,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.project.Project;
 
-/**
- * @author yole
- */
+
 public class HorzAlignProperty extends AlignProperty {
   public static HorzAlignProperty getInstance(Project project) {
     return project.getService(HorzAlignProperty.class);

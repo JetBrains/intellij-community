@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -49,8 +49,6 @@ import java.util.Map;
 /**
  * TODO: Use {@link PythonRunner} instead of this class? At already supports rerun and other things
  * Base class for tasks which are run from PyCharm with results displayed in a toolwindow (manage.py, setup.py, Sphinx etc).
- *
- * @author yole
  */
 public class PythonTask {
   /**

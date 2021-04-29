@@ -14,9 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-/**
- * @author yole
- */
+
 public final class ChangesViewContentEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance(ChangesViewContentEP.class);
 

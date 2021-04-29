@@ -14,9 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class PyPsiFacade {
   public static PyPsiFacade getInstance(Project project) {
     return project.getService(PyPsiFacade.class);

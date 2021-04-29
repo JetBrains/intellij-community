@@ -64,8 +64,6 @@ import java.util.regex.Pattern;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
- *
- * @author yole
  */
 public final class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);

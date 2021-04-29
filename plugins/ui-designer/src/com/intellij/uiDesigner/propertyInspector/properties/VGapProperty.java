@@ -7,11 +7,6 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- * @author yole
- */
 public final class VGapProperty extends AbstractIntProperty<RadContainer> {
   public static VGapProperty getInstance(Project project) {
     return project.getService(VGapProperty.class);

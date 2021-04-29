@@ -23,9 +23,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyGeneratorExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class GeneratorInArgumentListAnnotator extends PyAnnotator {
   @Override
   public void visitPyArgumentList(@NotNull PyArgumentList node) {

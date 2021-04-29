@@ -12,9 +12,7 @@ import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyStatementListImpl extends PyElementImpl implements PyStatementList {
   public PyStatementListImpl(ASTNode astNode) {
     super(astNode);

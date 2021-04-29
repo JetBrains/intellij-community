@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -37,10 +37,6 @@ import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
-/**
- * @author max
- * @author yole
- */
 public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance(SvnChangeProvider.class);
   public static final @NonNls String PROPERTY_LAYER = "Property";

@@ -15,9 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   @NotNull private final ContentRevision myContentRevision;
 

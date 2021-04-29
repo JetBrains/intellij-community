@@ -25,9 +25,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class IssueNavigationConfigurationPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll {
   private final JBTable myLinkTable;
   private final Project myProject;

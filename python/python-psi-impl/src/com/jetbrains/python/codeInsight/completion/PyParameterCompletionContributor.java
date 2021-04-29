@@ -24,9 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author yole
- */
+
 public class PyParameterCompletionContributor extends CompletionContributor {
   public PyParameterCompletionContributor() {
     extend(CompletionType.BASIC,
