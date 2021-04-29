@@ -247,26 +247,32 @@ fun <T, E : PsiElement> getPsiElementPopup(
     highlightSelection: Boolean,
     toPsi: (T) -> E,
     processor: (T) -> Boolean
-): JBPopup = with(JBPopupFactory.getInstance().createPopupChooserBuilder(elements)) {
-    val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
-    setRenderer(renderer)
-    setItemSelectedCallback { element: T? ->
-        highlighter?.dropHighlight()
-        element?.let {
-            highlighter?.highlight(toPsi(element))
-        }
-    }
-
-    title?.let { setTitle(it) }
-    renderer.installSpeedSearch(this, true)
-    setItemChosenCallback { it?.let(processor) }
-    addListener(object : JBPopupListener {
-        override fun onClosed(event: LightweightWindowEvent) {
+): JBPopup {
+    val psiElements = elements.map(toPsi)
+    return with(JBPopupFactory.getInstance().createPopupChooserBuilder(psiElements)) {
+        val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
+        setRenderer(renderer)
+        setItemSelectedCallback { element: E? ->
             highlighter?.dropHighlight()
+            element?.let {
+                highlighter?.highlight(element)
+            }
         }
-    })
 
-    createPopup()
+        title?.let { setTitle(it) }
+        renderer.installSpeedSearch(this, true)
+        setItemChosenCallback { psiElement ->
+            psiElement?.let { psiElements.indexOf(it) }?.let { processor(elements[it]) }
+        }
+
+        addListener(object : JBPopupListener {
+            override fun onClosed(event: LightweightWindowEvent) {
+                highlighter?.dropHighlight()
+            }
+        })
+
+        createPopup()
+    }
 }
 
 class SelectionAwareScopeHighlighter(val editor: Editor) {
