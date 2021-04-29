@@ -52,9 +52,7 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull
   @Override
   public Stream<Wrapper> getSelectedChanges() {
-    boolean hasSelection = myBrowser.getViewer().getSelectionModel().getSelectionCount() != 0;
-    return wrap(hasSelection ? VcsTreeModelData.selected(myBrowser.getViewer())
-                             : VcsTreeModelData.all(myBrowser.getViewer()));
+    return wrap(getSelectedOrAll(myBrowser));
   }
 
   @NotNull
@@ -87,6 +85,13 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   public void updatePreview(boolean state) {
     // We do not have local changes here, so it's OK to always use `fromModelRefresh == false`
     updatePreview(state, false);
+  }
+
+  @NotNull
+  public static VcsTreeModelData getSelectedOrAll(VcsLogChangesBrowser changesBrowser) {
+    boolean hasSelection = changesBrowser.getViewer().getSelectionModel().getSelectionCount() != 0;
+    return hasSelection ? VcsTreeModelData.selected(changesBrowser.getViewer())
+                        : VcsTreeModelData.all(changesBrowser.getViewer());
   }
 
   private class MyChangeWrapper extends ChangeWrapper {

@@ -160,8 +160,7 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
   }
 
   override fun getEditorTabName(): @Nls String {
-    val changesBrowser = changesBrowser
-    val change = changesBrowser.selectedChanges.firstOrNull() ?: changesBrowser.directChanges.firstOrNull()
+    val change = VcsLogChangeProcessor.getSelectedOrAll(changesBrowser).userObjectsStream(Change::class.java).findFirst().orElse(null)
 
     return if (change == null) VcsLogBundle.message("vcs.log.diff.preview.editor.empty.tab.name")
     else VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name", ChangesUtil.getFilePath(change).name)
