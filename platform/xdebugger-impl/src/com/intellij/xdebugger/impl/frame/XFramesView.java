@@ -3,30 +3,36 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,7 +102,9 @@ public final class XFramesView extends XDebugView {
 
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
 
-    myThreadComboBox = new ComboBox<>();
+    myThreadComboBox = Registry.is("debugger.new.tool.window.layout", false)
+                       ? new XDebuggerEmbeddedComboBox<>()
+                       : new ComboBox<>();
     myThreadComboBox.setSwingPopup(false);
     myThreadComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
       if (value != null) {
@@ -166,10 +174,34 @@ public final class XFramesView extends XDebugView {
     myToolbar = createToolbar();
     myThreadsPanel = new Wrapper();
     myThreadsPanel.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0));
-    myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
+    if (myThreadComboBox instanceof XDebuggerEmbeddedComboBox) {
+      myToolbar.setOpaque(false);
+      ((XDebuggerEmbeddedComboBox<XExecutionStack>)myThreadComboBox).setExtension(myToolbar);
+    } else {
+      myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
+    }
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
     myMainPanel.setFocusCycleRoot(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusPolicy());
+    if (Registry.is("debugger.new.tool.window.layout", false) && myMainPanel.getLayout() instanceof BorderLayout) {
+      String prev = getShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE);
+      String next = getShortcutText(IdeActions.ACTION_NEXT_OCCURENCE);
+      if (prev != null && next != null) {
+        String message = XDebuggerBundle.message("debugger.switch.frames.from.anywhere.hint", prev, next);
+        JBLabel hint = new JBLabel(message, UIUtil.ComponentStyle.SMALL);
+        hint.setBorder(JBUI.Borders.empty(3, 8));
+        hint.setForeground(UIUtil.getContextHelpForeground());
+        myMainPanel.add(hint, BorderLayout.SOUTH);
+      }
+    }
+  }
+
+  @Nullable
+  @NlsSafe
+  private static String getShortcutText(@NotNull @NonNls String actionId) {
+    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
+    if (shortcut == null) return null;
+    return KeymapUtil.getShortcutText(shortcut);
   }
 
   private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
@@ -242,10 +274,11 @@ public final class XFramesView extends XDebugView {
   private ActionToolbarImpl createToolbar() {
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
-    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesList));
-    framesGroup.add(actionsManager.createNextOccurenceAction(myFramesList));
-
+    if (!Registry.is("debugger.new.tool.window.layout", false)) {
+      CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+      framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesList));
+      framesGroup.add(actionsManager.createNextOccurenceAction(myFramesList));
+    }
     framesGroup.addAll(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP));
 
     final ActionToolbarImpl toolbar =
