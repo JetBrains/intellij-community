@@ -60,7 +60,7 @@ class AdvancedSettingBean : PluginAware {
 
   @Nls
   fun title(): String {
-    return findBundle()?.getString(titleKey) ?: "!$id!"
+    return findBundle()?.getString(titleKey.ifEmpty { "advanced.setting.$id" }) ?: "!$id!"
   }
 
   @Nls
@@ -71,8 +71,8 @@ class AdvancedSettingBean : PluginAware {
 
   @Nls
   fun description(): String? {
-    if (descriptionKey.isEmpty()) return null
-    return findBundle()?.getString(descriptionKey)
+    val descriptionKey = descriptionKey.ifEmpty { "advanced.setting.$id.description" }
+    return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.getString(descriptionKey)
   }
 
   private fun findBundle(): ResourceBundle? {

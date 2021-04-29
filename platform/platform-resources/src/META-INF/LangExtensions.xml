@@ -1395,10 +1395,6 @@
 
     <projectIndexingHistoryListener implementation="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporterListener"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporter"/>
-
-    <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true"
-                     titleKey="option.edit.source.on.enter.key.request.focus.in.editor"
-                     groupKey="group.advanced.settings.project.view"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>

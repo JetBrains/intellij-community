@@ -1218,14 +1218,9 @@
 
     <postStartupActivity implementation="com.intellij.openapi.util.registry.RegistryToAdvancedSettingsMigration"/>
 
-    <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false"
-                     titleKey="option.ide.show.fileType.icon.in.titleBar"
-                     descriptionKey="option.ide.show.fileType.icon.in.titleBar.description"
-                     groupKey="group.advanced.settings.ide"/>
-
-    <advancedSetting id="ide.max.recent.projects" default="50"
-                     titleKey="option.ide.max.recent.projects"
-                     groupKey="group.advanced.settings.ide"/>
+    <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ide"/>
+    <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
+    <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
