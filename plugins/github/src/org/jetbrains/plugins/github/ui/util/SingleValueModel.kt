@@ -25,7 +25,7 @@ class SingleValueModel<T>(initialValue: T) : com.intellij.collaboration.ui.coder
     SimpleEventListener.addListener(changeEventDispatcher, listener)
 
   @RequiresEdt
-  override fun addValueUpdatedListener(listener: (newValue: T) -> Unit) {
+  override fun addListener(listener: (newValue: T) -> Unit) {
     SimpleEventListener.addListener(changeEventDispatcher) {
       listener(value)
     }

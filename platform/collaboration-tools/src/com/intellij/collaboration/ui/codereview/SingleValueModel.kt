@@ -4,5 +4,5 @@ package com.intellij.collaboration.ui.codereview
 interface SingleValueModel<T> {
   var value: T
 
-  fun addValueUpdatedListener(listener: (newValue: T) -> Unit)
+  fun addListener(listener: (newValue: T) -> Unit)
 }

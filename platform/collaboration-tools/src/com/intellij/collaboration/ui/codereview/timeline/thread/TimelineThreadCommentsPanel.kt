@@ -87,7 +87,7 @@ class TimelineThreadCommentsPanel<T>(
       }
     })
 
-    foldModel.addValueUpdatedListener { updateFolding(it) }
+    foldModel.addListener { updateFolding(it) }
     updateFolding(true)
   }
 
