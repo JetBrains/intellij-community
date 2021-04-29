@@ -2,25 +2,16 @@
 package com.intellij.diff.editor
 
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.FileEditorBase
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.DiffBundle
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.impl.EditorWindow
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import java.awt.BorderLayout
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
-import java.awt.event.KeyEvent
 import javax.swing.JComponent
-import javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW
 import javax.swing.JPanel
-import javax.swing.KeyStroke
 
 open class DiffRequestProcessorEditor(
   private val file: DiffVirtualFile,
@@ -36,19 +27,6 @@ open class DiffRequestProcessorEditor(
 
   init {
     putUserData(EditorWindow.HIDE_TABS, true)
-    if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, processor.context)) {
-      Disposer.register(this, Disposable {
-        Disposer.dispose(processor)
-      })
-    }
-    Disposer.register(processor, Disposable {
-      propertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, true, false)
-    })
-
-    processor.component.registerKeyboardAction({ Disposer.dispose(this) },
-                                               KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_IN_FOCUSED_WINDOW)
-
-    file.getUserData(DiffVirtualFile.ESCAPE_HANDLER)?.registerCustomShortcutSet(CommonShortcuts.ESCAPE, component, this)
   }
 
   override fun getComponent(): JComponent = panel

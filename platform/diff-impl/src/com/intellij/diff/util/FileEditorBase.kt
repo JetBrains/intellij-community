@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
@@ -26,6 +26,10 @@ abstract class FileEditorBase : UserDataHolderBase(), FileEditor {
 
   override fun selectNotify() {}
   override fun deselectNotify() {}
+
+  fun firePropertyChange(propName: String, oldValue: Boolean, newValue: Boolean) {
+    propertyChangeSupport.firePropertyChange(propName, oldValue, newValue)
+  }
 
   override fun addPropertyChangeListener(listener: PropertyChangeListener) {
     propertyChangeSupport.addPropertyChangeListener(listener)
