@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -107,6 +109,15 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   <T> T getService(@NotNull Class<T> serviceClass);
+
+  /**
+   * Collects all services registered with client="..." attribute. Take a look at {@link ClientSession}
+   */
+  @ApiStatus.Experimental
+  @SuppressWarnings("unused")
+  default @NotNull <T> List<T> getServices(@NotNull Class<T> serviceClass, boolean includeLocal) {
+    return new SmartList<>(getService(serviceClass));
+  }
 
   default @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     return getService(serviceClass);

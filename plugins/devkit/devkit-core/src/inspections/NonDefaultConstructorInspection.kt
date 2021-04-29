@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.jvm.JvmClassKind
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClassType
@@ -46,6 +47,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
 
     val area: Area?
     val isService: Boolean
+    var serviceClientKind: ServiceDescriptor.ClientKind? = null
     // hack, allow Project-level @Service
     var isServiceAnnotation = false
     var extensionPoint: ExtensionPoint? = null
@@ -67,13 +69,19 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
 
       area = getArea(extensionPoint)
       isService = extensionPoint?.beanClass?.stringValue == serviceBeanFqn
+      serviceClientKind = when (extensionPoint?.xmlTag?.getAttribute("client")?.value) {
+        "ALL" -> ServiceDescriptor.ClientKind.ALL
+        "GUEST" -> ServiceDescriptor.ClientKind.GUEST
+        "LOCAL" -> ServiceDescriptor.ClientKind.LOCAL
+        else -> null
+      }
     }
 
     val isAppLevelExtensionPoint = area == null || area == Area.IDEA_APPLICATION
 
     var errors: MutableList<ProblemDescriptor>? = null
     loop@ for (method in constructors) {
-      if (isAllowedParameters(method.parameterList, extensionPoint, isAppLevelExtensionPoint, isServiceAnnotation)) {
+      if (isAllowedParameters(method.parameterList, extensionPoint, isAppLevelExtensionPoint, serviceClientKind, isServiceAnnotation)) {
         // allow to have empty constructor and extra (e.g. DartQuickAssistIntention)
         return null
       }
@@ -199,20 +207,43 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
-private val allowedServiceQualifiedNames = java.util.Set.of(
+private val allowedClientSessionsQualifiedNames = setOf(
+  "com.intellij.openapi.client.ClientSession",
+  "com.jetbrains.rdserver.core.GuestSession",
+)
+
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@NonNls
+private val allowedClientAppSessionsQualifiedNames = setOf(
+  "com.intellij.openapi.client.ClientAppSession",
+  "com.jetbrains.rdserver.core.GuestAppSession",
+) + allowedClientSessionsQualifiedNames
+
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@NonNls
+private val allowedClientProjectSessionsQualifiedNames = setOf(
+  "com.intellij.openapi.client.ClientProjectSession",
+  "com.jetbrains.rdserver.core.GuestProjectSession",
+) + allowedClientSessionsQualifiedNames
+
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@NonNls
+private val allowedServiceQualifiedNames = setOf(
   "com.intellij.openapi.project.Project",
   "com.intellij.openapi.module.Module",
   "com.intellij.util.messages.MessageBus",
   "com.intellij.openapi.options.SchemeManagerFactory",
   "com.intellij.openapi.editor.actionSystem.TypedActionHandler",
   "com.intellij.database.Dbms"
-)
+) + allowedClientAppSessionsQualifiedNames + allowedClientProjectSessionsQualifiedNames
+
 private val allowedServiceNames = allowedServiceQualifiedNames.mapTo(HashSet(allowedServiceQualifiedNames.size)) { it.substringAfterLast('.') }
 
 @Suppress("HardCodedStringLiteral")
 private fun isAllowedParameters(list: PsiParameterList,
                                 extensionPoint: ExtensionPoint?,
                                 isAppLevelExtensionPoint: Boolean,
+                                clientKind: ServiceDescriptor.ClientKind?,
                                 isServiceAnnotation: Boolean): Boolean {
   if (list.isEmpty) {
     return true
@@ -238,6 +269,15 @@ private fun isAllowedParameters(list: PsiParameterList,
 
     val qualifiedName = (type.resolve() ?: return false).qualifiedName
     if (!allowedServiceQualifiedNames.contains(qualifiedName)) {
+      return false
+    }
+
+    if (clientKind != ServiceDescriptor.ClientKind.GUEST &&
+        qualifiedName?.startsWith("com.jetbrains.rdserver.core") == true) {
+      return false
+    }
+
+    if (clientKind == null && allowedClientProjectSessionsQualifiedNames.contains(qualifiedName)) {
       return false
     }
 

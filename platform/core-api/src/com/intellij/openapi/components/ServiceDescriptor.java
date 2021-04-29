@@ -22,6 +22,7 @@ public final class ServiceDescriptor {
                            boolean overrides,
                            @Nullable String configurationSchemaKey,
                            @NotNull PreloadMode preload,
+                           @Nullable ClientKind client,
                            @Nullable ExtensionDescriptor.Os os) {
     this.serviceInterface = serviceInterface;
     this.serviceImplementation = serviceImplementation;
@@ -30,12 +31,33 @@ public final class ServiceDescriptor {
     this.overrides = overrides;
     this.configurationSchemaKey = configurationSchemaKey;
     this.preload = preload;
+    this.client = client;
     this.os = os;
   }
 
   @ApiStatus.Internal
   public enum PreloadMode {
     TRUE, FALSE, AWAIT, NOT_HEADLESS, NOT_LIGHT_EDIT
+  }
+
+  public enum ClientKind {
+    /**
+     * States that a dedicated service should be created for each participant
+     */
+    ALL,
+    /**
+     * States that dedicated services should be created only for the guests (local owner excluded)
+     */
+    GUEST,
+    /**
+     * USE WITH CARE.
+     * States that a service should be created only for the local owner of the IDE.
+     * Implies that guest implementations are also defined somewhere!
+     * Should be used either
+     * 1) by platform code if corresponding guest implementations are registered by CWM
+     * 2) for defining different implementations of the local owner's and guests' services side-by-side in one plugin
+     */
+    LOCAL,
   }
 
   @Attribute
@@ -73,6 +95,16 @@ public final class ServiceDescriptor {
   @Attribute
   public final ExtensionDescriptor.Os os;
 
+  /**
+   * States whether the service should be created once per client.
+   * Applicable only for application/project level services.
+   * Null means the the service is an ordinary one that is created one per application/project.
+   */
+  @Attribute
+  @ApiStatus.Internal
+  @Nullable
+  public final ClientKind client;
+
   public String getInterface() {
     return serviceInterface == null ? getImplementation() : serviceInterface;
   }
@@ -99,6 +131,7 @@ public final class ServiceDescriptor {
            ", overrides=" + overrides +
            ", configurationSchemaKey='" + configurationSchemaKey + '\'' +
            ", preload=" + preload +
+           ", client=" + client +
            ')';
   }
 }

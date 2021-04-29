@@ -543,6 +543,7 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
   var configurationSchemaKey: String? = null
   var overrides = false
   var preload = ServiceDescriptor.PreloadMode.FALSE
+  var client: ServiceDescriptor.ClientKind? = null
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
       "serviceInterface" -> serviceInterface = getNullifiedAttributeValue(reader, i)
@@ -560,10 +561,18 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
           else -> LOG.error("Unknown preload mode value ${reader.getAttributeValue(i)} at ${reader.location}")
         }
       }
+      "client" -> {
+        when (reader.getAttributeValue(i)) {
+          "all" -> client = ServiceDescriptor.ClientKind.ALL
+          "local" -> client = ServiceDescriptor.ClientKind.LOCAL
+          "guest" -> client = ServiceDescriptor.ClientKind.GUEST
+          else -> LOG.error("Unknown client value: ${reader.getAttributeValue(i)} at ${reader.location}")
+        }
+      }
     }
   }
   return ServiceDescriptor(serviceInterface, serviceImplementation, testServiceImplementation, headlessImplementation,
-                           overrides, configurationSchemaKey, preload, os)
+                           overrides, configurationSchemaKey, preload, client, os)
 }
 
 private fun readProduct(reader: XMLStreamReader2, descriptor: RawPluginDescriptor) {
