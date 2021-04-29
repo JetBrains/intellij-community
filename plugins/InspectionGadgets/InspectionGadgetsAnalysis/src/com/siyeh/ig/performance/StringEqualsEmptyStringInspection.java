@@ -140,17 +140,18 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
       }
       final @NonNls StringBuilder newExpression;
       CommentTracker ct = new CommentTracker();
+      final PsiExpression parent = ObjectUtils.tryCast(call.getParent(), PsiExpression.class);
+      final boolean isNegation = parent != null && BoolUtils.isNegation(parent);
       if (myAddNullCheck) {
         newExpression = new StringBuilder(ct.text(checkedExpression, ParenthesesUtils.EQUALITY_PRECEDENCE));
-        newExpression.append("!=null&&");
+        newExpression.append(isNegation ? "==null||" : "!=null&&");
       }
       else {
         newExpression = new StringBuilder();
       }
-      final PsiExpression parent = ObjectUtils.tryCast(call.getParent(), PsiExpression.class);
       final PsiExpression expressionToReplace;
       String expressionText = ct.text(checkedExpression, ParenthesesUtils.METHOD_CALL_PRECEDENCE);
-      if (parent != null && BoolUtils.isNegation(parent)) {
+      if (isNegation) {
         expressionToReplace = parent;
         if (myUseIsEmpty) {
           newExpression.append('!').append(expressionText).append(".isEmpty()");
