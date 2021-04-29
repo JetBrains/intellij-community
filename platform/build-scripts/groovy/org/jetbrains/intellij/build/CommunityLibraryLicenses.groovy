@@ -680,7 +680,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
     jetbrainsLibrary("kotlinc.kotlin-script-util"),
-    jetbrainsLibrary("kotlinc.kotlin-scripting-common"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-jvm"),
     jetbrainsLibrary("kotlinc.kotlinx-serialization-compiler-plugin"),
