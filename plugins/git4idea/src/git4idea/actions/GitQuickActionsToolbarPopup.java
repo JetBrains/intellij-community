@@ -2,7 +2,10 @@
 package git4idea.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
@@ -36,13 +39,6 @@ final class GitQuickActionsToolbarPopup extends VcsQuickActionsToolbarPopup {
                                    String place,
                                    Dimension minimumSize) {
       super(action, presentation, place, minimumSize);
-    }
-
-    @Override
-    protected void actionPerformed(AnActionEvent event) {
-      super.actionPerformed(new AnActionEvent(event.getInputEvent(), event.getDataContext(),
-                                              ActionPlaces.getPopupPlace(event.getPlace()), event.getPresentation(),
-                                              event.getActionManager(), event.getModifiers()));
     }
 
     @Override
