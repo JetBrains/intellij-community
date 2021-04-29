@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResul
 import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.*;
@@ -14,6 +15,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.inst.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -24,7 +26,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -105,13 +106,6 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
           mySameValueAssigned.put(left, Boolean.FALSE);
         }
       }
-    }
-  }
-
-  @Override
-  public void beforeConditionalJump(@NotNull PsiElement anchor, boolean isTrueBranch) {
-    if (anchor instanceof PsiExpression && PsiImplUtil.getSwitchLabel((PsiExpression)anchor) != null) {
-      mySwitchLabelsReachability.merge((PsiExpression)anchor, ThreeState.fromBoolean(isTrueBranch), ThreeState::merge);
     }
   }
 
@@ -224,11 +218,18 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
   }
 
   @Override
-  public void beforeExpressionPush(@NotNull DfaValue value,
-                                   @NotNull DfaAnchor anchor,
-                                   @NotNull DfaMemoryState state) {
-    JavaDfaInterceptor.super.beforeExpressionPush(value, anchor, state);
+  public void beforePush(@NotNull DfaValue value,
+                         @NotNull DfaAnchor anchor,
+                         @NotNull DfaMemoryState state) {
+    JavaDfaInterceptor.super.beforePush(value, anchor, state);
     if (anchor instanceof JavaExpressionAnchor && ((JavaExpressionAnchor)anchor).getExpression() instanceof PsiLiteralExpression) return;
+    if (anchor instanceof JavaSwitchLabelTakenAnchor) {
+      DfType type = state.getDfType(value);
+      mySwitchLabelsReachability.merge(((JavaSwitchLabelTakenAnchor)anchor).getLabelExpression(),
+                                       type.equals(DfTypes.TRUE) ? ThreeState.YES :
+                                       type.equals(DfTypes.FALSE) ? ThreeState.NO : ThreeState.UNSURE, ThreeState::merge);
+      return;
+    }
     myConstantExpressions.compute(anchor, (c, curState) -> ConstantResult.mergeValue(curState, state, value));
   }
 

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -17,10 +18,10 @@ import org.jetbrains.annotations.Nullable;
 
 public interface JavaDfaInterceptor extends DfaInterceptor {
   @Override
-  default void beforeExpressionPush(@NotNull DfaValue value,
-                                    @NotNull DfaAnchor anchor,
-                                    @NotNull DfaMemoryState state) {
-    if (anchor instanceof JavaPolyadicPartAnchor) {
+  default void beforePush(@NotNull DfaValue value,
+                          @NotNull DfaAnchor anchor,
+                          @NotNull DfaMemoryState state) {
+    if (anchor instanceof JavaPolyadicPartAnchor || anchor instanceof JavaSwitchLabelTakenAnchor) {
       // do not report by default
       return;
     }

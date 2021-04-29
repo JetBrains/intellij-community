@@ -14,15 +14,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface DfaInterceptor {
   /**
-   * Called before conditional goto instruction is executed that has an associated anchor
-   * @param anchor a PSI anchor that associated with conditional goto instruction
-   * @param isTrueBranch whether we are visiting the true branch. If both true and false jumps are possible,
-   *                     the method will be repeatedly called with isTrueBranch equals to true and false.
-   */
-  default void beforeConditionalJump(@NotNull PsiElement anchor, boolean isTrueBranch) {
-  }
-
-  /**
    * Called before initializer end ({@link com.intellij.codeInspection.dataFlow.lang.ir.inst.EndOfInitializerInstruction}) is processed.
    * Both static and instance initializer are processed in the same flow.
    *
@@ -33,17 +24,17 @@ public interface DfaInterceptor {
   }
 
   /**
-   * Called before a PsiExpression result is being pushed to the memory state stack during symbolic interpretation.
-   * The result of single expression can be pushed many times to the different memory states.
+   * Called before a value is being pushed to the memory state stack during symbolic interpretation.
+   * The value with the same anchor can be pushed many times to the different memory states.
+   * Only values that have an anchor are reported here.
    *
-   * @param value      a value being pushed
-   * @param expression a physical PsiExpression which evaluates to given value.
-   * @param range      if not-null, specifies a part of expression which corresponds to the value (like "a ^ b" range in "a ^ b ^ c" expression).
-   * @param state      a memory state where expression is about to be pushed
+   * @param value  a value being pushed
+   * @param anchor an anchor that describes the location of the pushed value
+   * @param state  a memory state where expression is about to be pushed
    */
-  default void beforeExpressionPush(@NotNull DfaValue value,
-                                    @NotNull DfaAnchor expression,
-                                    @NotNull DfaMemoryState state) {
+  default void beforePush(@NotNull DfaValue value,
+                          @NotNull DfaAnchor anchor,
+                          @NotNull DfaMemoryState state) {
 
   }
 

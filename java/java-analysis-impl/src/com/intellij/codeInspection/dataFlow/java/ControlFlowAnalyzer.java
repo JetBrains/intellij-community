@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
 import com.intellij.codeInspection.dataFlow.java.inliner.*;
 import com.intellij.codeInspection.dataFlow.jvm.*;
 import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.*;
@@ -953,7 +954,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                     caseValue.accept(this);
                     addInstruction(new BooleanBinaryInstruction(
                       TypeUtils.isJavaLangString(targetType) ? BooleanBinaryInstruction.STRING_EQUALITY_BY_CONTENT :
-                      JavaTokenType.EQEQ, null));
+                      JavaTokenType.EQEQ, new JavaSwitchLabelTakenAnchor(caseValue)));
                   }
                   else {
                     pushUnknown();

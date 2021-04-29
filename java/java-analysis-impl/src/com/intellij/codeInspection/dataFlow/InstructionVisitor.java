@@ -74,7 +74,7 @@ public class InstructionVisitor {
                             @NotNull DfaMemoryState state) {
     DfaAnchor anchor = instruction.getDfaAnchor();
     if (anchor != null) {
-      myInterceptor.beforeExpressionPush(value, anchor, state);
+      myInterceptor.beforePush(value, anchor, state);
     }
     state.push(value);
   }
@@ -704,18 +704,11 @@ public class InstructionVisitor {
     DfaCondition condTrue = memState.pop().eq(booleanValue(value));
     DfaCondition condFalse = condTrue.negate();
 
-    PsiElement anchor = instruction.getPsiAnchor();
     if (condTrue == DfaCondition.getTrue()) {
-      if (anchor != null) {
-        myInterceptor.beforeConditionalJump(anchor, true);
-      }
       return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(instruction.getOffset()), memState)};
     }
 
     if (condFalse == DfaCondition.getTrue()) {
-      if (anchor != null) {
-        myInterceptor.beforeConditionalJump(anchor, false);
-      }
       return nextInstruction(instruction, runner, memState);
     }
 
@@ -725,16 +718,10 @@ public class InstructionVisitor {
 
     if (memState.applyCondition(condTrue)) {
       result.add(new DfaInstructionState(runner.getInstruction(instruction.getOffset()), memState));
-      if (anchor != null) {
-        myInterceptor.beforeConditionalJump(anchor, true);
-      }
     }
 
     if (elseState.applyCondition(condFalse)) {
       result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), elseState));
-      if (anchor != null) {
-        myInterceptor.beforeConditionalJump(anchor, false);
-      }
     }
 
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
@@ -1093,12 +1080,12 @@ public class InstructionVisitor {
       currentStates = addContractResults(contract, currentStates, runner.getFactory(), results);
       for (DfaMemoryState result : results) {
         DfaValue value = result.pop();
-        myInterceptor.beforeExpressionPush(value, anchor, result);
+        myInterceptor.beforePush(value, anchor, result);
         state.push(value);
       }
     }
     for (DfaCallState currentState: currentStates) {
-      myInterceptor.beforeExpressionPush(defaultResult, anchor, currentState.myMemoryState);
+      myInterceptor.beforePush(defaultResult, anchor, currentState.myMemoryState);
       state.push(defaultResult);
     }
   }
