@@ -26,7 +26,6 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -36,14 +35,12 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class LocalFileSystemBase extends LocalFileSystem {
-  protected final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
+  final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.pluggableContentLoader");
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
@@ -187,8 +184,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
-    Stream<VirtualFile> iterator = StreamEx.of(files.iterator()).map(f -> refreshAndFindFileByIoFile(f));
-    refreshFiles(iterator, async, recursive, onFinish);
+    List<VirtualFile> virtualFiles = ContainerUtil.mapNotNull(files, f1 -> refreshAndFindFileByIoFile(f1));
+    refreshFiles(async, recursive, virtualFiles, onFinish);
   }
 
   @Override
@@ -196,11 +193,14 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
                               boolean async,
                               boolean recursive,
                               @Nullable Runnable onFinish) {
-    Stream<VirtualFile> iterator = StreamEx.of(files.iterator()).map(f -> refreshAndFindFileByNioFile(f));
-    refreshFiles(iterator, async, recursive, onFinish);
+    List<VirtualFile> virtualFiles = ContainerUtil.mapNotNull(files, f1 -> refreshAndFindFileByNioFile(f1));
+    refreshFiles(async, recursive, virtualFiles, onFinish);
   }
 
-  private static void refreshFiles(@NotNull Stream<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+  private static void refreshFiles(boolean async,
+                                   boolean recursive,
+                                   List<? extends VirtualFile> virtualFiles,
+                                   @Nullable Runnable onFinish) {
     VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     Application app = ApplicationManager.getApplication();
@@ -208,7 +208,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (fireCommonRefreshSession) manager.fireBeforeRefreshStart(false);
 
     try {
-      RefreshQueue.getInstance().refresh(async, recursive, onFinish, files.filter(f -> f != null).collect(Collectors.toList()));
+      RefreshQueue.getInstance().refresh(async, recursive, onFinish, virtualFiles);
     }
     finally {
       if (fireCommonRefreshSession) manager.fireAfterRefreshFinish(false);
