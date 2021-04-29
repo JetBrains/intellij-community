@@ -2,7 +2,11 @@
 package com.intellij.openapi.options.advanced
 
 import com.intellij.DynamicBundle
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -120,7 +124,7 @@ class AdvancedSettings : PersistentStateComponent<AdvancedSettings.AdvancedSetti
   }
 
   companion object {
-    fun getInstance(): AdvancedSettings = service()
+    fun getInstance(): AdvancedSettings = ApplicationManager.getApplication().getService(AdvancedSettings::class.java)
 
     @JvmStatic
     fun getBoolean(id: String): Boolean = getInstance().getSetting(id).toBoolean()
