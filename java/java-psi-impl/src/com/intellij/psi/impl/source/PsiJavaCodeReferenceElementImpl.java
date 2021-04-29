@@ -645,6 +645,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       }
     }
 
+    PsiElement qualifier = getQualifier();
+    PsiReferenceParameterList parentReferencesList = qualifier instanceof PsiJavaCodeReferenceElement 
+                                                     ? ((PsiJavaCodeReferenceElement)qualifier).getParameterList() 
+                                                     : null;
     PsiJavaCodeReferenceElement ref;
     try {
       ref = facade.getParserFacade().createReferenceFromText(text.toString(), getParent());
@@ -660,6 +664,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     PsiReferenceParameterList refParameterList = ref.getParameterList();
     if (parameterList != null && refParameterList != null) {
       refParameterList.replace(parameterList);
+    }
+
+    if (parentReferencesList != null) {
+      PsiElement refQualifier = ref.getQualifier();
+      if (refQualifier instanceof PsiJavaCodeReferenceElement) {
+        PsiReferenceParameterList qRefParameterList = ((PsiJavaCodeReferenceElement)refQualifier).getParameterList();
+        if (qRefParameterList != null) {
+          qRefParameterList.replace(parentReferencesList);
+        }
+      }
     }
 
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
