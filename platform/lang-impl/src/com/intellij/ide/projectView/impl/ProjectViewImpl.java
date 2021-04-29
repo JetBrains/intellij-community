@@ -97,6 +97,7 @@ import java.util.function.Function;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
+import static com.intellij.ui.treeStructure.Tree.MOUSE_PRESSED_NON_FOCUSED;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, QuickActionProvider, BusyObject {
@@ -932,7 +933,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           if (!isAutoscrollFromSource(getCurrentViewId())) return false;
           AbstractProjectViewPane pane = getCurrentProjectViewPane();
           JTree tree = pane == null ? null : pane.getTree();
-          return tree != null && tree.isShowing();
+          return tree != null && tree.isShowing() && !UIUtil.isClientPropertyTrue(tree, MOUSE_PRESSED_NON_FOCUSED);
         }
       }, myProject);
     }

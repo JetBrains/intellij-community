@@ -46,6 +46,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    */
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_SELECT_ON_MOUSE_PRESSED = Key.create("allows to select a node automatically on right click");
+  @ApiStatus.Internal
+  public static final Key<Boolean> MOUSE_PRESSED_NON_FOCUSED = Key.create("mouse pressed state");
 
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
@@ -698,6 +700,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     private void setPressed(MouseEvent e, boolean pressed) {
+      putClientProperty(MOUSE_PRESSED_NON_FOCUSED, pressed && !hasFocus());
       if (UIUtil.isUnderWin10LookAndFeel()) {
         Point p = e.getPoint();
         TreePath path = getPathForLocation(p.x, p.y);
