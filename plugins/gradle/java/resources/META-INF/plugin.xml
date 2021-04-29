@@ -86,5 +86,7 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsModuleLibrariesService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.MavenRepositoriesDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.AnnotationProcessingDataService"/>
+
+    <starter.moduleImporter implementation="org.jetbrains.plugins.gradle.starters.GradleStarterModuleImporter"/>
   </extensions>
 </idea-plugin>

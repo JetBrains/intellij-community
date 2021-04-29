@@ -267,6 +267,8 @@
     <!-- See com.intellij.codeInspection.javaDoc.JavaDocLocalInspection -->
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.starter.moduleImporter" interface="com.intellij.ide.starters.StarterModuleImporter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.starter.modulePreprocessor" interface="com.intellij.ide.starters.StarterModulePreprocessor" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -2144,6 +2146,10 @@
 
     <newProjectWizard implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
     <newProjectWizard implementation="com.intellij.ide.projectWizard.generators.KotlinNewProjectWizard"/>
+
+    <registryKey key="starters.dependency.update.host"
+                 defaultValue="https://frameworks.jetbrains.com"
+                 description="The host is used to download dependency config updates for framework starters"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

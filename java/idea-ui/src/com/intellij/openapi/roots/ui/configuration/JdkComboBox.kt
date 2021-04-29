@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.CommonBundle
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
@@ -87,11 +88,11 @@ fun validateJavaVersion(sdkProperty: GraphProperty<Sdk?>, javaVersion: String?):
     if (wizardVersion != null && javaVersion != null) {
       val selectedVersion = JavaSdkVersion.fromVersionString(javaVersion)
       if (selectedVersion != null && !wizardVersion.isAtLeast(selectedVersion)) {
-        Messages.showErrorDialog(JavaUiBundle.message("message.java.version.not.supported.by.sdk",
-                                                      selectedVersion.description,
-                                                      sdk.name,
-                                                      wizardVersion.description),
-                                 JavaUiBundle.message("message.title.error"))
+        Messages.showErrorDialog(JavaStartersBundle.message("message.java.version.not.supported.by.sdk",
+                                                            selectedVersion.description,
+                                                            sdk.name,
+                                                            wizardVersion.description),
+                                 JavaStartersBundle.message("message.title.error"))
         return false
       }
     }
