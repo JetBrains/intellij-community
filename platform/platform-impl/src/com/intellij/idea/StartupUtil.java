@@ -109,6 +109,11 @@ public final class StartupUtil {
     startupStart = StartUpMeasurer.startActivity("app initialization preparation");
 
     Main.setFlags(args);
+
+    if (!Main.isHeadless() && !checkGraphics()) {
+      System.exit(Main.NO_GRAPHICS);
+    }
+
     CommandLineArgs.parse(args);
 
     LoadingState.setStrictMode();
@@ -282,6 +287,16 @@ public final class StartupUtil {
     }
     while (!future.isDone());
     AWTAutoShutdown.getInstance().notifyThreadFree(busyThread);
+  }
+
+  private static boolean checkGraphics() {
+    if (GraphicsEnvironment.isHeadless()) {
+      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
+                  BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"),
+                  true);
+      return false;
+    }
+    return true;
   }
 
   /** Called via reflection from {@link com.intellij.ide.WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */

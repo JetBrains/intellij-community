@@ -79,10 +79,6 @@ public final class Main {
 
     setFlags(args);
 
-    if (!isHeadless() && !checkGraphics()) {
-      System.exit(NO_GRAPHICS);
-    }
-
     try {
       bootstrap(args, startupTimings);
     }
@@ -193,16 +189,6 @@ public final class Main {
 
     String firstArg = args[0];
     return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
-  }
-
-  private static boolean checkGraphics() {
-    if (GraphicsEnvironment.isHeadless()) {
-      showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
-                  BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"),
-                  true);
-      return false;
-    }
-    return true;
   }
 
   public static void showMessage(@Nls(capitalization = Nls.Capitalization.Title) String title, Throwable t) {
