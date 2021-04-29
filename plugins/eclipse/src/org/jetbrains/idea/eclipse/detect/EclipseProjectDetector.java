@@ -30,14 +30,19 @@ import java.util.function.Consumer;
 class EclipseProjectDetector extends ProjectDetector {
   private final static Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
 
-  protected void collectProjectPaths(List<String> projects) throws Exception {
+  protected void collectProjectPaths(List<String> projects) {
     String home = System.getProperty("user.home");
     Path path = Path.of(home, ".eclipse/org.eclipse.oomph.setup/setups/locations.setup");
     File file = path.toFile();
     if (file.exists()) {
-      List<String> workspaceUrls = parseOomphLocations(FileUtil.loadFile(file));
-      for (String url : workspaceUrls) {
-        scanForProjects(URI.create(url).getPath(), projects);
+      try {
+        List<String> workspaceUrls = parseOomphLocations(FileUtil.loadFile(file));
+        for (String url : workspaceUrls) {
+          scanForProjects(URI.create(url).getPath(), projects);
+        }
+      }
+      catch (Exception e) {
+        LOG.info(e);
       }
     }
     for (String appLocation : getStandardAppLocations()) {
@@ -92,13 +97,18 @@ class EclipseProjectDetector extends ProjectDetector {
     });
   }
 
-  static void collectProjects(List<String> projects, Path path) throws IOException {
+  static void collectProjects(List<String> projects, Path path) {
     File file = path.toFile();
     if (!file.exists()) return;
-    String prefs = FileUtil.loadFile(file);
-    String[] workspaces = getWorkspaces(prefs);
-    for (String workspace : workspaces) {
-      scanForProjects(workspace, projects);
+    try {
+      String prefs = FileUtil.loadFile(file);
+      String[] workspaces = getWorkspaces(prefs);
+      for (String workspace : workspaces) {
+        scanForProjects(workspace, projects);
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
     }
   }
 
