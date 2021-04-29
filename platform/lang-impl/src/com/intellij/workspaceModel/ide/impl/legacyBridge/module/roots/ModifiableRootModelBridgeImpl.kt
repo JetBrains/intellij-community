@@ -321,12 +321,12 @@ class ModifiableRootModelBridgeImpl(
     return newEntry
   }
 
-  internal fun removeDependencies(filter: (ModuleDependencyItem) -> Boolean) {
+  internal fun removeDependencies(filter: (Int, ModuleDependencyItem) -> Boolean) {
     val newDependencies = ArrayList<ModuleDependencyItem>()
     val newOrderEntries = ArrayList<OrderEntryBridge>()
     val oldDependencies = moduleEntity.dependencies
     for (i in oldDependencies.indices) {
-      if (!filter(oldDependencies[i])) {
+      if (!filter(i, oldDependencies[i])) {
         newDependencies.add(oldDependencies[i])
         val entryBridge = mutableOrderEntries[i]
         entryBridge.updateIndex(newOrderEntries.size)
@@ -372,11 +372,9 @@ class ModifiableRootModelBridgeImpl(
       moduleLibraryTable.removeLibrary(orderEntry.library as LibraryBridge)
     }
     else {
-      removeDependencies { it == item }
+      val itemIndex = entryImpl.currentIndex
+      removeDependencies { index, _ -> index == itemIndex }
     }
-
-    if (assertChangesApplied && mutableOrderEntries.any { it.item == item })
-      error("removeOrderEntry: removed order entry $item still exists after removing")
   }
 
   override fun rearrangeOrderEntries(newOrder: Array<out OrderEntry>) {
@@ -405,7 +403,7 @@ class ModifiableRootModelBridgeImpl(
     val currentSdk = sdk
     val jdkItem = currentSdk?.let { ModuleDependencyItem.SdkDependency(it.name, it.sdkType.name) }
     if (moduleEntity.dependencies != listOfNotNull(jdkItem, ModuleDependencyItem.ModuleSourceDependency)) {
-      removeDependencies { true }
+      removeDependencies { _, _ -> true }
       if (jdkItem != null) {
         appendDependency(jdkItem)
       }
@@ -591,7 +589,7 @@ class ModifiableRootModelBridgeImpl(
   override fun isDisposed(): Boolean = modelIsCommittedOrDisposed
 
   private fun setSdkItem(item: ModuleDependencyItem?) {
-    removeDependencies { it is ModuleDependencyItem.InheritedSdkDependency || it is ModuleDependencyItem.SdkDependency }
+    removeDependencies { _, it -> it is ModuleDependencyItem.InheritedSdkDependency || it is ModuleDependencyItem.SdkDependency }
     if (item != null) {
       insertDependency(item, 0)
     }

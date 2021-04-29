@@ -138,8 +138,8 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     }
 
     val libraryId = libraryEntity.persistentId()
-    modifiableModel.removeDependencies {
-      it is ModuleDependencyItem.Exportable.LibraryDependency && it.library == libraryId
+    modifiableModel.removeDependencies { _, item ->
+      item is ModuleDependencyItem.Exportable.LibraryDependency && item.library == libraryId
     }
 
     modifiableModel.diff.removeEntity(libraryEntity)
