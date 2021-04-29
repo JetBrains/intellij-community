@@ -162,7 +162,7 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
       val hoverData = getHoverData(event.point) ?: return false
       if (!hoverData.isOverOperationIcon) return false
       hoverData.hoverIcon.invokeAction(hoverData.node)
-      return false
+      return true
     }
   }
 
