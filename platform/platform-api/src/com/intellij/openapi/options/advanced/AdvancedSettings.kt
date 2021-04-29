@@ -2,6 +2,7 @@
 package com.intellij.openapi.options.advanced
 
 import com.intellij.DynamicBundle
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -75,7 +76,9 @@ class AdvancedSettingBean : PluginAware {
   }
 
   private fun findBundle(): ResourceBundle? {
-    val bundleName = bundle.nullize() ?: pluginDescriptor?.resourceBundleBaseName ?: return null
+    val bundleName = bundle.nullize() ?: pluginDescriptor?.resourceBundleBaseName
+                     ?: pluginDescriptor?.takeIf { it.pluginId.idString == "com.intellij" } ?.let { ApplicationBundle.BUNDLE }
+                     ?: return null
     val classLoader = pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader
     return DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
   }

@@ -42,8 +42,7 @@
     <advancedSetting id="localHistory.daysToKeep" default="5"
                      titleKey="option.localHistory.daysToKeep"
                      descriptionKey="option.localHistory.daysToKeep.description"
-                     groupKey="group.advanced.settings.ide"
-                     bundle="messages.ApplicationBundle"/>
+                     groupKey="group.advanced.settings.ide"/>
   </extensions>
 
   <applicationListeners>

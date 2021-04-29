@@ -1221,13 +1221,11 @@
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false"
                      titleKey="option.ide.show.fileType.icon.in.titleBar"
                      descriptionKey="option.ide.show.fileType.icon.in.titleBar.description"
-                     groupKey="group.advanced.settings.ide"
-                     bundle="messages.ApplicationBundle"/>
+                     groupKey="group.advanced.settings.ide"/>
 
     <advancedSetting id="ide.max.recent.projects" default="50"
                      titleKey="option.ide.max.recent.projects"
-                     groupKey="group.advanced.settings.ide"
-                     bundle="messages.ApplicationBundle"/>
+                     groupKey="group.advanced.settings.ide"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
