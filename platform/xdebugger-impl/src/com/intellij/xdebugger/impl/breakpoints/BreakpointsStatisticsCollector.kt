@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newBooleanMetric
 import com.intellij.internal.statistic.beans.newCounterMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
@@ -18,6 +20,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector.Companion.TYPE_FIELD
 
 class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroupId(): String = "debugger.breakpoints"
@@ -84,6 +87,14 @@ fun addType(type: XBreakpointType<*, *>, data: FeatureUsageData) {
   val info = getPluginInfo(type.javaClass)
   data.addPluginInfo(info)
   data.addData("type", if (info.isDevelopedByJetBrains()) type.getId() else "custom")
+}
+
+fun getType(type: XBreakpointType<*, *>) : List<EventPair<*>> {
+  val data = mutableListOf<EventPair<*>>()
+  val info = getPluginInfo(type.javaClass)
+  data.add(EventFields.PluginInfo.with(info))
+  data.add(TYPE_FIELD.with(if (info.isDevelopedByJetBrains()) type.id else "custom"))
+  return data
 }
 
 class BreakpointsUtilValidator : CustomValidationRule() {
