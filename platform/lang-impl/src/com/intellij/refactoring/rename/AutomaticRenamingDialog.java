@@ -399,11 +399,6 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       String newName = Messages.showInputDialog(myTable, RefactoringBundle.message("automatic.renaming.dialog.new.name.label"),
                                                 RefactoringBundle.message("automatic.renaming.dialog.rename.selected.title"), null, initial, new InputValidatorEx() {
         @Override
-        public boolean checkInput(String inputString) {
-          return getErrorText(inputString) == null;
-        }
-
-        @Override
         public boolean canClose(String inputString) {
           return checkInput(inputString);
         }

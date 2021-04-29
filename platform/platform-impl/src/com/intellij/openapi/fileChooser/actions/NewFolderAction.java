@@ -107,10 +107,5 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
       myErrorText = null;
       return !inputString.isEmpty();
     }
-
-    @Override
-    public boolean canClose(String inputString) {
-      return true;
-    }
   }
 }

@@ -15,4 +15,14 @@ public interface InputValidatorEx extends InputValidator {
   @NlsContexts.DetailedDescription
   @Nullable
   String getErrorText(@NonNls String inputString);
+
+  @Override
+  default boolean checkInput(String inputString) {
+    return getErrorText(inputString) == null;
+  }
+
+  @Override
+  default boolean canClose(String inputString) {
+    return true;
+  }
 }
