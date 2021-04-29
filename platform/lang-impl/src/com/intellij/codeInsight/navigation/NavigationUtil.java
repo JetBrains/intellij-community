@@ -343,8 +343,11 @@ public final class NavigationUtil {
 
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        final JPanel component = (JPanel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (!hasMnemonic.get()) return component;
+        final Component psiComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (!hasMnemonic.get() || !(psiComponent instanceof JPanel)) {
+          return psiComponent;
+        }
+        JPanel component = (JPanel)psiComponent;
 
         final JPanel panelWithMnemonic = new JPanel(new BorderLayout());
         final int mnemonic = getMnemonic(value, itemsMap);
