@@ -384,8 +384,9 @@ internal object OpenLessonActivities {
 
   @Throws(IOException::class)
   private fun getScratchFile(project: Project, lesson: Lesson, filename: String): VirtualFile {
+    val languageId = lesson.languageId ?: error("Scratch lesson ${lesson.id} should define language")
     var vf: VirtualFile? = null
-    val languageByID = findLanguageByID(lesson.languageId)
+    val languageByID = findLanguageByID(languageId)
     if (CourseManager.instance.mapModuleVirtualFile.containsKey(lesson.module)) {
       vf = CourseManager.instance.mapModuleVirtualFile[lesson.module]
       ScratchFileService.getInstance().scratchesMapping.setMapping(vf, languageByID)
@@ -425,7 +426,7 @@ internal object OpenLessonActivities {
       override fun compute(): VirtualFile {
         val learnProject = LearningUiManager.learnProject!!
 
-        val existedFile = lesson.existedFile ?: lesson.module.primaryLanguage.projectSandboxRelativePath
+        val existedFile = lesson.existedFile ?: lesson.module.primaryLanguage?.projectSandboxRelativePath
         val manager = ProjectRootManager.getInstance(learnProject)
         if (existedFile != null) {
           val root = manager.contentRoots[0]
