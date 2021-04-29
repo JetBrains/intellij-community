@@ -8,35 +8,18 @@ Only calls that target fields of the current class are reported by this inspecti
 <p>Example:</p>
 <pre>
   class Queue {
-    // ...
-    private final Lock lock = new ReentrantLock();
-    private final Condition isEmpty = lock.newCondition();
-    private int size = 0;
+    private final Condition isEmpty = ...;
 
     void add(Object elem) {
-      lock.lock();
-      try {
-          // ...
-          size++;
-          // isEmpty.signal();
-          // ...
-      } finally {
-          lock.unlock();
-      }
+      // ...
+      // isEmpty.signal();
+      // ...
     }
 
     void remove(Object elem) throws InterruptedException {
-      lock.lock();
-      try {
-          // ...
-          while (size <= 0) {
-            isEmpty.await(); // 'await()' doesn't contain corresponding 'signal()'/'signalAll()' call
-          }
-          size--;
-          // ...
-      } finally {
-          lock.unlock();
-      }
+      // ...
+      isEmpty.await(); // 'await()' doesn't contain corresponding 'signal()'/'signalAll()' call
+      // ...
     }
   }
 </pre>
