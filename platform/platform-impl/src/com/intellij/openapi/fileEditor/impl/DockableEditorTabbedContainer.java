@@ -94,12 +94,6 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   }
 
   @Override
-  public @NotNull RelativeRectangle getAcceptAreaFallback() {
-    JRootPane root = mySplitters.getRootPane();
-    return root != null ? new RelativeRectangle(root) : new RelativeRectangle(mySplitters);
-  }
-
-  @Override
   public @NotNull ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
     JBTabs tabs = getTabsAt(content, point);
     return tabs != null && !tabs.getPresentation().isHideTabs() ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
