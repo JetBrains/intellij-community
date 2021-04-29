@@ -36,7 +36,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-script-runtime" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-jvm" level="project" />
     <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" scope="RUNTIME" />

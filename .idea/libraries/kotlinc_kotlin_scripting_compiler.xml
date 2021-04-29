@@ -6,7 +6,7 @@
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-scripting-js" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-util-klib" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-script-runtime" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
       </exclude>
@@ -14,12 +14,14 @@
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler/1.4.32-release-380/kotlin-scripting-compiler-1.4.32-release-380.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.32-release-380/kotlin-scripting-common-1.4.32-release-380.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.4.32-release-380/kotlin-scripting-jvm-1.4.32-release-380.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.4.32-release-380/kotlin-scripting-compiler-impl-1.4.32-release-380.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler/1.4.32-release-380/kotlin-scripting-compiler-1.4.32-release-380-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.32-release-380/kotlin-scripting-common-1.4.32-release-380-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.4.32-release-380/kotlin-scripting-jvm-1.4.32-release-380-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.4.32-release-380/kotlin-scripting-compiler-impl-1.4.32-release-380-sources.jar!/" />
     </SOURCES>
   </library>
