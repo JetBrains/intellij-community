@@ -20,7 +20,6 @@ import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -286,29 +285,18 @@ public class ListPluginComponent extends JPanel {
   }
 
   private void createTag() {
-    String tag = null;
-
-    if (myPlugin.getProductCode() == null) {
-      if (myMarketplace && !LicensePanel.isEA2Product(myPlugin.getPluginId().getIdString())) {
-        List<String> tags = ((PluginNode)myPlugin).getTags();
-        if (tags != null && tags.contains(Tags.Paid.name())) {
-          tag = Tags.Paid.name(); //NON-NLS
-        }
-      }
+    List<String> tags = PluginManagerConfigurable.getTags(myPlugin);
+    if (!tags.isEmpty()) {
+      TagComponent tagComponent = createTagComponent(tags.get(0));
+      myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(tagComponent));
     }
-    else {
-      tag = ContainerUtil.getFirstItem(PluginManagerConfigurable.getTags(myPlugin));
-    }
+  }
 
-    if (tag == null) {
-      return;
-    }
-
+  private @NotNull TagComponent createTagComponent(@Nls @NotNull String tag) {
     TagComponent component = new TagComponent(tag);
     //noinspection unchecked
     component.setListener(mySearchListener, component);
-
-    myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(component));
+    return component;
   }
 
   private void setTagTooltip(@Nullable @Nls String text) {
