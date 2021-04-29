@@ -88,17 +88,17 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
                                               row: Int,
                                               hasFocus: Boolean): Component {
       val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-      floatingIcon = prepareIcon(tree as HoverChangesTree, value as ChangesBrowserNode<*>, row, selected)
+      floatingIcon = prepareIcon(tree as HoverChangesTree, value as ChangesBrowserNode<*>, row, selected, hasFocus)
       return rendererComponent
     }
 
-    fun prepareIcon(tree: HoverChangesTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): FloatingIcon? {
-      val hoverData = tree.hoverData
-      if ((hoverData == null && !selected) || tree.expandableItemsHandler.expandedItems.contains(row)) {
-        return null
-      }
+    fun prepareIcon(tree: HoverChangesTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean, hasFocus: Boolean): FloatingIcon? {
+      if (tree.expandableItemsHandler.expandedItems.contains(row)) return null
 
+      val hoverData = tree.hoverData
       val hovered = hoverData?.node == node
+      if (!hovered && !(selected && hasFocus)) return null
+
       val baseIcon = when {
         hovered -> hoverData!!.hoverIcon.icon
         selected -> tree.getHoverIcon(node)?.icon ?: return null
