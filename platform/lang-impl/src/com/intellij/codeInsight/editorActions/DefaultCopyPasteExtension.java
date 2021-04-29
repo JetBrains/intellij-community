@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.editorActions;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,9 +54,7 @@ public class DefaultCopyPasteExtension implements CopyPasteExtension {
 
   @Override
   public void format(@NotNull Project project, @NotNull Editor editor, int reformatOnPaste, int startOffset, int endOffset, int anchorColumn) {
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    documentManager.commitDocument(editor.getDocument());
-    documentManager.doPostponedOperationsAndUnblockDocument(editor.getDocument());
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     switch (reformatOnPaste) {
       case CodeInsightSettings.INDENT_BLOCK:
         indentBlock(project, editor, startOffset, endOffset, anchorColumn);
@@ -65,37 +63,77 @@ public class DefaultCopyPasteExtension implements CopyPasteExtension {
         indentEachLine(project, editor, startOffset, endOffset);
         break;
       case CodeInsightSettings.REFORMAT_BLOCK:
+        final RangeMarker bounds = editor.getDocument().createRangeMarker(startOffset, endOffset);
         indentEachLine(project, editor, startOffset, endOffset); // this is needed for example when inserting a comment before method
-        reformatBlock(project, editor, startOffset, endOffset);
+        reformatBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
+        bounds.dispose();
         break;
     }
   }
 
-  @VisibleForTesting
-  public static void indentBlock(Project project, Editor editor, final int startOffset, final int endOffset, int originalCaretCol) {
+  protected void adjustLineIndent(@NotNull Project project, @NotNull Editor editor, int startOffset, int endOffset) {
+    Document document = editor.getDocument();
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitDocument(document);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) return;
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    try {
+      codeStyleManager.adjustLineIndent(file, new TextRange(startOffset, endOffset));
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+  protected void adjustLineIndent(@NotNull Project project, @NotNull Editor editor, int offset) {
+    Document document = editor.getDocument();
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitDocument(document);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) return;
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    try {
+      codeStyleManager.adjustLineIndent(file, offset);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+  protected void reformatBlock(@NotNull Project project, @NotNull Editor editor, int startOffset, int endOffset) {
+    Document document = editor.getDocument();
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitDocument(document);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) return;
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    try {
+      codeStyleManager.reformatRange(file, startOffset, endOffset, true);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+  private void indentBlock(@NotNull Project project, @NotNull Editor editor, int startOffset, int endOffset, int originalCaretCol) {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
-    documentManager.commitDocument(document);
     PsiFile file = documentManager.getPsiFile(document);
     if (file == null) {
       return;
     }
 
     if (LanguageFormatting.INSTANCE.forContext(file) != null) {
-      indentBlockWithFormatter(project, document, startOffset, endOffset, file);
+      indentBlockWithFormatter(project, editor, startOffset, endOffset);
     }
     else {
       indentPlainTextBlock(document, startOffset, endOffset, originalCaretCol);
     }
   }
 
-  static void indentEachLine(Project project, Editor editor, int startOffset, int endOffset) {
-    Document document = editor.getDocument();
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file == null) return;
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    final CharSequence text = document.getCharsSequence();
+  private void indentEachLine(@NotNull Project project, @NotNull Editor editor, int startOffset, int endOffset) {
+    final CharSequence text = editor.getDocument().getCharsSequence();
     if (startOffset > 0 && endOffset > startOffset + 1 && text.charAt(endOffset - 1) == '\n' && text.charAt(startOffset - 1) == '\n') {
       // There is a possible situation that pasted text ends by a line feed. We don't want to proceed it when a text is
       // pasted at the first line column.
@@ -120,28 +158,10 @@ public class DefaultCopyPasteExtension implements CopyPasteExtension {
       // We don't want line 'int i = 1;' to be indented here.
       endOffset--;
     }
-    try {
-      codeStyleManager.adjustLineIndent(file, new TextRange(startOffset, endOffset));
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    adjustLineIndent(project, editor, startOffset, endOffset);
   }
 
-  static void reformatBlock(final Project project, final Editor editor, final int startOffset, final int endOffset) {
-    Document document = editor.getDocument();
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file == null) return;
-    try {
-      CodeStyleManager.getInstance(project).reformatRange(file, startOffset, endOffset, true);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-  }
-
-  public static void indentPlainTextBlock(final @NotNull Document document, final int startOffset, final int endOffset, final int indentLevel) {
+  private static void indentPlainTextBlock(final @NotNull Document document, final int startOffset, final int endOffset, final int indentLevel) {
     CharSequence chars = document.getCharsSequence();
     int spaceEnd = CharArrayUtil.shiftForward(chars, startOffset, " \t");
     final int startLine = document.getLineNumber(startOffset);
@@ -156,7 +176,7 @@ public class DefaultCopyPasteExtension implements CopyPasteExtension {
     indentLines(document, startLine + 1, endLine - 1, indentString);
   }
 
-  private static void indentBlockWithFormatter(Project project, final Document document, int startOffset, int endOffset, PsiFile file) {
+  private void indentBlockWithFormatter(@NotNull Project project,  @NotNull Editor editor, int startOffset, int endOffset) {
 
     // Algorithm: the main idea is to process the first line of the pasted block, adjust its indent if necessary, calculate indent
     // adjustment string and apply to each line of the pasted block starting from the second one.
@@ -189,6 +209,7 @@ public class DefaultCopyPasteExtension implements CopyPasteExtension {
     //         pasted line 2]
     //       We adjust the first line via formatter then and apply first line's indent to all subsequent pasted lines.
 
+    final Document document = editor.getDocument();
     final CharSequence chars = document.getCharsSequence();
     final int firstLine = document.getLineNumber(startOffset);
     final int firstLineStart = document.getLineStartOffset(firstLine);
@@ -252,13 +273,6 @@ public class DefaultCopyPasteExtension implements CopyPasteExtension {
       return;
     }
 
-    // Sync document and PSI for correct formatting processing.
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-    if (file == null) {
-      return;
-    }
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-
     final int j = CharArrayUtil.shiftForward(chars, startOffset, " \t\n");
     if (j >= endOffset) {
       // Pasted text contains white space/line feed symbols only, do nothing.
@@ -267,7 +281,7 @@ public class DefaultCopyPasteExtension implements CopyPasteExtension {
 
     final int anchorLine = document.getLineNumber(j);
     final int anchorLineStart = document.getLineStartOffset(anchorLine);
-    codeStyleManager.adjustLineIndent(file, j);
+    adjustLineIndent(project, editor, j);
 
     // Handle situation when pasted block starts with non-white space symbols.
     if (anchorLine == firstLine && j == startOffset) {

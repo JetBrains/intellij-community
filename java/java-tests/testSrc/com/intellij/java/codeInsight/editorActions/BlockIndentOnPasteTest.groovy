@@ -16,14 +16,13 @@
 package com.intellij.java.codeInsight.editorActions
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.editorActions.DefaultCopyPasteExtension
+import com.intellij.codeInsight.editorActions.CopyPasteExtension
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
-
 /**
  * @author Denis Zhdanov
  */
@@ -765,7 +764,9 @@ class Test {
       def column = myFixture.editor.caretModel.logicalPosition.column
       WriteCommandAction.runWriteCommandAction project, {
         myFixture.editor.document.insertString(offset, toPaste)
-        DefaultCopyPasteExtension.indentBlock(project, myFixture.editor, offset, offset + toPaste.length(), column)
+        CopyPasteExtension
+          .findForContext(project, myFixture.editor)
+          .format(project, myFixture.editor, CodeInsightSettings.INDENT_BLOCK, offset, offset + toPaste.length(), column)
       }
     }
     finally {

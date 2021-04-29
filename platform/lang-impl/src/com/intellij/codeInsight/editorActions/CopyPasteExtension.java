@@ -7,9 +7,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Experimental
 public interface CopyPasteExtension {
   ExtensionPointName<CopyPasteExtension> EP_NAME = ExtensionPointName.create("com.intellij.copyPasteExtension");
 
@@ -23,9 +25,10 @@ public interface CopyPasteExtension {
   }
 
   /**
-   * Returns `true` if optimizes copy/paste procedure in an editor for the language.
+   * Returns `true` if optimizes copy/paste procedure in the editor.
    *
-   * @param language the language in editor at current position
+   * @param project       current project
+   * @param editor        target editor
    * @return
    */
   boolean isSuitableContext(@NotNull Project project, @NotNull Editor editor);
