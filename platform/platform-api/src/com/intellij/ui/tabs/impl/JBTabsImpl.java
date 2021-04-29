@@ -36,10 +36,7 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutCallback;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
-import com.intellij.util.Alarm;
-import com.intellij.util.Function;
-import com.intellij.util.MathUtil;
-import com.intellij.util.Producer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -2287,7 +2284,7 @@ public class JBTabsImpl extends JComponent
 
   private void processRemove(final TabInfo info, boolean forcedNow) {
     TabLabel tabLabel = myInfo2Label.get(info);
-    remove(tabLabel);
+    ObjectUtils.consumeIfNotNull(tabLabel, label -> remove(label));
     remove(myInfo2Toolbar.get(info));
 
     JComponent tabComponent = info.getComponent();
