@@ -80,12 +80,10 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         }
       }
 
-      override fun actionPerformed(e: AnActionEvent?) {
-        if (e != null) {
-          super.actionPerformed(
-            AnActionEvent(e.inputEvent, e.dataContext, ActionPlaces.NEW_TOOLBAR, templatePresentation,
-                          ActionManager.getInstance(), 0))
-        }
+      override fun actionPerformed(e: AnActionEvent) {
+        super.actionPerformed(AnActionEvent(
+          e.inputEvent, e.dataContext, ActionPlaces.NEW_TOOLBAR, templatePresentation,
+          ActionManager.getInstance(), 0))
       }
 
       override fun paint(g: Graphics?) {
