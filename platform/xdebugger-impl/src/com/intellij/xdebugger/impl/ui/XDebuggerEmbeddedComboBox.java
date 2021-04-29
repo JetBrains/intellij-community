@@ -65,21 +65,21 @@ class BorderlessCombBoxUI extends EmbeddedComboBoxUI {
 
   @Override
   protected void paintArrow(Graphics2D g2, JButton btn) {
-    g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(comboBox.isEnabled()));
 
     var r = new Rectangle(btn.getSize());
     JBInsets.removeFrom(r, JBUI.insets(1, 0, 1, 1));
 
-    var tW = JBUIScale.scale(6f);
-    var tH = JBUIScale.scale(3.75f);
+    var tW = JBUIScale.scale(8f);
+    var tH = JBUIScale.scale(tW / 2);
 
-    var xU = (r.getWidth() - tW) / 2 - JBUIScale.scale(1);
-    var yU = (r.getHeight() - tH) / 2 + JBUIScale.scale(1);
+    var xU = (r.getWidth() - tW) / 2;
+    var yU = (r.getHeight() - tH) / 2;
 
     var leftLine = new Line2D.Double(xU, yU, xU + tW / 2f, yU + tH);
     var rightLine = new Line2D.Double(xU + tW / 2f, yU + tH, xU + tW, yU);
 
-    g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
+    g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(comboBox.isEnabled()));
+    g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
     g2.draw(leftLine);
     g2.draw(rightLine);
   }
