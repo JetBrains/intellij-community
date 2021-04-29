@@ -5,21 +5,22 @@ non-<code>final</code> variables. Such access may result in <code>equals()</code
 returning different results at different points in an object's lifecycle, which may in turn cause problems when
 using the standard Collections classes.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   public class Person {
-    private String lastName; // non-final field
+    private String lastName;
 
     @Override
     public boolean equals(Object obj) {
       ...
       Person other = (Person) obj;
       if (lastName == null) {
-        if (!lastName.equals(other.lastName)) { // warning: non-final field 'lastName' accessed in equals()
+        if (!lastName.equals(other.lastName)) {
         return false;
       ...
       }
     }
   }
+  </code>
 </pre>
 <!-- tooltip end -->
 <p>

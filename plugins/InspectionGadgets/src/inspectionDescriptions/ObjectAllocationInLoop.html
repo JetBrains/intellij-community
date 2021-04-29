@@ -13,17 +13,20 @@ and performance issues.
   <li>Lambdas that capture variables or <code>this</code> reference</li>
 </ul>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   // Explicit allocation
   for (Status status : Status.values()) {
     declarationsMap.put(status, new ArrayList&lt;&gt;());
   }
 
   // Lambda captures variable
+  String message = "Engine running.";
   for (Engine engine : engines) {
-    if (!isRunning(engine)) {
-      logger.warn(() -&gt; String.format("Engine running."));
-    }
+      if (!isRunning(engine)) {
+          logger.warn(() -> {
+              return String.format(message);
+          });
+      }
   }
 
   // Instance-bound method reference
@@ -32,7 +35,7 @@ and performance issues.
     descriptor.ifPresent(dynamicTestExecutor::execute);
   }
 
-
+</code>
 </pre>
 <!-- tooltip end -->
 </body>

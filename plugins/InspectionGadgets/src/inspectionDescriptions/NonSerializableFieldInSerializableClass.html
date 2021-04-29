@@ -11,13 +11,14 @@ method. For purposes of this inspection, fields with
 <code>Serializable</code>, unless the types
 they are declared to contain are non-<code>Serializable</code>.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class NonSerializableClass {}
 
   public class SerializableClass implements Serializable {
       NonSerializableClass clazz; // warning: Non-serializable field 'clazz' in a Serializable class
       static NonSerializableClass staticClazz; // no warnings
   }
+  </code>
 </pre>
 <!-- tooltip end -->
 <p>

@@ -3,11 +3,12 @@
 Reports checked exceptions expected by a TestNG test method,
 which are never thrown inside the method body.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   @Test(expectedExceptions = Exception.class) // warning: Expected 'Exception' never thrown
   public void testEngineIsRunning() {
     assertTrue(engine.isRunning());
   }
+  </code>
 </pre>
 <!-- tooltip end -->
 </body>

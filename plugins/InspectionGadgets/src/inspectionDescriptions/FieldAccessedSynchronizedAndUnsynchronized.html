@@ -1,25 +1,23 @@
 <html>
 <body>
 Reports non-final fields which are accessed in both <code>synchronized</code> and
-unsynchronized contexts. <code>volatile</code> fields and accesses in constructors and initializers are ignored by this
+non-<code>synchronized</code> contexts. <code>volatile</code> fields and accesses in constructors and initializers are ignored by this
 inspection. Such "partially synchronized" access is often the result of a coding oversight, and may
 result in unexpectedly inconsistent data structures.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   public class Program {
     Console console; // warning: Field 'console' is accessed in both synchronized and unsynchronized contexts
 
-    public void execute() {
-      synchronized(console) {
-          console.print("running");
-      }
+    public synchronized void execute() {
+      console.print("running");
     }
 
     public void check() {
       console.check();
     }
   }
-
+</code>
 </pre>
 <!-- tooltip end -->
 <p>

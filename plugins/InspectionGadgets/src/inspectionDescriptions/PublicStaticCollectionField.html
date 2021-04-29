@@ -4,8 +4,9 @@ Reports modifiable <code>public</code> <code>static</code> Collection fields. Of
 to store collections of constant values, these fields nonetheless represent a security
 hazard, as their contents may be modified, even if the field is declared as <code>final</code>.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   public static final List&lt;String&gt; EVENTS = new ArrayList&lt;&gt;();
+  </code>
 </pre>
 <!-- tooltip end -->
 <p>
