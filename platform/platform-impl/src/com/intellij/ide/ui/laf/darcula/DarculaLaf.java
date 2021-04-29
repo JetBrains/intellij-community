@@ -273,7 +273,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected void loadDefaults(UIDefaults defaults) {
-    if (SystemProperties.getBooleanProperty("ide.load.laf.as.json", false)) {
+    if (SystemProperties.getBooleanProperty("ide.load.laf.as.json", true)) {
       loadDefaultsFromJson(defaults);
     } else{
       loadDefaultsFromProperties(defaults);
@@ -358,13 +358,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   protected Object parseValue(String key, @NotNull String value) {
     if ("system".equals(value)) {
       return SYSTEM;
-    }
-
-    if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = IconLoader.findIcon(value, getClass(), true, false);
-      if (icon != null) {
-        return icon;
-      }
     }
 
     return UITheme.parseValue(key, value, getClass().getClassLoader());
