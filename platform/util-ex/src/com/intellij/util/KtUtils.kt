@@ -6,3 +6,10 @@ package com.intellij.util
 inline fun <reified T> Any?.castSafelyTo(): T? = this as? T
 
 inline fun <T> runIf(condition: Boolean, block: () -> T): T? = if (condition) block() else null
+
+inline fun <T> T?.alsoIfNull(block: () -> Unit): T? {
+  if (this == null) {
+    block()
+  }
+  return this
+}
