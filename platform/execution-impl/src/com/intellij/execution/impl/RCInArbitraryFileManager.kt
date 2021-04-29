@@ -34,11 +34,12 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     val addedRunConfigs: Collection<RunnerAndConfigurationSettingsImpl> = if (added.isEmpty()) emptyList() else ArrayList(added)
   }
 
-  private var saving = false
   private val filePathToRunConfigs = mutableMapOf<String, MutableList<RunnerAndConfigurationSettingsImpl>>()
 
   // Remember digest in order not to overwrite file with an equivalent content (e.g. different line endings or smth non-meaningful)
   private val filePathToDigests = mutableMapOf<String, MutableList<ByteArray>>()
+
+  private var savingFilePath: String? = null
 
   /**
    *  This function should be called with RunManagerImpl.lock.write
@@ -99,7 +100,9 @@ internal class RCInArbitraryFileManager(private val project: Project) {
    * This function should be called with RunManagerImpl.lock.write
    */
   internal fun loadChangedRunConfigsFromFile(runManager: RunManagerImpl, filePath: String): DeletedAndAddedRunConfigs {
-    if (saving) return DeletedAndAddedRunConfigs(emptyList(), emptyList())
+    if (filePath == savingFilePath) {
+      return DeletedAndAddedRunConfigs(emptyList(), emptyList())
+    }
 
     // shadow mutable map to ensure unchanged model
     val filePathToRunConfigs: Map<String, List<RunnerAndConfigurationSettingsImpl>> = filePathToRunConfigs
@@ -185,8 +188,10 @@ internal class RCInArbitraryFileManager(private val project: Project) {
       val runConfigs = entry.value
       val file = LocalFileSystem.getInstance().findFileByPath(filePath)
       if (file == null) {
-        deletedRunConfigs.addAll(runConfigs)
-        LOG.warn("It's unexpected that the file doesn't exist at this point ($filePath)")
+        if (filePath != savingFilePath) {
+          deletedRunConfigs.addAll(runConfigs)
+          LOG.warn("It's unexpected that the file doesn't exist at this point ($filePath)")
+        }
       }
       else {
         if (!fileIndex.isInContent(file)) {
@@ -218,7 +223,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
       val filePath = entry.key
       val runConfigs = entry.value
 
-      saving = true
+      savingFilePath = filePath
       try {
         val rootElement = Element("component").setAttribute("name", "ProjectRunConfigurationManager")
         val newDigests = mutableListOf<ByteArray>()
@@ -238,7 +243,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
         errors.add(RuntimeException("Cannot save run configuration in $filePath", e))
       }
       finally {
-        saving = false
+        savingFilePath = null
       }
     }
 
