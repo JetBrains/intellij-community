@@ -1548,5 +1548,7 @@
             internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+    <action id="ClickLink" class="com.intellij.codeInsight.navigation.actions.ClickLinkAction"
+            use-shortcut-of="GotoDeclaration" />
   </actions>
 </idea-plugin>
