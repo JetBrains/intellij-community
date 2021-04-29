@@ -6,6 +6,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileEditor
@@ -46,6 +47,8 @@ open class DiffRequestProcessorEditor(
 
     processor.component.registerKeyboardAction({ Disposer.dispose(this) },
                                                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_IN_FOCUSED_WINDOW)
+
+    file.getUserData(DiffVirtualFile.ESCAPE_HANDLER)?.registerCustomShortcutSet(CommonShortcuts.ESCAPE, component, this)
   }
 
   override fun getComponent(): JComponent = panel

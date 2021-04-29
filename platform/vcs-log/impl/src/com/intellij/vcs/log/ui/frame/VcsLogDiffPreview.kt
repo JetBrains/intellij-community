@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.EditorTabPreview.Companion.registerEscapeHandler
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
@@ -127,10 +128,8 @@ abstract class EditorDiffPreview(private val project: Project,
       toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(getOwnerComponent(), true) }, false)
     }
 
-    val editors = EditorTabPreview.openPreview(project, previewFile, focusEditor)
-    for (editor in editors) {
-      EditorTabPreview.registerEscapeHandler(editor, escapeHandler)
-    }
+    registerEscapeHandler(previewFile, escapeHandler)
+    EditorTabPreview.openPreview(project, previewFile, focusEditor)
   }
 
   fun closePreview() {
