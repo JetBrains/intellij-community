@@ -1222,8 +1222,7 @@
                      groupKey="group.advanced.settings.ide"
                      bundle="messages.ApplicationBundle"/>
 
-    <advancedSetting id="ide.max.recent.projects"
-                     default="50"
+    <advancedSetting id="ide.max.recent.projects" default="50"
                      titleKey="option.ide.max.recent.projects"
                      groupKey="group.advanced.settings.ide"
                      bundle="messages.ApplicationBundle"/>

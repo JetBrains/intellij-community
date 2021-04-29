@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
 import java.util.*
 
-enum class AdvancedSettingType { Int, Bool }
+enum class AdvancedSettingType { Int, Bool, String }
 
 class AdvancedSettingBean : PluginAware {
   private var pluginDescriptor: PluginDescriptor? = null
@@ -47,13 +47,14 @@ class AdvancedSettingBean : PluginAware {
   fun type(): AdvancedSettingType {
     return when {
       defaultValue.toIntOrNull() != null -> AdvancedSettingType.Int
-      else -> AdvancedSettingType.Bool
+      defaultValue == "true" || defaultValue == "false" -> AdvancedSettingType.Bool
+      else -> AdvancedSettingType.String
     }
   }
 
   @Nls
   fun title(): String {
-    return findBundle()?.getString(titleKey) ?: "!$id$"
+    return findBundle()?.getString(titleKey) ?: "!$id!"
   }
 
   @Nls
@@ -105,6 +106,9 @@ class AdvancedSettings : PersistentStateComponent<AdvancedSettings.AdvancedSetti
     @JvmStatic
     fun getInt(id: String): Int = getSetting(id).toInt()
 
+    @JvmStatic
+    fun getString(id: String): String = getSetting(id)
+
     private fun getSetting(id: String): String {
       val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException(
         "Can't find advanced setting $id")
@@ -121,7 +125,12 @@ class AdvancedSettings : PersistentStateComponent<AdvancedSettings.AdvancedSetti
       setSetting(id, value.toString(), AdvancedSettingType.Int)
     }
 
-    private fun setSetting(id: String, value: String, expectType: AdvancedSettingType) {
+    @JvmStatic
+    fun setString(id: String, value: String) {
+      setSetting(id, value, AdvancedSettingType.String)
+    }
+
+    fun setSetting(id: String, value: String, expectType: AdvancedSettingType) {
       val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException("Can't find advanced setting $id")
       if (option.type() != expectType) {
         throw IllegalArgumentException("Setting type ${option.type()} does not match parameter type $expectType")

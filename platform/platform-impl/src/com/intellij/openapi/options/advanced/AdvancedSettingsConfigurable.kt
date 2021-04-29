@@ -68,6 +68,15 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
           columns = 10
         )
       }
+
+      AdvancedSettingType.String -> {
+        label(extension.title() + ":")
+        textField(
+          { AdvancedSettings.getString(extension.id) },
+          { AdvancedSettings.setString(extension.id, it) },
+          columns = 20
+        )
+      }
     }
   }
 
