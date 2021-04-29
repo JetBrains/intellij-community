@@ -118,4 +118,8 @@ public abstract class ProjectManager {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract @Nullable Project createProject(@Nullable String name, @NotNull String path);
+
+  public @Nullable Project findOpenProjectByHash(@Nullable String locationHash) {
+    return null;
+  }
 }
