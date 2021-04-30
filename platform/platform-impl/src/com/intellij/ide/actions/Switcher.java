@@ -159,7 +159,10 @@ public final class Switcher extends BaseSwitcherAction {
 
       SwitcherListRenderer renderer = new SwitcherListRenderer(this);
       List<SwitcherToolWindow> windows = renderer.getToolWindows();
-      updateMnemonics(windows);
+      boolean showMnemonics = mySpeedSearch == null || is("ide.recent.files.tool.window.mnemonics");
+      if (showMnemonics || is("ide.recent.files.tool.window.sort.by.mnemonics")) {
+        updateMnemonics(windows);
+      }
       // register custom actions as soon as possible to block overridden actions
       registerAction(this::navigate, "ENTER");
       registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
@@ -215,7 +218,7 @@ public final class Switcher extends BaseSwitcherAction {
       if (pinned && !windows.isEmpty()) {
         twModel.add(new SwitcherRecentLocations(this));
       }
-      if (mySpeedSearch != null && !is("ide.recent.files.tool.window.mnemonics")) {
+      if (!showMnemonics) {
         windows.forEach(window -> window.setMnemonic(null));
       }
 
