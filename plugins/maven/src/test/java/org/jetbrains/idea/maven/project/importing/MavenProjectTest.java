@@ -686,7 +686,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                   "  </profile>" +
                   "</profiles>");
 
-    assertOrderedElementsAreEqual(getMavenProject().getProfilesIds(), "one", "default");
+    assertUnorderedElementsAreEqual(getMavenProject().getProfilesIds(), "one", "default");
   }
 
   public void testCollectingRepositories() {
