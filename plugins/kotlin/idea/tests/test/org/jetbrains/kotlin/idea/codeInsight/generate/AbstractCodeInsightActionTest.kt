@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.codeInsight.generate
 import com.intellij.codeInsight.actions.CodeInsightAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.TestActionEvent
@@ -41,9 +42,8 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
 
     protected open fun testAction(action: AnAction, forced: Boolean): Presentation {
         val e = TestActionEvent(action)
-        action.beforeActionPerformedUpdate(e)
-        if (forced || (e.presentation.isEnabled && e.presentation.isVisible)) {
-            action.actionPerformed(e)
+        if (ActionUtil.lastUpdateAndCheckDumb(action, e, true) || forced) {
+            ActionUtil.performActionDumbAwareWithCallbacks(action,e);
         }
         return e.presentation
     }

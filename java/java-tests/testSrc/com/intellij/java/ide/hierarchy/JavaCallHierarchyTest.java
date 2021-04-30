@@ -21,6 +21,7 @@ import com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction;
 import com.intellij.ide.hierarchy.call.CalleeMethodsTreeStructure;
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -111,7 +112,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     configureByText(XmlFileType.INSTANCE, "<foo>java.lang.Str<caret>ing</foo>");
     BrowseTypeHierarchyAction action = new BrowseTypeHierarchyAction();
     TestActionEvent e = new TestActionEvent(action);
-    action.beforeActionPerformedUpdate(e);
+    assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, e, true));
     assertTrue(e.getPresentation().isEnabled() && e.getPresentation().isVisible());
   }
 

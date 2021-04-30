@@ -84,11 +84,10 @@ abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScri
         val managerEx = ActionManagerEx.getInstanceEx()
         val action = managerEx.getAction(actionId)
         val event = AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, Presentation(), managerEx, 0)
-        action.beforeActionPerformedUpdate(event)
-        if (!event.presentation.isEnabled) {
+        if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
             return false
         }
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext)
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
         return true
     }
 
