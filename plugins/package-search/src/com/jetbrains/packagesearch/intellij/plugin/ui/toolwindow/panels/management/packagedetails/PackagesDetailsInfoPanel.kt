@@ -1,9 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Author
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Version
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
@@ -144,7 +142,7 @@ internal class PackagesDetailsInfoPanel : JPanel() {
     }
 
     private fun displayRepositoriesIfAny(
-        selectedVersionInfo: StandardV2Version?,
+        selectedVersionInfo: ApiStandardPackage.ApiStandardVersion?,
         allKnownRepositories: KnownRepositories.All
     ) {
         if (selectedVersionInfo == null) {
@@ -166,7 +164,7 @@ internal class PackagesDetailsInfoPanel : JPanel() {
         repositoriesLabel.isVisible = true
     }
 
-    private fun displayAuthorsIfAny(authors: List<StandardV2Author>?) {
+    private fun displayAuthorsIfAny(authors: List<ApiStandardPackage.ApiAuthor>?) {
         if (authors.isNullOrEmpty()) {
             authorsLabel.isVisible = false
             return
@@ -250,11 +248,11 @@ internal class PackagesDetailsInfoPanel : JPanel() {
         readmeLinkLabel.setDisplayText(readmeLink.displayNameCapitalized)
     }
 
-    private fun displayKotlinPlatformsIfAny(packageDetails: StandardV2Package?) {
+    private fun displayKotlinPlatformsIfAny(packageDetails: ApiStandardPackage?) {
         val isKotlinMultiplatform = packageDetails?.mpp != null
 
         if (isKotlinMultiplatform && packageDetails?.platforms?.isNotEmpty() == true) {
-            kotlinPlatformsPanel.display(packageDetails.platforms)
+            kotlinPlatformsPanel.display(packageDetails.platforms ?: emptyList())
             kotlinPlatformsPanel.isVisible = true
         } else {
             kotlinPlatformsPanel.clear()

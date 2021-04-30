@@ -47,7 +47,7 @@ internal class VersionColumn(
                     item.packageModel.usageInfo
                         .filter { usageInfo -> modules.any { usageInfo.projectModule == it.projectModule } }
                         .map { it.version }
-                        .max()
+                        .maxOrNull()
                         ?: throw IllegalStateException(
                             "Unable to find usage for supposedly installed package ${item.packageModel.identifier} " +
                                 "(modules: ${modules.modules.joinToString { it.projectModule.name }})"

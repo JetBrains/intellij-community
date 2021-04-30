@@ -19,7 +19,7 @@ internal fun requestJsonObject(
 }
 
 @Suppress("TooGenericExceptionCaught") // Putting any potential issues in an Either.Left
-private fun requestString(
+internal fun requestString(
     url: String,
     acceptContentType: String,
     timeoutInSeconds: Int = 10,

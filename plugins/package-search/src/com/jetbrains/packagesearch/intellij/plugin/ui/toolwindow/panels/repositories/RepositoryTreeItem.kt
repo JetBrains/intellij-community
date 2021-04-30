@@ -20,9 +20,9 @@ internal sealed class RepositoryTreeItem {
         override fun toSimpleIdentifier(): String = "GROUP:${repositoryModel.id}:${repositoryModel.name}:${repositoryModel.url}".toLowerCase()
 
         private fun getTextForCopy() = buildString {
-            repositoryModel.id?.let { appendln("  ${PackageSearchBundle.message("packagesearch.repository.copyableInfo.id", it)}") }
-            repositoryModel.name?.let { appendln("  ${PackageSearchBundle.message("packagesearch.repository.copyableInfo.name", it)}") }
-            repositoryModel.url?.let { appendln("  ${PackageSearchBundle.message("packagesearch.repository.copyableInfo.url", it)}") }
+            repositoryModel.id?.let { appendLine("  ${PackageSearchBundle.message("packagesearch.repository.copyableInfo.id", it)}") }
+            repositoryModel.name?.let { appendLine("  ${PackageSearchBundle.message("packagesearch.repository.copyableInfo.name", it)}") }
+            repositoryModel.url?.let { appendLine("  ${PackageSearchBundle.message("packagesearch.repository.copyableInfo.url", it)}") }
         }
 
         override fun getData(dataId: String) = when {

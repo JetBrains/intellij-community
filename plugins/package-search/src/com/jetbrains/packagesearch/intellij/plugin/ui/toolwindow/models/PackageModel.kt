@@ -1,7 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import org.apache.commons.lang3.StringUtils
 import java.util.Locale
@@ -9,7 +9,7 @@ import java.util.Locale
 internal sealed class PackageModel(
     val groupId: String,
     val artifactId: String,
-    val remoteInfo: StandardV2Package?
+    val remoteInfo: ApiStandardPackage?
 ) : Comparable<PackageModel> {
 
     val identifier = "$groupId:$artifactId".toLowerCase(Locale.ROOT)
@@ -49,7 +49,7 @@ internal sealed class PackageModel(
     class Installed(
         groupId: String,
         artifactId: String,
-        remoteInfo: StandardV2Package?,
+        remoteInfo: ApiStandardPackage?,
         val usageInfo: List<DependencyUsageInfo>
     ) : PackageModel(groupId, artifactId, remoteInfo) {
 
@@ -101,7 +101,7 @@ internal sealed class PackageModel(
     class SearchResult(
         groupId: String,
         artifactId: String,
-        remoteInfo: StandardV2Package
+        remoteInfo: ApiStandardPackage
     ) : PackageModel(groupId, artifactId, remoteInfo) {
 
         override fun additionalAvailableVersions(): List<PackageVersion> = emptyList()
@@ -115,7 +115,7 @@ internal sealed class PackageModel(
 
     companion object {
 
-        fun fromSearchResult(remoteInfo: StandardV2Package): SearchResult? {
+        fun fromSearchResult(remoteInfo: ApiStandardPackage): SearchResult? {
             if (remoteInfo.versions.isEmpty()) return null
 
             return SearchResult(
@@ -128,7 +128,7 @@ internal sealed class PackageModel(
         fun fromInstalledDependency(
             unifiedDependency: UnifiedDependency,
             usageInfo: List<DependencyUsageInfo>,
-            remoteInfo: StandardV2Package?
+            remoteInfo: ApiStandardPackage?
         ): Installed? {
             val groupId = unifiedDependency.coordinates.groupId ?: return null
             val artifactId = unifiedDependency.coordinates.artifactId ?: return null

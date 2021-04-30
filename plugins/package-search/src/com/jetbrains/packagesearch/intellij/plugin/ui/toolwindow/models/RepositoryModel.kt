@@ -1,7 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.packagesearch.intellij.plugin.api.model.V2Repository
+import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDeclaration
 
 internal data class RepositoryModel(
@@ -9,13 +9,11 @@ internal data class RepositoryModel(
     val name: String?,
     val url: String?,
     val usageInfo: List<RepositoryUsageInfo>,
-    val remoteInfo: V2Repository
+    val remoteInfo: ApiRepository
 ) {
 
     @NlsSafe
     val displayName = remoteInfo.friendlyName
-        ?: remoteInfo.url
-        ?: remoteInfo.id
 
     fun isEquivalentTo(other: RepositoryDeclaration): Boolean {
         if (id != null && id == other.id) return true

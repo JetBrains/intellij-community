@@ -2,10 +2,10 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.PlatformTarget
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.PlatformType
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.api.model.PlatformTarget
-import com.jetbrains.packagesearch.intellij.plugin.api.model.PlatformType
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Platform
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
@@ -19,21 +19,23 @@ internal class DependencyKotlinPlatformsPanel : HtmlEditorPane() {
         background = PackageSearchUI.UsualBackgroundColor
     }
 
-    fun display(platforms: List<StandardV2Platform>) {
+    fun display(platforms: List<ApiStandardPackage.ApiPlatform>) {
         clear()
 
         val chunks = mutableListOf<HtmlChunk>()
         chunks += HtmlChunk.p().addText(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.kotlinPlatforms"))
         chunks += HtmlChunk.ul().children(
             platforms.mapNotNull { platform ->
-                @NlsSafe val displayName = platform.type.displayName() ?: return@mapNotNull null
+                val type: PlatformType = PlatformType.from(platform.type)
+                @NlsSafe val displayName = type.displayName() ?: return@mapNotNull null
                 HtmlChunk.li().addText(displayName).let { element ->
-                    val canHaveTargets = platform.type == PlatformType.JS || platform.type == PlatformType.NATIVE
-                    if (canHaveTargets && platform.targets != null && platform.targets.isNotEmpty()) {
+                    val canHaveTargets = type == PlatformType.JS || type == PlatformType.NATIVE
+                    val targets = platform.targets
+                    if (canHaveTargets && targets != null && targets.isNotEmpty()) {
                         element.children(
                             HtmlChunk.br(),
                             HtmlChunk.span("font-style: italic;").addText(
-                                platform.targets.mapNotNull { it.displayName() }.joinToString(", ")
+                                targets.mapNotNull { PlatformTarget.from(it).displayName() }.joinToString(", ")
                             )
                         )
                     } else {

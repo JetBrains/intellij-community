@@ -18,13 +18,14 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
+import com.jetbrains.packagesearch.api.v2.ApiRepository
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
 import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.api.http.ApiResult
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2PackagesWithRepos
-import com.jetbrains.packagesearch.intellij.plugin.api.model.V2Repository
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
@@ -90,9 +91,9 @@ internal class PackageSearchDataService(
     private val operationExecutor = ModuleOperationExecutor(project)
     private val operationFailureRenderer = OperationFailureRenderer()
 
-    private var knownRepositoriesRemoteInfo = listOf<V2Repository>()
+    private var knownRepositoriesRemoteInfo = listOf<ApiRepository>()
     private val searchQueryProperty = Property("")
-    private val searchResultsProperty = Property<StandardV2PackagesWithRepos?>(null)
+    private val searchResultsProperty = Property<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>?>(null)
 
     private val _targetModulesProperty = Property<TargetModules>(TargetModules.None)
     private val _selectedPackageModelProperty = Property<SelectedPackageModel<*>?>(null)
@@ -446,7 +447,7 @@ internal class PackageSearchDataService(
 
     @RequiresBackgroundThread
     private fun installablePackages(
-        searchResults: StandardV2PackagesWithRepos?,
+        searchResults: ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>?,
         installedPackages: List<PackageModel>,
         traceInfo: TraceInfo
     ): List<PackageModel.SearchResult> {
@@ -464,7 +465,7 @@ internal class PackageSearchDataService(
     @RequiresBackgroundThread
     private fun allKnownRepositoryModels(
         allModules: List<ModuleModel>,
-        knownRepositoriesRemoteInfo: List<V2Repository>
+        knownRepositoriesRemoteInfo: List<ApiRepository>
     ) = KnownRepositories.All(
         knownRepositoriesRemoteInfo.map { remoteInfo ->
             val url = remoteInfo.url
@@ -481,7 +482,7 @@ internal class PackageSearchDataService(
         }
     )
 
-    private fun List<RepositoryDeclaration>.anyMatches(remoteInfo: V2Repository): Boolean {
+    private fun List<RepositoryDeclaration>.anyMatches(remoteInfo: ApiRepository): Boolean {
         val urls = ((remoteInfo.alternateUrls ?: emptyList()) + remoteInfo.url).filterNotNull()
         val id = remoteInfo.id
         if (urls.isEmpty() && id.isBlank()) return false

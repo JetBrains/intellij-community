@@ -1,10 +1,8 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2LinkedFile
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Scm
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
-internal class LinkExtractor(private val standardV2Package: StandardV2Package) {
+internal class LinkExtractor(private val standardV2Package: ApiStandardPackage) {
 
     fun scm(): InfoLink.ScmRepository? {
         val scm = standardV2Package.scm ?: return null
@@ -16,7 +14,7 @@ internal class LinkExtractor(private val standardV2Package: StandardV2Package) {
         }
     }
 
-    private fun extractScmUrl(scm: StandardV2Scm): ScmUrl {
+    private fun extractScmUrl(scm: ApiStandardPackage.ApiScm): ScmUrl {
         val scmUrl = scm.url
         val isGitHub = scmUrl.contains("github.com", true)
 
@@ -34,36 +32,20 @@ internal class LinkExtractor(private val standardV2Package: StandardV2Package) {
 
     private data class ScmUrl(val url: String, val isGitHub: Boolean)
 
-    fun projectWebsite(): InfoLink.ProjectWebsite? {
-        if (standardV2Package.url == null) return null
+    fun projectWebsite() = standardV2Package.url?.let { InfoLink.ProjectWebsite(it) }
 
-        return InfoLink.ProjectWebsite(standardV2Package.url)
-    }
+    fun documentation() = standardV2Package.gitHub?.communityProfile?.documentation?.let { InfoLink.Documentation(it) }
 
-    fun documentation(): InfoLink.Documentation? {
-        if (standardV2Package.gitHub?.communityProfile?.documentationUrl == null) return null
-
-        return InfoLink.Documentation(standardV2Package.gitHub.communityProfile.documentationUrl)
-    }
-
-    fun readme(): InfoLink.Readme? {
-        if (standardV2Package.gitHub?.communityProfile?.files?.readme == null) return null
-
-        val readmeUrl = standardV2Package.gitHub.communityProfile.files.readme.htmlUrl
-            ?: standardV2Package.gitHub.communityProfile.files.readme.url
-        return InfoLink.Readme(readmeUrl)
-    }
+    fun readme() = standardV2Package.gitHub?.communityProfile?.files?.readme?.let { InfoLink.Readme(it.htmlUrl ?: it.url) }
 
     fun licenses(): List<InfoLink.License> {
-        if (standardV2Package.licenses == null) return emptyList()
-
-        val otherLicenses = standardV2Package.licenses.otherLicenses?.map { it.asLicenseInfoLink() }
-            ?: emptyList()
-
-        return listOf(standardV2Package.licenses.mainLicense.asLicenseInfoLink()) + otherLicenses
+        val licenses = mutableListOf<InfoLink.License>()
+        standardV2Package.licenses?.mainLicense?.let { licenses.add(it.asLicenseInfoLink()) }
+        standardV2Package.licenses?.otherLicenses?.map { it.asLicenseInfoLink() }?.let { licenses.addAll(it) }
+        return licenses
     }
 
-    private fun StandardV2LinkedFile.asLicenseInfoLink() = InfoLink.License(
+    private fun ApiStandardPackage.ApiLinkedFile.asLicenseInfoLink() = InfoLink.License(
         url = htmlUrl ?: url,
         licenseName = name
     )

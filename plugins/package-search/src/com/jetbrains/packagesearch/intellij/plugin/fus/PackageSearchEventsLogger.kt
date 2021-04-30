@@ -2,7 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.fus
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
@@ -48,7 +48,7 @@ internal object PackageSearchEventsLogger {
         )
     }
 
-    fun onSearchResponse(project: Project, query: String, items: List<StandardV2Package>) = tryDoing {
+    fun onSearchResponse(project: Project, query: String, items: List<ApiStandardPackage>) = tryDoing {
         val matchItems = "match-items" to items.size
         val matchGroups = "match-groups" to items.distinctBy { it.groupId.toLowerCase() }.size
 
@@ -92,8 +92,8 @@ internal object PackageSearchEventsLogger {
     fun onPackageInstallHit(
         project: Project,
         buildSystem: BuildSystemType,
-        dependency: StandardV2Package?,
-        items: List<StandardV2Package>
+        dependency: ApiStandardPackage?,
+        items: List<ApiStandardPackage>
     ) = tryDoing {
         logDialogEvent(
             project = project,

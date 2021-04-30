@@ -20,7 +20,7 @@ internal class BrowsableLinkLabel : HyperlinkLabel() {
     private val String?.isBrowsableUrl: Boolean
         get() {
             if (isNullOrBlank()) return false
-            val normalizedUrl = this?.trim() ?: return false
+            val normalizedUrl = trim()
             return normalizedUrl.startsWith("http://") || normalizedUrl.startsWith("https://")
         }
 
