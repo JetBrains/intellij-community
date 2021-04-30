@@ -106,7 +106,7 @@ final class UnindexedFilesFinder {
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
             if (myDoTraceForFilesToBeIndexed) {
-              LOG.info("Scheduling full indexing of " + file + " because file type index is outdated");
+              LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated");
             }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
             shouldIndex.set(true);
@@ -139,7 +139,7 @@ final class UnindexedFilesFinder {
                   }
                   if (fileIndexingState.updateRequired()) {
                     if (myDoTraceForFilesToBeIndexed) {
-                      LOG.info("Scheduling indexing of " + file + " by request of index " + indexId);
+                      FileBasedIndexImpl.LOG.info("Scheduling indexing of " + indexedFile.getFileName() + " by request of index " + indexId);
                     }
 
                     long nowTime = System.nanoTime();
@@ -207,7 +207,7 @@ final class UnindexedFilesFinder {
       if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
         FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
         if (myDoTraceForFilesToBeIndexed) {
-          LOG.info("File " + fileContent.getFile() + " indexed using extension for " + indexId + " without content");
+          LOG.info("File " + fileContent.getFileName() + " indexed using extension for " + indexId + " without content");
         }
         return true;
       }
