@@ -155,8 +155,16 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<WrapReturnValueAction>())
   }
 
-  fun testMakeStatic() {
+  fun testMakeStaticOnMethodDeclaration() {
     assertTrue(doActionExists<MakeStaticAction>())
+  }
+
+  fun testMakeStaticOnClassDeclaration() {
+    assertTrue(doActionExists<MakeStaticAction>())
+  }
+
+  fun testMakeStaticFilteredOnStaticClass() {
+    assertFalse(doActionExists<MakeStaticAction>())
   }
 
   fun testMakeStaticFiltered() {
