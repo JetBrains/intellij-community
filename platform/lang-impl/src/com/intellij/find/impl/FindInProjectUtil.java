@@ -483,11 +483,6 @@ public final class FindInProjectUtil {
     }
 
     @Override
-    public String getLocationString() {
-      return myFindModel + "!!";
-    }
-
-    @Override
     public Icon getIcon(boolean open) {
       return AllIcons.Actions.Find;
     }
