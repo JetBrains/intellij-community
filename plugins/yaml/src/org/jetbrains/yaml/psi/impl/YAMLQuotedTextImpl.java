@@ -42,7 +42,7 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
     TextRange contentRange = TextRange.create(firstContentNode.getStartOffset(), getTextRange().getEndOffset())
       .shiftRight(-getTextRange().getStartOffset());
 
-    final List<String> lines = StringUtil.split(contentRange.substring(getText()), "\n", true, false);
+    final List<String> lines = StringUtil.split(contentRange.substring(getText()), "\n", false, false);
     // First line has opening quote
     int cumulativeOffset = contentRange.getStartOffset();
     for (int i = 0; i < lines.size(); ++i) {
@@ -69,7 +69,7 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
       }
 
       result.add(TextRange.create(lineStart, lineEnd).shiftRight(cumulativeOffset));
-      cumulativeOffset += line.length() + 1;
+      cumulativeOffset += line.length();
     }
 
     return result;

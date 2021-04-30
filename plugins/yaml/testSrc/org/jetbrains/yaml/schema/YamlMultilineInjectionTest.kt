@@ -3,6 +3,7 @@ package org.jetbrains.yaml.schema
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parents
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -12,6 +13,7 @@ import com.intellij.util.containers.Predicate
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import junit.framework.TestCase
 import org.jetbrains.yaml.psi.YAMLScalar
+import org.jetbrains.yaml.psi.impl.YAMLScalarImpl
 
 class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
@@ -43,7 +45,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     """.trimIndent())
 
     myInjectionFixture.assertInjectedLangAtCaret("XML")
-    assertInjectedAndLiteralValue("<html> <body>boo</body> </html>")
+    assertInjectedAndLiteralValue("<html>\n<body>boo</body>\n</html>")
   }
 
 
@@ -59,8 +61,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     assertInjectedAndLiteralValue("""
       |<html>
       |     <body>boo</body>
-      |</html>
-      |""".trimMargin())
+      |</html>""".trimMargin())
   }
 
   fun testBlockInjection() {
@@ -112,8 +113,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  root:
       |  
       |  """.trimMargin())
-    myInjectionFixture.assertInjectedContent("root:\n")
-    myFixture.type("  ")
+    myInjectionFixture.assertInjectedContent("root:\n\n")
     PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
     myFixture.type("abc:")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
@@ -123,17 +123,17 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  abc:
       |  
       |  """.trimMargin())
-    myInjectionFixture.assertInjectedContent("root:\n  abc:\n")
-    myFixture.type("   ")
+    myInjectionFixture.assertInjectedContent("root:\nabc:\n\n")
+    myFixture.type("def:")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
     myFixture.checkResult("""
       |myyaml: |
       |  root:
       |  abc:
-      |     
-      |     
+      |  def:
+      |  
       |  """.trimMargin())
-    myInjectionFixture.assertInjectedContent("root:\n  abc:\n     \n     ")
+    myInjectionFixture.assertInjectedContent("root:\nabc:\ndef:\n\n")
   }
 
   fun testBlockInjectionKeep() {
@@ -150,7 +150,6 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |<html>
       |<body>hello world</body>
       |</html>
-      |
       |""".trimMargin())
   }
   
@@ -168,7 +167,8 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     TestCase.assertEquals("""
       |<html>
       |<body>hello world</body>
-      |</html>""".trimMargin(), fe.file.text)
+      |</html>
+      |""".trimMargin(), fe.file.text)
     fe.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
     fe.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -176,6 +176,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |<html>
       |<body>hello world</body>
       |</html>
+      |
       |""".trimMargin(), fe.file.text)
     myFixture.checkResult("""
         X: |-
@@ -319,7 +320,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     myFixture.checkResult("""
         X: |
           <html></html>
-        
+          
         Y: 12
     """.trimIndent())
   }
@@ -332,8 +333,9 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
   val literalTextAtTheCaret: String
     get() {
       val elementAt = myInjectionFixture.topLevelFile.findElementAt(myInjectionFixture.topLevelCaretPosition)
-      return elementAt?.parents(true)?.mapNotNull { it.castSafelyTo<YAMLScalar>() }?.firstOrNull()?.textValue ?: 
-      throw AssertionError("no literal element at the caret position, only $elementAt were found")
+      return elementAt?.parents(true)?.mapNotNull { it.castSafelyTo<YAMLScalarImpl>() }?.firstOrNull()
+               ?.let { psi -> psi.contentRanges.joinToString("") { it.subSequence(psi.text) } }
+             ?: throw AssertionError("no literal element at the caret position, only $elementAt were found")
     }
 
 }

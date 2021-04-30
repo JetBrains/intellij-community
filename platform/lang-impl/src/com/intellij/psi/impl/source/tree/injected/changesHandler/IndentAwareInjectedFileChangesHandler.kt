@@ -128,7 +128,10 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       indent == null -> newText0
       // on the following line we heuristically guess that it was already indented by KotlinLiteralCopyPasteProcessor
       // TODO: come to the agreement with KotlinLiteralCopyPasteProcessor who will eventually indent eveything
-      maybeIndented && lines.all { it == "\n" || it.startsWith(indent) } -> newText0
+      maybeIndented && lines.all { it == "\n" || it.startsWith(indent) } -> newText0  
+      // on the following line we heuristically guess that it was already indented by YAMLCopyPasteProcessor
+      // TODO: come to the agreement with YAMLCopyPasteProcessor who will eventually indent eveything
+      maybeIndented && lines.lastOrNull() == indent -> indentHeuristically(indent, newText0.removeSuffix(indent), maybeIndented)
       lines.size <= 1 -> newText0
       else -> buildString {
         append(lines.first())

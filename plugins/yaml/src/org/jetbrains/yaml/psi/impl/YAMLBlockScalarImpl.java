@@ -8,7 +8,9 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.UtilKt;
 import kotlin.collections.CollectionsKt;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,61 +57,25 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
   @NotNull
   @Override
   public List<TextRange> getContentRanges() {
-    final ASTNode firstContentChild = getFirstContentNode();
-    if (firstContentChild == null) {
-      return Collections.emptyList();
+    int myStart = getTextRange().getStartOffset();
+    int indent = locateIndent();
+
+    List<TextRange> contentRanges = StreamEx.of(getLinesNodes()).map((line) -> {
+      var first = line.get(0);
+      return TextRange.create(first.getTextRange().getStartOffset() - myStart
+                              + ((first.getElementType() == YAMLTokenTypes.INDENT) ? indent : 0),
+                              ContainerUtil.getLastItem(line).getTextRange().getEndOffset() - myStart);
+    }).toList();
+
+    if (contentRanges.size() == 1) {
+      return List.of(TextRange.create(contentRanges.get(0).getEndOffset(), contentRanges.get(0).getEndOffset()));
     }
-
-    final int myStart = getTextRange().getStartOffset();
-    final List<TextRange> result = new ArrayList<>();
-
-    final int indent = locateIndent();
-
-    final ASTNode firstEol = TreeUtil.findSibling(firstContentChild, YAMLElementTypes.EOL_ELEMENTS);
-    if (firstEol == null) {
-      return Collections.emptyList();
+    else if (contentRanges.isEmpty()) {
+      return List.of();
     }
-
-    int thisLineStart = firstEol.getStartOffset() + 1;
-    for (ASTNode child = firstEol.getTreeNext(); child != null; child = child.getTreeNext()) {
-      final IElementType childType = child.getElementType();
-      final TextRange childRange = child.getTextRange();
-
-      if (childType == YAMLTokenTypes.INDENT && isEol(child.getTreePrev())) {
-        thisLineStart = child.getStartOffset() + Math.min(indent, child.getTextLength());
-      }
-      else if (childType == YAMLTokenTypes.SCALAR_EOL) {
-        if (thisLineStart != -1) {
-          int endOffset = shouldIncludeEolInRange(child) ? child.getTextRange().getEndOffset() : child.getStartOffset();
-          result.add(TextRange.create(thisLineStart, endOffset).shiftRight(-myStart));
-        }
-        thisLineStart = child.getStartOffset() + 1;
-      }
-      else {
-        if (isEol(child.getTreeNext())) {
-          if (thisLineStart == -1) {
-            Logger.getInstance(YAMLBlockScalarImpl.class).warn("thisLineStart == -1: '" + getText() + "'", new Throwable());
-            continue;
-          }
-          int endOffset = shouldIncludeEolInRange(child) ? child.getTreeNext().getTextRange().getEndOffset() : childRange.getEndOffset();
-          result.add(TextRange.create(thisLineStart, endOffset).shiftRight(-myStart));
-          thisLineStart = -1;
-        }
-      }
+    else {
+      return UtilKt.tailOrEmpty(contentRanges);
     }
-    if (thisLineStart != -1) {
-       result.add(TextRange.create(thisLineStart, getTextRange().getEndOffset()).shiftRight(-myStart));
-    }
-
-    ChompingIndicator chomping = getChompingIndicator();
-
-    if (chomping == ChompingIndicator.KEEP) {
-      return result;
-    }
-
-    final int lastNonEmpty = ContainerUtil.lastIndexOf(result, range -> range.getLength() != 0);
-
-    return lastNonEmpty == -1 ? Collections.emptyList() : result.subList(0, lastNonEmpty + 1);
   }
 
   protected int getFragmentEndOfLines(Set<QuickEditHandler> fragmentEditors) {
@@ -149,7 +115,7 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
   }
 
   /** See <a href="http://www.yaml.org/spec/1.2/spec.html#id2793979">8.1.1.1. Block Indentation Indicator</a>*/
-  protected final int locateIndent() {
+  public final int locateIndent() {
     int indent = getExplicitIndent();
     if (indent != IMPLICIT_INDENT) {
       return indent;
