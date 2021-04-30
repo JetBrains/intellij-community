@@ -4,9 +4,9 @@ configurations {
 }
 
 dependencies {
-  rkernel "org.jetbrains.intellij.deps.rkernel:rkernel:$rkernelVersion:osx@tar.gz"
-  rkernel "org.jetbrains.intellij.deps.rkernel:rkernel:$rkernelVersion:windows@tar.gz"
-  rkernel "org.jetbrains.intellij.deps.rkernel:rkernel:$rkernelVersion:linux@tar.gz"
+  rkernel "org.jetbrains.intellij.deps.rkernel:rwrapper:$rkernelVersion:x64-osx@tar.gz"
+  rkernel "org.jetbrains.intellij.deps.rkernel:rwrapper:$rkernelVersion:x64-windows.exe@tar.gz"
+  rkernel "org.jetbrains.intellij.deps.rkernel:rwrapper:$rkernelVersion:x64-linux@tar.gz"
 }
 
 task setupRkernel(dependsOn: configurations.rkernel) {
