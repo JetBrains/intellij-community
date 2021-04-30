@@ -43,7 +43,7 @@ apply from: 'setupAndroidStudio.gradle'
 
 task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinCompiler',
                                    'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
-clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinCompiler', 'cleanSetupJetSign', 'cleanSetupBundledMaven')
+clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinCompiler', 'cleanSetupBundledMaven')
 
 task dependenciesFile() {
   description = 'Creates file with all dependencies version, even those that were overloaded by system or env properties'
