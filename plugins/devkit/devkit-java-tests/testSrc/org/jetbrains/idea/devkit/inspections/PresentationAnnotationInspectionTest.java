@@ -16,7 +16,7 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.presentation.Presentation;
+import com.intellij.ide.IdeBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
@@ -41,8 +41,8 @@ public class PresentationAnnotationInspectionTest extends JavaCodeInsightFixture
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    String presentationJar = PathUtil.getJarPathForClass(Presentation.class);
-    moduleBuilder.addLibrary("presentation", presentationJar);
+    String platformIdeJar = PathUtil.getJarPathForClass(IdeBundle.class);
+    moduleBuilder.addLibrary("presentation", platformIdeJar);
     String iconsJar = PathUtil.getJarPathForClass(AllIcons.class);
     moduleBuilder.addLibrary("icons", iconsJar);
   }
