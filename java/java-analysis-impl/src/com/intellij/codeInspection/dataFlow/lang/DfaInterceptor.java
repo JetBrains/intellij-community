@@ -3,14 +3,12 @@ package com.intellij.codeInspection.dataFlow.lang;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * An interceptor that can peek into DFA analysis intermediate states and do something with them
- * @param <EXPR> type of expression element in the language
  */
 public interface DfaInterceptor {
   /**
@@ -37,23 +35,6 @@ public interface DfaInterceptor {
                           @NotNull DfaValue value,
                           @NotNull DfaAnchor anchor,
                           @NotNull DfaMemoryState state) {
-
-  }
-
-  /**
-   * Called for every expression which corresponds to the method, method reference, or lambda result.
-   *
-   * @param value      expression value
-   * @param expression an expression which produces given value. For conditional return like {@code return cond ? ifTrue : ifFalse;}
-   *                   this method will be called for {@code ifTrue} and {@code ifFalse} separately. Could be null if the expression
-   *                   is not readily available in the source code (e. g., for method references)
-   * @param context    a context from which the result is returned (could be method, method reference, or lambda)
-   * @param state      a memory state
-   */
-  default void beforeValueReturn(@NotNull DfaValue value,
-                                 @Nullable DfaAnchor expression,
-                                 @NotNull PsiElement context,
-                                 @NotNull DfaMemoryState state) {
 
   }
 

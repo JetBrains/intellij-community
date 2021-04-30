@@ -74,22 +74,6 @@ public interface JavaDfaInterceptor extends DfaInterceptor {
 
   }
 
-  @Override
-  default void beforeValueReturn(@NotNull DfaValue value,
-                                 @Nullable DfaAnchor anchor,
-                                 @NotNull PsiElement context,
-                                 @NotNull DfaMemoryState state) {
-    if (anchor instanceof JavaExpressionAnchor) {
-      beforeValueReturn(value, ((JavaExpressionAnchor)anchor).getExpression(), context, state);
-    }
-    else if (anchor == null) {
-      beforeValueReturn(value, (PsiExpression)null, context, state);
-    }
-    else {
-      throw new IllegalStateException("Java anchor expected, got: " + anchor + "(" + anchor.getClass() + ")");
-    }
-  }
-
   default void beforeValueReturn(@NotNull DfaValue value,
                                  @Nullable PsiExpression expression,
                                  @NotNull PsiElement context,
