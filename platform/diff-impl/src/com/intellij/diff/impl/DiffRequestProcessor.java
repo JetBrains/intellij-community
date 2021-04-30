@@ -67,6 +67,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
+
 public abstract class DiffRequestProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
 
@@ -506,7 +508,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     ((ActionToolbarImpl)myToolbar).clearPresentationCache();
     myToolbar.updateActionsImmediately();
 
-    ActionUtil.recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
+    recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
   }
 
   @NotNull

@@ -14,7 +14,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -168,6 +167,17 @@ public final class TextDiffViewerUtil {
 
     if (properties.size() < 2) return true;
     return new HashSet<>(properties).size() == 1;
+  }
+
+  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
+                                                  @NotNull JComponent component,
+                                                  @Nullable Disposable parentDisposable) {
+    for (AnAction action : group.getChildren(null)) {
+      if (action instanceof ActionGroup) {
+        recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
+      }
+      action.registerCustomShortcutSet(component, parentDisposable);
+    }
   }
 
   //
@@ -550,7 +560,7 @@ public final class TextDiffViewerUtil {
     }
 
     public void install(@NotNull List<? extends EditorEx> editors, @NotNull JComponent component) {
-      ActionUtil.recursiveRegisterShortcutSet(new DefaultActionGroup(myEditorPopupActions), component, null);
+      recursiveRegisterShortcutSet(new DefaultActionGroup(myEditorPopupActions), component, null);
 
       EditorPopupHandler handler = new ContextMenuPopupHandler.Simple(
         myEditorPopupActions.isEmpty() ? null : new DefaultActionGroup(myEditorPopupActions)

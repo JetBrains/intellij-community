@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -332,17 +331,6 @@ public final class ActionUtil {
           component.registerKeyboardAction(action, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
         }
       }
-    }
-  }
-
-  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
-                                                  @NotNull JComponent component,
-                                                  @Nullable Disposable parentDisposable) {
-    for (AnAction action : group.getChildren(null)) {
-      if (action instanceof ActionGroup) {
-        recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
-      }
-      action.registerCustomShortcutSet(component, parentDisposable);
     }
   }
 
