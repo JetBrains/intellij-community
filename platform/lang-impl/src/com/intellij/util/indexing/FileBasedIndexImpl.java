@@ -216,8 +216,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
   }
 
-  boolean isTraceIndexUpdates() {
+  boolean doTraceStubUpdates() {
     return myTraceIndexUpdates;
+  }
+
+  boolean doTraceStubUpdates(@NotNull ID<?, ?> indexId) {
+    return myTraceIndexUpdates && indexId.equals(StubUpdatingIndex.INDEX_ID);
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
@@ -1452,7 +1456,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Nullable("null in case index update is not necessary or the update has failed")
   SingleIndexUpdateStats updateSingleIndex(@NotNull ID<?, ?> indexId, @Nullable VirtualFile file, int inputId, @Nullable FileContent currentFC) {
-    if (myTraceIndexUpdates) {
+    if (doTraceStubUpdates(indexId)) {
       if (file == null) {
         LOG.info("index " + indexId + " deletion requested for " + inputId);
       }
@@ -1512,7 +1516,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                  ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
 
       if (runUpdateForPersistentData(storageUpdate)) {
-        if (myTraceIndexUpdates) {
+        if (doTraceStubUpdates(indexId)) {
           if (file == null) {
             LOG.info("index " + indexId + " deletion finished for " + inputId);
           }
