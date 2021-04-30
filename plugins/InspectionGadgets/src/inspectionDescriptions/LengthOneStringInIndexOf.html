@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports String literals of length one being used
+Reports single character string being used
 as a parameter in <code>String.indexOf()</code> or
 <code>String.lastIndexOf()</code> calls.
 There is a fix that allows to replace these string literals with equivalent character literals, gaining some performance enhancement.
@@ -8,7 +8,7 @@ There is a fix that allows to replace these string literals with equivalent char
 <pre>
   return s.indexOf("x");
 </pre>
-<p>After applying the fix:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   return s.indexOf('x');
 </pre>

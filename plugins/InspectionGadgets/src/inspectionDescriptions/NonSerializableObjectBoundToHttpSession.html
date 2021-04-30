@@ -1,12 +1,11 @@
 <html>
 <body>
-Reports non-<code>Serializable</code> objects used as arguments to
+Reports objects not implementing <code>java.io.Serializable</code> used as arguments to
 <code>javax.servlet.http.HttpSession.setAttribute()</code> or
 <code>javax.servlet.http.HttpSession.putValue()</code>.
-Such objects will not be serialized if the HttpSession is passivated or migrated, and may result in difficult-to-diagnose
-bugs. For purposes of this inspection, objects with <code>java.util.Collection</code> or
-<code>java.util.Map</code> types are assumed to be <code>Serializable</code>, unless the types
-they are declared to contain are non-<code>Serializable</code>.
+Such objects will not be serialized if the 'HttpSession' is passivated or migrated and may result in difficult-to-diagnose
+bugs. By default objects with <code>java.util.Collection</code> or
+<code>java.util.Map</code> types are assumed to be <code>Serializable</code>, unless type parameters are non-<code>Serializable</code>.
 <p>Example:</p>
 <pre>
   void foo(HttpSession session) {

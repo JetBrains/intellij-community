@@ -4,7 +4,7 @@ Reports classes that override the
 <code>equals()</code> method but do not override the
 <code>hashCode()</code> method or vice versa, which could potentially lead to problems
 when the class is added to a <code>Collection</code> or a <code>HashMap</code>.
-<p>There is a fix that generates stub for absent method.</p>
+<p>There is a fix that generates default implementation for absent method.</p>
 <p>Example:</p>
 <pre>
 class StringHolder {
