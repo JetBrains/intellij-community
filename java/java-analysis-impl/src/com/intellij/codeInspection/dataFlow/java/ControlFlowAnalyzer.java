@@ -2160,7 +2160,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    */
   @NotNull
   DfaVariableValue createTempVariable(@Nullable PsiType type) {
-    return myCurrentFlow.createTempVariable(type);
+    DfType dfType = type == null ? DfType.BOTTOM : DfTypes.typedObject(type, Nullability.UNKNOWN);
+    return myCurrentFlow.createTempVariable(dfType);
   }
 
   /**

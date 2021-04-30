@@ -2,14 +2,11 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -141,7 +138,7 @@ public final class ControlFlow {
   }
 
   /**
-   * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(PsiType)}
+   * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(DfType)}
    *
    * @param variable to check
    * @return true if supplied variable is a temp variable.
@@ -153,15 +150,11 @@ public final class ControlFlow {
   /**
    * Create a synthetic variable (not declared in the original code) to be used within this control flow.
    *
-   * @param type a type of variable to create
+   * @param dfType a type of variable to create
    * @return newly created variable
    */
-  @NotNull
-  public DfaVariableValue createTempVariable(@Nullable PsiType type) {
-    if(type == null) {
-      type = PsiType.VOID;
-    }
-    return getFactory().getVarFactory().createVariableValue(new ControlFlow.Synthetic(getInstructionCount(), type));
+  public @NotNull DfaVariableValue createTempVariable(@NotNull DfType dfType) {
+    return getFactory().getVarFactory().createVariableValue(new Synthetic(getInstructionCount(), dfType));
   }
 
   public @NotNull List<DfaVariableValue> getSynthetics(PsiElement element) {
@@ -244,9 +237,9 @@ public final class ControlFlow {
 
   public static final class Synthetic implements VariableDescriptor {
     private final int myLocation;
-    private final PsiType myType;
+    private final DfType myType;
 
-    private Synthetic(int location, PsiType type) {
+    private Synthetic(int location, DfType type) {
       myLocation = location;
       myType = type;
     }
@@ -258,7 +251,7 @@ public final class ControlFlow {
 
     @Override
     public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
-      return DfTypes.typedObject(myType, Nullability.UNKNOWN);
+      return myType;
     }
 
     @Override
