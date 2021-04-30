@@ -96,9 +96,7 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   private static final List<Supplier<? extends HtmlChunk>> ourPluginErrors = new ArrayList<>();
 
-  @ApiStatus.Internal
   private static Set<PluginId> ourPluginsToDisable;
-  @ApiStatus.Internal
   private static Set<PluginId> ourPluginsToEnable;
 
   @SuppressWarnings("StaticNonFinalField")
@@ -772,7 +770,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  static boolean onEnable(boolean enabled) {
+  static synchronized boolean onEnable(boolean enabled) {
     Set<PluginId> pluginIds = enabled ? ourPluginsToEnable : ourPluginsToDisable;
     ourPluginsToEnable = null;
     ourPluginsToDisable = null;
