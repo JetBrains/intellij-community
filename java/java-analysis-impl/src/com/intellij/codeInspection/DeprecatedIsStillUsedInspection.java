@@ -3,7 +3,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -23,6 +26,9 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
         if (parent instanceof PsiMember && parent instanceof PsiNameIdentifierOwner && ((PsiNameIdentifierOwner)parent).getNameIdentifier() == identifier) {
           checkMember((PsiMember)parent, identifier, holder);
         }
+        else if (parent != null && parent.getParent() instanceof PsiJavaModule) {
+          checkJavaModule((PsiJavaModule)parent.getParent(), holder);
+        }
         super.visitIdentifier(identifier);
       }
     };
@@ -37,6 +43,22 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
     String name = member.getName();
     if (name != null && hasUsages(member, name, searchHelper, member.getResolveScope())) {
       holder.registerProblem(identifier, JavaAnalysisBundle.message("deprecated.member.0.is.still.used", name));
+    }
+  }
+
+  private static void checkJavaModule(@NotNull PsiJavaModule javaModule, @NotNull ProblemsHolder holder) {
+    if (!PsiImplUtil.isDeprecated(javaModule)) {
+      return;
+    }
+    Module module = ModuleUtilCore.findModuleForPsiElement(javaModule);
+    if (module == null) {
+      return;
+    }
+    GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
+    PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(javaModule.getProject());
+    if (hasUsages(javaModule, javaModule.getName(), searchHelper, searchScope)) {
+      holder.registerProblem(javaModule.getNameIdentifier(),
+                             JavaAnalysisBundle.message("deprecated.member.0.is.still.used", javaModule.getName()));
     }
   }
 

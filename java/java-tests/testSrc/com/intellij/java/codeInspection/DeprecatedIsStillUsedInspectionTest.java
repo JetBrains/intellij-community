@@ -18,9 +18,10 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.DeprecatedIsStillUsedInspection;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor;
 
-public class DeprecatedIsStillUsedInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+public class DeprecatedIsStillUsedInspectionTest extends LightJava9ModulesCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/deprecatedIsStillUsed";
@@ -34,5 +35,24 @@ public class DeprecatedIsStillUsedInspectionTest extends LightJavaCodeInsightFix
 
   public void testSimple() {
     myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testJavaModuleIsDeprecated() {
+    moduleInfo("module first {requires second;}", ModuleDescriptor.MAIN);
+    moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
+    testJavaModule("@Deprecated module <warning descr=\"Deprecated member 'second' is still used\">second</warning> {}");
+  }
+
+  public void testJavaModuleDependantIsDeprecatedToo() {
+    moduleInfo("@Deprecated module first {requires second;}", ModuleDescriptor.MAIN);
+    moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
+    testJavaModule("@Deprecated module second {}");
+  }
+
+  private void testJavaModule(String expectedResult) {
+    myFixture.addClass("package java.lang; public @interface Deprecated {}");
+    myFixture.allowTreeAccessForAllFiles();
+    myFixture.configureFromExistingVirtualFile(addFile("module-info.java", expectedResult, ModuleDescriptor.M2));
+    myFixture.checkHighlighting();
   }
 }
