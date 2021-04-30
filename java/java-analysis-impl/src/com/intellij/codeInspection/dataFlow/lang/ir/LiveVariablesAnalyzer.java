@@ -51,6 +51,10 @@ final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
       return StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class)
         .filter(var -> var.getPsiVariable() instanceof PsiMember);
     }
+    else if (instruction instanceof MethodCallInstruction) {
+      return StreamEx.ofNullable(((MethodCallInstruction)instruction).getPrecalculatedReturnValue())
+        .select(DfaVariableValue.class);
+    }
     return StreamEx.empty();
   }
 
