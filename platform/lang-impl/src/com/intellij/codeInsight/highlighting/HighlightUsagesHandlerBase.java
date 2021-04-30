@@ -40,8 +40,8 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
   @NotNull protected final Editor myEditor;
   @NotNull protected final PsiFile myFile;
 
-  protected List<TextRange> myReadUsages = new ArrayList<>();
-  protected List<TextRange> myWriteUsages = new ArrayList<>();
+  protected final List<TextRange> myReadUsages = new ArrayList<>();
+  protected final List<TextRange> myWriteUsages = new ArrayList<>();
   protected @NlsContexts.StatusBarText String myStatusText;
   protected @NlsContexts.HintText String myHintText;
 
@@ -60,9 +60,9 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
 
   private void performHighlighting() {
     boolean clearHighlights = HighlightUsagesHandler.isClearHighlights(myEditor);
-    HighlightUsagesHandler.highlightRanges(HighlightManager.getInstance(myEditor.getProject()),
+    HighlightUsagesHandler.highlightRanges(HighlightManager.getInstance(myFile.getProject()),
                                            myEditor, EditorColors.SEARCH_RESULT_ATTRIBUTES, clearHighlights, myReadUsages);
-    HighlightUsagesHandler.highlightRanges(HighlightManager.getInstance(myEditor.getProject()),
+    HighlightUsagesHandler.highlightRanges(HighlightManager.getInstance(myFile.getProject()),
                                            myEditor, EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, clearHighlights, myWriteUsages);
     if (!clearHighlights) {
       WindowManager.getInstance().getStatusBar(myFile.getProject()).setInfo(myStatusText);
