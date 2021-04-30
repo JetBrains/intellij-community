@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
 import kotlin.io.path.exists
@@ -95,6 +96,9 @@ private object ProductionKotlinArtifacts : KotlinArtifacts(run {
             // and the kotlinc directory becomes a subdirectory of the cache directory (see KotlinBuildProcessParametersProvider.getAdditionalPluginPaths())
             pluginJar.parent.toFile()
         } else {
+            val kotlincPathWhenRunningFromSources = File(PathManager.getHomePath(), "out/artifacts/KotlinPlugin")
+            if (kotlincPathWhenRunningFromSources.exists()) return@run kotlincPathWhenRunningFromSources
+
             // Don't throw exception because someone may want to just try to initialize
             // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
             File("<invalid_kotlinc_path>")
