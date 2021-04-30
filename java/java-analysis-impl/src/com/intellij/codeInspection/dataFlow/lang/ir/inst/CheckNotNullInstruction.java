@@ -15,8 +15,14 @@
  */
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiElement;

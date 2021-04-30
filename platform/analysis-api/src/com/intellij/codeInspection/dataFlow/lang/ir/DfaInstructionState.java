@@ -1,12 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.codeInspection.dataFlow;
+package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * An (instruction, memoryState) pair that represents single possible abstract interpreter state.
+ */
 public class DfaInstructionState implements Comparable<DfaInstructionState> {
   public static final DfaInstructionState[] EMPTY_ARRAY = new DfaInstructionState[0];
   private final DfaMemoryState myBeforeMemoryState;
@@ -21,7 +25,13 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
   public Instruction getInstruction() {
     return myInstruction;
   }
-  
+
+  /**
+   * A helper method to create the resulting states for linear instruction
+   * 
+   * @param runner runner that interprets current IR
+   * @return an array of single instruction state containing the next instruction. 
+   */
   public DfaInstructionState[] nextStates(DataFlowRunner runner) {
     return myInstruction.nextStates(runner, myBeforeMemoryState);
   }

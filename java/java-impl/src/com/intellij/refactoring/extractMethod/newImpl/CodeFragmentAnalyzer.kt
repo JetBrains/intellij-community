@@ -3,11 +3,11 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInspection.dataFlow.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.DfaNullability
-import com.intellij.codeInspection.dataFlow.RunnerResult
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange

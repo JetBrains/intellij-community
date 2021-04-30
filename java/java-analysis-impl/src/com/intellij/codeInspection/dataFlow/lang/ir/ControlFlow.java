@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.jvm.ReturnTransfer;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.SpliceInstruction;

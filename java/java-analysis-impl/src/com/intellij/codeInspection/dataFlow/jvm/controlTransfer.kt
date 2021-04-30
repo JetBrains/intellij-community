@@ -3,12 +3,12 @@
 
 package com.intellij.codeInspection.dataFlow.jvm
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner
-import com.intellij.codeInspection.dataFlow.DfaInstructionState
-import com.intellij.codeInspection.dataFlow.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.TypeConstraint
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ControlTransferInstruction
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.psi.*
@@ -24,7 +24,9 @@ data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, privat
   override fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> {
     val varFactory = runner.factory.varFactory
     varsToFlush.forEach { desc -> state.flushVariable(varFactory.createVariableValue(desc)) }
-    return listOf(DfaInstructionState(runner.getInstruction(offset.instructionOffset), state))
+    return listOf(
+      DfaInstructionState(runner.getInstruction(offset.instructionOffset),
+                                                                                          state))
   }
 
   override fun getPossibleTargets(): List<Int> = listOf(offset.instructionOffset)
@@ -68,7 +70,8 @@ sealed class JvmTrap(private val anchor: PsiElement) : DfaControlTransferValue.T
     : JvmTrap(anchor) {
     override fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState> {
       return if (handler.target is ExceptionTransfer)
-        listOf(DfaInstructionState(handler.runner.getInstruction(target.instructionOffset), handler.state))
+        listOf(DfaInstructionState(
+          handler.runner.getInstruction(target.instructionOffset), handler.state))
       else handler.doDispatch()
     }
 
@@ -84,7 +87,8 @@ sealed class JvmTrap(private val anchor: PsiElement) : DfaControlTransferValue.T
 
     override fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState> {
       handler.state.push(handler.runner.factory.controlTransfer(handler.target, handler.traps))
-      return listOf(DfaInstructionState(handler.runner.getInstruction(jumpOffset.instructionOffset), handler.state))
+      return listOf(DfaInstructionState(
+        handler.runner.getInstruction(jumpOffset.instructionOffset), handler.state))
     }
 
     override fun getPossibleTargets() = listOf(jumpOffset.instructionOffset)

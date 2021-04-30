@@ -4,7 +4,7 @@ package com.intellij.debugger.engine.dfaassist;
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
-import com.intellij.codeInspection.dataFlow.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
