@@ -12,7 +12,11 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.lang.Language;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -323,6 +327,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
         assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
       }
+      ActionUtil.performActionDumbAwareWithCallbacks(
+        new EmptyAction(true), AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
 
       // startup activities
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
