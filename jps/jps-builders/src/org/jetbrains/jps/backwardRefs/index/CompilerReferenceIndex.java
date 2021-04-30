@@ -113,7 +113,7 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  private void force() {
+  public void force() {
     synchronized (myNameEnumerator) {
       if (!myNameEnumerator.isClosed()) {
         myNameEnumerator.force();
