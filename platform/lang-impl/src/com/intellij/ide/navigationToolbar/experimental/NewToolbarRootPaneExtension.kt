@@ -82,16 +82,18 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
   }
 
   override fun revalidate() {
-    myPanelWrapper.removeAll()
-    myPanel.removeAll()
-    myRightPanel.removeAll()
-    myCenterPanel.removeAll()
-    myLeftPanel.removeAll()
 
     val toolbarSettingsService = ToolbarSettings.Companion.getInstance()
     if (toolbarSettingsService is ExperimentalToolbarSettings) {
+
       val visibleAndEnabled = toolbarSettingsService.showNewToolbar && !instance.presentationMode
       if(visibleAndEnabled) {
+        myPanelWrapper.removeAll()
+        myPanel.removeAll()
+        myRightPanel.removeAll()
+        myCenterPanel.removeAll()
+        myLeftPanel.removeAll()
+
         logger.info("ToolbarSettingsService is ExperimentalToolbarSettings")
         logger.info("Show new toolbar: ${toolbarSettingsService.showNewToolbar}, presentation mode: ${instance.presentationMode}")
         logger.info(
