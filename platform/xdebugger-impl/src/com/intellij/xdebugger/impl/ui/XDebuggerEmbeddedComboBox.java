@@ -5,8 +5,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ComboBoxUI;
 import java.awt.*;
-import java.awt.geom.Line2D;
 import java.awt.geom.RectangularShape;
 
 public class XDebuggerEmbeddedComboBox<T> extends ComboBox<T> {
@@ -61,27 +58,6 @@ class BorderlessCombBoxUI extends EmbeddedComboBoxUI {
     } finally {
       g2.dispose();
     }
-  }
-
-  @Override
-  protected void paintArrow(Graphics2D g2, JButton btn) {
-
-    var r = new Rectangle(btn.getSize());
-    JBInsets.removeFrom(r, JBUI.insets(1, 0, 1, 1));
-
-    var tW = JBUIScale.scale(8f);
-    var tH = JBUIScale.scale(tW / 2);
-
-    var xU = (r.getWidth() - tW) / 2;
-    var yU = (r.getHeight() - tH) / 2;
-
-    var leftLine = new Line2D.Double(xU, yU, xU + tW / 2f, yU + tH);
-    var rightLine = new Line2D.Double(xU + tW / 2f, yU + tH, xU + tW, yU);
-
-    g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(comboBox.isEnabled()));
-    g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
-    g2.draw(leftLine);
-    g2.draw(rightLine);
   }
 
   @Override
