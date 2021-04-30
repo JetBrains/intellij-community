@@ -644,6 +644,29 @@ idea.fatal.error.notification=disabled
     }
   }
 
+  static void addProjectorServer(BuildContext buildContext, @NotNull Path distDir) {
+    JpsLibrary projectorServerLibrary = buildContext.project.libraryCollection.findLibrary("projector-server")
+    Path destLibDir = distDir.resolve("lib")
+    Path destProjectorLibDir = destLibDir.resolve("projector")
+    List<String> extraJars = new ArrayList<>()
+    Files.createDirectories(destProjectorLibDir)
+    for (File file : projectorServerLibrary.getFiles(JpsOrderRootType.COMPILED)) {
+      Files.copy(file.toPath(), destProjectorLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
+      extraJars += "projector/" + file.name
+    }
+    def srcClassPathTxt = Paths.get("$buildContext.paths.distAll/lib/classpath.txt")
+    //no file in fleet
+    if (Files.exists(srcClassPathTxt)) {
+      def classPathTxt = destLibDir.resolve("classpath.txt")
+      Files.copy(srcClassPathTxt, classPathTxt, StandardCopyOption.REPLACE_EXISTING)
+      Files.writeString(classPathTxt, "\n" + extraJars.join("\n"), StandardOpenOption.APPEND)
+      buildContext.messages.warning("added projector-server to classpath.txt")
+    }
+    else {
+      buildContext.messages.warning("no classpath.txt - no patching")
+    }
+  }
+
   private void logFreeDiskSpace(String phase) {
     CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
   }

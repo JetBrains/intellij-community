@@ -87,6 +87,7 @@ public final class StartupUtil {
   private static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
   private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
+  private static final String PROJECTOR_LAUNCHER_CLASS_NAME = "org.jetbrains.projector.server.ProjectorLauncher";
 
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
@@ -143,6 +144,17 @@ public final class StartupUtil {
     configureLog4j();
 
     activity = activity.endAndStart("LaF init scheduling");
+
+    if (args.length > 0 && Main.CWM_HOST_COMMAND.equals(args[0])) {
+      try {
+        Class<?> projectorMainClass = StartupUtil.class.getClassLoader().loadClass(PROJECTOR_LAUNCHER_CLASS_NAME);
+        MethodHandles.lookup().findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(boolean.class)).invoke();
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     Thread busyThread = Thread.currentThread();
     // EndUserAgreement.Document type is not specified to avoid class loading
