@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.psi.PsiClassOwner;
@@ -15,6 +16,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UastVisibility;
 
 import java.util.*;
 
@@ -36,13 +39,34 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     GlobalJavaInspectionContext javaInspectionContext = globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT);
     if (javaInspectionContext != null) {
       final RefManager refManager = globalContext.getRefManager();
+      Map<String, Set<String>> to2FromCandidatePairsToRemove = new HashMap<>();
+      for (Module module : ModuleManager.getInstance(refManager.getProject()).getModules()) {
+        RefModule refModule = refManager.getRefModule(module);
+        CommonProblemDescriptor[] descriptions = problemDescriptionsProcessor.getDescriptions(Objects.requireNonNull(refModule));
+        if (descriptions != null) {
+          String sourceModuleName = module.getName();
+          for (CommonProblemDescriptor description : descriptions) {
+            QuickFix[] fixes = description.getFixes();
+            if (fixes != null) {
+              Arrays.stream(fixes)
+                .map(fix -> fix instanceof RemoveModuleDependencyFix ? ((RemoveModuleDependencyFix)fix).myDependency : null)
+                .filter(Objects::nonNull)
+                .forEach(targetName -> to2FromCandidatePairsToRemove.computeIfAbsent(targetName, k -> new HashSet<>()).add(sourceModuleName));
+            }
+          }
+        }
+      }
+
       refManager.iterate(new RefJavaVisitor() {
         @Override
         public void visitClass(@NotNull RefClass aClass) {
-          if (aClass.isAnonymous()) return;
+          if (aClass.isAnonymous() || aClass.isLocalClass()) return;
           RefModule toModule = aClass.getModule();
           if (toModule == null) return;
           String toModuleName = toModule.getName();
+          if (!to2FromCandidatePairsToRemove.containsKey(toModuleName)) return;
+          UClass uClass = aClass.getUastElement();
+          if (uClass == null || UastVisibility.PRIVATE == uClass.getVisibility()) return;
           javaInspectionContext.enqueueClassUsagesProcessor(aClass, reference -> {
             PsiFile containingFile = reference.getElement().getContainingFile();
             if (!(containingFile instanceof PsiClassOwner)) {
