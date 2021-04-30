@@ -1371,7 +1371,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         final ID<?, ?> indexId = affectedIndexCandidates.get(i);
         boolean update = acceptsInput(indexId, fc) && getIndexingState(fc, indexId).updateRequired();
 
-        if (doTraceStubUpdates(indexId) && !update) {
+        if (!update && doTraceStubUpdates(indexId)) {
           boolean acceptsInput = acceptsInput(indexId, fc);
           LOG.info("index " + indexId + "should not be updated for " + fc.getFileName() + " because " + (acceptsInput
                                                                                                          ? "update is not required"
