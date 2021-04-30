@@ -52,6 +52,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -383,13 +387,28 @@ public final class IncProjectBuilder {
     context.addBuildListener(new BuildListener() {
       @Override
       public void filesGenerated(@NotNull FileGeneratedEvent event) {
-        final Set<File> outputs = FileCollectionFactory.createCanonicalFileSet();
-        for (Pair<String, String> pair : event.getPaths()) {
-          outputs.add(new File(pair.getFirst()));
+        Collection<Pair<String, String>> paths = event.getPaths();
+        if (paths.size() == 1) {
+          Pair<String, String> first = paths.iterator().next();
+          try {
+            Files.deleteIfExists(Paths.get(first.getFirst(), CLASSPATH_INDEX_FILE_NAME));
+          }
+          catch (IOException ignore) {
+          }
+          return;
         }
-        for (File root : outputs) {
-          //noinspection ResultOfMethodCallIgnored
-          new File(root, CLASSPATH_INDEX_FILE_NAME).delete();
+
+        Set<String> outputs = new HashSet<>();
+        FileSystem fs = FileSystems.getDefault();
+        for (Pair<String, String> pair : paths) {
+          String root = pair.getFirst();
+          if (outputs.add(root)) {
+            try {
+              Files.deleteIfExists(fs.getPath(root, CLASSPATH_INDEX_FILE_NAME));
+            }
+            catch (IOException ignore) {
+            }
+          }
         }
       }
     });

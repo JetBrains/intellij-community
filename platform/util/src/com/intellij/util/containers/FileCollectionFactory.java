@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -80,21 +80,27 @@ public final class FileCollectionFactory {
     return new ObjectOpenCustomHashSet<>(files, FILE_HASH_STRATEGY);
   }
 
-  public static @NotNull Set<Path> createCanonicalPathSet(@NotNull Collection<? extends Path> files) {
-    return new ObjectOpenCustomHashSet<>(files, new SerializableHashStrategy<Path>() {
-      @Override
-      public int hashCode(@Nullable Path o) {
-        return FileUtilRt.pathHashCode(o == null ? null : o.toString());
-      }
+  public static @NotNull Set<Path> createCanonicalPathSet() {
+    return new ObjectOpenCustomHashSet<>(new PathSerializableHashStrategy());
+  }
 
-      @Override
-      public boolean equals(@Nullable Path a, @Nullable Path b) {
-        return FileUtilRt.pathsEqual(a == null ? null : a.toString(), b == null ? null : b.toString());
-      }
-    });
+  public static @NotNull Set<Path> createCanonicalPathSet(@NotNull Collection<? extends Path> files) {
+    return new ObjectOpenCustomHashSet<>(files, new PathSerializableHashStrategy());
   }
 
   public static @NotNull Set<File> createCanonicalFileLinkedSet() {
     return new ObjectLinkedOpenCustomHashSet<>(FILE_HASH_STRATEGY);
+  }
+
+  private static final class PathSerializableHashStrategy implements SerializableHashStrategy<Path> {
+    @Override
+    public int hashCode(@Nullable Path o) {
+      return FileUtilRt.pathHashCode(o == null ? null : o.toString());
+    }
+
+    @Override
+    public boolean equals(@Nullable Path a, @Nullable Path b) {
+      return FileUtilRt.pathsEqual(a == null ? null : a.toString(), b == null ? null : b.toString());
+    }
   }
 }
