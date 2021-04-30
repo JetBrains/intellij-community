@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java.anchor;
 
-import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * An anchor that points to the Java expression, whose result is being evaluated 
  * by a corresponding instruction
  */
-public final class JavaExpressionAnchor implements DfaAnchor {
+public final class JavaExpressionAnchor extends JavaDfaAnchor {
   private final @NotNull PsiExpression myExpression;
 
   public JavaExpressionAnchor(@NotNull PsiExpression expression) {

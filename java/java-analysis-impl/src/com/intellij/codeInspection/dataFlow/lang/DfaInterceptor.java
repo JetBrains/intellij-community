@@ -12,16 +12,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface DfaInterceptor {
   /**
-   * Called before initializer end ({@link com.intellij.codeInspection.dataFlow.lang.ir.inst.EndOfInitializerInstruction}) is processed.
-   * Both static and instance initializer are processed in the same flow.
-   *
-   * @param isStatic whether we are at the end of instance or static initializer
-   * @param state memory state at this point
-   */
-  default void beforeInitializerEnd(boolean isStatic, @NotNull DfaMemoryState state) {
-  }
-
-  /**
    * Called before a value is being pushed to the memory state stack during symbolic interpretation.
    * The value with the same anchor can be pushed many times to the different memory states.
    * Only values that have an anchor are reported here.

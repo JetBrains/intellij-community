@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.defUse;
 
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaEndOfInstanceInitializerAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.BaseVariableAnalyzer;
@@ -35,7 +36,8 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
         return StreamEx.of((DfaVariableValue)value);
       }
     }
-    else if (instruction instanceof EndOfInitializerInstruction) {
+    else if (instruction instanceof PushValueInstruction &&
+             ((PushValueInstruction)instruction).getDfaAnchor() instanceof JavaEndOfInstanceInitializerAnchor) {
       return StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class)
         .filter(var -> var.getPsiVariable() instanceof PsiMember);
     }

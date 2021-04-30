@@ -331,10 +331,8 @@ public final class CommonDataflow {
     private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
 
     @Override
-    public void beforeInitializerEnd(boolean isStatic, @NotNull DfaMemoryState state) {
-      if (!isStatic) {
-        myEndOfInitializerStates.add(state.createCopy());
-      }
+    public void beforeInstanceInitializerEnd(@NotNull DfaMemoryState state) {
+      myEndOfInitializerStates.add(state.createCopy());
     }
 
     @Override

@@ -491,11 +491,6 @@ public class InstructionVisitor {
       .toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
-    myInterceptor.beforeInitializerEnd(instruction.isStatic(), state);
-    return nextInstruction(instruction, runner, state);
-  }
-
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     DfaValue dfaSource = memState.pop();
     DfaValue dfaDest = memState.pop();

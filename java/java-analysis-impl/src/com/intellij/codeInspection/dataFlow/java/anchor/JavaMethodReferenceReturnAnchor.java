@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java.anchor;
 
-import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * then the pushed value is method reference itself (functional type). In contrast, if it's wrapped
  * with {@link JavaMethodReferenceReturnAnchor}, the pushed value is result of method reference invocation. 
  */
-public class JavaMethodReferenceReturnAnchor implements DfaAnchor {
+public class JavaMethodReferenceReturnAnchor extends JavaDfaAnchor {
   private final @NotNull PsiMethodReferenceExpression myMethodReferenceExpression;
 
   public JavaMethodReferenceReturnAnchor(@NotNull PsiMethodReferenceExpression expression) {

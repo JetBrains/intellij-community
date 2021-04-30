@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaEndOfInstanceInitializerAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -45,7 +46,8 @@ final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
     else if (instruction instanceof EscapeInstruction) {
       return StreamEx.of(((EscapeInstruction)instruction).getEscapedVars());
     }
-    else if (instruction instanceof EndOfInitializerInstruction) {
+    else if (instruction instanceof PushValueInstruction && 
+             ((PushValueInstruction)instruction).getDfaAnchor() instanceof JavaEndOfInstanceInitializerAnchor) {
       return StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class)
         .filter(var -> var.getPsiVariable() instanceof PsiMember);
     }

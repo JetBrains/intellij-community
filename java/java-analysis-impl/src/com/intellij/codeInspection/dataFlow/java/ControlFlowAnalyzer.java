@@ -6,6 +6,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaEndOfInstanceInitializerAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
@@ -106,7 +107,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         element.accept(this);
       }
     }
-    addInstruction(new EndOfInitializerInstruction(isStatic));
+    if (!isStatic) {
+      addInstruction(new PushValueInstruction(DfType.TOP, new JavaEndOfInstanceInitializerAnchor()));
+      addInstruction(new PopInstruction());
+    }
     addInstruction(new FlushFieldsInstruction());
   }
 

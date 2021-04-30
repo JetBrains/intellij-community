@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java.anchor;
 
-import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
@@ -13,7 +12,7 @@ import java.util.Objects;
  * An anchor that points to the prefix part of the polyadic expression
  * whose result is being evaluated.
  */
-public class JavaPolyadicPartAnchor implements DfaAnchor {
+public class JavaPolyadicPartAnchor extends JavaDfaAnchor {
   private final @NotNull PsiPolyadicExpression myExpression;
   private final int myLastOperand;
 

@@ -2,10 +2,10 @@
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaDfaAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaEndOfInstanceInitializerAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -22,19 +22,29 @@ public interface JavaDfaInterceptor extends DfaInterceptor {
                           @NotNull DfaValue value,
                           @NotNull DfaAnchor anchor,
                           @NotNull DfaMemoryState state) {
-    if (anchor instanceof JavaPolyadicPartAnchor || anchor instanceof JavaSwitchLabelTakenAnchor) {
-      // do not report by default
+    if (!(anchor instanceof JavaDfaAnchor)) {
+      throw new IllegalStateException("Java anchor expected, got: " + anchor + "(" + anchor.getClass() + ")");
+    }
+    if (anchor instanceof JavaEndOfInstanceInitializerAnchor) {
+      beforeInstanceInitializerEnd(state);
       return;
     }
     if (anchor instanceof JavaMethodReferenceReturnAnchor) {
-      beforeValueReturn(value, (PsiExpression)null, ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression(), state);
+      beforeValueReturn(value, null, ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression(), state);
       return;
     }
-    if (!(anchor instanceof JavaExpressionAnchor)) {
-      throw new IllegalStateException("Java anchor expected, got: " + anchor + "(" + anchor.getClass() + ")");
+    if (anchor instanceof JavaExpressionAnchor) {
+      PsiExpression psiAnchor = ((JavaExpressionAnchor)anchor).getExpression();
+      callBeforeExpressionPush(value, psiAnchor, state, psiAnchor);
     }
-    PsiExpression psiAnchor = ((JavaExpressionAnchor)anchor).getExpression();
-    callBeforeExpressionPush(value, psiAnchor, state, psiAnchor);
+  }
+
+  /**
+   * Called before instance initializer is finished
+   * @param state memory state
+   */
+  default void beforeInstanceInitializerEnd(DfaMemoryState state) {
+    
   }
 
   private void callBeforeExpressionPush(@NotNull DfaValue value,

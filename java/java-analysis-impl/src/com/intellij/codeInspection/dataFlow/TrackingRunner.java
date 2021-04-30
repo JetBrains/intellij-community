@@ -140,10 +140,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     List<DfaMemoryState> endOfInitializerStates = new ArrayList<>();
     var visitor = new InstructionVisitor(new JavaDfaInterceptor() {
       @Override
-      public void beforeInitializerEnd(boolean isStatic, @NotNull DfaMemoryState state) {
-        if (!isStatic) {
-          endOfInitializerStates.add(state.createCopy());
-        }
+      public void beforeInstanceInitializerEnd(@NotNull DfaMemoryState state) {
+        endOfInitializerStates.add(state.createCopy());
       }
     }, true);
     RunnerResult result = analyzeMethodRecursively(body, visitor);

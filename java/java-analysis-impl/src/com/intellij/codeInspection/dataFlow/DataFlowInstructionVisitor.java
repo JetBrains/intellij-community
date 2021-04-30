@@ -341,10 +341,8 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
   }
 
   @Override
-  public void beforeInitializerEnd(boolean isStatic, @NotNull DfaMemoryState state) {
-    if (!isStatic) {
-      myEndOfInitializerStates.add(state.createCopy());
-    }
+  public void beforeInstanceInitializerEnd(@NotNull DfaMemoryState state) {
+    myEndOfInitializerStates.add(state.createCopy());
   }
 
   private static boolean hasTrivialFailContract(PsiCallExpression call) {
