@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.frontend.api
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -26,7 +27,11 @@ annotation class KtAnalysisSessionProviderInternals
  * Should not be used directly, consider using [analyse]/[analyseWithReadAction]/[analyseInModalWindow] instead
  */
 @InvalidWayOfUsingAnalysisSession
-abstract class KtAnalysisSessionProvider {
+abstract class KtAnalysisSessionProvider : Disposable {
+    @Suppress("LeakingThis")
+    @OptIn(KtInternalApiMarker::class)
+    val noWriteActionInAnalyseCallChecker = NoWriteActionInAnalyseCallChecker(this)
+
     @InvalidWayOfUsingAnalysisSession
     abstract fun getAnalysisSession(contextElement: KtElement, factory: ValidityTokenFactory): KtAnalysisSession
 
@@ -41,17 +46,20 @@ abstract class KtAnalysisSessionProvider {
     inline fun <R> analyse(contextElement: KtElement, tokenFactory: ValidityTokenFactory, action: KtAnalysisSession.() -> R): R =
         analyse(getAnalysisSession(contextElement, tokenFactory), tokenFactory, action)
 
-    @OptIn(KtAnalysisSessionProviderInternals::class)
+    @OptIn(KtAnalysisSessionProviderInternals::class, KtInternalApiMarker::class)
     @InvalidWayOfUsingAnalysisSession
     inline fun <R> analyse(analysisSession: KtAnalysisSession, factory: ValidityTokenFactory, action: KtAnalysisSession.() -> R): R {
+        noWriteActionInAnalyseCallChecker.beforeEnteringAnalysisContext()
         factory.beforeEnteringAnalysisContext()
         return try {
             analysisSession.action()
         } finally {
             factory.afterLeavingAnalysisContext()
+            noWriteActionInAnalyseCallChecker.afterLeavingAnalysisContext()
         }
     }
 
+    override fun dispose() {}
 }
 
 /**
