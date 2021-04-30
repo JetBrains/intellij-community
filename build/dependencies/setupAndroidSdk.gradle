@@ -15,14 +15,10 @@
  */
 
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.gradle.util.GFileUtils
 import javax.inject.Inject
 
 repositories {
   maven { url 'https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/' }
-  maven { url 'https://cache-redirector.jetbrains.com/kotlin.bintray.com/kotlin-plugin/' }
-  maven { url 'https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-eap' }
-  maven { url 'https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-bootstrap' }
 }
 
 configurations {
@@ -54,27 +50,6 @@ ext.android_layoutlib_version = "27.1.1.1"
 dependencies {
   androidLayoutlib "org.jetbrains.intellij.deps.android.tools.base:layoutlib-resources:${android_layoutlib_version}"
   androidSdk "org.jetbrains.intellij.deps.android:android-sdk:${android_sdk_version}:@tar.gz"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions-runtime:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-annotation-processing-gradle:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-build-common:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-runner:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-daemon-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-api:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-model:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-reflect:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-script-runtime:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-common:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-jvm:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-common:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-test:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-test-common:${kotlin_version}"
 }
 
 task syncAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androidLayoutlib], type: SyncAndroidSdkTask) {
