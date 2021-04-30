@@ -118,17 +118,16 @@ final class UnindexedFilesFinder {
                 if (myFileBasedIndex.needsFileContentLoading(indexId)) {
                   FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
                   boolean indexInfrastructureExtensionInvalidated = false;
-                  if (fileIndexingState == FileIndexingState.UP_TO_DATE) {
-                    if (myShouldProcessUpToDateFiles) {
-                      for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
-                        long nowTime = System.nanoTime();
-                        try {
-                          if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
-                            indexInfrastructureExtensionInvalidated = true;
-                          }
-                        } finally {
-                          timeProcessingUpToDateFiles.addAndGet(System.nanoTime() - nowTime);
+                  if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
+                    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
+                      long nowTime = System.nanoTime();
+                      try {
+                        if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
+                          indexInfrastructureExtensionInvalidated = true;
                         }
+                      }
+                      finally {
+                        timeProcessingUpToDateFiles.addAndGet(System.nanoTime() - nowTime);
                       }
                     }
                   }
@@ -137,7 +136,8 @@ final class UnindexedFilesFinder {
                   }
                   if (fileIndexingState.updateRequired()) {
                     if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
-                      FileBasedIndexImpl.LOG.info("Scheduling indexing of " + indexedFile.getFileName() + " by request of index " + indexId);
+                      FileBasedIndexImpl.LOG.info("Scheduling indexing of " + indexedFile.getFileName() + " by request of index " + indexId +
+                                                  (indexInfrastructureExtensionInvalidated ? " because extension invalidated" : ""));
                     }
 
                     long nowTime = System.nanoTime();
