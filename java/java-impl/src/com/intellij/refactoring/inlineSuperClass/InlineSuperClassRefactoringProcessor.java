@@ -17,6 +17,7 @@
 package com.intellij.refactoring.inlineSuperClass;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -259,6 +260,9 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       }
       else if (PsiTreeUtil.isAncestor(mySuperClass, targetClass, false)) {
         conflicts.putValue(targetClass, JavaRefactoringBundle.message("inline.super.no.inner.class", targetClass.getName()));
+      }
+      else if (!targetClass.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+        conflicts.putValue(targetClass, JavaRefactoringBundle.message("inline.superclass.foreign.language.conflict.message", targetClass.getLanguage().getDisplayName()));
       }
       else {
         for (MemberInfo info : myMemberInfos) {
