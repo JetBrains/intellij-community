@@ -117,7 +117,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private final Map<Class, JBCheckBox> myCheckBoxes = new HashMap<>();
   private final List<JBCheckBox> myAutoClicked = new ArrayList<>();
   private String myTestSearchFilter;
-  private final ActionCallback myTreeHasBuilt = new ActionCallback();
   private final List<Pair<String, JBCheckBox>> myTriggeredCheckboxes = new ArrayList<>();
   private final TreeExpander myTreeExpander;
   private final CopyPasteDelegator myCopyPasteDelegator;
@@ -148,7 +147,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     //Stop code analyzer to speedup EDT
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
-    IdeFocusManager.getInstance(myProject).typeAheadUntil(myTreeHasBuilt, "FileStructurePopup");
 
     myTreeActionsOwner = new TreeStructureActionsOwner(myTreeModel);
     myTreeActionsOwner.setActionIncluded(Sorter.ALPHA_SORTER, true);
@@ -282,11 +280,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       .createPopup();
 
     Disposer.register(myPopup, this);
-    Disposer.register(myPopup, () -> {
-      if (!myTreeHasBuilt.isDone()) {
-        myTreeHasBuilt.setRejected();
-      }
-    });
     myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
     myPopup.showCenteredInCurrentWindow(myProject);
 
@@ -296,7 +289,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
-      myTreeHasBuilt.setDone();
       installUpdater();
     }));
   }

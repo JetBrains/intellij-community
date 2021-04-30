@@ -638,8 +638,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       if (surrendersFocusOnKeyStroke()) {
         // this replaces focus request in JTable.processKeyBinding
         final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(this);
-        focusManager.setTypeaheadEnabled(false);
-        focusManager.requestFocus(editorComp, true).doWhenProcessed(() -> focusManager.setTypeaheadEnabled(true));
+        focusManager.requestFocus(editorComp, true);
       }
 
       setCellEditor(editor);

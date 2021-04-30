@@ -242,14 +242,12 @@ private class NativeMacMessageManager : MacMessages() {
     })
 
     try {
-      IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false)
       StackingPopupDispatcher.getInstance().hidePersistentPopups()
       info.dialog.show()
     }
     finally {
       info.disposer()
       StackingPopupDispatcher.getInstance().restorePersistentPopups()
-      IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true)
 
       synchronized(myLock) {
         myInfos[index] = null

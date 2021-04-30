@@ -71,18 +71,15 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract @Nullable Component getFocusedDescendantFor(@NotNull Component comp);
 
   /**
-   * @deprecated use {@link #typeAheadUntil(ActionCallback, String)} instead
+   * @deprecated This method does nothing currently.
    */
   @Deprecated
-  public void typeAheadUntil(ActionCallback done) {
-    typeAheadUntil(done, "No cause has been provided");
-  }
+  public void typeAheadUntil(ActionCallback done) {}
 
   /**
-   * Aggregates all key events until given callback object is processed.
-   *
-   * @param done action callback
+   * @deprecated This method does nothing currently.
    */
+  @Deprecated
   public void typeAheadUntil(ActionCallback done, @NotNull String cause) {}
 
   /**
@@ -99,11 +96,10 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract boolean isFocusTransferEnabled();
 
   /**
-   * Enables or disables typeahead.
-   *
-   * @see #typeAheadUntil(ActionCallback)
+   * @deprecated This method does nothing currently
    */
-  public abstract void setTypeaheadEnabled(boolean enabled);
+  @Deprecated
+  public void setTypeaheadEnabled(boolean enabled) {}
 
   /**
    * Computes effective focus owner.

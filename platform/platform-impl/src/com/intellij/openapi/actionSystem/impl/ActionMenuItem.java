@@ -266,13 +266,11 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
       IdeFocusManager focusManager = IdeFocusManager.findInstanceByContext(myContext);
-      ActionCallback typeAhead = new ActionCallback();
       String id = ActionManager.getInstance().getId(myAction.getAction());
       if (id != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
       }
 
-      focusManager.typeAheadUntil(typeAhead, getText());
       focusManager.runOnOwnContext(myContext, () -> {
         AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
         final AnActionEvent event = new AnActionEvent(
@@ -283,12 +281,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
           ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
           actionManager.fireBeforeActionPerformed(menuItemAction, event);
-          focusManager.doWhenFocusSettlesDown(typeAhead::setDone);
           ActionUtil.performActionDumbAware(menuItemAction, event);
           actionManager.fireAfterActionPerformed(menuItemAction, event);
-        }
-        else {
-          typeAhead.setDone();
         }
       });
     }
