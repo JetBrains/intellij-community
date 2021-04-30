@@ -90,28 +90,32 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
     val toolbarSettingsService = ToolbarSettings.Companion.getInstance()
     if (toolbarSettingsService is ExperimentalToolbarSettings) {
-      logger.info("ToolbarSettingsService is ExperimentalToolbarSettings")
-      logger.info("Show new toolbar: ${toolbarSettingsService.showNewToolbar}, presentation mode: ${instance.presentationMode}")
-      logger.info("Show old main toolbar: ${toolbarSettingsService.isToolbarVisible()}, old navbar visible: ${toolbarSettingsService.isNavBarVisible()}")
+      val visibleAndEnabled = toolbarSettingsService.showNewToolbar && !instance.presentationMode
+      if(visibleAndEnabled) {
+        logger.info("ToolbarSettingsService is ExperimentalToolbarSettings")
+        logger.info("Show new toolbar: ${toolbarSettingsService.showNewToolbar}, presentation mode: ${instance.presentationMode}")
+        logger.info(
+          "Show old main toolbar: ${toolbarSettingsService.isToolbarVisible()}, old navbar visible: ${toolbarSettingsService.isNavBarVisible()}")
 
-      myPanelWrapper.add(myPanel, BorderLayout.CENTER)
-      myPanel.add(myRightPanel, BorderLayout.EAST)//"growx, align trailing")
-      myPanel.add(myCenterPanel, BorderLayout.CENTER)//"growx, align leading")
-      myPanel.add(myLeftPanel, BorderLayout.WEST)//"growx, align leading")
+        myPanelWrapper.add(myPanel, BorderLayout.CENTER)
+        myPanel.add(myRightPanel, BorderLayout.EAST) //"growx, align trailing")
+        myPanel.add(myCenterPanel, BorderLayout.CENTER) //"growx, align leading")
+        myPanel.add(myLeftPanel, BorderLayout.WEST) //"growx, align leading")
 
-      val newToolbarActions = CustomActionsSchema.getInstance().getCorrectedAction("NewToolbarActions")
+        val newToolbarActions = CustomActionsSchema.getInstance().getCorrectedAction("NewToolbarActions")
 
-      val listChildren = (newToolbarActions as ActionGroup).getChildren(null)
-      addGroupComponent(myLeftPanel, "align leading", listChildren[0])
-      addGroupComponent(myCenterPanel, "align trailing, width 0:pref:max", listChildren[1])
-      addGroupComponent(myRightPanel, "align trailing, width pref!", listChildren[2])
+        val listChildren = (newToolbarActions as ActionGroup).getChildren(null)
+        addGroupComponent(myLeftPanel, "align leading", listChildren[0])
+        addGroupComponent(myCenterPanel, "align trailing, width 0:pref:max", listChildren[1])
+        addGroupComponent(myRightPanel, "align trailing, width pref!", listChildren[2])
 
-      myPanelWrapper.isVisible = toolbarSettingsService.showNewToolbar && !instance.presentationMode
-      myPanelWrapper.isEnabled = myPanelWrapper.isVisible
-      myPanel.isVisible = myPanelWrapper.isVisible
-      myLeftPanel.isVisible = myPanelWrapper.isVisible
-      myRightPanel.isVisible = myPanelWrapper.isVisible
-      logger.info("finish revalidate newtoolbar")
+        myPanelWrapper.isVisible = visibleAndEnabled
+        myPanelWrapper.isEnabled = visibleAndEnabled
+        myPanel.isVisible = visibleAndEnabled
+        myLeftPanel.isVisible = visibleAndEnabled
+        myRightPanel.isVisible = visibleAndEnabled
+        logger.info("finish revalidate newtoolbar")
+      }
     }
     else {
       myPanel.isVisible = false
