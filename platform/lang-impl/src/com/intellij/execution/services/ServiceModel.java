@@ -47,6 +47,13 @@ final class ServiceModel implements Disposable, InvokerSupplier {
       return new NotLoadedLastBfsIt<>(roots, tree);
     }
   };
+  static final TreeTraversal ONLY_LOADED_BFS = new TreeTraversal("ONLY_LOADED_BFS") {
+    @NotNull
+    @Override
+    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
+      return new OnlyLoadedBfsIt<>(roots, tree);
+    }
+  };
   private static final NotNullizer ourNotNullizer = new NotNullizer("ServiceViewTreeTraversal.NotNull");
 
   private final Project myProject;
@@ -803,6 +810,35 @@ final class ServiceModel implements Disposable, InvokerSupplier {
         if (iterable != null) {
           JBIterable.from(iterable).map(ourNotNullizer::notNullize).addAllTo(myQueue);
         }
+      }
+      if (myQueue.isEmpty()) {
+        return stop();
+      }
+      myTop = ourNotNullizer.nullize(myQueue.remove());
+      return myTop;
+    }
+  }
+
+  private static final class OnlyLoadedBfsIt<T> extends TreeTraversal.It<T> {
+    Deque<T> myQueue = new ArrayDeque<>();
+    T myTop;
+
+    OnlyLoadedBfsIt(@NotNull Iterable<? extends T> roots, Function<? super T, ? extends Iterable<? extends T>> tree) {
+      super(tree);
+      JBIterable.from(roots).map(ourNotNullizer::notNullize).addAllTo(myQueue);
+    }
+
+    @Override
+    public T nextImpl() {
+      if (myTop != null) {
+        if (!(myTop instanceof ServiceNode) ||
+            ((ServiceNode)myTop).isChildrenInitialized() || ((ServiceNode)myTop).isLoaded()) {
+          Iterable<? extends T> iterable = tree.fun(myTop);
+          if (iterable != null) {
+            JBIterable.from(iterable).map(ourNotNullizer::notNullize).addAllTo(myQueue);
+          }
+        }
+        myTop = null;
       }
       if (myQueue.isEmpty()) {
         return stop();
