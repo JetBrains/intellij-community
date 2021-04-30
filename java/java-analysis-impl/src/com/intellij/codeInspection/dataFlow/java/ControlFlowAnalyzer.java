@@ -412,7 +412,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                       getTrapsInsideElement(exitedStatement));
     } else {
       // Jumping out of analyzed code fragment
-      controlTransfer(ReturnTransfer.INSTANCE, getTrapsInsideElement(myCodeFragment));
+      controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, getTrapsInsideElement(myCodeFragment));
     }
   }
 
@@ -433,7 +433,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       controlTransfer(createTransfer(body, body), getTrapsInsideElement(body));
     } else {
       // Jumping out of analyzed code fragment
-      controlTransfer(ReturnTransfer.INSTANCE, getTrapsInsideElement(myCodeFragment));
+      controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, getTrapsInsideElement(myCodeFragment));
     }
     finishElement(statement);
   }
@@ -839,7 +839,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new PopInstruction());
       }
 
-      addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, myTrapStack), statement));
+      addInstruction(new ReturnInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, myTrapStack), statement));
     }
     finishElement(statement);
   }
@@ -2100,7 +2100,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                     @Nullable PsiType type) {
     // Transfer value is pushed to avoid emptying stack beyond this point
     pushTrap(new JvmTrap.InsideInlinedBlock(block));
-    addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
+    addInstruction(new PushInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null));
     myExpressionBlockContext =
       new ExpressionBlockContext(myExpressionBlockContext, block, resultNullability == Nullability.NOT_NULL, target, type);
     startElement(block);

@@ -3,15 +3,11 @@
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.jvm.ReturnTransfer;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.FList;
@@ -94,7 +90,7 @@ public final class ControlFlow {
    * Finalize current control flow. No more instructions are accepted after this call
    */
   public void finish() {
-    addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
+    addInstruction(new ReturnInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null));
 
     myLoopNumbers = LoopAnalyzer.calcInLoop(this);
     new LiveVariablesAnalyzer(this).flushDeadVariablesOnStatementFinish();

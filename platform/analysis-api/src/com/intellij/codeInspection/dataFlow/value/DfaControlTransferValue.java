@@ -70,6 +70,16 @@ public final class DfaControlTransferValue extends DfaValue {
   }
 
   /**
+   * A transfer that returns from the current scope
+   */
+  public static final TransferTarget RETURN_TRANSFER = new TransferTarget() {
+    @Override
+    public String toString() {
+      return "Return";
+    }
+  };
+
+  /**
    * Represents traps (e.g. catch sections) that may prevent normal transfer
    */
   public interface Trap {

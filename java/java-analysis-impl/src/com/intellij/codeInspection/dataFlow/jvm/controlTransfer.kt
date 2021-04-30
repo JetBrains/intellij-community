@@ -39,9 +39,6 @@ data class ExitFinallyTransfer(private val enterFinally: JvmTrap.EnterFinally) :
 
   override fun toString(): String = "ExitFinally"
 }
-object ReturnTransfer : TransferTarget {
-  override fun toString(): String = "Return"
-}
 
 sealed class JvmTrap(private val anchor: PsiElement) : DfaControlTransferValue.Trap {
   open fun link(instruction: ControlTransferInstruction) {}
@@ -103,7 +100,9 @@ sealed class JvmTrap(private val anchor: PsiElement) : DfaControlTransferValue.T
   }
   class InsideInlinedBlock(block: PsiCodeBlock): JvmTrap(block) {
     override fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState> {
-      (handler.state.pop() as DfaControlTransferValue).target as ReturnTransfer
+      if ((handler.state.pop() as DfaControlTransferValue).target !== DfaControlTransferValue.RETURN_TRANSFER) {
+        throw IllegalStateException()
+      }
       return handler.doDispatch()
     }
   }
