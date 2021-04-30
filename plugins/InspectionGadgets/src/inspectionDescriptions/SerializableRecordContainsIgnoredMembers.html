@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports members <code>writeObject</code>, <code>readObject</code>, <code>readObjectNoData</code>, <code>writeExternal</code>,
-<code>readExternal</code>, <code>serialPersistentFields</code> defined in <code>record</code> class.
-These members are ignored during serialization/deserialization of records.
+Reports the methods <code>writeObject()</code>, <code>readObject()</code>, <code>readObjectNoData()</code>, <code>writeExternal()</code> and
+<code>readExternal()</code> or the field <code>serialPersistentFields</code> defined in a <code>record</code> class.
+These members are not used for the serialization/deserialization of records.
 <p>Example:</p>
 <pre>
   record R1() implements Serializable {
