@@ -3,6 +3,7 @@ package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -361,11 +362,10 @@ public final class ActionMacro {
       if (action == null) return;
       Presentation presentation = action.getTemplatePresentation().clone();
       AnActionEvent event = new AnActionEvent(null, context, "MACRO_PLAYBACK", presentation, ActionManager.getInstance(), 0);
-      action.beforeActionPerformedUpdate(event);
-      if (!presentation.isEnabled()) {
+      if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
         return;
       }
-      action.actionPerformed(event);
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
 
     @Override

@@ -53,6 +53,7 @@ import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.model.psi.impl.ReferencesKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -880,9 +881,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public Presentation testAction(@NotNull AnAction action) {
     TestActionEvent e = new TestActionEvent(action);
-    action.beforeActionPerformedUpdate(e);
-    if (e.getPresentation().isEnabled() && e.getPresentation().isVisible()) {
-      action.actionPerformed(e);
+    if (ActionUtil.lastUpdateAndCheckDumb(action, e, true)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, e);
     }
     return e.getPresentation();
   }

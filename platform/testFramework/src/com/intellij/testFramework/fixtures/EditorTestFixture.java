@@ -130,13 +130,9 @@ public class EditorTestFixture {
     final ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final AnAction action = managerEx.getAction(actionId);
     final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
-
-    action.beforeActionPerformedUpdate(event);
-
-    if (!event.getPresentation().isEnabled()) {
+    if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       return false;
     }
-
     ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     return true;
   }

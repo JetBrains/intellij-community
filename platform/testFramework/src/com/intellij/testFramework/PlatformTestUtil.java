@@ -32,6 +32,7 @@ import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -593,12 +594,11 @@ public final class PlatformTestUtil {
   public static void invokeNamedAction(@NotNull String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     assertNotNull(action);
-    final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
-    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
-    action.beforeActionPerformedUpdate(event);
-    assertTrue(presentation.isEnabled());
-    action.actionPerformed(event);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
+    assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, event, false));
+    assertTrue(event.getPresentation().isEnabled());
+    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
   }
 
   public static void assertTiming(@NotNull String message, final long expectedMs, final long actual) {
