@@ -68,7 +68,7 @@ public class ControlTransferHandler {
     if (head != null) {
       return ((JvmTrap)head).dispatch(this);
     }
-    return ((JvmTransferTarget)target).dispatch(state, runner);
+    return target.dispatch(state, runner);
   }
 
   private static List<TypeConstraint> allCaughtTypes(PsiParameter param) {

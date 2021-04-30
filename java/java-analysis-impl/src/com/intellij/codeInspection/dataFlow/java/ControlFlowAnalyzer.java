@@ -416,7 +416,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void controlTransfer(@NotNull JvmTransferTarget target, FList<DfaControlTransferValue.Trap> traps) {
+  private void controlTransfer(@NotNull DfaControlTransferValue.TransferTarget target, FList<DfaControlTransferValue.Trap> traps) {
     addInstruction(new ControlTransferInstruction(myFactory.controlTransfer(target, traps)));
   }
 

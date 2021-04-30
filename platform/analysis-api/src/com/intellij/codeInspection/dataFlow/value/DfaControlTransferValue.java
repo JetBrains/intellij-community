@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FList;
 import one.util.streamex.StreamEx;
@@ -55,6 +58,13 @@ public final class DfaControlTransferValue extends DfaValue {
      * @return list of possible instruction offsets for given target
      */
     default @NotNull Collection<@NotNull Integer> getPossibleTargets() {
+      return Collections.emptyList();
+    }
+
+    /** 
+     * @return next instruction states assuming no traps 
+     */
+    default @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state, DataFlowRunner runner) {
       return Collections.emptyList();
     }
   }

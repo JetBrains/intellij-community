@@ -10,23 +10,18 @@ import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ControlTransferInstruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
+import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.TransferTarget
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.psi.*
 
-interface JvmTransferTarget : DfaControlTransferValue.TransferTarget {
-  /** @return next instruction states assuming no traps */
-  fun dispatch(state: DfaMemoryState, runner: DataFlowRunner) : List<DfaInstructionState> = emptyList()
-}
-data class ExceptionTransfer(val throwable: TypeConstraint) : JvmTransferTarget {
+data class ExceptionTransfer(val throwable: TypeConstraint) : TransferTarget {
   override fun toString(): String = "Exception($throwable)"
 }
-data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val varsToFlush: List<VariableDescriptor>) : JvmTransferTarget {
+data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val varsToFlush: List<VariableDescriptor>) : TransferTarget {
   override fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> {
     val varFactory = runner.factory.varFactory
     varsToFlush.forEach { desc -> state.flushVariable(varFactory.createVariableValue(desc)) }
-    return listOf(
-      DfaInstructionState(runner.getInstruction(offset.instructionOffset),
-                                                                                          state))
+    return listOf(DfaInstructionState(runner.getInstruction(offset.instructionOffset), state))
   }
 
   override fun getPossibleTargets(): List<Int> = listOf(offset.instructionOffset)
@@ -34,7 +29,7 @@ data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, privat
 }
 // ExitFinallyTransfer formally depends on enterFinally that has backLinks which are instructions bound to the DfaValueFactory
 // however, we actually use only instruction offsets from there, and binding to another factory does not change the offsets.
-data class ExitFinallyTransfer(private val enterFinally: JvmTrap.EnterFinally) : JvmTransferTarget {
+data class ExitFinallyTransfer(private val enterFinally: JvmTrap.EnterFinally) : TransferTarget {
   override fun getPossibleTargets(): Set<Int> = enterFinally.backLinks.asIterable().flatMap { it.getPossibleTargetIndices() }
     .filter { index -> index != enterFinally.jumpOffset.instructionOffset }.toSet()
 
@@ -44,7 +39,7 @@ data class ExitFinallyTransfer(private val enterFinally: JvmTrap.EnterFinally) :
 
   override fun toString(): String = "ExitFinally"
 }
-object ReturnTransfer : JvmTransferTarget {
+object ReturnTransfer : TransferTarget {
   override fun toString(): String = "Return"
 }
 
