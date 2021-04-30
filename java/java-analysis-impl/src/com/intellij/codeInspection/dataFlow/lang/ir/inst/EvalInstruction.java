@@ -4,10 +4,11 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,8 +35,21 @@ public abstract class EvalInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public final DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitEval(this, runner, stateBefore);
+  public final DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+    int operands = getOperands();
+    DfaValue[] args = new DfaValue[operands];
+    for (int i = operands - 1; i >= 0; i--) {
+      args[i] = stateBefore.pop();
+    }
+    DfaValue value = eval(runner.getFactory(), stateBefore, args);
+    if (value instanceof DfaVariableValue && JavaDfaHelpers.mayLeakFromType(value.getDfType())) {
+      DfaVariableValue qualifier = ((DfaVariableValue)value).getQualifier();
+      if (qualifier != null) {
+        JavaDfaHelpers.dropLocality(qualifier, stateBefore);
+      }
+    }
+    pushResult(runner, stateBefore, value, args);
+    return nextStates(runner, stateBefore);
   }
 
   /**

@@ -4,12 +4,16 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Instruction to ensure that a specific condition is hold on top-of-stack value
@@ -61,10 +65,6 @@ public class EnsureInstruction extends Instruction {
     return instruction;
   }
 
-  public boolean isMakeEphemeral() {
-    return myMakeEphemeral;
-  }
-
   public @Nullable UnsatisfiedConditionProblem getProblem() {
     return myProblem;
   }
@@ -78,10 +78,48 @@ public class EnsureInstruction extends Instruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner,
-                                      DfaMemoryState stateBefore,
-                                      InstructionVisitor visitor) {
-    return visitor.visitEnsure(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+    DfaValue tosValue = stateBefore.isEmptyStack() ? runner.getFactory().getUnknown() : stateBefore.peek();
+    DfaCondition cond = createCondition(tosValue);
+    UnsatisfiedConditionProblem problem = getProblem();
+    if (cond.equals(DfaCondition.getTrue())) {
+      if (problem != null) {
+        runner.getInterceptor().onCondition(problem, tosValue, ThreeState.NO, stateBefore);
+      }
+      return nextStates(runner, stateBefore);
+    }
+    if (myTransferValue == null) {
+      boolean satisfied = stateBefore.applyCondition(cond);
+      if (problem != null) {
+        runner.getInterceptor().onCondition(problem, tosValue, satisfied ? ThreeState.UNSURE : ThreeState.YES, stateBefore);
+      }
+      if (!satisfied) {
+        return DfaInstructionState.EMPTY_ARRAY;
+      }
+      return nextStates(runner, stateBefore);
+    }
+    DfaMemoryState falseState = stateBefore.createCopy();
+    boolean trueStatePossible = stateBefore.applyCondition(cond);
+    boolean falseStatePossible = falseState.applyCondition(cond.negate());
+    List<DfaInstructionState> result = new ArrayList<>();
+    if (trueStatePossible) {
+      result.add(nextState(runner, stateBefore));
+    }
+    if (problem != null) {
+      ThreeState failed = !trueStatePossible ? ThreeState.YES :
+                          !falseStatePossible ? ThreeState.NO : ThreeState.UNSURE;
+      runner.getInterceptor().onCondition(problem, tosValue, failed, stateBefore);
+    }
+    if (falseStatePossible) {
+      List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, runner, myTransferValue);
+      if (myMakeEphemeral) {
+        for (DfaInstructionState negState : states) {
+          negState.getMemoryState().markEphemeral();
+        }
+      }
+      result.addAll(states);
+    }
+    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   public @NotNull DfaCondition createCondition(@NotNull DfaValue tosValue) {

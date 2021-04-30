@@ -457,7 +457,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
       }
     };
-    return dfaRunner.analyzeMethod(body, new InstructionVisitor(returnChecker)) == RunnerResult.OK;
+    return dfaRunner.analyzeMethod(body, returnChecker) == RunnerResult.OK;
   }
 
   protected boolean insertNotNullCheckIfPossible() {
@@ -492,7 +492,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
       }
     };
-    final RunnerResult rc = dfaRunner.analyzeMethod(block, new InstructionVisitor(interceptor));
+    final RunnerResult rc = dfaRunner.analyzeMethod(block, interceptor);
     return rc == RunnerResult.OK && interceptor.myVisited ? DfaNullability.toNullability(interceptor.myNullability) : Nullability.UNKNOWN;
   }
 

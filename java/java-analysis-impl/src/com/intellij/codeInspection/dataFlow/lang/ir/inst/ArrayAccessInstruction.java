@@ -18,16 +18,25 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
-import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.intValue;
 
 public class ArrayAccessInstruction extends ExpressionPushingInstruction {
   private final @NotNull DfaValue myValue;
@@ -59,23 +68,60 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
     return instruction;
   }
 
-  @Nullable
-  public DfaControlTransferValue getOutOfBoundsExceptionTransfer() {
-    return myTransferValue;
-  }
-
   @NotNull
   public DfaValue getValue() {
     return myValue;
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitArrayAccess(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+    DfaValue index = stateBefore.pop();
+    DfaValue array = stateBefore.pop();
+    boolean alwaysOutOfBounds = !applyBoundsCheck(stateBefore, array, index);
+    if (myExpression != null) {
+      ThreeState failed = alwaysOutOfBounds ? ThreeState.YES : ThreeState.UNSURE;
+      runner.getInterceptor().onCondition(new ArrayIndexProblem(myExpression), index, failed, stateBefore);
+    }
+    if (alwaysOutOfBounds) {
+      if (myTransferValue != null) {
+        List<DfaInstructionState> states = ControlTransferHandler.dispatch(stateBefore, runner, myTransferValue);
+        for (DfaInstructionState state : states) {
+          state.getMemoryState().markEphemeral();
+        }
+        return states.toArray(DfaInstructionState.EMPTY_ARRAY);
+      }
+      return DfaInstructionState.EMPTY_ARRAY;
+    }
+
+    DfaValue result = myValue;
+    LongRangeSet rangeSet = DfIntType.extractRange(stateBefore.getDfType(index));
+    DfaValue arrayElementValue = ArrayElementDescriptor.getArrayElementValue(runner.getFactory(), array, rangeSet);
+    if (!DfaTypeValue.isUnknown(arrayElementValue)) {
+      result = arrayElementValue;
+    }
+    if (!(result instanceof DfaVariableValue) && array instanceof DfaVariableValue) {
+      for (DfaVariableValue value : ((DfaVariableValue)array).getDependentVariables().toArray(new DfaVariableValue[0])) {
+        if (value.getQualifier() == array) {
+          JavaDfaHelpers.dropLocality(value, stateBefore);
+        }
+      }
+    }
+    pushResult(runner, stateBefore, result);
+    return nextStates(runner, stateBefore);
   }
-  
-  public @Nullable PsiArrayAccessExpression getExpression() {
-    return myExpression;
+
+  private static boolean applyBoundsCheck(@NotNull DfaMemoryState memState,
+                                          @NotNull DfaValue array,
+                                          @NotNull DfaValue index) {
+    DfaValueFactory factory = index.getFactory();
+    DfaValue length = JvmSpecialField.ARRAY_LENGTH.createValue(factory, array);
+    DfaCondition lengthMoreThanZero = length.cond(RelationType.GT, intValue(0));
+    if (!memState.applyCondition(lengthMoreThanZero)) return false;
+    DfaCondition indexNonNegative = index.cond(RelationType.GE, intValue(0));
+    if (!memState.applyCondition(indexNonNegative)) return false;
+    DfaCondition indexLessThanLength = index.cond(RelationType.LT, length);
+    if (!memState.applyCondition(indexLessThanLength)) return false;
+    return true;
   }
 
   @Override

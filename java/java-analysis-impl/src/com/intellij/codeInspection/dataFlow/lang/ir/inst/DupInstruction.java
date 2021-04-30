@@ -4,14 +4,13 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class DupInstruction extends Instruction {
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState memState, InstructionVisitor visitor) {
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState memState) {
     memState.push(memState.peek());
-    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
-    return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
+    return nextStates(runner, memState);
   }
 
   public String toString() {

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
@@ -29,15 +29,23 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-/* package */ final class DfaCallArguments {
+public final class DfaCallArguments {
   final DfaValue myQualifier;
   final DfaValue[] myArguments;
   final @NotNull MutationSignature myMutation;
 
-  DfaCallArguments(DfaValue qualifier, DfaValue[] arguments, @NotNull MutationSignature mutation) {
+  public DfaCallArguments(DfaValue qualifier, DfaValue[] arguments, @NotNull MutationSignature mutation) {
     myQualifier = qualifier;
     myArguments = arguments;
     myMutation = mutation;
+  }
+
+  public DfaValue getQualifier() {
+    return myQualifier;
+  }
+
+  public DfaValue[] getArguments() {
+    return myArguments;
   }
 
   @Override
@@ -93,7 +101,7 @@ import java.util.Set;
     DfaValue qualifierValue = null;
     if (call instanceof PsiMethodCallExpression) {
       PsiExpression qualifier = ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
-      qualifierValue = DfaExpressionFactory.getExpressionDfaValue(factory, qualifier);
+      qualifierValue = JavaDfaValueFactory.getExpressionDfaValue(factory, qualifier);
     }
     if (qualifierValue == null) {
       qualifierValue = factory.getUnknown();
@@ -105,7 +113,7 @@ import java.util.Set;
     for (int i = 0; i < parameters.length; i++) {
       DfaValue argValue = null;
       if (i < args.length && (!varArgCall || i < parameters.length - 1)) {
-        argValue = DfaExpressionFactory.getExpressionDfaValue(factory, args[i]);
+        argValue = JavaDfaValueFactory.getExpressionDfaValue(factory, args[i]);
       }
       if (argValue == null) {
         argValue = factory.getUnknown();

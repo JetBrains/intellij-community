@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -46,6 +47,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
   private boolean myInlining = true;
   private boolean myCancelled = false;
   private boolean myWasForciblyMerged = false;
+  private @NotNull DfaInterceptor myInterceptor = DfaInterceptor.EMPTY;
 
   public StandardDataFlowRunner(@NotNull Project project) {
     this(project, null);
@@ -84,7 +86,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
   }
 
   private @Nullable Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock,
-                                                                   @NotNull InstructionVisitor visitor,
+                                                                   @NotNull DfaInterceptor interceptor,
                                                                    boolean allowInlining) {
     PsiElement container = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class, PsiLambdaExpression.class);
     if (container != null && (!(container instanceof PsiClass) || PsiUtil.isLocalOrAnonymousClass((PsiClass)container))) {
@@ -93,7 +95,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
         final RunnerResult result;
         try {
           myInlining = allowInlining;
-          result = analyzeMethod(block, visitor);
+          result = analyzeMethod(block, interceptor);
         }
         finally {
           myInlining = true;
@@ -117,12 +119,12 @@ public class StandardDataFlowRunner implements DataFlowRunner {
    * On the other hand, inlining will normally work inside the supplied method.
    *
    * @param psiBlock method/lambda/class initializer body
-   * @param visitor a visitor to use
+   * @param interceptor an interceptor to use
    * @return result status
    */
-  public final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
-    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, false);
-    return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, initialStates);
+  public final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull DfaInterceptor interceptor) {
+    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, interceptor, false);
+    return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, interceptor, initialStates);
   }
 
   /**
@@ -130,40 +132,40 @@ public class StandardDataFlowRunner implements DataFlowRunner {
    * Usually inlining works, e.g. for lambdas inside stream API calls.
    *
    * @param psiBlock method/lambda/class initializer body
-   * @param visitor a visitor to use
+   * @param interceptor an interceptor to use
    * @return result status
    */
-  public final @NotNull RunnerResult analyzeMethodWithInlining(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
-    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, true);
+  public final @NotNull RunnerResult analyzeMethodWithInlining(@NotNull PsiElement psiBlock, @NotNull DfaInterceptor interceptor) {
+    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, interceptor, true);
     if (initialStates == null) {
       return RunnerResult.NOT_APPLICABLE;
     }
     if (initialStates.isEmpty()) {
       return RunnerResult.OK;
     }
-    return analyzeMethod(psiBlock, visitor, initialStates);
+    return analyzeMethod(psiBlock, interceptor, initialStates);
   }
 
   /**
    * Analyze given code-block without analyzing any parent and children context
    * @param block block to analyze
-   * @param visitor visitor to use
+   * @param interceptor an interceptor to use
    * @return result status
    */
-  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block, @NotNull InstructionVisitor visitor) {
-    return analyzeMethod(block, visitor, Collections.singleton(createMemoryState()));
+  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block, @NotNull DfaInterceptor interceptor) {
+    return analyzeMethod(block, interceptor, Collections.singleton(createMemoryState()));
   }
 
   final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
-                                            @NotNull InstructionVisitor visitor,
+                                            @NotNull DfaInterceptor interceptor,
                                             @NotNull Collection<? extends DfaMemoryState> initialStates) {
     ControlFlow flow = buildFlow(psiBlock);
     if (flow == null) return RunnerResult.NOT_APPLICABLE;
-    return analyzeFlow(psiBlock, visitor, initialStates, flow);
+    return analyzeFlow(psiBlock, interceptor, initialStates, flow);
   }
 
   @NotNull RunnerResult analyzeFlow(@NotNull PsiElement psiBlock,
-                                    @NotNull InstructionVisitor visitor,
+                                    @NotNull DfaInterceptor interceptor,
                                     @NotNull Collection<? extends DfaMemoryState> initialStates,
                                     ControlFlow flow) {
     List<DfaInstructionState> startingStates = createInitialInstructionStates(psiBlock, initialStates, flow);
@@ -171,7 +173,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
       return RunnerResult.ABORTED;
     }
 
-    return interpret(psiBlock, visitor, flow, startingStates);
+    return interpret(psiBlock, interceptor, flow, startingStates);
   }
 
   protected final @Nullable ControlFlow buildFlow(@NotNull PsiElement psiBlock) {
@@ -188,11 +190,12 @@ public class StandardDataFlowRunner implements DataFlowRunner {
   }
 
   protected final @NotNull RunnerResult interpret(@NotNull PsiElement psiBlock,
-                                                  @NotNull InstructionVisitor visitor,
+                                                  @NotNull DfaInterceptor interceptor,
                                                   @NotNull ControlFlow flow,
                                                   @NotNull List<DfaInstructionState> startingStates) {
     int endOffset = flow.getInstructionCount();
     myInstructions = flow.getInstructions();
+    myInterceptor = interceptor;
     DfaInstructionState lastInstructionState = null;
     myNestedClosures.clear();
     myWasForciblyMerged = false;
@@ -252,7 +255,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
             }
           }
 
-          DfaInstructionState[] after = acceptInstruction(visitor, instructionState);
+          DfaInstructionState[] after = acceptInstruction(instructionState);
           if (LOG.isDebugEnabled() && instruction instanceof ControlTransferInstruction && after.length == 0) {
             DfaMemoryState memoryState = instructionState.getMemoryState();
             if (!memoryState.isEmptyStack()) {
@@ -399,21 +402,21 @@ public class StandardDataFlowRunner implements DataFlowRunner {
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
   }
 
-  public @NotNull RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull InstructionVisitor visitor) {
-    Collection<DfaMemoryState> states = createInitialStates(block, visitor, false);
+  public @NotNull RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull DfaInterceptor interceptor) {
+    Collection<DfaMemoryState> states = createInitialStates(block, interceptor, false);
     if (states == null) return RunnerResult.NOT_APPLICABLE;
-    return analyzeBlockRecursively(block, states, visitor);
+    return analyzeBlockRecursively(block, states, interceptor);
   }
 
   public @NotNull RunnerResult analyzeBlockRecursively(@NotNull PsiElement block,
                                                        @NotNull Collection<? extends DfaMemoryState> states,
-                                                       @NotNull InstructionVisitor visitor) {
-    RunnerResult result = analyzeMethod(block, visitor, states);
+                                                       @NotNull DfaInterceptor interceptor) {
+    RunnerResult result = analyzeMethod(block, interceptor, states);
     if (result != RunnerResult.OK) return result;
 
     Ref<RunnerResult> ref = Ref.create(RunnerResult.OK);
     forNestedClosures((closure, nestedStates) -> {
-      RunnerResult res = analyzeBlockRecursively(closure, nestedStates, visitor);
+      RunnerResult res = analyzeBlockRecursively(closure, nestedStates, interceptor);
       if (res != RunnerResult.OK) {
         ref.set(res);
       }
@@ -484,9 +487,17 @@ public class StandardDataFlowRunner implements DataFlowRunner {
     return loopNumber[nextInstruction.getIndex()] == loopNumber[prevInstruction.getIndex()];
   }
 
-  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
+  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
-    return instruction.accept(this, instructionState.getMemoryState(), visitor);
+    return instruction.accept(this, instructionState.getMemoryState());
+  }
+
+  /**
+   * @return true if analysis should stop when null is dereferenced. 
+   * If false, the analysis will be continued under assumption that null value is not null anymore.
+   */
+  public boolean stopOnNull() {
+    return false;
   }
 
   @Override
@@ -505,6 +516,11 @@ public class StandardDataFlowRunner implements DataFlowRunner {
   @Override
   public @NotNull Instruction getInstruction(int index) {
     return myInstructions[index];
+  }
+
+  @Override
+  public @NotNull DfaInterceptor getInterceptor() {
+    return myInterceptor;
   }
 
   public void forNestedClosures(BiConsumer<? super PsiElement, ? super Collection<? extends DfaMemoryState>> consumer) {

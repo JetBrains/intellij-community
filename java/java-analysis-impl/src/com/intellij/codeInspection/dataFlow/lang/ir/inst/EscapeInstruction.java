@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,8 +32,9 @@ public class EscapeInstruction extends Instruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitEscapeInstruction(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+    getEscapedVars().forEach(var -> JavaDfaHelpers.dropLocality(var, stateBefore));
+    return nextStates(runner, stateBefore);
   }
 
   @Override

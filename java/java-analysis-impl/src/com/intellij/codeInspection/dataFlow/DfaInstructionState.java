@@ -22,8 +22,8 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
     return myInstruction;
   }
   
-  public DfaInstructionState[] nextInstruction(DataFlowRunner runner) {
-    return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(myInstruction.getIndex() + 1), myBeforeMemoryState)};
+  public DfaInstructionState[] nextStates(DataFlowRunner runner) {
+    return myInstruction.nextStates(runner, myBeforeMemoryState);
   }
 
   @NotNull

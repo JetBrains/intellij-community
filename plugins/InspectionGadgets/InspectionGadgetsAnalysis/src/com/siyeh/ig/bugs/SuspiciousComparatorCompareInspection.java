@@ -127,15 +127,15 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
           return state;
         }
       };
-      var visitor = new ComparatorInterceptor(owner);
-      if (runner.analyzeMethod(body, new InstructionVisitor(visitor)) != RunnerResult.OK) return;
-      if (visitor.myRange.contains(0) || visitor.myContexts.isEmpty()) return;
+      var interceptor = new ComparatorInterceptor(owner);
+      if (runner.analyzeMethod(body, interceptor) != RunnerResult.OK) return;
+      if (interceptor.myRange.contains(0) || interceptor.myContexts.isEmpty()) return;
       PsiElement context = null;
-      if (visitor.myContexts.size() == 1) {
-        context = visitor.myContexts.iterator().next();
+      if (interceptor.myContexts.size() == 1) {
+        context = interceptor.myContexts.iterator().next();
       }
       else {
-        PsiElement commonParent = PsiTreeUtil.findCommonParent(visitor.myContexts.toArray(PsiElement.EMPTY_ARRAY));
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(interceptor.myContexts.toArray(PsiElement.EMPTY_ARRAY));
         if (commonParent instanceof PsiExpression) {
           context = commonParent;
         } else {

@@ -4,19 +4,18 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import org.jetbrains.annotations.NotNull;
 
 public class SwapInstruction extends Instruction {
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
     final DfaValue a = stateBefore.pop();
     final DfaValue b = stateBefore.pop();
     stateBefore.push(a);
     stateBefore.push(b);
-    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
-    return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, stateBefore)};
+    return nextStates(runner, stateBefore);
   }
 
   public String toString() {

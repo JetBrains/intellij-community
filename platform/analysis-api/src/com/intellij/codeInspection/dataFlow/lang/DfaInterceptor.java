@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
  * An interceptor that can peek into DFA analysis intermediate states and do something with them
  */
 public interface DfaInterceptor {
+  DfaInterceptor EMPTY = new DfaInterceptor() {};
+  
   /**
    * Called before a value is being pushed to the memory state stack during symbolic interpretation.
    * The value with the same anchor can be pushed many times to the different memory states.

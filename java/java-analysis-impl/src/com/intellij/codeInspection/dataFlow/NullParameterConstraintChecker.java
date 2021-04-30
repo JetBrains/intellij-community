@@ -3,8 +3,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
@@ -64,8 +64,7 @@ final class NullParameterConstraintChecker extends StandardDataFlowRunner {
     if (nullableParameters.isEmpty()) return PsiParameter.EMPTY_ARRAY;
 
     NullParameterConstraintChecker checker = new NullParameterConstraintChecker(method.getProject(), nullableParameters);
-    checker.analyzeMethod(method.getBody(), new InstructionVisitor(new JavaDfaInterceptor() {
-    }));
+    checker.analyzeMethod(method.getBody(), DfaInterceptor.EMPTY);
 
     return checker.myPossiblyViolatedParameters
       .stream()
@@ -75,7 +74,7 @@ final class NullParameterConstraintChecker extends StandardDataFlowRunner {
   }
 
   @Override
-  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
+  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
     if (instruction instanceof PushInstruction) {
       final DfaValue var = ((PushInstruction)instruction).getValue();
@@ -110,7 +109,7 @@ final class NullParameterConstraintChecker extends StandardDataFlowRunner {
       }
     }
 
-    return super.acceptInstruction(visitor, instructionState);
+    return super.acceptInstruction(instructionState);
   }
 
   @NotNull

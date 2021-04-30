@@ -19,14 +19,14 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class PopInstruction extends Instruction {
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
     stateBefore.pop();
-    return nextInstruction(runner, stateBefore);
+    return nextStates(runner, stateBefore);
   }
 
   public String toString() {

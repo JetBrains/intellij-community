@@ -19,7 +19,6 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +49,9 @@ public class FlushVariableInstruction extends Instruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitFlushVariable(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+    stateBefore.flushVariable(getVariable());
+    return nextStates(runner, stateBefore);
   }
 
   public String toString() {

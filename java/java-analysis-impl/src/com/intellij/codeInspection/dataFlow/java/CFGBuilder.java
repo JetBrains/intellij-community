@@ -849,7 +849,7 @@ public class CFGBuilder {
       ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
       condGoto.setOffset(myAnalyzer.getInstructionCount());
       myBranches.add(() -> pushUnknown().add(condGoto));
-      DfaValue commonValue = DfaExpressionFactory.createCommonValue(factory, expressions, type);
+      DfaValue commonValue = JavaDfaValueFactory.createCommonValue(factory, expressions, type);
       if (DfaTypeValue.isUnknown(commonValue)) {
         flush(targetVariable).push(targetVariable);
       } else {

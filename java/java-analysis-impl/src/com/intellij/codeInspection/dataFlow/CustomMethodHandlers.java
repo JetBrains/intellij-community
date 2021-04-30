@@ -63,7 +63,7 @@ public final class CustomMethodHandlers {
   );
   public static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 256;
 
-  interface CustomMethodHandler {
+  public interface CustomMethodHandler {
 
     @Nullable
     DfaValue getMethodResultValue(DfaCallArguments callArguments,

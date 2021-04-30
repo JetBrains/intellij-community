@@ -16,21 +16,30 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.psi.PsiAssignmentExpression;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiVariable;
-import com.intellij.util.ObjectUtils;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class AssignInstruction extends ExpressionPushingInstruction {
   private final PsiExpression myRExpression;
@@ -51,7 +60,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
   @Nullable
   private static DfaAnchor getAnchor(PsiExpression rExpression) {
     if (rExpression == null) return null;
-    PsiAssignmentExpression expression = ObjectUtils.tryCast(rExpression.getParent(), PsiAssignmentExpression.class);
+    PsiAssignmentExpression expression = tryCast(rExpression.getParent(), PsiAssignmentExpression.class);
     return expression == null ? null : new JavaExpressionAnchor(expression);
   }
 
@@ -64,8 +73,60 @@ public class AssignInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitAssign(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+    DfaValue dfaSource = stateBefore.pop();
+    DfaValue dfaDest = stateBefore.pop();
+
+    if (!(dfaDest instanceof DfaVariableValue) && myAssignedValue != null) {
+      // It's possible that dfaDest on the stack is cleared to DfaTypeValue due to variable flush
+      // (e.g. during StateMerger#mergeByFacts), so we try to restore the original destination.
+      dfaDest = myAssignedValue;
+    }
+    runner.getInterceptor().beforeAssignment(dfaSource, dfaDest, stateBefore, getDfaAnchor());
+    if (dfaSource == dfaDest) {
+      stateBefore.push(dfaDest);
+      this.flushArrayOnUnknownAssignment(runner.getFactory(), dfaDest, stateBefore);
+      return nextStates(runner, stateBefore);
+    }
+    if (!(dfaDest instanceof DfaVariableValue &&
+          ((DfaVariableValue)dfaDest).getPsiVariable() instanceof PsiLocalVariable &&
+          dfaSource instanceof DfaVariableValue &&
+          (ControlFlow.isTempVariable((DfaVariableValue)dfaSource) ||
+           ((DfaVariableValue)dfaSource).getDescriptor().isCall()))) {
+      JavaDfaHelpers.dropLocality(dfaSource, stateBefore);
+    }
+
+    PsiExpression lValue = PsiUtil.skipParenthesizedExprDown(getLExpression());
+    PsiExpression rValue = getRExpression();
+    if (lValue instanceof PsiArrayAccessExpression) {
+      checkArrayElementAssignability(runner, stateBefore, dfaSource, dfaDest, lValue, rValue);
+    }
+
+    if (dfaDest instanceof DfaVariableValue) {
+      DfaVariableValue var = (DfaVariableValue) dfaDest;
+
+      PsiElement psi = var.getPsiVariable();
+      if (dfaSource instanceof DfaTypeValue &&
+          ((psi instanceof PsiField && ((PsiField)psi).hasModifierProperty(PsiModifier.STATIC)) ||
+           (var.getQualifier() != null && !DfReferenceType.isLocal(stateBefore.getDfType(var.getQualifier()))))) {
+        DfType dfType = dfaSource.getDfType();
+        if (dfType instanceof DfReferenceType) {
+          dfaSource = dfaSource.getFactory().fromDfType(((DfReferenceType)dfType).dropLocality());
+        }
+      }
+      if (!(psi instanceof PsiField) || !((PsiField)psi).hasModifierProperty(PsiModifier.VOLATILE)) {
+        stateBefore.setVarValue(var, dfaSource);
+      }
+      if (DfaNullability.fromDfType(var.getInherentType()) == DfaNullability.NULLABLE &&
+          DfaNullability.fromDfType(stateBefore.getDfType(var)) == DfaNullability.UNKNOWN && isVariableInitializer()) {
+        stateBefore.meetDfType(var, DfaNullability.NULLABLE.asDfType());
+      }
+    }
+
+    pushResult(runner, stateBefore, dfaDest);
+    this.flushArrayOnUnknownAssignment(runner.getFactory(), dfaDest, stateBefore);
+
+    return nextStates(runner, stateBefore);
   }
 
   @Nullable
@@ -78,17 +139,13 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     return myLExpression;
   }
 
-  public boolean isVariableInitializer() {
-    return myRExpression != null && myRExpression.getParent() instanceof PsiVariable;
-  }
-
   @Nullable
   public DfaValue getAssignedValue() {
     return myAssignedValue;
   }
 
-  public String toString() {
-    return "ASSIGN";
+  private boolean isVariableInitializer() {
+    return myRExpression != null && myRExpression.getParent() instanceof PsiVariable;
   }
 
   @Contract("null -> null")
@@ -99,5 +156,56 @@ public class AssignInstruction extends ExpressionPushingInstruction {
       return ((PsiAssignmentExpression)rExpression.getParent()).getLExpression();
     }
     return null;
+  }
+
+  private static void checkArrayElementAssignability(@NotNull DataFlowRunner runner,
+                                                     @NotNull DfaMemoryState memState,
+                                                     @NotNull DfaValue dfaSource,
+                                                     @NotNull DfaValue dfaDest,
+                                                     @NotNull PsiExpression lValue,
+                                                     @Nullable PsiExpression rValue) {
+    if (rValue == null) return;
+    PsiType rCodeType = rValue.getType();
+    PsiType lCodeType = lValue.getType();
+    // If types known from source are not convertible, a compilation error is displayed, additional warning is unnecessary
+    if (rCodeType == null || lCodeType == null || !TypeConversionUtil.areTypesConvertible(rCodeType, lCodeType)) return;
+    if (!(dfaDest instanceof DfaVariableValue)) return;
+    DfaVariableValue qualifier = ((DfaVariableValue)dfaDest).getQualifier();
+    if (qualifier == null) return;
+    DfType toType = TypeConstraint.fromDfType(memState.getDfType(qualifier)).getArrayComponentType();
+    if (toType == DfType.BOTTOM) return;
+    DfType fromType = memState.getDfType(dfaSource);
+    DfType meet = fromType.meet(toType);
+    Project project = lValue.getProject();
+    PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(rValue, PsiAssignmentExpression.class);
+    PsiType psiFromType = TypeConstraint.fromDfType(fromType).getPsiType(project);
+    PsiType psiToType = TypeConstraint.fromDfType(toType).getPsiType(project);
+    if (assignmentExpression == null || psiFromType == null || psiToType == null) return;
+    runner.getInterceptor().onCondition(new ArrayStoreProblem(assignmentExpression, psiFromType, psiToType), dfaSource,
+                                        meet == DfType.BOTTOM ? ThreeState.YES : ThreeState.UNSURE, memState);
+  }
+
+  @Override
+  public String toString() {
+    return "ASSIGN";
+  }
+
+  private void flushArrayOnUnknownAssignment(@NotNull DfaValueFactory factory,
+                                             @NotNull DfaValue dest,
+                                             @NotNull DfaMemoryState memState) {
+    if (dest instanceof DfaVariableValue) return;
+    PsiArrayAccessExpression arrayAccess =
+      tryCast(PsiUtil.skipParenthesizedExprDown(myLExpression), PsiArrayAccessExpression.class);
+    if (arrayAccess != null) {
+      PsiExpression array = arrayAccess.getArrayExpression();
+      DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(factory, array);
+      if (value instanceof DfaVariableValue) {
+        for (DfaVariableValue qualified : ((DfaVariableValue)value).getDependentVariables().toArray(new DfaVariableValue[0])) {
+          if (qualified.isFlushableByCalls()) {
+            memState.flushVariable(qualified);
+          }
+        }
+      }
+    }
   }
 }

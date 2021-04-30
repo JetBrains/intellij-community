@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
@@ -211,7 +212,7 @@ public final class DfaUtil {
       }
     }
     var interceptor = new BlockNullabilityInterceptor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, new InstructionVisitor(interceptor));
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, interceptor);
 
     if (rc == RunnerResult.OK) {
       if (interceptor.hasNulls) {
@@ -235,7 +236,7 @@ public final class DfaUtil {
 
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
-   * (e.g. passed to {@link StandardDataFlowRunner#analyzeMethodRecursively(PsiElement, InstructionVisitor)}) to cover
+   * (e.g. passed to {@link StandardDataFlowRunner#analyzeMethodRecursively(PsiElement, DfaInterceptor)}) to cover
    * given expression.
    *
    * @param expression expression to cover

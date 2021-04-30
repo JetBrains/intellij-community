@@ -109,9 +109,13 @@ final class ContractChecker {
 
     ContractCheckInterceptor interceptor = new ContractCheckInterceptor(method, contract, ownContract);
     StandardDataFlowRunner runner = new StandardDataFlowRunner(method.getProject(), null) {
+      @Override 
+      public boolean stopOnNull() {
+        return true;
+      }
+
       @Override
-      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
-                                                                  @NotNull DfaInstructionState instructionState) {
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();
         DfaMemoryState memState = instructionState.getMemoryState();
         if (instruction instanceof ReturnInstruction) {
@@ -130,7 +134,7 @@ final class ContractChecker {
               return DfaInstructionState.EMPTY_ARRAY;
             }
             if (ContractCheckInterceptor.weCannotInferAnythingAboutMethodReturnValue((MethodCallInstruction)instruction)) {
-              DfaInstructionState[] states = super.acceptInstruction(visitor, instructionState);
+              DfaInstructionState[] states = super.acceptInstruction(instructionState);
               for (DfaInstructionState state: states) {
                 state.getMemoryState().markEphemeral();
               }
@@ -138,7 +142,7 @@ final class ContractChecker {
             }
           }
         }
-        return super.acceptInstruction(visitor, instructionState);
+        return super.acceptInstruction(instructionState);
       }
     };
 
@@ -155,7 +159,7 @@ final class ContractChecker {
       }
     }
 
-    runner.analyzeMethod(body, new InstructionVisitor(interceptor, true), Collections.singletonList(initialState));
+    runner.analyzeMethod(body, interceptor, Collections.singletonList(initialState));
     return interceptor.getErrors();
   }
 }

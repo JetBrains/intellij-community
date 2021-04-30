@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResult;
-import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
@@ -128,7 +128,7 @@ final class DataFlowInstructionVisitor implements JavaDfaInterceptor {
            ((PsiAssignmentExpression)rExpression).getOperationTokenType().equals(JavaTokenType.EQ)) {
       rExpression = ((PsiAssignmentExpression)rExpression).getRExpression();
     }
-    DfaValue dest = DfaExpressionFactory.getExpressionDfaValue(var.getFactory(), rExpression);
+    DfaValue dest = JavaDfaValueFactory.getExpressionDfaValue(var.getFactory(), rExpression);
     if (dest == null) return false;
     DfType dfType = dest.getDfType();
 

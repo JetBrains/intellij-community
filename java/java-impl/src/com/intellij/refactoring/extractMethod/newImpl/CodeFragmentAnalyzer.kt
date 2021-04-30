@@ -3,7 +3,10 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInspection.dataFlow.*
+import com.intellij.codeInspection.dataFlow.DfaMemoryState
+import com.intellij.codeInspection.dataFlow.DfaNullability
+import com.intellij.codeInspection.dataFlow.RunnerResult
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.java.refactoring.JavaRefactoringBundle
@@ -255,8 +258,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
         }
       }
 
-      val visitor = InstructionVisitor(Interceptor())
-      val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, visitor)
+      val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, Interceptor())
       return if (runnerState == RunnerResult.OK) {
         DfaNullability.toNullability(nullability)
       } else {

@@ -483,7 +483,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
   private static class MergeInstruction extends Instruction {
     @Override
-    public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+    public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
       return DfaInstructionState.EMPTY_ARRAY;
     }
 

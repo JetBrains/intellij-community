@@ -7,8 +7,8 @@ import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.FinishElementInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
@@ -376,8 +376,7 @@ public final class DfaPsiUtil {
           }
 
           @Override
-          protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
-                                                                      @NotNull DfaInstructionState instructionState) {
+          protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
             if (instruction instanceof FinishElementInstruction) {
               Set<DfaVariableValue> vars = ((FinishElementInstruction)instruction).getVarsToFlush();
@@ -400,11 +399,10 @@ public final class DfaPsiUtil {
               }
               return DfaInstructionState.EMPTY_ARRAY;
             }
-            return super.acceptInstruction(visitor, instructionState);
+            return super.acceptInstruction(instructionState);
           }
         };
-        final RunnerResult rc = dfaRunner.analyzeMethod(body, new InstructionVisitor(new JavaDfaInterceptor() {
-        }));
+        final RunnerResult rc = dfaRunner.analyzeMethod(body, DfaInterceptor.EMPTY);
         Set<PsiField> notNullFields = new HashSet<>();
         if (rc == RunnerResult.OK) {
           for (Map.Entry<PsiField, Boolean> entry : map.entrySet()) {

@@ -82,7 +82,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         DfaVariableValue methodName = runner.myDfaMethodName;
         if (methodName == null) return;
         Map<String, Map<PsiExpression, DfType>> returnMap = new TreeMap<>();
-        RunnerResult result = runner.analyzeMethod(body, new InstructionVisitor(new JavaDfaInterceptor() {
+        RunnerResult result = runner.analyzeMethod(body, new JavaDfaInterceptor() {
           @Override
           public void beforeValueReturn(@NotNull DfaValue value,
                                         @Nullable PsiExpression expression,
@@ -100,7 +100,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
             }
             returnMap.computeIfAbsent(name, k -> new HashMap<>()).merge(expression, type, DfType::join);
           }
-        }));
+        });
         if (result != RunnerResult.OK) return;
         Set<PsiExpression> reportedAnchors = new HashSet<>();
         returnMap.forEach((name, map) -> {

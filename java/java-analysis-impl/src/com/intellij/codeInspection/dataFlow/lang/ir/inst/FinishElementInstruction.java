@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
@@ -25,13 +24,13 @@ public class FinishElementInstruction extends Instruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState state, InstructionVisitor visitor) {
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
     if (!myVarsToFlush.isEmpty()) {
       for (DfaVariableValue value : myVarsToFlush) {
         state.flushVariable(value, false);
       }
     }
-    return nextInstruction(runner, state);
+    return nextStates(runner, state);
   }
 
   @Override

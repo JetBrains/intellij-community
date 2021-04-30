@@ -19,18 +19,13 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class Instruction {
   private int myIndex = -1;
 
-  protected final DfaInstructionState[] nextInstruction(DataFlowRunner runner, DfaMemoryState stateBefore) {
-    return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), stateBefore)};
-  }
-
-  public abstract DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor);
+  public abstract DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore);
 
   public void setIndex(int index) {
     if (myIndex != -1) {
@@ -51,5 +46,13 @@ public abstract class Instruction {
    */
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     return this;
+  }
+
+  public final @NotNull DfaInstructionState @NotNull [] nextStates(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState memState) {
+    return new DfaInstructionState[]{nextState(runner, memState)};
+  }
+
+  public final @NotNull DfaInstructionState nextState(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState memState) {
+    return new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState);
   }
 }

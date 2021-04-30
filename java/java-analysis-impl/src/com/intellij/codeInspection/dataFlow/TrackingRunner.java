@@ -101,10 +101,10 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @Override
-  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
+  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
     TrackingDfaMemoryState memState = (TrackingDfaMemoryState)instructionState.getMemoryState().createCopy();
-    DfaInstructionState[] states = super.acceptInstruction(visitor, instructionState);
+    DfaInstructionState[] states = super.acceptInstruction(instructionState);
     for (DfaInstructionState state : states) {
       afterStates.add(state);
       ((TrackingDfaMemoryState)state.getMemoryState()).recordChange(instruction, memState);
@@ -136,15 +136,20 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     return runner.findProblemCause(expression, type);
   }
 
+  @Override
+  public boolean stopOnNull() {
+    return true;
+  }
+
   private boolean analyze(PsiExpression expression, PsiElement body) {
     List<DfaMemoryState> endOfInitializerStates = new ArrayList<>();
-    var visitor = new InstructionVisitor(new JavaDfaInterceptor() {
+    var interceptor = new JavaDfaInterceptor() {
       @Override
       public void beforeInstanceInitializerEnd(@NotNull DfaMemoryState state) {
         endOfInitializerStates.add(state.createCopy());
       }
-    }, true);
-    RunnerResult result = analyzeMethodRecursively(body, visitor);
+    };
+    RunnerResult result = analyzeMethodRecursively(body, interceptor);
     if (result != RunnerResult.OK) return false;
     if (body instanceof PsiClass) {
       PsiMethod ctor = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
@@ -160,7 +165,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
           else {
             initialStates = StreamEx.of(endOfInitializerStates).map(DfaMemoryState::createCopy).toList();
           }
-          return analyzeBlockRecursively(ctorBody, initialStates, visitor) == RunnerResult.OK;
+          return analyzeBlockRecursively(ctorBody, initialStates, interceptor) == RunnerResult.OK;
         }
       }
     }

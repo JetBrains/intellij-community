@@ -130,7 +130,7 @@ public final class GuessManagerImpl extends GuessManager {
     GuessManagerRunner runner = new GuessManagerRunner(scope.getProject(), honorAssignments, null);
 
     var interceptor = new ExpressionTypeInterceptor(runner, forPlace);
-    RunnerResult result = runner.analyzeMethodWithInlining(scope, new InstructionVisitor(interceptor));
+    RunnerResult result = runner.analyzeMethodWithInlining(scope, interceptor);
     if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
       return interceptor.getResult();
     }
@@ -169,7 +169,7 @@ public final class GuessManagerImpl extends GuessManager {
       }
     }
     var interceptor = new MyInterceptor();
-    RunnerResult result = runner.analyzeMethodWithInlining(scope, new InstructionVisitor(interceptor));
+    RunnerResult result = runner.analyzeMethodWithInlining(scope, interceptor);
     if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
       return interceptor.constraint.meet(initial).getPsiType(scope.getProject());
     }
@@ -218,8 +218,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
-                                                                @NotNull DfaInstructionState instructionState) {
+    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
       Instruction instruction = instructionState.getInstruction();
       DfaMemoryState memState = instructionState.getMemoryState();
       if (instruction instanceof TypeCastInstruction) {
@@ -232,7 +231,7 @@ public final class GuessManagerImpl extends GuessManager {
         memState.push(adjustValue(dfaLeft, ((InstanceofInstruction)instruction).getLeft()));
         memState.push(dfaRight);
       }
-      return super.acceptInstruction(visitor, instructionState);
+      return super.acceptInstruction(instructionState);
     }
 
     private DfaValue adjustValue(@NotNull DfaValue value, @Nullable PsiExpression expression) {

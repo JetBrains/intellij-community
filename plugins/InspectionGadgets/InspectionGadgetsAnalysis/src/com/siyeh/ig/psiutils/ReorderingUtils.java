@@ -4,7 +4,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.BooleanReturnValue;
-import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -311,8 +311,8 @@ public final class ReorderingUtils {
         if (relationType != null) {
           PsiExpression left = binOp.getLOperand();
           PsiExpression right = binOp.getROperand();
-          DfaValue leftVal = DfaExpressionFactory.getExpressionDfaValue(myFactory, left);
-          DfaValue rightVal = DfaExpressionFactory.getExpressionDfaValue(myFactory, right);
+          DfaValue leftVal = JavaDfaValueFactory.getExpressionDfaValue(myFactory, left);
+          DfaValue rightVal = JavaDfaValueFactory.getExpressionDfaValue(myFactory, right);
           if (leftVal == null || rightVal == null) return false;
           DfaCondition value1 = leftVal.cond(relationType, rightVal);
           DfaCondition value2 = rightVal.cond(Objects.requireNonNull(relationType.getFlipped()), leftVal);

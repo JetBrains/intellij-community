@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst
 import com.intellij.codeInspection.dataFlow.DataFlowRunner
 import com.intellij.codeInspection.dataFlow.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.DfaMemoryState
-import com.intellij.codeInspection.dataFlow.InstructionVisitor
+import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler
 import com.intellij.codeInspection.dataFlow.jvm.JvmTrap
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
@@ -30,8 +30,8 @@ open class ControlTransferInstruction : Instruction {
     return instruction
   }
 
-  override fun accept(runner: DataFlowRunner, state: DfaMemoryState, visitor: InstructionVisitor): Array<out DfaInstructionState> {
-    return visitor.visitControlTransfer(this, runner, state)
+  override fun accept(runner: DataFlowRunner, state: DfaMemoryState): Array<out DfaInstructionState> {
+    return ControlTransferHandler.dispatch(state, runner, this.transfer).toTypedArray()
   }
 
   /**

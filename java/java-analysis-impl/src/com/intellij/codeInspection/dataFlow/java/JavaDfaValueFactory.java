@@ -30,10 +30,13 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class DfaExpressionFactory {
+/**
+ * Utility class to help producing values for Java DFA
+ */
+public class JavaDfaValueFactory {
 
-   private DfaExpressionFactory() {
-   }
+  private JavaDfaValueFactory() {
+  }
 
   @Nullable
   @Contract("_, null -> null")

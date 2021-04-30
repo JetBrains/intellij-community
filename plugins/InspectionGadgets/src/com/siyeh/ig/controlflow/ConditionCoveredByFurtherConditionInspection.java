@@ -135,8 +135,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
   private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
     StandardDataFlowRunner runner = new StandardDataFlowRunner(expressionToAnalyze.getProject(), expressionToAnalyze) {
       @Override
-      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
-                                                                  @NotNull DfaInstructionState instructionState) {
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();
         if (instruction instanceof CheckNotNullInstruction) {
           DfaMemoryState state = instructionState.getMemoryState();
@@ -145,11 +144,11 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
             DfType dfType = state.getDfType(value);
             if (dfType instanceof DfReferenceType) {
               state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
-              return instructionState.nextInstruction(this);
+              return instructionState.nextStates(this);
             }
           }
         }
-        return super.acceptInstruction(visitor, instructionState);
+        return super.acceptInstruction(instructionState);
       }
 
       @NotNull
@@ -184,7 +183,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       }
     };
     Map<PsiExpression, ThreeState> values = new HashMap<>();
-    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, new InstructionVisitor(new JavaDfaInterceptor() {
+    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, new JavaDfaInterceptor() {
       @Override
       public void beforeExpressionPush(@NotNull DfaValue value,
                                        @NotNull PsiExpression expression,
@@ -199,7 +198,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         }
         values.put(expression, old == null || old == result ? result : ThreeState.UNSURE);
       }
-    }));
+    });
     return result == RunnerResult.OK ? values : Collections.emptyMap();
   }
 }

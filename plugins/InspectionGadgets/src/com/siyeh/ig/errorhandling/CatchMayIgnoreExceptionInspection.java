@@ -7,7 +7,10 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.RunnerResult;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
@@ -179,7 +182,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
             }
           }
         };
-        return runner.analyzeCodeBlock(block, new InstructionVisitor(interceptor)) == RunnerResult.OK;
+        return runner.analyzeCodeBlock(block, interceptor) == RunnerResult.OK;
       }
     };
   }
@@ -208,8 +211,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
-                                                                @NotNull DfaInstructionState instructionState) {
+    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
       Instruction instruction = instructionState.getInstruction();
       DfaMemoryState memState = instructionState.getMemoryState();
       if (instruction instanceof MethodCallInstruction) {
@@ -219,14 +221,14 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
           if (memState.areEqual(qualifier, myExceptionVar)) {
             memState.pop();
             memState.push(getFactory().fromDfType(DfTypes.NULL));
-            return instructionState.nextInstruction(this);
+            return instructionState.nextStates(this);
           }
         }
       }
       if (isSideEffect(instruction, memState)) {
         cancel();
       }
-      return super.acceptInstruction(visitor, instructionState);
+      return super.acceptInstruction(instructionState);
     }
 
     private boolean isSideEffect(Instruction instruction, DfaMemoryState memState) {

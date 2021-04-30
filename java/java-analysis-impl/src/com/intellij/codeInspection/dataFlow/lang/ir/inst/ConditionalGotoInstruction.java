@@ -20,10 +20,15 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.booleanValue;
 
 public class ConditionalGotoInstruction extends Instruction implements BranchingInstruction {
   private ControlFlow.ControlFlowOffset myOffset;
@@ -46,8 +51,33 @@ public class ConditionalGotoInstruction extends Instruction implements Branching
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitConditionalGoto(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner,
+                                      @NotNull DfaMemoryState stateBefore) {
+    boolean value = !isNegated();
+    DfaCondition condTrue = stateBefore.pop().eq(booleanValue(value));
+    DfaCondition condFalse = condTrue.negate();
+
+    if (condTrue == DfaCondition.getTrue()) {
+      return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getOffset()), stateBefore)};
+    }
+
+    if (condFalse == DfaCondition.getTrue()) {
+      return nextStates(runner, stateBefore);
+    }
+
+    ArrayList<DfaInstructionState> result = new ArrayList<>(2);
+
+    DfaMemoryState elseState = stateBefore.createCopy();
+
+    if (stateBefore.applyCondition(condTrue)) {
+      result.add(new DfaInstructionState(runner.getInstruction(getOffset()), stateBefore));
+    }
+
+    if (elseState.applyCondition(condFalse)) {
+      result.add(nextState(runner, elseState));
+    }
+
+    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   public String toString() {

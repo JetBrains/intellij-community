@@ -1,7 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -20,5 +25,39 @@ public abstract class ExpressionPushingInstruction extends Instruction {
   @Nullable
   public DfaAnchor getDfaAnchor() {
     return myAnchor;
+  }
+
+  /**
+   * Push result of this instruction to memory state stack (to be used by inheritors)
+   * 
+   * @param runner runner that interprets this instruction
+   * @param state memory state to push to
+   * @param value value to push (will be wrapped into {@link com.intellij.codeInspection.dataFlow.value.DfaTypeValue})
+   * @param inputArgs input arguments used to calculate the resulting value
+   */
+  protected final void pushResult(@NotNull DataFlowRunner runner,
+                                  @NotNull DfaMemoryState state,
+                                  @NotNull DfType value,
+                                  @NotNull DfaValue @NotNull ... inputArgs) {
+    pushResult(runner, state, runner.getFactory().fromDfType(value), inputArgs);
+  }
+
+  /**
+   * Push result of this instruction to memory state stack (to be used by inheritors)
+   *
+   * @param runner runner that interprets this instruction
+   * @param state memory state to push to
+   * @param value value to push
+   * @param inputArgs input arguments used to calculate the resulting value
+   */
+  protected final void pushResult(@NotNull DataFlowRunner runner,
+                                  @NotNull DfaMemoryState state,
+                                  @NotNull DfaValue value,
+                                  @NotNull DfaValue @NotNull ... inputArgs) {
+    DfaAnchor anchor = getDfaAnchor();
+    if (anchor != null) {
+      runner.getInterceptor().beforePush(inputArgs, value, anchor, state);
+    }
+    state.push(value);
   }
 }

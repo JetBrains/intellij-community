@@ -58,7 +58,7 @@ public final class HardcodedContracts {
    * @param method method to test
    * @return true if given method doesn't spoil the arguments' locality
    */
-  static boolean isKnownNoParameterLeak(@Nullable PsiMethod method) {
+  public static boolean isKnownNoParameterLeak(@Nullable PsiMethod method) {
     if (method == null) return false;
     if (ConstructionUtils.isCollectionConstructor(method)) {
       PsiClass aClass = method.getContainingClass();

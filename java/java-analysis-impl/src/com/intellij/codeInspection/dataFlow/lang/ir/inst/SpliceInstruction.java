@@ -18,9 +18,9 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import one.util.streamex.IntStreamEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +38,7 @@ public class SpliceInstruction extends Instruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
     List<DfaValue> removed = IntStreamEx.range(myCount).mapToObj(idx -> stateBefore.pop()).toList();
     IntStreamEx.of(myReplacement).elements(removed).forEach(stateBefore::push);
     Instruction nextInstruction = runner.getInstruction(getIndex() + 1);

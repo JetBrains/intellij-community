@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -68,12 +69,17 @@ class DebuggerDfaRunner extends StandardDataFlowRunner {
     return myStartingState != null;
   }
 
-  RunnerResult interpret(InstructionVisitor visitor) {
+  RunnerResult interpret(DfaInterceptor interceptor) {
     if (myFlow == null || myStartingState == null ||
         PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myModificationStamp) {
       return RunnerResult.ABORTED;
     }
-    return interpret(myBody, visitor, myFlow, Collections.singletonList(myStartingState));
+    return interpret(myBody, interceptor, myFlow, Collections.singletonList(myStartingState));
+  }
+
+  @Override
+  public boolean stopOnNull() {
+    return true;
   }
 
   @Nullable

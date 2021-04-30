@@ -3,7 +3,7 @@ package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
@@ -140,7 +140,7 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
                                                         @Nullable PsiExpression expression,
                                                         @NotNull DfType targetType) {
     if (expression == null) return factory.getUnknown();
-    DfaValue value = DfaExpressionFactory.getExpressionDfaValue(factory, expression);
+    DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(factory, expression);
     if (value != null) {
       return DfaUtil.boxUnbox(value, targetType);
     }

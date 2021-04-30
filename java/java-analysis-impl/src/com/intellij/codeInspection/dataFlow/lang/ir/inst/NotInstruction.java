@@ -19,9 +19,16 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiPrefixExpression;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.FALSE;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.TRUE;
 
 public class NotInstruction extends ExpressionPushingInstruction {
   public NotInstruction(PsiPrefixExpression anchor) {
@@ -29,8 +36,21 @@ public class NotInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitNot(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+    DfaValue dfaValue = stateBefore.pop();
+
+    DfaMemoryState falseState = stateBefore.createCopy();
+    List<DfaInstructionState> result = new ArrayList<>(2);
+    if (stateBefore.applyCondition(dfaValue.eq(FALSE))) {
+      pushResult(runner, stateBefore, TRUE);
+      result.add(nextState(runner, stateBefore));
+    }
+    if (falseState.applyCondition(dfaValue.eq(TRUE))) {
+      pushResult(runner, falseState, FALSE);
+      result.add(nextState(runner, falseState));
+    }
+
+    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   public String toString() {
