@@ -55,7 +55,7 @@ import java.lang.reflect.Proxy;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,6 +71,11 @@ public final class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance(IncProjectBuilder.class);
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
+  // CLASSPATH_INDEX_FILE_NAME cannot be used because IDEA on run creates CLASSPATH_INDEX_FILE_NAME only if some module class is loaded,
+  // so, not possible to distinguish case
+  // "classpath.index doesn't exist because deleted on module file change" vs "classpath.index doesn't exist because was not created"
+  private static final String UNMODIFIED_MARK_FILE_NAME = ".unmodified";
+
   //private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
   private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
@@ -383,32 +388,33 @@ public final class IncProjectBuilder {
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
 
-    //Deletes class loader classpath index files for changed output roots
+    // deletes class loader classpath index files for changed output roots
     context.addBuildListener(new BuildListener() {
       @Override
       public void filesGenerated(@NotNull FileGeneratedEvent event) {
         Collection<Pair<String, String>> paths = event.getPaths();
+        FileSystem fs = FileSystems.getDefault();
         if (paths.size() == 1) {
-          Pair<String, String> first = paths.iterator().next();
-          try {
-            Files.deleteIfExists(Paths.get(first.getFirst(), CLASSPATH_INDEX_FILE_NAME));
-          }
-          catch (IOException ignore) {
-          }
+          deleteFiles(paths.iterator().next().first, fs);
           return;
         }
 
         Set<String> outputs = new HashSet<>();
-        FileSystem fs = FileSystems.getDefault();
         for (Pair<String, String> pair : paths) {
           String root = pair.getFirst();
           if (outputs.add(root)) {
-            try {
-              Files.deleteIfExists(fs.getPath(root, CLASSPATH_INDEX_FILE_NAME));
-            }
-            catch (IOException ignore) {
-            }
+            deleteFiles(root, fs);
           }
+        }
+      }
+
+      private void deleteFiles(String rootPath, FileSystem fs) {
+        Path root = fs.getPath(rootPath);
+        try {
+          Files.deleteIfExists(root.resolve(CLASSPATH_INDEX_FILE_NAME));
+          Files.deleteIfExists(root.resolve(UNMODIFIED_MARK_FILE_NAME));
+        }
+        catch (IOException ignore) {
         }
       }
     });
