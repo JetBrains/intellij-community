@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiDirectory
@@ -60,7 +61,7 @@ class AddDependencyAction : AnAction(
     private fun findSelectedModule(e: AnActionEvent, modules: List<ModuleModel>): ModuleModel? {
         val project = e.project ?: return null
         val file = obtainSelectedProjectDirIfSingle(e)?.virtualFile ?: return null
-        val selectedModule = ModuleUtilCore.findModuleForFile(file, project) ?: return null
+        val selectedModule = runReadAction { ModuleUtilCore.findModuleForFile(file, project) } ?: return null
 
         // Sanity check that the module we got actually exists
         ModuleManager.getInstance(project).findModuleByName(selectedModule.name)

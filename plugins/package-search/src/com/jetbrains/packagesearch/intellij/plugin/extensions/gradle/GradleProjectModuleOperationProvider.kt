@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.extensions.gradle
 
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -60,7 +61,7 @@ internal open class GradleProjectModuleOperationProvider : AbstractProjectModule
     }
 
     override fun refreshProject(project: Project, virtualFile: VirtualFile) {
-        val module = ModuleUtilCore.findModuleForFile(virtualFile, project)
+        val module = runReadAction { ModuleUtilCore.findModuleForFile(virtualFile, project) }
         val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
         if (rootProjectPath != null) {
             ExternalSystemUtil.refreshProject(

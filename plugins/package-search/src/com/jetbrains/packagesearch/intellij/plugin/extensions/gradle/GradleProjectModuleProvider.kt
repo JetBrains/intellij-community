@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.extensions.gradle
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
@@ -111,7 +112,7 @@ internal open class GradleProjectModuleProvider : ProjectModuleProvider {
         for (externalProject in childProjects.values) {
             val projectBuildFile = externalProject.buildFile?.absolutePath?.let(localFileSystem::findFileByPath)
                 ?: continue
-            val nativeModule = ModuleUtilCore.findModuleForFile(projectBuildFile, project)
+            val nativeModule = runReadAction { ModuleUtilCore.findModuleForFile(projectBuildFile, project) }
                 ?: continue
 
             val projectModule = ProjectModule(
