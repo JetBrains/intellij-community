@@ -13,7 +13,6 @@ import com.intellij.idea.StartupUtil;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationFullContent;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -160,7 +159,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
       EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
       NotificationAction action = vmEditAction.isEnabled() ? NotificationAction.createExpiring(
-        IdeBundle.message("vm.options.edit.action.cap"), (e, n) -> ActionUtil.performActionDumbAware(vmEditAction, e)) : null;
+        IdeBundle.message("vm.options.edit.action.cap"), (e, n) -> vmEditAction.actionPerformed(e)) : null;
       showNotification("code.cache.warn.message", action, reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }

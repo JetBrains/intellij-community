@@ -254,6 +254,11 @@ public final class ActionUtil {
     }
   }
 
+  /**
+   * @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)} or
+   *                 {@link AnAction#actionPerformed(AnActionEvent)} instead
+   */
+  @Deprecated
   public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent event) {
     Project project = event.getProject();
     try {
