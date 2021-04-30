@@ -611,15 +611,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   private @NotNull RelativePoint getBestPositionFor(@NotNull Editor editor) {
-    DataContext context = ((EditorEx)editor).getDataContext();
-    Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
-    if (dominantArea != null && !myRequestFocus) {
-      final JLayeredPane layeredPane = editor.getContentComponent().getRootPane().getLayeredPane();
-      return relativePointWithDominantRectangle(layeredPane, dominantArea);
+    if (editor instanceof EditorEx) {
+      DataContext context = ((EditorEx)editor).getDataContext();
+      Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
+      if (dominantArea != null && !myRequestFocus) {
+        final JLayeredPane layeredPane = editor.getContentComponent().getRootPane().getLayeredPane();
+        return relativePointWithDominantRectangle(layeredPane, dominantArea);
+      }
     }
-    else {
-      return guessBestPopupLocation(editor);
-    }
+
+    return guessBestPopupLocation(editor);
   }
 
   private @NotNull RelativePoint guessBestPopupLocation(@NotNull Editor editor) {
