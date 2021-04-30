@@ -11,8 +11,7 @@ import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
-import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -203,8 +202,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                                                   ProblemsHolder holder,
                                                                   StandardDataFlowRunner dfaRunner,
                                                                   Collection<? extends DfaMemoryState> initialStates) {
-    final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE);
-    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, initialStates);
+    DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE);
+    ControlFlow flow = dfaRunner.buildFlow(scope);
+    if (flow == null) return visitor;
+    visitor.initInstanceOf(flow.getInstructions());
+    RunnerResult rc = dfaRunner.analyzeFlow(scope, visitor, initialStates, flow);
     if (rc == RunnerResult.OK) {
       if (dfaRunner.wasForciblyMerged() &&
           (ApplicationManager.getApplication().isUnitTestMode() || Registry.is("ide.dfa.report.imprecise"))) {
@@ -283,7 +285,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     reportOptionalOfNullableImprovements(reporter, visitor.getOfNullableCalls());
 
-    reportRedundantInstanceOf(visitor, reporter, instructions);
+    reportRedundantInstanceOf(visitor, reporter);
 
     reportConstants(reporter, visitor);
 
@@ -304,29 +306,21 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     reportPointlessSameArguments(reporter, visitor);
   }
 
-  private static void reportRedundantInstanceOf(DataFlowInstructionVisitor visitor,
-                                                ProblemReporter reporter,
-                                                Instruction @NotNull [] instructions) {
-    for (Instruction instruction : instructions) {
-      if (instruction instanceof InstanceofInstruction) {
-        InstanceofInstruction instanceOf = (InstanceofInstruction)instruction;
-        if (visitor.isInstanceofRedundant(instanceOf)) {
-          DfaAnchor anchor = instanceOf.getDfaAnchor();
-          PsiExpression expression =
-            anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() :
-            anchor instanceof JavaMethodReferenceReturnAnchor ? ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression() :
-            null;
-          if (expression == null || shouldBeSuppressed(expression)) continue;
-          if (JavaPsiPatternUtil.getExposedPatternVariables(expression).stream()
-            .anyMatch(var -> VariableAccessUtils.variableIsUsed(var, var.getDeclarationScope()))) {
-            continue;
-          }
-          reporter.registerProblem(expression,
-                                   JavaAnalysisBundle.message("dataflow.message.redundant.instanceof"),
-                                   new RedundantInstanceofFix(expression));
-        }
+  private static void reportRedundantInstanceOf(DataFlowInstructionVisitor visitor, ProblemReporter reporter) {
+    visitor.redundantInstanceOfs().forEach(anchor -> {
+      PsiExpression expression =
+        anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() :
+        anchor instanceof JavaMethodReferenceReturnAnchor ? ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression() :
+        null;
+      if (expression == null || shouldBeSuppressed(expression)) return;
+      if (JavaPsiPatternUtil.getExposedPatternVariables(expression).stream()
+        .anyMatch(var -> VariableAccessUtils.variableIsUsed(var, var.getDeclarationScope()))) {
+        return;
       }
-    }
+      reporter.registerProblem(expression,
+                               JavaAnalysisBundle.message("dataflow.message.redundant.instanceof"),
+                               new RedundantInstanceofFix(expression));
+    });
   }
 
   private void reportUnreachableSwitchBranches(Map<PsiExpression, ThreeState> labelReachability, ProblemsHolder holder) {

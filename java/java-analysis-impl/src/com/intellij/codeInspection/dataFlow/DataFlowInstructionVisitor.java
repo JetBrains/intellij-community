@@ -63,6 +63,7 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
   private final Map<PsiExpression, ThreeState> mySwitchLabelsReachability = new HashMap<>();
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
+  private final Set<DfaAnchor> myPotentiallyRedundantInstanceOf = new HashSet<>();
   private final boolean myStrictMode;
 
   private static final CallMatcher USELESS_SAME_ARGUMENTS = CallMatcher.anyOf(
@@ -108,6 +109,11 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
         }
       }
     }
+  }
+
+  void initInstanceOf(Instruction[] instructions) {
+    StreamEx.of(instructions).select(InstanceofInstruction.class).map(InstanceofInstruction::getDfaAnchor).into(
+      myPotentiallyRedundantInstanceOf);
   }
 
   private static boolean isAssignmentToDefaultValueInConstructor(DfaValue target, PsiExpression rExpression) {
@@ -209,13 +215,9 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
     return myAlwaysReturnsNotNull &&
            ContainerUtil.exists(instructions, i -> i instanceof ReturnInstruction && ((ReturnInstruction)i).getAnchor() instanceof PsiReturnStatement);
   }
-
-  public boolean isInstanceofRedundant(InstanceofInstruction instruction) {
-    DfaAnchor anchor = instruction.getDfaAnchor();
-    if (anchor == null) return false;
-    if (myUsefulInstanceofs.contains(instruction)) return false;
-    ConstantResult result = myConstantExpressions.get(anchor);
-    return result == ConstantResult.UNKNOWN;
+  
+  StreamEx<DfaAnchor> redundantInstanceOfs() {
+    return StreamEx.of(myPotentiallyRedundantInstanceOf).filter(anchor -> myConstantExpressions.get(anchor) == ConstantResult.UNKNOWN);
   }
 
   @Override
@@ -244,7 +246,26 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
                                        type.equals(DfTypes.FALSE) ? ThreeState.NO : ThreeState.UNSURE, ThreeState::merge);
       return;
     }
+    if (myPotentiallyRedundantInstanceOf.contains(anchor) && isUsefulInstanceof(args, value, state)) {
+      myPotentiallyRedundantInstanceOf.remove(anchor);
+    }
     myConstantExpressions.compute(anchor, (c, curState) -> ConstantResult.mergeValue(curState, state, value));
+  }
+
+  private static boolean isUsefulInstanceof(@NotNull DfaValue @NotNull [] args,
+                                            @NotNull DfaValue value,
+                                            @NotNull DfaMemoryState state) {
+    if (args.length != 2) return true;
+    DfType type = state.getDfType(value);
+    if (type.equals(DfTypes.BOOLEAN)) {
+      if (args[0] instanceof DfaTypeValue && args[1] instanceof DfaTypeValue && !DfaTypeValue.isUnknown(args[0])) {
+        TypeConstraint left = TypeConstraint.fromDfType(args[0].getDfType());
+        TypeConstraint right = TypeConstraint.fromDfType(args[1].getDfType());
+        return !right.isSuperConstraintOf(left);
+      }
+      return true;
+    }
+    return type.equals(DfTypes.FALSE) && DfaNullability.fromDfType(state.getDfType(args[0])) != DfaNullability.NULL;
   }
 
   private void checkUselessCall(@NotNull DfaValue @NotNull [] args,

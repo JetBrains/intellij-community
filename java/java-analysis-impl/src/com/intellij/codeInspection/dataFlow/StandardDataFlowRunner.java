@@ -159,6 +159,13 @@ public class StandardDataFlowRunner implements DataFlowRunner {
                                             @NotNull Collection<? extends DfaMemoryState> initialStates) {
     ControlFlow flow = buildFlow(psiBlock);
     if (flow == null) return RunnerResult.NOT_APPLICABLE;
+    return analyzeFlow(psiBlock, visitor, initialStates, flow);
+  }
+
+  @NotNull RunnerResult analyzeFlow(@NotNull PsiElement psiBlock,
+                                    @NotNull InstructionVisitor visitor,
+                                    @NotNull Collection<? extends DfaMemoryState> initialStates,
+                                    ControlFlow flow) {
     List<DfaInstructionState> startingStates = createInitialInstructionStates(psiBlock, initialStates, flow);
     if (startingStates.isEmpty()) {
       return RunnerResult.ABORTED;

@@ -58,7 +58,6 @@ public class InstructionVisitor {
   private static final Logger LOG = Logger.getInstance(DataFlowInstructionVisitor.class);
   protected final @NotNull DfaInterceptor myInterceptor;
   protected final boolean myStopAnalysisOnNpe;
-  protected final Set<InstanceofInstruction> myUsefulInstanceofs = new HashSet<>();
 
   public InstructionVisitor(@Nullable DfaInterceptor interceptor) {
     this(interceptor, false);
@@ -985,38 +984,24 @@ public class InstructionVisitor {
       condition = dfaLeft.cond(RelationType.IS, dfaRight);
     }
 
-    boolean useful;
     ArrayList<DfaInstructionState> states = new ArrayList<>(2);
     DfType leftType = memState.getDfType(dfaLeft);
     if (condition.isUnknown()) {
-      if (leftType != DfType.TOP && dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaTypeValue) {
-        TypeConstraint left = TypeConstraint.fromDfType(leftType);
-        TypeConstraint right = TypeConstraint.fromDfType(dfaRight.getDfType());
-        useful = !right.isSuperConstraintOf(left);
-      } else {
-        useful = true;
-      }
-      states.add(makeBooleanResult(instruction, runner, memState, ThreeState.UNSURE));
+      states.add(makeBooleanResult(instruction, runner, memState, ThreeState.UNSURE, dfaLeft, dfaRight));
     }
     else {
       final DfaMemoryState trueState = memState.createCopy();
-      useful = unknownTargetType;
       if (trueState.applyCondition(condition)) {
-        states.add(makeBooleanResult(instruction, runner, trueState, unknownTargetType ? ThreeState.UNSURE : ThreeState.YES));
+        states.add(makeBooleanResult(instruction, runner, trueState, unknownTargetType ? ThreeState.UNSURE : ThreeState.YES, dfaLeft, dfaRight));
       }
       DfaCondition negated = condition.negate();
       if (unknownTargetType ? memState.applyContractCondition(negated) : memState.applyCondition(negated)) {
-        states.add(makeBooleanResult(instruction, runner, memState, ThreeState.NO));
-        if (!memState.isNull(dfaLeft)) {
-          useful = true;
-        } else if (DfaNullability.fromDfType(leftType) == DfaNullability.UNKNOWN) {
+        states.add(makeBooleanResult(instruction, runner, memState, ThreeState.NO, dfaLeft, dfaRight));
+        if (memState.isNull(dfaLeft) && DfaNullability.fromDfType(leftType) == DfaNullability.UNKNOWN) {
           // Not-instanceof check leaves only "null" possible value in some state: likely the state is ephemeral
           memState.markEphemeral();
         }
       }
-    }
-    if (useful) {
-      myUsefulInstanceofs.add(instruction);
     }
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
@@ -1024,10 +1009,10 @@ public class InstructionVisitor {
   private DfaInstructionState makeBooleanResult(ExpressionPushingInstruction instruction,
                                                 DataFlowRunner runner,
                                                 DfaMemoryState memState,
-                                                @NotNull ThreeState result) {
-    DfaValue value = result == ThreeState.UNSURE ? runner.getFactory().getUnknown() : runner.getFactory()
-      .fromDfType(booleanValue(result.toBoolean()));
-    pushExpressionResult(value, instruction, memState);
+                                                @NotNull ThreeState result,
+                                                @NotNull DfaValue @NotNull ... args) {
+    DfaValue value = runner.getFactory().fromDfType(result == ThreeState.UNSURE ? BOOLEAN : booleanValue(result.toBoolean()));
+    pushExpressionResult(value, instruction, memState, args);
     return new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState);
   }
 
