@@ -302,8 +302,8 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   @Nullable
   public T getSelectedElement() {
     int viewRow = getSelectedElementRow();
-    int modelRow = myTable.convertRowIndexToModel(viewRow);
-    return modelRow < 0? null : myTableModel.getElementAt(modelRow);
+    int modelRow = viewRow == -1 ? -1 : myTable.convertRowIndexToModel(viewRow);
+    return modelRow < 0 ? null : myTableModel.getElementAt(modelRow);
   }
 
   public int getSelectedElementRow() {
