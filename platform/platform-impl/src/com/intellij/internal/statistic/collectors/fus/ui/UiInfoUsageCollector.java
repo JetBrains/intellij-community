@@ -9,6 +9,8 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -18,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,6 +31,8 @@ import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newMetr
  * @author Konstantin Bulenkov
  */
 final class UiInfoUsageCollector extends ApplicationUsagesCollector {
+  private static final Logger LOG = Logger.getInstance(UiInfoUsageCollector.class);
+
   @NotNull
   @Override
   public String getGroupId() {
@@ -36,7 +41,7 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 8;
+    return 9;
   }
 
   @NotNull
@@ -136,14 +141,26 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
     scale = scaleBase + scaleFract;
 
-    boolean isScaleMode = false;
+    Ref<Boolean> isScaleMode = new Ref<>();
     if (!GraphicsEnvironment.isHeadless()) {
-      DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-      isScaleMode = JdkEx.getDisplayModeEx().isDefault(dm);
+      try {
+        SwingUtilities.invokeAndWait(() -> {
+          DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+          isScaleMode.set(JdkEx.getDisplayModeEx().isDefault(dm));
+        });
+      }
+      catch (InvocationTargetException e) {
+        LOG.error(e);
+      }
+      catch (InterruptedException e) {
+        // ignore
+      }
     }
 
-    FeatureUsageData data = new FeatureUsageData().
-      addData("scale_mode", isScaleMode).addData("scale", scale);
+    FeatureUsageData data = new FeatureUsageData().addData("scale", scale);
+    if (!isScaleMode.isNull()) {
+      data.addData("scale_mode", isScaleMode.get());
+    }
     set.add(newMetric("Screen.Scale", data));
   }
 }
