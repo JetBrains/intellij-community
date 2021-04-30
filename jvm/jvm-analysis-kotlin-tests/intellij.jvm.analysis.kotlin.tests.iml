@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.tests" />
-    <orderEntry type="library" scope="RUNTIME" name="KotlinPlugin" level="project" />
+    <orderEntry type="module" module-name="intellij.android.kotlin-dependencies" scope="RUNTIME" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
