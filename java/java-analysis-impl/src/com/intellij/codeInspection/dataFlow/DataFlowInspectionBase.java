@@ -206,7 +206,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     ControlFlow flow = dfaRunner.buildFlow(scope);
     if (flow == null) return visitor;
     visitor.initInstanceOf(flow.getInstructions());
-    RunnerResult rc = dfaRunner.analyzeFlow(scope, visitor, initialStates, flow);
+    RunnerResult rc = dfaRunner.analyzeFlow(scope, new InstructionVisitor(visitor), initialStates, flow);
     if (rc == RunnerResult.OK) {
       if (dfaRunner.wasForciblyMerged() &&
           (ApplicationManager.getApplication().isUnitTestMode() || Registry.is("ide.dfa.report.imprecise"))) {

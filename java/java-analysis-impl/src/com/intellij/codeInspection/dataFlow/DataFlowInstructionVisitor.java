@@ -45,7 +45,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-final class DataFlowInstructionVisitor extends InstructionVisitor implements JavaDfaInterceptor {
+final class DataFlowInstructionVisitor implements JavaDfaInterceptor {
   private static final Logger LOG = Logger.getInstance(DataFlowInstructionVisitor.class);
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
@@ -76,7 +76,6 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
   );
 
   DataFlowInstructionVisitor(boolean strictMode) {
-    super(null, false);
     myStrictMode = strictMode;
   }
 

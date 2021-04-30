@@ -54,17 +54,17 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author peter
  */
-public class InstructionVisitor {
+public final class InstructionVisitor {
   private static final Logger LOG = Logger.getInstance(DataFlowInstructionVisitor.class);
   protected final @NotNull DfaInterceptor myInterceptor;
   protected final boolean myStopAnalysisOnNpe;
 
-  public InstructionVisitor(@Nullable DfaInterceptor interceptor) {
+  public InstructionVisitor(@NotNull DfaInterceptor interceptor) {
     this(interceptor, false);
   }
 
-  public InstructionVisitor(@Nullable DfaInterceptor interceptor, boolean stopAnalysisOnNpe) {
-    myInterceptor = interceptor != null ? interceptor : (DfaInterceptor)this;
+  public InstructionVisitor(@NotNull DfaInterceptor interceptor, boolean stopAnalysisOnNpe) {
+    myInterceptor = interceptor;
     myStopAnalysisOnNpe = stopAnalysisOnNpe;
   }
 
