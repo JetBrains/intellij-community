@@ -78,12 +78,27 @@ public interface JavaDfaInterceptor extends DfaInterceptor {
     }
   }
 
+  /**
+   * Called before result of given expression is pushed to the stack
+   * @param value value that is about to be pushed
+   * @param expression expression evaluated (only completely evaluated expressions are reported here)
+   * @param state memory state
+   */
   default void beforeExpressionPush(@NotNull DfaValue value,
                                     @NotNull PsiExpression expression,
                                     @NotNull DfaMemoryState state) {
 
   }
 
+  /**
+   * Called before returning the value from specific computation scope (method, lambda, method reference).
+   * Can be called many times for the same scope.
+   * 
+   * @param value value to be returned
+   * @param expression expression that resulted in a given value (can be null) 
+   * @param context context ({@link PsiMethod}, or {@link PsiFunctionalExpression})
+   * @param state memory state
+   */
   default void beforeValueReturn(@NotNull DfaValue value,
                                  @Nullable PsiExpression expression,
                                  @NotNull PsiElement context,
