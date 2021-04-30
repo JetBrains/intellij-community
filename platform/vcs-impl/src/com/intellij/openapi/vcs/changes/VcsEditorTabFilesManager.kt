@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.editor.DiffContentVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -30,7 +31,8 @@ class VcsEditorTabFilesManager :
     val messageBus = ApplicationManager.getApplication().messageBus
     messageBus.connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        if (source is FileEditorManagerEx) {
+        //currently shouldOpenInNewWindow is bound only to diff files
+        if (file is DiffContentVirtualFile && source is FileEditorManagerEx) {
           val isOpenInNewWindow = source.findFloatingWindowForFile(file) != null
           file.putUserData(OPENED_IN_NEW_WINDOW, if (isOpenInNewWindow) true else null)
           shouldOpenInNewWindow = isOpenInNewWindow
