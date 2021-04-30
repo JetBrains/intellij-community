@@ -3,12 +3,39 @@
 Reports methods with too many <code>return</code> points. Methods with too many <code>return</code> points may be confusing,
 and hard to refactor. A <code>return</code> point is either a <code>return</code> statement or the falling through the bottom of a
 <code>void</code> method or constructor.
+<p>For example, such method is reported if inspection allows only two <code>return</code> statement:</p>
+<pre>
+  void doSmth(User[] users) {
+    for (User user : users) {
+      if (cond1(user)) {
+        user.setId(getId());
+        return;
+      } else if (cond2(user)) {
+        if (cond3(user)) {
+          user.setId(getId());
+          return;
+        }
+      }
+    }
+  }
+</pre>
+<p>And it can be rewritten with much more comprehensive code:</p>
+<pre>
+  void doSmth(User[] users) {
+    for (User user : users) {
+      if (cond1(user) || cond2(user) && cond3(user)) {
+        user.setId(getId());
+        return;
+      }
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 Use the field below to specify the maximum number of <code>return</code> points a method is allowed to have.
 <p>
-Use the first checkbox below to ignore guard clauses. 
-Guard clause is an <code>if</code> clause that contains only <code>return</code> statement  
+Use the first checkbox below to ignore guard clauses.
+A guard clause is an <code>if</code> statement that contains only a <code>return</code> statement
 <p>
 Use the second checkbox below to ignore <code>return</code> points inside <code>equals()</code> methods.
 <p>
