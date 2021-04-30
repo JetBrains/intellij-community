@@ -20,6 +20,7 @@ class EditorConfigShadowingOptionInspection : LocalInspectionTool() {
         .dropLast(1)
         .lastOrNull { equalOptions(option, it) }
         ?.apply {
+          @Suppress("DialogTitleCapitalization")
           val message = EditorConfigBundle["inspection.option.shadowing.message"]
           holder.registerProblem(findKey(option), message, EditorConfigRemoveOptionQuickFix())
         }

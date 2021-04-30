@@ -22,6 +22,7 @@ class EditorConfigPatternRedundancyInspection : LocalInspectionTool() {
       if (otherPatterns.isEmpty()) return
 
       if (isDuplicate(pattern, otherPatterns)) {
+        @Suppress("DialogTitleCapitalization")
         val message = EditorConfigBundle["inspection.pattern.duplicate.message"]
         holder.registerProblem(pattern, message, EditorConfigRemoveHeaderElementQuickFix())
         return
@@ -38,6 +39,7 @@ class EditorConfigPatternRedundancyInspection : LocalInspectionTool() {
       val otherAutomatonsUnion = otherAutomatons.fold(Automaton(), BasicOperations::union)
 
       if (pattern isSubcaseOf otherAutomatonsUnion) {
+        @Suppress("DialogTitleCapitalization")
         val message = EditorConfigBundle["inspection.pattern.redundant.to.union.message"]
         holder.registerProblem(pattern, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, EditorConfigRemoveHeaderElementQuickFix())
       }

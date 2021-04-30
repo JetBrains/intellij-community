@@ -21,11 +21,7 @@ class EditorConfigOptionRedundancyInspection : LocalInspectionTool() {
       val parentOptions = parents.map(EditorConfigFlatOptionKey::option)
       if (!parentOptions.all { haveEqualValues(option, it) }) return
 
-      val key =
-        if (parentOptions.size == 1) "inspection.option.redundant.singular.message"
-        else "inspection.option.redundant.plural.message"
-
-      val message = EditorConfigBundle[key]
+      val message = EditorConfigBundle.get("inspection.option.redundant.message", option.name ?: "" )
       holder.registerProblem(
         flatOptionKey,
         message,
