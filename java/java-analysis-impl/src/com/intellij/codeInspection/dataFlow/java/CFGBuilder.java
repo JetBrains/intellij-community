@@ -9,8 +9,7 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceRetur
 import com.intellij.codeInspection.dataFlow.java.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.jvm.JvmTrap;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
-import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;

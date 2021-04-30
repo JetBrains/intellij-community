@@ -6,7 +6,6 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.jvm.ReturnTransfer;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.SpliceInstruction;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
