@@ -51,6 +51,7 @@ public interface EditorEx extends Editor {
   @NonNls String PROP_INSERT_MODE = "insertMode";
   @NonNls String PROP_COLUMN_MODE = "columnMode";
   @NonNls String PROP_FONT_SIZE = "fontSize";
+  @NonNls String PROP_ONE_LINE_MODE = "oneLineMode";
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
 
   @NotNull
