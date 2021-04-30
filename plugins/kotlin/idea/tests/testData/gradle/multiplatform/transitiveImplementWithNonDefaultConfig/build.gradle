@@ -52,7 +52,6 @@ project('project3') {
     apply plugin: 'kotlin'
 
     dependencies {
-        compile(project(path: ':project2', configuration: 'myConfig')) { transitive = false }
+        implementation(project(path: ':project2', configuration: 'myConfig')) { transitive = false }
     }
 }
-        

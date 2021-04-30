@@ -29,7 +29,7 @@ project('jvm-lib2') {
 
     dependencies {
         implement project(':common-lib2')
-        compile project(':jvm-lib1')
+        api project(':jvm-lib1')
     }
 }
 
@@ -37,7 +37,6 @@ project('jvm-app') {
     apply plugin: 'kotlin-platform-jvm'
 
     dependencies {
-        compile project(':jvm-lib2')
+        implementation project(':jvm-lib2')
     }
 }
-        

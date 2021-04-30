@@ -32,7 +32,7 @@ project('common-app') {
     apply plugin: 'kotlin-platform-common'
 
     dependencies {
-        compile project(':common-lib')
+        api project(':common-lib')
     }
 }
 
@@ -41,7 +41,7 @@ project('jvm-app') {
 
     dependencies {
         implement project(':common-app')
-        compile project(':jvm-lib')
+        api project(':jvm-lib')
     }
 }
 
@@ -50,7 +50,6 @@ project('js-app') {
 
     dependencies {
         implement project(':common-app')
-        compile project(':js-lib')
+        api project(':js-lib')
     }
 }
-        
