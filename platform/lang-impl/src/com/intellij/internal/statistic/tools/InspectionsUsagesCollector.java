@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.tools;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -17,6 +18,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -39,6 +41,11 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
   private static final Predicate<ScopeToolState> DISABLED = state -> state.getTool().isEnabledByDefault() && !state.isEnabled();
 
   private static final StringEventField INSPECTION_ID_FIELD = EventFields.StringValidatedByCustomRule("inspection_id", "tool");
+  private static final StringEventField SCOPE_FIELD = EventFields.String("scope", List.of(
+    "All", "All Changed Files", "Generated Files", "Project Files and Vendor", "Non-Project Files", "Project Non-Source Files",
+    "Open Files", "Project Files", "Production", "Scratches and Consoles", "Project Source Files", "Tests"
+  ));
+  private static final StringEventField SEVERITY_FIELD = EventFields.String("severity", ContainerUtil.map(HighlightSeverity.DEFAULT_SEVERITIES, severity -> severity.getName()));
   private static final BooleanEventField ENABLED_FIELD = EventFields.Boolean("enabled");
   private static final BooleanEventField INSPECTION_ENABLED_FIELD = EventFields.Boolean("inspection_enabled");
   private static final PrimitiveEventField<Object> OPTION_VALUE_FIELD = new PrimitiveEventField<>() {
@@ -67,7 +74,7 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
     new StringEventField.ValidatedByAllowedValues("option_type", Arrays.asList("boolean", "integer"));
   private static final StringEventField OPTION_NAME_FIELD = EventFields.StringValidatedByCustomRule("option_name", "plugin_info");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 7);
+  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 8);
 
   private static final VarargEventId NOT_DEFAULT_STATE =
     GROUP.registerVarargEvent("not.default.state",
@@ -91,6 +98,11 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
                         EventFields.Boolean("project_level"),
                         EventFields.Boolean("default"),
                         EventFields.Boolean("locked"));
+  private static final EventId3<String, String, String> NOT_DEFAULT_SCOPE_AND_SEVERITY =
+    GROUP.registerEvent("not.default.scope.and.severity",
+                        INSPECTION_ID_FIELD,
+                        SCOPE_FIELD,
+                        SEVERITY_FIELD);
 
   @Override
   public EventLogGroup getGroup() {
@@ -111,6 +123,8 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
     for (ScopeToolState state : tools) {
       InspectionToolWrapper<?, ?> tool = state.getTool();
       PluginInfo pluginInfo = getInfo(tool);
+
+      // not.default.state
       if (ENABLED.test(state)) {
         result.add(create(tool, pluginInfo, true));
       }
@@ -118,7 +132,12 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
         result.add(create(tool, pluginInfo, false));
       }
 
+      // setting.non.default.state
       result.addAll(getChangedSettingsEvents(tool, pluginInfo, state.isEnabled()));
+
+      // not.default.scope.and.severity
+      final MetricEvent scopeAndSeverityEvent = getChangedScopeAndSeverityEvent(state, pluginInfo);
+      if (scopeAndSeverityEvent != null) result.add(scopeAndSeverityEvent);
     }
     return result;
   }
@@ -232,6 +251,24 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
     catch (Exception e) {
       return Collections.emptyMap();
     }
+  }
+
+  @Nullable
+  private static MetricEvent getChangedScopeAndSeverityEvent(ScopeToolState tool, PluginInfo info) {
+    if (!isSafeToReport(info)) {
+      return null;
+    }
+
+    if (!(tool.getScopeName().equals("All") &&
+          tool.getLevel().getSeverity().getName().equals(tool.getTool().getDefaultLevel().getSeverity().getName()))) {
+      return NOT_DEFAULT_SCOPE_AND_SEVERITY.metric(
+        tool.getTool().getID(),
+        tool.getScopeName(),
+        tool.getLevel().toString()
+      );
+    }
+
+    return null;
   }
 
   public static class InspectionToolValidator extends CustomValidationRule {
