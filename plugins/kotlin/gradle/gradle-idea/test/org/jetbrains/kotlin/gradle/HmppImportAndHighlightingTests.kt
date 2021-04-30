@@ -454,7 +454,6 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
     @PluginTargetVersions(pluginVersion = "1.4.30+")
     fun testHmppLibAndConsumer() {
         configureByFiles()
-        importProject()
         linkProject("$projectPath/lib-and-app")
         linkProject("$projectPath/published-lib-consumer")
 
@@ -487,7 +486,6 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
             allModules {
                 assertNoDependencyInBuildClasses()
             }
-            module("project")
             module("lib-and-app")
             module("lib-and-app.app")
             module("lib-and-app.app.commonMain") {
@@ -497,8 +495,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("lib-and-app.app.commonMain", DependencyScope.TEST)
                 moduleDependency("lib-and-app.lib.commonMain", DependencyScope.TEST)
             }
-            module("lib-and-app.app.iosArm64Main")
-            {
+            module("lib-and-app.app.iosArm64Main") {
                 moduleDependency("lib-and-app.app.commonMain", DependencyScope.COMPILE)
                 moduleDependency("lib-and-app.app.iosMain", DependencyScope.COMPILE)
                 moduleDependency("lib-and-app.lib.commonMain", DependencyScope.COMPILE)
@@ -506,8 +503,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 if (HostManager.hostIsMac)
                     moduleDependency("lib-and-app.lib.iosArm64Main", DependencyScope.COMPILE)
             }
-            module("lib-and-app.app.iosArm64Test")
-            {
+            module("lib-and-app.app.iosArm64Test") {
                 moduleDependency("lib-and-app.app.commonMain", DependencyScope.TEST)
                 moduleDependency("lib-and-app.app.commonTest", DependencyScope.TEST)
                 moduleDependency("lib-and-app.app.iosArm64Main", DependencyScope.TEST)
@@ -515,25 +511,21 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("lib-and-app.app.iosTest", DependencyScope.TEST)
                 moduleDependency("lib-and-app.lib.commonMain", DependencyScope.TEST)
                 moduleDependency("lib-and-app.lib.iosMain", DependencyScope.TEST)
-                if (HostManager.hostIsMac)
-                    moduleDependency("lib-and-app.lib.iosArm64Main", DependencyScope.COMPILE)
+
             }
-            module("lib-and-app.app.iosMain")
-            {
+            module("lib-and-app.app.iosMain") {
                 moduleDependency("lib-and-app.app.commonMain", DependencyScope.COMPILE)
                 moduleDependency("lib-and-app.lib.commonMain", DependencyScope.COMPILE)
                 moduleDependency("lib-and-app.lib.iosMain", DependencyScope.COMPILE)
             }
-            module("lib-and-app.app.iosTest")
-            {
+            module("lib-and-app.app.iosTest") {
                 moduleDependency("lib-and-app.app.commonMain", DependencyScope.TEST)
                 moduleDependency("lib-and-app.app.commonTest", DependencyScope.TEST)
                 moduleDependency("lib-and-app.app.iosMain", DependencyScope.TEST)
                 moduleDependency("lib-and-app.lib.commonMain", DependencyScope.TEST)
                 moduleDependency("lib-and-app.lib.iosMain", DependencyScope.TEST)
             }
-            module("lib-and-app.app.iosX64Main")
-            {
+            module("lib-and-app.app.iosX64Main") {
                 moduleDependency("lib-and-app.app.commonMain", DependencyScope.COMPILE)
                 moduleDependency("lib-and-app.app.iosMain", DependencyScope.COMPILE)
                 moduleDependency("lib-and-app.lib.commonMain", DependencyScope.COMPILE)
@@ -541,8 +533,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 if (HostManager.hostIsMac)
                     moduleDependency("lib-and-app.lib.iosX64Main", DependencyScope.COMPILE)
             }
-            module("lib-and-app.app.iosX64Test")
-            {
+            module("lib-and-app.app.iosX64Test") {
                 moduleDependency("lib-and-app.app.commonMain", DependencyScope.TEST)
                 moduleDependency("lib-and-app.app.commonTest", DependencyScope.TEST)
                 moduleDependency("lib-and-app.app.iosX64Main", DependencyScope.TEST)
@@ -672,7 +663,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
             module("published-lib-consumer.iosArm64Main") {
                 moduleDependency("published-lib-consumer.commonMain", DependencyScope.COMPILE)
                 moduleDependency("published-lib-consumer.iosMain", DependencyScope.COMPILE)
-                libraryDependency("Gradle: com.h0tk3y.mpp.demo:lib-iosarm64:1.0", DependencyScope.COMPILE)
+                libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosarm64:(klib:)?1.0"), DependencyScope.COMPILE)
             }
             module("published-lib-consumer.iosArm64Test") {
                 moduleDependency("published-lib-consumer.commonMain", DependencyScope.TEST)
@@ -680,7 +671,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("published-lib-consumer.iosMain", DependencyScope.TEST)
                 moduleDependency("published-lib-consumer.iosTest", DependencyScope.TEST)
                 moduleDependency("published-lib-consumer.iosArm64Main", DependencyScope.TEST)
-                libraryDependency("Gradle: com.h0tk3y.mpp.demo:lib-iosarm64:1.0", DependencyScope.TEST)
+                libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosarm64:(klib:)?1.0"), DependencyScope.TEST)
             }
             module("published-lib-consumer.iosMain") {
                 moduleDependency("published-lib-consumer.commonMain", DependencyScope.COMPILE)
@@ -697,7 +688,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
             module("published-lib-consumer.iosX64Main") {
                 moduleDependency("published-lib-consumer.commonMain", DependencyScope.COMPILE)
                 moduleDependency("published-lib-consumer.iosMain", DependencyScope.COMPILE)
-                libraryDependency("Gradle: com.h0tk3y.mpp.demo:lib-iosx64:1.0", DependencyScope.COMPILE)
+                libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosx64:(klib:)?1.0"), DependencyScope.COMPILE)
             }
             module("published-lib-consumer.iosX64Test") {
                 moduleDependency("published-lib-consumer.commonMain", DependencyScope.TEST)
@@ -705,7 +696,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("published-lib-consumer.iosMain", DependencyScope.TEST)
                 moduleDependency("published-lib-consumer.iosTest", DependencyScope.TEST)
                 moduleDependency("published-lib-consumer.iosX64Main", DependencyScope.TEST)
-                libraryDependency("Gradle: com.h0tk3y.mpp.demo:lib-iosx64:1.0", DependencyScope.TEST)
+                libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosx64:(klib:)?1.0"), DependencyScope.TEST)
             }
             module("published-lib-consumer.jsMain") {
                 moduleDependency("published-lib-consumer.commonMain", DependencyScope.COMPILE)
