@@ -28,11 +28,13 @@ public interface DfaInterceptor {
    * The value with the same anchor can be pushed many times to the different memory states.
    * Only values that have an anchor are reported here.
    *
+   * @param args   input arguments used to evaluate the value
    * @param value  a value being pushed
    * @param anchor an anchor that describes the location of the pushed value
    * @param state  a memory state where expression is about to be pushed
    */
-  default void beforePush(@NotNull DfaValue value,
+  default void beforePush(@NotNull DfaValue @NotNull [] args,
+                          @NotNull DfaValue value,
                           @NotNull DfaAnchor anchor,
                           @NotNull DfaMemoryState state) {
 

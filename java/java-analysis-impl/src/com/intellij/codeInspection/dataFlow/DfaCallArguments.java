@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,11 @@ import java.util.Set;
   @Override
   public int hashCode() {
     return (Objects.hashCode(myQualifier) * 31 + Arrays.hashCode(myArguments))*31+myMutation.hashCode();
+  }
+  
+  public DfaValue[] toArray() {
+    if (myArguments == null || myQualifier == null) return new DfaValue[0];
+    return ArrayUtil.prepend(myQualifier, myArguments);
   }
 
   public void flush(@NotNull DfaMemoryState state, @NotNull DfaValueFactory factory, @Nullable PsiMethod method) {

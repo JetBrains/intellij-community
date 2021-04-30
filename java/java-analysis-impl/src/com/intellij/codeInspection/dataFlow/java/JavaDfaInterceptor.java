@@ -18,7 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 public interface JavaDfaInterceptor extends DfaInterceptor {
   @Override
-  default void beforePush(@NotNull DfaValue value,
+  default void beforePush(@NotNull DfaValue @NotNull [] args,
+                          @NotNull DfaValue value,
                           @NotNull DfaAnchor anchor,
                           @NotNull DfaMemoryState state) {
     if (anchor instanceof JavaPolyadicPartAnchor || anchor instanceof JavaSwitchLabelTakenAnchor) {

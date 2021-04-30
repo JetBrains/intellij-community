@@ -71,10 +71,11 @@ public class InstructionVisitor {
 
   void pushExpressionResult(@NotNull DfaValue value,
                             @NotNull ExpressionPushingInstruction instruction,
-                            @NotNull DfaMemoryState state) {
+                            @NotNull DfaMemoryState state,
+                            @NotNull DfaValue @NotNull ... inputArgs) {
     DfaAnchor anchor = instruction.getDfaAnchor();
     if (anchor != null) {
-      myInterceptor.beforePush(value, anchor, state);
+      myInterceptor.beforePush(inputArgs, value, anchor, state);
     }
     state.push(value);
   }
@@ -130,13 +131,10 @@ public class InstructionVisitor {
 
     DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
     int i = 0;
-    PsiExpression expression = tryCast(instruction.getContext(), PsiExpression.class);
+    DfaValue[] args = callArguments.toArray();
     for (DfaMemoryState state : finalStates) {
-      if (expression != null) {
-        onMethodCall(state.peek(), expression, callArguments, state);
-      }
       callArguments.flush(state, factory, realMethod);
-      pushExpressionResult(state.pop(), instruction, state);
+      pushExpressionResult(state.pop(), instruction, state, args);
       result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
     }
     return result;
@@ -261,7 +259,7 @@ public class InstructionVisitor {
         dropLocality(qualifier, memState);
       }
     }
-    pushExpressionResult(value, instruction, memState);
+    pushExpressionResult(value, instruction, memState, args);
     return nextInstruction(instruction, runner, memState);
   }
 
@@ -852,13 +850,6 @@ public class InstructionVisitor {
     return true;
   }
 
-  protected void onMethodCall(@NotNull DfaValue result,
-                              @NotNull PsiExpression expression,
-                              @NotNull DfaCallArguments arguments,
-                              @NotNull DfaMemoryState memState) {
-
-  }
-
   public DfaInstructionState[] visitCheckNotNull(CheckNotNullInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     NullabilityProblemKind.NullabilityProblem<?> problem = instruction.getProblem();
     if (problem.thrownException() == null) {
@@ -1075,17 +1066,18 @@ public class InstructionVisitor {
     DfaValue defaultResult = runner.getFactory().fromDfType(typedObject(returnType, DfaPsiUtil.getElementNullability(returnType, method)));
     Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments, defaultResult));
     JavaMethodReferenceReturnAnchor anchor = new JavaMethodReferenceReturnAnchor(methodRef);
+    DfaValue[] args = callArguments.toArray();
     for (MethodContract contract : contracts) {
       Set<DfaMemoryState> results = new HashSet<>();
       currentStates = addContractResults(contract, currentStates, runner.getFactory(), results);
       for (DfaMemoryState result : results) {
         DfaValue value = result.pop();
-        myInterceptor.beforePush(value, anchor, result);
+        myInterceptor.beforePush(args, value, anchor, result);
         state.push(value);
       }
     }
     for (DfaCallState currentState: currentStates) {
-      myInterceptor.beforePush(defaultResult, anchor, currentState.myMemoryState);
+      myInterceptor.beforePush(args, defaultResult, anchor, currentState.myMemoryState);
       state.push(defaultResult);
     }
   }

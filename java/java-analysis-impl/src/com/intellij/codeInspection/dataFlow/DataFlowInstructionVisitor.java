@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResul
 import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
@@ -218,11 +219,24 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
   }
 
   @Override
-  public void beforePush(@NotNull DfaValue value,
+  public void beforePush(@NotNull DfaValue @NotNull [] args,
+                         @NotNull DfaValue value,
                          @NotNull DfaAnchor anchor,
                          @NotNull DfaMemoryState state) {
-    JavaDfaInterceptor.super.beforePush(value, anchor, state);
-    if (anchor instanceof JavaExpressionAnchor && ((JavaExpressionAnchor)anchor).getExpression() instanceof PsiLiteralExpression) return;
+    JavaDfaInterceptor.super.beforePush(args, value, anchor, state);
+    if (anchor instanceof JavaExpressionAnchor) {
+      PsiExpression expression = ((JavaExpressionAnchor)anchor).getExpression();
+      if (expression instanceof PsiLiteralExpression) return;
+      if (expression instanceof PsiMethodCallExpression && USELESS_SAME_ARGUMENTS.matches(expression)) {
+        checkUselessCall(args, value, state, ((PsiMethodCallExpression)expression).getMethodExpression());
+      }
+    }
+    if (anchor instanceof JavaMethodReferenceReturnAnchor) {
+      PsiMethodReferenceExpression methodRef = ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression();
+      if (USELESS_SAME_ARGUMENTS.methodReferenceMatches(methodRef)) {
+        checkUselessCall(args, value, state, methodRef);
+      }
+    }
     if (anchor instanceof JavaSwitchLabelTakenAnchor) {
       DfType type = state.getDfType(value);
       mySwitchLabelsReachability.merge(((JavaSwitchLabelTakenAnchor)anchor).getLabelExpression(),
@@ -231,6 +245,19 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
       return;
     }
     myConstantExpressions.compute(anchor, (c, curState) -> ConstantResult.mergeValue(curState, state, value));
+  }
+
+  private void checkUselessCall(@NotNull DfaValue @NotNull [] args,
+                         @NotNull DfaValue value,
+                         @NotNull DfaMemoryState state,
+                         @NotNull PsiReferenceExpression expression) {
+    if (args.length == 3) {
+      ArgResultEquality equality = new ArgResultEquality(
+        state.areEqual(args[1], args[2]),
+        state.areEqual(value, args[1]),
+        state.areEqual(value, args[2]));
+      mySameArguments.merge(expression, equality, ArgResultEquality::merge);
+    }
   }
 
   @Override
@@ -248,21 +275,6 @@ final class DataFlowInstructionVisitor extends InstructionVisitor implements Jav
     if (parent instanceof PsiTypeCastExpression) {
       TypeConstraint fact = TypeConstraint.fromDfType(memState.getDfType(value));
       myRealOperandTypes.merge((PsiTypeCastExpression)parent, fact, TypeConstraint::join);
-    }
-  }
-
-  @Override
-  protected void onMethodCall(@NotNull DfaValue result,
-                              @NotNull PsiExpression expression,
-                              @NotNull DfaCallArguments arguments,
-                              @NotNull DfaMemoryState memState) {
-    PsiReferenceExpression reference = USELESS_SAME_ARGUMENTS.getReferenceIfMatched(expression);
-    if (reference != null) {
-      ArgResultEquality equality = new ArgResultEquality(
-        memState.areEqual(arguments.myArguments[0], arguments.myArguments[1]),
-        memState.areEqual(result, arguments.myArguments[0]),
-        memState.areEqual(result, arguments.myArguments[1]));
-      mySameArguments.merge(reference, equality, ArgResultEquality::merge);
     }
   }
 
