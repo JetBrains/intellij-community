@@ -1369,7 +1369,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         final ID<?, ?> indexId = affectedIndexCandidates.get(i);
-        if (acceptsInput(indexId, fc) && getIndexingState(fc, indexId).updateRequired()) {
+        boolean update = acceptsInput(indexId, fc) && getIndexingState(fc, indexId).updateRequired();
+
+        if (doTraceStubUpdates(indexId) && !update) {
+          boolean acceptsInput = acceptsInput(indexId, fc);
+          LOG.info("index " + indexId + "should not be updated for " + fc.getFileName() + " because " + (acceptsInput
+                                                                                                         ? "update is not required"
+                                                                                                         : "file is not accepted by index"));
+        }
+
+        if (update) {
           ProgressManager.checkCanceled();
           SingleIndexUpdateStats updateStats = updateSingleIndex(indexId, file, inputId, fc);
           if (updateStats == null) {
