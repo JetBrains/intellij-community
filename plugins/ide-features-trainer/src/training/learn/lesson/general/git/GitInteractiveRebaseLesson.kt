@@ -19,7 +19,6 @@ import git4idea.i18n.GitBundle
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
 import training.dsl.TaskContext
-import training.learn.course.KLesson
 import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
 import training.learn.lesson.general.git.GitLessonsUtil.findVcsLogData
 import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
@@ -32,7 +31,7 @@ import javax.swing.JButton
 import javax.swing.JDialog
 import javax.swing.KeyStroke
 
-class GitInteractiveRebaseLesson: KLesson("Git.InteractiveRebase", "Interactive Rebase") {
+class GitInteractiveRebaseLesson: GitLesson("Git.InteractiveRebase", "Interactive Rebase") {
   override val existedFile = "src/git/martian_cat.yml"
   private val branchName = "fixes"
 

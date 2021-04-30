@@ -26,17 +26,15 @@ import git4idea.repo.GitRepositoryManager
 import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
 import training.dsl.TaskRuntimeContext
-import training.learn.course.KLesson
 import training.learn.lesson.general.git.GitLessonsUtil.findVcsLogData
 import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
 import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
 import training.learn.lesson.general.git.GitLessonsUtil.triggerOnNotification
-import training.project.ProjectUtils
 import java.io.File
 import javax.swing.JDialog
 
-class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature branch workflow") {
+class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature branch workflow") {
   override val existedFile = "src/git/simple_cat.yml"
   private val branchName = "feature"
   private lateinit var repository: GitRepository
@@ -45,7 +43,7 @@ class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature bra
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
       val remoteProjectRoot = reCreateRemoteProjectDir()
-      ProjectUtils.copyGitProject(File(remoteProjectRoot.path))
+      GitProjectUtil.copyGitProject(File(remoteProjectRoot.path))
       runProcess(project, "", false) {
         val git = Git.getInstance()
         repository = GitRepositoryManager.getInstance(project).repositories.first()

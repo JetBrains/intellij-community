@@ -130,7 +130,7 @@ internal object OpenLessonActivities {
           LOG.error(Exception("Invalid learning project initialization: projectWhereToStartLesson = $projectWhereToStartLesson, learnProject = $learnProject"))
           return
         }
-        cleanupAndOpenLesson(projectWhereToStartLesson, lesson)
+        prepareAndOpenLesson(projectWhereToStartLesson, lesson)
       }
       else {
         openLessonForPreparedProject(projectWhereToStartLesson, lesson)
@@ -141,18 +141,12 @@ internal object OpenLessonActivities {
     }
   }
 
-  private fun cleanupAndOpenLesson(project: Project, lessonToOpen: Lesson) {
-    val lessons = CourseManager.instance.lessonsForModules.filter { it.lessonType == LessonType.PROJECT }
+  private fun prepareAndOpenLesson(project: Project, lessonToOpen: Lesson, withCleanup: Boolean = true) {
     runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = project) {
-      LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
-      // todo: find more convenient way
-      if (lessonToOpen.module.name == "Git") {
-        ProjectUtils.restoreGitLessonsFiles(project)
+      if (withCleanup) {
+        LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
       }
-
-      for (lesson in lessons) {
-        lesson.cleanup(project)
-      }
+      lessonToOpen.prepare(project)
 
       invokeLater {
         openLessonForPreparedProject(project, lessonToOpen)
@@ -352,7 +346,7 @@ internal object OpenLessonActivities {
   @RequiresEdt
   private fun openLessonWhenLearnProjectStart(lesson: Lesson, myLearnProject: Project) {
     if (lesson.properties.canStartInDumbMode) {
-      openLessonForPreparedProject(myLearnProject, lesson)
+      prepareAndOpenLesson(myLearnProject, lesson, withCleanup = false)
       return
     }
     fun openLesson() {
@@ -363,7 +357,7 @@ internal object OpenLessonActivities {
           // Try to fix PyCharm double startup indexing :(
           val openWhenSmart = {
             DumbService.getInstance(myLearnProject).runWhenSmart {
-              openLessonForPreparedProject(myLearnProject, lesson)
+              prepareAndOpenLesson(myLearnProject, lesson, withCleanup = false)
             }
           }
           Alarm().addRequest(openWhenSmart, 500)

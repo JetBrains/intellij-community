@@ -26,7 +26,6 @@ import com.intellij.util.DocumentUtil
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import training.dsl.*
-import training.learn.course.KLesson
 import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
 import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.learn.lesson.general.git.GitLessonsUtil.moveLearnToolWindowRight
@@ -39,7 +38,7 @@ import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.tree.TreePath
 
-class GitCommitLesson : KLesson("Git.Commit", "Commit") {
+class GitCommitLesson : GitLesson("Git.Commit", "Commit") {
   override val existedFile = "src/git/simple_cat.yml"
   private val branchName = "feature"
   private val firstFileName = "simple_cat.yml"

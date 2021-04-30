@@ -23,14 +23,13 @@ import com.intellij.util.DocumentUtil
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
 import training.dsl.dropMnemonic
-import training.learn.course.KLesson
 import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
 import training.learn.lesson.general.git.GitLessonsUtil.moveLearnToolWindowRight
 import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
 import java.awt.Rectangle
 import javax.swing.JButton
 
-class GitChangelistsAndShelveLesson : KLesson("Git.ChangelistsAndShelf", "Changelists and Shelf") {
+class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Changelists and Shelf") {
   override val existedFile = "src/git/martian_cat.yml"
   private val branchName = "main"
   private val commentingLineText = "fur_type: long haired"

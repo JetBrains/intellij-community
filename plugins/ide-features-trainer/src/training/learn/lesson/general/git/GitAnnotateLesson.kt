@@ -21,7 +21,6 @@ import training.dsl.LessonUtil
 import training.dsl.TaskContext
 import training.dsl.dropMnemonic
 import training.learn.LearnBundle
-import training.learn.course.KLesson
 import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
 import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
 import java.awt.Component
@@ -29,7 +28,7 @@ import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JEditorPane
 
-class GitAnnotateLesson : KLesson("Git.Annotate", "Annotate with Git Blame") {
+class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
   override val existedFile = "src/git/martian_cat.yml"
   private val branchName = "main"
   private val firstStateText = "ears_number: 4"

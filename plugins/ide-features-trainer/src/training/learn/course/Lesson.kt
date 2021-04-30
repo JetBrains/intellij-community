@@ -30,7 +30,7 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   /** This method is called for all project-based lessons before the start of any project-based lesson */
   @RequiresBackgroundThread
-  open fun cleanup(project: Project) = Unit
+  open fun prepare(project: Project) = Unit
 
   open val properties: LessonProperties = LessonProperties()
 

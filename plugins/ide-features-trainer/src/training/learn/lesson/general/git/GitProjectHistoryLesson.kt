@@ -18,7 +18,6 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
-import training.learn.course.KLesson
 import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
 import training.learn.lesson.general.git.GitLessonsUtil.findVcsLogData
 import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
@@ -29,7 +28,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.Icon
 
-class GitProjectHistoryLesson() : KLesson("Git.ProjectHistory", "Project history") {
+class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", "Project history") {
   override val existedFile = "src/git/sphinx_cat.yml"
   private val branchName = "feature"
   private val textToFind = "sphinx"
