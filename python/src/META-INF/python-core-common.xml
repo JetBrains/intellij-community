@@ -244,6 +244,7 @@
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PyRemoteAnalyzeStacktraceFilter"/>
 
     <internalFileTemplate name="Python Script"/>
+    <internalFileTemplate name="Python Stub"/>
     <internalFileTemplate name="Python Unit Test"/>
     <internalFileTemplate name="Setup Script"/>
 
