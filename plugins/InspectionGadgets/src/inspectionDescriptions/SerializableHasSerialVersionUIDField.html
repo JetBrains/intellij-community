@@ -1,16 +1,29 @@
 <html>
 <body>
-Reports any <b>Serializable</b> classes which do not provide a <b>serialVersionUID</b> field.
-Without a <b>serialVersionUID</b> field, any change to a class will make previously serialized versions unreadable.
+Reports classes that implement <code>Serializable</code> and do not declare a <code>serialVersionUID</code> field.
+<p>
+  Without a <code>serialVersionUID</code> field, any change to a class will make previously serialized versions unreadable.
+</p>
+<p>Example:</p>
+<pre>
+  class Main implements Serializable {
+  }
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  class Main implements Serializable {
+    private static final long serialVersionUID = -1446398935944895849L;
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-Use the table below to specify what specific classes and inheritors should be excluded
-from being checked by this inspection. This is meant for those classes which, although they inherit
-Serializable from a superclass, are not intended for serialization. Such classes would lead this
-inspection to report unnecessarily.
-<p>
-Use the checkbox below to ignore <b>Serializable</b> anonymous classes.
-<p>
-
+<p>Use the Options panel below to configure the inspection:</p>
+<ul>
+  <li>
+    Fill the table below to suppress the reporting subclasses of a class that implement <code>Serializable</code> as they are not intended to be serialized.
+  </li>
+  <li>
+    Enable the checkbox below to ignore <code>Serializable</code> anonymous classes.
+  </li>
+</ul>
 </body>
 </html>

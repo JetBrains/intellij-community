@@ -1,22 +1,44 @@
 <html>
 <body>
-Reports method parameters named identically to visible fields of their class
+Reports method parameters that are named identically to the visible fields of the method's class
 or surrounding classes if it is a parameter inside of an inner or anonymous class.
 Such a parameter name may be confusing.
+<p>The quick-fix can't be performed in an automatic way, instead it prompts for a new name for a parameter.</p>
+<p>Example:</p>
+<pre>
+  class Main {
+    private final int value;
+
+    public Main(int value) {
+        this.value = value;
+    }
+  }
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  class Main {
+    private final int value;
+
+    public Main(int input) {
+        this.value = input;
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox to ignore parameters of simple setters.
-<p>
-Use the second checkbox to ignore for private fields in a superclass, which are not visible from the parameter.
-<p>
-Use the third checkbox to ignore parameters of constructors.
-<p>
-Use the fourth checkbox to ignore parameters of abstract methods.
-<p>
-Use the fifth checkbox to ignore parameters of <b>static</b> methods hiding an instance field and
-to ignore parameters of instance methods in static inner classes hiding an instance field in an outer class.
-While not strictly hiding, such parameters can still be confusing.
-<p>
+  Use the Options panel below to configure the inspection:
+</p>
+<ol>
+  <li>Enable the first checkbox to ignore parameters of simple setters.</li>
+  <li>Enable the second checkbox to ignore for private fields in a superclass, which are not visible from the parameter.</li>
+  <li>Enable the third checkbox to ignore parameters of constructors.</li>
+  <li>Enable the fourth checkbox to ignore parameters of abstract methods.</li>
+  <li>
+    Enable the fifth checkbox to ignore parameters of <code>static</code> methods hiding an instance field and
+    to ignore parameters of instance methods in static inner classes hiding an instance field in an outer class.
+    While not strictly hiding, such parameters can still be confusing.
+  </li>
+</ol>
 
 </body>
 </html>
