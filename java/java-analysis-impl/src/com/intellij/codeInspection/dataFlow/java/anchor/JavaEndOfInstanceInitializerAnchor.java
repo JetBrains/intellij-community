@@ -6,4 +6,8 @@ package com.intellij.codeInspection.dataFlow.java.anchor;
  * Could be used to get the initial memory state before constructor processing. 
  */
 public class JavaEndOfInstanceInitializerAnchor extends JavaDfaAnchor {
+  @Override
+  public String toString() {
+    return "End of instance initializer";
+  }
 }
