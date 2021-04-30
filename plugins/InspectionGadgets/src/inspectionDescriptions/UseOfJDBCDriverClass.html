@@ -5,9 +5,9 @@ bind your project to a specific database and driver, defeating the purpose of JD
 resulting in loss of portability.
 <p>Example: </p>
 <pre>
-  import java.awt.peer.ButtonPeer;
+  import java.sql.Driver;
 
-  abstract class Sample implements ButtonPeer {
+  abstract class Sample implements Driver {
     public void foo() {
         Sample sample;
     }
