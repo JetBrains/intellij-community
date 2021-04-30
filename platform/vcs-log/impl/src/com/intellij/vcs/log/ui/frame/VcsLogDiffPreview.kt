@@ -124,6 +124,7 @@ abstract class EditorDiffPreview(private val project: Project,
 
   fun openPreviewInEditor(focusEditor: Boolean) {
     val escapeHandler = Runnable {
+      closePreview()
       val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
       toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(getOwnerComponent(), true) }, false)
     }
