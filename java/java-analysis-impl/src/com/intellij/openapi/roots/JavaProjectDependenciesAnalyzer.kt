@@ -5,6 +5,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Condition
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.graph.GraphAlgorithms
+import com.intellij.util.graph.GraphGenerator
+import com.intellij.util.graph.InboundSemiGraph
 
 object JavaProjectDependenciesAnalyzer {
   /**
@@ -71,4 +75,35 @@ object JavaProjectDependenciesAnalyzer {
     return result
   }
 
+  /**
+   * Remove items which are exported by other items.
+   */
+  fun removeDuplicatingDependencies(originalDependencies: Collection<Module>): List<Module> {
+    val dependencies = originalDependencies.distinct()
+    val moduleToDominatingDependency = MultiMap.createLinkedSet<Module, Module>()
+    for (dependency in dependencies) {
+      ModuleRootManager.getInstance(dependency).orderEntries()
+        .exportedOnly().recursively().compileOnly().runtimeOnly().productionOnly()
+        .forEachModule {
+          moduleToDominatingDependency.putValue(it, dependency)
+          true
+        }
+    }
+    val dominationGraph = GraphGenerator.generate(object : InboundSemiGraph<Module> {
+      override fun getNodes(): Collection<Module> = dependencies
+      override fun getIn(n: Module): Iterator<Module> = moduleToDominatingDependency.get(n).iterator()
+    })
+
+    val sccGraph = GraphAlgorithms.getInstance().computeSCCGraph(dominationGraph)
+    val toRemove = HashSet<Module>()
+    for (scc in sccGraph.nodes) {
+      if (sccGraph.getIn(scc).hasNext()) {
+        toRemove.addAll(scc.nodes)
+      }
+      else if (scc.nodes.size > 1) {
+        toRemove.addAll(scc.nodes.toList().drop(1))
+      }
+    }
+    return dependencies - toRemove
+  }
 }

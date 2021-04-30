@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.actions
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.PsiManager
@@ -30,12 +31,16 @@ class ExtractModuleFromPackageActionTest {
     val main = projectModel.createModule("main")
     val dep1 = projectModel.createModule("dep1")
     val dep2 = projectModel.createModule("dep2")
+    val exported = projectModel.createModule("exported")
     ModuleRootModificationUtil.addDependency(main, dep1)
+    ModuleRootModificationUtil.addDependency(dep1, exported, DependencyScope.COMPILE, true)
     ModuleRootModificationUtil.addDependency(main, dep2)
     val mainSrc = projectModel.addSourceRoot(main, "src", JavaSourceRootType.SOURCE)
     val dep1Src = projectModel.addSourceRoot(dep1, "src", JavaSourceRootType.SOURCE)
-    val mainClass = VfsTestUtil.createFile(mainSrc, "xxx/Main.java", "package xxx;\nclass Main extends dep1.Dep1 {}")
+    val exportedSrc = projectModel.addSourceRoot(exported, "src", JavaSourceRootType.SOURCE)
+    val mainClass = VfsTestUtil.createFile(mainSrc, "xxx/Main.java", "package xxx;\nclass Main extends dep1.Dep1 { exported.Util u; }")
     VfsTestUtil.createFile(dep1Src, "dep1/Dep1.java", "package dep1;\npublic class Dep1 {}")
+    VfsTestUtil.createFile(exportedSrc, "exported/Util.java", "package exported;\npublic class Util {}")
 
     val directory = runReadAction { PsiManager.getInstance(projectModel.project).findDirectory(mainClass.parent)!! }
     ExtractModuleFromPackageAction.extractModuleFromDirectory(directory, main, "main.xxx")

@@ -15,10 +15,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
@@ -103,8 +100,15 @@ class ExtractModuleFromPackageAction : AnAction() {
           model.sdk = ModuleRootManager.getInstance(module).sdk
         }
         model.addContentEntry(directory.virtualFile).addSourceFolder(directory.virtualFile, false, packagePrefix)
-        usedModules.forEach { model.addModuleOrderEntry(it) }
-        usedLibraries.forEach { model.addLibraryEntry(it) }
+        val moduleDependencies = JavaProjectDependenciesAnalyzer.removeDuplicatingDependencies(usedModules)
+        moduleDependencies.forEach { model.addModuleOrderEntry(it) }
+        val exportedLibraries = HashSet<Library>()
+        for (moduleDependency in moduleDependencies) {
+          ModuleRootManager.getInstance(moduleDependency).orderEntries().exportedOnly().recursively().forEachLibrary {
+            exportedLibraries.add(it)
+          }
+        }
+        (usedLibraries - exportedLibraries).forEach { model.addLibraryEntry(it) }
       }
     }
 
