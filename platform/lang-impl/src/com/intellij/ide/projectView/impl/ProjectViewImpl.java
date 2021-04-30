@@ -930,10 +930,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         private boolean isAutoscrollFromSourceAllowedHere() {
           if (!myAutoScrollOnFocusEditor.getAndSet(true)) return false;
           if (!Registry.is("ide.autoscroll.from.source.on.focus.gained")) return false;
-          if (!isAutoscrollFromSource(getCurrentViewId())) return false;
-          AbstractProjectViewPane pane = getCurrentProjectViewPane();
-          JTree tree = pane == null ? null : pane.getTree();
-          return tree != null && tree.isShowing() && !UIUtil.isClientPropertyTrue(tree, MOUSE_PRESSED_NON_FOCUSED);
+          return isAutoscrollFromSource(getCurrentViewId());
         }
       }, myProject);
     }
@@ -1700,7 +1697,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isAutoscrollFromSource(String paneId) {
-    return myAutoscrollFromSource.isSelected() && myAutoscrollFromSource.isEnabled(paneId);
+    if (!myAutoscrollFromSource.isSelected()) return false;
+    if (!myAutoscrollFromSource.isEnabled(paneId)) return false;
+    AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
+    if (pane == null) return false;
+    JTree tree = pane.getTree();
+    if (tree == null || !tree.isShowing()) return false;
+    return !UIUtil.isClientPropertyTrue(tree, MOUSE_PRESSED_NON_FOCUSED);
   }
 
   public void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
@@ -1912,7 +1915,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Override
     protected void selectElementFromEditor(@NotNull FileEditor fileEditor) {
       if (myProject.isDisposed() || !myViewContentPanel.isShowing()) return;
-      if (isAutoscrollFromSource(getCurrentViewId()) && !isCurrentProjectViewPaneFocused() && !isMousePressedNonFocused()) {
+      if (isAutoscrollFromSource(getCurrentViewId()) && !isCurrentProjectViewPaneFocused()) {
         SimpleSelectInContext context = getSelectInContext(fileEditor);
         if (context != null) context.selectInCurrentTarget(false);
       }
@@ -1957,11 +1960,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     private boolean isCurrentProjectViewPaneFocused() {
       AbstractProjectViewPane pane = getCurrentProjectViewPane();
       return pane != null && IJSwingUtilities.hasFocus(pane.getComponentToFocus());
-    }
-
-    private boolean isMousePressedNonFocused() {
-      AbstractProjectViewPane pane = getCurrentProjectViewPane();
-      return pane != null && UIUtil.isClientPropertyTrue(pane.getTree(), MOUSE_PRESSED_NON_FOCUSED);
     }
 
     @Override
