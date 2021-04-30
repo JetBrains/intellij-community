@@ -38,7 +38,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaModule
 import com.intellij.task.ExecuteRunConfigurationTask
-import gnu.trove.THashMap
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.build.GradleExecutionEnvironmentProvider
@@ -95,7 +94,7 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
 
         val taskSettings = ExternalSystemTaskExecutionSettings().apply {
             isPassParentEnvs = params.isPassParentEnvs
-            env = if (params.env.isEmpty()) emptyMap() else THashMap(params.env)
+            env = if (params.env.isEmpty()) emptyMap() else HashMap(params.env)
             externalSystemIdString = GradleConstants.SYSTEM_ID.id
             externalProjectPath = GradleRunnerUtil.resolveProjectPath(module)
             taskNames = listOf(runAppTaskName)

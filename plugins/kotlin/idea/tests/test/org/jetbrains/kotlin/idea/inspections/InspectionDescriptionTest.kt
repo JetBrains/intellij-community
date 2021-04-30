@@ -15,7 +15,6 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import gnu.trove.THashMap
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -24,7 +23,7 @@ import org.junit.runner.RunWith
 class InspectionDescriptionTest : LightPlatformTestCase() {
 
     fun testDescriptionsAndShortNames() {
-        val shortNames = THashMap<String, InspectionToolWrapper<InspectionProfileEntry, InspectionEP>>()
+        val shortNames = HashMap<String, InspectionToolWrapper<InspectionProfileEntry, InspectionEP>>()
 
         val inspectionTools = loadKotlinInspections()
         val errors = StringBuilder()
@@ -67,7 +66,7 @@ class InspectionDescriptionTest : LightPlatformTestCase() {
     }
 
     fun testExtensionPoints() {
-        val shortNames = THashMap<String, LocalInspectionEP>()
+        val shortNames = HashMap<String, LocalInspectionEP>()
 
         @Suppress("DEPRECATION")
         val inspectionEPs = Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)

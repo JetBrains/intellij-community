@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -67,7 +67,7 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   protected @NotNull Collection<V> createCollection() {
-    return new SmartList<>();
+    return new ArrayList<>();
   }
 
   protected @NotNull Collection<V> createEmptyCollection() {
@@ -341,7 +341,7 @@ public class MultiMap<K, V> implements Serializable {
     return new MultiMap<K, V>() {
       @Override
       protected @NotNull Collection<V> createCollection() {
-        return new SmartHashSet<>();
+        return new HashSet<>();
       }
 
       @Override
@@ -355,7 +355,7 @@ public class MultiMap<K, V> implements Serializable {
     return new MultiMap<K, V>(map) {
       @Override
       protected @NotNull Collection<V> createCollection() {
-        return new SmartHashSet<>();
+        return new HashSet<>();
       }
 
       @Override

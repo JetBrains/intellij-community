@@ -62,6 +62,10 @@ public final class FileCollectionFactory {
     return new Object2ObjectOpenCustomHashMap<>(FILE_HASH_STRATEGY);
   }
 
+  public static @NotNull <V> Map<File, V> createCanonicalFileMap(int expected) {
+    return new Object2ObjectOpenCustomHashMap<>(expected, FILE_HASH_STRATEGY);
+  }
+
   public static @NotNull <V> Map<File, V> createCanonicalFileMap(@NotNull Map<File, V> map) {
     if (map instanceof Object2ObjectOpenCustomHashMap) {
       Object2ObjectOpenCustomHashMap<File, V> m = (Object2ObjectOpenCustomHashMap<File, V>)map;

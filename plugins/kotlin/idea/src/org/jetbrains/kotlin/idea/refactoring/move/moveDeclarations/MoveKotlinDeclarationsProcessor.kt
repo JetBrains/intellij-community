@@ -29,8 +29,8 @@ import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
-import gnu.trove.THashMap
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.findFacadeClass
@@ -118,7 +118,7 @@ class MoveDeclarationsDescriptor @JvmOverloads constructor(
 
 class ConflictUsageInfo(element: PsiElement, val messages: Collection<String>) : UsageInfo(element)
 
-private object ElementHashingStrategy : TObjectHashingStrategy<PsiElement> {
+private object ElementHashingStrategy : Hash.Strategy<PsiElement> {
     override fun equals(e1: PsiElement?, e2: PsiElement?): Boolean {
         if (e1 === e2) return true
         // Name should be enough to distinguish different light elements based on the same original declaration
@@ -128,7 +128,7 @@ private object ElementHashingStrategy : TObjectHashingStrategy<PsiElement> {
         return e1 == e2
     }
 
-    override fun computeHashCode(e: PsiElement?): Int {
+    override fun hashCode(e: PsiElement?): Int {
         return when (e) {
             null -> 0
             is KtLightDeclaration<*, *> -> (e.kotlinOrigin?.hashCode() ?: 0) * 31 + (e.name?.hashCode() ?: 0)
@@ -343,7 +343,7 @@ class MoveKotlinDeclarationsProcessor(
         try {
             descriptor.delegate.preprocessUsages(descriptor, usages)
 
-            val oldToNewElementsMapping = THashMap<PsiElement, PsiElement>(ElementHashingStrategy)
+            val oldToNewElementsMapping = Object2ObjectOpenCustomHashMap<PsiElement, PsiElement>(ElementHashingStrategy)
 
             val newDeclarations = ArrayList<KtNamedDeclaration>()
 
