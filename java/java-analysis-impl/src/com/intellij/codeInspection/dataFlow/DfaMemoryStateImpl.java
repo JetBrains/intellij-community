@@ -26,13 +26,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -506,7 +500,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         LOG.error("Invariant violated: null-class for id=" + myFactory.getValue(entry.getIntKey()));
       }
     }
-    TIntObjectHashMap<BitSet> graph = new TIntObjectHashMap<>();
+    var graph = new Int2ObjectOpenHashMap<BitSet>();
     for (DistinctPairSet.DistinctPair pair : myDistinctClasses) {
       if (pair.isOrdered()) {
         BitSet set = graph.get(pair.getFirstIndex());
@@ -520,14 +514,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     BitSet visited = new BitSet();
     BitSet stack = new BitSet();
-    for (int v : graph.keys()) {
+    for (int v : graph.keySet()) {
       if (isCycle(v, graph, visited, stack)) {
         throw new IllegalStateException("Cycle in distinct pairs involving " + myEqClasses.get(v));
       }
     }
   }
 
-  private static boolean isCycle(int v, TIntObjectHashMap<BitSet> graph, BitSet visited, BitSet stack) {
+  private static boolean isCycle(int v, Int2ObjectMap<BitSet> graph, BitSet visited, BitSet stack) {
     if (!visited.get(v)) {
       visited.set(v);
       stack.set(v);
@@ -1495,12 +1489,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     List<EqClass> groups = splitEqClass(eqClass, other);
     if (groups.size() == 1) return false;
 
-    TIntArrayList addedClasses = new TIntArrayList();
+    var addedClasses = new IntArrayList();
     int origIndex = myIdToEqClassesIndices.get(eqClass.get(0));
     for (EqClass group : groups) {
       addedClasses.add(storeClass(group));
     }
-    int[] addedClassesArray = addedClasses.toNativeArray();
+    int[] addedClassesArray = addedClasses.toIntArray();
     myDistinctClasses.splitClass(origIndex, addedClassesArray);
     myEqClasses.set(origIndex, null);
 
@@ -1572,29 +1566,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return type;
   }
 
-  private class MyIdMap extends TIntObjectHashMap<Integer> {
-    @Override
-    public String toString() {
-      final StringBuilder s = new StringBuilder("{");
-      forEachEntry(new TIntObjectProcedure<>() {
-        @Override
-        public boolean execute(int id, Integer index) {
-          DfaValue value = myFactory.getValue(id);
-          s.append(value).append(" -> ").append(index).append(", ");
-          return true;
-        }
-      });
-      s.append("}");
-      return s.toString();
-    }
-  }
-
   enum QualifierStatus {
     SHOULD_FLUSH_ALWAYS, SHOULD_FLUSH_CALLS, SHOULD_NOT_FLUSH
   }
 
   private final class QualifierStatusMap {
-    private final TIntObjectHashMap<QualifierStatus> myMap = new TIntObjectHashMap<>();
+    private final Int2ObjectOpenHashMap<QualifierStatus> myMap = new Int2ObjectOpenHashMap<>();
     private final @Nullable Set<DfaValue> myQualifiersToFlush;
 
     private QualifierStatusMap(@Nullable Set<DfaValue> qualifiersToFlush) {

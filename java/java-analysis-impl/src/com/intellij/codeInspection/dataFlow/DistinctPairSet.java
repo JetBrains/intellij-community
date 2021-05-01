@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.memory.EqClass;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import gnu.trove.TLongArrayList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -113,7 +112,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
    * @return true if merge is successful, false if classes were distinct
    */
   public boolean unite(int c1Index, int c2Index) {
-    TLongArrayList c2Pairs = new TLongArrayList();
+    LongArrayList c2Pairs = new LongArrayList();
     long[] distincts = myData.toLongArray();
     for (long distinct : distincts) {
       int pc1 = low(distinct);
@@ -137,7 +136,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
     }
 
     for (int i = 0; i < c2Pairs.size(); i++) {
-      long c = c2Pairs.get(i);
+      long c = c2Pairs.getLong(i);
       myData.remove(c);
       if (c >= 0) {
         myData.add(createPair(c1Index, low(c) == c2Index ? high(c) : low(c), false));
