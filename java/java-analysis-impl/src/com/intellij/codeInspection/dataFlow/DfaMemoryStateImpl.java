@@ -583,12 +583,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         convertReferenceEqualityToValueEquality(value);
       }
       if (!updateDependentVariables(var, result)) return false;
-      if (result instanceof DfConstantType) {
-        if (!propagateConstant(var, (DfConstantType<?>)result)) return false;
-      }
-      if (result instanceof DfIntegralType) {
-        if (!applyRangeToRelatedValues(var, ((DfIntegralType)result).getRange())) return false;
-      }
+      if (!correctRelatedValues(var, result)) return false;
+      if (result instanceof DfConstantType && !propagateConstant(var, (DfConstantType<?>)result)) return false;
       return true;
     }
     return value.getDfType().meet(dfType) != DfType.BOTTOM;
@@ -914,26 +910,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private boolean applyRangeToRelatedValues(DfaValue value, LongRangeSet appliedRange) {
+  private boolean correctRelatedValues(@NotNull DfaValue value, @NotNull DfType type) {
     EqClass eqClass = getEqClass(value);
     if (eqClass == null) return true;
+    DfType greater = type.fromRelation(RelationType.GT);
+    DfType less = type.fromRelation(RelationType.LT);
+    if (greater == DfType.TOP && less == DfType.TOP) return true;
     for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs().toArray(new DistinctPairSet.DistinctPair[0])) {
       if (pair.isOrdered()) {
         if (pair.getFirst() == eqClass) {
-          if (!applyRelationRangeToClass(pair.getSecond(), appliedRange, RelationType.GT)) return false;
+          if (!meetDfType(Objects.requireNonNull(pair.getSecond().getCanonicalVariable()), greater)) return false;
         } else if(pair.getSecond() == eqClass) {
-          if (!applyRelationRangeToClass(pair.getFirst(), appliedRange, RelationType.LT)) return false;
+          if (!meetDfType(Objects.requireNonNull(pair.getFirst().getCanonicalVariable()), less)) return false;
         }
       }
-    }
-    return true;
-  }
-
-  private boolean applyRelationRangeToClass(EqClass eqClass, LongRangeSet range, RelationType relationType) {
-    LongRangeSet appliedRange = range.fromRelation(relationType);
-    for (DfaVariableValue var : eqClass.asList()) {
-      DfType rangeType = DfTypes.rangeClamped(appliedRange, var.getDfType() instanceof DfLongType);
-      if (!meetDfType(var, rangeType)) return false;
     }
     return true;
   }
