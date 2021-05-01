@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -27,6 +28,7 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
@@ -82,15 +84,28 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   private static boolean canHaveStub(@NotNull VirtualFile file, @NotNull FileType fileType) {
     if (fileType instanceof LanguageFileType) {
-      final Language l = ((LanguageFileType)fileType).getLanguage();
-      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+      Language l = ((LanguageFileType)fileType).getLanguage();
+      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+      FileBasedIndexImpl fileBasedIndex = ObjectUtils.tryCast(FileBasedIndex.getInstance(), FileBasedIndexImpl.class);
+
       if (parserDefinition == null) {
+        if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates()) {
+          FileBasedIndexImpl.LOG.info("No parser definition for " + file.getName());
+        }
         return false;
       }
 
       final IFileElementType elementType = parserDefinition.getFileNodeType();
       if (elementType instanceof IStubFileElementType && ((IStubFileElementType<?>)elementType).shouldBuildStubFor(file)) {
+        if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates()) {
+          FileBasedIndexImpl.LOG.info("Should build stub for " + file.getName());
+        }
         return true;
+      }
+
+      if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates()) {
+        FileBasedIndexImpl.LOG.info("Can't build stub using stub file element type " + file.getName() +
+                                    ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file));
       }
     }
     final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);

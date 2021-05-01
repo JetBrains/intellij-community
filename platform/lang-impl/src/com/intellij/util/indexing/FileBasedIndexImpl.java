@@ -101,6 +101,8 @@ import static com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag;
 public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   private static final ThreadLocal<VirtualFile> ourFileToBeIndexed = new ThreadLocal<>();
+
+  @ApiStatus.Internal
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
   private final boolean myTraceIndexUpdates;
 
@@ -216,7 +218,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
   }
 
-  boolean doTraceStubUpdates() {
+  @ApiStatus.Internal
+  public boolean doTraceStubUpdates() {
     return myTraceIndexUpdates;
   }
 
