@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.JvmPushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Represents code block IR (list of instructions)
@@ -91,16 +89,6 @@ public final class ControlFlow {
 
     myLoopNumbers = LoopAnalyzer.calcInLoop(this);
     new LiveVariablesAnalyzer(this).flushDeadVariablesOnStatementFinish();
-  }
-
-  /**
-   * @return stream of all accessed variables within this flow
-   */
-  public Stream<DfaVariableValue> accessedVariables() {
-    return StreamEx.of(myInstructions).select(JvmPushInstruction.class)
-      .remove(JvmPushInstruction::isReferenceWrite)
-      .map(PushInstruction::getValue)
-      .select(DfaVariableValue.class).distinct();
   }
 
   public ControlFlowOffset getStartOffset(final PsiElement element) {

@@ -162,7 +162,8 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
                                                                          @NotNull Collection<? extends DfaMemoryState> memStates,
                                                                          @NotNull ControlFlow flow) {
         List<DfaInstructionState> states = super.createInitialInstructionStates(psiBlock, memStates, flow);
-        List<DfaVariableValue> vars = flow.accessedVariables()
+        List<DfaVariableValue> vars = StreamEx.of(getFactory().getValues())
+          .select(DfaVariableValue.class)
           .filter(var -> {
             if (!(var.getInherentType() instanceof DfReferenceType) ||
                 ((DfReferenceType)var.getInherentType()).getNullability() == DfaNullability.UNKNOWN) {
