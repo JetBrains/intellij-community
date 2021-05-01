@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.FinishElementInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.JvmPushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
