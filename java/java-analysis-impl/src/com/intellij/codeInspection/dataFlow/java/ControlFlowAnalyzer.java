@@ -137,7 +137,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return null;
     }
 
+    addInstruction(new ReturnInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null));
     myCurrentFlow.finish();
+    new LiveVariablesAnalyzer(myCurrentFlow).flushDeadVariablesOnStatementFinish();
     return myCurrentFlow;
   }
 

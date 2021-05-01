@@ -53,6 +53,16 @@ public abstract class Instruction {
   }
 
   /**
+   * @return true if the instruction always moves to the next instruction. Note that the linear instruction
+   * may still split the memory state returning several instruction states from accept (but all of them
+   * point to the next instruction).
+   */
+  public boolean isLinear() {
+    int[] indexes = getSuccessorIndexes();
+    return indexes.length == 1 && indexes[0] == myIndex + 1;
+  }
+
+  /**
    * Copy instruction to another factory. May return itself if the instruction does not depend on the factory.
    *
    * @param factory factory to place the instruction

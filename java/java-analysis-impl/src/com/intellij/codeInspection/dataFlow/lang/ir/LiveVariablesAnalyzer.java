@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaEndOfInstanceInitializerAnchor;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.EscapeInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.FinishElementInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiMember;
@@ -20,8 +23,8 @@ import java.util.function.Consumer;
 /**
  * @author peter
  */
-final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
-  LiveVariablesAnalyzer(ControlFlow flow) {
+public final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
+  public LiveVariablesAnalyzer(ControlFlow flow) {
     super(flow);
   }
 
@@ -62,11 +65,7 @@ final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
   protected boolean isInterestingInstruction(Instruction instruction) {
     if (instruction == myInstructions[0]) return true;
     if (getReadVariables(instruction).findFirst().isPresent() || getWrittenVariable(instruction) != null) return true;
-    return instruction instanceof FinishElementInstruction ||
-           instruction instanceof GotoInstruction ||
-           instruction instanceof ConditionalGotoInstruction ||
-           instruction instanceof ControlTransferInstruction ||
-           instruction instanceof EnsureInstruction;
+    return !instruction.isLinear() || instruction instanceof FinishElementInstruction;
   }
 
   @Nullable
@@ -116,7 +115,7 @@ final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
     return ok ? result : null;
   }
 
-  void flushDeadVariablesOnStatementFinish() {
+  public void flushDeadVariablesOnStatementFinish() {
     final Map<FinishElementInstruction, BitSet> liveVars = findLiveVars();
     if (liveVars == null) return;
 

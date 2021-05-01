@@ -2,11 +2,12 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
@@ -85,10 +86,7 @@ public final class ControlFlow {
    * Finalize current control flow. No more instructions are accepted after this call
    */
   public void finish() {
-    addInstruction(new ReturnInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null));
-
     myLoopNumbers = LoopAnalyzer.calcInLoop(this);
-    new LiveVariablesAnalyzer(this).flushDeadVariablesOnStatementFinish();
   }
 
   public ControlFlowOffset getStartOffset(final PsiElement element) {

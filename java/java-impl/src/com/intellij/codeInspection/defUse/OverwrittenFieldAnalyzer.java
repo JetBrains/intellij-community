@@ -5,7 +5,10 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaEndOfInstanceInitial
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.FinishElementInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.JvmPushInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
@@ -46,13 +49,11 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
   @Override
   protected boolean isInterestingInstruction(Instruction instruction) {
     if (instruction == myInstructions[0]) return true;
+    if (!instruction.isLinear()) return true;
 
     if (instruction instanceof AssignInstruction && ((AssignInstruction)instruction).getAssignedValue() instanceof DfaVariableValue ||
         instruction instanceof MethodCallInstruction ||
         instruction instanceof FinishElementInstruction ||
-        instruction instanceof GotoInstruction ||
-        instruction instanceof ConditionalGotoInstruction ||
-        instruction instanceof ControlTransferInstruction ||
         instruction instanceof FlushFieldsInstruction) {
       return true;
     }
