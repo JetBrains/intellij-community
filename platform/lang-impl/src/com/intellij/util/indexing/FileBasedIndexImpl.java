@@ -1833,7 +1833,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  private FileIndexingState getIndexingState(@NotNull IndexedFile file, @NotNull ID<?, ?> indexId) {
+  FileIndexingState getIndexingState(@NotNull IndexedFile file, @NotNull ID<?, ?> indexId) {
     VirtualFile virtualFile = file.getFile();
     if (isMock(virtualFile)) return FileIndexingState.NOT_INDEXED;
     return getIndex(indexId).getIndexingStateForFile(((NewVirtualFile)virtualFile).getId(), file);
@@ -1866,7 +1866,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myIndexableSets.add(Pair.create(set, project));
   }
 
-  private boolean acceptsInput(@NotNull ID<?, ?> indexId, @NotNull IndexedFile indexedFile) {
+  boolean acceptsInput(@NotNull ID<?, ?> indexId, @NotNull IndexedFile indexedFile) {
     InputFilter filter = getInputFilter(indexId);
     return acceptsInput(filter, indexedFile);
   }

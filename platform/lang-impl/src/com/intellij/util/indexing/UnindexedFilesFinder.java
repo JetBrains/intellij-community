@@ -136,8 +136,10 @@ final class UnindexedFilesFinder {
                   }
                   if (fileIndexingState.updateRequired()) {
                     if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
-                      FileBasedIndexImpl.LOG.info("Scheduling indexing of " + indexedFile.getFileName() + " by request of index " + indexId +
-                                                  (indexInfrastructureExtensionInvalidated ? " because extension invalidated" : ""));
+                      FileBasedIndexImpl.LOG.info("Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
+                                                  (indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
+                                                  ((myFileBasedIndex.acceptsInput(indexId, indexedFile)) ? " accepted;" : " unaccepted;") +
+                                                  ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
                     }
 
                     long nowTime = System.nanoTime();
