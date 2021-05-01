@@ -60,7 +60,7 @@ public class MacWinTabsHandler {
   public MacWinTabsHandler(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     myFrame = frame;
 
-    if (JdkEx.setTabbingMode(frame, () -> updateTabBars(null))) {
+    if (isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, () -> updateTabBars(null))) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
 
       Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
@@ -70,6 +70,10 @@ public class MacWinTabsHandler {
         }
       });
     }
+  }
+
+  private static boolean isAllowedFrame(@Nullable JFrame frame) {
+    return frame == null || frame instanceof IdeFrameImpl;
   }
 
   public void frameShow() {
@@ -95,7 +99,7 @@ public class MacWinTabsHandler {
   }
 
   public void exitFullScreen() {
-    if (!JdkEx.isTabbingModeAvailable()) {
+    if (!isAllowedFrame(myFrame) || !JdkEx.isTabbingModeAvailable()) {
       return;
     }
 
@@ -113,7 +117,7 @@ public class MacWinTabsHandler {
   }
 
   private static void updateTabBars(@Nullable JFrame newFrame) {
-    if (!JdkEx.isTabbingModeAvailable()) {
+    if (!isAllowedFrame(newFrame) || !JdkEx.isTabbingModeAvailable()) {
       return;
     }
 
