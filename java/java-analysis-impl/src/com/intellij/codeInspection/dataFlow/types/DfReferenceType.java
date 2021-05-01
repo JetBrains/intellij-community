@@ -147,5 +147,17 @@ public interface DfReferenceType extends DfType {
   }
 
   @Override
+  default DfType correctForClosure() {
+    DfReferenceType newType = dropLocality();
+    if (newType.getMutability() == Mutability.MUST_NOT_MODIFY) {
+      // If we must not modify parameter inside the method body itself,
+      // we may still be able to modify it inside nested closures,
+      // as they could be executed later.
+      newType = newType.dropMutability();
+    }
+    return newType;
+  }
+
+  @Override
   @NlsSafe @NotNull String toString();
 }

@@ -244,6 +244,16 @@ public interface DfType {
   }
 
   /**
+   * Correct the variable type that is passed from outer context to the closure 
+   * (e.g. drop the locality flag).
+   * 
+   * @return corrected variable type; return this if no correction is necessary.
+   */
+  default DfType correctForClosure() {
+    return this;
+  }
+
+  /**
    * @return human-readable representation of this DfType, could be localized
    */
   @Override @NlsSafe @NotNull String toString();
