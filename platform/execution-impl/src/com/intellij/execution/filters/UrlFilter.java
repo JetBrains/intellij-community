@@ -4,6 +4,7 @@ package com.intellij.execution.filters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.OpenUrlHyperlinkInfo;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -15,6 +16,7 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -66,9 +68,8 @@ public class UrlFilter implements Filter, DumbAware {
     return fileHyperlinkInfo != null ? fileHyperlinkInfo : new OpenUrlHyperlinkInfo(url);
   }
 
-  @Nullable
-  private HyperlinkInfo buildFileHyperlinkInfo(@NotNull String url) {
-    if (myProject != null && url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+  private @Nullable HyperlinkInfo buildFileHyperlinkInfo(@NotNull String url) {
+    if (myProject != null && !url.endsWith(".html") && url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
       int documentLine = 0, documentColumn = 0;
       int filePathEndIndex = url.length();
       final int lastColonInd = url.lastIndexOf(':');
@@ -89,18 +90,7 @@ public class UrlFilter implements Filter, DumbAware {
         }
       }
       String filePath = url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex);
-      return new LazyFileHyperlinkInfo(myProject, filePath, documentLine, documentColumn) {
-        @Override
-        public void navigate(@NotNull Project project) {
-          VirtualFile file = getVirtualFile();
-          if (file == null || !file.isValid()) {
-            Messages.showErrorDialog(project, ExecutionBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(url, 150)),
-                                     IdeBundle.message("title.cannot.open.file"));
-            return;
-          }
-          super.navigate(project);
-        }
-      };
+      return new FileUrlHyperlinkInfo(filePath, documentLine, documentColumn, url);
     }
     return null;
   }
@@ -114,6 +104,31 @@ public class UrlFilter implements Filter, DumbAware {
     @Override
     public Filter @NotNull [] getDefaultFilters(@NotNull Project project) {
       return getDefaultFilters(project, GlobalSearchScope.allScope(project));
+    }
+  }
+
+  private class FileUrlHyperlinkInfo extends LazyFileHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
+    private @NotNull final String myUrl;
+
+    FileUrlHyperlinkInfo(@NotNull String filePath, int documentLine, int documentColumn, @NotNull String url) {
+      super(UrlFilter.this.myProject, filePath, documentLine, documentColumn);
+      myUrl = url;
+    }
+
+    @Override
+    public void navigate(@NotNull Project project) {
+      VirtualFile file = getVirtualFile();
+      if (file == null || !file.isValid()) {
+        Messages.showErrorDialog(project, ExecutionBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(myUrl, 150)),
+                                 IdeBundle.message("title.cannot.open.file"));
+        return;
+      }
+      super.navigate(project);
+    }
+
+    @Override
+    public @Nullable ActionGroup getPopupMenuGroup(@NotNull MouseEvent event) {
+      return new OpenUrlHyperlinkInfo(myUrl).getPopupMenuGroup(event);
     }
   }
 }
