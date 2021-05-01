@@ -6,6 +6,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.memory.EqClass;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
@@ -28,6 +29,8 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import one.util.streamex.StreamEx;
@@ -49,7 +52,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private final List<EqClass> myEqClasses;
   // dfa value id -> indices in myEqClasses list of the classes which contain the id
-  private final MyIdMap myIdToEqClassesIndices;
+  private final Int2IntMap myIdToEqClassesIndices;
   private final Stack<DfaValue> myStack;
   private final DistinctPairSet myDistinctClasses;
   private final LinkedHashMap<DfaVariableValue,DfType> myVariableTypes;
@@ -61,7 +64,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myVariableTypes = new LinkedHashMap<>();
     myDistinctClasses = new DistinctPairSet(this);
     myStack = new Stack<>();
-    myIdToEqClassesIndices = new MyIdMap();
+    myIdToEqClassesIndices = new Int2IntOpenHashMap();
   }
 
   protected DfaMemoryStateImpl(DfaMemoryStateImpl toCopy) {
@@ -72,7 +75,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myDistinctClasses = new DistinctPairSet(this, toCopy.myDistinctClasses);
 
     myEqClasses = new ArrayList<>(toCopy.myEqClasses);
-    myIdToEqClassesIndices = (MyIdMap)toCopy.myIdToEqClassesIndices.clone();
+    myIdToEqClassesIndices = new Int2IntOpenHashMap(toCopy.myIdToEqClassesIndices);
     myVariableTypes = new LinkedHashMap<>(toCopy.myVariableTypes);
 
     myCachedNonTrivialEqClasses = toCopy.myCachedNonTrivialEqClasses;
@@ -289,10 +292,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     else {
       myEqClasses.add(eqClass);
     }
-    eqClass.forEach(id -> {
-      myIdToEqClassesIndices.put(id, resultIndex);
-      return true;
-    });
+    eqClass.forValues(id -> myIdToEqClassesIndices.put(id, resultIndex));
     return resultIndex;
   }
 
@@ -389,7 +389,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
-  List<EqClass> getEqClasses() {
+  public List<EqClass> getEqClasses() {
     return myEqClasses;
   }
 
@@ -403,14 +403,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    * @param dfaValue value to find a class for
    * @return class index or -1 if not found
    */
-  int getEqClassIndex(@NotNull DfaValue dfaValue) {
-    Integer classIndex = myIdToEqClassesIndices.get(dfaValue.getID());
-    if (classIndex == null) {
+  public int getEqClassIndex(@NotNull DfaValue dfaValue) {
+    int classIndex = myIdToEqClassesIndices.getOrDefault(dfaValue.getID(), -1);
+    if (classIndex == -1) {
       dfaValue = canonicalize(dfaValue);
-      classIndex = myIdToEqClassesIndices.get(dfaValue.getID());
+      classIndex = myIdToEqClassesIndices.getOrDefault(dfaValue.getID(), -1);
     }
 
-    if (classIndex == null) return -1;
+    if (classIndex == -1) return -1;
 
     EqClass aClass = myEqClasses.get(classIndex);
     assert aClass.contains(dfaValue.getID());
@@ -487,7 +487,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
-    for (int valueId : myIdToEqClassesIndices.keys()) {
+    for (int valueId : myIdToEqClassesIndices.keySet().toIntArray()) {
       DfaValue value = myFactory.getValue(valueId);
       DfaVariableValue var = ObjectUtils.tryCast(value, DfaVariableValue.class);
       if (var == null || var.getQualifier() != from) continue;
@@ -500,13 +500,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private void checkInvariants() {
     if (!LOG.isDebugEnabled() && !ApplicationManager.getApplication().isEAP()) return;
-    myIdToEqClassesIndices.forEachEntry((id, classIndex) -> {
-      EqClass eqClass = myEqClasses.get(classIndex);
-      if (eqClass == null || !eqClass.contains(id)) {
-        LOG.error("Invariant violated: null-class for id=" + myFactory.getValue(id));
+    for (Int2IntMap.Entry entry : myIdToEqClassesIndices.int2IntEntrySet()) {
+      EqClass eqClass = myEqClasses.get(entry.getIntValue());
+      if (eqClass == null || !eqClass.contains(entry.getIntKey())) {
+        LOG.error("Invariant violated: null-class for id=" + myFactory.getValue(entry.getIntKey()));
       }
-      return true;
-    });
+    }
     TIntObjectHashMap<BitSet> graph = new TIntObjectHashMap<>();
     for (DistinctPairSet.DistinctPair pair : myDistinctClasses) {
       if (pair.isOrdered()) {
@@ -568,8 +567,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private void convertReferenceEqualityToValueEquality(DfaValue value) {
     int id = canonicalize(value).getID();
-    Integer index = myIdToEqClassesIndices.get(id);
-    if (index == null) return;
+    int index = myIdToEqClassesIndices.getOrDefault(id, -1);
+    if (index == -1) return;
     for (Iterator<DistinctPairSet.DistinctPair> iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
       DistinctPairSet.DistinctPair pair = iterator.next();
       EqClass otherClass = pair.getOtherClass(index);
@@ -1213,11 +1212,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private @NotNull DfaVariableValue canonicalize(DfaVariableValue var) {
     DfaVariableValue qualifier = var.getQualifier();
     if (qualifier != null) {
-      Integer index = myIdToEqClassesIndices.get(qualifier.getID());
-      if (index == null) {
+      int index = myIdToEqClassesIndices.getOrDefault(qualifier.getID(), -1);
+      if (index == -1) {
         qualifier = canonicalize(qualifier);
-        index = myIdToEqClassesIndices.get(qualifier.getID());
-        if (index == null) {
+        index = myIdToEqClassesIndices.getOrDefault(qualifier.getID(), -1);
+        if (index == -1) {
           return var.withQualifier(qualifier);
         }
       }
@@ -1345,12 +1344,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   void removeEquivalence(DfaVariableValue var) {
     int varID = var.getID();
-    Integer varClassIndex = myIdToEqClassesIndices.get(varID);
-    if (varClassIndex == null) {
+    int varClassIndex = myIdToEqClassesIndices.getOrDefault(varID, -1);
+    if (varClassIndex == -1) {
       var = canonicalize(var);
       varID = var.getID();
-      varClassIndex = myIdToEqClassesIndices.get(varID);
-      if (varClassIndex == null) return;
+      varClassIndex = myIdToEqClassesIndices.getOrDefault(varID, -1);
+      if (varClassIndex == -1) return;
     }
 
     EqClass varClass = myEqClasses.get(varClassIndex);
@@ -1519,7 +1518,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
             recordVariableType(target, getDfType(var));
           }
         }
-        for (int valueId : myIdToEqClassesIndices.keys()) {
+        for (int valueId : myIdToEqClassesIndices.keySet().toIntArray()) {
           DfaValue value = myFactory.getValue(valueId);
           DfaVariableValue var = ObjectUtils.tryCast(value, DfaVariableValue.class);
           if (var == null || var.getQualifier() != from) continue;

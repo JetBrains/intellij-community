@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.dataFlow;
+package com.intellij.codeInspection.dataFlow.memory;
 
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -13,25 +13,25 @@ import java.util.*;
 /**
  * @author peter
  */
-final class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
+public final class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
   private final DfaValueFactory myFactory;
 
   /**
    * A comparator which allows to select a "canonical" variable of several variables (which is minimal of them).
    * Variables with shorter qualifier chain are preferred to be canonical.
    */
-  static final Comparator<DfaVariableValue> CANONICAL_VARIABLE_COMPARATOR =
+  public static final Comparator<DfaVariableValue> CANONICAL_VARIABLE_COMPARATOR =
     Comparator.nullsFirst((v1, v2) -> {
       int result = EqClass.CANONICAL_VARIABLE_COMPARATOR.compare(v1.getQualifier(), v2.getQualifier());
       if (result != 0) return result;
       return Integer.compare(v1.getID(), v2.getID());
     });
 
-  EqClass(DfaValueFactory factory) {
+  public EqClass(DfaValueFactory factory) {
     myFactory = factory;
   }
 
-  EqClass(@NotNull EqClass toCopy) {
+  public EqClass(@NotNull EqClass toCopy) {
     super(toCopy.toNativeArray());
     myFactory = toCopy.myFactory;
   }
@@ -50,7 +50,7 @@ final class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
     return buf.toString();
   }
 
-  DfaVariableValue getVariable(int index) {
+  public DfaVariableValue getVariable(int index) {
     return (DfaVariableValue)myFactory.getValue(get(index));
   }
 
@@ -58,12 +58,9 @@ final class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
    * @return copy of variables from this class as a list. Use this method if you expect
    * class updates during the iteration.
    */
-  List<DfaVariableValue> asList() {
+  public List<DfaVariableValue> asList() {
     List<DfaVariableValue> vars = new ArrayList<>(size());
-    forEach(id -> {
-      vars.add((DfaVariableValue)myFactory.getValue(id));
-      return true;
-    });
+    forValues(id -> vars.add((DfaVariableValue)myFactory.getValue(id)));
     return vars;
   }
 
@@ -72,7 +69,7 @@ final class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
    * null if the class does not contain variables.
    */
   @Nullable
-  DfaVariableValue getCanonicalVariable() {
+  public DfaVariableValue getCanonicalVariable() {
     if (size() == 1) {
       return getVariable(0);
     }

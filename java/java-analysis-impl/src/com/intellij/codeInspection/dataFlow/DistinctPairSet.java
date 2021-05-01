@@ -1,8 +1,7 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.memory.EqClass;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import gnu.trove.TLongArrayList;
 import gnu.trove.TLongHashSet;
@@ -14,22 +13,22 @@ import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.List;
 
-final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
+public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
   private final DfaMemoryStateImpl myState;
   private final TLongHashSet myData;
 
-  DistinctPairSet(DfaMemoryStateImpl state) {
+  public DistinctPairSet(DfaMemoryStateImpl state) {
     myState = state;
     myData = new TLongHashSet();
   }
 
-  DistinctPairSet(DfaMemoryStateImpl state, DistinctPairSet other) {
+  public DistinctPairSet(DfaMemoryStateImpl state, DistinctPairSet other) {
     myData = new TLongHashSet(other.size());
     myState = state;
     other.myData.forEach(myData::add);
   }
 
-  boolean addOrdered(int firstIndex, int secondIndex) {
+  public boolean addOrdered(int firstIndex, int secondIndex) {
     TLongHashSet toAdd = new TLongHashSet();
     toAdd.add(createPair(firstIndex, secondIndex, true));
     for(DistinctPair pair : this) {
@@ -46,7 +45,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     return true;
   }
 
-  void addUnordered(int firstIndex, int secondIndex) {
+  public void addUnordered(int firstIndex, int secondIndex) {
     if (!myData.contains(createPair(firstIndex, secondIndex, true)) &&
         !myData.contains(createPair(secondIndex, firstIndex, true))) {
       myData.add(createPair(firstIndex, secondIndex, false));
@@ -177,7 +176,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
   }
 
   @Nullable
-  RelationType getRelation(int c1Index, int c2Index) {
+  public RelationType getRelation(int c1Index, int c2Index) {
     if (areDistinctUnordered(c1Index, c2Index)) {
       return RelationType.NE;
     }
@@ -217,7 +216,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     return (int)((Math.abs(l) & 0xFFFFFFFF00000000L) >> 32);
   }
 
-  static final class DistinctPair {
+  public static final class DistinctPair {
     private final int myFirst;
     private final int mySecond;
     private final boolean myOrdered;
