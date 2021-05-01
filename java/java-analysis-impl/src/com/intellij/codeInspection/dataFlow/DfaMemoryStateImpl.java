@@ -17,10 +17,8 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -1074,12 +1072,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean isUnstableValue(DfaValue value) {
     if (!(value instanceof DfaVariableValue)) return false;
     DfaVariableValue var = (DfaVariableValue)value;
-    PsiElement owner = var.getPsiVariable();
-    if (!(owner instanceof PsiMethod)) return false;
-    if (var.getDfType() instanceof DfPrimitiveType) return false;
-    if (PropertyUtilBase.isSimplePropertyGetter((PsiMethod)owner)) return false;
-    if (isNull(var)) return false;
-    return true;
+    return !var.alwaysEqualsToItself() && !(getDfType(var) instanceof DfConstantType);
   }
 
   private static @Nullable RelationType getFloatingConstantRelation(DfType leftType, DfType rightType) {
@@ -1293,9 +1286,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void flushQualifiedMethods(@NotNull DfaVariableValue variable) {
-    PsiElement psiVariable = variable.getPsiVariable();
     DfaVariableValue qualifier = variable.getQualifier();
-    if (psiVariable instanceof PsiField && qualifier != null) {
+    if (qualifier != null) {
       // Flush method results on field write
       List<DfaVariableValue> toFlush =
         ContainerUtil.filter(qualifier.getDependentVariables(), DfaVariableValue::containsCalls);
@@ -1471,7 +1463,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     List<EqClass> groups = splitEqClass(eqClass, other);
     if (groups.size() == 1) return false;
 
-    var addedClasses = new IntArrayList();
+    IntList addedClasses = new IntArrayList();
     int origIndex = myIdToEqClassesIndices.get(eqClass.get(0));
     for (EqClass group : groups) {
       addedClasses.add(storeClass(group));
@@ -1553,7 +1545,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private final class QualifierStatusMap {
-    private final Int2ObjectOpenHashMap<QualifierStatus> myMap = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<QualifierStatus> myMap = new Int2ObjectOpenHashMap<>();
     private final @Nullable Set<DfaValue> myQualifiersToFlush;
 
     private QualifierStatusMap(@Nullable Set<DfaValue> qualifiersToFlush) {

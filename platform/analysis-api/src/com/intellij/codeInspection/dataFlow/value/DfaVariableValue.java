@@ -169,4 +169,12 @@ public final class DfaVariableValue extends DfaValue {
   public boolean containsCalls() {
     return myDescriptor.isCall() || myQualifier != null && myQualifier.containsCalls();
   }
+
+  /**
+   * @return false if the variable may be not equal to itself when applying the {@link RelationType#EQ}.
+   * This could be possible if variable is backed by a pure method that always returns a new object. 
+   */
+  public boolean alwaysEqualsToItself() {
+    return myDescriptor.alwaysEqualsToItself(getDfType());
+  }
 }

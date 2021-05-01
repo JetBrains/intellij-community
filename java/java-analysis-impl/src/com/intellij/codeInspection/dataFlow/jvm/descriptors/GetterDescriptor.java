@@ -3,12 +3,15 @@ package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
@@ -97,5 +100,12 @@ public final class GetterDescriptor extends PsiVarDescriptor {
                                         @Nullable PsiElement context) {
     PsiType type = getType(value.getQualifier());
     return DfaNullability.fromNullability(DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, var));
+  }
+
+  @Override
+  public boolean alwaysEqualsToItself(@NotNull DfType type) {
+    if (type instanceof DfPrimitiveType) return true;
+    if (PropertyUtilBase.isSimplePropertyGetter(myGetter)) return true;
+    return false;
   }
 }

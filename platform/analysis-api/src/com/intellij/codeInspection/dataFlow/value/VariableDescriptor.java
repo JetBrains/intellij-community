@@ -92,4 +92,13 @@ public interface VariableDescriptor {
                                   @Nullable PsiElement context) {
     return getDfType(thisValue.getQualifier());
   }
+
+  /**
+   * @return false if variable described by this descriptor may be not equal to itself when applying the {@link RelationType#EQ}.
+   * This could be possible if variable is backed by a pure method that always returns a new object. 
+   * @param type variable type
+   */
+  default boolean alwaysEqualsToItself(@NotNull DfType type) {
+    return true;
+  }
 }
