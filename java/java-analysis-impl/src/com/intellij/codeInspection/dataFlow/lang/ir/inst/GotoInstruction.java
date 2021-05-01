@@ -51,7 +51,7 @@ public class GotoInstruction extends Instruction {
   }
 
   @Override
-  public int[] getSuccessorIndexes() {
+  public int @NotNull [] getSuccessorIndexes() {
     return new int[] {getOffset()};
   }
 
