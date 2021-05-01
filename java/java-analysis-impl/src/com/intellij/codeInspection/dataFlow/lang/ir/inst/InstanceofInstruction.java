@@ -102,7 +102,9 @@ public class InstanceofInstruction extends ExpressionPushingInstruction implemen
       if (unknownTargetType ? stateBefore.applyContractCondition(negated) : stateBefore.applyCondition(negated)) {
         pushResult(runner, stateBefore, FALSE, dfaLeft, dfaRight);
         states.add(nextState(runner, stateBefore));
-        if (stateBefore.isNull(dfaLeft) && DfaNullability.fromDfType(leftType) == DfaNullability.UNKNOWN) {
+        DfaNullability oldNullability = DfaNullability.fromDfType(leftType);
+        DfaNullability newNullability = DfaNullability.fromDfType(stateBefore.getDfType(dfaLeft));
+        if (newNullability == DfaNullability.NULL && oldNullability == DfaNullability.UNKNOWN) {
           // Not-instanceof check leaves only "null" possible value in some state: likely the state is ephemeral
           stateBefore.markEphemeral();
         }

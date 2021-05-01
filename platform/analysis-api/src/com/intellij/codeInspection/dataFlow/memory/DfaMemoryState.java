@@ -146,12 +146,6 @@ public interface DfaMemoryState {
 
   /**
    * @param value to check
-   * @return true if given value is null within this memory state
-   */
-  boolean isNull(DfaValue value);
-
-  /**
-   * @param value to check
    * @return true if given value is not-null within this memory state
    */
   boolean isNotNull(DfaValue value);

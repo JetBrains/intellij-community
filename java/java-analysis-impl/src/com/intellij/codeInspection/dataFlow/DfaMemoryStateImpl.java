@@ -534,7 +534,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
-  @Override
   public boolean isNull(DfaValue value) {
     return getDfType(value) == DfTypes.NULL;
   }

@@ -66,7 +66,8 @@ public class CheckNotNullInstruction extends Instruction {
       checkNotNullable(runner, stateBefore, stateBefore.peek(), problem);
     } else {
       DfaValue value = stateBefore.pop();
-      boolean isNull = runner instanceof StandardDataFlowRunner && ((StandardDataFlowRunner)runner).stopOnNull() && stateBefore.isNull(value);
+      boolean isNull = runner instanceof StandardDataFlowRunner && ((StandardDataFlowRunner)runner).stopOnNull() &&
+                       stateBefore.getDfType(value) == NULL;
       if (myTransferValue == null) {
         stateBefore.push(dereference(runner, stateBefore, value, problem));
         if (isNull) {
@@ -106,17 +107,17 @@ public class CheckNotNullInstruction extends Instruction {
       DfType dfType = value.getDfType().meet(NOT_NULL_OBJECT);
       return value.getFactory().fromDfType(dfType == DfType.BOTTOM ? NOT_NULL_OBJECT : dfType);
     }
-    if (memState.isNull(value) && problem != null && problem.getKind() == NullabilityProblemKind.nullableFunctionReturn) {
-      return value.getFactory().fromDfType(NOT_NULL_OBJECT);
-    }
-    if (value instanceof DfaVariableValue) {
-      DfType dfType = memState.getDfType(value);
-      if (dfType == NULL) {
+    DfType dfType = memState.getDfType(value);
+    if (dfType == NULL) {
+      if (problem != null && problem.getKind() == NullabilityProblemKind.nullableFunctionReturn) {
+        return value.getFactory().fromDfType(NOT_NULL_OBJECT);
+      }
+      if (value instanceof DfaVariableValue) {
         memState.setDfType(value, NOT_NULL_OBJECT);
       }
-      else {
-        memState.meetDfType(value, NOT_NULL_OBJECT);
-      }
+    }
+    else if (value instanceof DfaVariableValue) {
+      memState.meetDfType(value, NOT_NULL_OBJECT);
     }
     return value;
   }

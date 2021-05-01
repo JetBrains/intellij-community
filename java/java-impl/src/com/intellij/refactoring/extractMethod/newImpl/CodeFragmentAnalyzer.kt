@@ -248,11 +248,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       class Interceptor : JavaDfaInterceptor {
         override fun beforeExpressionPush(value: DfaValue, expr: PsiExpression, state: DfaMemoryState) {
           if (expr in expressionSet) {
-            val expressionNullability = when {
-              state.isNotNull(value) -> DfaNullability.NOT_NULL
-              state.isNull(value) -> DfaNullability.NULL
-              else -> DfaNullability.fromDfType(state.getDfType(value))
-            }
+            val expressionNullability = DfaNullability.fromDfType(state.getDfType(value))
             nullability = nullability.unite(expressionNullability)
           }
         }

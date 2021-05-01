@@ -454,7 +454,8 @@ public class ExtractMethodProcessor implements MatchProvider {
                                     @NotNull DfaMemoryState state) {
         if (context == myCodeFragmentMember && expression != null &&
             returnedExpressions.stream().anyMatch(ret -> PsiTreeUtil.isAncestor(ret, expression, false))) {
-          boolean result = nullsExpected ? state.isNull(value) : state.isNotNull(value);
+          DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
+          boolean result = nullability == (nullsExpected ? DfaNullability.NULL : DfaNullability.NOT_NULL);
           if (!result) {
             dfaRunner.cancel();
           }

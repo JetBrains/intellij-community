@@ -100,7 +100,7 @@ final class DataFlowInstructionVisitor implements JavaDfaInterceptor {
         // (we compare strings by contents)
         if (memState.areEqual(value, target) &&
             !isFloatingZero(dfType.getConstantOfType(Number.class)) &&
-            !(TypeUtils.isJavaLangString(left.getType()) && !memState.isNull(value)) &&
+            !(TypeUtils.isJavaLangString(left.getType()) && dfType != DfTypes.NULL) &&
             !isAssignmentToDefaultValueInConstructor(target, assignment.getRExpression())) {
           mySameValueAssigned.merge(left, Boolean.TRUE, Boolean::logicalAnd);
         }
@@ -318,11 +318,12 @@ final class DataFlowInstructionVisitor implements JavaDfaInterceptor {
   private void processOfNullableResult(@NotNull DfaValue value, @NotNull DfaMemoryState memState, PsiElement anchor) {
     DfaValueFactory factory = value.getFactory();
     DfaValue optionalValue = JvmSpecialField.OPTIONAL_VALUE.createValue(factory, value);
+    DfaNullability nullability = DfaNullability.fromDfType(memState.getDfType(optionalValue));
     ThreeState present;
-    if (memState.isNull(optionalValue)) {
+    if (nullability == DfaNullability.NULL) {
       present = ThreeState.NO;
     }
-    else if (memState.isNotNull(optionalValue)) {
+    else if (nullability == DfaNullability.NOT_NULL) {
       present = ThreeState.YES;
     }
     else present = ThreeState.UNSURE;

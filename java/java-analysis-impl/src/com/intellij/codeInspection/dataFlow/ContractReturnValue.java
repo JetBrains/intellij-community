@@ -409,7 +409,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
-      return !state.isNull(value);
+      return state.getDfType(value) != DfTypes.NULL;
     }
   };
 
@@ -441,7 +441,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
-      return !state.isNull(value);
+      return state.getDfType(value) != DfTypes.NULL;
     }
   };
 
@@ -476,7 +476,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
-      return !state.isNull(value);
+      return state.getDfType(value) != DfTypes.NULL;
     }
   };
 

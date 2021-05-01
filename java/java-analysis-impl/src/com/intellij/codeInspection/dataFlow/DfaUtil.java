@@ -204,7 +204,7 @@ public final class DfaUtil {
           if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) || state.isNotNull(value)) {
             hasNotNulls = true;
           }
-          else if (state.isNull(value)) {
+          else if (state.getDfType(value) == DfTypes.NULL) {
             hasNulls = true;
           }
           else {
