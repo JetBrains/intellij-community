@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,6 +14,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Key;
@@ -34,6 +36,8 @@ import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
+import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.messages.MessageBusConnection;
@@ -51,6 +55,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
 
 @ApiStatus.Internal
 public final class UnindexedFilesUpdater extends DumbModeTask {
@@ -129,10 +135,22 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       }
     }
 
+    PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+    Instant pushPropertiesStart = Instant.now();
+    try {
+      if (myPusher instanceof PushedFilePropertiesUpdaterImpl) {
+        ((PushedFilePropertiesUpdaterImpl)myPusher).performDelayedPushTasks();
+      }
+    } finally {
+      projectIndexingHistory.getTimes().setPushPropertiesDuration(Duration.between(pushPropertiesStart, Instant.now()));
+    }
+    LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks"));
+
+
     indicator.setIndeterminate(true);
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
 
-    PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+    snapshot = PerformanceWatcher.takeSnapshot();
     Instant scanFilesStart = Instant.now();
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
@@ -145,15 +163,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
-
-    snapshot = PerformanceWatcher.takeSnapshot();
-    Instant pushPropertiesStart = Instant.now();
-    try {
-      myPusher.pushAllPropertiesNow();
-    } finally {
-      projectIndexingHistory.getTimes().setPushPropertiesDuration(Duration.between(pushPropertiesStart, Instant.now()));
-    }
-    LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Pushing properties"));
 
     myIndex.clearIndicesIfNecessary();
 
@@ -355,11 +364,23 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       List<VirtualFile> files = new ArrayList<>();
       ScanningStatistics scanningStatistics = new ScanningStatistics(provider.getDebugName());
       providerToFiles.put(provider, files);
+      IndexableSetOrigin origin = provider.getOrigin();
       List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors =
-        ContainerUtil.mapNotNull(sessions, s -> s.createVisitor(provider.getOrigin()));
+        ContainerUtil.mapNotNull(sessions, s -> s.createVisitor(origin));
 
       IndexableFilesDeduplicateFilter thisProviderDeduplicateFilter =
         IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter);
+
+      List<FilePropertyPusher<?>> pushers;
+      Object[] moduleValues;
+      if (origin instanceof ModuleRootOrigin) {
+        pushers = FilePropertyPusher.EP_NAME.getExtensionList();
+        moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, (ModuleRootOrigin)origin));
+      }
+      else {
+        pushers = null;
+        moduleValues = null;
+      }
 
       ContentIterator collectingIterator = fileOrDir -> {
         if (subTaskIndicator.isCanceled()) {
@@ -367,6 +388,9 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
         }
 
         PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
+        if (pushers != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
+          ((PushedFilePropertiesUpdaterImpl) myPusher).applyPushersToFile(fileOrDir, pushers, moduleValues);
+        }
 
         UnindexedFileStatus status;
         long statusTime = System.nanoTime();
