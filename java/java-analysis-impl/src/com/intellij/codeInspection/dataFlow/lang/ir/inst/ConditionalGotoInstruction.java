@@ -81,6 +81,12 @@ public class ConditionalGotoInstruction extends Instruction implements Branching
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
+  @Override
+  public int @NotNull [] getSuccessorIndexes() {
+    int offset = getOffset();
+    return offset == getIndex() + 1 ? new int[] {offset} : new int[] {getIndex() + 1, offset};
+  }
+
   public String toString() {
     return "IF_" + (isNegated() ? "NE" : "EQ") + " " + getOffset();
   }

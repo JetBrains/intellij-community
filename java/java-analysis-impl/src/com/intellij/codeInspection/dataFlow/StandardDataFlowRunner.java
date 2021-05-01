@@ -362,7 +362,7 @@ public class StandardDataFlowRunner implements DataFlowRunner {
       } else if (instruction instanceof ConditionalGotoInstruction) {
         joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
       } else if (instruction instanceof ControlTransferInstruction) {
-        IntStreamEx.of(((ControlTransferInstruction)instruction).getPossibleTargetIndices()).elements(myInstructions)
+        IntStreamEx.of(((ControlTransferInstruction)instruction).getSuccessorIndexes()).elements(myInstructions)
                    .into(joinInstructions);
       } else if (instruction instanceof MethodCallInstruction && !((MethodCallInstruction)instruction).getContracts().isEmpty()) {
         joinInstructions.add(myInstructions[index + 1]);

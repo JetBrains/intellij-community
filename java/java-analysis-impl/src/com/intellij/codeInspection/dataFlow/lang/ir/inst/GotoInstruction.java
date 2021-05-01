@@ -51,6 +51,11 @@ public class GotoInstruction extends Instruction {
   }
 
   @Override
+  public int[] getSuccessorIndexes() {
+    return new int[] {getOffset()};
+  }
+
+  @Override
   public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
     Instruction nextInstruction = runner.getInstruction(getOffset());
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, stateBefore)};

@@ -1,17 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
-import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -27,7 +23,7 @@ final class LoopAnalyzer {
       myInstructions = flow.getInstructions();
       for (Instruction instruction : myInstructions) {
         int fromIndex = instruction.getIndex();
-        int[] to = getSuccessorIndices(fromIndex, myInstructions);
+        int[] to = instruction.getSuccessorIndexes();
         for (int toIndex : to) {
           int[] froms = myIns.get(toIndex);
           if (froms == null) {
@@ -57,8 +53,7 @@ final class LoopAnalyzer {
     @NotNull
     @Override
     public Iterator<Instruction> getOut(Instruction instruction) {
-      int fromIndex = instruction.getIndex();
-      int[] next = getSuccessorIndices(fromIndex, myInstructions);
+      int[] next = instruction.getSuccessorIndexes();
       return indicesToInstructions(next);
     }
 
@@ -91,28 +86,5 @@ final class LoopAnalyzer {
       tNumber += size;
     }
     return loop;
-  }
-
-  static int @NotNull [] getSuccessorIndices(int i, Instruction[] myInstructions) {
-    Instruction instruction = myInstructions[i];
-    if (instruction instanceof GotoInstruction) {
-      return new int[]{((GotoInstruction)instruction).getOffset()};
-    }
-    if (instruction instanceof ControlTransferInstruction) {
-      return ArrayUtil.toIntArray(((ControlTransferInstruction)instruction).getPossibleTargetIndices());
-    }
-    if (instruction instanceof EnsureInstruction) {
-      DfaControlTransferValue transfer = ((EnsureInstruction)instruction).getExceptionTransfer();
-      return transfer == null
-             ? new int[]{i + 1}
-             : StreamEx.of(transfer.getPossibleTargetIndices()).mapToInt(x -> x).append(i + 1).toArray();
-    }
-    if (instruction instanceof ConditionalGotoInstruction) {
-      int offset = ((ConditionalGotoInstruction)instruction).getOffset();
-      if (offset != i+1) {
-        return new int[]{i + 1, offset};
-      }
-    }
-    return i == myInstructions.length-1 ? ArrayUtilRt.EMPTY_INT_ARRAY : new int[]{i + 1};
   }
 }

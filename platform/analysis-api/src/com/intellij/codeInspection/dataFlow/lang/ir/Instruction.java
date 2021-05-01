@@ -45,6 +45,14 @@ public abstract class Instruction {
   }
 
   /**
+   * @return array of possible next instruction indexes that could be executed after this one.
+   * Default implementation returns the next index which is suitable for linear instructions.
+   */
+  public int @NotNull [] getSuccessorIndexes() {
+    return new int[] {myIndex + 1};
+  }
+
+  /**
    * Copy instruction to another factory. May return itself if the instruction does not depend on the factory.
    *
    * @param factory factory to place the instruction

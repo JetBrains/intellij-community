@@ -2,14 +2,12 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,12 +41,6 @@ public abstract class EvalInstruction extends ExpressionPushingInstruction {
       args[i] = stateBefore.pop();
     }
     DfaValue value = eval(runner.getFactory(), stateBefore, args);
-    if (value instanceof DfaVariableValue && JavaDfaHelpers.mayLeakFromType(value.getDfType())) {
-      DfaVariableValue qualifier = ((DfaVariableValue)value).getQualifier();
-      if (qualifier != null) {
-        JavaDfaHelpers.dropLocality(qualifier, stateBefore);
-      }
-    }
     pushResult(runner, stateBefore, value, args);
     return nextStates(runner, stateBefore);
   }

@@ -45,8 +45,8 @@ public final class DfaControlTransferValue extends DfaValue {
     return traps;
   }
 
-  public @NotNull List<@NotNull Integer> getPossibleTargetIndices() {
-    return StreamEx.of(traps).flatCollection(Trap::getPossibleTargets).append(target.getPossibleTargets()).toList();
+  public int @NotNull [] getPossibleTargetIndices() {
+    return StreamEx.of(traps).flatCollection(Trap::getPossibleTargets).append(target.getPossibleTargets()).mapToInt(x -> x).toArray();
   }
 
   /**

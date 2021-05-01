@@ -29,7 +29,7 @@ public abstract class BaseVariableAnalyzer {
   }
 
   private List<Instruction> getSuccessors(Instruction ins) {
-    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).elements(myInstructions).toList();
+    return IntStreamEx.of(ins.getSuccessorIndexes()).elements(myInstructions).toList();
   }
 
   private MultiMap<Instruction, Instruction> calcBackwardMap() {

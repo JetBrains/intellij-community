@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.util.ThreeState;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,6 +122,13 @@ public class EnsureInstruction extends Instruction {
       result.addAll(states);
     }
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
+  }
+
+  @Override
+  public int @NotNull [] getSuccessorIndexes() {
+    return myTransferValue == null
+           ? new int[]{getIndex() + 1}
+           : IntStreamEx.of(myTransferValue.getPossibleTargetIndices()).append(getIndex() + 1).toArray();
   }
 
   public @NotNull DfaCondition createCondition(@NotNull DfaValue tosValue) {
