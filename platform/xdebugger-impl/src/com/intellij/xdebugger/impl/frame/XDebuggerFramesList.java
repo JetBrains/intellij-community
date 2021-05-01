@@ -25,6 +25,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,21 +83,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
     doInit();
     setDataProvider(dataId -> {
-      if (mySelectedFrame != null) {
-        if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-          return getFile(mySelectedFrame);
-        }
-        else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-          VirtualFile file = getFile(mySelectedFrame);
-          if (file != null && file.isValid()) {
-            return PsiManager.getInstance(myProject).findFile(file);
-          }
-        }
-      }
-      if (FRAMES_LIST.is(dataId)) {
-        return XDebuggerFramesList.this;
-      }
-      return null;
+      return getData(dataId, mySelectedFrame);
     });
 
     // This is a workaround for the performance issue IDEA-187063
@@ -105,6 +92,24 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     if (font != null) {
       setFont(new FontUIResource(font.getName(), font.getStyle(), font.getSize()));
     }
+  }
+
+  private @Nullable Object getData(@NonNls String dataId, @Nullable XStackFrame frame) {
+    if (frame != null) {
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        return getFile(frame);
+      }
+      if (CommonDataKeys.PSI_FILE.is(dataId)) {
+        VirtualFile file = getFile(frame);
+        if (file != null && file.isValid()) {
+          return PsiManager.getInstance(myProject).findFile(file);
+        }
+      }
+    }
+    if (FRAMES_LIST.is(dataId)) {
+      return this;
+    }
+    return null;
   }
 
   @Override
