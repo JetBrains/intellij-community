@@ -993,7 +993,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.rename.RenameUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.rename.RenameInplacePopupUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.move.MoveUsagesCollector"/>
-    <statistics.counterUsagesCollector groupId="refactoring" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.actions.RefactoringUsageCollector"/>
     <statistics.counterUsagesCollector groupId="package.management.ui" version="1"/>
     <statistics.counterUsagesCollector groupId="completion" version="6"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.FindUsagesStatisticsCollector"/>
