@@ -4,8 +4,9 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.memory.EqClass;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import gnu.trove.TLongArrayList;
-import gnu.trove.TLongHashSet;
-import gnu.trove.TLongIterator;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,21 +16,20 @@ import java.util.List;
 
 public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
   private final DfaMemoryStateImpl myState;
-  private final TLongHashSet myData;
+  private final LongOpenHashSet myData;
 
   public DistinctPairSet(DfaMemoryStateImpl state) {
     myState = state;
-    myData = new TLongHashSet();
+    myData = new LongOpenHashSet();
   }
 
   public DistinctPairSet(DfaMemoryStateImpl state, DistinctPairSet other) {
-    myData = new TLongHashSet(other.size());
+    myData = new LongOpenHashSet(other.myData);
     myState = state;
-    other.myData.forEach(myData::add);
   }
 
   public boolean addOrdered(int firstIndex, int secondIndex) {
-    TLongHashSet toAdd = new TLongHashSet();
+    LongOpenHashSet toAdd = new LongOpenHashSet();
     toAdd.add(createPair(firstIndex, secondIndex, true));
     for(DistinctPair pair : this) {
       if (!pair.isOrdered()) continue;
@@ -41,7 +41,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
         toAdd.add(createPair(pair.myFirst, secondIndex, true));
       }
     }
-    myData.addAll(toAdd.toArray());
+    myData.addAll(toAdd);
     return true;
   }
 
@@ -81,7 +81,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
   @Override
   public Iterator<DistinctPair> iterator() {
     return new Iterator<>() {
-      final TLongIterator iterator = myData.iterator();
+      final LongIterator iterator = myData.iterator();
 
       @Override
       public boolean hasNext() {
@@ -90,7 +90,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
 
       @Override
       public DistinctPair next() {
-        return decode(iterator.next());
+        return decode(iterator.nextLong());
       }
 
       @Override
@@ -114,7 +114,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
    */
   public boolean unite(int c1Index, int c2Index) {
     TLongArrayList c2Pairs = new TLongArrayList();
-    long[] distincts = myData.toArray();
+    long[] distincts = myData.toLongArray();
     for (long distinct : distincts) {
       int pc1 = low(distinct);
       int pc2 = high(distinct);
@@ -153,9 +153,9 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
   }
 
   public void splitClass(int index, int[] splitIndices) {
-    TLongArrayList toAdd = new TLongArrayList();
-    for(TLongIterator iterator = myData.iterator(); iterator.hasNext(); ) {
-      DistinctPair pair = decode(iterator.next());
+    LongArrayList toAdd = new LongArrayList();
+    for(LongIterator iterator = myData.iterator(); iterator.hasNext(); ) {
+      DistinctPair pair = decode(iterator.nextLong());
       if (pair.myFirst == index) {
         for (int splitIndex : splitIndices) {
           toAdd.add(createPair(splitIndex, pair.mySecond, pair.isOrdered()));
@@ -168,7 +168,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
         iterator.remove();
       }
     }
-    myData.addAll(toAdd.toNativeArray());
+    myData.addAll(toAdd);
   }
 
   public boolean areDistinctUnordered(int c1Index, int c2Index) {
