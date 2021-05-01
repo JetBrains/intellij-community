@@ -135,5 +135,17 @@ public interface DfReferenceType extends DfType {
   }
 
   @Override
+  default DfType correctTypeOnFlush(DfType typeBeforeFlush) {
+    DfaNullability inherentNullability = this.getNullability();
+    if (inherentNullability == DfaNullability.NULLABLE) {
+      DfaNullability nullability = DfaNullability.fromDfType(typeBeforeFlush);
+      if (nullability == DfaNullability.FLUSHED || nullability == DfaNullability.NULL || nullability == DfaNullability.NOT_NULL) {
+        return dropNullability().meet(DfaNullability.FLUSHED.asDfType());
+      }
+    }
+    return this;
+  }
+
+  @Override
   @NlsSafe @NotNull String toString();
 }

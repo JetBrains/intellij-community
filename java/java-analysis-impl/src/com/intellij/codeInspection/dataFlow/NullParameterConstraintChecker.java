@@ -136,10 +136,10 @@ final class NullParameterConstraintChecker extends StandardDataFlowRunner {
     }
 
     @Override
-    protected void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize, boolean shouldMarkFlushed) {
+    public void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize) {
       final PsiElement psi = variable.getPsiVariable();
       if (psi instanceof PsiParameter && myPossiblyViolatedParameters.contains(psi)) return;
-      super.flushVariable(variable, canonicalize, shouldMarkFlushed);
+      super.flushVariable(variable, canonicalize);
     }
 
     @NotNull

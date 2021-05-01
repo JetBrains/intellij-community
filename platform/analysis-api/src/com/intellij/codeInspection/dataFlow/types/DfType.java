@@ -231,6 +231,19 @@ public interface DfType {
   }
 
   /**
+   * Correct the inherent variable type when concrete variable state is flushed
+   * due to unknown code execution. This could be useful to handle non-strict 
+   * properties like nullability (e.g. if unstable nullable variable was checked for null,
+   * then unknown code was executed, then the variable should not probably reset to nullable)
+   * 
+   * @param typeBeforeFlush type the variable had before flush
+   * @return corrected inherent variable type; return this if no correction is necessary.
+   */
+  default DfType correctTypeOnFlush(DfType typeBeforeFlush) {
+    return this;
+  }
+
+  /**
    * @return human-readable representation of this DfType, could be localized
    */
   @Override @NlsSafe @NotNull String toString();

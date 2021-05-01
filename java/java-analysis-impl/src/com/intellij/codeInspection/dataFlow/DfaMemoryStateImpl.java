@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -1253,7 +1252,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     for (DfaVariableValue value : vars) {
-      doFlush(value, shouldMarkFlushed(value));
+      doFlush(value, true);
     }
     myStack.replaceAll(val -> {
       DfType type = val.getDfType();
@@ -1267,23 +1266,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     });
   }
 
-  private boolean shouldMarkFlushed(@NotNull DfaVariableValue value) {
-    if (DfaNullability.fromDfType(value.getInherentType()) != DfaNullability.NULLABLE) return false;
-    DfaNullability nullability = DfaNullability.fromDfType(getDfType(value));
-    return nullability == DfaNullability.FLUSHED || nullability == DfaNullability.NULL || nullability == DfaNullability.NOT_NULL;
-  }
-
   @Override
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    flushVariable(variable, true, false);
+    flushVariable(variable, true);
   }
 
   @Override
   public void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize) {
-    flushVariable(variable, canonicalize, false);
-  }
-
-  protected void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize, boolean shouldMarkFlushed) {
     DfaVariableValue canonical = canonicalize ? canonicalize(variable) : variable;
     EqClass eqClass = canonical.getDependentVariables().isEmpty() ? null : getEqClass(canonical);
     DfaVariableValue newCanonical =
@@ -1292,7 +1281,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         .orElse(null);
     myStack.replaceAll(value -> handleStackValueOnVariableFlush(value, canonical, newCanonical));
 
-    doFlush(canonical, shouldMarkFlushed);
+    doFlush(canonical, false);
     flushDependencies(canonical);
     myCachedHash = null;
   }
@@ -1310,11 +1299,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       // Flush method results on field write
       List<DfaVariableValue> toFlush =
         ContainerUtil.filter(qualifier.getDependentVariables(), DfaVariableValue::containsCalls);
-      toFlush.forEach(val -> doFlush(val, shouldMarkFlushed(val)));
+      toFlush.forEach(val -> doFlush(val, true));
     }
   }
 
   void doFlush(@NotNull DfaVariableValue var, boolean markFlushed) {
+    DfType typeBefore = getDfType(var);
     if(isNull(var)) {
       myStack.replaceAll(val -> val == var ? myFactory.fromDfType(DfTypes.NULL) : val);
     }
@@ -1322,9 +1312,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     removeEquivalence(var);
     myVariableTypes.remove(var);
     if (markFlushed) {
-      DfType type = getDfType(var);
-      if (type instanceof DfReferenceType) {
-        recordVariableType(var, ((DfReferenceType)type).dropNullability().meet(DfaNullability.FLUSHED.asDfType()));
+      DfType inherentType = var.getInherentType();
+      DfType correctedType = inherentType.correctTypeOnFlush(typeBefore);
+      if (!inherentType.equals(correctedType)) {
+        recordVariableType(var, correctedType);
       }
     }
     myCachedHash = null;
@@ -1443,14 +1434,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue var : vars) {
       DfType type = getDfType(var);
       DfType otherType = other.getDfType(var);
-      DfType result = type.join(otherType);
-      Nullability nullability = DfaNullability.toNullability(DfaNullability.fromDfType(type));
-      Nullability otherNullability = DfaNullability.toNullability(DfaNullability.fromDfType(otherType));
-      if (nullability != otherNullability && (nullability == Nullability.NULLABLE || otherNullability == Nullability.NULLABLE) &&
-          result instanceof DfReferenceType) {
-        // When merging nullable with something we cannot warn about nullability violation anymore
-        // because we lose the information about coherent state, thus noise warnings could be produced
-        result = ((DfReferenceType)result).dropNullability().meet(DfaNullability.FLUSHED.asDfType());
+      DfType result;
+      if (!type.equals(otherType)) {
+        result = type.join(otherType).correctTypeOnFlush(type).correctTypeOnFlush(otherType);
+      } else {
+        result = type;
       }
       recordVariableType(var, result);
     }
