@@ -133,13 +133,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-
-    LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Pushing properties"));
-
-    myIndex.clearIndicesIfNecessary();
-
-    snapshot = PerformanceWatcher.takeSnapshot();
-
     Instant scanFilesStart = Instant.now();
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
@@ -150,16 +143,19 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     } finally {
       projectIndexingHistory.getTimes().setScanFilesDuration(Duration.between(scanFilesStart, Instant.now()));
     }
+    String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
+    LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
 
+    snapshot = PerformanceWatcher.takeSnapshot();
     Instant pushPropertiesStart = Instant.now();
     try {
       myPusher.pushAllPropertiesNow();
     } finally {
       projectIndexingHistory.getTimes().setPushPropertiesDuration(Duration.between(pushPropertiesStart, Instant.now()));
     }
+    LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Pushing properties"));
 
-    String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
-    LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
+    myIndex.clearIndicesIfNecessary();
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
