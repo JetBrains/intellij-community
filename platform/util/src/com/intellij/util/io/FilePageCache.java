@@ -281,7 +281,7 @@ public final class FilePageCache {
   private Map<Integer, DirectBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext) {
     mySegmentsAccessLock.lock();
     try {
-      storageLockContext.checkThreadAccess(false);
+      storageLockContext.checkThreadAccess(true);
       Map<Integer, DirectBufferWrapper> mineBuffers = null;
       for (Map.Entry<Integer, DirectBufferWrapper> entry : mySegments.entrySet()) {
         if ((entry.getKey() & FILE_INDEX_MASK) == index) {
@@ -322,6 +322,7 @@ public final class FilePageCache {
   }
 
   void flushBuffersForOwner(int index, StorageLockContext storageLockContext) throws IOException {
+    storageLockContext.checkThreadAccess(false);
     Map<Integer, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
 
     if (buffers != null) {
