@@ -1376,13 +1376,13 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       MemoryStateChange leftPush = history.findSubExpressionPush(leftPlace);
       if (leftPush == null && arguments != null) {
         DfaValue left = leftVal.makeDfaValue(getFactory(), arguments);
-        leftPush = MemoryStateChange.create(history.getPrevious(), new PushInstruction(left, null), Collections.emptyMap(), left);
+        leftPush = MemoryStateChange.create(history.getPrevious(), new JvmPushInstruction(left, null), Collections.emptyMap(), left);
       }
       PsiExpression rightPlace = rightVal.findPlace(call);
       MemoryStateChange rightPush = history.findSubExpressionPush(rightPlace);
       if (rightPush == null && arguments != null) {
         DfaValue right = rightVal.makeDfaValue(getFactory(), arguments);
-        rightPush = MemoryStateChange.create(history.getPrevious(), new PushInstruction(right, null), Collections.emptyMap(), right);
+        rightPush = MemoryStateChange.create(history.getPrevious(), new JvmPushInstruction(right, null), Collections.emptyMap(), right);
       }
       if (leftPush != null && rightPush != null) {
         causeItem.addChildren(findRelationCause(type, leftPush, rightPush));

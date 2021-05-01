@@ -31,7 +31,7 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
 
   @NotNull
   private StreamEx<DfaVariableValue> getReadVariables(Instruction instruction) {
-    if (instruction instanceof PushInstruction && !((PushInstruction)instruction).isReferenceWrite()) {
+    if (instruction instanceof JvmPushInstruction && !((JvmPushInstruction)instruction).isReferenceWrite()) {
       DfaValue value = ((PushInstruction)instruction).getValue();
       if (value instanceof DfaVariableValue) {
         return StreamEx.of((DfaVariableValue)value);

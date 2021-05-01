@@ -2,6 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.JvmPushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -97,8 +98,8 @@ public final class ControlFlow {
    * @return stream of all accessed variables within this flow
    */
   public Stream<DfaVariableValue> accessedVariables() {
-    return StreamEx.of(myInstructions).select(PushInstruction.class)
-      .remove(PushInstruction::isReferenceWrite)
+    return StreamEx.of(myInstructions).select(JvmPushInstruction.class)
+      .remove(JvmPushInstruction::isReferenceWrite)
       .map(PushInstruction::getValue)
       .select(DfaVariableValue.class).distinct();
   }

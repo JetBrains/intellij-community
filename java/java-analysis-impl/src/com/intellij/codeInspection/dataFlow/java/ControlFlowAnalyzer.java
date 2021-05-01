@@ -294,7 +294,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void initializeVariable(PsiVariable variable, PsiExpression initializer) {
     if (JavaDfaValueFactory.ignoreInitializer(variable)) return;
     DfaVariableValue dfaVariable = PlainDescriptor.createVariableValue(myFactory, variable);
-    addInstruction(new PushInstruction(dfaVariable, null, true));
+    addInstruction(new JvmPushInstruction(dfaVariable, null, true));
     initializer.accept(this);
     generateBoxingUnboxingInstructionFor(initializer, variable.getType());
     addInstruction(new AssignInstruction(initializer, dfaVariable));
@@ -895,7 +895,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void push(@NotNull DfaValue value, @NotNull PsiExpression expression) {
-    addInstruction(new PushInstruction(value, new JavaExpressionAnchor(expression)));
+    addInstruction(new JvmPushInstruction(value, new JavaExpressionAnchor(expression)));
   }
 
   private void push(@NotNull DfType dfType, @NotNull PsiExpression expression) {
@@ -921,7 +921,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       if (syntheticVar) {
         expressionValue = createTempVariable(targetType);
-        addInstruction(new PushInstruction(expressionValue, null, true));
+        addInstruction(new JvmPushInstruction(expressionValue, null, true));
       }
       selector.accept(this);
       generateBoxingUnboxingInstructionFor(selector, targetType);
@@ -949,12 +949,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
               PsiExpressionList values = psiLabelStatement.getCaseValues();
               if (values != null) {
                 for (PsiExpression caseValue : values.getExpressions()) {
-
                   boolean enumConstant = caseValue instanceof PsiReferenceExpression &&
                                          ((PsiReferenceExpression)caseValue).resolve() instanceof PsiEnumConstant;
 
                   if (caseValue != null && expressionValue != null && (enumConstant || PsiUtil.isConstantExpression(caseValue))) {
-                    addInstruction(new PushInstruction(expressionValue, null));
+                    addInstruction(new JvmPushInstruction(expressionValue, null));
                     caseValue.accept(this);
                     addInstruction(new BooleanBinaryInstruction(
                       TypeUtils.isJavaLangString(targetType) ? BooleanBinaryInstruction.STRING_EQUALITY_BY_CONTENT :
@@ -1302,7 +1301,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       .meet(type == null ? DfTypes.OBJECT_OR_NULL : TypeConstraints.exact(type).asDfType())
       .meet(DfTypes.LOCAL_OBJECT);
     if (arrayWriteTarget != null) {
-      addInstruction(new PushInstruction(arrayWriteTarget, null, true));
+      addInstruction(new JvmPushInstruction(arrayWriteTarget, null, true));
       push(arrayType, expression);
       addInstruction(new AssignInstruction(originalExpression, arrayWriteTarget));
       int index = 0;
@@ -1312,7 +1311,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           target = Objects.requireNonNull(ArrayElementDescriptor.getArrayElementValue(getFactory(), arrayWriteTarget, index));
         }
         index++;
-        addInstruction(new PushInstruction(target == null ? myFactory.getUnknown() : target, null, true));
+        addInstruction(new JvmPushInstruction(target == null ? myFactory.getUnknown() : target, null, true));
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
@@ -1323,7 +1322,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     else {
       for (PsiExpression initializer : initializers) {
-        addInstruction(new PushInstruction(myFactory.getUnknown(), null, true));
+        addInstruction(new JvmPushInstruction(myFactory.getUnknown(), null, true));
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
@@ -1331,7 +1330,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new AssignInstruction(initializer, null));
         addInstruction(new PopInstruction());
       }
-      addInstruction(new PushInstruction(var, null, true));
+      addInstruction(new JvmPushInstruction(var, null, true));
       push(arrayType, expression);
       addInstruction(new AssignInstruction(originalExpression, var));
     }
@@ -1667,7 +1666,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (qualifierExpression == null) {
         DfaValue thisVariable = JavaDfaValueFactory.getQualifierOrThisValue(myFactory, call.getMethodExpression());
         if (thisVariable != null) {
-          addInstruction(new PushInstruction(thisVariable, null));
+          addInstruction(new JvmPushInstruction(thisVariable, null));
         }
         else {
           pushUnknown();
@@ -1816,7 +1815,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             qualifierValue = ThisDescriptor.createThisValue(myFactory, outerClass);
           }
         }
-        addInstruction(new PushInstruction(qualifierValue, null));
+        addInstruction(new JvmPushInstruction(qualifierValue, null));
       }
 
       PsiMethod constructor = pushConstructorArguments(expression);
@@ -1859,12 +1858,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       int lengthValue = (Integer)val;
       if (lengthValue > 0 && lengthValue <= MAX_UNROLL_SIZE) {
         DfaVariableValue var = createTempVariable(type);
-        addInstruction(new PushInstruction(var, null, true));
+        addInstruction(new JvmPushInstruction(var, null, true));
         addInstruction(new SwapInstruction());
         addInstruction(new AssignInstruction(null, var));
         for (int i = 0; i < lengthValue; i++) {
           DfaValue value = ArrayElementDescriptor.getArrayElementValue(getFactory(), var, i);
-          addInstruction(new PushInstruction(value == null ? getFactory().getUnknown() : value, null, true));
+          addInstruction(new JvmPushInstruction(value == null ? getFactory().getUnknown() : value, null, true));
         }
         addInstruction(new PushValueInstruction(DfTypes.defaultValue(componentType)));
         for (int i = lengthValue - 1; i >= 0; i--) {
@@ -2015,9 +2014,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     // complex assignments (e.g. "|=") are both reading and writing
     boolean writing = PsiUtil.isAccessedForWriting(expression) && !PsiUtil.isAccessedForReading(expression);
     DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression);
-    addInstruction(new PushInstruction(value == null ? myFactory.getUnknown() : value,
-                                       writing ? null : new JavaExpressionAnchor(expression),
-                                       writing));
+    addInstruction(new JvmPushInstruction(value == null ? myFactory.getUnknown() : value,
+                                          writing ? null : new JavaExpressionAnchor(expression),
+                                          writing));
     addNullCheck(expression);
 
     finishElement(expression);
@@ -2100,7 +2099,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                     @Nullable PsiType type) {
     // Transfer value is pushed to avoid emptying stack beyond this point
     pushTrap(new JvmTrap.InsideInlinedBlock(block));
-    addInstruction(new PushInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null));
+    addInstruction(new JvmPushInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null));
     myExpressionBlockContext =
       new ExpressionBlockContext(myExpressionBlockContext, block, resultNullability == Nullability.NOT_NULL, target, type);
     startElement(block);
@@ -2228,7 +2227,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     void generateReturn(PsiExpression returnValue, ControlFlowAnalyzer analyzer) {
       if (returnValue != null) {
-        analyzer.addInstruction(new PushInstruction(myTarget, null, true));
+        analyzer.addInstruction(new JvmPushInstruction(myTarget, null, true));
         if (!isSwitch()) {
           analyzer.addCustomNullabilityProblem(returnValue, myForceNonNullBlockResult ?
                                                             NullabilityProblemKind.nullableFunctionReturn : NullabilityProblemKind.noProblem);
