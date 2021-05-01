@@ -798,11 +798,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (areEqual(leftLeft, right)) {
         RelationType finalRelation = op == LongRangeBinOp.MINUS ?
                                      Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
-        if (!applyCondition(leftRight.cond(finalRelation, DfTypes.intValue(0)))) return false;
+        if (!applyCondition(leftRight.cond(finalRelation, binOp.getDfType().meetRange(LongRangeSet.point(0))))) return false;
       }
       // a+b (rel) c && b == c => a (rel) 0
       if (op == LongRangeBinOp.PLUS && areEqual(leftRight, right)) {
-        if (!applyCondition(leftLeft.cond(correctedRelation, DfTypes.intValue(0)))) return false;
+        if (!applyCondition(leftLeft.cond(correctedRelation, binOp.getDfType().meetRange(LongRangeSet.point(0))))) return false;
       }
 
       if (!applyRelationOnAddition(type, leftLeft, leftRange, rightCorrected, right, isLong)) return false;
@@ -1113,7 +1113,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     if (op == LongRangeBinOp.PLUS && areEqual(binOp.getLeft(), binOp.getRight())) {
-      return leftType.eval(isLong ? DfTypes.longValue(2) : DfTypes.intValue(2), LongRangeBinOp.MUL);
+      return leftType.eval(binOp.getDfType().meetRange(LongRangeSet.point(2)), LongRangeBinOp.MUL);
     }
     return result;
   }
