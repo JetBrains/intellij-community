@@ -109,10 +109,6 @@ public final class StartupUtil {
 
     Main.setFlags(args);
 
-    if (!Main.isHeadless() && !checkGraphics()) {
-      System.exit(Main.NO_GRAPHICS);
-    }
-
     CommandLineArgs.parse(args);
 
     LoadingState.setStrictMode();
@@ -143,7 +139,7 @@ public final class StartupUtil {
     activity = activity.endAndStart("log4j configuration");
     configureLog4j();
 
-    activity = activity.endAndStart("LaF init scheduling");
+    activity = activity.endAndStart("Cwm Host init");
 
     if (args.length > 0 && Main.CWM_HOST_COMMAND.equals(args[0])) {
       try {
@@ -155,6 +151,12 @@ public final class StartupUtil {
         throw new RuntimeException(e);
       }
     }
+
+    if (!Main.isHeadless() && !checkGraphics()) {
+      System.exit(Main.NO_GRAPHICS);
+    }
+
+    activity = activity.endAndStart("LaF init scheduling");
 
     Thread busyThread = Thread.currentThread();
     // EndUserAgreement.Document type is not specified to avoid class loading
