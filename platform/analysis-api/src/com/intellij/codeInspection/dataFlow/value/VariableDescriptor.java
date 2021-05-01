@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -100,5 +101,14 @@ public interface VariableDescriptor {
    */
   default boolean alwaysEqualsToItself(@NotNull DfType type) {
     return true;
+  }
+
+  /**
+   * @param state memory state (must not be modified)
+   * @param value value of the variable described by this descriptor
+   * @return a constraint on the qualified implied by a given value 
+   */
+  default @NotNull DfType getQualifierConstraintFromValue(@NotNull DfaMemoryState state, @NotNull DfaValue value) {
+    return DfType.TOP;
   }
 }

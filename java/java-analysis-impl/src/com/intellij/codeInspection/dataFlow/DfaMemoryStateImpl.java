@@ -16,10 +16,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -594,16 +590,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         // equivalence by content, but other object types by reference, so we need to remove distinct pairs, if any.
         convertReferenceEqualityToValueEquality(value);
       }
-      updateEquivalentVariables(var, result);
+      if (!updateDependentVariables(var, result)) return false;
       if (result instanceof DfConstantType) {
         if (!propagateConstant(var, (DfConstantType<?>)result)) return false;
-      }
-      if (result instanceof DfAntiConstantType) {
-        for (Object notValue : ((DfAntiConstantType<?>)result).getNotValues()) {
-          if (notValue instanceof PsiType) {
-            if (!processGetClass(var, (PsiType)notValue, true)) return false;
-          }
-        }
       }
       if (result instanceof DfIntegralType) {
         if (!applyRangeToRelatedValues(var, ((DfIntegralType)result).getRange())) return false;
@@ -876,7 +865,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (type == RelationType.EQ && !applySpecialFieldEquivalence(dfaLeft, dfaRight)) return false;
 
     if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue && !isNegated) {
-      if (!equalizeTypesOnGetClass((DfaVariableValue)dfaLeft, (DfaVariableValue)dfaRight)) {
+      if (!updateQualifierOnEquality((DfaVariableValue)dfaLeft, (DfaVariableValue)dfaRight) ||
+          !updateQualifierOnEquality((DfaVariableValue)dfaRight, (DfaVariableValue)dfaLeft)) {
         return false;
       }
     }
@@ -906,38 +896,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
   }
 
-  private boolean equalizeTypesOnGetClass(DfaVariableValue dfaLeft, DfaVariableValue dfaRight) {
-    PsiElement leftPsi = dfaLeft.getPsiVariable();
-    PsiElement rightPsi = dfaRight.getPsiVariable();
-    if (leftPsi != rightPsi || !(leftPsi instanceof PsiMethod) || !PsiTypesUtil.isGetClass((PsiMethod)leftPsi)) return true;
-    DfaVariableValue leftQualifier = dfaLeft.getQualifier();
-    DfaVariableValue rightQualifier = dfaRight.getQualifier();
-    if (leftQualifier == null || rightQualifier == null || leftQualifier == rightQualifier) return true;
-    TypeConstraint leftType = TypeConstraint.fromDfType(getDfType(leftQualifier));
-    TypeConstraint rightType = TypeConstraint.fromDfType(getDfType(rightQualifier));
-    return meetDfType(leftQualifier, rightType.asDfType()) && meetDfType(rightQualifier, leftType.asDfType());
-  }
-
-  private boolean processGetClass(DfaVariableValue variable, PsiType value, boolean negated) {
-    EqClass eqClass = getEqClass(variable);
-    List<DfaVariableValue> variables = eqClass == null ? Collections.singletonList(variable) : eqClass.asList();
-    for (DfaVariableValue var : variables) {
-      PsiElement psi = var.getPsiVariable();
-      DfaVariableValue qualifier = var.getQualifier();
-      if (qualifier != null && psi instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)psi)) {
-        DfType dfType = TypeConstraints.exact(value).asDfType();
-        if (!applyCondition(qualifier.cond(negated ? RelationType.IS_NOT : RelationType.IS, dfType))) {
-          return false;
-        }
-      }
-    }
-    return true;
+  private boolean updateQualifierOnEquality(DfaVariableValue target, DfaValue value) {
+    DfType constraint = target.getDescriptor().getQualifierConstraintFromValue(this, value);
+    DfaVariableValue qualifier = target.getQualifier();
+    return qualifier == null || meetDfType(qualifier, constraint);
   }
 
   private boolean propagateConstant(DfaVariableValue value, DfConstantType<?> constant) {
-    if (constant.getValue() instanceof PsiType) {
-      if (!processGetClass(value, (PsiType)constant.getValue(), false)) return false;
-    }
     JvmSpecialField field = JvmSpecialField.fromQualifierType(constant);
     if (field != null) {
       if (!meetDfType(field.createValue(getFactory(), value), field.fromConstant(constant.getValue()))) return false;
@@ -1163,16 +1128,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myCachedHash = null;
   }
 
-  protected void updateEquivalentVariables(DfaVariableValue dfaVar, DfType type) {
+  private boolean updateDependentVariables(DfaVariableValue dfaVar, DfType type) {
+    if (!updateQualifierOnEquality(dfaVar, dfaVar)) return false;
     EqClass eqClass = getEqClass(dfaVar);
     if (eqClass != null) {
       type = type.fromRelation(RelationType.EQ);
       for (DfaVariableValue value : eqClass.asList()) {
         if (value != dfaVar) {
           recordVariableType(value, type);
+          if (!updateQualifierOnEquality(value, value)) return false;
         }
       }
     }
+    return true;
   }
 
   private @NotNull DfaValue canonicalize(@NotNull DfaValue value) {
