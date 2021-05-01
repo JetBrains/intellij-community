@@ -387,7 +387,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
-      return !state.isNotNull(value);
+      return state.getDfType(value).isSuperType(DfTypes.NULL);
     }
   };
 

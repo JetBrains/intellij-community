@@ -201,10 +201,11 @@ public final class DfaUtil {
                                     @NotNull PsiElement context,
                                     @NotNull DfaMemoryState state) {
         if (context == owner && expression != null) {
-          if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) || state.isNotNull(value)) {
+          DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
+          if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) || nullability == DfaNullability.NOT_NULL) {
             hasNotNulls = true;
           }
-          else if (state.getDfType(value) == DfTypes.NULL) {
+          else if (nullability == DfaNullability.NULL) {
             hasNulls = true;
           }
           else {

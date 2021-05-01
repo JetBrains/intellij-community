@@ -305,7 +305,7 @@ final class DataFlowInstructionVisitor implements JavaDfaInterceptor {
                                 @NotNull PsiElement context,
                                 @NotNull DfaMemoryState state) {
     if (context instanceof PsiMethod || context instanceof PsiLambdaExpression) {
-      myAlwaysReturnsNotNull = myAlwaysReturnsNotNull && state.isNotNull(value);
+      myAlwaysReturnsNotNull = myAlwaysReturnsNotNull && !state.getDfType(value).isSuperType(DfTypes.NULL);
     }
     else if (context instanceof PsiMethodReferenceExpression) {
       var methodRef = (PsiMethodReferenceExpression)context;

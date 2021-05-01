@@ -392,8 +392,9 @@ public final class DfaPsiUtil {
                 (isCallExposingNonInitializedFields(instruction) ||
                  instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {
               for (PsiField field : containingClass.getFields()) {
-                if (!instructionState.getMemoryState().isNotNull(
-                  PlainDescriptor.createVariableValue(getFactory(), field))) {
+                DfaVariableValue value = PlainDescriptor.createVariableValue(getFactory(), field);
+                DfType dfType = instructionState.getMemoryState().getDfType(value);
+                if (dfType.isSuperType(DfTypes.NULL)) {
                   map.put(field, false);
                 }
                 else if (!map.containsKey(field)) {

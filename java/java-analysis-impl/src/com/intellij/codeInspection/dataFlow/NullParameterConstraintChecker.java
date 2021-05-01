@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.PushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -32,7 +33,7 @@ import java.util.Set;
  * On the checker's start mark all parameters with null-argument usages as violated (i.e. the method fails if parameter is null).
  * A parameter can be amnestied (excluded from violated) when one of following statements is true:
  * 1. If at least one successful method execution ({@link ReturnInstruction#isViaException()} == false)
- * doesn't require a not-null value for the parameter ({@link DfaMemoryState#isNotNull(DfaValue) == false});
+ * doesn't require a not-null value for the parameter
  * OR
  * 2. If the parameter has a reassignment while one of any method execution.
  *
@@ -102,7 +103,7 @@ final class NullParameterConstraintChecker extends StandardDataFlowRunner {
       DfaMemoryState memState = instructionState.getMemoryState();
       for (PsiParameter parameter : myPossiblyViolatedParameters.toArray(PsiParameter.EMPTY_ARRAY)) {
         final DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), parameter);
-        if (memState.isNotNull(dfaVar)) {
+        if (!memState.getDfType(dfaVar).isSuperType(DfTypes.NULL)) {
           myParametersWithSuccessfulExecutionInNotNullState.add(parameter);
         }
         else {

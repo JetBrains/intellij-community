@@ -145,12 +145,6 @@ public interface DfaMemoryState {
   @NotNull DfType getUnboxedDfType(@NotNull DfaValue value);
 
   /**
-   * @param value to check
-   * @return true if given value is not-null within this memory state
-   */
-  boolean isNotNull(DfaValue value);
-
-  /**
    * Forget values of all unstable fields that could be
    * qualified by one of specified qualifiers (including possible aliases).
    */

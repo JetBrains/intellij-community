@@ -370,8 +370,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaWrappedValue) && !(dfaLeft.getDfType() instanceof DfConstantType)) {
       return false;
     }
-    return !isNull(dfaLeft) && !isNull(dfaRight) &&
-           TypeConstraint.fromDfType(getDfType(dfaLeft)).isComparedByEquals() &&
+    return TypeConstraint.fromDfType(getDfType(dfaLeft)).isComparedByEquals() &&
            TypeConstraint.fromDfType(getDfType(dfaRight)).isComparedByEquals();
   }
 
@@ -500,7 +499,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         LOG.error("Invariant violated: null-class for id=" + myFactory.getValue(entry.getIntKey()));
       }
     }
-    var graph = new Int2ObjectOpenHashMap<BitSet>();
+    Int2ObjectMap<BitSet> graph = new Int2ObjectOpenHashMap<>();
     for (DistinctPairSet.DistinctPair pair : myDistinctClasses) {
       if (pair.isOrdered()) {
         BitSet set = graph.get(pair.getFirstIndex());
@@ -536,11 +535,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   public boolean isNull(DfaValue value) {
     return getDfType(value) == DfTypes.NULL;
-  }
-
-  @Override
-  public boolean isNotNull(DfaValue value) {
-    return !getDfType(value).isSuperType(DfTypes.NULL);
   }
 
   @Override
@@ -1275,7 +1269,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private boolean shouldMarkFlushed(@NotNull DfaVariableValue value) {
     if (DfaNullability.fromDfType(value.getInherentType()) != DfaNullability.NULLABLE) return false;
-    return DfaNullability.fromDfType(getDfType(value)) == DfaNullability.FLUSHED || isNull(value) || isNotNull(value);
+    DfaNullability nullability = DfaNullability.fromDfType(getDfType(value));
+    return nullability == DfaNullability.FLUSHED || nullability == DfaNullability.NULL || nullability == DfaNullability.NOT_NULL;
   }
 
   @Override
