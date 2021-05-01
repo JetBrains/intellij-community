@@ -202,7 +202,8 @@ public final class DfaUtil {
                                     @NotNull DfaMemoryState state) {
         if (context == owner && expression != null) {
           DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
-          if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) || nullability == DfaNullability.NOT_NULL) {
+          if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) || 
+              nullability == DfaNullability.NOT_NULL) {
             hasNotNulls = true;
           }
           else if (nullability == DfaNullability.NULL) {
