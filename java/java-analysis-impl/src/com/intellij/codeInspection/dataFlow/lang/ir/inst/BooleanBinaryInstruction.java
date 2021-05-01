@@ -19,6 +19,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
+import com.intellij.codeInspection.dataFlow.lang.ir.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;

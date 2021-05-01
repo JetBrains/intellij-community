@@ -8,8 +8,6 @@ import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.BranchingInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.ConditionalGotoInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ControlTransferInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;

@@ -335,7 +335,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder ifConditionIs(boolean value) {
-    ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, value, null);
+    ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, DfTypes.booleanValue(!value));
     myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));
     return add(gotoInstruction);
   }
@@ -371,7 +371,9 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder ifNotNull() {
-    return pushNull().ifCondition(JavaTokenType.NE);
+    ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, DfTypes.NULL);
+    myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));
+    return add(gotoInstruction);
   }
 
   /**
@@ -421,7 +423,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder doWhileUnknown() {
-    ConditionalGotoInstruction jump = new ConditionalGotoInstruction(null, false, null);
+    ConditionalGotoInstruction jump = new ConditionalGotoInstruction(null, DfType.TOP, null);
     jump.setOffset(myAnalyzer.getInstructionCount());
     myBranches.add(() -> pushUnknown().add(jump));
     return this;
@@ -846,7 +848,7 @@ public class CFGBuilder {
         pushExpression(expression);
         pop();
       }
-      ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
+      ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, DfTypes.TRUE, null);
       condGoto.setOffset(myAnalyzer.getInstructionCount());
       myBranches.add(() -> pushUnknown().add(condGoto));
       DfaValue commonValue = JavaDfaValueFactory.createCommonValue(factory, expressions, type);
@@ -866,7 +868,7 @@ public class CFGBuilder {
       GotoInstruction gotoInstruction = new GotoInstruction(null, false);
       gotoInstruction.setOffset(myAnalyzer.getInstructionCount());
       dup().push(factory.getSentinel()).compare(JavaTokenType.EQEQ);
-      ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
+      ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, DfTypes.TRUE);
       add(condGoto);
       assignTo(targetVariable);
       myBranches.add(() -> {

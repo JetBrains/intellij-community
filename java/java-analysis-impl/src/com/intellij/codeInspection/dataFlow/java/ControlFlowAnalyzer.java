@@ -121,7 +121,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if(myCodeFragment instanceof PsiClass) {
         // if(unknown) { staticInitializer(); } else { instanceInitializer(); }
         pushUnknown();
-        ConditionalGotoInstruction conditionalGoto = new ConditionalGotoInstruction(null, false, null);
+        ConditionalGotoInstruction conditionalGoto = new ConditionalGotoInstruction(null, DfType.TOP);
         addInstruction(conditionalGoto);
         buildClassInitializerFlow((PsiClass)myCodeFragment, true);
         GotoInstruction unconditionalGoto = new GotoInstruction(null);
@@ -235,13 +235,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitAssertStatement(PsiAssertStatement statement) {
     startElement(statement);
     addInstruction(new PushInstruction(AssertionDisabledDescriptor.createAssertionsDisabledVar(myFactory), null));
-    ConditionalGotoInstruction jump = new ConditionalGotoInstruction(null, false, null);
+    ConditionalGotoInstruction jump = new ConditionalGotoInstruction(null, DfTypes.TRUE);
     addInstruction(jump);
     final PsiExpression condition = statement.getAssertCondition();
     if (condition != null) {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, condition));
+      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), DfTypes.TRUE, condition));
       final PsiExpression description = statement.getAssertDescription();
       if (description != null) {
         description.accept(this);
@@ -453,7 +453,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         if (statement == myCodeFragment) {
           addInstruction(new PopInstruction());
         } else {
-          addInstruction(new ConditionalGotoInstruction(getStartOffset(statement), false, condition));
+          addInstruction(new ConditionalGotoInstruction(getStartOffset(statement), DfTypes.TRUE, condition));
         }
       }
     }
@@ -525,9 +525,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       if (length != null) {
         addInstruction(new UnwrapSpecialFieldInstruction(length));
-        addInstruction(new PushValueInstruction(DfTypes.intValue(0)));
-        addInstruction(new BooleanBinaryInstruction(JavaTokenType.EQEQ, null));
-        addInstruction(new ConditionalGotoInstruction(loopEndOffset, false, null));
+        addInstruction(new ConditionalGotoInstruction(loopEndOffset, DfTypes.intValue(0)));
         hasSizeCheck = true;
       } else {
         addInstruction(new PopInstruction());
@@ -545,7 +543,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (!hasSizeCheck) {
       pushUnknown();
-      addInstruction(new ConditionalGotoInstruction(loopEndOffset, true, null));
+      addInstruction(new ConditionalGotoInstruction(loopEndOffset, DfType.TOP));
     }
 
     final PsiStatement body = statement.getBody();
@@ -555,7 +553,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (hasSizeCheck) {
       pushUnknown();
-      addInstruction(new ConditionalGotoInstruction(loopEndOffset, true, null));
+      addInstruction(new ConditionalGotoInstruction(loopEndOffset, DfType.TOP));
     }
 
     addInstruction(new GotoInstruction(offset));
@@ -597,7 +595,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     else {
       addInstruction(new PushValueInstruction(statement.getRParenth() == null ? DfTypes.BOOLEAN : DfTypes.TRUE));
     }
-    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, condition));
+    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), DfTypes.FALSE, condition));
 
     PsiStatement body = statement.getBody();
     if (body != null) {
@@ -693,7 +691,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       new CFGBuilder(this).assign(loopVar, DfType.TOP)
                           .push(origin)
                           .compare(JavaTokenType.LE);
-      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
+      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), DfTypes.TRUE, null));
     }
     addInstruction(new GotoInstruction(startOffset));
     return true;
@@ -712,7 +710,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (condition != null) {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-      addInstruction(new ConditionalGotoInstruction(skipThenOffset, true, condition));
+      addInstruction(new ConditionalGotoInstruction(skipThenOffset, DfTypes.FALSE, condition));
     }
 
     if (thenStatement != null) {
@@ -965,7 +963,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                     pushUnknown();
                   }
 
-                  addInstruction(new ConditionalGotoInstruction(offset, false, caseValue));
+                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
                 }
               }
             }
@@ -1194,7 +1192,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     } else {
       pushUnknown();
     }
-    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, condition));
+    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), DfTypes.FALSE, condition));
 
     PsiStatement body = statement.getBody();
     if (body != null) {
@@ -1510,7 +1508,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression nextOperand = i == operands.length - 1 ? null : operands[i + 1];
       if (nextOperand != null) {
         ControlFlow.DeferredOffset nextOffset = new ControlFlow.DeferredOffset();
-        addInstruction(new ConditionalGotoInstruction(nextOffset, !and, operand));
+        addInstruction(new ConditionalGotoInstruction(nextOffset, DfTypes.booleanValue(and), operand));
         push(DfTypes.booleanValue(!and), expression);
         addInstruction(new GotoInstruction(endOffset));
         nextOffset.setOffset(getInstructionCount());
@@ -1540,7 +1538,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
       PsiType type = expression.getType();
-      addInstruction(new ConditionalGotoInstruction(elseOffset, true, PsiUtil.skipParenthesizedExprDown(condition)));
+      addInstruction(new ConditionalGotoInstruction(elseOffset, DfTypes.FALSE, PsiUtil.skipParenthesizedExprDown(condition)));
       thenExpression.accept(this);
       generateBoxingUnboxingInstructionFor(thenExpression,type);
 

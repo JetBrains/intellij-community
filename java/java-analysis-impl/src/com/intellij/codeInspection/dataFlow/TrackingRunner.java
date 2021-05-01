@@ -15,11 +15,15 @@ import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.CheckNotNullInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.JvmPushInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.ASTNode;
@@ -673,7 +677,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
           MemoryStateChange push = history.findExpressionPush(operand);
           if (push != null &&
               ((push.myInstruction instanceof ConditionalGotoInstruction &&
-                ((ConditionalGotoInstruction)push.myInstruction).isTarget(value, history.myInstruction)) ||
+                ((ConditionalGotoInstruction)push.myInstruction).isTarget(DfTypes.booleanValue(value), history.myInstruction)) ||
                push.myTopOfStack.getDfType().isConst(value))) {
             int andVal = and ? 1 : 0;
             CauseItem cause = new CauseItem(
