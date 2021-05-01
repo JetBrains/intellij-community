@@ -2,18 +2,29 @@
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogWrapper
 
-private const val DIALOGS = "ui.dialogs"
+class DialogsCounterUsagesCollector : CounterUsagesCollector() {
+  companion object {
+    private val GROUP = EventLogGroup("ui.dialogs", 58)
+
+    val EXIT_CODE = EventFields.Int("code")
+    val DIALOG_CLASS = EventFields.StringValidatedByCustomRule("dialog_class", "dialog_class")
+
+    val SHOW = GROUP.registerEvent("show", DIALOG_CLASS)
+    val CLOSE = GROUP.registerEvent("close", DIALOG_CLASS, EXIT_CODE)
+    val HELP = GROUP.registerEvent("help.clicked", DIALOG_CLASS)
+  }
+
+  override fun getGroup(): EventLogGroup = GROUP
+}
 
 class SettingsCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
@@ -33,10 +44,6 @@ class SettingsCounterUsagesCollector : CounterUsagesCollector() {
 }
 
 class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
-  private val CLOSE_OK_DIALOG_DATA = FeatureUsageData().addData("code", DialogWrapper.OK_EXIT_CODE)
-  private val CLOSE_CANCEL_DIALOG_DATA = FeatureUsageData().addData("code", DialogWrapper.CANCEL_EXIT_CODE)
-  private val CLOSE_CUSTOM_DIALOG_DATA = FeatureUsageData().addData("code", DialogWrapper.NEXT_USER_EXIT_CODE)
-
   override fun logSelectConfigurable(configurable: Configurable) {
     if (FeatureUsageLogger.isEnabled()) {
       logSettingsEvent(configurable, SettingsCounterUsagesCollector.SELECT)
@@ -64,32 +71,26 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
 
   override fun logShowDialog(name: String, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      val data = FeatureUsageData().addDialogClass(name)
-      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, "show", data)
+      DialogsCounterUsagesCollector.SHOW.log(name)
     }
   }
 
   override fun logCloseDialog(name: String, exitCode: Int, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      val data = getDialogCloseData(exitCode).copy().addDialogClass(name)
-      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, "close", data)
+      DialogsCounterUsagesCollector.CLOSE.log(name, getExitCodeToReport(exitCode))
     }
   }
 
   override fun logClickOnHelpDialog(name: String, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      val data = FeatureUsageData().addDialogClass(name)
-      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, "help.clicked", data)
+      DialogsCounterUsagesCollector.HELP.log(name)
     }
   }
 
-  private fun getDialogCloseData(exitCode: Int): FeatureUsageData {
-    return when (exitCode) {
-      DialogWrapper.OK_EXIT_CODE -> CLOSE_OK_DIALOG_DATA
-      DialogWrapper.CANCEL_EXIT_CODE -> CLOSE_CANCEL_DIALOG_DATA
-      else -> CLOSE_CUSTOM_DIALOG_DATA
+  private fun getExitCodeToReport(exitCode: Int): Int {
+    if (exitCode == DialogWrapper.OK_EXIT_CODE || exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+      return exitCode
     }
+    return DialogWrapper.NEXT_USER_EXIT_CODE
   }
-
-  internal fun FeatureUsageData.addDialogClass(name: String) = this.addData("dialog_class", name)
 }
