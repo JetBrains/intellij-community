@@ -152,7 +152,6 @@ private fun connectNio(bootstrap: Bootstrap,
     if (future.isSuccess) {
       if (!future.channel().isOpen) {
         Logger.getInstance("com.intellij.util.io.netty").debug("connectNio: !future.channel().isOpen")
-        continue
       }
       return ConnectToChannelResult(future.channel())
     }
