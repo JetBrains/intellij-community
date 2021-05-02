@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -161,24 +160,30 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
-    Computable<T> adjustedCall = () -> {
+    // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
+    boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
+    boolean shallAsync = myForceAsync || canAsync && action instanceof UpdateInBackground &&
+                                         ((UpdateInBackground)action).isUpdateInBackground();
+    boolean isEDT = EDT.isCurrentThreadEdt();
+    if (isEDT && canAsync && shallAsync) {
+      LOG.error("Calling " + operation + " on EDT on `" + action.getClass().getName() + "` " +
+                (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
+    }
+    if (isEDT || canAsync && shallAsync) {
       try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
         return call.get();
       }
-    };
-    // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
-    boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
-    if (canAsync && myForceAsync ||
-        EDT.isCurrentThreadEdt() ||
-        canAsync && action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground()) {
-      return adjustedCall.get();
     }
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     return computeOnEdt(() -> {
       long start = System.currentTimeMillis();
       try {
-        return ProgressManager.getInstance().runProcess(adjustedCall, ProgressWrapper.wrap(progress));
+        return ProgressManager.getInstance().runProcess(() -> {
+          try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
+            return call.get();
+          }
+        }, ProgressWrapper.wrap(progress));
       }
       finally {
         long elapsed = System.currentTimeMillis() - start;
