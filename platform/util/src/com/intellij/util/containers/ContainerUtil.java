@@ -2605,7 +2605,10 @@ public final class ContainerUtil {
     return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, createHashingStrategy(hashingStrategy));
   }
 
-  @Contract(value = "_ -> new", pure = true)
+  /**
+   * @deprecated Use {@link CollectionFactory#createConcurrentWeakMap()}
+   */
+  @Deprecated
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     return new ConcurrentWeakHashMap<>(createHashingStrategy(hashingStrategy));
   }

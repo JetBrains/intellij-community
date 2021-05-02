@@ -19,6 +19,11 @@ public final class CollectionFactory {
   }
 
   @Contract(value = " -> new", pure = true)
+  public static @NotNull <V> ConcurrentMap<String, V> createConcurrentWeakCaseInsensitiveMap() {
+    return new ConcurrentWeakHashMap<>(HashingStrategy.caseInsensitive());
+  }
+
+  @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakValueMap() {
     return new ConcurrentWeakValueHashMap<>();
   }

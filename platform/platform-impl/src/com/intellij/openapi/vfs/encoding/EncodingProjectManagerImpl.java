@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,12 +63,15 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     @Override
     public int hashCode(VirtualFilePointer pointer) {
       // TODO !! hashCode is unstable - VirtualFilePointer URL can change
-      return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
+      String url = pointer.getUrl();
+      return SystemInfoRt.isFileSystemCaseSensitive ? url.hashCode() : StringUtilRt.stringHashCodeInsensitive(url);
     }
 
     @Override
     public boolean equals(VirtualFilePointer o1, VirtualFilePointer o2) {
-      return FileUtil.PATH_HASHING_STRATEGY.equals(o1.getUrl(), o2.getUrl());
+      String u1 = o1.getUrl();
+      String u2 = o2.getUrl();
+      return u1 == u2 || (SystemInfoRt.isFileSystemCaseSensitive ? u1.equals(u2) : u1.equalsIgnoreCase(u2));
     }
   });
   private volatile Charset myProjectCharset;

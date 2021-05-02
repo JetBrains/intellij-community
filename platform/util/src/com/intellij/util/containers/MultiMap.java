@@ -24,7 +24,7 @@ public class MultiMap<K, V> implements Serializable {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final MultiMap<?,?> EMPTY = new EmptyMap();
+  private static final MultiMap<?,?> EMPTY = new EmptyMap();
 
   private static final long serialVersionUID = -2632269270151455493L;
 

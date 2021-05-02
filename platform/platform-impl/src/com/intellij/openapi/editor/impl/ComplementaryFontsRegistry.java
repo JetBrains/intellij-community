@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
@@ -8,7 +8,8 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +38,8 @@ public final class ComplementaryFontsRegistry {
   // This is the font that will be used to show placeholder glyphs for characters no installed font can display.
   // Glyph with code 0 will be used as a placeholder from this font.
   private static final FallBackInfo UNDISPLAYABLE_FONT_INFO = new FallBackInfo("JetBrains Mono", Font.PLAIN, Font.PLAIN);
-  private static final TIntHashSet[] ourUndisplayableChars = new TIntHashSet[] { // per font style
-    new TIntHashSet(), new TIntHashSet(), new TIntHashSet(), new TIntHashSet()
+  private static final IntSet[] ourUndisplayableChars = new IntOpenHashSet[] { // per font style
+    new IntOpenHashSet(), new IntOpenHashSet(), new IntOpenHashSet(), new IntOpenHashSet()
   };
   private static String ourLastFontFamily = null;
   private static String ourLastRegularSubFamily;
@@ -307,7 +308,7 @@ public final class ComplementaryFontsRegistry {
     if (style < 0 || style > 3) style = Font.PLAIN;
     synchronized (lock) {
       FallBackInfo fallBackInfo = UNDISPLAYABLE_FONT_INFO;
-      TIntHashSet undisplayableChars = ourUndisplayableChars[style];
+      IntSet undisplayableChars = ourUndisplayableChars[style];
       if (!undisplayableChars.contains(codePoint)) {
         boolean canDisplayFirst = false;
         LinkedHashMap<String, FallBackInfo> usedFonts = ourUsedFonts[style];
