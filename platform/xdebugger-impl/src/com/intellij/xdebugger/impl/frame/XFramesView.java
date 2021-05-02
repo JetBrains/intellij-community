@@ -94,6 +94,8 @@ public final class XFramesView extends XDebugView {
     myFramesList.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {
+        int i = myFramesList.locationToIndex(new Point(x, y));
+        if (i != -1) myFramesList.selectFrame(i);
         ActionManager actionManager = ActionManager.getInstance();
         ActionGroup group = (ActionGroup)actionManager.getAction(XDebuggerActions.FRAMES_TREE_POPUP_GROUP);
         actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
