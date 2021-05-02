@@ -173,8 +173,9 @@ public final class DfaVariableValue extends DfaValue {
   /**
    * @return false if the variable may be not equal to itself when applying the {@link RelationType#EQ}.
    * This could be possible if variable is backed by a pure method that always returns a new object. 
+   * @param type current variable type (memory state-specific)
    */
-  public boolean alwaysEqualsToItself() {
-    return myDescriptor.alwaysEqualsToItself(getDfType());
+  public boolean alwaysEqualsToItself(@NotNull DfType type) {
+    return myDescriptor.alwaysEqualsToItself(type);
   }
 }

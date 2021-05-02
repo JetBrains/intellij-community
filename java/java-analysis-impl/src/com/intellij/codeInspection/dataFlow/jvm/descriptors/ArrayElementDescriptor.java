@@ -7,7 +7,10 @@ import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -19,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A descriptor that represents an array element with fixed index
  */
-public final class ArrayElementDescriptor implements VariableDescriptor {
+public final class ArrayElementDescriptor extends JvmVariableDescriptor {
   private final int myIndex;
 
   public ArrayElementDescriptor(int index) {

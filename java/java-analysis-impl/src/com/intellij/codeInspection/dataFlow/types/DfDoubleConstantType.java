@@ -5,8 +5,6 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleType {
   DfDoubleConstantType(double value) {
     super(value);
@@ -16,30 +14,33 @@ class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleTyp
   @Override
   public DfType join(@NotNull DfType other) {
     if (other.isSuperType(this)) return other;
-    if (other instanceof DfDoubleType) return DfTypes.DOUBLE;
+    if (other instanceof DfDoubleRangeType) {
+      return other.join(this);
+    }
+    if (other instanceof DfDoubleConstantType) {
+      double val1 = getValue();
+      double val2 = ((DfDoubleConstantType)other).getValue();
+      if (Double.isNaN(val1)) {
+        return DfDoubleRangeType.create(val2, val2, false, true);
+      }
+      if (Double.isNaN(val2)) {
+        return DfDoubleRangeType.create(val1, val1, false, true);
+      }
+      double from = Math.min(val1, val2);
+      double to = Math.max(val1, val2);
+      // We don't support disjoint sets, so the best we can do is to return a range from min to max
+      return DfDoubleRangeType.create(from, to, false, false);
+    }
     return DfType.TOP;
   }
 
   @Override
   public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
-    Double value = getValue();
+    double value = getValue();
     if (Double.isNaN(value)) {
       return relationType == RelationType.NE ? DfTypes.DOUBLE : BOTTOM;
     }
-    switch (relationType) {
-      case EQ:
-        return value == 0.0 ? DfTypes.DOUBLE_ZERO : this;
-      case LT:
-      case GT:
-        return new DfDoubleNotValueType(value == 0.0 ? Set.of(0.0, -0.0, Double.NaN) : Set.of(value, Double.NaN));
-      case NE:
-        return new DfDoubleNotValueType(value == 0.0 ? DOUBLE_ZERO_SET : Set.of(value));
-      case LE:
-      case GE:
-        return new DfDoubleNotValueType(Set.of(Double.NaN));
-      default:
-        return DfTypes.DOUBLE;
-    }
+    return DfDoubleRangeType.fromRelation(relationType, value, value);
   }
 
   @NotNull
@@ -51,6 +52,10 @@ class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleTyp
   @NotNull
   @Override
   public DfType tryNegate() {
-    return new DfDoubleNotValueType(Set.of(getValue()));
+    double value = getValue();
+    if (Double.isNaN(value)) {
+      return DfDoubleRangeType.create(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, false);
+    }
+    return DfDoubleRangeType.create(value, value, true, true);
   }
 }

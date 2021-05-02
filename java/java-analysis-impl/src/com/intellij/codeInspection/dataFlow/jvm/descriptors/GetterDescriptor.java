@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -15,7 +16,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -110,8 +110,9 @@ public final class GetterDescriptor extends PsiVarDescriptor {
 
   @Override
   public boolean alwaysEqualsToItself(@NotNull DfType type) {
-    if (type instanceof DfPrimitiveType) return true;
-    if (PropertyUtilBase.isSimplePropertyGetter(myGetter)) return true;
+    if (!super.alwaysEqualsToItself(type)) return false;
+    if (type instanceof DfPrimitiveType || type instanceof DfConstantType) return true;
+    if (PropertyUtil.isSimpleGetter(myGetter) || PsiTypesUtil.isGetClass(myGetter)) return true;
     return false;
   }
 

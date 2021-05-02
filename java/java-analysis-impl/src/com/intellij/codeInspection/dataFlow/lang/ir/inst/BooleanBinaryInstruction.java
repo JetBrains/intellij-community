@@ -113,13 +113,16 @@ public class BooleanBinaryInstruction extends ExpressionPushingInstruction imple
       RelationType relation = relations[i];
       DfaCondition condition = dfaLeft.cond(relation, dfaRight);
       if (condition == DfaCondition.getFalse()) continue;
+      boolean result = relationType.isSubRelation(relation);
       if (condition == DfaCondition.getTrue()) {
-        pushResult(runner, memState, booleanValue(relationType.isSubRelation(relation)));
+        pushResult(runner, memState, booleanValue(result));
         return nextStates(runner, memState);
       }
       final DfaMemoryState copy = i == relations.length - 1 && !states.isEmpty() ? memState : memState.createCopy();
-      if (copy.applyCondition(condition)) {
-        pushResult(runner, copy, booleanValue(relationType.isSubRelation(relation)));
+      if (copy.applyCondition(condition) &&
+          copy.meetDfType(dfaLeft, copy.getDfType(dfaLeft).correctForRelationResult(relationType, result)) &&
+          copy.meetDfType(dfaRight, copy.getDfType(dfaRight).correctForRelationResult(relationType, result))) {
+        pushResult(runner, copy, booleanValue(result));
         states.add(nextState(runner, copy));
       }
     }

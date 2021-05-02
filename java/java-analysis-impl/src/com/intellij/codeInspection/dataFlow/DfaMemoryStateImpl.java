@@ -691,28 +691,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return (leftType == rightType) == (relationType == RelationType.EQ);
     }
 
-    if (!meetDfType(dfaLeft, leftType.meet(rightType.fromRelation(relationType)))) {
+    if (!meetDfType(dfaLeft, leftType.meetRelation(relationType, rightType))) {
       return false;
     }
-    if (relationType.getFlipped() != null && !meetDfType(dfaRight, rightType.meet(leftType.fromRelation(relationType.getFlipped())))) {
+    if (relationType.getFlipped() != null && !meetDfType(dfaRight, rightType.meetRelation(relationType.getFlipped(), leftType))) {
       return false;
     }
 
     if (!applyBinOpRelations(dfaLeft, relationType, dfaRight)) return false;
-
-    if (leftType instanceof DfFloatingPointType && rightType instanceof DfFloatingPointType && relationType.getFlipped() != null) {
-      RelationType constantRelation = getFloatingConstantRelation(leftType, rightType);
-      if (constantRelation != null) {
-        return relationType.isSubRelation(constantRelation);
-      }
-      if (canBeNaN(leftType) || canBeNaN(rightType)) {
-        if (dfaLeft == dfaRight && dfaLeft instanceof DfaVariableValue && !(dfaLeft.getDfType() instanceof DfPrimitiveType)) {
-          return !dfaRelation.isNonEquality();
-        }
-        applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
-        return true;
-      }
-    }
 
     if (dfaRight instanceof DfaTypeValue) {
       if ((relationType == RelationType.EQ || relationType.isInequality()) &&
@@ -860,7 +846,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaWrappedValue)) {
-      return !isNegated || (dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls());
+      return !isNegated || isUnstableValue(dfaLeft);
     }
 
     if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
@@ -913,15 +899,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean correctRelatedValues(@NotNull DfaValue value, @NotNull DfType type) {
     EqClass eqClass = getEqClass(value);
     if (eqClass == null) return true;
-    DfType greater = type.fromRelation(RelationType.GT);
-    DfType less = type.fromRelation(RelationType.LT);
-    if (greater == DfType.TOP && less == DfType.TOP) return true;
+    if (type.fromRelation(RelationType.GT) == DfType.TOP && type.fromRelation(RelationType.LT) == DfType.TOP) return true;
     for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs().toArray(new DistinctPairSet.DistinctPair[0])) {
       if (pair.isOrdered()) {
         if (pair.getFirst() == eqClass) {
-          if (!meetDfType(Objects.requireNonNull(pair.getSecond().getCanonicalVariable()), greater)) return false;
+          DfaVariableValue var = Objects.requireNonNull(pair.getSecond().getCanonicalVariable());
+          if (!meetDfType(var, getDfType(var).meetRelation(RelationType.GT, type))) return false;
         } else if(pair.getSecond() == eqClass) {
-          if (!meetDfType(Objects.requireNonNull(pair.getFirst().getCanonicalVariable()), less)) return false;
+          DfaVariableValue var = Objects.requireNonNull(pair.getFirst().getCanonicalVariable());
+          if (!meetDfType(var, getDfType(var).meetRelation(RelationType.LT, type))) return false;
         }
       }
     }
@@ -976,10 +962,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return type instanceof DfConstantType && DfaUtil.isNaN(((DfConstantType<?>)type).getValue());
   }
 
-  private static boolean canBeNaN(@NotNull DfType dfType) {
-    return dfType.isSuperType(DfTypes.floatValue(Float.NaN)) || dfType.isSuperType(DfTypes.doubleValue(Double.NaN));
-  }
-
   private boolean applyRelation(@NotNull DfaValue dfaLeft, @NotNull DfaValue dfaRight, boolean isNegated) {
     if (!(dfaLeft instanceof DfaVariableValue) || !(dfaRight instanceof DfaVariableValue)) return true;
     int c1Index = getOrCreateEqClassIndex((DfaVariableValue)dfaLeft);
@@ -1019,18 +1001,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean isUnstableValue(DfaValue value) {
     if (!(value instanceof DfaVariableValue)) return false;
     DfaVariableValue var = (DfaVariableValue)value;
-    return !var.alwaysEqualsToItself() && !(getDfType(var) instanceof DfConstantType);
-  }
-
-  private static @Nullable RelationType getFloatingConstantRelation(DfType leftType, DfType rightType) {
-    Number value1 = leftType.getConstantOfType(Number.class);
-    Number value2 = rightType.getConstantOfType(Number.class);
-    if (value1 == null || value2 == null) return null;
-    double double1 = value1.doubleValue();
-    double double2 = value2.doubleValue();
-    if (double1 == 0.0 && double2 == 0.0) return RelationType.EQ;
-    int cmp = Double.compare(double1, double2);
-    return cmp == 0 ? RelationType.EQ : cmp < 0 ? RelationType.LT : RelationType.GT;
+    return !var.alwaysEqualsToItself(getDfType(var));
   }
 
   public @NotNull DfType getBinOpRange(DfaBinOpValue binOp) {

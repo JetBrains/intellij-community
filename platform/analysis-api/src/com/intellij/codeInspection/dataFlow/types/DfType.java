@@ -198,6 +198,20 @@ public interface DfType {
   }
 
   /**
+   * Narrows this value to the set of values that satisfies given relation
+   * 
+   * @param relationType relation applied
+   * @param other other operand (e.g., for {@code a < b} relation, this object is {@code a},
+   *              other is {@code b} and relationType is {@code <}.
+   * @return narrowed type containing only values that satisfy the relation 
+   * (may contain some more values if the exact type cannot be represented).
+   * For any {@code meetRelation} arguments, {@code this.isSuperType(this.meetRelation(...))} is true.
+   */
+  default @NotNull DfType meetRelation(@NotNull RelationType relationType, @NotNull DfType other) {
+    return meet(other.fromRelation(relationType));
+  }
+
+  /**
    * @return the widened version of this type; should be called on back-branches.
    */
   default DfType widen() {
@@ -250,6 +264,19 @@ public interface DfType {
    * @return corrected variable type; return this if no correction is necessary.
    */
   default DfType correctForClosure() {
+    return this;
+  }
+
+  /**
+   * Correct the type after applying the relation depending on whether the relation was applied successfully.
+   * May be necessary to handle weird relation semantics, like with NaN in some languages.
+   * 
+   * @param relation relation applied
+   * @param result if true then the relation was applied successfully. E.g., for {@code a > b},
+   *               result is true for {@code a > b} state and false for {@code a < b} and for {@code a == b} states.
+   * @return corrected type; return this if no correction is necessary
+   */
+  default @NotNull DfType correctForRelationResult(@NotNull RelationType relation, boolean result) {
     return this;
   }
 
