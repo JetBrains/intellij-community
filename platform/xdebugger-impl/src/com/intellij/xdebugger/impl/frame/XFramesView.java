@@ -561,27 +561,23 @@ public final class XFramesView extends XDebugView {
     }
 
     private boolean selectCurrentFrame() {
-      if (myToSelect instanceof XStackFrame) {
-        if (!Objects.equals(myFramesList.getSelectedValue(), myToSelect) && myFramesList.getModel().contains(myToSelect)) {
-          myFramesList.setSelectedValue(myToSelect, true);
-          processFrameSelection(mySession, false);
-          myListenersEnabled = true;
-          return true;
-        }
+      if (selectFrame(myToSelect)) {
+        myListenersEnabled = true;
+        processFrameSelection(mySession, false);
+        return true;
+      }
+      return false;
+    }
+
+    private boolean selectFrame(Object toSelect) {
+      if (toSelect instanceof XStackFrame) {
+        if (myFramesList.selectFrame((XStackFrame)toSelect)) return true;
         if (myAllFramesLoaded && myFramesList.getSelectedValue() == null) {
           LOG.error("Frame was not found, " + myToSelect.getClass() + " must correctly override equals");
         }
       }
-      else if (myToSelect instanceof Integer) {
-        int selectedFrameIndex = (int)myToSelect;
-        if (myFramesList.getSelectedIndex() != selectedFrameIndex &&
-            myFramesList.getElementCount() > selectedFrameIndex &&
-            myFramesList.getModel().getElementAt(selectedFrameIndex) != null) {
-          myFramesList.setSelectedIndex(selectedFrameIndex);
-          processFrameSelection(mySession, false);
-          myListenersEnabled = true;
-          return true;
-        }
+      else if (toSelect instanceof Integer) {
+        if (myFramesList.selectFrame((int)toSelect)) return true;
       }
       return false;
     }

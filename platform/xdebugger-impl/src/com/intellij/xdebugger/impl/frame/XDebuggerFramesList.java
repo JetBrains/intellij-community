@@ -35,6 +35,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class XDebuggerFramesList extends DebuggerFramesList {
   private final Project myProject;
@@ -116,6 +117,25 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   public void clear() {
     super.clear();
     myFileColors.clear();
+  }
+
+  public boolean selectFrame(@NotNull XStackFrame toSelect) {
+    //noinspection unchecked
+    if (!Objects.equals(getSelectedValue(), toSelect) && getModel().contains(toSelect)) {
+      setSelectedValue(toSelect, true);
+      return true;
+    }
+    return false;
+  }
+
+  public boolean selectFrame(int indexToSelect) {
+    if (getSelectedIndex() != indexToSelect &&
+        getElementCount() > indexToSelect &&
+        getModel().getElementAt(indexToSelect) != null) {
+      setSelectedIndex(indexToSelect);
+      return true;
+    }
+    return false;
   }
 
   @Nullable
