@@ -80,7 +80,7 @@ final class BuildContextImpl extends BuildContext {
     fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
     systemSelector = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
-    bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "log4j.jar", "jna.jar")
+    bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "jna.jar")
     dependenciesProperties = new DependenciesProperties(this)
     messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
   }

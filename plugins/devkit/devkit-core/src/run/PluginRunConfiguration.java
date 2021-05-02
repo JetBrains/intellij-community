@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
@@ -45,7 +46,6 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.idea.LoggerFactory.LOG_FILE_NAME;
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
   private static final String NAME = "name";
@@ -158,7 +158,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
 
         if (!fromIdeaProject) {
           String bootPath = "/lib/boot.jar";
-          String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
+          String bootJarPath = ideaJdkHome + FileUtil.toSystemDependentName(bootPath);
           if (new File(bootJarPath).exists()) {
             //there is no need to add boot.jar in modern IDE builds (181.*)
             vm.add("-Xbootclasspath/a:" + bootJarPath);
@@ -212,9 +212,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
         else {
-          for (String path : List.of("log4j.jar", "jdom.jar", "openapi.jar", "util.jar", "bootstrap.jar",
-                                     "idea_rt.jar", "idea.jar")) {
-            params.getClassPath().add(ideaJdkHome + toSystemDependentName("/lib/" + path));
+          for (String path : List.of("openapi.jar", "util.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar")) {
+            params.getClassPath().add(ideaJdkHome + FileUtil.toSystemDependentName("/lib/" + path));
           }
         }
         params.getClassPath().addFirst(((JavaSdkType)usedIdeaJdk.getSdkType()).getToolsPath(usedIdeaJdk));

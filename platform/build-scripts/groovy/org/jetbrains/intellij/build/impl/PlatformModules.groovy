@@ -203,7 +203,9 @@ final class PlatformModules {
         "aalto-xml",
         "netty-buffer",
         "netty-codec-http",
-        "netty-handler-proxy"
+        "netty-handler-proxy",
+        "protobuf",
+        "Log4J",
       ))
 
       for (JpsLibrary library in additionalProjectLevelLibraries) {
@@ -216,7 +218,7 @@ final class PlatformModules {
 
       withProjectLibrariesFromIncludedModules(buildContext)
 
-      for (String toRemoveVersion : List.of("Log4J", "jna", "jetbrains-annotations-java5", "JDOM")) {
+      for (String toRemoveVersion : List.of("jna", "jetbrains-annotations-java5")) {
         removeVersionFromProjectLibraryJarNames(toRemoveVersion)
       }
     }
