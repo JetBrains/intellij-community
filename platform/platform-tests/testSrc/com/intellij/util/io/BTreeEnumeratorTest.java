@@ -181,15 +181,12 @@ public class BTreeEnumeratorTest {
   @Test
   public void testPerformance() throws IOException {
     IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
-    IntObjectCache.DeletedPairsListener listener = new IntObjectCache.DeletedPairsListener() {
-      @Override
-      public void objectRemoved(int key, Object value) {
-        try {
-          assertEquals(myEnumerator.enumerate((String)value), key);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    IntObjectCache.DeletedPairsListener<String> listener = (key, value) -> {
+      try {
+        assertEquals(myEnumerator.enumerate(value), key);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     };
 

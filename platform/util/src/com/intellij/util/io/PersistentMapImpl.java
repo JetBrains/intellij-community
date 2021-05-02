@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
 /** Thread-safe implementation of persistent hash map (PHM). The implementation works in the following (generic) way:<ul>
@@ -80,6 +81,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   private static final boolean doHardConsistencyChecks = false;
   private final PersistentEnumeratorBase<Key> myEnumerator;
   private final boolean myCompactOnClose;
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock(true);
 
   @TestOnly
   public boolean isCorrupted() {
@@ -279,13 +281,13 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   }
 
   @NotNull
-  private Lock getWriteLock() {
-    return myEnumerator.getWriteLock();
+  protected Lock getWriteLock() {
+    return myLock.writeLock();
   }
 
   @NotNull
-  private Lock getReadLock() {
-    return myEnumerator.getReadLock();
+  protected Lock getReadLock() {
+    return PersistentEnumeratorBase.USE_RW_LOCK ? myLock.readLock() : myLock.writeLock();
   }
 
   private static boolean doNewCompact() {
@@ -422,7 +424,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     }
   }
 
-  int enumerate(Key name) throws IOException {
+  private int enumerate(Key name) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     getWriteLock().lock();
     try {
