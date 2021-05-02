@@ -37,15 +37,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
@@ -70,26 +66,24 @@ public final class XFramesView extends XDebugView {
     myMainPanel = new JPanel(new BorderLayout());
 
     myFramesList = new XDebuggerFramesList(project);
-    myFramesList.addListSelectionListener(new ListSelectionListener() {
+    AutoScrollToSourceHandler selectFrameHandler = new AutoScrollToSourceHandler() {
       @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (myListenersEnabled && !e.getValueIsAdjusting() && mySelectedFrameIndex != myFramesList.getSelectedIndex()) {
-          processFrameSelection(getSession(e), true);
-        }
-      }
-    });
-    myFramesList.addMouseListener(new MouseAdapter() {
-      // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
+      protected boolean isAutoScrollMode() { return true; }
+
       @Override
-      public void mouseReleased(final MouseEvent e) {
+      protected void setAutoScrollMode(boolean state) { }
+
+      @Override
+      protected boolean needToCheckFocus() { return false; }
+
+      @Override
+      protected void scrollToSource(@NotNull Component list) {
         if (myListenersEnabled) {
-          int i = myFramesList.locationToIndex(e.getPoint());
-          if (i != -1 && myFramesList.isSelectedIndex(i)) {
-            processFrameSelection(getSession(e), true);
-          }
+          processFrameSelection(getSession(list), true);
         }
       }
-    });
+    };
+    selectFrameHandler.install(myFramesList);
 
     myFramesList.addMouseListener(new PopupHandler() {
       @Override
