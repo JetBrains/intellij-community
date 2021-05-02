@@ -86,7 +86,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
     doInit();
     setDataProvider(dataId -> {
-      return getData(dataId, mySelectedFrame);
+      return getData(dataId, getSelectedFrame());
     });
 
     // This is a workaround for the performance issue IDEA-187063
@@ -107,6 +107,9 @@ public class XDebuggerFramesList extends DebuggerFramesList {
         if (file != null && file.isValid()) {
           return PsiManager.getInstance(myProject).findFile(file);
         }
+      }
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+        return getSelectedFrameNavigatable(true);
       }
     }
     if (FRAMES_LIST.is(dataId)) {
