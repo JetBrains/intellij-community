@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
 
 /** Thread-safe implementation of persistent hash map (PHM). The implementation works in the following (generic) way:<ul>
@@ -278,8 +279,13 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   }
 
   @NotNull
-  public Object getDataAccessLock() {
-    return myEnumerator.getDataAccessLock();
+  private Lock getWriteLock() {
+    return myEnumerator.getWriteLock();
+  }
+
+  @NotNull
+  private Lock getReadLock() {
+    return myEnumerator.getReadLock();
   }
 
   private static boolean doNewCompact() {
@@ -364,14 +370,16 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   @Override
   public final void put(Key key, Value value) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
-    synchronized (getDataAccessLock()) {
-      try {
-        doPut(key, value);
-      }
-      catch (IOException ex) {
-        markCorrupted();
-        throw ex;
-      }
+    getWriteLock().lock();
+    try {
+      doPut(key, value);
+    }
+    catch (IOException ex) {
+      markCorrupted();
+      throw ex;
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
@@ -428,9 +436,13 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   int enumerate(Key name) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       myIntAddressForNewRecord = canUseIntAddressForNewRecord(myValueStorage.getSize());
       return myEnumerator.enumerate(name);
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
@@ -444,14 +456,17 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   @Override
   public final void appendData(Key key, @NotNull AppendablePersistentMap.ValueDataAppender appender) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
-    synchronized (getDataAccessLock()) {
-      try {
-        doAppendData(key, appender);
-      }
-      catch (IOException ex) {
-        markCorrupted();
-        throw ex;
-      }
+
+    getWriteLock().lock();
+    try {
+      doAppendData(key, appender);
+    }
+    catch (IOException ex) {
+      markCorrupted();
+      throw ex;
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
@@ -481,17 +496,19 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
    */
   @Override
   public final boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
-    synchronized (getDataAccessLock()) {
-      try {
-        if (myAppendCache != null) {
-          myAppendCache.clear();
-        }
-        return myEnumerator.iterateData(processor);
+    getWriteLock().lock();
+    try {
+      if (myAppendCache != null) {
+        myAppendCache.clear();
       }
-      catch (IOException e) {
-        markCorrupted();
-        throw e;
-      }
+      return myEnumerator.iterateData(processor);
+    }
+    catch (IOException e) {
+      markCorrupted();
+      throw e;
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
@@ -512,35 +529,39 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   @Override
   public final boolean processExistingKeys(@NotNull Processor<? super Key> processor) throws IOException {
-    synchronized (getDataAccessLock()) {
-      try {
-        if (myAppendCache != null) {
-          myAppendCache.clear();
+    getWriteLock().lock();
+    try {
+      if (myAppendCache != null) {
+        myAppendCache.clear();
+      }
+      return myEnumerator.processAllDataObject(processor, new PersistentEnumeratorBase.DataFilter() {
+        @Override
+        public boolean accept(final int id) {
+          return readValueId(id) != NULL_ADDR;
         }
-        return myEnumerator.processAllDataObject(processor, new PersistentEnumeratorBase.DataFilter() {
-          @Override
-          public boolean accept(final int id) {
-            return readValueId(id) != NULL_ADDR;
-          }
-        });
-      }
-      catch (IOException e) {
-        markCorrupted();
-        throw e;
-      }
+      });
+    }
+    catch (IOException e) {
+      markCorrupted();
+      throw e;
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
   @Override
   public final Value get(Key key) throws IOException {
-    synchronized (getDataAccessLock()) {
-      try {
-        return doGet(key);
-      }
-      catch (IOException ex) {
-        markCorrupted();
-        throw ex;
-      }
+    getWriteLock().lock();
+    try {
+      return doGet(key);
+    }
+    catch (IOException ex) {
+      markCorrupted();
+      throw ex;
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
@@ -631,8 +652,12 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   @Override
   public final boolean containsKey(Key key) throws IOException {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       return doContainsMapping(key);
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
@@ -663,8 +688,12 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   @Override
   public final void remove(Key key) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       doRemove(key);
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
@@ -707,8 +736,12 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   public final void force() {
     if (myIsReadOnly) return;
     if (myDoTrace) LOG.info("Forcing " + myStorageFile);
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       doForce();
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
@@ -740,16 +773,21 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   private void close(boolean emergency) throws IOException {
     if (myDoTrace) LOG.info("Closed " + myStorageFile);
-    synchronized (getDataAccessLock()) {
-      if (!isClosed()) {
-        try {
-          if (!emergency && myCompactOnClose && isCompactionSupported()) {
-            compact();
-          }
-        } finally {
-          doClose();
+    getWriteLock().lock();
+    try {
+      if (isClosed()) return;
+
+      try {
+        if (!emergency && myCompactOnClose && isCompactionSupported()) {
+          compact();
         }
       }
+      finally {
+        doClose();
+      }
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
@@ -804,7 +842,8 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   @ApiStatus.Internal
   public void compact() throws IOException {
     if (!isCompactionSupported()) throw new IncorrectOperationException();
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       force();
       LOG.info("Compacting " + myEnumerator.myFile);
       LOG.info("Live keys:" + (int)(myLiveAndGarbageKeysCounter / LIVE_KEY_MASK) +
@@ -875,6 +914,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
       myEnumerator.putMetaData2(myLargeIndexWatermarkId);
       if (myDoTrace) LOG.assertTrue(myEnumerator.isDirty());
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 

@@ -39,6 +39,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author max
@@ -59,6 +61,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected final Path myFile;
   private final Version myVersion;
   private final boolean myDoCaching;
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock(true);
 
   private volatile boolean myDirtyStatusUpdateInProgress;
 
@@ -255,8 +258,13 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   @NotNull
-  protected Object getDataAccessLock() {
-    return this;
+  protected Lock getWriteLock() {
+    return myLock.writeLock();
+  }
+
+  @NotNull
+  protected Lock getReadLock() {
+    return myLock.readLock();
   }
 
   void lockStorageRead() {
@@ -521,7 +529,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @Override
   public void close() throws IOException {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       lockStorageWrite();
       try {
         if (!myClosed) {
@@ -532,6 +541,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       finally {
         unlockStorageWrite();
       }
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
@@ -546,26 +558,39 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean isClosed() {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       return myClosed;
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
   @Override
   public boolean isDirty() {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       return myDirty;
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
   public boolean isCorrupted() {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       return myCorrupted;
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
   private void flush() throws IOException {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       lockStorageWrite();
       try {
         if (myStorage.isDirty() || isDirty()) {
@@ -576,6 +601,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         unlockStorageWrite();
       }
     }
+    finally {
+      getWriteLock().unlock();
+    }
   }
 
   protected void doFlush() throws IOException {
@@ -585,9 +613,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @Override
   public void force() {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       lockStorageWrite();
-
       try {
         myKeyStorage.force();
         flush();
@@ -599,10 +627,14 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         unlockStorageWrite();
       }
     }
+    finally {
+      getWriteLock().unlock();
+    }
   }
 
   protected final void markDirty(boolean dirty) throws IOException {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
       lockStorageWrite();
       try {
@@ -630,10 +662,14 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         unlockStorageWrite();
       }
     }
+    finally {
+      getWriteLock().unlock();
+    }
   }
 
   protected void markCorrupted() {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       if (!myCorrupted) {
         myCorrupted = true;
         if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
@@ -645,6 +681,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
           // ignore...
         }
       }
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 

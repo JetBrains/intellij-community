@@ -375,15 +375,16 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
-    synchronized (getDataAccessLock()) {
-      try {
-        if (onlyCheckForExisting) {
-          lockStorageRead();
-        }
-        else {
-          lockStorageWrite();
-        }
+    getWriteLock().lock();
+    try {
+      if (onlyCheckForExisting) {
+        lockStorageRead();
+      }
+      else {
+        lockStorageWrite();
+      }
 
+      try {
         if (IntToIntBtree.doDump) System.out.println(value);
         final int valueHC = myDataDescriptor.getHashCode(value);
 
@@ -501,6 +502,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           unlockStorageWrite();
         }
       }
+    }
+    finally {
+      getWriteLock().unlock();
     }
   }
 
