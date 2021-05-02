@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.ShareableKey;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
@@ -50,6 +51,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
   protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 
+  private static final boolean USE_RW_LOCK = SystemProperties.getBooleanProperty("idea.persistent.data.use.read.write.lock", false);
   private static final int META_DATA_OFFSET = 4;
   static final int DATA_START = META_DATA_OFFSET + 16;
   private static final CacheKey ourFlyweight = new FlyweightKey();
@@ -264,7 +266,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @NotNull
   protected Lock getReadLock() {
-    return myLock.readLock();
+    return USE_RW_LOCK ? myLock.readLock() : myLock.writeLock();
   }
 
   void lockStorageRead() {
@@ -558,33 +560,33 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean isClosed() {
-    getWriteLock().lock();
+    getReadLock().lock();
     try {
       return myClosed;
     }
     finally {
-      getWriteLock().unlock();
+      getReadLock().unlock();
     }
   }
 
   @Override
   public boolean isDirty() {
-    getWriteLock().lock();
+    getReadLock().lock();
     try {
       return myDirty;
     }
     finally {
-      getWriteLock().unlock();
+      getReadLock().unlock();
     }
   }
 
   public boolean isCorrupted() {
-    getWriteLock().lock();
+    getReadLock().lock();
     try {
       return myCorrupted;
     }
     finally {
-      getWriteLock().unlock();
+      getReadLock().unlock();
     }
   }
 

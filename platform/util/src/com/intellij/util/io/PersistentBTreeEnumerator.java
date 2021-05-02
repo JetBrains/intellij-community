@@ -375,7 +375,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
-    getWriteLock().lock();
+    (onlyCheckForExisting ? getReadLock() : getWriteLock()).lock();
     try {
       if (onlyCheckForExisting) {
         lockStorageRead();
@@ -504,7 +504,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       }
     }
     finally {
-      getWriteLock().unlock();
+      (onlyCheckForExisting ? getReadLock() : getWriteLock()).unlock();
     }
   }
 

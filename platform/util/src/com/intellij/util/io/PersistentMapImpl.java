@@ -297,16 +297,6 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
            (int)(myLiveAndGarbageKeysCounter & DEAD_KEY_NUMBER_MASK) > 0;
   }
 
-  protected void doDropMemoryCaches() {
-    myEnumerator.lockStorageWrite();
-    try {
-      clearAppenderCaches();
-    }
-    finally {
-      myEnumerator.unlockStorageWrite();
-    }
-  }
-
   public int getSize() {
     return (int)(myLiveAndGarbageKeysCounter / LIVE_KEY_MASK);
   }
@@ -398,9 +388,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     myEnumerator.lockStorageWrite();
     try {
       myEnumerator.markDirty(true);
-      if (myAppendCache != null) {
-        myAppendCache.remove(key);
-      }
+      flushAppendCache(key);
 
       long oldValueOffset;
       if (myDirectlyStoreLongFileOffsetMode) {
@@ -496,11 +484,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
    */
   @Override
   public final boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
-    getWriteLock().lock();
+    getReadLock().lock();
     try {
-      if (myAppendCache != null) {
-        myAppendCache.clear();
-      }
+      flushAppendCache();
       return myEnumerator.iterateData(processor);
     }
     catch (IOException e) {
@@ -508,7 +494,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       throw e;
     }
     finally {
-      getWriteLock().unlock();
+      getReadLock().unlock();
     }
   }
 
@@ -529,11 +515,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   @Override
   public final boolean processExistingKeys(@NotNull Processor<? super Key> processor) throws IOException {
-    getWriteLock().lock();
+    getReadLock().lock();
     try {
-      if (myAppendCache != null) {
-        myAppendCache.clear();
-      }
+      flushAppendCache();
       return myEnumerator.processAllDataObject(processor, new PersistentEnumeratorBase.DataFilter() {
         @Override
         public boolean accept(final int id) {
@@ -546,13 +530,13 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       throw e;
     }
     finally {
-      getWriteLock().unlock();
+      getReadLock().unlock();
     }
   }
 
   @Override
   public final Value get(Key key) throws IOException {
-    getWriteLock().lock();
+    getReadLock().lock();
     try {
       return doGet(key);
     }
@@ -561,7 +545,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       throw ex;
     }
     finally {
-      getWriteLock().unlock();
+      getReadLock().unlock();
     }
   }
 
@@ -577,9 +561,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   @Nullable
   protected Value doGet(Key key) throws IOException {
-    if (myAppendCache != null) {
-      myAppendCache.remove(key);
-    }
+    flushAppendCache(key);
 
     myEnumerator.lockStorageRead();
     final long valueOffset;
@@ -652,19 +634,17 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   @Override
   public final boolean containsKey(Key key) throws IOException {
-    getWriteLock().lock();
+    getReadLock().lock();
     try {
       return doContainsMapping(key);
     }
     finally {
-      getWriteLock().unlock();
+      getReadLock().unlock();
     }
   }
 
   private boolean doContainsMapping(Key key) throws IOException {
-    if (myAppendCache != null) {
-      myAppendCache.remove(key);
-    }
+    flushAppendCache(key);
 
     myEnumerator.lockStorageRead();
     try {
@@ -700,9 +680,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   protected void doRemove(Key key) throws IOException {
     myEnumerator.lockStorageWrite();
     try {
-      if (myAppendCache != null) {
-        myAppendCache.remove(key);
-      }
+      flushAppendCache(key);
       final long record;
       if (myDirectlyStoreLongFileOffsetMode) {
         assert !myIntMapping; // removal isn't supported
@@ -762,7 +740,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   private void clearAppenderCaches() {
     if (myIntMapping) return;
-    myAppendCache.clear();
+    flushAppendCache();
     myValueStorage.force();
   }
 
@@ -796,10 +774,10 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     try {
       try {
         try {
-          if (myAppendCache != null) {
+          if (myAppendCacheFlusher != null) {
             myAppendCacheFlusher.stop();
-            myAppendCache.clear();
           }
+          flushAppendCache();
         }
         catch (RuntimeException ex) {
           Throwable cause = ex.getCause();
@@ -923,6 +901,18 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   @ApiStatus.Internal
   public boolean isCompactionSupported() {
     return !myIsReadOnly && !myIntMapping;
+  }
+
+  private void flushAppendCache(Key key) {
+    if (myAppendCache != null) {
+      myAppendCache.remove(key);
+    }
+  }
+
+  private void flushAppendCache() {
+    if (myAppendCache != null) {
+      myAppendCache.clear();
+    }
   }
 
   private static File[] getFilesInDirectoryWithNameStartingWith(@NotNull Path fileFromDirectory) throws IOException {
