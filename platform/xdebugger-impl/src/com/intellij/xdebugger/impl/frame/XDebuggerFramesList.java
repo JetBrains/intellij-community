@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -136,6 +137,35 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       return true;
     }
     return false;
+  }
+
+  private @Nullable XStackFrame getSelectedFrame() {
+    Object value = getSelectedValue();
+    return value instanceof XStackFrame ? (XStackFrame)value : null;
+  }
+
+  @Override
+  protected @Nullable Navigatable getSelectedFrameNavigatable(boolean canFocusEditor) {
+    XStackFrame frame = getSelectedFrame();
+    return frame != null ? getFrameNavigatable(frame, canFocusEditor) : null;
+  }
+
+  private @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame, boolean canFocusEditor) {
+    XSourcePosition position = frame.getSourcePosition();
+    Navigatable navigatable = position != null ? position.createNavigatable(myProject) : null;
+    if (canFocusEditor || navigatable == null) return navigatable;
+    return new Navigatable() {
+      @Override
+      public void navigate(boolean requestFocus) {
+        navigatable.navigate(false);
+      }
+
+      @Override
+      public boolean canNavigate() { return navigatable.canNavigate(); }
+
+      @Override
+      public boolean canNavigateToSource() { return navigatable.canNavigateToSource(); }
+    };
   }
 
   @Nullable

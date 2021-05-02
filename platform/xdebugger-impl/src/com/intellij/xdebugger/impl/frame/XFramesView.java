@@ -13,6 +13,8 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
+import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
@@ -52,6 +54,7 @@ public final class XFramesView extends XDebugView {
   private final XDebuggerFramesList myFramesList;
   private final ComboBox<XExecutionStack> myThreadComboBox;
   private final Object2IntMap<XExecutionStack> myExecutionStacksWithSelection = new Object2IntOpenHashMap<>();
+  private final AutoScrollToSourceHandler myFrameSelectionHandler;
   private XExecutionStack mySelectedStack;
   private int mySelectedFrameIndex;
   private Rectangle myVisibleRect;
@@ -65,8 +68,7 @@ public final class XFramesView extends XDebugView {
   public XFramesView(@NotNull Project project) {
     myMainPanel = new JPanel(new BorderLayout());
 
-    myFramesList = new XDebuggerFramesList(project);
-    AutoScrollToSourceHandler selectFrameHandler = new AutoScrollToSourceHandler() {
+    myFrameSelectionHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() { return true; }
 
@@ -83,7 +85,20 @@ public final class XFramesView extends XDebugView {
         }
       }
     };
-    selectFrameHandler.install(myFramesList);
+    myFramesList = new XDebuggerFramesList(project) {
+      @Override
+      protected @NotNull Navigatable getSelectedFrameNavigatable(boolean canFocusEditor) {
+        Navigatable navigatable = super.getSelectedFrameNavigatable(canFocusEditor);
+        return new NavigatableAdapter() {
+          @Override
+          public void navigate(boolean requestFocus) {
+            if (navigatable != null && navigatable.canNavigate()) navigatable.navigate(requestFocus);
+            handleFrameSelection();
+          }
+        };
+      }
+    };
+    myFrameSelectionHandler.install(myFramesList);
 
     myFramesList.addMouseListener(new PopupHandler() {
       @Override
@@ -190,6 +205,10 @@ public final class XFramesView extends XDebugView {
         myMainPanel.add(hint, BorderLayout.SOUTH);
       }
     }
+  }
+
+  private void handleFrameSelection() {
+    myFrameSelectionHandler.onMouseClicked(myFramesList);
   }
 
   @Nullable
