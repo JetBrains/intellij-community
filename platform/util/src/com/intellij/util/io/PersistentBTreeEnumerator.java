@@ -436,6 +436,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           }
         }
 
+        assert !onlyCheckForExisting;
         int newValueId = writeData(value, valueHC);
         ++myValuesCount;
 

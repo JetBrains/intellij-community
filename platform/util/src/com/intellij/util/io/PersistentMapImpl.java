@@ -510,7 +510,13 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   @Override
   public void markDirty() throws IOException {
-    myEnumerator.markDirty(true);
+    getWriteLock().lock();
+    try {
+      myEnumerator.markDirty(true);
+    }
+    finally {
+      getWriteLock().unlock();
+    }
   }
 
   @Override

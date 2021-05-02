@@ -571,22 +571,22 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @Override
   public boolean isDirty() {
-    getReadLock().lock();
+    lockStorageRead();
     try {
       return myDirty;
     }
     finally {
-      getReadLock().unlock();
+      unlockStorageRead();
     }
   }
 
   public boolean isCorrupted() {
-    getReadLock().lock();
+    lockStorageRead();
     try {
       return myCorrupted;
     }
     finally {
-      getReadLock().unlock();
+      unlockStorageRead();
     }
   }
 
@@ -635,42 +635,36 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected final void markDirty(boolean dirty) throws IOException {
-    getWriteLock().lock();
+    if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
+    lockStorageWrite();
     try {
-      if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
-      lockStorageWrite();
-      try {
-        if (myDirty) {
-          if (!dirty) {
-            myDirtyStatusUpdateInProgress = true;
-            if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
-            if (!myCorrupted) {
-              myStorage.putInt(0, myVersion.correctlyClosedMagic);
-              myDirty = false;
-            }
-            myDirtyStatusUpdateInProgress = false;
+      if (myDirty) {
+        if (!dirty) {
+          myDirtyStatusUpdateInProgress = true;
+          if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
+          if (!myCorrupted) {
+            myStorage.putInt(0, myVersion.correctlyClosedMagic);
+            myDirty = false;
           }
-        }
-        else {
-          if (dirty) {
-            myDirtyStatusUpdateInProgress = true;
-            myStorage.putInt(0, myVersion.dirtyMagic);
-            myDirtyStatusUpdateInProgress = false;
-            myDirty = true;
-          }
+          myDirtyStatusUpdateInProgress = false;
         }
       }
-      finally {
-        unlockStorageWrite();
+      else {
+        if (dirty) {
+          myDirtyStatusUpdateInProgress = true;
+          myStorage.putInt(0, myVersion.dirtyMagic);
+          myDirtyStatusUpdateInProgress = false;
+          myDirty = true;
+        }
       }
     }
     finally {
-      getWriteLock().unlock();
+      unlockStorageWrite();
     }
   }
 
   protected void markCorrupted() {
-    getWriteLock().lock();
+    lockStorageWrite();
     try {
       if (!myCorrupted) {
         myCorrupted = true;
@@ -685,7 +679,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
     finally {
-      getWriteLock().unlock();
+      unlockStorageWrite();
     }
   }
 
