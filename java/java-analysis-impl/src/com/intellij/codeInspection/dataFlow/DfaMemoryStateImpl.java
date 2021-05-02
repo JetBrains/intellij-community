@@ -865,8 +865,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (type == RelationType.EQ && !applySpecialFieldEquivalence(dfaLeft, dfaRight)) return false;
 
     if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue && !isNegated) {
-      if (!updateQualifierOnEquality((DfaVariableValue)dfaLeft, (DfaVariableValue)dfaRight) ||
-          !updateQualifierOnEquality((DfaVariableValue)dfaRight, (DfaVariableValue)dfaLeft)) {
+      if (!updateQualifierOnEquality((DfaVariableValue)dfaLeft, dfaRight) ||
+          !updateQualifierOnEquality((DfaVariableValue)dfaRight, dfaLeft)) {
         return false;
       }
     }
