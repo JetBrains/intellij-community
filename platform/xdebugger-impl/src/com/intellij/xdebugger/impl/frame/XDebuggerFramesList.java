@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -110,6 +111,19 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     }
     if (FRAMES_LIST.is(dataId)) {
       return this;
+    }
+    // Because of the overridden locationToIndex(), the default logic of retrieving the context menu point doesn't work.
+    // Here, were mimic the way PopupFactoryImpl.guessBestPopupLocation(JComponent) calculates it for JLists.
+    if (PlatformDataKeys.CONTEXT_MENU_POINT.is(dataId)) {
+      int index = getSelectedIndex();
+      if (index != -1) {
+        Rectangle cellBounds = getCellBounds(index, index);
+        if (cellBounds != null) {
+          Rectangle visibleRect = getVisibleRect();
+          return new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height - 1);
+        }
+      }
+      return null;
     }
     return null;
   }
