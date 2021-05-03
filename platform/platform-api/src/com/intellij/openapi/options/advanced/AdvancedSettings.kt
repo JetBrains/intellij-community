@@ -2,6 +2,7 @@
 package com.intellij.openapi.options.advanced
 
 import com.intellij.DynamicBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -11,10 +12,12 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.Topic
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 enum class AdvancedSettingType { Int, Bool, String }
@@ -105,38 +108,50 @@ class AdvancedSettings : PersistentStateComponent<AdvancedSettings.AdvancedSetti
     this.state = state
   }
 
-  private fun getSetting(id: String): String {
+  private fun getSettingString(id: String): String {
     val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException(
       "Can't find advanced setting $id")
     return getInstance().state.settings[id] ?: option.defaultValue
   }
 
-  fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
+  private fun getSetting(id: String): Pair<Any, AdvancedSettingType> {
     val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException("Can't find advanced setting $id")
-    if (option.type() != expectType) {
-      throw IllegalArgumentException("Setting type ${option.type()} does not match parameter type $expectType")
+    val valueString = getSettingString(id)
+    val value = when (option.type()) {
+      AdvancedSettingType.Int -> valueString.toInt()
+      AdvancedSettingType.Bool -> valueString.toBigDecimal()
+      AdvancedSettingType.String -> valueString
     }
-    val oldValueString = getSetting(id)
-    val oldValue = when (option.type()) {
-      AdvancedSettingType.Int -> oldValueString.toInt()
-      AdvancedSettingType.Bool -> oldValueString.toBigDecimal()
-      AdvancedSettingType.String -> oldValueString
+    return value to option.type()
+  }
+
+  fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
+    val (oldValue, type) = getSetting(id)
+    if (type != expectType) {
+      throw IllegalArgumentException("Setting type $type does not match parameter type $expectType")
     }
     state.settings[id] = value.toString()
     ApplicationManager.getApplication().messageBus.syncPublisher(AdvancedSettingsChangeListener.TOPIC).advancedSettingChanged(id, oldValue, value)
   }
 
+  @TestOnly
+  fun setSetting(id: String, value: Any, revertOnDispose: Disposable) {
+    val (oldValue, type) = getSetting(id)
+    setSetting(id, value, type)
+    Disposer.register(revertOnDispose, Disposable { setSetting(id, oldValue, type )})
+  }
+  
   companion object {
     fun getInstance(): AdvancedSettings = ApplicationManager.getApplication().getService(AdvancedSettings::class.java)
 
     @JvmStatic
-    fun getBoolean(id: String): Boolean = getInstance().getSetting(id).toBoolean()
+    fun getBoolean(id: String): Boolean = getInstance().getSettingString(id).toBoolean()
 
     @JvmStatic
-    fun getInt(id: String): Int = getInstance().getSetting(id).toInt()
+    fun getInt(id: String): Int = getInstance().getSettingString(id).toInt()
 
     @JvmStatic
-    fun getString(id: String): String = getInstance().getSetting(id)
+    fun getString(id: String): String = getInstance().getSettingString(id)
 
     @JvmStatic
     fun setBoolean(id: String, value: Boolean) {
