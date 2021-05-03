@@ -168,7 +168,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testTypeInEmptyConsole() {
     ConsoleViewImpl console = myConsole;
     console.clear();
-    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionManager.getInstance();
     DataContext dataContext = DataManager.getInstance().getDataContext(console.getComponent());
     TypedAction action = TypedAction.getInstance();
     action.actionPerformed(console.getEditor(), 'h', dataContext);

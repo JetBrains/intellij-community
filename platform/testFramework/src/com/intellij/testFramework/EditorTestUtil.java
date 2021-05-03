@@ -75,7 +75,7 @@ public final class EditorTestUtil {
     return first != 0 ? first : Comparing.compare(o1.second, o2.second);
   };
 
-  public static void performTypingAction(Editor editor, char c) {
+  public static void performTypingAction(@NotNull Editor editor, char c) {
     if (c == BACKSPACE_FAKE_CHAR) {
       executeAction(editor, IdeActions.ACTION_EDITOR_BACKSPACE);
     }

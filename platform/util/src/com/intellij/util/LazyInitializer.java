@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,8 @@ import java.util.function.Supplier;
 public final class LazyInitializer {
   private static final Object UNINITIALIZED_VALUE = new Object();
 
-  public static <T> LazyValue<T> create(@NotNull Supplier<? extends T> initializer) {
+  @Contract(value = "_ -> new", pure = true)
+  public static <T> @NotNull LazyValue<T> create(@NotNull Supplier<? extends T> initializer) {
     return new LazyValue<>(initializer);
   }
 
