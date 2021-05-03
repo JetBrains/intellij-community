@@ -14,8 +14,10 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.util.parseKotlinVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestCase() {
@@ -453,6 +455,11 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
     @Test
     @PluginTargetVersions(pluginVersion = "1.4.30+")
     fun testHmppLibAndConsumer() {
+        assumeTrue(
+            "Test ignored, because of regression in 1.5.0 https://youtrack.jetbrains.com/issue/KT-46417",
+            kotlinPluginVersion != parseKotlinVersion("1.5.0")
+        )
+
         configureByFiles()
         linkProject("$projectPath/lib-and-app")
         linkProject("$projectPath/published-lib-consumer")
