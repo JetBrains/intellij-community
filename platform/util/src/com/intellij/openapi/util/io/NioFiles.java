@@ -39,9 +39,9 @@ public final class NioFiles {
   }
 
   /**
-   * <p>On DOS-like file systems, sets the RO attribute to the corresponding value.
+   * On DOS-like file systems, sets the RO attribute to the corresponding value.
    * On POSIX file systems, deletes all write permissions when {@code value} is {@code true} or
-   * adds the "owner-write" one otherwise.</p>
+   * adds the "owner-write" one otherwise.
    */
   public static void setReadOnly(@NotNull Path path, boolean value) throws IOException {
     PosixFileAttributeView posixView;

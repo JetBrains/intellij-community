@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -375,7 +375,7 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
-            //noinspection RedundantSuppression,SSBasedInspection
+            //noinspection RedundantSuppression
             Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
             runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
             return Boolean.FALSE;
@@ -390,7 +390,7 @@ public final class IoTestUtil {
       }
     }
     catch (Throwable t) {
-      //noinspection RedundantSuppression,SSBasedInspection
+      //noinspection RedundantSuppression
       Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(t);
       return null;
     }
@@ -443,7 +443,9 @@ public final class IoTestUtil {
     String changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
     String out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.getPath());
     if (!out.endsWith(caseSensitive ? "enabled." : "disabled.")) {
-      throw new IOException("Can't setCaseSensitivity("+dir+", "+caseSensitive+"). 'fsutil.exe setCaseSensitiveInfo' output:"+changeOut+"; 'fsutil.exe getCaseSensitiveInfo' output:"+out);
+      throw new IOException("Can't setCaseSensitivity(" + dir + ", " + caseSensitive + ")." +
+                            " 'fsutil.exe setCaseSensitiveInfo' output:" + changeOut + ";" +
+                            " 'fsutil.exe getCaseSensitiveInfo' output:" + out);
     }
   }
 }
