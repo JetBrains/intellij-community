@@ -777,6 +777,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
         TransformerHandler handler = transformerFactory.newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
+        handler.getTransformer().setOutputProperty(OutputKeys.VERSION, "1.1");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
         FileUtilRt.createParentDirs(myOutputFile);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(myOutputFile, StandardCharsets.UTF_8))) {

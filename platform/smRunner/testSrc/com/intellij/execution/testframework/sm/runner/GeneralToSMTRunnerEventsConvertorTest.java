@@ -620,7 +620,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
     mySuite.addChild(mySimpleTest);
     for (int i = 0; i < 550; i++) {
-      String message = "line" + i + "\n";
+      String message = "line" + i + "\u0000\n";
       mySimpleTest.addLast(printer -> printer.print(message, ConsoleViewContentType.NORMAL_OUTPUT));
     }
     mySimpleTest.setFinished();
