@@ -47,7 +47,7 @@ internal fun <L : Any> L.invalidAccess(): Nothing =
 private fun PsiElement.nonExistentType() = JavaPsiFacade.getElementFactory(project)
     .createTypeFromText("error.NonExistentClass", this)
 
-internal fun KtTypedSymbol.asPsiType(parent: PsiElement, phase: FirResolvePhase): PsiType =
+internal fun KtCallableSymbol.asPsiType(parent: PsiElement, phase: FirResolvePhase): PsiType =
     annotatedType.asPsiType(this, parent, phase)
 
 internal fun KtTypeAndAnnotations.asPsiType(
