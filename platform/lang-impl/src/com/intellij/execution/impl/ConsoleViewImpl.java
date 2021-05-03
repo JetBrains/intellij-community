@@ -1263,16 +1263,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     String textToUse = StringUtil.convertLineSeparators(text);
     int typeOffset;
+    Document document = editor.getDocument();
     if (selectionModel.hasSelection()) {
-      Document document = editor.getDocument();
       int start = selectionModel.getSelectionStart();
       int end = selectionModel.getSelectionEnd();
       document.deleteString(start, end);
       selectionModel.removeSelection();
       typeOffset = start;
+      assert typeOffset <= document.getTextLength() : "typeOffset="+typeOffset+"; document.getTextLength()="+document.getTextLength()+"; sel start="+start+"; sel end="+end+"; document="+document.getClass();
     }
     else {
       typeOffset = editor.getCaretModel().getOffset();
+      assert typeOffset <= document.getTextLength() : "typeOffset="+typeOffset+"; document.getTextLength()="+document.getTextLength()+"; caret model="+editor.getCaretModel();
     }
     insertUserText(typeOffset, textToUse);
   }
