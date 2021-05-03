@@ -295,18 +295,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   @Deprecated
   @Nullable
   protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-    if (UISettings.getInstance().getShowIconInQuickNavigation()) {
-      return getModuleRenderer(value);
+    if (!UISettings.getInstance().getShowIconInQuickNavigation()) {
+      return null;
     }
-    return null;
-  }
-
-  /**
-   * @deprecated use {@link #getModuleTextWithIcon} instead
-   */
-  @Deprecated
-  @ApiStatus.Internal
-  public static @Nullable DefaultListCellRenderer getModuleRenderer(Object value) {
     final DefaultListCellRenderer renderer = ModuleRendererFactory.findInstance(value).getModuleRenderer();
     if (renderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
       // it won't display any new information
@@ -352,9 +343,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return ReadAction.compute(() -> {
       String elementText = getElementText(element);
       String containerText = getContainerText(element, elementText);
-      DefaultListCellRenderer moduleRenderer = getModuleRenderer(element);
+      TextWithIcon moduleTextWithIcon = getModuleTextWithIcon(element);
       return (containerText == null ? elementText : elementText + " " + containerText) +
-             (moduleRenderer != null ? moduleRenderer.getText() : "");
+             (moduleTextWithIcon != null ? moduleTextWithIcon.getText() : "");
     });
   }
 

@@ -26,8 +26,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.util.regex.Pattern
-import javax.swing.JLabel
-import javax.swing.JList
 
 private val CONTAINER_PATTERN: Pattern = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
 
@@ -61,16 +59,14 @@ fun targetPresentation(element: PsiElement): TargetPresentation {
   val presentableText: String = itemPresentation?.presentableText
                                 ?: (element as? PsiNamedElement)?.name
                                 ?: element.text
-  val moduleRendererComponent = PsiElementListCellRenderer.getModuleRenderer(element)
-    ?.getListCellRendererComponent(JList<PsiElement>(), element, -1, false, false) as? JLabel
-
+  val moduleTextWithIcon = PsiElementListCellRenderer.getModuleTextWithIcon(element)
   return TargetPresentation
     .builder(presentableText)
     .backgroundColor(file?.let { VfsPresentationUtil.getFileBackgroundColor(project, file) })
     .icon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS))
     .presentableTextAttributes(itemPresentation?.getColoredAttributes())
     .containerText(itemPresentation?.getContainerText(), file?.let { fileStatusAttributes(project, file) })
-    .locationText(moduleRendererComponent?.text, moduleRendererComponent?.icon)
+    .locationText(moduleTextWithIcon?.text, moduleTextWithIcon?.icon)
     .presentation()
 }
 

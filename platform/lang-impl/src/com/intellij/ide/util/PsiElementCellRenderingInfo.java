@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.TextWithIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,9 +32,9 @@ public interface PsiElementCellRenderingInfo<T extends PsiElement> {
     return ReadAction.compute(() -> {
       String elementText = getElementText(element);
       String containerText = getContainerText(element, elementText);
-      DefaultListCellRenderer moduleRenderer = PsiElementListCellRenderer.getModuleRenderer(element);
+      TextWithIcon moduleTextWithIcon = PsiElementListCellRenderer.getModuleTextWithIcon(element);
       return (containerText == null ? elementText : elementText + " " + containerText) +
-             (moduleRenderer != null ? moduleRenderer.getText() : "");
+             (moduleTextWithIcon != null ? moduleTextWithIcon.getText() : "");
     });
   }
 }
