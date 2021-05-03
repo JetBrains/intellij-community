@@ -327,7 +327,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   @Iconable.IconFlags
-  protected abstract int getIconFlags();
+  protected int getIconFlags() {
+    return 0;
+  }
 
   protected Icon getIcon(PsiElement element) {
     return element.getIcon(getIconFlags());

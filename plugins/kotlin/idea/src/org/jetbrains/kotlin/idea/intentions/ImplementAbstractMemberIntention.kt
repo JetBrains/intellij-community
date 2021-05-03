@@ -168,8 +168,6 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
             }
         }
 
-        override fun getIconFlags() = 0
-
         override fun getElementText(element: PsiElement?): String? {
             return when (element) {
                 is KtEnumEntry -> element.name

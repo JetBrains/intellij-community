@@ -430,8 +430,6 @@ private fun psiElementRenderer() = object : PsiElementListCellRenderer<PsiElemen
 
     override fun getContainerText(element: PsiElement, name: String?): String? = null
 
-    override fun getIconFlags(): Int = 0
-
     override fun getIcon(element: PsiElement): Icon? = super.getIcon(element.getRepresentativeElement())
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
@@ -40,11 +40,6 @@ public class GotoXmlSchemaTypeRendererProvider implements GotoTargetRendererProv
     protected String getContainerText(XmlTag element, String name) {
       final PsiFile file = element.getContainingFile();
       return "(" + file.getName() + ")";
-    }
-
-    @Override
-    protected int getIconFlags() {
-      return 0;
     }
   }
 }

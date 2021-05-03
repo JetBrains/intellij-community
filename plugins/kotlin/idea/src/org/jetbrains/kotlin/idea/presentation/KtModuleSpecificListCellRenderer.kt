@@ -11,7 +11,6 @@ import com.intellij.psi.NavigatablePsiElement
 import org.jetbrains.kotlin.idea.util.module
 
 abstract class KtModuleSpecificListCellRenderer<T : NavigatablePsiElement> : PsiElementListCellRenderer<T>() {
-    override fun getIconFlags() = 0
 
     override fun getComparingObject(element: T?): Comparable<Nothing> {
         val baseText = super.getComparingObject(element)

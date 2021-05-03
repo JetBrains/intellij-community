@@ -360,11 +360,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
       return null;
     }
-
-    @Override
-    protected int getIconFlags() {
-      return 0;
-    }
   }
 
   private static class ActionCellRenderer extends DefaultListCellRenderer {
