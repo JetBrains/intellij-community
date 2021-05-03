@@ -16,6 +16,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -112,7 +113,7 @@ public final class GetterDescriptor extends PsiVarDescriptor {
   public boolean alwaysEqualsToItself(@NotNull DfType type) {
     if (!super.alwaysEqualsToItself(type)) return false;
     if (type instanceof DfPrimitiveType || type instanceof DfConstantType) return true;
-    if (PropertyUtil.isSimpleGetter(myGetter) || PsiTypesUtil.isGetClass(myGetter)) return true;
+    if (PropertyUtilBase.isSimplePropertyGetter(myGetter)) return true;
     return false;
   }
 

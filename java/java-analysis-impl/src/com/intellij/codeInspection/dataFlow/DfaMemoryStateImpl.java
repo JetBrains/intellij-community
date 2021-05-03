@@ -845,8 +845,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaWrappedValue)) {
-      return !isNegated || isUnstableValue(dfaLeft);
+    if (dfaLeft == dfaRight && dfaLeft instanceof DfaVariableValue) {
+      return !isNegated || isUnstableValue(dfaLeft) || ((DfaVariableValue)dfaLeft).containsCalls();
     }
 
     if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
