@@ -48,6 +48,7 @@ public interface Extension extends DomElement {
            fieldName.equals("className") ||
            fieldName.equals("serviceInterface") ||
            fieldName.equals("serviceImplementation") ||
+           fieldName.equals("class") ||
            (fieldName.endsWith("Class") && !fieldName.equals("forClass"));
   }
 }
