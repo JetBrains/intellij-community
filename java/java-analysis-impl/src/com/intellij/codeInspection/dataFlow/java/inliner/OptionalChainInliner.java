@@ -91,7 +91,10 @@ public class OptionalChainInliner implements CallInliner {
       .register(OPTIONAL_OR_ELSE, (builder, call) -> {
         PsiExpression argument = call.getArgumentList().getExpressions()[0];
         // orElse(null) is a no-op
-        if (ExpressionUtils.isNullLiteral(argument)) return;
+        if (ExpressionUtils.isNullLiteral(argument)) {
+          builder.resultOf(call);
+          return;
+        }
         builder.pushExpression(argument) // stack: .. optValue, elseValue
           .boxUnbox(argument, call.getType())
           .splice(2, 0, 1, 1) // stack: .. elseValue, optValue, optValue

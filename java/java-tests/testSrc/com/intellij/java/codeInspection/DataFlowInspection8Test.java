@@ -336,4 +336,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
                        "public @interface UnknownNullability { }");
     doTestWith(insp -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
   }
+  public void testReturnOrElseNull() { doTestWith(insp -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
 }
