@@ -131,7 +131,7 @@ public final class GetterDescriptor extends PsiVarDescriptor {
         .nonNull()
         .reduce(TypeConstraint::meet).orElse(TypeConstraints.TOP).asDfType();
     }
-    if (value instanceof DfaVariableValue) {
+    if (value instanceof DfaVariableValue && ((DfaVariableValue)value).getDescriptor().equals(this)) {
       DfaVariableValue qualifier = ((DfaVariableValue)value).getQualifier();
       if (qualifier != null) {
         constraint = constraint.meet(TypeConstraint.fromDfType(state.getDfType(qualifier)).asDfType());
