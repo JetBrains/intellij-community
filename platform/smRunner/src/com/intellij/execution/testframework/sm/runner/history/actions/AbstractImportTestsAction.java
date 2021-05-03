@@ -32,8 +32,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.swing.*;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.util.Arrays;
@@ -138,9 +136,9 @@ public abstract class AbstractImportTestsAction extends AnAction {
       myProject = project;
       class TerminateParsingException extends SAXException { }
       try (InputStream inputStream = new BufferedInputStream(new FileInputStream(VfsUtilCore.virtualToIoFile(myFile)))) {
-        SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-        parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-        parser.parse(inputStream, new DefaultHandler() {
+        SAXParserFactory factory = SAXParserFactory.newInstance();
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        factory.newSAXParser().parse(inputStream, new DefaultHandler() {
           boolean isConfigContent = false;
           final StringBuilder builder = new StringBuilder();
 
