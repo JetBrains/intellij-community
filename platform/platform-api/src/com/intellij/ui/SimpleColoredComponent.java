@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -1158,7 +1158,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @Override
   public String getToolTipText(MouseEvent event) {
-    if (myIcon instanceof IconWithToolTip && findFragmentAt(event.getX()) == FRAGMENT_ICON && Registry.is("ide.icon.tooltips")) {
+    if (myIcon instanceof IconWithToolTip && findFragmentAt(event.getX()) == FRAGMENT_ICON) {
       String iconToolTip = ((IconWithToolTip)myIcon).getToolTip(false);
       if (iconToolTip != null) {
         return StringUtil.capitalize(iconToolTip);
