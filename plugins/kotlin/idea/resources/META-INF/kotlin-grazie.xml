@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij.grazie">
+    <grammar.strategy language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinGrammarCheckingStrategy"/>
+  </extensions>
+</idea-plugin>
