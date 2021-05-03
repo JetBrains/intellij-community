@@ -21,6 +21,14 @@ import java.util.*
 class AdvancedSettingBean : PluginAware {
   private var pluginDescriptor: PluginDescriptor? = null
 
+  val enumKlass: Class<Enum<*>>? by lazy {
+    @Suppress("UNCHECKED_CAST")
+    if (enumClass.isNotBlank())
+      (pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader).loadClass(enumClass) as Class<Enum<*>>
+    else
+      null
+  }
+
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
     this.pluginDescriptor = pluginDescriptor
   }
@@ -49,8 +57,13 @@ class AdvancedSettingBean : PluginAware {
   @JvmField
   var bundle: String = ""
 
+  @Attribute("enumClass")
+  @JvmField
+  var enumClass: String = ""
+
   fun type(): AdvancedSettingType {
     return when {
+      enumClass.isNotBlank() -> AdvancedSettingType.Enum
       defaultValue.toIntOrNull() != null -> AdvancedSettingType.Int
       defaultValue == "true" || defaultValue == "false" -> AdvancedSettingType.Bool
       else -> AdvancedSettingType.String
@@ -108,7 +121,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponent<Advanc
     if (type != expectType) {
       throw IllegalArgumentException("Setting type $type does not match parameter type $expectType")
     }
-    state.settings[id] = value.toString()
+    state.settings[id] = if (expectType == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString()
     ApplicationManager.getApplication().messageBus.syncPublisher(AdvancedSettingsChangeListener.TOPIC).advancedSettingChanged(id, oldValue, value)
   }
 
@@ -118,13 +131,19 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponent<Advanc
     return state.settings[id] ?: option.defaultValue
   }
 
-  private fun getSetting(id: String): Pair<Any, AdvancedSettingType> {
+  override fun getSetting(id: String): Pair<Any, AdvancedSettingType> {
     val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException("Can't find advanced setting $id")
     val valueString = getSettingString(id)
     val value = when (option.type()) {
       AdvancedSettingType.Int -> valueString.toInt()
       AdvancedSettingType.Bool -> valueString.toBoolean()
       AdvancedSettingType.String -> valueString
+      AdvancedSettingType.Enum -> try {
+        java.lang.Enum.valueOf(option.enumKlass!!, valueString)
+      }
+      catch(e: IllegalArgumentException) {
+        java.lang.Enum.valueOf(option.enumKlass!!, option.defaultValue)
+      }
     }
     return value to option.type()
   }

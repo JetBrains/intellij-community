@@ -77,6 +77,21 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
           columns = 20
         )
       }
+
+      AdvancedSettingType.Enum -> {
+        val builder = label(extension.title() + ":")
+        cell {
+          buttonGroup(
+            { AdvancedSettings.getEnum(extension.id, extension.enumKlass!!) },
+            { AdvancedSettings.setEnum(extension.id, it) }
+          ) {
+            for (enumConstant in extension.enumKlass!!.enumConstants) {
+              radioButton(enumConstant.toString(), enumConstant)
+            }
+          }
+        }
+        builder
+      }
     }
   }
 

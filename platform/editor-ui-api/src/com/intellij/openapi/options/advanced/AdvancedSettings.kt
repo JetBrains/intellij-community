@@ -4,10 +4,11 @@ package com.intellij.openapi.options.advanced
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.messages.Topic
 
-enum class AdvancedSettingType { Int, Bool, String }
+enum class AdvancedSettingType { Int, Bool, String, Enum }
 
 abstract class AdvancedSettings  {
   protected abstract fun getSettingString(id: String): String
+  protected abstract fun getSetting(id: String): Pair<Any, AdvancedSettingType>
 
   abstract fun setSetting(id: String, value: Any, expectType: AdvancedSettingType)
 
@@ -24,6 +25,10 @@ abstract class AdvancedSettings  {
     @JvmStatic
     fun getString(id: String): String = getInstance().getSettingString(id)
 
+    @Suppress("UNCHECKED_CAST")
+    @JvmStatic
+    fun <T: Enum<T>> getEnum(id: String, enumClass: Class<T>): T = enumClass.cast(getInstance().getSetting(id).first)
+
     @JvmStatic
     fun setBoolean(id: String, value: Boolean) {
       getInstance().setSetting(id, value, AdvancedSettingType.Bool)
@@ -37,6 +42,11 @@ abstract class AdvancedSettings  {
     @JvmStatic
     fun setString(id: String, value: String) {
       getInstance().setSetting(id, value, AdvancedSettingType.String)
+    }
+
+    @JvmStatic
+    fun setEnum(id: String, value: Enum<*>) {
+      getInstance().setSetting(id, value, AdvancedSettingType.Enum)
     }
   }
 }
