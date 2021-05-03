@@ -14,6 +14,7 @@ import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
 
   private ParameterTablePanel myParameterPanel;
   private VariableData[] myVariableData;
-  private final boolean myAnyNonFieldMembersUsed;
+  private final boolean myPreferOuterClassParameter;
   private JCheckBox myGenerateDelegateCb;
 
 
@@ -46,7 +47,8 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
 
     String type = UsageViewUtil.getType(myMember);
     setTitle(JavaRefactoringBundle.message("make.0.static", StringUtil.capitalize(type)));
-    myAnyNonFieldMembersUsed = buildVariableData(internalUsages);
+    myPreferOuterClassParameter = buildVariableData(internalUsages) ||
+                                  ContainerUtil.exists(myVariableData, data -> !data.variable.hasModifierProperty(PsiModifier.FINAL));
     init();
   }
 
@@ -131,7 +133,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     String text = myMember instanceof PsiMethod ? RefactoringBundle.message("add.object.as.a.parameter.with.name") : JavaRefactoringBundle.message("add.object.as.a.parameter.to.constructors.with.name");
     myMakeClassParameter.setText(text);
     panel.add(myMakeClassParameter, gbConstraints);
-    myMakeClassParameter.setSelected(myAnyNonFieldMembersUsed);
+    myMakeClassParameter.setSelected(myPreferOuterClassParameter);
 
     gbConstraints.insets = JBUI.insets(0, 8, 4, 8);
     gbConstraints.weighty = 0;
@@ -167,7 +169,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
       text = myMember instanceof PsiMethod ? JavaRefactoringBundle.message("add.parameters.for.fields") : JavaRefactoringBundle.message("add.parameters.for.fields.to.constructors");
       myMakeFieldParameters.setText(text);
       panel.add(myMakeFieldParameters, gbConstraints);
-      myMakeFieldParameters.setSelected(!myAnyNonFieldMembersUsed);
+      myMakeFieldParameters.setSelected(!myPreferOuterClassParameter);
 
       myParameterPanel = new ParameterTablePanel(myProject, myVariableData, myMember) {
         @Override
