@@ -2,28 +2,28 @@
 <body>
 Reports methods that contain more than one loop statement.
 <p>For example, this method contains two loops so it will be reported:</p>
-<pre>
+<pre><code>
   void methodWithTwoLoops(int n1, int n2) {
-    for (int i = 0; i < n1; i++) {
+    for (int i = 0; i &lt; n1; i++) {
       System.out.println(i);
     }
 
     int j = 0;
-    while (j < n2) {
+    while (j &lt; n2) {
       System.out.println(j);
       j++;
     }
   }
-</pre>
-<p>This method will also be reported, since in contains nested loop:</p>
-<pre>  
+</code></pre>
+<p>This method will also be reported, since it contains a nested loop:</p>
+<pre><code>
   void methodWithNestedLoop(int n1, int n2) {
-    for (int i = 0; i < n1; i++) {
-      for (int j = 0; j < n2; j++) {
+    for (int i = 0; i &lt; n1; i++) {
+      for (int j = 0; j &lt; n2; j++) {
         System.out.println(i + j);
       }
   }
 }
-</pre>
+</code></pre>
 </body>
 </html>

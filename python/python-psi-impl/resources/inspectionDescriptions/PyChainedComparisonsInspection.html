@@ -2,21 +2,21 @@
 <body>
 <p>Reports chained comparisons that can be simplified.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
-def do_comparison(x):
-    xmin = 10
-    xmax = 100
-    if x >= xmin and x <= xmax:
-        pass
-</pre>
-<p>The IDE offers to simplify <code>if x >= xmin and x <= xmax</code>.
+<pre><code>
+  def do_comparison(x):
+      xmin = 10
+      xmax = 100
+      if x >= xmin and x &lt;= xmax:
+          pass
+</code></pre>
+<p>The IDE offers to simplify <code>if x >= xmin and x &lt;= xmax</code>.
   When the quick-fix is applied, the code changes to:</p>
-<pre style="font-family: monospace">
-def do_comparison(x):
-    xmin = 10
-    xmax = 100
-    if xmin <= x <= xmax:
-        pass
-</pre>
+<pre><code>
+  def do_comparison(x):
+      xmin = 10
+      xmax = 100
+      if xmin &lt;= x &lt;= xmax:
+          pass
+</code></pre>
 </body>
 </html>
