@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -768,42 +769,46 @@ public final class EditorPainter implements TextDrawingCallback {
           }
           else if (c == '\t') {
             double strokeWidth = Math.max(scale, PaintUtil.devPixel(myGraphics));
-            if (Registry.is("editor.old.tab.painting")) {
-              int tabEndX = endX - (int)(myView.getPlainSpaceWidth() / 4);
-              int height = myView.getCharHeight();
-              Color tabColor = color == null ? null : ColorUtil.mix(myBackgroundColor, color, 0.7);
-              myTextDrawingTasks.add(g -> {
-                int halfHeight = height / 2;
-                int yMid = yToUse - halfHeight;
-                int yTop = yToUse - height;
-                g.setColor(tabColor);
-                LinePainter2D.paint(g, startX, yMid, tabEndX, yMid, LinePainter2D.StrokeType.INSIDE, strokeWidth);
-                LinePainter2D.paint(g, tabEndX, yToUse, tabEndX, yTop, LinePainter2D.StrokeType.INSIDE, strokeWidth);
-                g.fillPolygon(new int[]{tabEndX - halfHeight, tabEndX - halfHeight, tabEndX}, new int[]{yToUse, yTop, yMid}, 3);
-              });
-            }
-            else if (Registry.is("editor.arrow.tab.painting")) {
-              int tabLineHeight = calcFeatureSize(4, scale);
-              int tabLineWidth = Math.min(endX - startX, calcFeatureSize(3, scale));
-              int xToUse = Math.min(endX - tabLineWidth, startX + tabLineWidth);
-              myTextDrawingTasks.add(g -> {
-                g.setColor(color);
-                g.setStroke(stroke);
-                Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g.drawLine(xToUse, yToUse, xToUse + tabLineWidth, yToUse - tabLineHeight);
-                g.drawLine(xToUse, yToUse - tabLineHeight * 2, xToUse + tabLineWidth, yToUse - tabLineHeight);
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
-              });
-              restoreStroke = true;
-            }
-            else {
-              int yMid = yToUse - myView.getCharHeight() / 2;
-              int tabEndX = Math.max(startX + 1, endX - getTabGap(scale));
-              myTextDrawingTasks.add(g -> {
-                g.setColor(color);
-                LinePainter2D.paint(g, startX, yMid, tabEndX, yMid, LinePainter2D.StrokeType.INSIDE, strokeWidth);
-              });
+            switch (EditorSettingsExternalizable.getInstance().getTabCharacterPaintMode()) {
+              case LONG_ARROW: {
+                int tabEndX = endX - (int)(myView.getPlainSpaceWidth() / 4);
+                int height = myView.getCharHeight();
+                Color tabColor = color == null ? null : ColorUtil.mix(myBackgroundColor, color, 0.7);
+                myTextDrawingTasks.add(g -> {
+                  int halfHeight = height / 2;
+                  int yMid = yToUse - halfHeight;
+                  int yTop = yToUse - height;
+                  g.setColor(tabColor);
+                  LinePainter2D.paint(g, startX, yMid, tabEndX, yMid, LinePainter2D.StrokeType.INSIDE, strokeWidth);
+                  LinePainter2D.paint(g, tabEndX, yToUse, tabEndX, yTop, LinePainter2D.StrokeType.INSIDE, strokeWidth);
+                  g.fillPolygon(new int[]{tabEndX - halfHeight, tabEndX - halfHeight, tabEndX}, new int[]{yToUse, yTop, yMid}, 3);
+                });
+                break;
+              }
+              case ARROW: {
+                int tabLineHeight = calcFeatureSize(4, scale);
+                int tabLineWidth = Math.min(endX - startX, calcFeatureSize(3, scale));
+                int xToUse = Math.min(endX - tabLineWidth, startX + tabLineWidth);
+                myTextDrawingTasks.add(g -> {
+                  g.setColor(color);
+                  g.setStroke(stroke);
+                  Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+                  g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                  g.drawLine(xToUse, yToUse, xToUse + tabLineWidth, yToUse - tabLineHeight);
+                  g.drawLine(xToUse, yToUse - tabLineHeight * 2, xToUse + tabLineWidth, yToUse - tabLineHeight);
+                  g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
+                });
+                restoreStroke = true;
+                break;
+              }
+              default: {
+                int yMid = yToUse - myView.getCharHeight() / 2;
+                int tabEndX = Math.max(startX + 1, endX - getTabGap(scale));
+                myTextDrawingTasks.add(g -> {
+                  g.setColor(color);
+                  LinePainter2D.paint(g, startX, yMid, tabEndX, yMid, LinePainter2D.StrokeType.INSIDE, strokeWidth);
+                });
+              }
             }
           }
           else if (c == '\u3000') { // ideographic space
