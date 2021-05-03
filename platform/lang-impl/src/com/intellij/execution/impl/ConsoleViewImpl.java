@@ -135,8 +135,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private String myHelpId;
 
-  private final boolean myUsePredefinedMessageFilter;
-
   private final GlobalSearchScope mySearchScope;
 
   private final List<Filter> myCustomFilters = new SmartList<>();
@@ -175,7 +173,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myState = initialState;
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
     myProject = project;
-    myUsePredefinedMessageFilter = usePredefinedMessageFilter;
     mySearchScope = searchScope;
 
     myInputMessageFilter = ConsoleViewUtil.computeInputFilter(this, project, searchScope);
@@ -212,7 +209,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
     });
-    if (myUsePredefinedMessageFilter) {
+    if (usePredefinedMessageFilter) {
       updatePredefinedFilters();
       ApplicationManager.getApplication().getMessageBus().connect(this)
         .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
@@ -965,8 +962,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (!myIsViewer) {
       new EnterHandler().registerCustomShortcutSet(CommonShortcuts.ENTER, myEditor.getContentComponent());
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_PASTE, new PasteHandler());
-      registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler());
-      registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_DELETE, new DeleteHandler());
+      registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_BACKSPACE, new DeleteBackspaceHandler(-1, IdeActions.ACTION_EDITOR_BACKSPACE));
+      registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_DELETE, new DeleteBackspaceHandler(0, IdeActions.ACTION_EDITOR_DELETE));
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_TAB, new TabHandler());
 
       registerActionHandler(myEditor, EOFAction.ACTION_ID);
@@ -1090,7 +1087,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           existingRegion = regions[0];
         }
       }
-      ConsoleFolding lastFolding = findFoldingByRegion(existingRegion);
+      ConsoleFolding lastFolding = existingRegion == null ? null : findFoldingByRegion(existingRegion);
       int lastStartLine = Integer.MAX_VALUE;
       if (lastFolding != null) {
         int offset = existingRegion.getStartOffset();
@@ -1157,9 +1154,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  @Nullable
-  @Contract("null -> null")
-  private ConsoleFolding findFoldingByRegion(@Nullable FoldRegion region) {
+  private ConsoleFolding findFoldingByRegion(@NotNull FoldRegion region) {
     String lastFoldingFqn = USED_FOLDING_FQN_KEY.get(region);
     if (lastFoldingFqn == null) return null;
     ConsoleFolding consoleFolding = ConsoleFolding.EP_NAME.getByKey(lastFoldingFqn, ConsoleViewImpl.class, ConsoleViewImpl::getFoldingFqn);
@@ -1171,7 +1166,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return consoleFolding.getClass().getName();
   }
 
-  private @Nullable ConsoleFolding foldingForLine(List<ConsoleFolding> extensions, int line, Document document) {
+  private @Nullable ConsoleFolding foldingForLine(@NotNull List<? extends ConsoleFolding> extensions, int line, @NotNull Document document) {
     String lineText = EditorHyperlinkSupport.getLineText(document, line, false);
     if (line == 0 && myCommandLineFolding.shouldFoldLine(myProject, lineText)) {
       return myCommandLineFolding;
@@ -1231,7 +1226,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private static final class MyTypedHandler extends TypedActionHandlerBase {
-    private MyTypedHandler(TypedActionHandler originalAction) {
+    private MyTypedHandler(@NotNull TypedActionHandler originalAction) {
       super(originalAction);
     }
 
@@ -1331,44 +1326,21 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static class BackSpaceHandler extends ConsoleAction {
+  private static class DeleteBackspaceHandler extends ConsoleAction {
+    private final int myTextOffsetToDeleteRelativeToCaret;
+    private final String myParentActionId;
+
+    private DeleteBackspaceHandler(int textOffsetToDeleteRelativeToCaret, @NotNull String parentActionId) {
+      myTextOffsetToDeleteRelativeToCaret = textOffsetToDeleteRelativeToCaret;
+      myParentActionId = parentActionId;
+    }
+
     @Override
     public void execute(@NotNull ConsoleViewImpl consoleView, @NotNull DataContext context) {
       Editor editor = consoleView.myEditor;
 
       if (IncrementalSearchHandler.isHintVisible(editor)) {
-        getDefaultActionHandler().execute(editor, null, context);
-        return;
-      }
-
-      Document document = editor.getDocument();
-      int length = document.getTextLength();
-      if (length == 0) {
-        return;
-      }
-
-      SelectionModel selectionModel = editor.getSelectionModel();
-      if (selectionModel.hasSelection()) {
-        consoleView.deleteUserText(selectionModel.getSelectionStart(),
-                                   selectionModel.getSelectionEnd() - selectionModel.getSelectionStart());
-      }
-      else if (editor.getCaretModel().getOffset() > 0) {
-        consoleView.deleteUserText(editor.getCaretModel().getOffset() - 1, 1);
-      }
-    }
-
-    private static EditorActionHandler getDefaultActionHandler() {
-      return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
-    }
-  }
-
-  private static class DeleteHandler extends ConsoleAction {
-    @Override
-    public void execute(@NotNull ConsoleViewImpl consoleView, @NotNull DataContext context) {
-      Editor editor = consoleView.myEditor;
-
-      if (IncrementalSearchHandler.isHintVisible(editor)) {
-        getDefaultActionHandler().execute(editor, null, context);
+        getDefaultActionHandler(myParentActionId).execute(editor, null, context);
         return;
       }
 
@@ -1385,12 +1357,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                                    selectionModel.getSelectionEnd() - selectionModel.getSelectionStart());
       }
       else {
-        consoleView.deleteUserText(editor.getCaretModel().getOffset(), 1);
+        int offset = editor.getCaretModel().getOffset() + myTextOffsetToDeleteRelativeToCaret;
+        if (offset >= 0) {
+          consoleView.deleteUserText(offset, 1);
+        }
       }
     }
 
-    private static EditorActionHandler getDefaultActionHandler() {
-      return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
+    @NotNull
+    private static EditorActionHandler getDefaultActionHandler(@NotNull String actionId) {
+      return EditorActionManager.getInstance().getActionHandler(actionId);
     }
   }
 
