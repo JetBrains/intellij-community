@@ -1,22 +1,22 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class <!LINE_MARKER("descr='Run Test'")!>P1IosX64Test<!> {
+class P1IosX64Test {
 
     @Test
-    fun <!LINE_MARKER("descr='Run Test'")!>testCommonMain<!>() {
+    fun testCommonMain() {
         val x = P1CommonMain()
         assertEquals(x.invoke(), P1CommonMain())
     }
 
     @Test
-    fun <!LINE_MARKER("descr='Run Test'")!>testNativeMain<!>() {
+    fun testNativeMain() {
         val x = P1NativeMain()
         assertEquals(x.invoke(), P1NativeMain())
     }
 
     @Test
-    fun <!LINE_MARKER("descr='Run Test'")!>testIosMain<!>() {
+    fun testIosMain() {
         val x = P1IosMain()
         assertEquals(x.invoke(), P1IosMain())
     }
