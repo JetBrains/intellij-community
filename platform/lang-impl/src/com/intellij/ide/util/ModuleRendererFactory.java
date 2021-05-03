@@ -1,13 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.util;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.TextWithIcon;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
+import java.awt.*;
 
 public abstract class ModuleRendererFactory {
+
   private static final ExtensionPointName<ModuleRendererFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleRendererFactory");
 
   public static ModuleRendererFactory findInstance(Object element) {
@@ -24,9 +29,31 @@ public abstract class ModuleRendererFactory {
     return true;
   }
 
-  public abstract DefaultListCellRenderer getModuleRenderer();
+  /**
+   * This method might be invoked in the background, which will lock {@link java.awt.Component.AWTTreeLock}.
+   * In fact, this method is not needed since implementation only needs to provide the text and icon.
+   *
+   * @deprecated call/implement {@link #getModuleTextWithIcon} instead
+   */
+  @Deprecated
+  public @NotNull DefaultListCellRenderer getModuleRenderer() {
+    throw new AbstractMethodError("getModuleTextWithIcon(Object) must be implemented");
+  }
 
   public boolean rendersLocationString() {
     return false;
+  }
+
+  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
+  public @Nullable TextWithIcon getModuleTextWithIcon(Object element) {
+    Component component = getModuleRenderer().getListCellRendererComponent(new JList<>(), element, -1, false, false);
+    if (component instanceof JLabel) {
+      JLabel label = (JLabel)component;
+      return new TextWithIcon(label.getText(), label.getIcon());
+    }
+    else {
+      return null;
+    }
   }
 }
