@@ -152,14 +152,20 @@ public final class TextMateLexer {
         int startPosition = currentRange.start;
         endPosition = currentRange.end;
         if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
-          openScopeSelector(output, currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
+          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.NAME), string, currentMatch, '$');
+          openScopeSelector(output, name, startPosition + startLineOffset);
+
           parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
           parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
-          openScopeSelector(output, currentRule.getStringAttribute(Constants.StringKey.CONTENT_NAME), endPosition + startLineOffset);
+
+          String contentName = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.CONTENT_NAME), string, currentMatch, '$');
+          openScopeSelector(output, contentName, endPosition + startLineOffset);
+
           myStates = myStates.prepend(currentState);
         }
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
-          openScopeSelector(output, currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
+          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.NAME), string, currentMatch, '$');
+          openScopeSelector(output, name, startPosition + startLineOffset);
           parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
           closeScopeSelector(output, endPosition + startLineOffset);
         }
@@ -235,7 +241,8 @@ public final class TextMateLexer {
         }
         else if (ends.isEmpty()) {
           CaptureMatchData start = starts.removeLast();
-          openScopeSelector(output, start.selectorName, start.range.start + startLineOffset);
+          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$');
+          openScopeSelector(output, name, start.range.start + startLineOffset);
         }
         else if (ends.getLast().group < starts.getLast().group) {
           CaptureMatchData end = ends.removeLast();
@@ -243,7 +250,8 @@ public final class TextMateLexer {
         }
         else {
           CaptureMatchData start = starts.removeLast();
-          openScopeSelector(output, start.selectorName, start.range.start + startLineOffset);
+          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$');
+          openScopeSelector(output, name, start.range.start + startLineOffset);
         }
       }
       return !matches.isEmpty();

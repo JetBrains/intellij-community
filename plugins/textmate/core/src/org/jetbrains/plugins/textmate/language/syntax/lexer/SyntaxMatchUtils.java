@@ -154,40 +154,45 @@ public final class SyntaxMatchUtils {
                                            @NotNull TextMateLexerState lexerState) {
     CharSequence stringRegex = lexerState.syntaxRule.getStringAttribute(keyName);
     if (stringRegex != null) {
-      return regex(replaceGroupsWithMatchData(stringRegex, lexerState.string, lexerState.matchData))
+      return regex(replaceGroupsWithMatchData(stringRegex, lexerState.string, lexerState.matchData, '\\'))
         .match(string, byteOffset, ourCheckCancelledCallback);
     }
     return MatchData.NOT_MATCHED;
   }
 
   /**
-   * Replaces parts like \1 or \20 in patternString parameter with group captures from matchData.
+   * Replaces parts like \1 or \20 in string parameter with group captures from matchData.
    * <p/>
-   * E.g. given patternString "\1-\2" and matchData consists of two groups: "first" and "second",
-   * then patternString "first-second" will be returned.
+   * E.g. given string "\1-\2" and matchData consists of two groups: "first" and "second",
+   * then string "first-second" will be returned.
    *
-   * @param patternString source pattern
-   * @param string        matched string
+   * @param string string pattern
+   * @param matchingString        matched matchingString
    * @param matchData     matched data with captured groups for replacement
-   * @return patternString with replaced group-references
+   * @return string with replaced group-references
    */
-  public static String replaceGroupsWithMatchData(@NotNull CharSequence patternString,
-                                                  @Nullable StringWithId string,
-                                                  @NotNull MatchData matchData) {
-    if (string == null || !matchData.matched()) {
-      return patternString.toString();
+  public static String replaceGroupsWithMatchData(@Nullable CharSequence string,
+                                                  @Nullable StringWithId matchingString,
+                                                  @NotNull MatchData matchData,
+                                                  char prefix) {
+    if (string == null) {
+      return null;
+    }
+
+    if (matchingString == null || !matchData.matched()) {
+      return string.toString();
     }
     StringBuilder result = new StringBuilder();
     int charIndex = 0;
-    int length = patternString.length();
+    int length = string.length();
     while (charIndex < length) {
-      char c = patternString.charAt(charIndex);
-      if (c == '\\') {
+      char c = string.charAt(charIndex);
+      if (c == prefix) {
         boolean hasGroupIndex = false;
         int groupIndex = 0;
         int digitIndex = charIndex + 1;
         while (digitIndex < length) {
-          int digit = Character.digit(patternString.charAt(digitIndex), 10);
+          int digit = Character.digit(string.charAt(digitIndex), 10);
           if (digit == -1) {
             break;
           }
@@ -197,7 +202,7 @@ public final class SyntaxMatchUtils {
         }
         if (hasGroupIndex && matchData.count() > groupIndex) {
           TextMateRange range = matchData.byteOffset(groupIndex);
-          StringUtil.escapeToRegexp(new String(string.bytes, range.start, range.getLength(), StandardCharsets.UTF_8), result);
+          StringUtil.escapeToRegexp(new String(matchingString.bytes, range.start, range.getLength(), StandardCharsets.UTF_8), result);
           charIndex = digitIndex;
           continue;
         }
