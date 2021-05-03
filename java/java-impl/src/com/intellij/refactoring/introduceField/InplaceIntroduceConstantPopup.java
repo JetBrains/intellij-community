@@ -98,6 +98,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     myReplaceAllCb.setMnemonic('a');
     myReplaceAllCb.setFocusable(false);
     myReplaceAllCb.setVisible(myOccurrences.length > 1);
+    myReplaceAllCb.setSelected(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL);
     right.add(myReplaceAllCb, rgc);
 
     return right;
@@ -265,6 +266,9 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
                                                 getType(),
                                                 true,
                                                 getParentClass(), false, false);
+    if (myReplaceAllCb.isVisible()) {
+      JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL = isReplaceAllOccurrences();
+    }
     WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
       if (getLocalVariable() != null) {
         final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
