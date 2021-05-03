@@ -73,12 +73,12 @@ var VirtualFile.pathBeforeJ2K: String? by UserDataProperty(Key.create("PATH_BEFO
 class JavaToKotlinAction : AnAction() {
     companion object {
         private fun uniqueKotlinFileName(javaFile: VirtualFile): String {
-            val nioFile = javaFile.toNioPath()
+            val nioFile = javaFile.fileSystem.getNioPath(javaFile)
 
             var i = 0
             while (true) {
                 val fileName = javaFile.nameWithoutExtension + (if (i > 0) i else "") + ".kt"
-                if (nioFile.resolveSibling(fileName).notExists()) return fileName
+                if (nioFile == null || nioFile.resolveSibling(fileName).notExists()) return fileName
                 i++
             }
         }
