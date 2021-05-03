@@ -6,21 +6,17 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.messages.Topic
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.*
-
-enum class AdvancedSettingType { Int, Bool, String }
 
 class AdvancedSettingBean : PluginAware {
   private var pluginDescriptor: PluginDescriptor? = null
@@ -91,9 +87,8 @@ class AdvancedSettingBean : PluginAware {
   }
 }
 
-@Service
 @State(name = "AdvancedSettings", storages = [Storage(value = "other.xml")], reportStatistic = false)
-class AdvancedSettings : PersistentStateComponent<AdvancedSettings.AdvancedSettingsState> {
+class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponent<AdvancedSettingsImpl.AdvancedSettingsState> {
   class AdvancedSettingsState {
     var settings = mutableMapOf<String, String>()
   }
@@ -108,24 +103,7 @@ class AdvancedSettings : PersistentStateComponent<AdvancedSettings.AdvancedSetti
     this.state = state
   }
 
-  private fun getSettingString(id: String): String {
-    val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException(
-      "Can't find advanced setting $id")
-    return getInstance().state.settings[id] ?: option.defaultValue
-  }
-
-  private fun getSetting(id: String): Pair<Any, AdvancedSettingType> {
-    val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException("Can't find advanced setting $id")
-    val valueString = getSettingString(id)
-    val value = when (option.type()) {
-      AdvancedSettingType.Int -> valueString.toInt()
-      AdvancedSettingType.Bool -> valueString.toBigDecimal()
-      AdvancedSettingType.String -> valueString
-    }
-    return value to option.type()
-  }
-
-  fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
+  override fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
     val (oldValue, type) = getSetting(id)
     if (type != expectType) {
       throw IllegalArgumentException("Setting type $type does not match parameter type $expectType")
@@ -134,47 +112,27 @@ class AdvancedSettings : PersistentStateComponent<AdvancedSettings.AdvancedSetti
     ApplicationManager.getApplication().messageBus.syncPublisher(AdvancedSettingsChangeListener.TOPIC).advancedSettingChanged(id, oldValue, value)
   }
 
+  override fun getSettingString(id: String): String {
+    val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException(
+      "Can't find advanced setting $id")
+    return state.settings[id] ?: option.defaultValue
+  }
+
+  private fun getSetting(id: String): Pair<Any, AdvancedSettingType> {
+    val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException("Can't find advanced setting $id")
+    val valueString = getSettingString(id)
+    val value = when (option.type()) {
+      AdvancedSettingType.Int -> valueString.toInt()
+      AdvancedSettingType.Bool -> valueString.toBoolean()
+      AdvancedSettingType.String -> valueString
+    }
+    return value to option.type()
+  }
+
   @TestOnly
   fun setSetting(id: String, value: Any, revertOnDispose: Disposable) {
     val (oldValue, type) = getSetting(id)
     setSetting(id, value, type)
     Disposer.register(revertOnDispose, Disposable { setSetting(id, oldValue, type )})
-  }
-  
-  companion object {
-    fun getInstance(): AdvancedSettings = ApplicationManager.getApplication().getService(AdvancedSettings::class.java)
-
-    @JvmStatic
-    fun getBoolean(id: String): Boolean = getInstance().getSettingString(id).toBoolean()
-
-    @JvmStatic
-    fun getInt(id: String): Int = getInstance().getSettingString(id).toInt()
-
-    @JvmStatic
-    fun getString(id: String): String = getInstance().getSettingString(id)
-
-    @JvmStatic
-    fun setBoolean(id: String, value: Boolean) {
-      getInstance().setSetting(id, value, AdvancedSettingType.Bool)
-    }
-
-    @JvmStatic
-    fun setInt(id: String, value: Int) {
-      getInstance().setSetting(id, value, AdvancedSettingType.Int)
-    }
-
-    @JvmStatic
-    fun setString(id: String, value: String) {
-      getInstance().setSetting(id, value, AdvancedSettingType.String)
-    }
-  }
-}
-
-interface AdvancedSettingsChangeListener {
-  fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any)
-
-  companion object {
-    @JvmField
-    val TOPIC = Topic(AdvancedSettingsChangeListener::class.java)
   }
 }
