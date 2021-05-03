@@ -60,7 +60,7 @@ public class ImportTestsGroup extends ActionGroup {
     final int historySize = fileNames.size();
     final AnAction[] actions = new AnAction[historySize];
     for (int i = 0; i < historySize; i++) {
-      actions[i] = new ImportTestsFromHistoryAction(myProperties, project, fileNames.get(i).getName());
+      actions[i] = new ImportTestsFromHistoryAction(project, fileNames.get(i).getName());
     }
     return actions;
   }
