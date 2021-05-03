@@ -21,7 +21,8 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
   val buildNumber = BuildNumber.fromString("2042.42")
-  val parentContext = DescriptorListLoadingContext(disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
+  val parentContext = DescriptorListLoadingContext(disabledPlugins = disabledPlugins,
+                                                   result = PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
   val result = PluginDescriptorLoader.loadDescriptorFromFileOrDir(file = dir,
                                                                   pathName = PluginManagerCore.PLUGIN_XML,
                                                                   context = parentContext,

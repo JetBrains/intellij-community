@@ -4,7 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionDescriptor
 import com.intellij.openapi.util.NlsSafe
-import org.jdom.Element
+import com.intellij.util.XmlElement
 import org.jetbrains.annotations.ApiStatus
 import java.time.LocalDate
 
@@ -55,5 +55,9 @@ class RawPluginDescriptor {
   @JvmField internal var contentDescriptor = PluginContentDescriptor.EMPTY
   @JvmField internal var dependencyDescriptor = ModuleDependenciesDescriptor.EMPTY
 
-  class ActionDescriptor(@JvmField val element: Element, @JvmField val resourceBundle: String?)
+  class ActionDescriptor(
+    @JvmField val name: String,
+    @JvmField val element: XmlElement,
+    @JvmField val resourceBundle: String?,
+  )
 }

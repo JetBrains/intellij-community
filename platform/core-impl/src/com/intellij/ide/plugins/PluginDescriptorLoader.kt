@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
@@ -31,6 +32,9 @@ import java.util.concurrent.RecursiveTask
 import java.util.function.Supplier
 import javax.xml.stream.XMLStreamException
 
+private val LOG: Logger
+  get() = PluginManagerCore.getLogger()
+
 @ApiStatus.Internal
 object PluginDescriptorLoader {
   fun loadDescriptor(file: Path,
@@ -47,7 +51,7 @@ object PluginDescriptorLoader {
 
   internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl? {
     val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
-    val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(DisabledPluginsState.disabledPlugins())
+    val parentContext = DescriptorListLoadingContext(disabledPlugins = DisabledPluginsState.disabledPlugins())
     if (Files.isDirectory(pluginRoot)) {
       return loadDescriptorFromDir(file = pluginRoot,
                                    descriptorRelativePath = "${PluginManagerCore.META_INF}$fileName",
@@ -98,7 +102,7 @@ object PluginDescriptorLoader {
       if (isEssential) {
         throw e
       }
-      DescriptorListLoadingContext.LOG.warn("Cannot load ${file.resolve(descriptorRelativePath)}", e)
+      LOG.warn("Cannot load ${file.resolve(descriptorRelativePath)}", e)
       return null
     }
   }
@@ -244,7 +248,7 @@ object PluginDescriptorLoader {
                                                   pathResolver = pathResolver)
       if (otherDescriptor != null) {
         if (descriptor != null) {
-          DescriptorListLoadingContext.LOG.error("Cannot load $file because two or more plugin.xml detected")
+          LOG.error("Cannot load $file because two or more plugin.xml detected")
           return null
         }
         descriptor = otherDescriptor
@@ -466,7 +470,7 @@ object PluginDescriptorLoader {
       }
     }
     catch (e: IOException) {
-      DescriptorListLoadingContext.LOG.warn(e)
+      LOG.warn(e)
     }
   }
 
@@ -546,7 +550,7 @@ object PluginDescriptorLoader {
                      disabledPlugins: Set<PluginId>,
                      isBundled: Boolean,
                      pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
-    DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins).use { context ->
+    DescriptorListLoadingContext(disabledPlugins = disabledPlugins).use { context ->
       return loadDescriptorFromFileOrDir(file = file,
                                          pathName = PluginManagerCore.PLUGIN_XML,
                                          context = context,
@@ -577,7 +581,7 @@ object PluginDescriptorLoader {
     // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
     val fullDescriptor = tryLoadFullDescriptor(descriptor)
     if (fullDescriptor == null) {
-      DescriptorListLoadingContext.LOG.error("Could not load full descriptor for plugin ${descriptor.pluginPath}")
+      LOG.error("Could not load full descriptor for plugin ${descriptor.pluginPath}")
       return descriptor
     }
     else {
@@ -667,7 +671,7 @@ private class LoadDescriptorsFromClassPathAction(private val urls: Map<URL, Stri
             if (isEssential) {
               throw e
             }
-            DescriptorListLoadingContext.LOG.info("Cannot load $url", e)
+            LOG.info("Cannot load $url", e)
             return null
           }
         }

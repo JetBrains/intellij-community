@@ -288,7 +288,7 @@ class ClassLoaderConfigurator(
     if (ClassLoaderConfigurationData.SEPARATE_CLASSLOADER_FOR_SUB && dependency.pluginDependencies != null) {
       for (dependentModuleDependency in dependent.dependencyDescriptor.modules) {
         if (dependency.contentDescriptor.findModuleByName(dependentModuleDependency.name) != null) {
-          for (pluginDependency in dependency.pluginDependencies!!) {
+          for (pluginDependency in dependency.pluginDependencies) {
             if (!pluginDependency.isDisabledOrBroken && pluginDependency.subDescriptor != null &&
                 dependentModuleDependency.packageName == pluginDependency.subDescriptor!!.packagePrefix) {
               loaders.add(pluginDependency.subDescriptor!!.classLoader!!)
@@ -399,7 +399,7 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
                                     resourceFileFactory: ClassPath.ResourceFileFactory?): PluginClassLoader {
   // main plugin descriptor
   if (descriptor.descriptorPath == null) {
-    when (descriptor.id!!.idString) {
+    when (descriptor.id.idString) {
       "com.intellij.diagram" -> {
         // multiple packages - intellij.diagram and intellij.diagram.impl modules
         return createPluginClassLoaderWithExtraPackage(parentLoaders = parentLoaders,
@@ -584,7 +584,7 @@ private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl):
 }
 
 private fun isClassloaderPerDescriptorEnabled(descriptor: IdeaPluginDescriptorImpl): Boolean {
-  return ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(descriptor.id!!, descriptor.packagePrefix)
+  return ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(descriptor.id, descriptor.packagePrefix)
 }
 
 private fun collectPackagePrefixes(dependent: IdeaPluginDescriptorImpl, packagePrefixes: MutableList<String>) {
@@ -651,7 +651,7 @@ private fun addPackagePrefixIfNeeded(packagePrefixes: MutableList<String>, packa
 }
 
 private fun collectFromServices(containerDescriptor: ContainerDescriptor, packagePrefixes: MutableList<String>) {
-  for (service in (containerDescriptor.services ?: return)) {
+  for (service in containerDescriptor.services) {
     // testServiceImplementation is ignored by intention
     service.serviceImplementation?.let {
       addPackageByClassNameIfNeeded(it, packagePrefixes)

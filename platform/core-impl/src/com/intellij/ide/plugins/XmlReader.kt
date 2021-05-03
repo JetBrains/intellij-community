@@ -14,6 +14,7 @@ import com.intellij.openapi.util.StaxFactory
 import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.messages.ListenerDescriptor
+import com.intellij.util.readXmlAsModel
 import org.codehaus.stax2.XMLStreamReader2
 import org.codehaus.stax2.typed.TypedXMLStreamException
 import org.jetbrains.annotations.TestOnly
@@ -290,7 +291,8 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
     }
 
     actionElements.add(RawPluginDescriptor.ActionDescriptor(
-      element = SafeStAXStreamBuilder.processElementFragment(reader, true, false, readContext.jdomFactory),
+      name = elementName,
+      element = readXmlAsModel(reader),
       resourceBundle = resourceBundle,
     ))
   }
@@ -742,7 +744,7 @@ private fun readInclude(reader: XMLStreamReader2,
 private var dateTimeFormatter: DateTimeFormatter? = null
 
 private val LOG: Logger
-  get() = DescriptorListLoadingContext.LOG
+  get() = PluginManagerCore.getLogger()
 
 private fun parseReleaseDate(dateString: String): LocalDate? {
   if (dateString.isEmpty() || dateString == "__DATE__") {

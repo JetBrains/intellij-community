@@ -112,7 +112,7 @@ public final class PluginLoadingResult {
   }
 
   void reportCannotLoad(@NotNull Path file, Throwable e) {
-    DescriptorListLoadingContext.LOG.warn("Cannot load " + file, e);
+    PluginManagerCore.getLogger().warn("Cannot load " + file, e);
     globalErrors.add(() -> CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
                                                FileUtil.getLocationRelativeToUserHome(file.toString(), false)));
   }
@@ -120,10 +120,6 @@ public final class PluginLoadingResult {
   @SuppressWarnings("UnusedReturnValue")
   boolean add(@NotNull IdeaPluginDescriptorImpl descriptor, boolean overrideUseIfCompatible) {
     PluginId pluginId = descriptor.getPluginId();
-    if (pluginId == null) {
-      PluginManagerCore.getLogger().warn("No id is provided by \"" + descriptor.getPluginPath().getFileName().toString() + "\"");
-      return true;
-    }
 
     if (descriptor.isIncomplete) {
       return true;

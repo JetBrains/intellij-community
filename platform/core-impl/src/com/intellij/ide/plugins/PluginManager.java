@@ -66,20 +66,6 @@ public final class PluginManager {
     return Files.isRegularFile(onceInstalledFile) ? onceInstalledFile : null;
   }
 
-  public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
-                                                                  @NotNull Set<PluginId> disabledPlugins,
-                                                                  boolean isBundled,
-                                                                  @NotNull PathResolver pathResolver) {
-    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins);
-    return PluginDescriptorLoader.loadDescriptorFromFileOrDir(file,
-                                                              PluginManagerCore.PLUGIN_XML,
-                                                              parentContext,
-                                                              pathResolver,
-                                                              isBundled,
-                                                              /* isEssential = */false,
-                                                              Files.isDirectory(file));
-  }
-
   /**
    * @deprecated In a plugin code simply throw error or log using {@link Logger#error(Throwable)}.
    */

@@ -373,7 +373,7 @@ object DynamicPlugins {
     if (!containerDescriptor.components.isNullOrEmpty()) {
       return "Plugin $pluginId is not unload-safe because it declares components"
     }
-    if (containerDescriptor.services?.any { it.overrides } == true) {
+    if (containerDescriptor.services.any { it.overrides }) {
       return "Plugin $pluginId is not unload-safe because it overrides services"
     }
     return null
@@ -736,17 +736,17 @@ object DynamicPlugins {
     }
 
     val pluginId = pluginDescriptor.pluginId
-    app.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
+    app.unloadServices(pluginDescriptor.appContainerDescriptor.services, pluginId)
     val appMessageBus = app.messageBus as MessageBusEx
     pluginDescriptor.appContainerDescriptor.listeners?.let { appMessageBus.unsubscribeLazyListeners(pluginId, it) }
 
     for (project in openedProjects) {
-      (project as ComponentManagerImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
+      (project as ComponentManagerImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.services, pluginId)
       pluginDescriptor.projectContainerDescriptor.listeners?.let {
         ((project as ComponentManagerImpl).messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, it)
       }
 
-      val moduleServices = pluginDescriptor.moduleContainerDescriptor.getServices()
+      val moduleServices = pluginDescriptor.moduleContainerDescriptor.services
       for (module in ModuleManager.getInstance(project).modules) {
         (module as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
         createDisposeTreePredicate(pluginDescriptor)?.let { Disposer.disposeChildren(module, it) }
@@ -1012,7 +1012,7 @@ object DynamicPlugins {
 }
 
 private class OptionalDependencyDescriptorLoader {
-  private val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(DisabledPluginsState.disabledPlugins())
+  private val listContext = DescriptorListLoadingContext(disabledPlugins = DisabledPluginsState.disabledPlugins())
 
   fun load(mainDescriptor: IdeaPluginDescriptorImpl, dependencyConfigFile: String): IdeaPluginDescriptorImpl? {
     val pathResolver = PluginDescriptorLoader.createPathResolverForPlugin(mainDescriptor, true)

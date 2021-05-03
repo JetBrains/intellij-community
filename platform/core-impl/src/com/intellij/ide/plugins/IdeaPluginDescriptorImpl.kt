@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.BeanExtensionPoint
 import com.intellij.openapi.extensions.impl.ExtensionDescriptor
@@ -17,6 +18,9 @@ import java.nio.file.Path
 import java.time.ZoneOffset
 import java.util.*
 import java.util.function.Supplier
+
+private val LOG: Logger
+  get() = PluginManagerCore.getLogger()
 
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
@@ -71,28 +75,25 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     pluginDependencies = list
   }
 
-  @Transient
-  @JvmField
-  internal var jarFiles: List<Path>? = null
-  @JvmField internal var actionElements: MutableList<RawPluginDescriptor.ActionDescriptor>? = null
+  @Transient @JvmField internal var jarFiles: List<Path>? = null
+  @JvmField var classLoader: ClassLoader? = null
+
+  @JvmField internal val actionElements = raw.actionElements
 
   // extension point name -> list of extension elements
-  private var epNameToExtensionElements: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
+  private var epNameToExtensionElements = raw.epNameToExtensionElements
 
-  @JvmField var appContainerDescriptor = ContainerDescriptor()
-  @JvmField var projectContainerDescriptor = ContainerDescriptor()
-  @JvmField var moduleContainerDescriptor = ContainerDescriptor()
+  @JvmField val appContainerDescriptor = raw.appContainerDescriptor
+  @JvmField val projectContainerDescriptor = raw.projectContainerDescriptor
+  @JvmField val moduleContainerDescriptor = raw.moduleContainerDescriptor
 
   @JvmField internal val contentDescriptor = raw.contentDescriptor
   @JvmField internal val dependencyDescriptor = raw.dependencyDescriptor
-  private val modules: MutableList<PluginId>? = raw.modules
+  private val modules = raw.modules
 
-  @JvmField var classLoader: ClassLoader? = null
+  private val descriptionChildText = raw.description
 
-  private var descriptionChildText = raw.description
-
-  var isUseIdeaClassLoader = raw.isUseIdeaClassLoader
-    internal set
+  @JvmField val isUseIdeaClassLoader = raw.isUseIdeaClassLoader
 
   var isUseCoreClassLoader = false
     private set
@@ -163,13 +164,13 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
     if (raw.resourceBundleBaseName != null) {
       if (id == PluginManagerCore.CORE_ID) {
-        DescriptorListLoadingContext.LOG.warn(
+        LOG.warn(
           "<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor included into the platform part of the IDE " +
           "but the platform part uses predefined bundles (e.g. ActionsBundle for actions) anyway; " +
           "this tag must be replaced by a corresponding attribute in some inner tags (e.g. by 'resource-bundle' attribute in 'actions' tag)")
       }
       if (resourceBundleBaseName != null && resourceBundleBaseName != raw.resourceBundleBaseName) {
-        DescriptorListLoadingContext.LOG.warn("Resource bundle redefinition for plugin $id." +
+        LOG.warn("Resource bundle redefinition for plugin $id." +
                                               " Old value: $resourceBundleBaseName, new value: ${raw.resourceBundleBaseName}")
       }
       resourceBundleBaseName = raw.resourceBundleBaseName
@@ -181,8 +182,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
     if (context.isPluginDisabled(id)) {
       markAsIncomplete(context, null, null)
-      if (DescriptorListLoadingContext.LOG.isDebugEnabled) {
-        DescriptorListLoadingContext.LOG.debug("Skipping reading of $id from $path (reason: disabled)")
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Skipping reading of $id from $path (reason: disabled)")
       }
       return false
     }
@@ -205,13 +206,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
         return false
       }
     }
-
-    appContainerDescriptor = raw.appContainerDescriptor
-    projectContainerDescriptor = raw.projectContainerDescriptor
-    moduleContainerDescriptor = raw.moduleContainerDescriptor
-    epNameToExtensionElements = raw.epNameToExtensionElements
-
-    actionElements = raw.actionElements
 
     createExtensionPoints(appContainerDescriptor, this)
     createExtensionPoints(projectContainerDescriptor, this)
@@ -246,7 +240,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       }
       else if (context.result.isBroken(dependency.pluginId)) {
         if (!dependency.isOptional && !isIncomplete) {
-          DescriptorListLoadingContext.LOG.info("Skipping reading of $id from $path " +
+          LOG.info("Skipping reading of $id from $path " +
                                                 "(reason: non-optional dependency ${dependency.pluginId} is broken)")
           markAsIncomplete(context = context, disabledDependency = null) {
             CoreBundle.message("plugin.loading.error.short.depends.on.broken.plugin", dependency.pluginId)
@@ -277,9 +271,9 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       if (raw == null) {
         val message = "Plugin $descriptor misses optional descriptor $configFile"
         if (context.isMissingSubDescriptorIgnored) {
-          DescriptorListLoadingContext.LOG.info(message)
+          LOG.info(message)
           if (resolveError != null) {
-            DescriptorListLoadingContext.LOG.debug(resolveError)
+            LOG.debug(resolveError)
           }
         }
         else {
@@ -385,7 +379,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
         DynamicBundle.INSTANCE.getResourceBundle(resourceBundleBaseName, pluginClassLoader)
       }
       catch (e: MissingResourceException) {
-        DescriptorListLoadingContext.LOG.info("Cannot find plugin $id resource-bundle: $resourceBundleBaseName")
+        LOG.info("Cannot find plugin $id resource-bundle: $resourceBundleBaseName")
         null
       }
     }

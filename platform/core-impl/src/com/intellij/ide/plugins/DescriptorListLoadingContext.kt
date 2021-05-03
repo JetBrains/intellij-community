@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SafeJdomFactory
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
@@ -15,39 +16,19 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Supplier
 
+private val unitTestWithBundledPlugins = java.lang.Boolean.getBoolean("idea.run.tests.with.bundled.plugins")
+
+private val LOG: Logger
+  get() = PluginManagerCore.getLogger()
+
 @ApiStatus.Internal
 class DescriptorListLoadingContext constructor(
   @JvmField val disabledPlugins: Set<PluginId>,
-  @JvmField @Suppress("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR") val result: PluginLoadingResult,
+  @JvmField @Suppress("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR") val result: PluginLoadingResult = PluginManagerCore.createLoadingResult(null),
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
 ) : AutoCloseable, ReadModuleContext {
-  companion object {
-    @JvmStatic
-    private val unitTestWithBundledPlugins = java.lang.Boolean.getBoolean("idea.run.tests.with.bundled.plugins")
-
-    @JvmField val LOG = PluginManagerCore.getLogger()
-
-    @JvmStatic
-    fun createSingleDescriptorContext(disabledPlugins: Set<PluginId>): DescriptorListLoadingContext {
-      return DescriptorListLoadingContext(
-        disabledPlugins = disabledPlugins,
-        result = PluginManagerCore.createLoadingResult(null)
-      )
-    }
-
-    @JvmStatic
-    fun createForTest(result: PluginLoadingResult): DescriptorListLoadingContext {
-      return DescriptorListLoadingContext(
-        isMissingIncludeIgnored = false,
-        isMissingSubDescriptorIgnored = false,
-        disabledPlugins = Collections.emptySet(),
-        result = result
-      )
-    }
-  }
-
   private val toDispose = ConcurrentLinkedQueue<Array<PluginXmlFactory?>>()
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
@@ -111,21 +92,19 @@ class DescriptorListLoadingContext constructor(
   }
 }
 
+// doesn't make sense to intern class name since it is unique
+// ouch, do we really cannot agree how to name implementation class attribute?
+private val CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
+  "implementation", "implementationClass", "builderClass",
+  "serviceImplementation", "class", "className", "beanClass",
+  "serviceInterface", "interface", "interfaceClass", "instance", "implementation-class",
+  "qualifiedName"))
+
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+private val EXTRA_STRINGS = Arrays.asList("id", PluginManagerCore.VENDOR_JETBRAINS)
+
 // don't intern CDATA because in most cases it is used for some unique large text (e.g. plugin description)
 internal class PluginXmlFactory : SafeJdomFactory.BaseSafeJdomFactory() {
-  companion object {
-    // doesn't make sense to intern class name since it is unique
-    // ouch, do we really cannot agree how to name implementation class attribute?
-    @JvmStatic private val CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
-      "implementation", "implementationClass", "builderClass",
-      "serviceImplementation", "class", "className", "beanClass",
-      "serviceInterface", "interface", "interfaceClass", "instance", "implementation-class",
-      "qualifiedName"))
-
-    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    @JvmStatic private val EXTRA_STRINGS = Arrays.asList("id", PluginManagerCore.VENDOR_JETBRAINS)
-  }
-
   @Suppress("SSBasedInspection")
   private val strings = ObjectOpenHashSet<String>(CLASS_NAMES.size + EXTRA_STRINGS.size)
 

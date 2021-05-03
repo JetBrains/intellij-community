@@ -10,6 +10,7 @@ import com.intellij.util.io.directoryStreamIfExists
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
+import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
 
@@ -83,7 +84,7 @@ internal class ClassLoaderConfiguratorTest {
 
 private fun loadDescriptors(dir: Path): PluginLoadingResult {
   val result = PluginLoadingResult(emptyMap(), Supplier { buildNumber })
-  val context = DescriptorListLoadingContext.createForTest(result)
+  val context = DescriptorListLoadingContext(disabledPlugins = Collections.emptySet(), result = result)
 
   // constant order in tests
   val paths: List<Path> = dir.directoryStreamIfExists { it.sorted() }!!

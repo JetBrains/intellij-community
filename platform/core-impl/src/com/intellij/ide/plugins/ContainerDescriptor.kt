@@ -16,8 +16,10 @@ class ContainerDescriptor {
                                  val `interface`: String?,
                                  val beanClass: String?,
                                  val dynamic: Boolean)
+  private var _services: MutableList<ServiceDescriptor>? = null
+  val services: List<ServiceDescriptor>
+    get() = _services ?: Collections.emptyList()
 
-  @JvmField var services: MutableList<ServiceDescriptor>? = null
   @JvmField var components: MutableList<ComponentConfig>? = null
   @JvmField var listeners: MutableList<ListenerDescriptor>? = null
 
@@ -28,13 +30,11 @@ class ContainerDescriptor {
   @Transient
   @JvmField var extensions: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
 
-  fun getServices(): List<ServiceDescriptor> = services ?: Collections.emptyList()
-
   fun addService(serviceDescriptor: ServiceDescriptor) {
-    if (services == null) {
-      services = ArrayList()
+    if (_services == null) {
+      _services = ArrayList()
     }
-    services!!.add(serviceDescriptor)
+    _services!!.add(serviceDescriptor)
   }
 
   internal fun getComponentListToAdd(): MutableList<ComponentConfig> {
@@ -47,12 +47,12 @@ class ContainerDescriptor {
   }
 
   override fun toString(): String {
-    if (services == null && components == null && extensionPoints == null && extensions == null && listeners == null) {
+    if (_services == null && components == null && extensionPoints == null && extensions == null && listeners == null) {
       return "ContainerDescriptor(empty)"
     }
     else {
       return "ContainerDescriptor(" +
-             "services=$services, components=$components, " +
+             "services=$_services, components=$components, " +
              "extensionPoints=$extensionPoints, extensions=$extensions, listeners=$listeners" +
              ")"
     }

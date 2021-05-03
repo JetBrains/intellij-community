@@ -361,7 +361,7 @@ public final class PluginManagerCore {
     // otherwise we need to check plugins with use-idea-classloader="true"
     String root = null;
     for (IdeaPluginDescriptorImpl o : loadedPlugins) {
-      if (!o.isUseIdeaClassLoader()) {
+      if (!o.isUseIdeaClassLoader) {
         continue;
       }
 
