@@ -260,19 +260,16 @@ public final class ConsoleViewUtil {
     if (inputFilters.isEmpty()) {
       return (text, contentType) -> null;
     }
-    CompositeInputFilter compositeInputFilter = new CompositeInputFilter(project);
+    List<InputFilter> allFilters = new ArrayList<>();
     for (ConsoleInputFilterProvider eachProvider : inputFilters) {
       List<InputFilter> filters;
       if (eachProvider instanceof ConsoleDependentInputFilterProvider) {
-        filters = ((ConsoleDependentInputFilterProvider)eachProvider).getDefaultFilters(consoleView, project, searchScope);
+        allFilters.addAll(((ConsoleDependentInputFilterProvider)eachProvider).getDefaultFilters(consoleView, project, searchScope));
       }
       else {
-        filters = Arrays.asList(eachProvider.getDefaultFilters(project));
-      }
-      for (InputFilter filter : filters) {
-        compositeInputFilter.addFilter(filter);
+        allFilters.addAll(Arrays.asList(eachProvider.getDefaultFilters(project)));
       }
     }
-    return compositeInputFilter;
+    return new CompositeInputFilter(project, allFilters);
   }
 }
