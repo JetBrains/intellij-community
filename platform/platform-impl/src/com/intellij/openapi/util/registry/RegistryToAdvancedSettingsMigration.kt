@@ -18,7 +18,7 @@ class RegistryToAdvancedSettingsMigration : StartupActivity.DumbAware {
       for (setting in AdvancedSettingBean.EP_NAME.extensions) {
         val userProperty = userProperties[setting.id] ?: continue
         try {
-          AdvancedSettings.setSetting(setting.id, userProperty, setting.type())
+          AdvancedSettings.getInstance().setSetting(setting.id, userProperty, setting.type())
           userProperties.remove(setting.id)
         }
         catch (e: IllegalArgumentException) {
