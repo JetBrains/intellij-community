@@ -9,22 +9,26 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.intellij.build.tasks.reorderJar
 import java.io.File
-import java.nio.file.DirectoryStream
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
+import java.nio.file.*
+import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
+private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+
 data class BuildItem(val dir: Path, val layout: PluginLayout) {
   val moduleNames = HashSet<String>()
 
   fun markAsBuilt(outDir: Path) {
     for (moduleName in moduleNames) {
-      Files.deleteIfExists(outDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME))
+      try {
+        Files.newByteChannel(outDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME), TOUCH_OPTIONS)
+      }
+      catch (e: NoSuchFileException) {
+      }
     }
   }
 }
