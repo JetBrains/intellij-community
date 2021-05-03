@@ -216,9 +216,12 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           suffix += "\n";
         }
         String prefix = "";
+        if(getLanguageOptions().isAddBlankBefore()){
+          prefix += "\n";
+        }
         if (getPreviousSibling(point) != null) {
           if (getPreviousSibling(point) instanceof PsiComment) {
-            prefix = "\n\n";
+            prefix += "\n\n";
           }
           if (getPreviousSibling(point) instanceof PsiWhiteSpace &&
               getPreviousSibling(getPreviousSibling(point)) != null &&
@@ -226,7 +229,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
             String ws = getPreviousSibling(point).getText();
             int cnt = countNewline(ws);
             if (cnt == 1) {
-              prefix = "\n";
+              prefix += "\n";
             }
           }
         }
