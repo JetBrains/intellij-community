@@ -63,7 +63,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall("org.mockito.Mockito", "verify"),
       CallMatcher.instanceCall("org.jmock.Expectations", "allowing", "ignoring", "never", "one", "oneOf", "with")
         .parameterTypes("T"));
-  private static final Set<String> IGNORE_ANNOTATIONS = Set.of(
+  private static final Set<String> CAN_IGNORE_RETURN_VALUE_ANNOTATIONS = Set.of(
     "org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
   private static final Set<String> CHECK_ANNOTATIONS = Set.of(
     "javax.annotation.CheckReturnValue", "org.assertj.core.util.CheckReturnValue", "com.google.errorprone.annotations.CheckReturnValue");
@@ -205,41 +205,42 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (aClass == null) return false;
       if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return false;
       if (call instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
+        final PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
         if (MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS.test(previousCall)) return false;
       }
       if (PropertyUtil.isSimpleGetter(method)) {
-        return !isIgnored(method, null);
+        return !hasCanIgnoreReturnValueAnnotation(method, null);
       }
       if (method instanceof PsiCompiledElement) {
-        PsiMethod sourceMethod = ObjectUtils.tryCast(method.getNavigationElement(), PsiMethod.class);
+        final PsiMethod sourceMethod = ObjectUtils.tryCast(method.getNavigationElement(), PsiMethod.class);
         if (sourceMethod != null && PropertyUtil.isSimpleGetter(sourceMethod)) {
-          return !isIgnored(method, null);
+          return !hasCanIgnoreReturnValueAnnotation(method, null);
         }
       }
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
-        return !isIgnored(method, null);
+        return !hasCanIgnoreReturnValueAnnotation(method, null);
       }
-
-      if (isKnownExceptionalSideEffectCaught(call)) return false;
-
+      if (isKnownExceptionalSideEffectCaught(call)) {
+        return false;
+      }
       if (isPureMethod(method, call)) {
-        return !isIgnored(method, null);
+        return !hasCanIgnoreReturnValueAnnotation(method, null);
       }
 
-      PsiAnnotation annotation = findAnnotationInTree(method, null, CHECK_ANNOTATIONS);
-      if (annotation == null) {
-        annotation = getAnnotationByShortNameCheckReturnValue(method);
-      }
-
+      final PsiAnnotation annotation = findCheckReturnValueAnnotation(method);
       if (!myMethodMatcher.matches(method) && annotation == null) return false;
       if (isHardcodedException(call)) return false;
-      return !isIgnored(method, annotation);
+      PsiElement stop = annotation == null ? null : (PsiElement)annotation.getOwner();
+      return !hasCanIgnoreReturnValueAnnotation(method, stop);
     }
 
-    private boolean isIgnored(@NotNull PsiMethod method, @Nullable PsiAnnotation annotation) {
-      final PsiElement owner = annotation == null ? null : (PsiElement)annotation.getOwner();
-      return findAnnotationInTree(method, owner, IGNORE_ANNOTATIONS) != null;
+    private boolean hasCanIgnoreReturnValueAnnotation(@NotNull PsiMethod method, @Nullable PsiElement stopElement) {
+      return findAnnotationInTree(method, stopElement, CAN_IGNORE_RETURN_VALUE_ANNOTATIONS) != null;
+    }
+
+    private PsiAnnotation findCheckReturnValueAnnotation(PsiMethod method) {
+      final PsiAnnotation annotation = findAnnotationInTree(method, null, CHECK_ANNOTATIONS);
+      return annotation == null ? getAnnotationByShortNameCheckReturnValue(method) : annotation;
     }
 
     private PsiAnnotation getAnnotationByShortNameCheckReturnValue(PsiMethod method) {
@@ -318,6 +319,15 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       }
     }
 
+    /**
+     * Finds the specified annotations in the psi tree.
+     * For example first trying a method, then the surrounding class, then the surrounding package.
+     * When the element checked is a method or class, super methods and classes are also checked.
+     * @param element  the element at which to start searching
+     * @param stop  psi element to stop at, and not continue to surrounding elements
+     * @param fqAnnotationNames  the fully qualified names of the annotations to find
+     * @return the first annotation found, or null if no annotation was found.
+     */
     @Nullable
     private PsiAnnotation findAnnotationInTree(PsiElement element, @Nullable PsiElement stop, @NotNull Set<String> fqAnnotationNames) {
       while (element != null) {
@@ -340,16 +350,16 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
           if (aPackage == null) {
             return null;
           }
-          PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+          final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
           if(annotation != null) {
             // Check that annotation actually belongs to the same library/source root
             // which could be important in case of split-packages
-            VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
-            VirtualFile currentFile = classOwner.getVirtualFile();
+            final VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
+            final VirtualFile currentFile = classOwner.getVirtualFile();
             if(annotationFile != null && currentFile != null) {
-              ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
-              VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(annotationFile);
-              VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(currentFile);
+              final ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
+              final VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(annotationFile);
+              final VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(currentFile);
               if (!Objects.equals(annotationClassRoot, currentClassRoot)) {
                 return null;
               }
