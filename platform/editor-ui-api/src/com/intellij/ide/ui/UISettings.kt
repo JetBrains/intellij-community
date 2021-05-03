@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -148,7 +149,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.closeTabButtonOnTheRight
 
   val cycleScrolling: Boolean
-    get() = Registry.`is`("ide.cycle.scrolling", false)
+    get() = AdvancedSettings.getBoolean("ide.cycle.scrolling")
 
   var navigateToPreview: Boolean
     get() = state.navigateToPreview
