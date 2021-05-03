@@ -3,9 +3,10 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.CodeInsightUtilCore
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.diagnostics.Diagnostic
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
-class AddWhenElseBranchFix(element: KtWhenExpression) : KotlinQuickFixAction<KtWhenExpression>(element) {
+class AddWhenElseBranchFix(element: KtWhenExpression) : KotlinPsiOnlyQuickFixAction<KtWhenExpression>(element) {
     override fun getFamilyName() = KotlinBundle.message("fix.add.else.branch.when")
     override fun getText() = familyName
 
@@ -35,9 +36,9 @@ class AddWhenElseBranchFix(element: KtWhenExpression) : KotlinQuickFixAction<KtW
         editor?.caretModel?.moveToOffset(endOffset + 1)
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
-        public override fun createAction(diagnostic: Diagnostic): AddWhenElseBranchFix? {
-            return diagnostic.psiElement.getNonStrictParentOfType<KtWhenExpression>()?.let(::AddWhenElseBranchFix)
+    companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
+            return listOfNotNull(psiElement.getNonStrictParentOfType<KtWhenExpression>()?.let(::AddWhenElseBranchFix))
         }
     }
 }
