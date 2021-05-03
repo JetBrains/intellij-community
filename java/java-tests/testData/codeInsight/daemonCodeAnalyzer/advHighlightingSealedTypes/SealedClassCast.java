@@ -97,4 +97,12 @@ interface Foo {
       System.out.println("It's a RandomClass");
     }
   }
+  
+  static class Wildcards {
+    sealed interface I<T> {}
+    final class C<T> implements I<T> {}
+    void f(I<String> f) {
+      C<?> r = (C<?>) f;  
+    }
+  }
 }
