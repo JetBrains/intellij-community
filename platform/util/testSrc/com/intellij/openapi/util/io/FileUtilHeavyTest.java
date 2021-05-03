@@ -468,4 +468,12 @@ public class FileUtilHeavyTest {
     NioFiles.setReadOnly(d, false);
     Files.createFile(child);
   }
+
+  @Test
+  public void list() {
+    Path f1 = tempDir.newFile("f1").toPath(), f2 = tempDir.newFile("f2").toPath();
+    assertThat(NioFiles.list(f1.getParent())).containsExactlyInAnyOrder(f1, f2);
+    assertThat(NioFiles.list(f1)).isEmpty();
+    assertThat(NioFiles.list(f1.getParent().resolve("missing_file"))).isEmpty();
+  }
 }

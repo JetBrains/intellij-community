@@ -4,13 +4,11 @@ package com.intellij.openapi.util.io;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.attribute.*;
-import java.util.Arrays;
-import java.util.Set;
+import java.nio.file.*;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.*;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 
@@ -62,6 +60,23 @@ public final class NioFiles {
     }
     else {
       throw new IOException("Not supported: " + path.getFileSystem());
+    }
+  }
+
+  /**
+   * A convenience wrapper around {@link Files#newDirectoryStream(Path)} that returns all entries of the given directory,
+   * ignores exceptions (returns an empty list), and doesn't forget to close the directory stream.
+   */
+  public static @NotNull List<Path> list(@NotNull Path directory) {
+    try {
+      List<Path> files = new ArrayList<>();
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+        for (Path path : stream) files.add(path);
+      }
+      return files;
+    }
+    catch (IOException e) {
+      return Collections.emptyList();
     }
   }
 }
