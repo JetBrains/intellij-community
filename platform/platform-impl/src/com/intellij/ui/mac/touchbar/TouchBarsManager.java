@@ -527,7 +527,13 @@ final class TouchBarsManager {
 
       // ensure that top of stack has current touchbar
       final @Nullable ComponentActions ca = myStack.peek();
-      if (ca == null) return;
+      if (ca == null) {
+        // stack is empty
+        myLastShownTouchbar = null;
+        NST.setTouchBar(myWindow != null ? myWindow.get() : null, null);
+        return;
+      }
+
       if (ca.getCurrent() == null) { // current touchbar wasn't set yet, do it now
         ca.setCurrent(ourLastModifiersEx);
         if (ca.getCurrent() == null)
