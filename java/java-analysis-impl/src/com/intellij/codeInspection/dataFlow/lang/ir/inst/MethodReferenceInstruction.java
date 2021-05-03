@@ -86,12 +86,12 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
       for (DfaMemoryState result : results) {
         DfaValue value = result.pop();
         runner.getInterceptor().beforePush(args, value, anchor, result);
-        state.push(value);
+        result.push(value);
       }
     }
     for (DfaCallState currentState: currentStates) {
       runner.getInterceptor().beforePush(args, defaultResult, anchor, currentState.getMemoryState());
-      state.push(defaultResult);
+      currentState.getMemoryState().push(defaultResult);
     }
   }
 
