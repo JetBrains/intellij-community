@@ -28,9 +28,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
@@ -210,20 +208,28 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
     removeAll();
     myRightComponentWidth = 0;
-    DefaultListCellRenderer rightRenderer = getRightCellRenderer(value);
-    Component rightCellRendererComponent = null;
-    JPanel spacer = null;
-    if (rightRenderer != null) {
-      Component result;
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
-        result = rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      }
-      rightCellRendererComponent = result;
-      add(rightCellRendererComponent, BorderLayout.EAST);
+
+    final TextWithIcon itemLocation;
+    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+      itemLocation = getItemLocation(value);
+    }
+    final JLabel locationComponent;
+    final JPanel spacer;
+    if (itemLocation == null) {
+      locationComponent = null;
+      spacer = null;
+    }
+    else {
+      locationComponent = new JLabel(itemLocation.getText(), itemLocation.getIcon(), SwingConstants.RIGHT);
+      locationComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding()));
+      locationComponent.setHorizontalTextPosition(SwingConstants.LEFT);
+      locationComponent.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+
+      add(locationComponent, BorderLayout.EAST);
       spacer = new JPanel();
       spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
       add(spacer, BorderLayout.CENTER);
-      myRightComponentWidth = rightCellRendererComponent.getPreferredSize().width;
+      myRightComponentWidth = locationComponent.getPreferredSize().width;
       myRightComponentWidth += spacer.getPreferredSize().width;
     }
 
@@ -236,10 +242,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     add(leftCellRendererComponent, LEFT);
     final Color bg = isSelected ? UIUtil.getListSelectionBackground(true) : leftCellRendererComponent.getBackground();
     setBackground(bg);
-    if (rightCellRendererComponent != null) {
-      rightCellRendererComponent.setBackground(bg);
-    }
-    if (spacer != null) {
+    if (itemLocation != null) {
+      locationComponent.setBackground(bg);
       spacer.setBackground(bg);
     }
     return this;
@@ -271,6 +275,24 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return false;
   }
 
+  protected @Nullable TextWithIcon getItemLocation(Object value) {
+    if (isGetRightCellRendererOverridden) {
+      return ModuleRendererFactory.getTextWithIcon(getRightCellRenderer(value), value);
+    }
+    if (UISettings.getInstance().getShowIconInQuickNavigation()) {
+      return getModuleTextWithIcon(value);
+    }
+    return null;
+  }
+
+  private final boolean isGetRightCellRendererOverridden = ReflectionUtil.getMethodDeclaringClass(
+    getClass(), "getRightCellRenderer", Object.class
+  ) != PsiElementListCellRenderer.class;
+
+  /**
+   * @deprecated override {@link #getItemLocation} instead
+   */
+  @Deprecated
   @Nullable
   protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
     if (UISettings.getInstance().getShowIconInQuickNavigation()) {
@@ -279,6 +301,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return null;
   }
 
+  /**
+   * @deprecated use {@link #getModuleTextWithIcon} instead
+   */
+  @Deprecated
   @ApiStatus.Internal
   public static @Nullable DefaultListCellRenderer getModuleRenderer(Object value) {
     final DefaultListCellRenderer renderer = ModuleRendererFactory.findInstance(value).getModuleRenderer();
@@ -287,6 +313,16 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       return null;
     }
     return renderer;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable TextWithIcon getModuleTextWithIcon(Object value) {
+    ModuleRendererFactory factory = ModuleRendererFactory.findInstance(value);
+    if (factory instanceof PlatformModuleRendererFactory) {
+      // it won't display any new information
+      return null;
+    }
+    return factory.getModuleTextWithIcon(value);
   }
 
   public abstract @NlsSafe String getElementText(T element);
@@ -401,10 +437,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       );
     }
 
-    DefaultListCellRenderer rightCellRenderer = getRightCellRenderer(element);
-    if (rightCellRenderer != null) {
-      JLabel label = (JLabel)rightCellRenderer.getListCellRendererComponent(new JList<>(), element, -1, false, false);
-      builder = builder.locationText(label.getText(), label.getIcon());
+    TextWithIcon itemLocation = getItemLocation(element);
+    if (itemLocation != null) {
+      builder = builder.locationText(itemLocation.getText(), itemLocation.getIcon());
     }
 
     return builder.presentation();

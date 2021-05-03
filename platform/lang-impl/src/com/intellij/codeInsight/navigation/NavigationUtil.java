@@ -45,6 +45,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
+import com.intellij.util.TextWithIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -320,8 +321,8 @@ public final class NavigationUtil {
       }
 
       @Override
-      protected DefaultListCellRenderer getRightCellRenderer(Object value) {
-        return showContainingModules ? super.getRightCellRenderer(value) : null;
+      protected @Nullable TextWithIcon getItemLocation(Object value) {
+        return showContainingModules ? super.getItemLocation(value) : null;
       }
 
       @Override

@@ -55,13 +55,18 @@ public abstract class ModuleRendererFactory {
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   public @Nullable TextWithIcon getModuleTextWithIcon(Object element) {
-    Component component = getModuleRenderer().getListCellRendererComponent(new JList<>(), element, -1, false, false);
-    if (component instanceof JLabel) {
-      JLabel label = (JLabel)component;
-      return new TextWithIcon(label.getText(), label.getIcon());
-    }
-    else {
+    return getTextWithIcon(getModuleRenderer(), element);
+  }
+
+  static @Nullable TextWithIcon getTextWithIcon(@Nullable ListCellRenderer<Object> renderer, Object element) {
+    if (renderer == null) {
       return null;
     }
+    Component component = renderer.getListCellRendererComponent(new JList<>(), element, -1, false, false);
+    if (!(component instanceof JLabel)) {
+      return null;
+    }
+    JLabel label = (JLabel)component;
+    return new TextWithIcon(label.getText(), label.getIcon());
   }
 }
