@@ -1720,7 +1720,8 @@ public abstract class LongRangeSet {
       LongRangeSet negated = super.negate(isLong);
       if (negated instanceof Range) {
         // Leave 0 at the place, reverse the rest
-        long negatedBits = (Long.reverse(myBits & -2) >>> (Long.SIZE - myMod - 1)) | (myBits & 1);
+        long reverse = Long.reverse(myBits & -2);
+        long negatedBits = (myMod == Long.SIZE ? reverse << 1 : reverse >>> (Long.SIZE - myMod - 1)) | (myBits & 1);
         return modRange(negated.min(), negated.max(), myMod, negatedBits);
       }
       return negated;

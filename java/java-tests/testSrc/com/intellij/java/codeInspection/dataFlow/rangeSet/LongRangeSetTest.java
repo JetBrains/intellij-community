@@ -405,6 +405,7 @@ public class LongRangeSetTest {
     assertEquals("{-1000..-701, -499..-101, 301..599, 801..900}", set.negate(false).toString());
     checkNegate(modRange(-15, 100, 10, 0b1011), "{-100..10}: <0, 7, 9> mod 10", true);
     checkNegate(modRange(-15, 100, 2, 0b10), "{-99..15}: odd", false);
+    checkNegate(modRange(0, 200, 64, 0b100), "{-194..-2}: <62> mod 64", false);
   }
 
   @Test
