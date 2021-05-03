@@ -60,12 +60,14 @@ import static org.junit.Assert.*;
 public class EditorTestFixture {
   @NotNull
   private final Project myProject;
+  @NotNull
   private final Editor myEditor;
+  @NotNull
   private final VirtualFile myFile;
 
   private boolean myEmptyLookup;
 
-  public EditorTestFixture(@NotNull Project project, Editor editor, VirtualFile file) {
+  public EditorTestFixture(@NotNull Project project, @NotNull Editor editor, @NotNull VirtualFile file) {
     myProject = project;
     myEditor = editor;
     myFile = file;
@@ -73,7 +75,7 @@ public class EditorTestFixture {
 
   public void type(char c) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final EditorActionManager actionManager = EditorActionManager.getInstance();
+      EditorActionManager.getInstance();
       if (c == '\b') {
         performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
         return;
@@ -141,7 +143,7 @@ public class EditorTestFixture {
   }
 
   public PsiFile getFile() {
-    return myFile != null ? ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myFile)) : null;
+    return ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myFile));
   }
 
   @NotNull
@@ -163,7 +165,7 @@ public class EditorTestFixture {
     return instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDirt, readEditorMarkupModel);
   }
 
-  @Nullable
+  @NotNull
   protected Editor getCompletionEditor() {
     return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, getFile());
   }
@@ -185,7 +187,6 @@ public class EditorTestFixture {
     ApplicationManager.getApplication().invokeAndWait(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
         @Override
-        @SuppressWarnings("deprecation")
         protected void completionFinished(CompletionProgressIndicator indicator, boolean hasModifiers) {
           myEmptyLookup = indicator.getLookup().getItems().isEmpty();
           super.completionFinished(indicator, hasModifiers);
@@ -319,6 +320,7 @@ public class EditorTestFixture {
     return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));
   }
 
+  @NotNull
   public Editor getEditor() {
     return myEditor;
   }

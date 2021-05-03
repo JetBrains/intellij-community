@@ -188,7 +188,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myTempDirFixture = tempDirTestFixture;
   }
 
-  private void setFileAndEditor(VirtualFile file, Editor editor) {
+  private void setFileAndEditor(@NotNull VirtualFile file, @NotNull Editor editor) {
     myFile = file;
     myEditor = editor;
     myEditorTestFixture = new EditorTestFixture(getProject(), editor, file);
@@ -1522,7 +1522,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return copy;
   }
 
-  @Nullable
+  @NotNull
   protected Editor createEditor(@NotNull VirtualFile file) {
     final Project project = getProject();
     final FileEditorManager instance = FileEditorManager.getInstance(project);
@@ -1530,9 +1530,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(project, file), false);
     EditorTestUtil.waitForLoading(editor);
-    if (editor != null) {
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
-    }
+    DaemonCodeAnalyzer.getInstance(getProject()).restart();
     return editor;
   }
 
