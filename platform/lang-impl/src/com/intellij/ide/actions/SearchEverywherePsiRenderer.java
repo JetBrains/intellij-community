@@ -2,7 +2,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.navigation.NavigationItem;
@@ -182,16 +181,6 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
                                                        boolean hasFocus) {
     return GotoFileCellRenderer.doCustomizeNonPsiElementLeftRenderer(
       renderer, list, value, getNavigationItemAttributes(value));
-  }
-
-  @Override
-  protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-    final DefaultListCellRenderer rightRenderer = super.getRightCellRenderer(value);
-    if (rightRenderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
-      // that renderer will display file path, but we're showing it ourselves - no need to show twice
-      return null;
-    }
-    return rightRenderer;
   }
 
   @Override
