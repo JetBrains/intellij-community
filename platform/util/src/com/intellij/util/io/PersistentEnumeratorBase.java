@@ -22,15 +22,12 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.SLRUMap;
-import com.intellij.util.containers.ShareableKey;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import com.intellij.util.io.keyStorage.InlinedKeyStorage;
 import com.intellij.util.io.keyStorage.NoDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.Closeable;
 import java.io.Flushable;
@@ -54,7 +51,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected static final boolean USE_RW_LOCK = SystemProperties.getBooleanProperty("idea.persistent.data.use.read.write.lock", false);
   private static final int META_DATA_OFFSET = 4;
   static final int DATA_START = META_DATA_OFFSET + 16;
-  private static final CacheKey ourFlyweight = new FlyweightKey();
 
   protected final ResizeableMappedFile myStorage;
   @NotNull
@@ -95,58 +91,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     abstract int recordWriteOffset(T enumerator, byte[] buf);
     abstract byte @NotNull [] getRecordBuffer(T enumerator);
     abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
-  }
-
-  private static class CacheKey implements ShareableKey {
-    public PersistentEnumeratorBase<?> owner;
-    public Object key;
-
-    private CacheKey(Object key, PersistentEnumeratorBase<?> owner) {
-      this.key = key;
-      this.owner = owner;
-    }
-
-    @Override
-    public ShareableKey getStableCopy() {
-      return this;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (!(o instanceof CacheKey)) return false;
-
-      final CacheKey cacheKey = (CacheKey)o;
-
-      if (!key.equals(cacheKey.key)) return false;
-      if (!owner.equals(cacheKey.owner)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return key.hashCode();
-    }
-  }
-
-  private static CacheKey sharedKey(Object key, PersistentEnumeratorBase owner) {
-    ourFlyweight.key = key;
-    ourFlyweight.owner = owner;
-    return ourFlyweight;
-  }
-
-  private static final int ENUMERATION_CACHE_SIZE;
-  static {
-    String property = System.getProperty("idea.enumerationCacheSize");
-    ENUMERATION_CACHE_SIZE = property == null ? 8192 : Integer.valueOf(property);
-  }
-
-  private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<>(ENUMERATION_CACHE_SIZE, ENUMERATION_CACHE_SIZE);
-
-  @TestOnly
-  public static void clearCacheForTests() {
-    ourEnumerationCache.clear();
   }
 
   public static class CorruptedException extends IOException {
@@ -259,6 +203,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
+  protected void assertWriteAccess() {
+    assert myLock.isWriteLockedByCurrentThread();
+  }
+
   @NotNull
   protected Lock getWriteLock() {
     return myLock.writeLock();
@@ -311,10 +259,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   private int doEnumerate(Data value, boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     if (myDoCaching && !saveNewValue) {
-      synchronized (ourEnumerationCache) {
-        final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
-        if (cachedId != null) return cachedId.intValue();
-      }
+      int cachedId = PersistentEnumeratorCache.getCachedId(value, this);
+      if (cachedId != NULL_ID) return cachedId;
     }
 
     final int id;
@@ -333,9 +279,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
 
     if (myDoCaching && id != NULL_ID) {
-      synchronized (ourEnumerationCache) {
-        ourEnumerationCache.put(new CacheKey(value, this), id);
-      }
+      PersistentEnumeratorCache.cacheId(value, id, this);
     }
 
     return id;
@@ -551,8 +495,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   protected void doClose() throws IOException {
     try {
+      force();
       myKeyStorage.close();
-      flush();
     }
     finally {
       myStorage.close();
@@ -590,24 +534,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  private void flush() throws IOException {
-    getWriteLock().lock();
-    try {
-      lockStorageWrite();
-      try {
-        if (myStorage.isDirty() || isDirty()) {
-          doFlush();
-        }
-      }
-      finally {
-        unlockStorageWrite();
-      }
-    }
-    finally {
-      getWriteLock().unlock();
-    }
-  }
-
   protected void doFlush() throws IOException {
     markDirty(false);
     myStorage.force();
@@ -620,7 +546,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       lockStorageWrite();
       try {
         myKeyStorage.force();
-        flush();
+        if (myStorage.isDirty() || isDirty()) {
+          doFlush();
+        }
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -680,17 +608,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
     finally {
       unlockStorageWrite();
-    }
-  }
-
-  private static class FlyweightKey extends CacheKey {
-    FlyweightKey() {
-      super(null, null);
-    }
-
-    @Override
-    public ShareableKey getStableCopy() {
-      return new CacheKey(key, owner);
     }
   }
 }

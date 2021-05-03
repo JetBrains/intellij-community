@@ -14,6 +14,7 @@ import com.intellij.project.TestProjectManager;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
+import com.intellij.util.io.PersistentEnumeratorCache;
 import com.intellij.util.ref.DebugReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,7 @@ public final class LeakHunter {
     else {
       UIUtil.pump();
     }
-    PersistentEnumeratorBase.clearCacheForTests();
+    PersistentEnumeratorCache.clearCacheForTests();
     Runnable runnable = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
         DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, __ -> true, (leaked, backLink) -> {

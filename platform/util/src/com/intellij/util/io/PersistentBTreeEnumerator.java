@@ -215,34 +215,39 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   public boolean traverseAllRecords(@NotNull final RecordsProcessor p) throws IOException {
+    getReadLock().lock();
     try {
-      // TODO downgrade to read
-      lockStorageWrite();
-      return myBTree.processMappings(new IntToIntBtree.KeyValueProcessor() {
-        @Override
-        public boolean process(int key, int value) throws IOException {
-          p.setCurrentKey(key);
+      lockStorageRead();
+      try {
+        return myBTree.processMappings(new IntToIntBtree.KeyValueProcessor() {
+          @Override
+          public boolean process(int key, int value) throws IOException {
+            p.setCurrentKey(key);
 
-          if (value > 0 || myInlineKeysNoMapping) {
-            return p.process(value);
+            if (value > 0 || myInlineKeysNoMapping) {
+              return p.process(value);
+            }
+            int rec = -value;
+            while (rec != 0) {
+              int id = myStorage.getInt(rec);
+              if (!p.process(id)) return false;
+              rec = myStorage.getInt(rec + COLLISION_OFFSET);
+            }
+            return true;
           }
-          int rec = -value;
-          while (rec != 0) {
-            int id = myStorage.getInt(rec);
-            if (!p.process(id)) return false;
-            rec = myStorage.getInt(rec + COLLISION_OFFSET);
-          }
-          return true;
-        }
-      });
-    }
-    catch (IllegalStateException e) {
-      CorruptedException corruptedException = new CorruptedException(myFile);
-      corruptedException.initCause(e);
-      throw corruptedException;
+        });
+      }
+      catch (IllegalStateException e) {
+        CorruptedException corruptedException = new CorruptedException(myFile);
+        corruptedException.initCause(e);
+        throw corruptedException;
+      }
+      finally {
+        unlockStorageRead();
+      }
     }
     finally {
-      unlockStorageWrite();
+      getReadLock().unlock();
     }
   }
 
@@ -296,23 +301,29 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final int[] myResultBuf = new int[1];
 
   long getNonNegativeValue(Data key) throws IOException {
-    assert myInlineKeysNoMapping;
+    getReadLock().lock();
     try {
-      lockStorageRead();
-      final boolean hasMapping = myBTree.get(((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key), myResultBuf);
-      if (!hasMapping) {
-        return NULL_ID;
-      }
+      assert myInlineKeysNoMapping;
+      try {
+        lockStorageRead();
+        final boolean hasMapping = myBTree.get(((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key), myResultBuf);
+        if (!hasMapping) {
+          return NULL_ID;
+        }
 
-      return keyIdToNonNegativeOffset(myResultBuf[0]);
-    }
-    catch (IllegalStateException e) {
-      CorruptedException exception = new CorruptedException(myFile);
-      exception.initCause(e);
-      throw exception;
+        return keyIdToNonNegativeOffset(myResultBuf[0]);
+      }
+      catch (IllegalStateException e) {
+        CorruptedException exception = new CorruptedException(myFile);
+        exception.initCause(e);
+        throw exception;
+      }
+      finally {
+        unlockStorageRead();
+      }
     }
     finally {
-      unlockStorageRead();
+      getReadLock().unlock();
     }
   }
 
@@ -322,40 +333,46 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   void putNonNegativeValue(Data key, long value) throws IOException {
-    assert value >= 0;
-    assert myInlineKeysNoMapping;
+    getWriteLock().lock();
     try {
-      lockStorageWrite();
+      assert value >= 0;
+      assert myInlineKeysNoMapping;
+      try {
+        lockStorageWrite();
 
-      int intKey = ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key);
+        int intKey = ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key);
 
-      markDirty(true);
+        markDirty(true);
 
-      if (value < Integer.MAX_VALUE) {
-        myBTree.put(intKey, (int)value);
-      }
-      else {
-        // reuse long record if it was allocated
-        boolean hasMapping = myBTree.get(intKey, myResultBuf);
-        if (hasMapping) {
-          if (myResultBuf[0] < 0) {
-            myStorage.putLong(-myResultBuf[0], value);
-            return;
-          }
+        if (value < Integer.MAX_VALUE) {
+          myBTree.put(intKey, (int)value);
         }
+        else {
+          // reuse long record if it was allocated
+          boolean hasMapping = myBTree.get(intKey, myResultBuf);
+          if (hasMapping) {
+            if (myResultBuf[0] < 0) {
+              myStorage.putLong(-myResultBuf[0], value);
+              return;
+            }
+          }
 
-        int pos = nextLongValueRecord();
-        myStorage.putLong(pos, value);
-        myBTree.put(intKey, -pos);
+          int pos = nextLongValueRecord();
+          myStorage.putLong(pos, value);
+          myBTree.put(intKey, -pos);
+        }
       }
-    }
-    catch (IllegalStateException e) {
-      CorruptedException exception = new CorruptedException(myFile);
-      exception.initCause(e);
-      throw exception;
+      catch (IllegalStateException e) {
+        CorruptedException exception = new CorruptedException(myFile);
+        exception.initCause(e);
+        throw exception;
+      }
+      finally {
+        unlockStorageWrite();
+      }
     }
     finally {
-      unlockStorageWrite();
+      getWriteLock().unlock();
     }
   }
 
