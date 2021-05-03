@@ -31,11 +31,6 @@ import java.util.Set;
 public class DefaultModuleRendererFactory extends ModuleRendererFactory {
 
   @Override
-  public final @NotNull DefaultListCellRenderer getModuleRenderer() {
-    return new PsiElementModuleRenderer(this::getModuleTextWithIcon);
-  }
-
-  @Override
   public final @Nullable TextWithIcon getModuleTextWithIcon(Object element) {
     if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
       return elementLocation((PsiElement)element);

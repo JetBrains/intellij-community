@@ -2,6 +2,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TextWithIcon;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -41,8 +42,15 @@ public abstract class ModuleRendererFactory {
    */
   @Deprecated
   public @NotNull DefaultListCellRenderer getModuleRenderer() {
+    if (isGetModuleTextWithIconOverridden) {
+      return new PsiElementModuleRenderer(this::getModuleTextWithIcon);
+    }
     throw new AbstractMethodError("getModuleTextWithIcon(Object) must be implemented");
   }
+
+  private final boolean isGetModuleTextWithIconOverridden = ReflectionUtil.getMethodDeclaringClass(
+    getClass(), "getModuleTextWithIcon", Object.class
+  ) != ModuleRendererFactory.class;
 
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
