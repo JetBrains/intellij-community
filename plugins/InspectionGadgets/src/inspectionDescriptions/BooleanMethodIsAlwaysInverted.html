@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports methods with a <code>boolean</code> return type, which are only used in a negated context.
-The quick-fix makes it possible to rename and invert the method.
-Due to performance reasons some methods might not be reported during in-editor highlighting.
+Reports methods with a <code>boolean</code> return type that are used only in a negated context.
+<p>The quick-fix makes it possible to rename and invert the method.
+  Due to performance reasons, some methods might not be highlighted in the editor.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   class C {
     boolean alwaysTrue() {
       return true;
@@ -17,9 +17,9 @@ Due to performance reasons some methods might not be reported during in-editor h
     }
     boolean member = !alwaysTrue();
   }
-</pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   class C {
     boolean alwaysFalse() {
       return false;
@@ -32,7 +32,7 @@ Due to performance reasons some methods might not be reported during in-editor h
     }
     boolean member = alwaysFalse();
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>
