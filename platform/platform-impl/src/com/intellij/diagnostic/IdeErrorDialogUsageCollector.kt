@@ -10,10 +10,14 @@ class IdeErrorDialogUsageCollector : CounterUsagesCollector() {
 
   companion object {
 
-    private val GROUP = EventLogGroup("ide.error.dialog", 1)
+    private val GROUP = EventLogGroup("ide.error.dialog", 2)
+    private val CLEAR_ALL = GROUP.registerEvent("clear.all")
     private val REPORT = GROUP.registerEvent("report")
     private val REPORT_ALL = GROUP.registerEvent("report.all")
     private val REPORT_AND_CLEAR_ALL = GROUP.registerEvent("report.and.clear.all")
+
+    @JvmStatic
+    fun logClearAll() = CLEAR_ALL.log()
 
     @JvmStatic
     fun logReport() = REPORT.log()

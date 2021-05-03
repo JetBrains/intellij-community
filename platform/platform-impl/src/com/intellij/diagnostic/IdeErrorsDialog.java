@@ -772,6 +772,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     @Override
     public void actionPerformed(ActionEvent e) {
+      IdeErrorDialogUsageCollector.logClearAll();
       myMessagePool.clearErrors();
       doCancelAction();
     }
