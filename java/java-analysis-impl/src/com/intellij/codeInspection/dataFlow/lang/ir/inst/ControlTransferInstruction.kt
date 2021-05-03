@@ -40,5 +40,5 @@ open class ControlTransferInstruction : Instruction {
    */
   override fun getSuccessorIndexes(): IntArray = transfer.possibleTargetIndices
 
-  override fun toString(): String = "TRANSFER $transfer [targets: ${successorIndexes}]"
+  override fun toString(): String = "TRANSFER $transfer [targets: ${successorIndexes.contentToString()}]"
 }
