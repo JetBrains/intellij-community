@@ -2,12 +2,19 @@
 <body>
 Reports any instantiations of <code>java.util.Set</code> objects whose content types are enumerated classes. Such <code>Set</code> objects
 can be replaced by <code>java.util.EnumSet</code> objects. <code>EnumSet</code> implementations can be much more efficient compared to
-other sets, as the underlying data structure is a bit vector.
+other sets, as the underlying data structure is a bit vector. A quick-fix is available that replaces the initializer with a call to
+<code>EnumSet.noneOf</code>. This quick-fix is not available if the type of the variable is a sub-class of <code>Set</code>.
 <p>Example:</p>
 <pre>
   enum MyEnum { FOO, BAR; }
 
-  HashSet&#60;MyEnum&#62; enums = new HashSet&#60;MyEnum&#62;();
+  Set&#60;MyEnum&#62; enums = new HashSet&#60;MyEnum&#62;();
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  enum MyEnum { FOO, BAR; }
+
+  Set&#60;MyEnum&#62; enums = EnumSet.noneOf(MyEnum.class);;
 </pre>
 <!-- tooltip end -->
 </body>
