@@ -433,7 +433,7 @@ private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSy
 }
 
 private fun <T> T.getExtensionReceiverParameter(
-    ktSymbol: KtPossibleExtensionSymbol
+    ktSymbol: KtCallableSymbol,
 ): ReceiverParameterDescriptor? where T : KtSymbolBasedDeclarationDescriptor, T : CallableDescriptor {
     val receiverTypeAndAnnotation = ktSymbol.receiverType ?: return null
     val receiverValue = ExtensionReceiver(this, receiverTypeAndAnnotation.type.toKotlinType(context), null)
