@@ -15,7 +15,7 @@ public abstract class ModuleRendererFactory {
 
   private static final ExtensionPointName<ModuleRendererFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleRendererFactory");
 
-  public static ModuleRendererFactory findInstance(Object element) {
+  public static @NotNull ModuleRendererFactory findInstance(Object element) {
     for (ModuleRendererFactory factory : EP_NAME.getExtensions()) {
       if (factory.handles(element)) {
         return factory;
@@ -25,23 +25,23 @@ public abstract class ModuleRendererFactory {
     return null;
   }
 
+  public boolean rendersLocationString() {
+    return false;
+  }
+
   protected boolean handles(final Object element) {
     return true;
   }
 
   /**
-   * This method might be invoked in the background, which will lock {@link java.awt.Component.AWTTreeLock}.
-   * In fact, this method is not needed since implementation only needs to provide the text and icon.
+   * This method might be invoked in the background, which will lock {@link Component.AWTTreeLock}.
+   * In fact, this method is not needed since implementation only needs to provide a text and an icon.
    *
    * @deprecated call/implement {@link #getModuleTextWithIcon} instead
    */
   @Deprecated
   public @NotNull DefaultListCellRenderer getModuleRenderer() {
     throw new AbstractMethodError("getModuleTextWithIcon(Object) must be implemented");
-  }
-
-  public boolean rendersLocationString() {
-    return false;
   }
 
   @RequiresReadLock
