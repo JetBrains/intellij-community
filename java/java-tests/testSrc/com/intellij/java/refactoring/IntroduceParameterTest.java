@@ -171,6 +171,12 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
              "method <b><code>R.name()</code></b> will no longer be record component <b><code>name</code></b> getter"));
   }
 
+  public void testCanonicalConstructor() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> 
+      doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false, false, 
+             "Constructor will no longer be canonical"));
+  }
+
   public void testParameterInFor() {
     configureByFile("/refactoring/introduceParameter/beforeParameterInFor.java");
     performForLocal(true, true, true, false, false);

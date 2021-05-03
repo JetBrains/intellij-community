@@ -262,6 +262,10 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                                                          RefactoringUIUtil.getDescription(recordComponent, true));
           conflicts.putValue(myMethodToReplaceIn, message);
         }
+        else if (JavaPsiRecordUtil.isCanonicalConstructor(myMethodToReplaceIn)) {
+          String message = JavaRefactoringBundle.message("0.will.no.longer.be.canonical.constructor");
+          conflicts.putValue(myMethodToReplaceIn, message);
+        }
       }
     }
 
