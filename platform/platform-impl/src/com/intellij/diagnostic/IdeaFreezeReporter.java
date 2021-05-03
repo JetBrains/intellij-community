@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.management.ThreadInfo;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
@@ -184,17 +186,17 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(dir, THROWABLE_FILE_NAME)))) {
             oos.writeObject(event.getThrowable());
           }
-          saveAppInfo(dir, false);
+          saveAppInfo(dir.toPath().resolve(APPINFO_FILE_NAME), false);
         }
         catch (IOException ignored) { }
       }
     }
   }
 
-  static void saveAppInfo(File dir, boolean overwrite) throws IOException {
-    File appInfoFile = new File(dir, APPINFO_FILE_NAME);
-    if (overwrite || !appInfoFile.exists()) {
-      FileUtil.writeToFile(appInfoFile, ITNProxy.getAppInfoString());
+  static void saveAppInfo(Path appInfoFile, boolean overwrite) throws IOException {
+    if (overwrite || !Files.exists(appInfoFile)) {
+      Files.createDirectories(appInfoFile.getParent());
+      Files.writeString(appInfoFile, ITNProxy.getAppInfoString());
     }
   }
 

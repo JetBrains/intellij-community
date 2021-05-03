@@ -206,6 +206,7 @@ final class PlatformModules {
         "netty-handler-proxy",
         "protobuf",
         "Log4J",
+        "fastutil-min",
       ))
 
       for (JpsLibrary library in additionalProjectLevelLibraries) {

@@ -1766,14 +1766,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
            (isChildrenCaseSensitivityCached ? Flags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
            (areChildrenCaseSensitive ? Flags.CHILDREN_CASE_SENSITIVE : 0);
   }
+
   private static final Hash.Strategy<VFileCreateEvent> CASE_INSENSITIVE_STRATEGY = new Hash.Strategy<>() {
     @Override
     public int hashCode(@Nullable VFileCreateEvent object) {
-      return StringUtil.stringHashCodeInsensitive(object.getChildName());
+      return object == null ? 0 : Strings.stringHashCodeInsensitive(object.getChildName());
     }
 
     @Override
     public boolean equals(VFileCreateEvent o1, VFileCreateEvent o2) {
+      if (o1 == o2) {
+        return true;
+      }
       return o2 != null && o1.getChildName().equalsIgnoreCase(o2.getChildName());
     }
   };

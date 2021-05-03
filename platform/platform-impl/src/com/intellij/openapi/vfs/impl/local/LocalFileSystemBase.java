@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -134,7 +135,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public String resolveSymLink(@NotNull VirtualFile file) {
     String result = FileSystemUtil.resolveSymLink(file.getPath());
-    return result != null ? FileUtil.toSystemIndependentName(result) : null;
+    return result != null ? FileUtilRt.toSystemIndependentName(result) : null;
   }
 
   @Override
@@ -155,7 +156,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   protected @Nullable String normalize(@NotNull String path) {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       if (path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) != '/') {
         path = path.substring(1);  // hack around `new File(path).toURI().toURL().getFile()`
       }
@@ -169,7 +170,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     try {
-      Path file = Paths.get(path);
+      Path file = Path.of(path);
       if (!file.isAbsolute() && !(SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':')) {
         path = file.toAbsolutePath().toString();
       }
@@ -333,7 +334,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (!auxCreateFile(parent, name)) {
       File ioFile = new File(ioParent, name);
       VirtualFile existing = parent.findChild(name);
-      boolean created = FileUtil.createIfDoesntExist(ioFile);
+      boolean created = FileUtilRt.createIfNotExists(ioFile);
       if (!created) {
         if (existing != null) {
           throw new IOException(IdeBundle.message("vfs.target.already.exists.error", parent.getPath() + "/" + name));
@@ -593,7 +594,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
-    String path = FileUtil.toSystemDependentName(file.getPath());
+    String path = FileUtilRt.toSystemDependentName(file.getPath());
     FileUtil.setReadOnlyAttribute(path, !writableFlag);
     if (FileUtil.canWrite(path) != writableFlag) {
       throw new IOException("Failed to change read-only flag for " + path);
@@ -698,7 +699,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   protected FileAttributes getAttributes(@NotNull String path) {
-    return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
+    return myAttrGetter.accessDiskWithCheckCanceled(FileUtilRt.toSystemDependentName(path));
   }
 
   private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);

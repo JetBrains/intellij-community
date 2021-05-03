@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.tools;
 
-import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -36,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class InspectionsUsagesCollector extends ProjectUsagesCollector {
+public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
   private static final Predicate<ScopeToolState> ENABLED = state -> !state.getTool().isEnabledByDefault() && state.isEnabled();
   private static final Predicate<ScopeToolState> DISABLED = state -> state.getTool().isEnabledByDefault() && !state.isEnabled();
 
@@ -237,16 +236,18 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
         return Collections.emptyMap();
       }
 
-      return ContainerUtil.map2MapNotNull(options, option -> {
+      Map<String, Attribute> set = new HashMap<>(options.size());
+      for (Content option : options) {
         if (option instanceof Element) {
-          Attribute nameAttr = ((Element)option).getAttribute("name");
-          Attribute valueAttr = ((Element)option).getAttribute("value");
+          Element el = (Element)option;
+          Attribute nameAttr = el.getAttribute("name");
+          Attribute valueAttr = el.getAttribute("value");
           if (nameAttr != null && valueAttr != null) {
-            return Pair.create(nameAttr.getValue(), valueAttr);
+            set.put(nameAttr.getValue(), valueAttr);
           }
         }
-        return null;
-      });
+      }
+      return set;
     }
     catch (Exception e) {
       return Collections.emptyMap();

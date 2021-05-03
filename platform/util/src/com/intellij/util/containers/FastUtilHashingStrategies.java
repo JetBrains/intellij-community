@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import it.unimi.dsi.fastutil.Hash;
@@ -8,15 +9,32 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.Serializable;
 import java.util.Objects;
 
 // must be not exposed to avoid exposing Hash.Strategy interface
 @ApiStatus.Internal
-public final class FastUtilHashingStrategies implements Hash.Strategy<CharSequence> {
-  private static final Hash.Strategy<CharSequence> CASE_SENSITIVE = new FastUtilHashingStrategies(true);
-  private static final Hash.Strategy<CharSequence> CASE_INSENSITIVE = new FastUtilHashingStrategies(false);
+public final class FastUtilHashingStrategies {
+  interface SerializableHashStrategy<T> extends Hash.Strategy<T>, Serializable {}
 
-  private final boolean isCaseSensitive;
+  private static final Hash.Strategy<CharSequence> CASE_SENSITIVE = new FastUtilCharSequenceHashingStrategy(true);
+  private static final Hash.Strategy<CharSequence> CASE_INSENSITIVE = new FastUtilCharSequenceHashingStrategy(false);
+
+  private FastUtilHashingStrategies() {
+  }
+
+  public static final Hash.Strategy<File> FILE_HASH_STRATEGY = new SerializableHashStrategy<File>() {
+    @Override
+    public int hashCode(@Nullable File o) {
+      return FileUtilRt.pathHashCode(o == null ? null : o.getPath());
+    }
+
+    @Override
+    public boolean equals(@Nullable File a, @Nullable File b) {
+      return FileUtilRt.pathsEqual(a == null ? null : a.getPath(), b == null ? null : b.getPath());
+    }
+  };
 
   public static @NotNull Hash.Strategy<CharSequence> getCharSequenceStrategy(boolean isCaseSensitive) {
     return isCaseSensitive ? CASE_SENSITIVE : CASE_INSENSITIVE;
@@ -48,8 +66,26 @@ public final class FastUtilHashingStrategies implements Hash.Strategy<CharSequen
       }
     };
   }
+}
 
-  private FastUtilHashingStrategies(boolean caseSensitive) {
+final class FastUtilCaseInsensitiveStringHashingStrategy implements Hash.Strategy<String> {
+  static final Hash.Strategy<String> INSTANCE = new FastUtilCaseInsensitiveStringHashingStrategy();
+
+  @Override
+  public int hashCode(String s) {
+    return s == null ? 0 : StringUtilRt.stringHashCodeInsensitive(s);
+  }
+
+  @Override
+  public boolean equals(String s1, String s2) {
+    return s1 == s2 || (s1 != null && s1.equalsIgnoreCase(s2));
+  }
+}
+
+final class FastUtilCharSequenceHashingStrategy implements Hash.Strategy<CharSequence> {
+  private final boolean isCaseSensitive;
+
+  FastUtilCharSequenceHashingStrategy(boolean caseSensitive) {
     isCaseSensitive = caseSensitive;
   }
 
@@ -64,20 +100,6 @@ public final class FastUtilHashingStrategies implements Hash.Strategy<CharSequen
   @Override
   public boolean equals(CharSequence s1, CharSequence s2) {
     return StringUtilRt.equal(s1, s2, isCaseSensitive);
-  }
-}
-
-final class FastUtilCaseInsensitiveStringHashingStrategy implements Hash.Strategy<String> {
-  static final Hash.Strategy<String> INSTANCE = new FastUtilCaseInsensitiveStringHashingStrategy();
-
-  @Override
-  public int hashCode(String s) {
-    return s == null ? 0 : StringUtil.stringHashCodeInsensitive(s);
-  }
-
-  @Override
-  public boolean equals(String s1, String s2) {
-    return s1 == s2 || (s1 != null && s1.equalsIgnoreCase(s2));
   }
 }
 

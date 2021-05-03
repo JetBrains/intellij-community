@@ -3,17 +3,17 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class FilePathHashingStrategy {
+  public static final TObjectHashingStrategy<CharSequence> INSTANCE = createForCharSequence(SystemInfoRt.isFileSystemCaseSensitive);
+
   private FilePathHashingStrategy() { }
 
   public static @NotNull TObjectHashingStrategy<String> create() {
     return create(SystemInfoRt.isFileSystemCaseSensitive);
-  }
-
-  public static @NotNull TObjectHashingStrategy<CharSequence> createForCharSequence() {
-    return createForCharSequence(SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   public static @NotNull TObjectHashingStrategy<CharSequence> createForCharSequence(boolean caseSensitive) {

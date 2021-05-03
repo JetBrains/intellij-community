@@ -4,7 +4,6 @@ package com.intellij.openapi.util.io;
 import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -41,12 +40,12 @@ import java.util.regex.Pattern;
 public class FileUtil extends FileUtilRt {
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
-  public static final int REGEX_PATTERN_FLAGS = SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
+  public static final int REGEX_PATTERN_FLAGS = SystemInfoRt.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
 
   @Deprecated
   public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = FilePathHashingStrategy.create();
-  public static final TObjectHashingStrategy<CharSequence> PATH_CHAR_SEQUENCE_HASHING_STRATEGY = FilePathHashingStrategy.createForCharSequence();
 
+  @Deprecated
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
     new TObjectHashingStrategy<File>() {
       @Override
@@ -133,11 +132,11 @@ public class FileUtil extends FileUtilRt {
   public static ThreeState isAncestorThreeState(@NotNull String ancestor, @NotNull String file, boolean strict) {
     String ancestorPath = toCanonicalPath(ancestor);
     String filePath = toCanonicalPath(file);
-    return startsWith(filePath, ancestorPath, strict, SystemInfo.isFileSystemCaseSensitive, true);
+    return startsWith(filePath, ancestorPath, strict, SystemInfoRt.isFileSystemCaseSensitive, true);
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String prefix) {
-    return startsWith(path, prefix, SystemInfo.isFileSystemCaseSensitive);
+    return startsWith(path, prefix, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive) {
@@ -331,7 +330,7 @@ public class FileUtil extends FileUtilRt {
   private static File renameToTempFileOrDelete(@NotNull File file) {
     String tempDir = getTempDirectory();
     boolean isSameDrive = true;
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       String tempDirDrive = tempDir.substring(0, 2);
       String fileDrive = file.getAbsolutePath().substring(0, 2);
       isSameDrive = tempDirDrive.equalsIgnoreCase(fileDrive);
@@ -413,7 +412,7 @@ public class FileUtil extends FileUtilRt {
       }
     }
 
-    if (SystemInfo.isUnix && fromFile.canExecute()) {
+    if (SystemInfoRt.isUnix && fromFile.canExecute()) {
       FileSystemUtil.clonePermissionsToExecute(fromFile.getPath(), toFile.getPath());
     }
   }
@@ -665,7 +664,7 @@ public class FileUtil extends FileUtilRt {
   public static String normalize(@NotNull String path) {
     int start = 0;
     boolean separator = false;
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       if (path.startsWith("//")) {
         start = 2;
         separator = true;
@@ -699,7 +698,7 @@ public class FileUtil extends FileUtilRt {
     final StringBuilder result = new StringBuilder(path.length());
     result.append(path, 0, prefixEnd);
     int start = prefixEnd;
-    if (start==0 && SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
+    if (start==0 && SystemInfoRt.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
       start = 2;
       result.append("//");
       separator = true;
@@ -728,7 +727,7 @@ public class FileUtil extends FileUtilRt {
 
   public static boolean rename(@NotNull File source, @NotNull String newName) throws IOException {
     File target = new File(source.getParent(), newName);
-    if (!SystemInfo.isFileSystemCaseSensitive && newName.equalsIgnoreCase(source.getName())) {
+    if (!SystemInfoRt.isFileSystemCaseSensitive && newName.equalsIgnoreCase(source.getName())) {
       File intermediate = createTempFile(source.getParentFile(), source.getName(), ".tmp", false, false);
       return source.renameTo(intermediate) && intermediate.renameTo(target);
     }
@@ -800,7 +799,7 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static @NlsSafe String resolveShortWindowsName(@NotNull String path) throws IOException {
     try {
-      return SystemInfo.isWindows && containsWindowsShortName(path) ? Paths.get(path).toRealPath(LinkOption.NOFOLLOW_LINKS).toString() : path;
+      return SystemInfoRt.isWindows && containsWindowsShortName(path) ? Paths.get(path).toRealPath(LinkOption.NOFOLLOW_LINKS).toString() : path;
     }
     catch (InvalidPathException e) {
       throw new IOException(e);
@@ -840,7 +839,7 @@ public class FileUtil extends FileUtilRt {
    */
   @Nullable
   public static String extractRootPath(@NotNull String normalizedPath) {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       if (normalizedPath.length() >= 2 && normalizedPath.charAt(1) == ':') {
         // drive letter
         return StringUtil.toUpperCase(normalizedPath.substring(0, 2));
@@ -1257,7 +1256,7 @@ public class FileUtil extends FileUtilRt {
   public static @NlsSafe String getLocationRelativeToUserHome(@Nullable String path, boolean unixOnly) {
     if (path == null) return null;
 
-    if (SystemInfo.isUnix || !unixOnly) {
+    if (SystemInfoRt.isUnix || !unixOnly) {
       File projectDir = new File(path);
       File userHomeDir = new File(SystemProperties.getUserHome());
       if (isAncestor(userHomeDir, projectDir, true)) {

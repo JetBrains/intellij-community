@@ -98,7 +98,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   public Map<String, String> getEntries() {
-    return ImmutableMap.copyOf(myState.getEntries());
+    return Map.copyOf(myState.getEntries());
   }
 
   public void setEntries(Map<String, String> entries) {

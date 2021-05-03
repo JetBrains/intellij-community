@@ -418,7 +418,7 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <K, V> Map<K, V> union(@NotNull Map<? extends K, ? extends V> map, @NotNull Map<? extends K, ? extends V> map2) {
-    Map<K, V> result = new THashMap<>(map.size() + map2.size());
+    Map<K, V> result = new HashMap<>(map.size() + map2.size());
     result.putAll(map);
     result.putAll(map2);
     return result;
@@ -866,7 +866,7 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2Map(@NotNull Collection<? extends T> collection,
                                                      @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
-    final Map<K, V> set = new THashMap<>(collection.size());
+    final Map<K, V> set = new HashMap<>(collection.size());
     for (T t : collection) {
       Pair<? extends K, ? extends V> pair = mapper.fun(t);
       set.put(pair.first, pair.second);
@@ -883,7 +883,7 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2MapNotNull(@NotNull Collection<? extends T> collection,
                                                             @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
-    final Map<K, V> set = new THashMap<>(collection.size());
+    Map<K, V> set = new HashMap<>(collection.size());
     for (T t : collection) {
       Pair<? extends K, ? extends V> pair = mapper.fun(t);
       if (pair != null) {

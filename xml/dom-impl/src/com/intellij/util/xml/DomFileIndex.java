@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -53,9 +51,18 @@ public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomInd
       public Map<DomIndexKey, Void> map(@NotNull FileContent inputData) {
         XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         String rootTagName = header.getRootTagLocalName();
-        if (rootTagName == null) return Collections.emptyMap();
-        var namespaces = Arrays.asList(header.getPublicId(), header.getSystemId(), header.getRootTagNamespace(), NULL_NAMESPACE);
-        return ContainerUtil.map2MapNotNull(namespaces, s -> s == null ? null : Pair.create(new DomIndexKey(rootTagName, s), null));
+        if (rootTagName == null) {
+          return Collections.emptyMap();
+        }
+
+        String[] namespaces = new String[]{header.getPublicId(), header.getSystemId(), header.getRootTagNamespace(), NULL_NAMESPACE};
+        Map<DomIndexKey, Void> set = new HashMap<>(namespaces.length);
+        for (String t : namespaces) {
+          if (t != null) {
+            set.put(new DomIndexKey(rootTagName, t), null);
+          }
+        }
+        return set;
       }
     };
   }

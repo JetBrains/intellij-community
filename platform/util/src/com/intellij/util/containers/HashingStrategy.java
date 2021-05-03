@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,7 @@ class CaseInsensitiveCharSequenceHashingStrategy implements HashingStrategy<Char
 
   @Override
   public boolean equals(CharSequence s1, CharSequence s2) {
-    return StringUtil.equalsIgnoreCase(s1, s2);
+    return StringUtilRt.equal(s1, s2, false);
   }
 }
 

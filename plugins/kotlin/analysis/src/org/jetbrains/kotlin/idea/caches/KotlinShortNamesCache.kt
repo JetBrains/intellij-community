@@ -20,7 +20,6 @@ import com.intellij.util.Processor
 import com.intellij.util.Processors
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.IdFilter
-import gnu.trove.THashSet
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.defaultImplsChild
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
@@ -334,15 +333,15 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
     }
 
     private class CancelableArrayCollectProcessor<T> : Processor<T> {
-        val troveSet = THashSet<T>()
-        private val processor = Processors.cancelableCollectProcessor<T>(troveSet)
+        private val set = HashSet<T>()
+        private val processor = Processors.cancelableCollectProcessor<T>(set)
 
         override fun process(value: T): Boolean {
             return processor.process(value)
         }
 
-        val size: Int get() = troveSet.size
+        val size: Int get() = set.size
 
-        fun toArray(a: Array<T>): Array<T> = troveSet.toArray(a)
+        fun toArray(a: Array<T>): Array<T> = set.toArray(a)
     }
 }
