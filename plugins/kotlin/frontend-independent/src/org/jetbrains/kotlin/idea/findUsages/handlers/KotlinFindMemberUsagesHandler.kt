@@ -85,7 +85,8 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                 acceptCallableOverrides = true,
                 acceptOverloads = kotlinOptions.isIncludeOverloadUsages,
                 acceptExtensionsOfDeclarationClass = kotlinOptions.isIncludeOverloadUsages,
-                searchForExpectedUsages = kotlinOptions.searchExpected
+                searchForExpectedUsages = kotlinOptions.searchExpected,
+                searchForComponentConventions = !forHighlight
             )
         }
 

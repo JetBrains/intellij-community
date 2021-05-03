@@ -26,6 +26,16 @@ public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTes
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("destructingDeclaration.kt")
+    public void testDestructingDeclaration() throws Exception {
+        runTest("testData/usageHighlighter/destructingDeclaration.kt");
+    }
+
+    @TestMetadata("destructingDeclarationLambdaParams.kt")
+    public void testDestructingDeclarationLambdaParams() throws Exception {
+        runTest("testData/usageHighlighter/destructingDeclarationLambdaParams.kt");
+    }
+
     @TestMetadata("implicitIt.kt")
     public void testImplicitIt() throws Exception {
         runTest("testData/usageHighlighter/implicitIt.kt");

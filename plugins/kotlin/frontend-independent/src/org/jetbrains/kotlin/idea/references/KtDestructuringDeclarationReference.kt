@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 
 abstract class KtDestructuringDeclarationReference(
     element: KtDestructuringDeclarationEntry
-) : AbstractKtReference<KtDestructuringDeclarationEntry>(element) {
+) : KtMultiReference<KtDestructuringDeclarationEntry>(element) {
 
     override fun getRangeInElement() = TextRange(0, element.textLength)
 
