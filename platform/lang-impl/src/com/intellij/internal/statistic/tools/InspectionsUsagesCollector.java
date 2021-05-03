@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -19,10 +20,13 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileEditor.impl.OpenFilesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.search.scope.*;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
@@ -41,8 +45,14 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
 
   private static final StringEventField INSPECTION_ID_FIELD = EventFields.StringValidatedByCustomRule("inspection_id", "tool");
   private static final StringEventField SCOPE_FIELD = EventFields.String("scope", List.of(
-    "All", "All Changed Files", "Generated Files", "Project Files and Vendor", "Non-Project Files", "Project Non-Source Files",
-    "Open Files", "Project Files", "Production", "Scratches and Consoles", "Project Source Files", "Tests"
+    CustomScopesProviderEx.getAllScope().getScopeId(),
+    ProjectFilesScope.INSTANCE.getScopeId(),
+    NonProjectFilesScope.NAME,
+    ProjectProductionScope.INSTANCE.getScopeId(),
+    TestsScope.NAME,
+    OpenFilesScope.INSTANCE.getScopeId(),
+    GeneratedFilesScope.INSTANCE.getScopeId(),
+    ScratchesNamedScope.ID
   ));
   private static final StringEventField SEVERITY_FIELD = EventFields.String("severity", ContainerUtil.map(HighlightSeverity.DEFAULT_SEVERITIES, severity -> severity.getName()));
   private static final BooleanEventField ENABLED_FIELD = EventFields.Boolean("enabled");
@@ -73,7 +83,7 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
     new StringEventField.ValidatedByAllowedValues("option_type", Arrays.asList("boolean", "integer"));
   private static final StringEventField OPTION_NAME_FIELD = EventFields.StringValidatedByCustomRule("option_name", "plugin_info");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 8);
+  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 9);
 
   private static final VarargEventId NOT_DEFAULT_STATE =
     GROUP.registerVarargEvent("not.default.state",
@@ -260,7 +270,7 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
       return null;
     }
 
-    if (!(tool.getScopeName().equals("All") &&
+    if (!(tool.getScopeName().equals(CustomScopesProviderEx.getAllScope().getScopeId()) &&
           tool.getLevel().getSeverity().getName().equals(tool.getTool().getDefaultLevel().getSeverity().getName()))) {
       return NOT_DEFAULT_SCOPE_AND_SEVERITY.metric(
         tool.getTool().getID(),
