@@ -75,6 +75,10 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
     doHighlightingTest();
   }
 
+  public void testContentDescriptorNoPackageInMainHighlighting() {
+    doHighlightingTest();
+  }
+
   private void doHighlightingTest() {
     doHighlightingTest("anotherModule");
   }
