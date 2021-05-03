@@ -218,7 +218,7 @@ public class AtomicConversionRule extends TypeConversionRule {
         }
         return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set($val$)");
       }
-      if (PsiUtil.isLanguageLevel8OrHigher(context)) {
+      if (PsiUtil.isLanguageLevel8OrHigher(context) && !PsiType.BOOLEAN.equals(from)) {
         final String name =
           JavaCodeStyleManager.getInstance(context.getProject()).suggestUniqueVariableName("v", context, false);
         return new TypeConversionDescriptor("$qualifier$" + sign + "$val$",
