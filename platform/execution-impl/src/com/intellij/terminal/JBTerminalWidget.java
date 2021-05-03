@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
-import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkWithHoverInfo;
@@ -16,14 +15,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
@@ -51,7 +48,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -205,54 +201,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       }
     });
     return bar;
-  }
-
-  @Override
-  public List<TerminalAction> getActions() {
-    List<TerminalAction> actions = super.getActions();
-    if (isInTerminalToolWindow()) {
-      JBTerminalSystemSettingsProviderBase settingsProvider = getSettingsProvider();
-      actions.add(new TerminalAction(settingsProvider.getNewSessionActionPresentation(), input -> {
-        myListener.onNewSession();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(settingsProvider.getCloseSessionActionPresentation(), input -> {
-        myListener.onSessionClosed();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-
-      actions.add(TerminalSplitAction.create(true, myListener).withMnemonicKey(KeyEvent.VK_V).separatorBefore(true));
-      actions.add(TerminalSplitAction.create(false, myListener).withMnemonicKey(KeyEvent.VK_H));
-      if (myListener != null && myListener.isGotoNextSplitTerminalAvailable()) {
-        actions.add(settingsProvider.getGotoNextSplitTerminalAction(myListener, true));
-        actions.add(settingsProvider.getGotoNextSplitTerminalAction(myListener, false));
-      }
-      actions.add(new TerminalAction(settingsProvider.getPreviousTabActionPresentation(), input -> {
-        myListener.onPreviousTabSelected();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(settingsProvider.getNextTabActionPresentation(), input -> {
-        myListener.onNextTabSelected();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(settingsProvider.getMoveTabRightActionPresentation(), input -> {
-        myListener.moveTabRight();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_R).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabRight()));
-      actions.add(new TerminalAction(settingsProvider.getMoveTabLeftActionPresentation(), input -> {
-        myListener.moveTabLeft();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_L).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabLeft()));
-      actions.add(new TerminalAction(settingsProvider.getShowTabsActionPresentation(), input -> {
-        myListener.showTabs();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-    }
-    return actions;
-  }
-
-  private boolean isInTerminalToolWindow() {
-    return isTerminalToolWindow(getTerminalPanel().getContextToolWindow());
   }
 
   public int getFontSize() {

@@ -11,6 +11,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.JBTerminalWidgetListener;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import org.jetbrains.annotations.NonNls;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class TerminalActionUtil {
 
@@ -55,5 +57,17 @@ public class TerminalActionUtil {
       ActionUtil.performActionDumbAwareWithCallbacks(action, AnActionEvent.createFromInputEvent(keyEvent, "Terminal", null, dataContext));
       return true;
     });
+  }
+
+  public static TerminalAction createTerminalAction(@NotNull JBTerminalWidget widget,
+                                                    @NotNull TerminalActionPresentation actionPresentation,
+                                                    @NotNull Predicate<JBTerminalWidgetListener> action) {
+    return new TerminalAction(actionPresentation, input -> {
+      JBTerminalWidgetListener listener = widget.getListener();
+      if (listener != null) {
+        return action.test(listener);
+      }
+      return false;
+    }).withEnabledSupplier(() -> widget.getListener() != null);
   }
 }
