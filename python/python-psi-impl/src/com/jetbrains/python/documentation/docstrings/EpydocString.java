@@ -2,7 +2,7 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xml.util.XmlTagUtilBase;
+import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,7 +178,7 @@ public class EpydocString extends TagBasedDocString {
   private static class HTMLConverter extends MarkupConverter {
     @Override
     protected void appendText(String text) {
-      myResult.append(joinLines(XmlTagUtilBase.escapeString(text, false), true));
+      myResult.append(joinLines(XmlStringUtil.escapeString(text, false), true));
     }
 
     @Override

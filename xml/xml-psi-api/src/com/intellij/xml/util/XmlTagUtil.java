@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.lang.ASTNode;
@@ -21,9 +21,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
-public final class XmlTagUtil extends XmlTagUtilBase {
-  private static final Object2IntMap<String> ourCharacterEntities = new Object2IntOpenHashMap<>();
+public final class XmlTagUtil {
+  private static final Object2IntMap<String> ourCharacterEntities = new Object2IntOpenHashMap<>(6);
 
   static {
     ourCharacterEntities.put("lt", '<');
@@ -145,7 +144,6 @@ public final class XmlTagUtil extends XmlTagUtilBase {
   @Nullable
   public static TextRange getEndTagRange(@NotNull XmlTag tag) {
     XmlToken tagName = getEndTagNameElement(tag);
-
     return getTagRange(tagName, XmlTokenType.XML_END_TAG_START);
   }
 
