@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.Change
 class VcsStatisticsCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("vcs", 8)
+    val GROUP = EventLogGroup("vcs", 9)
 
     @JvmField
     val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
@@ -32,6 +32,12 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
     val NON_MODAL_COMMIT_PROMOTION_SHOWN = GROUP.registerEvent("non.modal.commit.promotion.shown")
     val NON_MODAL_COMMIT_PROMOTION_ACCEPTED = GROUP.registerEvent("non.modal.commit.promotion.accepted")
     val NON_MODAL_COMMIT_PROMOTION_REJECTED = GROUP.registerEvent("non.modal.commit.promotion.rejected")
+
+    @JvmField
+    val CLONE = GROUP.registerEvent("clone.invoked", EventFields.Class("clone_dialog_extension"))
+
+    @JvmField
+    val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
 
     @JvmStatic
     fun logRefreshActionPerformed(project: Project,
