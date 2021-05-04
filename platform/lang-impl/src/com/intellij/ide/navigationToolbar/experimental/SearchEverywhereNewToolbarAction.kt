@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar.experimental
 
 import com.intellij.icons.AllIcons
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -27,7 +28,7 @@ import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener {
   private val margin = JBUI.scale(4)
-  private var hotKeyWasUsed = Registry.`is`("ide.suppress.double.click.handler")
+  private var hotKeyWasUsed = AdvancedSettings.getBoolean("ide.suppress.double.click.handler")
   private var subscribedForDoubleShift = false
 
   init {
