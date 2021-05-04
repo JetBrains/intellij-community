@@ -28,8 +28,6 @@
                          key="configurable.PyDependenciesConfigurable.display.name"
                          provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
 
-    <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
-
     <statusBarWidgetFactory id="pythonInterpreterWidget"
                             implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
                             order="after codeStyleWidget, before gitWidget, before hgWidget, before notificationsWidget"/>
