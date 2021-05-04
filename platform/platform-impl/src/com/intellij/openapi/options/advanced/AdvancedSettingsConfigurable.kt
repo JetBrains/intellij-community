@@ -35,7 +35,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
     val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.groupBy {
       it.group() ?: ApplicationBundle.message("group.advanced.settings.other")
-    }
+    }.toSortedMap()
 
     for ((group, extensions) in groupedExtensions) {
       titledRow(group) {
