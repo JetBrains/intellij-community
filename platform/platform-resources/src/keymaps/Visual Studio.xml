@@ -83,7 +83,7 @@
   </action>
   <action id="ExpressionTypeInfo"/>
   <action id="RunClass">
-    <keyboard-shortcut first-keystroke="control F5"/>
+    <keyboard-shortcut first-keystroke="control alt F5"/>
   </action>
   <action id="FindNext">
     <keyboard-shortcut first-keystroke="F3"/><!--VS Edit.FindNext-->
