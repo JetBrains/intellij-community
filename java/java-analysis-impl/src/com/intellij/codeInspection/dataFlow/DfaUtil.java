@@ -332,11 +332,6 @@ public final class DfaUtil {
            JAVA_UTIL_COLLECTIONS.equals(field.getContainingClass().getQualifiedName());
   }
 
-  public static boolean isNaN(Object value) {
-    return value instanceof Double && ((Double)value).isNaN() ||
-           value instanceof Float && ((Float)value).isNaN();
-  }
-
   /**
    * @param poset input poset (mutable)
    * @param predicate non-strict partial order over the input poset

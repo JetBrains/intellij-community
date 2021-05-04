@@ -700,13 +700,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (!applyBinOpRelations(dfaLeft, relationType, dfaRight)) return false;
 
-    if (dfaRight instanceof DfaTypeValue) {
-      if ((relationType == RelationType.EQ || relationType.isInequality()) &&
-          !applyUnboxedRelation(dfaLeft, dfaRight, relationType.isInequality())) {
-        return false;
-      }
-    }
-
     return applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
   }
 
@@ -926,8 +919,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean applySpecialFieldEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
     Couple<DfaValue> pair = left instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)left, right) :
                             right instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)right, left) : null;
-    if (pair == null || isNaN(pair.getFirst()) || isNaN(pair.getSecond())) return true;
-    return applyCondition(pair.getFirst().eq(pair.getSecond()));
+    if (pair == null) return true;
+    DfType result = getDfType(pair.getFirst()).meet(getDfType(pair.getSecond()));
+    return meetDfType(pair.getFirst(), result) && meetDfType(pair.getSecond(), result);
   }
 
   private boolean applyUnboxedRelation(@NotNull DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
@@ -955,11 +949,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
     return applyRelation(unboxedLeft, unboxedRight, negated);
-  }
-
-  private static boolean isNaN(@NotNull DfaValue dfa) {
-    DfType type = dfa.getDfType();
-    return type instanceof DfConstantType && DfaUtil.isNaN(((DfConstantType<?>)type).getValue());
   }
 
   private boolean applyRelation(@NotNull DfaValue dfaLeft, @NotNull DfaValue dfaRight, boolean isNegated) {
