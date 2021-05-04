@@ -31,14 +31,14 @@ class DfDoubleRangeType implements DfDoubleType {
       return new DfDoubleRangeType(from, to, false, nan);
     }
     if (to == Double.POSITIVE_INFINITY) {
-      to = Math.nextDown(from);
+      to = nextDown(from);
       from = Double.NEGATIVE_INFINITY;
       invert = !invert;
     }
     if (!nan && !invert && Double.compare(from, to) == 0) {
       return new DfDoubleConstantType(from);
     }
-    if (!nan && invert && from == Double.NEGATIVE_INFINITY && to == Math.nextDown(Double.POSITIVE_INFINITY)) {
+    if (!nan && invert && from == Double.NEGATIVE_INFINITY && to == nextDown(Double.POSITIVE_INFINITY)) {
       return new DfDoubleConstantType(Double.POSITIVE_INFINITY);
     }
     return new DfDoubleRangeType(from, to, invert, nan);
@@ -91,10 +91,10 @@ class DfDoubleRangeType implements DfDoubleType {
     DfDoubleRangeType res = range.myNaN && !myNaN ? new DfDoubleRangeType(myFrom, myTo, myInvert, true) : this;
     if (range.myInvert) {
       if (range.myFrom > Double.NEGATIVE_INFINITY) {
-        res = res.joinRange(Double.NEGATIVE_INFINITY, Math.nextDown(range.myFrom));
+        res = res.joinRange(Double.NEGATIVE_INFINITY, nextDown(range.myFrom));
       }
       if (range.myTo < Double.POSITIVE_INFINITY) {
-        res = res.joinRange(Math.nextUp(range.myTo), Double.POSITIVE_INFINITY);
+        res = res.joinRange(nextUp(range.myTo), Double.POSITIVE_INFINITY);
       }
     } else {
       res = res.joinRange(range.myFrom, range.myTo);
@@ -105,16 +105,17 @@ class DfDoubleRangeType implements DfDoubleType {
   private @NotNull DfDoubleRangeType joinRange(double from, double to) {
     if (Double.compare(from, to) > 0) return this;
     if (myInvert) {
+      if (Double.compare(to, myFrom) < 0 || Double.compare(from, myTo) > 0) return this;
       double fromCmp = Double.compare(myFrom, from);
       double toCmp = Double.compare(to, myTo);
       if (fromCmp >= 0 && toCmp >= 0 || fromCmp < 0 && toCmp < 0) {
         return (DfDoubleRangeType)create(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, myNaN);
       }
       if (fromCmp >= 0 && toCmp < 0) {
-        return (DfDoubleRangeType)create(Math.nextUp(to), myTo, true, myNaN);
+        return (DfDoubleRangeType)create(nextUp(to), myTo, true, myNaN);
       }
       if (fromCmp < 0 && toCmp >= 0) {
-        return (DfDoubleRangeType)create(myFrom, Math.nextDown(from), true, myNaN);
+        return (DfDoubleRangeType)create(myFrom, nextDown(from), true, myNaN);
       }
       throw new AssertionError("Impossible!");
     } else {
@@ -138,10 +139,10 @@ class DfDoubleRangeType implements DfDoubleType {
         double fromCmp = Double.compare(myFrom, range.myFrom);
         double toCmp = Double.compare(range.myTo, myTo);
         if (fromCmp >= 0) {
-          return create(Math.nextUp(range.myTo), myTo, false, nan);
+          return create(nextUp(range.myTo), myTo, false, nan);
         }
         if (toCmp >= 0) {
-          return create(myFrom, Math.nextDown(range.myFrom), false, nan);
+          return create(myFrom, nextDown(range.myFrom), false, nan);
         }
         if (myFrom == Double.NEGATIVE_INFINITY && myTo == Double.POSITIVE_INFINITY) {
           return create(range.myFrom, range.myTo, false, nan);
@@ -159,26 +160,21 @@ class DfDoubleRangeType implements DfDoubleType {
       }
     }
   }
-  
-  private double min() {
-    return myInvert ? myFrom == Double.NEGATIVE_INFINITY ? Math.nextUp(myTo) : Double.NEGATIVE_INFINITY : myFrom;
-  }
-
-  private double max() {
-    return myInvert ? myTo == Double.POSITIVE_INFINITY ? Math.nextDown(myFrom) : Double.POSITIVE_INFINITY : myTo;
-  }
 
   @Override
   public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
-    double max = max();
-    double min = min();
     if (myInvert && relationType == RelationType.EQ) {
       double from = myFrom, to = myTo;
       if (from == 0.0) from = -0.0;
       if (to == 0.0) to = 0.0;
       return create(from, to, true, true);
     }
-    return fromRelation(relationType, min, max);
+    if (myInvert) {
+      double max = myTo == Double.POSITIVE_INFINITY ? nextDown(myFrom) : Double.POSITIVE_INFINITY;
+      double min = myFrom == Double.NEGATIVE_INFINITY ? nextUp(myTo) : Double.NEGATIVE_INFINITY;
+      return fromRelation(relationType, min, max);
+    }
+    return fromRelation(relationType, myFrom, myTo);
   }
 
   static @NotNull DfType fromRelation(@NotNull RelationType relationType, double min, double max) {
@@ -186,25 +182,13 @@ class DfDoubleRangeType implements DfDoubleType {
     assert !Double.isNaN(max);
     switch (relationType) {
       case LE:
-        if (max == 0.0) { // 0.0 or -0.0
-          return create(Double.NEGATIVE_INFINITY, 0.0, false, true);
-        }
-        return create(Double.NEGATIVE_INFINITY, max, false, true);
+        return create(Double.NEGATIVE_INFINITY, max == 0.0 ? 0.0 : max, false, true);
       case LT:
-        if (max == 0.0) { // 0.0 or -0.0
-          return create(Double.NEGATIVE_INFINITY, -Double.MIN_VALUE, false, true);
-        }
         return max == Double.NEGATIVE_INFINITY ? DfTypes.DOUBLE_NAN :
                create(Double.NEGATIVE_INFINITY, Math.nextDown(max), false, true);
       case GE:
-        if (min == 0.0) { // 0.0 or -0.0
-          return create(-0.0, Double.POSITIVE_INFINITY, false, true);
-        }
-        return create(min, Double.POSITIVE_INFINITY, false, true);
+        return create(min == 0.0 ? -0.0 : min, Double.POSITIVE_INFINITY, false, true);
       case GT:
-        if (min == 0.0) { // 0.0 or -0.0
-          return create(Double.MIN_VALUE, Double.POSITIVE_INFINITY, false, true);
-        }
         return min == Double.POSITIVE_INFINITY ? DfTypes.DOUBLE_NAN :
                create(Math.nextUp(min), Double.POSITIVE_INFINITY, false, true);
       case EQ:
@@ -236,8 +220,8 @@ class DfDoubleRangeType implements DfDoubleType {
       if (myFrom == myTo) {
         range = "!= " + (Double.compare(myFrom, -0.0) == 0 && Double.compare(myTo, 0.0) == 0 ? "\u00B10.0" : myFrom);
       } else {
-        String first = myFrom == Double.NEGATIVE_INFINITY ? "" : formatRange(Double.NEGATIVE_INFINITY, Math.nextDown(myFrom));
-        String second = myTo == Double.POSITIVE_INFINITY ? "" : formatRange(Math.nextUp(myTo), Double.POSITIVE_INFINITY);
+        String first = myFrom == Double.NEGATIVE_INFINITY ? "" : formatRange(Double.NEGATIVE_INFINITY, nextDown(myFrom));
+        String second = myTo == Double.POSITIVE_INFINITY ? "" : formatRange(nextUp(myTo), Double.POSITIVE_INFINITY);
         range = StreamEx.of(first, second).without("").joining(" || ");
       }
     } else {
@@ -256,11 +240,29 @@ class DfDoubleRangeType implements DfDoubleType {
     return result; 
   }
 
+  private static double nextDown(double val) {
+    // Math.nextDown returns -MIN_VALUE for 0.0. This is suitable for relations
+    // (see fromRelation) but not suitable for inverted range boundary
+    if (Double.compare(val, 0.0) == 0) {
+      return -0.0;
+    }
+    return Math.nextDown(val);
+  }
+
+  private static double nextUp(double val) {
+    // Math.nextUp returns MIN_VALUE for -0.0. This is suitable for relations
+    // (see fromRelation) but not suitable for inverted range boundary
+    if (Double.compare(val, -0.0) == 0) {
+      return 0.0;
+    }
+    return Math.nextUp(val);
+  }
+
   private static String formatRange(double from, double to) {
     int cmp = Double.compare(from, to);
     if (cmp == 0) return Double.toString(from);
     if (Double.compare(from, -0.0) == 0 && Double.compare(to, 0.0) == 0) {
-      return "\u00B10.0";
+      return "\u00B10.0"; // \u00B1 = +/-
     }
     if (from == Double.NEGATIVE_INFINITY) {
       if (to == Double.POSITIVE_INFINITY) return "";
@@ -274,7 +276,7 @@ class DfDoubleRangeType implements DfDoubleType {
 
   @NotNull
   private static String formatFrom(double from) {
-    double prev = Math.nextDown(from);
+    double prev = nextDown(from);
     if (Double.toString(prev).length() < Double.toString(from).length()) {
       return "> " + prev;
     }
@@ -283,7 +285,7 @@ class DfDoubleRangeType implements DfDoubleType {
 
   @NotNull
   private static String formatTo(double to) {
-    double next = Math.nextUp(to);
+    double next = nextUp(to);
     if (Double.toString(next).length() < Double.toString(to).length()) {
       return "< " + next;
     }

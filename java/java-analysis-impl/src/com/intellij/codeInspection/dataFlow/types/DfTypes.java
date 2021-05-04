@@ -204,6 +204,16 @@ public final class DfTypes {
   }
 
   /**
+   * @param min minimal value (inclusive, not NaN)
+   * @param max maximal value (inclusive, not NaN)
+   * @return a float type that contains all the values between min and max
+   */
+  public static DfType floatRange(float min, float max) {
+    if (min > max) throw new IllegalArgumentException();
+    return DfFloatRangeType.create(min, max, false, false);
+  }
+
+  /**
    * A type that corresponds to JVM double type
    */
   public static final DfDoubleType DOUBLE = new DfDoubleRangeType(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, true);
@@ -219,6 +229,16 @@ public final class DfTypes {
    */
   public static DfDoubleConstantType doubleValue(double value) {
     return new DfDoubleConstantType(value);
+  }
+
+  /**
+   * @param min minimal value (inclusive, not NaN)
+   * @param max maximal value (inclusive, not NaN)
+   * @return a double type that contains all the values between min and max
+   */
+  public static DfType doubleRange(double min, double max) {
+    if (min > max) throw new IllegalArgumentException();
+    return DfDoubleRangeType.create(min, max, false, false);
   }
 
   /**

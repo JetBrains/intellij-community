@@ -17,7 +17,7 @@ class DfFloatRangeType implements DfFloatType {
     myInvert = invert;
     myNaN = nan;
   }
-  
+
   static DfType create(float from, float to, boolean invert, boolean nan) {
     assert !Float.isNaN(from);
     assert !Float.isNaN(to);
@@ -31,18 +31,18 @@ class DfFloatRangeType implements DfFloatType {
       return new DfFloatRangeType(from, to, false, nan);
     }
     if (to == Float.POSITIVE_INFINITY) {
-      to = Math.nextDown(from);
+      to = nextDown(from);
       from = Float.NEGATIVE_INFINITY;
       invert = !invert;
     }
     if (!nan && !invert && Float.compare(from, to) == 0) {
       return new DfFloatConstantType(from);
     }
-    if (!nan && invert && from == Float.NEGATIVE_INFINITY && to == Math.nextDown(Float.POSITIVE_INFINITY)) {
+    if (!nan && invert && from == Float.NEGATIVE_INFINITY && to == nextDown(Float.POSITIVE_INFINITY)) {
       return new DfFloatConstantType(Float.POSITIVE_INFINITY);
     }
     return new DfFloatRangeType(from, to, invert, nan);
-  } 
+  }
 
   @Override
   public boolean isSuperType(@NotNull DfType other) {
@@ -64,7 +64,7 @@ class DfFloatRangeType implements DfFloatType {
         if (range.myInvert) {
           return from >= 0 && to >= 0;
         } else {
-          return Float.compare(range.myTo, myFrom) < 0 || Float.compare(range.myFrom, myTo) > 0; 
+          return Float.compare(range.myTo, myFrom) < 0 || Float.compare(range.myFrom, myTo) > 0;
         }
       } else {
         return !range.myInvert && from <= 0 && to <= 0;
@@ -91,10 +91,10 @@ class DfFloatRangeType implements DfFloatType {
     DfFloatRangeType res = range.myNaN && !myNaN ? new DfFloatRangeType(myFrom, myTo, myInvert, true) : this;
     if (range.myInvert) {
       if (range.myFrom > Float.NEGATIVE_INFINITY) {
-        res = res.joinRange(Float.NEGATIVE_INFINITY, Math.nextDown(range.myFrom));
+        res = res.joinRange(Float.NEGATIVE_INFINITY, nextDown(range.myFrom));
       }
       if (range.myTo < Float.POSITIVE_INFINITY) {
-        res = res.joinRange(Math.nextUp(range.myTo), Float.POSITIVE_INFINITY);
+        res = res.joinRange(nextUp(range.myTo), Float.POSITIVE_INFINITY);
       }
     } else {
       res = res.joinRange(range.myFrom, range.myTo);
@@ -105,16 +105,17 @@ class DfFloatRangeType implements DfFloatType {
   private @NotNull DfFloatRangeType joinRange(float from, float to) {
     if (Float.compare(from, to) > 0) return this;
     if (myInvert) {
+      if (Float.compare(to, myFrom) < 0 || Float.compare(from, myTo) > 0) return this;
       float fromCmp = Float.compare(myFrom, from);
       float toCmp = Float.compare(to, myTo);
       if (fromCmp >= 0 && toCmp >= 0 || fromCmp < 0 && toCmp < 0) {
         return (DfFloatRangeType)create(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, false, myNaN);
       }
       if (fromCmp >= 0 && toCmp < 0) {
-        return (DfFloatRangeType)create(Math.nextUp(to), myTo, true, myNaN);
+        return (DfFloatRangeType)create(nextUp(to), myTo, true, myNaN);
       }
       if (fromCmp < 0 && toCmp >= 0) {
-        return (DfFloatRangeType)create(myFrom, Math.nextDown(from), true, myNaN);
+        return (DfFloatRangeType)create(myFrom, nextDown(from), true, myNaN);
       }
       throw new AssertionError("Impossible!");
     } else {
@@ -133,15 +134,15 @@ class DfFloatRangeType implements DfFloatType {
       if (!range.myInvert) {
         float from = Math.max(myFrom, range.myFrom);
         float to = Math.min(myTo, range.myTo);
-        return create(from, to, false, nan); 
+        return create(from, to, false, nan);
       } else {
         float fromCmp = Float.compare(myFrom, range.myFrom);
         float toCmp = Float.compare(range.myTo, myTo);
         if (fromCmp >= 0) {
-          return create(Math.nextUp(range.myTo), myTo, false, nan);
+          return create(nextUp(range.myTo), myTo, false, nan);
         }
         if (toCmp >= 0) {
-          return create(myFrom, Math.nextDown(range.myFrom), false, nan);
+          return create(myFrom, nextDown(range.myFrom), false, nan);
         }
         if (myFrom == Float.NEGATIVE_INFINITY && myTo == Float.POSITIVE_INFINITY) {
           return create(range.myFrom, range.myTo, false, nan);
@@ -159,26 +160,21 @@ class DfFloatRangeType implements DfFloatType {
       }
     }
   }
-  
-  private float min() {
-    return myInvert ? myFrom == Float.NEGATIVE_INFINITY ? Math.nextUp(myTo) : Float.NEGATIVE_INFINITY : myFrom;
-  }
-
-  private float max() {
-    return myInvert ? myTo == Float.POSITIVE_INFINITY ? Math.nextDown(myFrom) : Float.POSITIVE_INFINITY : myTo;
-  }
 
   @Override
   public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
-    float max = max();
-    float min = min();
     if (myInvert && relationType == RelationType.EQ) {
       float from = myFrom, to = myTo;
       if (from == 0.0f) from = -0.0f;
       if (to == 0.0f) to = 0.0f;
       return create(from, to, true, true);
     }
-    return fromRelation(relationType, min, max);
+    if (myInvert) {
+      float max = myTo == Float.POSITIVE_INFINITY ? nextDown(myFrom) : Float.POSITIVE_INFINITY;
+      float min = myFrom == Float.NEGATIVE_INFINITY ? nextUp(myTo) : Float.NEGATIVE_INFINITY;
+      return fromRelation(relationType, min, max);
+    }
+    return fromRelation(relationType, myFrom, myTo);
   }
 
   static @NotNull DfType fromRelation(@NotNull RelationType relationType, float min, float max) {
@@ -186,25 +182,13 @@ class DfFloatRangeType implements DfFloatType {
     assert !Float.isNaN(max);
     switch (relationType) {
       case LE:
-        if (max == 0.0f) { // 0.0f or -0.0f
-          return create(Float.NEGATIVE_INFINITY, 0.0f, false, true);
-        }
-        return create(Float.NEGATIVE_INFINITY, max, false, true);
+        return create(Float.NEGATIVE_INFINITY, max == 0.0f ? 0.0f : max, false, true);
       case LT:
-        if (max == 0.0f) { // 0.0f or -0.0f
-          return create(Float.NEGATIVE_INFINITY, -Float.MIN_VALUE, false, true);
-        }
         return max == Float.NEGATIVE_INFINITY ? DfTypes.FLOAT_NAN :
                create(Float.NEGATIVE_INFINITY, Math.nextDown(max), false, true);
       case GE:
-        if (min == 0.0f) { // 0.0f or -0.0f
-          return create(-0.0f, Float.POSITIVE_INFINITY, false, true);
-        }
-        return create(min, Float.POSITIVE_INFINITY, false, true);
+        return create(min == 0.0f ? -0.0f : min, Float.POSITIVE_INFINITY, false, true);
       case GT:
-        if (min == 0.0f) { // 0.0f or -0.0f
-          return create(Float.MIN_VALUE, Float.POSITIVE_INFINITY, false, true);
-        }
         return min == Float.POSITIVE_INFINITY ? DfTypes.FLOAT_NAN :
                create(Math.nextUp(min), Float.POSITIVE_INFINITY, false, true);
       case EQ:
@@ -236,8 +220,8 @@ class DfFloatRangeType implements DfFloatType {
       if (myFrom == myTo) {
         range = "!= " + (Float.compare(myFrom, -0.0f) == 0 && Float.compare(myTo, 0.0f) == 0 ? "\u00B10.0f" : myFrom);
       } else {
-        String first = myFrom == Float.NEGATIVE_INFINITY ? "" : formatRange(Float.NEGATIVE_INFINITY, Math.nextDown(myFrom));
-        String second = myTo == Float.POSITIVE_INFINITY ? "" : formatRange(Math.nextUp(myTo), Float.POSITIVE_INFINITY);
+        String first = myFrom == Float.NEGATIVE_INFINITY ? "" : formatRange(Float.NEGATIVE_INFINITY, nextDown(myFrom));
+        String second = myTo == Float.POSITIVE_INFINITY ? "" : formatRange(nextUp(myTo), Float.POSITIVE_INFINITY);
         range = StreamEx.of(first, second).without("").joining(" || ");
       }
     } else {
@@ -253,14 +237,32 @@ class DfFloatRangeType implements DfFloatType {
     else if (!range.isEmpty()) {
       result += " (or NaN)";
     }
-    return result; 
+    return result;
+  }
+
+  private static float nextDown(float val) {
+    // Math.nextDown returns -MIN_VALUE for 0.0f. This is suitable for relations
+    // (see fromRelation) but not suitable for inverted range boundary
+    if (Float.compare(val, 0.0f) == 0) {
+      return -0.0f;
+    }
+    return Math.nextDown(val);
+  }
+
+  private static float nextUp(float val) {
+    // Math.nextUp returns MIN_VALUE for -0.0f. This is suitable for relations
+    // (see fromRelation) but not suitable for inverted range boundary
+    if (Float.compare(val, -0.0f) == 0) {
+      return 0.0f;
+    }
+    return Math.nextUp(val);
   }
 
   private static String formatRange(float from, float to) {
     int cmp = Float.compare(from, to);
     if (cmp == 0) return Float.toString(from);
     if (Float.compare(from, -0.0f) == 0 && Float.compare(to, 0.0f) == 0) {
-      return "\u00B10.0f";
+      return "\u00B10.0f"; // \u00B1 = +/-
     }
     if (from == Float.NEGATIVE_INFINITY) {
       if (to == Float.POSITIVE_INFINITY) return "";
@@ -274,7 +276,7 @@ class DfFloatRangeType implements DfFloatType {
 
   @NotNull
   private static String formatFrom(float from) {
-    float prev = Math.nextDown(from);
+    float prev = nextDown(from);
     if (Float.toString(prev).length() < Float.toString(from).length()) {
       return "> " + prev;
     }
@@ -283,7 +285,7 @@ class DfFloatRangeType implements DfFloatType {
 
   @NotNull
   private static String formatTo(float to) {
-    float next = Math.nextUp(to);
+    float next = nextUp(to);
     if (Float.toString(next).length() < Float.toString(to).length()) {
       return "< " + next;
     }
