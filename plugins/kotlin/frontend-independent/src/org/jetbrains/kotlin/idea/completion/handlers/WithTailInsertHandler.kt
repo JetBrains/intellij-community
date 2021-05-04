@@ -5,13 +5,15 @@ package org.jetbrains.kotlin.idea.completion.handlers
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.idea.completion.KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY
-import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
-import org.jetbrains.kotlin.idea.completion.tryGetOffset
+
+
+abstract class SmartCompletionTailOffsetProvider {
+    abstract fun getTailOffset(context: InsertionContext, item: LookupElement): Int
+}
 
 class WithTailInsertHandler(
     val tailText: String,
@@ -39,11 +41,8 @@ class WithTailInsertHandler(
         val document = context.document
         PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(document)
 
-        var tailOffset = context.tailOffset
-        if (completionChar == Lookup.REPLACE_SELECT_CHAR && item.getUserData(KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY) != null) {
-            context.offsetMap.tryGetOffset(SmartCompletion.OLD_ARGUMENTS_REPLACEMENT_OFFSET)
-                ?.let { tailOffset = it }
-        }
+        var tailOffset = serviceOrNull<SmartCompletionTailOffsetProvider>()?.getTailOffset(context, item)
+            ?:context.tailOffset
 
         val moveCaret = context.editor.caretModel.offset == tailOffset
 
