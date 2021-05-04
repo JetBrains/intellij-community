@@ -367,7 +367,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         @Override
         public void windowOpened(WindowEvent e) {
           Arrays.stream(Frame.getFrames())
-            .filter(f -> f != null && f != dialogWindow && f.getOwner() != dialogWindow
+            .filter(f -> f != null && f.getOwner() != dialogWindow
                          && f instanceof IdeFrame && ((IdeFrame)f).getProject() == myProject)
             .forEach(win -> {
               win.addWindowFocusListener(focusListener);
