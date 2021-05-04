@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -13,7 +13,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,8 +54,23 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
 public class IconsReferencesContributor extends PsiReferenceContributor
   implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
 
+  @NonNls
+  private static final String ALL_ICONS_FQN = "com.intellij.icons.AllIcons";
+  @NonNls
+  private static final String ALL_ICONS_NAME = "AllIcons";
+  @NonNls
+  private static final String PLATFORM_ICONS_MODULE = "intellij.platform.icons";
+  @NonNls
+  private static final String ICONS_MODULE = "icons";
+
+  @NonNls
+  private static final String ICONS_PACKAGE_PREFIX = "icons.";
+  @NonNls
+  private static final String COM_INTELLIJ_ICONS_PREFIX = "com.intellij.icons.";
+
   @Override
-  public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {
+  public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters,
+                         @NotNull final Processor<? super PsiReference> consumer) {
     final PsiElement file = queryParameters.getElementToSearch();
     if (file instanceof PsiBinaryFile) {
       final Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(file));
@@ -178,12 +192,13 @@ public class IconsReferencesContributor extends PsiReferenceContributor
                     if (newElementName == null) {
                       newElementName = ((PsiField)element).getName();
                     }
-                    if (classQualifiedName.startsWith("com.intellij.icons.")) {
-                      return replace(classQualifiedName, newElementName, "com.intellij.icons.");
+                    if (classQualifiedName.startsWith(COM_INTELLIJ_ICONS_PREFIX)) {
+                      return replace(classQualifiedName, newElementName, COM_INTELLIJ_ICONS_PREFIX);
                     }
-                    if (classQualifiedName.startsWith("icons.")) {
-                      return replace(classQualifiedName, newElementName, "icons.");
+                    if (classQualifiedName.startsWith(ICONS_PACKAGE_PREFIX)) {
+                      return replace(classQualifiedName, newElementName, ICONS_PACKAGE_PREFIX);
                     }
+                    return ElementManipulators.handleContentChange(myElement, classQualifiedName + "." + newElementName);
                   }
                 }
               }
@@ -202,7 +217,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static void registerForIconLoaderMethods(@NotNull PsiReferenceRegistrar registrar) {
-    final PsiMethodPattern method = psiMethod().withName("load").definedInClass("com.intellij.icons.AllIcons");
+    final PsiMethodPattern method = psiMethod().withName("load").definedInClass(ALL_ICONS_FQN);
     final PsiJavaElementPattern.Capture<PsiLiteralExpression> findGetIconPattern
       = literalExpression().and(psiExpression().methodCallParameter(0, method));
     registrar.registerReferenceProvider(findGetIconPattern, new PsiReferenceProvider() {
@@ -212,9 +227,9 @@ public class IconsReferencesContributor extends PsiReferenceContributor
         return new FileReferenceSet(element) {
           @Override
           protected Collection<PsiFileSystemItem> getExtraContexts() {
-            Module iconsModule = ModuleManager.getInstance(element.getProject()).findModuleByName("intellij.platform.icons");
+            Module iconsModule = ModuleManager.getInstance(element.getProject()).findModuleByName(PLATFORM_ICONS_MODULE);
             if (iconsModule == null) {
-              iconsModule = ModuleManager.getInstance(element.getProject()).findModuleByName("icons");
+              iconsModule = ModuleManager.getInstance(element.getProject()).findModuleByName(ICONS_MODULE);
             }
             if (iconsModule == null) {
               return super.getExtraContexts();
@@ -269,12 +284,13 @@ public class IconsReferencesContributor extends PsiReferenceContributor
                   if (newElementName == null) {
                     newElementName = ((PsiField)element).getName();
                   }
-                  if (classQualifiedName.startsWith("com.intellij.icons.")) {
-                    return replace(newElementName, classQualifiedName, "com.intellij.icons.");
+                  if (classQualifiedName.startsWith(COM_INTELLIJ_ICONS_PREFIX)) {
+                    return replace(newElementName, classQualifiedName, COM_INTELLIJ_ICONS_PREFIX);
                   }
-                  if (classQualifiedName.startsWith("icons.")) {
-                    return replace(newElementName, classQualifiedName, "icons.");
+                  if (classQualifiedName.startsWith(ICONS_PACKAGE_PREFIX)) {
+                    return replace(newElementName, classQualifiedName, ICONS_PACKAGE_PREFIX);
                   }
+                  return ElementManipulators.handleContentChange(myElement, classQualifiedName + "." + newElementName);
                 }
               }
             }
@@ -298,7 +314,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static boolean isIconsModule(Module module) {
-    return module != null && ("icons".equals(module.getName()) || "intellij.platform.icons".equals(module.getName()))
+    return module != null && (ICONS_MODULE.equals(module.getName()) || PLATFORM_ICONS_MODULE.equals(module.getName()))
            && ModuleRootManager.getInstance(module).getSourceRoots().length == 1;
   }
 
@@ -307,42 +323,59 @@ public class IconsReferencesContributor extends PsiReferenceContributor
     return image != null && mgr.getFileTypeByFile(image) == mgr.getFileTypeByExtension("png");
   }
 
+  /**
+   * Name of class containing icons must end with {@code Icons}.
+   * <p>
+   * Valid icon paths:
+   * <ul>
+   * <li>AllIcons.IconFieldName (=com.intellij.icons.AllIcons)</li>
+   * <li>MyIcons.IconFieldName (implicitly in 'icons' package)</li>
+   * <li>MyIcons.InnerClass.IconFieldName ("")</li>
+   * </ul>
+   * Using FQN notation:
+   * <ul>
+   * <li>com.company.MyIcons.IconFieldName</li>
+   * <li>com.company.MyIcons.InnerClass.IconFieldName</li>
+   * </ul>
+   */
   @Nullable
-  private static PsiField resolveIconPath(@NonNls @Nullable String pathStr, PsiElement element) {
-    if (pathStr == null) {
-      return null;
+  private static PsiField resolveIconPath(@NonNls @Nullable String path, PsiElement element) {
+    if (path == null) return null;
+
+    @NonNls List<String> pathElements = StringUtil.split(path, ".");
+    if (pathElements.size() < 2) return null;
+
+    final int iconsClassNameIdx = ContainerUtil.lastIndexOf(pathElements, s -> s.endsWith("Icons"));
+    if (iconsClassNameIdx == -1) return null;
+
+    PsiClass iconClass = findIconClass(element.getProject(),
+                                       StringUtil.join(ContainerUtil.getFirstItems(pathElements, iconsClassNameIdx + 1), "."),
+                                       iconsClassNameIdx != 0);
+    if (iconClass == null) return null;
+
+    for (int i = iconsClassNameIdx + 1; i < pathElements.size() - 1; i++) {
+      iconClass = iconClass.findInnerClassByName(pathElements.get(i), false);
+      if (iconClass == null) return null;
     }
 
-    @NonNls List<String> path = StringUtil.split(pathStr, ".");
-    if (path.size() > 1 && path.get(0).endsWith("Icons")) {
-      Project project = element.getProject();
-      PsiClass cur = findIconClass(project, path.get(0));
-      if (cur == null) {
-        return null;
-      }
-
-      for (int i = 1; i < path.size() - 1; i++) {
-        cur = cur.findInnerClassByName(path.get(i), false);
-        if (cur == null) {
-          return null;
-        }
-      }
-
-      return cur.findFieldByName(path.get(path.size() - 1), false);
-    }
-
-    return null;
+    return iconClass.findFieldByName(pathElements.get(pathElements.size() - 1), false);
   }
 
   @Nullable
-  private static PsiClass findIconClass(Project project, @NonNls String className) {
-    final boolean isAllIcons = "AllIcons".equals(className);
-    final String fqnClassName = isAllIcons ? "com.intellij.icons.AllIcons" : "icons." + className;
-    return JavaPsiFacade.getInstance(project)
-      .findClass(fqnClassName, isAllIcons ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project));
+  private static PsiClass findIconClass(Project project, @NonNls @NotNull String iconClass, boolean isQualifiedFqn) {
+    final String adjustedIconClassFqn;
+    if (isQualifiedFqn) {
+      adjustedIconClassFqn = iconClass;
+    }
+    else {
+      adjustedIconClassFqn = ALL_ICONS_NAME.equals(iconClass) ? ALL_ICONS_FQN : ICONS_PACKAGE_PREFIX + iconClass;
+    }
+
+    return JavaPsiFacade.getInstance(project).findClass(adjustedIconClassFqn, GlobalSearchScope.allScope(project));
   }
 
   private static abstract class IconPsiReferenceBase extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
+
     IconPsiReferenceBase(@NotNull PsiElement element) {
       super(element, true);
     }

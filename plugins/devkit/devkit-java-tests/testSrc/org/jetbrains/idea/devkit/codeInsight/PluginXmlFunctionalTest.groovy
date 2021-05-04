@@ -418,6 +418,14 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "public class MyIcons {" +
                        "  public static final javax.swing.Icon MyCustomIcon = null; " +
                        "}")
+    myFixture.addClass("package my; " +
+                       "public class FqnIcons {" +
+                       "  public static final javax.swing.Icon MyFqnIcon = null; " +
+                       "  " +
+                       "  public static class Inner {" +
+                       "    public static final javax.swing.Icon MyInnerFqnIcon = null; " +
+                       "  }" +
+                       "}")
     doHighlightingTest("iconAttribute.xml",
                        "MyIconAttributeEPBean.java")
   }
