@@ -4,6 +4,7 @@ Reports any JDBC resource which is not safely closed. JDBC resources reported
 by this inspection include <code>java.sql.Connection</code>,
 <code>java.sql.Statement</code>, <code>java.sql.PreparedStatement</code>,
 <code>java.sql.CallableStatement</code>, and <code>java.sql.ResultSet</code>.
+<p>By default, inspection assumes that the resources can be closed by any method with a <code>close</code> or <code>cleanup</code> in the name.</p>
 <p>Example:</p>
 <pre>
   ResultSet findAllElements(Connection connection) throws SQLException {
@@ -19,9 +20,7 @@ block. This style is less desirable because it is more verbose than opening a re
 in front of a <code>try</code> block.
 </p>
 <p>
-Use the second checkbox below to specify that the inspection should not warn if a JDBC resource is passed as a method call argument.
-If enabled the inspection assumes the resource is closed in the called method.
-Method calls inside a <code>finally</code> block with <code>close</code> in the name and an JDBC resource argument will not be ignored.
+Use the second checkbox below to specify that the resource can be closed by any method call with the resource passed as argument.
 </p>
 </body>
 </html>

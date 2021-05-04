@@ -1,9 +1,9 @@
-
 <html>
 <body>
-Reports any Socket resource which is not safely closed. Socket resources reported
+Reports any socket resource which is not safely closed. Socket resources reported
 by this inspection include <code>java.net.Socket</code>,
 <code>java.net.DatagramSocket</code>, and <code>java.net.ServerSocket</code>.
+<p>By default, inspection assumes that the resources can be closed by any method with a <code>close</code> or <code>cleanup</code> in the name.</p>
 <p>Example:</p>
 <pre>
   byte[] getMessage(ServerSocket socket) throws IOException {
@@ -13,14 +13,12 @@ by this inspection include <code>java.net.Socket</code>,
 </pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to specify if a Socket is allowed to be opened inside a <code>try</code>
-block. This style is less desirable because it is more verbose than opening a Socket
+Use the first checkbox below to specify if a socket is allowed to be opened inside a <code>try</code>
+block. This style is less desirable because it is more verbose than opening a socket
 in front of a <code>try</code> block.
 </p>
 <p>
-Use the second checkbox below to specify that the inspection should not warn if a Socket is passed as a method call argument.
-If enabled the inspection assumes the Socket is closed in the called method.
-Method calls inside a <code>finally</code> block with <code>close</code> in the name and a Socket argument will not be ignored.
+Use the second checkbox below to specify that the resource can be closed by any method call with the resource passed as argument.
 </p>
 </body>
 </html>

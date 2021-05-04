@@ -3,11 +3,9 @@
 Reports any I/O resource which is not safely closed. I/O resources checked
 by this inspection include <code>java.io.InputStream</code>,
 <code>java.io.OutputStream</code>, <code>java.io.Reader</code>,
-<code>java.io.Writer</code>, <code>java.util.zip.ZipFile</code> and <code>java.io.RandomAccessFile</code>.
-
-"java.util.zip.ZipFile", "java.io.Closeable"
-I/O resources which are wrapped by other I/O resources
-are not reported, as the wrapped resource will be closed by the wrapping resource.
+<code>java.io.Writer</code>, <code>java.util.zip.ZipFile</code>, <code>java.io.Closeable</code> and <code>java.io.RandomAccessFile</code>.
+I/O resources which are wrapped by other I/O resources are not reported, as the wrapped resource will be closed by the wrapping resource.
+<p>By default, inspection assumes that the resources can be closed by any method with a <code>close</code> or <code>cleanup</code> in the name.</p>
 <p>Example:</p>
 <pre>
   void save() throws IOException {
@@ -21,14 +19,12 @@ Use the table below to specify which I/O resources should be ignored by this ins
 Specify I/O resource classes here which do not need to be closed.
 </p>
 <p>
-Use the first checkbox below to specify if an I/O resource is allowed to be opened <code>inside</code> a <code>try</code>
+Use the first checkbox below to specify if an I/O resource is allowed to be opened inside a <code>try</code>
 block. This style is less desirable because it is more verbose than opening a resource in front of a <code>try</code>
 block.
 </p>
 <p>
-Use the second checkbox below to specify that the inspection should not warn if an I/O resource is passed as a method call argument.
-If enabled the inspection assumes the resource is closed in the called method.
-Method calls inside a <code>finally</code> block with <code>close</code> in the name and an I/O resource argument will not be ignored.
+Use the second checkbox below to specify that the resource can be closed by any method call with the resource passed as argument.
 </p>
 </body>
 </html>

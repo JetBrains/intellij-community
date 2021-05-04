@@ -1,6 +1,7 @@
 <html>
 <body>
 Reports any calls to <code>openSession()</code> method if the returned <code>org.hibernate.Session</code> resource is not safely closed.
+<p>By default, inspection assumes that the resources can be closed by any method with a <code>close</code> or <code>cleanup</code> in the name.</p>
 <p>Example:</p>
 <pre>
   void doHibernateQuery(SessionFactory factory) {
@@ -15,9 +16,7 @@ block. This style is less desirable because it is more verbose than opening a re
 in front of a <code>try</code> block.
 </p>
 <p>
-Use the second checkbox below to specify that the inspection should not warn if a Hibernate resource is passed as a method call argument.
-If enabled the inspection assumes the resource is closed in the called method.
-Method calls inside a <code>finally</code> block with <code>close</code> in the name and a Hibernate resource argument will not be ignored.
+Use the second checkbox below to specify that the resource can be closed by any method call with the resource passed as argument.
 </p>
 </body>
 </html>

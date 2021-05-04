@@ -3,6 +3,7 @@
 Reports any <code>Channel</code> resource which is not safely closed. <code>Channel</code> resources reported
 by this inspection include any instances created by calling
 <code>getChannel()</code> on a file or socket resource.
+<p>By default, inspection assumes that the resources can be closed by any method with a <code>close</code> or <code>cleanup</code> in the name.</p>
 <p>Example:</p>
 <pre>
   void send(Socket socket) throws IOException {
@@ -17,9 +18,7 @@ block. This style is less desirable because it is more verbose than opening a <c
 in front of a <code>try</code> block.
 </p>
 <p>
-Use the second checkbox below to specify that the inspection should not warn if a <code>Channel</code> instance is passed as a method call argument.
-If enabled the inspection assumes the <code>Channel</code> is closed in the called method.
-Method calls inside a <code>finally</code> block with <code>close</code> in the name and a <code>Channel</code> argument will not ignored.
+Use the second checkbox below to specify that the resource can be closed by any method call with the resource passed as argument.
 </p>
 </body>
 </html>
