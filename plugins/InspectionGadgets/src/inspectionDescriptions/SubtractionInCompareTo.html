@@ -10,7 +10,7 @@ Comparing the integer values directly and returning <code>-1</code>, <code>0</co
   rounding.
 </p>
 <p>
-The warning is not issued when it's statically determined that value ranges are limited, and overflow never occurs.
+A warning is not issued when it's statically determined that value ranges are limited, and overflow never occurs.
 Additionally subtraction on <code>int</code> numbers greater than or equal to <code>0</code> will never overflow.
 Therefore this inspection tries not to warn in those cases.
 Methods that always return zero or greater can be specified in this inspection's settings.

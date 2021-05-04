@@ -3,10 +3,14 @@
 Reports on any call to <code>java.util.concurrent.locks.Condition.await()</code> not made inside a loop.
 <code>await()</code> and related methods are normally used to suspend a thread until a condition is signalled as true, 
 and that condition should be checked after the <code>await()</code> returns. A loop is the clearest way to achieve this.
-<p>Example: </p> <code>void acquire(Condition released) { released.await();} </code>
+<p>Example:</p><pre>
+<code>void acquire(Condition released) throws InterruptedException { 
+  released.await();
+}
+</code></pre>
 <p>
-Good code should like this:
-<pre><code>void acquire(Condition released) {
+Good code should look like this:
+<pre><code>void acquire(Condition released) throws InterruptedException {
   while (acquired) {
     released.await();
   }
