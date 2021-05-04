@@ -131,7 +131,7 @@ internal fun replaceFile(updatedFile: Path, jarFileToReplace: VirtualFile): Virt
 
     updatedFile.copyTo(jarNioFileToReplace, overwrite = true)
     if (jarNioFileToReplace.name != updatedFile.name) {
-        val newFile = jarNioFileToReplace.parent.resolve(updatedFile.name)
+        val newFile = jarNioFileToReplace.resolveSibling(updatedFile.name)
         if (newFile.notExists()) {
             try {
                 jarNioFileToReplace.moveTo(newFile, overwrite = true)

@@ -109,7 +109,7 @@ class ProjectSettingsComponent(ideWizard: IdeWizard) : DynamicComponent(ideWizar
         if (!locationWasUpdatedByHand) {
             val location = read { StructurePlugin.projectPath.settingValue }
             if (location.parent != null) modify {
-                StructurePlugin.projectPath.reference.setValue(location.parent.resolve(StructurePlugin.name.settingValue))
+                StructurePlugin.projectPath.reference.setValue(location.resolveSibling(StructurePlugin.name.settingValue))
                 locationWasUpdatedByHand = false
             }
         }

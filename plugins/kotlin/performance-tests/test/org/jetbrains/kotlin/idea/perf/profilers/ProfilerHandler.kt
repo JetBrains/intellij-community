@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -30,10 +30,8 @@ interface ProfilerHandler {
         }
 
         fun determinePhasePath(dumpPath: Path, profilerConfig: ProfilerConfig): Path {
-            val activityPath = dumpPath.parent.resolve(profilerConfig.path)
-            val runNumber =
-                (activityPath.toFile().listFiles()?.maxBy { it.name.toIntOrNull() ?: 0 }?.name?.toIntOrNull()
-                    ?: 0) + 1
+            val activityPath = dumpPath.resolveSibling(profilerConfig.path)
+            val runNumber = (activityPath.toFile().listFiles()?.maxByOrNull { it.name.toIntOrNull() ?: 0 }?.name?.toIntOrNull() ?: 0) + 1
             val runPath = activityPath.resolve("$runNumber")
             runPath.toFile().mkdirs()
             logMessage { "profiler's run path found $runPath" }

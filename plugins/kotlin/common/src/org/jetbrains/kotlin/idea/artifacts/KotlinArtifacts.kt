@@ -88,7 +88,7 @@ private object ProductionKotlinArtifacts : KotlinArtifacts(run {
 
     val libFile = pluginJar.parent.takeIf { it.name == "lib" }
     if (libFile == null || !libFile.exists()) {
-        if ("compile-server" in pluginJar.pathString && pluginJar.parent.resolve("kotlinc").exists()) {
+        if ("compile-server" in pluginJar.pathString && pluginJar.resolveSibling("kotlinc").exists()) {
             // WSL JPS build copies all JPS plugin jars to the cache directory, without an intervening 'lib' directory,
             // and the kotlinc directory becomes a subdirectory of the cache directory (see KotlinBuildProcessParametersProvider.getAdditionalPluginPaths())
             pluginJar.parent.toFile()
