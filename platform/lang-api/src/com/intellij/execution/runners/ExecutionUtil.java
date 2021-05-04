@@ -31,6 +31,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+import java.util.function.Function;
 
 import static com.intellij.openapi.projectRoots.JdkUtil.PROPERTY_DYNAMIC_CLASSPATH;
 
@@ -103,17 +105,28 @@ public final class ExecutionUtil {
                                           @Nullable @DialogMessage String description,
                                           @Nullable HyperlinkListener listener) {
     String title = ExecutionBundle.message("error.running.configuration.message", taskName);
+    handleExecutionError(project, toolWindowId, e, title, description, descr -> title + ":<br>" + descr, listener);
+  }
+
+  public static void handleExecutionError(@NotNull Project project,
+                                          @NotNull String toolWindowId,
+                                          @NotNull Throwable e,
+                                          @Nls String title,
+                                          @Nullable @DialogMessage String description,
+                                          @NotNull Function<? super @DialogMessage String, @DialogMessage String> fullMessageSupplier,
+                                          @Nullable HyperlinkListener listener) {
 
     if (StringUtil.isEmptyOrSpaces(description)) {
       LOG.warn("Execution error without description", e);
       description = ExecutionBundle.message("dialog.message.unknown.error");
     }
 
-    String fullMessage = title + ":<br>" + description;
+    String fullMessage = fullMessageSupplier.apply(description);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(fullMessage, e);
-    } else {
+    }
+    else {
       LOG.info(fullMessage, e);
     }
 
