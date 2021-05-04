@@ -18,7 +18,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
@@ -79,7 +79,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     DfaValue dfaSource = stateBefore.pop();
     DfaValue dfaDest = stateBefore.pop();
 
@@ -88,11 +88,11 @@ public class AssignInstruction extends ExpressionPushingInstruction {
       // (e.g. during StateMerger#mergeByFacts), so we try to restore the original destination.
       dfaDest = myAssignedValue;
     }
-    runner.getInterceptor().beforeAssignment(dfaSource, dfaDest, stateBefore, getDfaAnchor());
+    interpreter.getInterceptor().beforeAssignment(dfaSource, dfaDest, stateBefore, getDfaAnchor());
     if (dfaSource == dfaDest) {
       stateBefore.push(dfaDest);
-      this.flushArrayOnUnknownAssignment(runner.getFactory(), dfaDest, stateBefore);
-      return nextStates(runner, stateBefore);
+      this.flushArrayOnUnknownAssignment(interpreter.getFactory(), dfaDest, stateBefore);
+      return nextStates(interpreter, stateBefore);
     }
     if (!(dfaDest instanceof DfaVariableValue &&
           ((DfaVariableValue)dfaDest).getPsiVariable() instanceof PsiLocalVariable &&
@@ -105,7 +105,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     PsiExpression lValue = PsiUtil.skipParenthesizedExprDown(getLExpression());
     PsiExpression rValue = getRExpression();
     if (lValue instanceof PsiArrayAccessExpression) {
-      checkArrayElementAssignability(runner, stateBefore, dfaSource, dfaDest, lValue, rValue);
+      checkArrayElementAssignability(interpreter, stateBefore, dfaSource, dfaDest, lValue, rValue);
     }
 
     if (dfaDest instanceof DfaVariableValue) {
@@ -129,10 +129,10 @@ public class AssignInstruction extends ExpressionPushingInstruction {
       }
     }
 
-    pushResult(runner, stateBefore, dfaDest);
-    this.flushArrayOnUnknownAssignment(runner.getFactory(), dfaDest, stateBefore);
+    pushResult(interpreter, stateBefore, dfaDest);
+    this.flushArrayOnUnknownAssignment(interpreter.getFactory(), dfaDest, stateBefore);
 
-    return nextStates(runner, stateBefore);
+    return nextStates(interpreter, stateBefore);
   }
 
   @Nullable
@@ -164,7 +164,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     return null;
   }
 
-  private static void checkArrayElementAssignability(@NotNull DataFlowRunner runner,
+  private static void checkArrayElementAssignability(@NotNull DataFlowInterpreter runner,
                                                      @NotNull DfaMemoryState memState,
                                                      @NotNull DfaValue dfaSource,
                                                      @NotNull DfaValue dfaDest,

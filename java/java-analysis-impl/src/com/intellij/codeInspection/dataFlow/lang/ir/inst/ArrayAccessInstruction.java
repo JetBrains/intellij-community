@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
@@ -76,17 +76,17 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     DfaValue index = stateBefore.pop();
     DfaValue array = stateBefore.pop();
     boolean alwaysOutOfBounds = !applyBoundsCheck(stateBefore, array, index);
     if (myExpression != null) {
       ThreeState failed = alwaysOutOfBounds ? ThreeState.YES : ThreeState.UNSURE;
-      runner.getInterceptor().onCondition(new ArrayIndexProblem(myExpression), index, failed, stateBefore);
+      interpreter.getInterceptor().onCondition(new ArrayIndexProblem(myExpression), index, failed, stateBefore);
     }
     if (alwaysOutOfBounds) {
       if (myTransferValue != null) {
-        List<DfaInstructionState> states = ControlTransferHandler.dispatch(stateBefore, runner, myTransferValue);
+        List<DfaInstructionState> states = ControlTransferHandler.dispatch(stateBefore, interpreter, myTransferValue);
         for (DfaInstructionState state : states) {
           state.getMemoryState().markEphemeral();
         }
@@ -97,7 +97,7 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
 
     DfaValue result = myValue;
     LongRangeSet rangeSet = DfIntType.extractRange(stateBefore.getDfType(index));
-    DfaValue arrayElementValue = ArrayElementDescriptor.getArrayElementValue(runner.getFactory(), array, rangeSet);
+    DfaValue arrayElementValue = ArrayElementDescriptor.getArrayElementValue(interpreter.getFactory(), array, rangeSet);
     if (!DfaTypeValue.isUnknown(arrayElementValue)) {
       result = arrayElementValue;
     }
@@ -108,8 +108,8 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
         }
       }
     }
-    pushResult(runner, stateBefore, result);
-    return nextStates(runner, stateBefore);
+    pushResult(interpreter, stateBefore, result);
+    return nextStates(interpreter, stateBefore);
   }
 
   private static boolean applyBoundsCheck(@NotNull DfaMemoryState memState,

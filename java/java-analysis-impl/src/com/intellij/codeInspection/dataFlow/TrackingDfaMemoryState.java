@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
@@ -491,7 +491,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
   private static class MergeInstruction extends Instruction {
     @Override
-    public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+    public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
       return DfaInstructionState.EMPTY_ARRAY;
     }
 

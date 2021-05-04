@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -35,7 +35,7 @@ public abstract class ExpressionPushingInstruction extends Instruction {
    * @param value value to push (will be wrapped into {@link com.intellij.codeInspection.dataFlow.value.DfaTypeValue})
    * @param inputArgs input arguments used to calculate the resulting value
    */
-  protected final void pushResult(@NotNull DataFlowRunner runner,
+  protected final void pushResult(@NotNull DataFlowInterpreter runner,
                                   @NotNull DfaMemoryState state,
                                   @NotNull DfType value,
                                   @NotNull DfaValue @NotNull ... inputArgs) {
@@ -50,7 +50,7 @@ public abstract class ExpressionPushingInstruction extends Instruction {
    * @param value value to push
    * @param inputArgs input arguments used to calculate the resulting value
    */
-  protected final void pushResult(@NotNull DataFlowRunner runner,
+  protected final void pushResult(@NotNull DataFlowInterpreter runner,
                                   @NotNull DfaMemoryState state,
                                   @NotNull DfaValue value,
                                   @NotNull DfaValue @NotNull ... inputArgs) {

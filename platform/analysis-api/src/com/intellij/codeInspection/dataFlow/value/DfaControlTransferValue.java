@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.psi.PsiElement;
@@ -64,7 +64,7 @@ public final class DfaControlTransferValue extends DfaValue {
     /** 
      * @return next instruction states assuming no traps 
      */
-    default @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state, DataFlowRunner runner) {
+    default @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state, DataFlowInterpreter runner) {
       return Collections.emptyList();
     }
   }

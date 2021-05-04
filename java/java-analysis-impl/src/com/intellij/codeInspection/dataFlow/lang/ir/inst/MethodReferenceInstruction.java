@@ -17,7 +17,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
@@ -42,13 +42,13 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     PsiMethodReferenceExpression expression = getMethodReference();
     final DfaValue qualifier = stateBefore.pop();
     JavaDfaHelpers.dropLocality(qualifier, stateBefore);
-    handleMethodReference(qualifier, expression, runner, stateBefore);
-    pushResult(runner, stateBefore, typedObject(expression.getFunctionalInterfaceType(), Nullability.NOT_NULL));
-    return nextStates(runner, stateBefore);
+    handleMethodReference(qualifier, expression, interpreter, stateBefore);
+    pushResult(interpreter, stateBefore, typedObject(expression.getFunctionalInterfaceType(), Nullability.NOT_NULL));
+    return nextStates(interpreter, stateBefore);
   }
 
   public String toString() {
@@ -61,7 +61,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
 
   private static void handleMethodReference(DfaValue qualifier,
                                             PsiMethodReferenceExpression methodRef,
-                                            DataFlowRunner runner,
+                                            DataFlowInterpreter runner,
                                             DfaMemoryState state) {
     PsiType functionalInterfaceType = methodRef.getFunctionalInterfaceType();
     if (functionalInterfaceType == null) return;
@@ -97,7 +97,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
 
   private static @NotNull DfaCallArguments getMethodReferenceCallArguments(PsiMethodReferenceExpression methodRef,
                                                                            DfaValue qualifier,
-                                                                           DataFlowRunner runner,
+                                                                           DataFlowInterpreter runner,
                                                                            PsiMethod sam,
                                                                            PsiMethod method,
                                                                            PsiSubstitutor substitutor) {

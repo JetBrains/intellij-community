@@ -3,7 +3,7 @@
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaCondition;
@@ -46,16 +46,16 @@ public class ConditionalGotoInstruction extends Instruction implements Branching
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     DfaCondition condTrue = stateBefore.pop().eq(myCompareTo);
     DfaCondition condFalse = condTrue.negate();
 
     if (condTrue == DfaCondition.getTrue()) {
-      return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getOffset()), stateBefore)};
+      return new DfaInstructionState[] {new DfaInstructionState(interpreter.getInstruction(getOffset()), stateBefore)};
     }
 
     if (condFalse == DfaCondition.getTrue()) {
-      return nextStates(runner, stateBefore);
+      return nextStates(interpreter, stateBefore);
     }
 
     ArrayList<DfaInstructionState> result = new ArrayList<>(2);
@@ -63,11 +63,11 @@ public class ConditionalGotoInstruction extends Instruction implements Branching
     DfaMemoryState elseState = stateBefore.createCopy();
 
     if (stateBefore.applyCondition(condTrue)) {
-      result.add(new DfaInstructionState(runner.getInstruction(getOffset()), stateBefore));
+      result.add(new DfaInstructionState(interpreter.getInstruction(getOffset()), stateBefore));
     }
 
     if (elseState.applyCondition(condFalse)) {
-      result.add(nextState(runner, elseState));
+      result.add(nextState(interpreter, elseState));
     }
 
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -23,13 +23,13 @@ public class FinishElementInstruction extends Instruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState state) {
     if (!myVarsToFlush.isEmpty()) {
       for (DfaVariableValue value : myVarsToFlush) {
         state.flushVariable(value, false);
       }
     }
-    return nextStates(runner, state);
+    return nextStates(interpreter, state);
   }
 
   @Override

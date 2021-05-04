@@ -19,7 +19,7 @@ public enum RunnerResult {
    */
   NOT_APPLICABLE,
   /**
-   * Analysis is explicitly cancelled via {@link DataFlowRunner#cancel()}
+   * Analysis is explicitly cancelled via {@link DataFlowInterpreter#cancel()}
    */
   CANCELLED,
   /**

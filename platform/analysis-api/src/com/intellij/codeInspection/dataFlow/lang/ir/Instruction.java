@@ -2,7 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import org.jetbrains.annotations.NotNull;
@@ -18,13 +18,13 @@ public abstract class Instruction {
   /**
    * Interpret the instruction and return the resulting instruction states
    *
-   * @param runner runner that interprets current IR
+   * @param interpreter interpreter that interprets current IR
    * @param stateBefore input memory state. Could be modified during the interpretation
    * @return an array of output memory states. Non-branching instructions return an array of one element.
    * Returning an empty array means that the interpretation stops here 
    * (e.g. 'return' instruction or throwing an exception).
    */
-  public abstract DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore);
+  public abstract DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore);
 
   /**
    * Set the current instruction index within the IR it belongs to. Can be done only once.
@@ -78,7 +78,7 @@ public abstract class Instruction {
    * @param memState resulting memory state
    * @return an array of a single instruction state that refers to the next instruction and the supplied memory state
    */
-  protected final @NotNull DfaInstructionState @NotNull [] nextStates(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState memState) {
+  protected final @NotNull DfaInstructionState @NotNull [] nextStates(@NotNull DataFlowInterpreter runner, @NotNull DfaMemoryState memState) {
     return new DfaInstructionState[]{nextState(runner, memState)};
   }
 
@@ -88,7 +88,7 @@ public abstract class Instruction {
    * @param memState resulting memory state
    * @return an instruction state that refers to the next instruction and the supplied memory state
    */
-  protected final @NotNull DfaInstructionState nextState(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState memState) {
+  protected final @NotNull DfaInstructionState nextState(@NotNull DataFlowInterpreter runner, @NotNull DfaMemoryState memState) {
     return new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState);
   }
 }

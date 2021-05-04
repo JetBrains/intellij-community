@@ -19,7 +19,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ClassCastProblem;
@@ -87,8 +87,8 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
-    final DfaValueFactory factory = runner.getFactory();
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
+    final DfaValueFactory factory = interpreter.getFactory();
     PsiType fromType = getCasted().getType();
     TypeConstraint constraint = TypeConstraints.instanceOf(myCastTo);
     boolean castPossible = true;
@@ -99,15 +99,15 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
         if (!castTopOfStack(factory, stateBefore, constraint)) {
           castPossible = false;
         } else {
-          result.add(nextState(runner, stateBefore));
-          pushResult(runner, stateBefore, stateBefore.pop());
+          result.add(nextState(interpreter, stateBefore));
+          pushResult(interpreter, stateBefore, stateBefore.pop());
         }
       }
       DfaValue value = castFail.peek();
       DfaCondition notNullCondition = value.cond(RelationType.NE, NULL);
       DfaCondition notTypeCondition = value.cond(RelationType.IS_NOT, typedObject(myCastTo, Nullability.NOT_NULL));
       if (castFail.applyCondition(notNullCondition) && castFail.applyCondition(notTypeCondition)) {
-        List<DfaInstructionState> states = ControlTransferHandler.dispatch(castFail, runner, myTransferValue);
+        List<DfaInstructionState> states = ControlTransferHandler.dispatch(castFail, interpreter, myTransferValue);
         for (DfaInstructionState cceState : states) {
           cceState.getMemoryState().markEphemeral();
         }
@@ -120,12 +120,12 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
         }
       }
 
-      result.add(nextState(runner, stateBefore));
-      pushResult(runner, stateBefore, stateBefore.pop());
+      result.add(nextState(interpreter, stateBefore));
+      pushResult(interpreter, stateBefore, stateBefore.pop());
     }
     UnsatisfiedConditionProblem problem = getConditionProblem();
     if (problem != null) {
-      runner.getInterceptor().onCondition(problem, stateBefore.peek(), castPossible ? ThreeState.UNSURE : ThreeState.YES, stateBefore);
+      interpreter.getInterceptor().onCondition(problem, stateBefore.peek(), castPossible ? ThreeState.UNSURE : ThreeState.YES, stateBefore);
     }
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }

@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow.jvm;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
@@ -26,19 +26,19 @@ import java.util.Objects;
 
 public class ControlTransferHandler {
   private @NotNull final DfaMemoryState state;
-  private @NotNull final DataFlowRunner runner;
+  private @NotNull final DataFlowInterpreter runner;
   private final @NotNull DfaControlTransferValue.TransferTarget target;
   private FList<DfaControlTransferValue.Trap> traps;
   private TypeConstraint throwableType;
 
-  ControlTransferHandler(@NotNull DfaMemoryState state, @NotNull DataFlowRunner runner, @NotNull DfaControlTransferValue transferValue) {
+  ControlTransferHandler(@NotNull DfaMemoryState state, @NotNull DataFlowInterpreter runner, @NotNull DfaControlTransferValue transferValue) {
     this.state = state;
     this.runner = runner;
     this.target = transferValue.getTarget();
     this.traps = transferValue.getTraps();
   }
 
-  @NotNull DataFlowRunner getRunner() {
+  @NotNull DataFlowInterpreter getRunner() {
     return runner;
   }
 
@@ -56,7 +56,7 @@ public class ControlTransferHandler {
 
   public @NotNull
   static List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
-                                            @NotNull DataFlowRunner runner,
+                                            @NotNull DataFlowInterpreter runner,
                                             @NotNull DfaControlTransferValue transferValue) {
     return new ControlTransferHandler(state, runner, transferValue).doDispatch();
   }

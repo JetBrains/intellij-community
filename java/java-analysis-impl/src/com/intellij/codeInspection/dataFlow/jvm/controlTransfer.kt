@@ -4,7 +4,7 @@
 package com.intellij.codeInspection.dataFlow.jvm
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ControlTransferInstruction
@@ -19,10 +19,10 @@ data class ExceptionTransfer(val throwable: TypeConstraint) : TransferTarget {
   override fun toString(): String = "Exception($throwable)"
 }
 data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val varsToFlush: List<VariableDescriptor>) : TransferTarget {
-  override fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> {
-    val varFactory = runner.factory.varFactory
+  override fun dispatch(state: DfaMemoryState, interpreter: DataFlowInterpreter): List<DfaInstructionState> {
+    val varFactory = interpreter.factory.varFactory
     varsToFlush.forEach { desc -> state.flushVariable(varFactory.createVariableValue(desc)) }
-    return listOf(DfaInstructionState(runner.getInstruction(offset.instructionOffset), state))
+    return listOf(DfaInstructionState(interpreter.getInstruction(offset.instructionOffset), state))
   }
 
   override fun getPossibleTargets(): List<Int> = listOf(offset.instructionOffset)
@@ -35,8 +35,8 @@ data class ExitFinallyTransfer(private val enterFinally: JvmTrap.EnterFinally) :
     .flatMap { it.successorIndexes.asIterable() }
     .filter { index -> index != enterFinally.jumpOffset.instructionOffset }.toSet()
 
-  override fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> {
-    return ControlTransferHandler.dispatch(state, runner, state.pop() as DfaControlTransferValue)
+  override fun dispatch(state: DfaMemoryState, interpreter: DataFlowInterpreter): List<DfaInstructionState> {
+    return ControlTransferHandler.dispatch(state, interpreter, state.pop() as DfaControlTransferValue)
   }
 
   override fun toString(): String = "ExitFinally"

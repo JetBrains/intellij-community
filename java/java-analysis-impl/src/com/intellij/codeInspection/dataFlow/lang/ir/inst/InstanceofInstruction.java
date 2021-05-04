@@ -17,7 +17,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.BranchingInstruction;
@@ -66,10 +66,10 @@ public class InstanceofInstruction extends ExpressionPushingInstruction implemen
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     DfaValue dfaRight = stateBefore.pop();
     DfaValue dfaLeft = stateBefore.pop();
-    DfaValueFactory factory = runner.getFactory();
+    DfaValueFactory factory = interpreter.getFactory();
     boolean unknownTargetType = false;
     DfaCondition condition = null;
     if (isClassObjectCheck()) {
@@ -89,19 +89,19 @@ public class InstanceofInstruction extends ExpressionPushingInstruction implemen
     ArrayList<DfaInstructionState> states = new ArrayList<>(2);
     DfType leftType = stateBefore.getDfType(dfaLeft);
     if (condition.isUnknown()) {
-      pushResult(runner, stateBefore, BOOLEAN, dfaLeft, dfaRight);
-      states.add(nextState(runner, stateBefore));
+      pushResult(interpreter, stateBefore, BOOLEAN, dfaLeft, dfaRight);
+      states.add(nextState(interpreter, stateBefore));
     }
     else {
       final DfaMemoryState trueState = stateBefore.createCopy();
       if (trueState.applyCondition(condition)) {
-        pushResult(runner, trueState, unknownTargetType ? BOOLEAN : TRUE, dfaLeft, dfaRight);
-        states.add(nextState(runner, trueState));
+        pushResult(interpreter, trueState, unknownTargetType ? BOOLEAN : TRUE, dfaLeft, dfaRight);
+        states.add(nextState(interpreter, trueState));
       }
       DfaCondition negated = condition.negate();
       if (unknownTargetType ? stateBefore.applyContractCondition(negated) : stateBefore.applyCondition(negated)) {
-        pushResult(runner, stateBefore, FALSE, dfaLeft, dfaRight);
-        states.add(nextState(runner, stateBefore));
+        pushResult(interpreter, stateBefore, FALSE, dfaLeft, dfaRight);
+        states.add(nextState(interpreter, stateBefore));
         DfaNullability oldNullability = DfaNullability.fromDfType(leftType);
         DfaNullability newNullability = DfaNullability.fromDfType(stateBefore.getDfType(dfaLeft));
         if (newNullability == DfaNullability.NULL && oldNullability == DfaNullability.UNKNOWN) {

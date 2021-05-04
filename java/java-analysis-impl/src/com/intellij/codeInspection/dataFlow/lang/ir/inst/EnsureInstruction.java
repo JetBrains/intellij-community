@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
@@ -80,40 +80,40 @@ public class EnsureInstruction extends Instruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
-    DfaValue tosValue = stateBefore.isEmptyStack() ? runner.getFactory().getUnknown() : stateBefore.peek();
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
+    DfaValue tosValue = stateBefore.isEmptyStack() ? interpreter.getFactory().getUnknown() : stateBefore.peek();
     DfaCondition cond = createCondition(tosValue);
     UnsatisfiedConditionProblem problem = getProblem();
     if (cond.equals(DfaCondition.getTrue())) {
       if (problem != null) {
-        runner.getInterceptor().onCondition(problem, tosValue, ThreeState.NO, stateBefore);
+        interpreter.getInterceptor().onCondition(problem, tosValue, ThreeState.NO, stateBefore);
       }
-      return nextStates(runner, stateBefore);
+      return nextStates(interpreter, stateBefore);
     }
     if (myTransferValue == null) {
       boolean satisfied = stateBefore.applyCondition(cond);
       if (problem != null) {
-        runner.getInterceptor().onCondition(problem, tosValue, satisfied ? ThreeState.UNSURE : ThreeState.YES, stateBefore);
+        interpreter.getInterceptor().onCondition(problem, tosValue, satisfied ? ThreeState.UNSURE : ThreeState.YES, stateBefore);
       }
       if (!satisfied) {
         return DfaInstructionState.EMPTY_ARRAY;
       }
-      return nextStates(runner, stateBefore);
+      return nextStates(interpreter, stateBefore);
     }
     DfaMemoryState falseState = stateBefore.createCopy();
     boolean trueStatePossible = stateBefore.applyCondition(cond);
     boolean falseStatePossible = falseState.applyCondition(cond.negate());
     List<DfaInstructionState> result = new ArrayList<>();
     if (trueStatePossible) {
-      result.add(nextState(runner, stateBefore));
+      result.add(nextState(interpreter, stateBefore));
     }
     if (problem != null) {
       ThreeState failed = !trueStatePossible ? ThreeState.YES :
                           !falseStatePossible ? ThreeState.NO : ThreeState.UNSURE;
-      runner.getInterceptor().onCondition(problem, tosValue, failed, stateBefore);
+      interpreter.getInterceptor().onCondition(problem, tosValue, failed, stateBefore);
     }
     if (falseStatePossible) {
-      List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, runner, myTransferValue);
+      List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, interpreter, myTransferValue);
       if (myMakeEphemeral) {
         for (DfaInstructionState negState : states) {
           negState.getMemoryState().markEphemeral();

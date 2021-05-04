@@ -2,7 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
    * @param runner runner that interprets current IR
    * @return an array of single instruction state containing the next instruction. 
    */
-  public DfaInstructionState[] nextStates(DataFlowRunner runner) {
+  public DfaInstructionState[] nextStates(DataFlowInterpreter runner) {
     return myInstruction.nextStates(runner, myBeforeMemoryState);
   }
 

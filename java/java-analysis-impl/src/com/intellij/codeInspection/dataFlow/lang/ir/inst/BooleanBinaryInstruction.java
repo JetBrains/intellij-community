@@ -17,7 +17,7 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
@@ -59,14 +59,14 @@ public class BooleanBinaryInstruction extends ExpressionPushingInstruction imple
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     DfaValue dfaRight = stateBefore.pop();
     DfaValue dfaLeft = stateBefore.pop();
 
     if (myOpSign == AND || myOpSign == OR) {
-      return handleAndOrBinop(runner, stateBefore, dfaRight, dfaLeft);
+      return handleAndOrBinop(interpreter, stateBefore, dfaRight, dfaLeft);
     }
-    return handleRelationBinop(runner, stateBefore, dfaRight, dfaLeft);
+    return handleRelationBinop(interpreter, stateBefore, dfaRight, dfaLeft);
   }
 
   private static RelationType @NotNull [] splitRelation(RelationType relationType) {
@@ -81,7 +81,7 @@ public class BooleanBinaryInstruction extends ExpressionPushingInstruction imple
     }
   }
 
-  private DfaInstructionState @NotNull [] handleRelationBinop(@NotNull DataFlowRunner runner,
+  private DfaInstructionState @NotNull [] handleRelationBinop(@NotNull DataFlowInterpreter runner,
                                                               @NotNull DfaMemoryState memState,
                                                               @NotNull DfaValue dfaRight,
                                                               @NotNull DfaValue dfaLeft) {
@@ -135,7 +135,7 @@ public class BooleanBinaryInstruction extends ExpressionPushingInstruction imple
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  private DfaInstructionState @NotNull [] handleAndOrBinop(@NotNull DataFlowRunner runner,
+  private DfaInstructionState @NotNull [] handleAndOrBinop(@NotNull DataFlowInterpreter runner,
                                                            @NotNull DfaMemoryState memState,
                                                            @NotNull DfaValue dfaRight, 
                                                            @NotNull DfaValue dfaLeft) {

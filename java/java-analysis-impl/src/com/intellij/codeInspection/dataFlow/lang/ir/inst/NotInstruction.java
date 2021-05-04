@@ -16,7 +16,7 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
@@ -37,18 +37,18 @@ public class NotInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     DfaValue dfaValue = stateBefore.pop();
 
     DfaMemoryState falseState = stateBefore.createCopy();
     List<DfaInstructionState> result = new ArrayList<>(2);
     if (stateBefore.applyCondition(dfaValue.eq(FALSE))) {
-      pushResult(runner, stateBefore, TRUE);
-      result.add(nextState(runner, stateBefore));
+      pushResult(interpreter, stateBefore, TRUE);
+      result.add(nextState(interpreter, stateBefore));
     }
     if (falseState.applyCondition(dfaValue.eq(TRUE))) {
-      pushResult(runner, falseState, FALSE);
-      result.add(nextState(runner, falseState));
+      pushResult(interpreter, falseState, FALSE);
+      result.add(nextState(interpreter, falseState));
     }
 
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);

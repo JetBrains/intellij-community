@@ -18,7 +18,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
@@ -60,29 +60,29 @@ public class CheckNotNullInstruction extends Instruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     NullabilityProblemKind.NullabilityProblem<?> problem = getProblem();
     if (problem.thrownException() == null) {
-      checkNotNullable(runner, stateBefore, stateBefore.peek(), problem);
+      checkNotNullable(interpreter, stateBefore, stateBefore.peek(), problem);
     } else {
       DfaValue value = stateBefore.pop();
-      boolean isNull = runner instanceof JvmDataFlowInterpreter &&
-                       ((JvmDataFlowInterpreter)runner).stopOnNull() &&
+      boolean isNull = interpreter instanceof JvmDataFlowInterpreter &&
+                       ((JvmDataFlowInterpreter)interpreter).stopOnNull() &&
                        stateBefore.getDfType(value) == NULL;
       if (myTransferValue == null) {
-        stateBefore.push(dereference(runner, stateBefore, value, problem));
+        stateBefore.push(dereference(interpreter, stateBefore, value, problem));
         if (isNull) {
           return DfaInstructionState.EMPTY_ARRAY;
         }
       } else {
         List<DfaInstructionState> result = new ArrayList<>();
         DfaMemoryState nullState = stateBefore.createCopy();
-        stateBefore.push(dereference(runner, stateBefore, value, problem));
+        stateBefore.push(dereference(interpreter, stateBefore, value, problem));
         if (!isNull) {
-          result.add(nextState(runner, stateBefore));
+          result.add(nextState(interpreter, stateBefore));
         }
         if (nullState.applyCondition(value.eq(NULL))) {
-          List<DfaInstructionState> dispatched = ControlTransferHandler.dispatch(nullState, runner, myTransferValue);
+          List<DfaInstructionState> dispatched = ControlTransferHandler.dispatch(nullState, interpreter, myTransferValue);
           for (DfaInstructionState npeState : dispatched) {
             npeState.getMemoryState().markEphemeral();
           }
@@ -91,7 +91,7 @@ public class CheckNotNullInstruction extends Instruction {
         return result.toArray(DfaInstructionState.EMPTY_ARRAY);
       }
     }
-    return nextStates(runner, stateBefore);
+    return nextStates(interpreter, stateBefore);
   }
 
   @Override
@@ -99,7 +99,7 @@ public class CheckNotNullInstruction extends Instruction {
     return "CHECK_NOT_NULL " + myProblem;
   }
 
-  static <T extends PsiElement> DfaValue dereference(@NotNull DataFlowRunner runner, 
+  static <T extends PsiElement> DfaValue dereference(@NotNull DataFlowInterpreter runner, 
                                                      @NotNull DfaMemoryState memState,
                                                      @NotNull DfaValue value,
                                                      @Nullable NullabilityProblemKind.NullabilityProblem<T> problem) {
@@ -123,7 +123,7 @@ public class CheckNotNullInstruction extends Instruction {
     return value;
   }
 
-  static void checkNotNullable(@NotNull DataFlowRunner runner, 
+  static void checkNotNullable(@NotNull DataFlowInterpreter runner, 
                                @NotNull DfaMemoryState state,
                                @NotNull DfaValue value,
                                @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {

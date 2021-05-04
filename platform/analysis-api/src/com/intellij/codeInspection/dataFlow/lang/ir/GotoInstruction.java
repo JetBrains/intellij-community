@@ -2,7 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,8 +39,8 @@ public class GotoInstruction extends Instruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
-    Instruction nextInstruction = runner.getInstruction(getOffset());
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
+    Instruction nextInstruction = interpreter.getInstruction(getOffset());
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, stateBefore)};
   }
 

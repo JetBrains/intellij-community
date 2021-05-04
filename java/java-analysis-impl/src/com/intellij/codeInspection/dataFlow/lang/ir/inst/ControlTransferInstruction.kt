@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir.inst
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler
 import com.intellij.codeInspection.dataFlow.jvm.JvmTrap
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
@@ -31,8 +31,8 @@ open class ControlTransferInstruction : Instruction {
     return instruction
   }
 
-  override fun accept(runner: DataFlowRunner, state: DfaMemoryState): Array<out DfaInstructionState> {
-    return ControlTransferHandler.dispatch(state, runner, this.transfer).toTypedArray()
+  override fun accept(interpreter: DataFlowInterpreter, state: DfaMemoryState): Array<out DfaInstructionState> {
+    return ControlTransferHandler.dispatch(state, interpreter, this.transfer).toTypedArray()
   }
 
   /**

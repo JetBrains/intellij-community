@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
@@ -29,7 +29,7 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.StandardDataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH;
 
-public class JvmDataFlowInterpreter implements DataFlowRunner {
+public class JvmDataFlowInterpreter implements DataFlowInterpreter {
   private static final Logger LOG = Logger.getInstance(JvmDataFlowInterpreter.class);
   private final @NotNull ControlFlow myFlow;
   private final Instruction @NotNull [] myInstructions;

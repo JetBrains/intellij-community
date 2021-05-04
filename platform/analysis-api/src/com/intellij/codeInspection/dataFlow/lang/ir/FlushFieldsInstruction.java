@@ -2,7 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FlushFieldsInstruction extends Instruction {
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     stateBefore.flushFields();
-    return nextStates(runner, stateBefore);
+    return nextStates(interpreter, stateBefore);
   }
 
   public String toString() {

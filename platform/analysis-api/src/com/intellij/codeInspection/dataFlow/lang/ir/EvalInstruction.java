@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -32,15 +32,15 @@ public abstract class EvalInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public final DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
+  public final DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     int operands = getOperands();
     DfaValue[] args = new DfaValue[operands];
     for (int i = operands - 1; i >= 0; i--) {
       args[i] = stateBefore.pop();
     }
-    DfaValue value = eval(runner.getFactory(), stateBefore, args);
-    pushResult(runner, stateBefore, value, args);
-    return nextStates(runner, stateBefore);
+    DfaValue value = eval(interpreter.getFactory(), stateBefore, args);
+    pushResult(interpreter, stateBefore, value, args);
+    return nextStates(interpreter, stateBefore);
   }
 
   /**

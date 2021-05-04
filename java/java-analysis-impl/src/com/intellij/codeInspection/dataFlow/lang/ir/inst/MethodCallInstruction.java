@@ -18,7 +18,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
@@ -238,9 +238,9 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState stateBefore) {
-    DfaValueFactory factory = runner.getFactory();
-    DfaCallArguments callArguments = this.popCall(runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
+    DfaValueFactory factory = interpreter.getFactory();
+    DfaCallArguments callArguments = this.popCall(interpreter, stateBefore);
 
     Set<DfaMemoryState> finalStates = new LinkedHashSet<>();
 
@@ -252,7 +252,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     if (callArguments.getArguments() != null && !(defaultResult.getDfType() instanceof DfConstantType)) {
       for (MethodContract contract : getContracts()) {
         currentStates = addContractResults(contract, currentStates, factory, finalStates);
-        if (currentStates.size() + finalStates.size() > runner.getComplexityLimit()) {
+        if (currentStates.size() + finalStates.size() > interpreter.getComplexityLimit()) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Too complex contract on " + getContext() + ", skipping contract processing");
           }
@@ -272,8 +272,8 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue[] args = callArguments.toArray();
     for (DfaMemoryState state : finalStates) {
       callArguments.flush(state, factory, realMethod);
-      pushResult(runner, state, state.pop(), args);
-      result[i++] = nextState(runner, state);
+      pushResult(interpreter, state, state.pop(), args);
+      result[i++] = nextState(interpreter, state);
     }
     return result;
   }
@@ -470,7 +470,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     return false;
   }
 
-  private DfaValue popQualifier(@NotNull DataFlowRunner runner,
+  private DfaValue popQualifier(@NotNull DataFlowInterpreter runner,
                                 @NotNull DfaMemoryState memState,
                                 DfaValue @Nullable [] argValues) {
     DfaValue value = memState.pop();
@@ -497,7 +497,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     return value;
   }
 
-  private DfaValue @Nullable [] popCallArguments(DataFlowRunner runner, DfaMemoryState memState) {
+  private DfaValue @Nullable [] popCallArguments(DataFlowInterpreter runner, DfaMemoryState memState) {
     DfaValue[] argValues = null;
     PsiParameterList paramList = null;
     if (myTargetMethod != null) {
@@ -564,7 +564,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     return argValues;
   }
 
-  private @NotNull DfaCallArguments popCall(@NotNull DataFlowRunner runner, @NotNull DfaMemoryState memState) {
+  private @NotNull DfaCallArguments popCall(@NotNull DataFlowInterpreter runner, @NotNull DfaMemoryState memState) {
     DfaValue[] argValues = popCallArguments(runner, memState);
     final DfaValue qualifier = popQualifier(runner, memState, argValues);
     return new DfaCallArguments(qualifier, argValues, getMutationSignature());

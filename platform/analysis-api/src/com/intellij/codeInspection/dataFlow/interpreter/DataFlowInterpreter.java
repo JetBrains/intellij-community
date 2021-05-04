@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * An interpreter that performs abstract interpretation of {@link com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow}
  */
-public interface DataFlowRunner {
+public interface DataFlowInterpreter {
   /**
    * @return factory associated with this runner, can be used to create new values when necessary
    */
