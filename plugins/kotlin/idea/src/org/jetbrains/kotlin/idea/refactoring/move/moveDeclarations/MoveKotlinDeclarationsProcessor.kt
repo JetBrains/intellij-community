@@ -28,7 +28,7 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacadeImpl
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
@@ -232,7 +232,7 @@ class MoveKotlinDeclarationsProcessor(
                         )
                     }
 
-                    val facadeContainer = lightElement.parent as? KtLightClassForFacade
+                    val facadeContainer = lightElement.parent as? KtLightClassForFacadeImpl
                     if (facadeContainer != null) {
                         val oldFqNameWithFacade = StringUtil.getQualifiedName(facadeContainer.qualifiedName, elementName)
                         val newFqNameWithFacade = StringUtil.getQualifiedName(
