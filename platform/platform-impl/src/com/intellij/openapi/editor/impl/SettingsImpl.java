@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -17,7 +17,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -33,7 +32,6 @@ import java.util.function.Supplier;
 
 public class SettingsImpl implements EditorSettings {
   private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
-  private static final RegistryValue SPECIAL_CHARS_ENABLED = Registry.get("editor.show.special.chars");
 
   @Nullable private final EditorImpl myEditor;
   @Nullable private Supplier<? extends Language> myLanguageSupplier;
@@ -758,7 +756,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isShowingSpecialChars() {
-    return myShowingSpecialCharacters == null ? SPECIAL_CHARS_ENABLED.asBoolean() : myShowingSpecialCharacters;
+    return myShowingSpecialCharacters == null ? EditorSettingsExternalizable.getInstance().isShowSpecialChars() : myShowingSpecialCharacters;
   }
 
   @Override

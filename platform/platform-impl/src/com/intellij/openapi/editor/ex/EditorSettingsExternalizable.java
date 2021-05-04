@@ -49,6 +49,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   private static final String SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT = "*";
   @NonNls private static final String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
   private static final String EDITOR_TAB_PAINTING = "editor.tab.painting";
+  private static final String SHOW_SPECIAL_CHARS = "editor.show.special.chars";
 
   //Q: make it interface?
   public static final class OptionSet {
@@ -155,6 +156,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public @interface StripTrailingSpaces {}
 
   private TabCharacterPaintMode myTabCharacterPaintMode = AdvancedSettings.getEnum(EDITOR_TAB_PAINTING, TabCharacterPaintMode.class);
+  private boolean myShowSpecialChars = AdvancedSettings.getBoolean(SHOW_SPECIAL_CHARS);
 
   public EditorSettingsExternalizable() {
     this(ApplicationManager.getApplication().getService(OsSpecificState.class));
@@ -167,6 +169,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
                              if (id.equals(EDITOR_TAB_PAINTING)) {
                                myTabCharacterPaintMode = (TabCharacterPaintMode) newValue;
                                myPropertyChangeSupport.firePropertyChange(EDITOR_TAB_PAINTING, oldValue, newValue);
+                             }
+                             else if (id.equals(SHOW_SPECIAL_CHARS)) {
+                               myShowSpecialChars = (boolean) newValue;
+                               myPropertyChangeSupport.firePropertyChange(SHOW_SPECIAL_CHARS, oldValue, newValue);
                              }
                            }
                          });
@@ -746,5 +752,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public TabCharacterPaintMode getTabCharacterPaintMode() {
     return myTabCharacterPaintMode;
+  }
+
+  public boolean isShowSpecialChars() {
+    return myShowSpecialChars;
   }
 }
