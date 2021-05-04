@@ -1,9 +1,11 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
 import com.intellij.ProjectTopics
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbUnawareHider
 import com.intellij.openapi.project.ModuleListener
@@ -25,6 +27,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.SimpleTo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.SimpleToolWindowWithTwoToolbarsPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories.RepositoryManagementPanel
+import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
 import com.jetbrains.packagesearch.intellij.plugin.util.dataService
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -37,6 +40,27 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
     private lateinit var toolWindow: ToolWindow
     private var toolWindowContentsCreated = false
     private var wasAvailable = false
+
+    private val panels = mutableListOf<PackageSearchPanelBase>()
+    private val contentFactory = ContentFactory.SERVICE.getInstance()
+
+    private val contentManagerOrNull: ContentManager?
+        get() = if (::toolWindow.isInitialized) toolWindow.contentManager else null
+
+    private val contentManagerListener = object : ContentManagerListener {
+        override fun selectionChanged(event: ContentManagerEvent) {
+            (toolWindow as? ToolWindowEx)?.setAdditionalGearActions(null)
+            toolWindow.setTitleActions(emptyList())
+
+            val panel = event.content.component as? HasToolWindowActions
+            panel?.gearActions?.let {
+                (toolWindow as? ToolWindowEx)?.setAdditionalGearActions(it)
+            }
+            panel?.titleActions?.let {
+                toolWindow.setTitleActions(it.asList())
+            }
+        }
+    }
 
     fun initialize(toolWindow: ToolWindow) {
         this.toolWindow = toolWindow
@@ -54,27 +78,41 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
         }
     }
 
-    private val panels = mutableListOf<PackageSearchPanelBase>()
-
     private fun createToolWindowContents(toolWindow: ToolWindow, isAvailable: Boolean) {
         toolWindowContentsCreated = true
         wasAvailable = isAvailable
 
         toolWindow.title = PackageSearchBundle.message("packagesearch.ui.toolwindow.title")
 
-        val contentFactory = ContentFactory.SERVICE.getInstance()
-        val contentManager = toolWindow.contentManager
-
-        contentManager.removeAllContents(false)
+        val contentManager = checkNotNull(contentManagerOrNull) { "The ContentManager is not available when creating the toolwindow" }
 
         if (!isAvailable) {
+            contentManager.removeAllContents(false)
             renderUnavailableUi(contentManager)
             return
         }
 
-        if (toolWindow is ToolWindowEx) {
-            registerSelectionChangedListener(contentManager, toolWindow)
-        }
+        contentManager.addContentManagerListener(contentManagerListener)
+        initializeUi(contentManager)
+    }
+
+    private fun renderUnavailableUi(contentManager: ContentManager) {
+        contentManager.addContent(
+            contentFactory.createContent(
+                DumbUnawareHider(JLabel()).apply {
+                    setContentVisible(false)
+                    emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.noModules")
+                },
+                PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title"), false
+            ).apply {
+                isCloseable = false
+            }
+        )
+    }
+
+    private fun initializeUi(contentManager: ContentManager) {
+        contentManager.removeAllContents(true)
+        panels.clear()
 
         val rootModel = project.dataService()
         panels += PackageManagementPanel(
@@ -96,40 +134,6 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
         for (panel in panels) {
             initializePanel(panel, contentManager, contentFactory)
         }
-    }
-
-    private fun renderUnavailableUi(contentManager: ContentManager) {
-        contentManager.addContent(
-            ContentFactory.SERVICE.getInstance().createContent(
-                DumbUnawareHider(JLabel()).apply {
-                    setContentVisible(false)
-                    emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.noModules")
-                },
-                PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title"), false
-            ).apply {
-                isCloseable = false
-            }
-        )
-    }
-
-    private fun registerSelectionChangedListener(
-        contentManager: ContentManager,
-        toolWindow: ToolWindowEx
-    ) {
-        contentManager.addContentManagerListener(object : ContentManagerListener {
-            override fun selectionChanged(event: ContentManagerEvent) {
-                toolWindow.setAdditionalGearActions(null)
-                toolWindow.setTitleActions(emptyList())
-
-                val panel = event.content.component as? HasToolWindowActions
-                panel?.gearActions?.let {
-                    toolWindow.setAdditionalGearActions(it)
-                }
-                panel?.titleActions?.let {
-                    toolWindow.setTitleActions(it.asList())
-                }
-            }
-        })
     }
 
     private fun initializePanel(
@@ -162,6 +166,7 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
 
             content.isCloseable = false
             contentManager.addContent(content)
+            content.component.updateAndRepaint()
         }
     }
 
@@ -173,7 +178,7 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
         titleActions: Array<AnAction>?
     ) {
         addContent(
-            ContentFactory.SERVICE.getInstance().createContent(null, title, false).apply {
+            contentFactory.createContent(null, title, false).apply {
                 component = SimpleToolWindowWithToolWindowActionsPanel(gearActions, titleActions, false).apply {
                     setProvideQuickActions(true)
                     setContent(content)
@@ -207,6 +212,10 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
                 }
             }
         )
+
+        val contentManager = checkNotNull(contentManagerOrNull) { "The content manager is unavailable when starting monitoring" }
+        ApplicationManager.getApplication().messageBus.connect(this)
+            .subscribe(LafManagerListener.TOPIC, LafManagerListener { contentManager.component.updateAndRepaint() })
     }
 
     override fun dispose() {
@@ -216,6 +225,8 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
         }
 
         if (::toolWindow.isInitialized && !toolWindow.isDisposed) {
+            checkNotNull(contentManagerOrNull) { "The content manager is unavailable when disposing" }
+                .removeContentManagerListener(contentManagerListener)
             toolWindow.remove()
         }
     }

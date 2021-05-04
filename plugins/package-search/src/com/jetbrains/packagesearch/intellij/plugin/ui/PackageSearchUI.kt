@@ -35,8 +35,7 @@ import javax.swing.Scrollable
 
 internal object PackageSearchUI {
 
-    private val MAIN_BG_COLOR: Color =
-        JBColor.namedColor("Plugins.background", JBColor(UIUtil.getListBackground(), Color(0x313335)))
+    private val MAIN_BG_COLOR: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
 
     internal val GRAY_COLOR: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
 
