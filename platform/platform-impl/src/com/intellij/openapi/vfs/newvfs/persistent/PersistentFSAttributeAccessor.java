@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
@@ -57,7 +58,7 @@ final class PersistentFSAttributeAccessor {
         }
         else {
           if (myInlineAttributes && attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-            byte[] b = new byte[attrAddressOrSize];
+            byte[] b = ArrayUtil.newByteArray(attrAddressOrSize);
             attrRefs.readFully(b);
             return new DataInputStream(new UnsyncByteArrayInputStream(b));
           }
@@ -277,7 +278,7 @@ final class PersistentFSAttributeAccessor {
                 DataInputOutputUtil.writeINT(dataStream, attrAddressOrSize);
 
                 if (attrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-                  byte[] b = new byte[attrAddressOrSize];
+                  byte[] b = ArrayUtil.newByteArray(attrAddressOrSize);
                   attrRefs.readFully(b);
                   dataStream.write(b);
                 }

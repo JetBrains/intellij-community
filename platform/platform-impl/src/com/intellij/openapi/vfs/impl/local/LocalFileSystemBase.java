@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ThrowableConsumer;
@@ -424,7 +425,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static byte @NotNull [] loadBytes(@NotNull InputStream stream, int length) throws IOException {
-    byte[] bytes = new byte[length];
+    byte[] bytes = ArrayUtil.newByteArray(length);
     int count = 0;
     while (count < length) {
       int n = stream.read(bytes, count, length - count);

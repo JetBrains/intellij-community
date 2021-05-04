@@ -285,7 +285,7 @@ public class FileUtil extends FileUtilRt {
         count = 0;
       }
     }
-    byte[] result = new byte[total];
+    byte[] result = ArrayUtil.newByteArray(total);
     if (buffers != null) {
       for (byte[] buffer : buffers) {
         System.arraycopy(buffer, 0, result, result.length - total, buffer.length);

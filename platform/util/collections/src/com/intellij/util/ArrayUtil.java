@@ -793,6 +793,10 @@ public final class ArrayUtil {
   public static int @NotNull [] newIntArray(int count) {
     return count == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : new int[count];
   }
+  @Contract(pure=true)
+  public static byte @NotNull [] newByteArray(int count) {
+    return count == 0 ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[count];
+  }
 
   @Contract(pure=true)
   public static long @NotNull [] newLongArray(int count) {
