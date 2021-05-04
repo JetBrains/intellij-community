@@ -14,6 +14,8 @@ import training.learn.lesson.LessonManager
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.awt.geom.Point2D
+import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
 import javax.swing.Icon
 import javax.swing.JTextPane
@@ -21,6 +23,7 @@ import javax.swing.text.AttributeSet
 import javax.swing.text.BadLocationException
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
+import kotlin.math.roundToInt
 
 class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
@@ -60,8 +63,8 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
       override fun mouseClicked(me: MouseEvent) {
         val rangeData = getRangeDataForMouse(me) ?: return
         val middle = (rangeData.range.first + rangeData.range.last) / 2
-        val rectangle = modelToView(middle)
-        rangeData.action(Point(rectangle.x, (rectangle.y + rectangle.height/2)), rectangle.height)
+        val rectangle = modelToView2D(middle)
+        rangeData.action(Point(rectangle.x.roundToInt(), (rectangle.y.roundToInt() + rectangle.height.roundToInt() / 2)), rectangle.height.roundToInt())
       }
 
       override fun mouseMoved(me: MouseEvent) {
@@ -79,12 +82,11 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
   }
 
   private fun getRangeDataForMouse(me: MouseEvent): RangeData? {
-    val point = Point(me.x, me.y)
-    val offset = viewToModel(point)
+    val offset = viewToModel2D(Point2D.Double(me.x.toDouble(), me.y.toDouble()))
     val result = ranges.find { offset in it.range } ?: return null
     if (offset < 0 || offset >= document.length) return null
     for (i in result.range) {
-      val rectangle = modelToView(i)
+      val rectangle = modelToView2D(i)
       if (me.x >= rectangle.x && me.y >= rectangle.y && me.y <= rectangle.y + rectangle.height) {
         return result
       }
@@ -202,8 +204,8 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
   }
 
   private fun getRectangleToScroll(lessonMessage: LessonMessage): Rectangle? {
-    val startRect = modelToView(lessonMessage.start + 1) ?: return null
-    val endRect = modelToView(lessonMessage.end - 1) ?: return null
+    val startRect = modelToView2D(lessonMessage.start + 1)?.toRectangle() ?: return null
+    val endRect = modelToView2D(lessonMessage.end - 1)?.toRectangle() ?: return null
     return Rectangle(startRect.x, startRect.y - activeTaskInset, endRect.x + endRect.width - startRect.x,
                      endRect.y + endRect.height - startRect.y + activeTaskInset * 2)
   }
@@ -291,9 +293,9 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     return RangeData(clickRange) { p, h -> showShortcutBalloon(p, h, actionId) }
   }
 
-  private fun showShortcutBalloon(point: Point, height: Int, actionName: String?) {
+  private fun showShortcutBalloon(point: Point2D, height: Int, actionName: String?) {
     if (actionName == null) return
-    showActionKeyPopup(this, point, height, actionName)
+    showActionKeyPopup(this, point.toPoint(), height, actionName)
   }
 
   private fun appendClickableRange(clickable: String, attributeSet: SimpleAttributeSet): IntRange {
@@ -319,7 +321,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     for (lessonMessage in allLessonMessages()) {
       var startOffset = lessonMessage.start
       if (startOffset != 0) startOffset++
-      val rectangle = modelToView(startOffset)
+      val rectangle = modelToView2D(startOffset).toRectangle()
       if (lessonMessage.state == MessageState.PASSED) {
         try {
           val checkmark = FeaturesTrainerIcons.Img.GreenCheckmark
@@ -449,5 +451,13 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     private val arc by lazy { JBUI.scale(4) }
     private val indent by lazy { JBUI.scale(2) }
     private val activeTaskInset by lazy { JBUI.scale(12) }
+
+    private fun Point2D.toPoint(): Point {
+      return Point(x.roundToInt(), y.roundToInt())
+    }
+
+    private fun Rectangle2D.toRectangle(): Rectangle {
+      return Rectangle(x.roundToInt(), y.roundToInt(), width.roundToInt(), height.roundToInt())
+    }
   }
 }
