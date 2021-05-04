@@ -88,7 +88,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
       // (e.g. during StateMerger#mergeByFacts), so we try to restore the original destination.
       dfaDest = myAssignedValue;
     }
-    interpreter.getInterceptor().beforeAssignment(dfaSource, dfaDest, stateBefore, getDfaAnchor());
+    interpreter.getListener().beforeAssignment(dfaSource, dfaDest, stateBefore, getDfaAnchor());
     if (dfaSource == dfaDest) {
       stateBefore.push(dfaDest);
       this.flushArrayOnUnknownAssignment(interpreter.getFactory(), dfaDest, stateBefore);
@@ -187,7 +187,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     PsiType psiFromType = TypeConstraint.fromDfType(fromType).getPsiType(project);
     PsiType psiToType = TypeConstraint.fromDfType(toType).getPsiType(project);
     if (assignmentExpression == null || psiFromType == null || psiToType == null) return;
-    runner.getInterceptor().onCondition(new ArrayStoreProblem(assignmentExpression, psiFromType, psiToType), dfaSource,
+    runner.getListener().onCondition(new ArrayStoreProblem(assignmentExpression, psiFromType, psiToType), dfaSource,
                                         meet == DfType.BOTTOM ? ThreeState.YES : ThreeState.UNSURE, memState);
   }
 

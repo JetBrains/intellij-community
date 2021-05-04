@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResult;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
@@ -46,7 +46,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-final class DataFlowInstructionVisitor implements JavaDfaInterceptor {
+final class DataFlowInstructionVisitor implements JavaDfaListener {
   private static final Logger LOG = Logger.getInstance(DataFlowInstructionVisitor.class);
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
@@ -225,7 +225,7 @@ final class DataFlowInstructionVisitor implements JavaDfaInterceptor {
                          @NotNull DfaValue value,
                          @NotNull DfaAnchor anchor,
                          @NotNull DfaMemoryState state) {
-    JavaDfaInterceptor.super.beforePush(args, value, anchor, state);
+    JavaDfaListener.super.beforePush(args, value, anchor, state);
     if (anchor instanceof JavaExpressionAnchor) {
       PsiExpression expression = ((JavaExpressionAnchor)anchor).getExpression();
       if (expression instanceof PsiLiteralExpression) return;

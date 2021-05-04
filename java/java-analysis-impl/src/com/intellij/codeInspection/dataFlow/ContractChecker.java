@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
@@ -34,7 +34,7 @@ import java.util.*;
 * @author peter
 */
 final class ContractChecker {
-  private static class ContractCheckInterceptor implements JavaDfaInterceptor {
+  private static class ContractCheckListener implements JavaDfaListener {
     private final PsiMethod myMethod;
     private final StandardMethodContract myContract;
     private final boolean myOwnContract;
@@ -43,7 +43,7 @@ final class ContractChecker {
     private final Set<PsiElement> myFailures = new HashSet<>();
     private boolean myMayReturnNormally = false;
 
-    ContractCheckInterceptor(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
+    ContractCheckListener(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
       myMethod = method;
       myContract = contract;
       myOwnContract = ownContract;
@@ -114,7 +114,7 @@ final class ContractChecker {
     DfaValueFactory factory = new DfaValueFactory(method.getProject(), null);
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
     if (flow == null) return Collections.emptyMap();
-    ContractCheckInterceptor interceptor = new ContractCheckInterceptor(method, contract, ownContract);
+    ContractCheckListener interceptor = new ContractCheckListener(method, contract, ownContract);
     JvmDataFlowInterpreter interpreter = new JvmDataFlowInterpreter(flow, interceptor, true) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
@@ -135,7 +135,7 @@ final class ContractChecker {
               interceptor.myFailures.add(call);
               return DfaInstructionState.EMPTY_ARRAY;
             }
-            if (ContractCheckInterceptor.weCannotInferAnythingAboutMethodReturnValue((MethodCallInstruction)instruction)) {
+            if (ContractCheckListener.weCannotInferAnythingAboutMethodReturnValue((MethodCallInstruction)instruction)) {
               DfaInstructionState[] states = super.acceptInstruction(instructionState);
               for (DfaInstructionState state : states) {
                 state.getMemoryState().markEphemeral();

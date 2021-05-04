@@ -5,8 +5,8 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
@@ -133,7 +133,7 @@ public final class GuessManagerImpl extends GuessManager {
 
     GuessManagerRunner runner = new GuessManagerRunner(scope.getProject(), honorAssignments, null);
 
-    var interceptor = new ExpressionTypeInterceptor(runner, forPlace);
+    var interceptor = new ExpressionTypeListener(runner, forPlace);
     RunnerResult result = runner.analyzeMethodWithInlining(scope, interceptor);
     if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
       return interceptor.getResult();
@@ -156,7 +156,7 @@ public final class GuessManagerImpl extends GuessManager {
 
     GuessManagerRunner runner = new GuessManagerRunner(scope.getProject(), honorAssignments, forPlace);
 
-    class MyInterceptor implements JavaDfaInterceptor {
+    class MyListener implements JavaDfaListener {
       TypeConstraint constraint = TypeConstraints.BOTTOM;
 
       @Override
@@ -172,7 +172,7 @@ public final class GuessManagerImpl extends GuessManager {
         }
       }
     }
-    var interceptor = new MyInterceptor();
+    var interceptor = new MyListener();
     RunnerResult result = runner.analyzeMethodWithInlining(scope, interceptor);
     if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
       return interceptor.constraint.meet(initial).getPsiType(scope.getProject());
@@ -192,9 +192,8 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    protected @NotNull JvmDataFlowInterpreter createInterpreter(@NotNull DfaInterceptor interceptor,
-                                                                @NotNull ControlFlow flow) {
-      return new JvmDataFlowInterpreter(flow, interceptor) {
+    protected @NotNull JvmDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
+      return new JvmDataFlowInterpreter(flow, listener) {
         @Override
         public int getComplexityLimit() {
           // Limit analysis complexity for completion as it could be relaunched many times
@@ -564,13 +563,13 @@ public final class GuessManagerImpl extends GuessManager {
     }
   }
 
-  private static final class ExpressionTypeInterceptor implements JavaDfaInterceptor {
+  private static final class ExpressionTypeListener implements JavaDfaListener {
     private final Map<DfaVariableValue, TypeConstraint> myResult = new HashMap<>();
     private final GuessManagerRunner myRunner;
     private final PsiElement myForPlace;
 
-    private ExpressionTypeInterceptor(GuessManagerRunner runner,
-                                      @NotNull PsiElement forPlace) {
+    private ExpressionTypeListener(GuessManagerRunner runner,
+                                   @NotNull PsiElement forPlace) {
       myRunner = runner;
       myForPlace = PsiUtil.skipParenthesizedExprUp(forPlace);
     }

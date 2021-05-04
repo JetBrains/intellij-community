@@ -76,12 +76,12 @@ class DebuggerDfaRunner {
     return myStartingState != null;
   }
 
-  @Nullable DebuggerDfaInterceptor interpret() {
+  @Nullable DebuggerDfaListener interpret() {
     if (myFlow == null || myStartingState == null ||
         PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myModificationStamp) {
       return null;
     }
-    var interceptor = new DebuggerDfaInterceptor();
+    var interceptor = new DebuggerDfaListener();
     JvmDataFlowInterpreter interpreter = new JvmDataFlowInterpreter(myFlow, interceptor, true);
     return interpreter.interpret(List.of(myStartingState)) == RunnerResult.OK ? interceptor : null;
   }

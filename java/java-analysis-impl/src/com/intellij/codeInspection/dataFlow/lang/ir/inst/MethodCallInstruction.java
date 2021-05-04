@@ -484,7 +484,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       // Inferred mutation annotation may infer mutates="this" if invisible state is mutated (e.g. cached hashCode is stored).
       // So let's conservatively skip the warning here. Such contract is still useful because it assures that nothing else is mutated.
       if (method != null && JavaMethodContractUtil.hasExplicitContractAnnotation(method)) {
-        runner.getInterceptor().onCondition(new MutabilityProblem(getContext(), true), value, ThreeState.YES, memState);
+        runner.getListener().onCondition(new MutabilityProblem(getContext(), true), value, ThreeState.YES, memState);
         if (dfType instanceof DfReferenceType) {
           memState.setDfType(value, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
         }
@@ -551,7 +551,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         if (!Mutability.fromDfType(dfType).canBeModified() &&
             // Empty array cannot be modified at all
             !memState.getDfType(JvmSpecialField.ARRAY_LENGTH.createValue(runner.getFactory(), arg)).equals(intValue(0))) {
-          runner.getInterceptor().onCondition(new MutabilityProblem(anchor, false), arg, ThreeState.YES, memState);
+          runner.getListener().onCondition(new MutabilityProblem(anchor, false), arg, ThreeState.YES, memState);
           if (dfType instanceof DfReferenceType) {
             memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
           }

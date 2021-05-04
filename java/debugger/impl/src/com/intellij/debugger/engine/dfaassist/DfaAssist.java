@@ -222,7 +222,7 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
   }
 
   private static @NotNull Map<PsiExpression, DfaHint> computeHints(@NotNull DebuggerDfaRunner runner) {
-    DebuggerDfaInterceptor interceptor = runner.interpret();
+    DebuggerDfaListener interceptor = runner.interpret();
     if (interceptor == null) return Collections.emptyMap();
     interceptor.cleanup();
     return interceptor.getHints();

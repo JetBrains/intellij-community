@@ -3,7 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ControlTransferInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
@@ -33,7 +33,7 @@ public class JvmDataFlowInterpreter implements DataFlowInterpreter {
   private static final Logger LOG = Logger.getInstance(JvmDataFlowInterpreter.class);
   private final @NotNull ControlFlow myFlow;
   private final Instruction @NotNull [] myInstructions;
-  private final @NotNull DfaInterceptor myInterceptor;
+  private final @NotNull DfaListener myListener;
   private final @NotNull MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
   private final @NotNull PsiElement myPsiAnchor;
   private final @NotNull DfaValueFactory myValueFactory;
@@ -41,16 +41,16 @@ public class JvmDataFlowInterpreter implements DataFlowInterpreter {
   private boolean myCancelled = false;
   private boolean myWasForciblyMerged = false;
 
-  public JvmDataFlowInterpreter(@NotNull ControlFlow flow, @NotNull DfaInterceptor interceptor) {
-    this(flow, interceptor, false);
+  public JvmDataFlowInterpreter(@NotNull ControlFlow flow, @NotNull DfaListener listener) {
+    this(flow, listener, false);
   }
 
   public JvmDataFlowInterpreter(@NotNull ControlFlow flow,
-                                @NotNull DfaInterceptor interceptor,
+                                @NotNull DfaListener listener,
                                 boolean stopOnNull) { 
     myFlow = flow;
     myInstructions = flow.getInstructions();
-    myInterceptor = interceptor;
+    myListener = listener;
     myPsiAnchor = flow.getPsiAnchor();
     myValueFactory = flow.getFactory();
     myStopOnNull = stopOnNull;
@@ -240,8 +240,8 @@ public class JvmDataFlowInterpreter implements DataFlowInterpreter {
   }
 
   @Override
-  public @NotNull DfaInterceptor getInterceptor() {
-    return myInterceptor;
+  public @NotNull DfaListener getListener() {
+    return myListener;
   }
 
   private void handleStepOutOfLoop(@NotNull Instruction prevInstruction,

@@ -85,12 +85,12 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
       currentStates = MethodCallInstruction.addContractResults(contract, currentStates, runner.getFactory(), results);
       for (DfaMemoryState result : results) {
         DfaValue value = result.pop();
-        runner.getInterceptor().beforePush(args, value, anchor, result);
+        runner.getListener().beforePush(args, value, anchor, result);
         result.push(value);
       }
     }
     for (DfaCallState currentState: currentStates) {
-      runner.getInterceptor().beforePush(args, defaultResult, anchor, currentState.getMemoryState());
+      runner.getListener().beforePush(args, defaultResult, anchor, currentState.getMemoryState());
       currentState.getMemoryState().push(defaultResult);
     }
   }

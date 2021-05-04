@@ -6,7 +6,7 @@ import com.intellij.codeInsight.Nullability
 import com.intellij.codeInspection.dataFlow.DfaNullability
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.java.refactoring.JavaRefactoringBundle
@@ -245,7 +245,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
       var nullability = DfaNullability.NOT_NULL
 
-      class Interceptor : JavaDfaInterceptor {
+      class Listener : JavaDfaListener {
         override fun beforeExpressionPush(value: DfaValue, expr: PsiExpression, state: DfaMemoryState) {
           if (expr in expressionSet) {
             val expressionNullability = DfaNullability.fromDfType(state.getDfType(value))
@@ -254,7 +254,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
         }
       }
 
-      val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, Interceptor())
+      val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, Listener())
       return if (runnerState == RunnerResult.OK) {
         DfaNullability.toNullability(nullability)
       } else {

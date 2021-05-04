@@ -125,7 +125,7 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
     }
     UnsatisfiedConditionProblem problem = getConditionProblem();
     if (problem != null) {
-      interpreter.getInterceptor().onCondition(problem, stateBefore.peek(), castPossible ? ThreeState.UNSURE : ThreeState.YES, stateBefore);
+      interpreter.getListener().onCondition(problem, stateBefore.peek(), castPossible ? ThreeState.UNSURE : ThreeState.YES, stateBefore);
     }
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }

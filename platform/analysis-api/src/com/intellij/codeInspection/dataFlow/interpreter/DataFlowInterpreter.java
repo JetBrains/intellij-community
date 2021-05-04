@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.interpreter;
 
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -46,5 +46,5 @@ public interface DataFlowInterpreter {
   /**
    * @return DfaInterceptor associated with current analysis
    */
-  @NotNull DfaInterceptor getInterceptor(); 
+  @NotNull DfaListener getListener(); 
 }

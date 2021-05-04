@@ -131,7 +131,7 @@ public class CheckNotNullInstruction extends Instruction {
       DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
       ThreeState failed = nullability == DfaNullability.NOT_NULL ? ThreeState.NO :
                           nullability == DfaNullability.NULL ? ThreeState.YES : ThreeState.UNSURE;
-      runner.getInterceptor().onCondition(problem, value, failed, state);
+      runner.getListener().onCondition(problem, value, failed, state);
     }
   }
 }

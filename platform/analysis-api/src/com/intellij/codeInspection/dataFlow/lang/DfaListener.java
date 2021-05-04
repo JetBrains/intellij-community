@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An interceptor that can peek into DFA analysis intermediate states and do something with them
+ * An listener that can listen for events that occur during the abstract interpretation
  */
-public interface DfaInterceptor {
-  DfaInterceptor EMPTY = new DfaInterceptor() {};
+public interface DfaListener {
+  DfaListener EMPTY = new DfaListener() {};
   
   /**
    * Called before a value is being pushed to the memory state stack during symbolic interpretation.

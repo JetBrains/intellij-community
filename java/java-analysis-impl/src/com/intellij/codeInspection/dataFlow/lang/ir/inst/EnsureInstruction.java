@@ -86,14 +86,14 @@ public class EnsureInstruction extends Instruction {
     UnsatisfiedConditionProblem problem = getProblem();
     if (cond.equals(DfaCondition.getTrue())) {
       if (problem != null) {
-        interpreter.getInterceptor().onCondition(problem, tosValue, ThreeState.NO, stateBefore);
+        interpreter.getListener().onCondition(problem, tosValue, ThreeState.NO, stateBefore);
       }
       return nextStates(interpreter, stateBefore);
     }
     if (myTransferValue == null) {
       boolean satisfied = stateBefore.applyCondition(cond);
       if (problem != null) {
-        interpreter.getInterceptor().onCondition(problem, tosValue, satisfied ? ThreeState.UNSURE : ThreeState.YES, stateBefore);
+        interpreter.getListener().onCondition(problem, tosValue, satisfied ? ThreeState.UNSURE : ThreeState.YES, stateBefore);
       }
       if (!satisfied) {
         return DfaInstructionState.EMPTY_ARRAY;
@@ -110,7 +110,7 @@ public class EnsureInstruction extends Instruction {
     if (problem != null) {
       ThreeState failed = !trueStatePossible ? ThreeState.YES :
                           !falseStatePossible ? ThreeState.NO : ThreeState.UNSURE;
-      interpreter.getInterceptor().onCondition(problem, tosValue, failed, stateBefore);
+      interpreter.getListener().onCondition(problem, tosValue, failed, stateBefore);
     }
     if (falseStatePossible) {
       List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, interpreter, myTransferValue);

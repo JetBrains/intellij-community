@@ -9,7 +9,7 @@ import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
@@ -88,7 +88,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         DfaVariableValue methodName = runner.myDfaMethodName;
         if (methodName == null) return;
         Map<String, Map<PsiExpression, DfType>> returnMap = new TreeMap<>();
-        RunnerResult result = runner.analyzeMethod(body, new JavaDfaInterceptor() {
+        RunnerResult result = runner.analyzeMethod(body, new JavaDfaListener() {
           @Override
           public void beforeValueReturn(@NotNull DfaValue value,
                                         @Nullable PsiExpression expression,

@@ -11,7 +11,7 @@ import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.FinishElementInstruction;
@@ -337,7 +337,7 @@ public final class DfaPsiUtil {
         if (flow == null) {
           return Result.create(Set.of(), body, PsiModificationTracker.MODIFICATION_COUNT);
         }
-        var interpreter = new JvmDataFlowInterpreter(flow, DfaInterceptor.EMPTY) {
+        var interpreter = new JvmDataFlowInterpreter(flow, DfaListener.EMPTY) {
           final Map<PsiField, Boolean> map = new HashMap<>();
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction)) {

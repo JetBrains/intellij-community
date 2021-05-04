@@ -56,7 +56,7 @@ public abstract class ExpressionPushingInstruction extends Instruction {
                                   @NotNull DfaValue @NotNull ... inputArgs) {
     DfaAnchor anchor = getDfaAnchor();
     if (anchor != null) {
-      runner.getInterceptor().beforePush(inputArgs, value, anchor, state);
+      runner.getListener().beforePush(inputArgs, value, anchor, state);
     }
     state.push(value);
   }

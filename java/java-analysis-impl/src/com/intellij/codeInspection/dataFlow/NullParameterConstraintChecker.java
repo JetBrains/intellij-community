@@ -5,7 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
@@ -106,7 +106,7 @@ final class NullParameterConstraintChecker {
     final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;
 
     private NullParameterCheckerInterpreter(ControlFlow flow, Collection<PsiParameter> nullableParameters) {
-      super(flow, DfaInterceptor.EMPTY);
+      super(flow, DfaListener.EMPTY);
       myPossiblyViolatedParameters = new HashSet<>(nullableParameters);
       myUsedParameters = new HashSet<>();
       myParametersWithSuccessfulExecutionInNotNullState = new HashSet<>();

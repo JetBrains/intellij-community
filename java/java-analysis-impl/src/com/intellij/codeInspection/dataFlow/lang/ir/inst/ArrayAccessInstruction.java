@@ -82,7 +82,7 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
     boolean alwaysOutOfBounds = !applyBoundsCheck(stateBefore, array, index);
     if (myExpression != null) {
       ThreeState failed = alwaysOutOfBounds ? ThreeState.YES : ThreeState.UNSURE;
-      interpreter.getInterceptor().onCondition(new ArrayIndexProblem(myExpression), index, failed, stateBefore);
+      interpreter.getListener().onCondition(new ArrayIndexProblem(myExpression), index, failed, stateBefore);
     }
     if (alwaysOutOfBounds) {
       if (myTransferValue != null) {

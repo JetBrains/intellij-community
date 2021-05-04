@@ -3,10 +3,10 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
@@ -190,7 +190,7 @@ public final class DfaUtil {
 
     final var dfaRunner = new StandardDataFlowRunner(owner.getProject());
 
-    final class BlockNullabilityInterceptor implements JavaDfaInterceptor {
+    final class BlockNullabilityListener implements JavaDfaListener {
       boolean hasNulls = false;
       boolean hasNotNulls = false;
       boolean hasUnknowns = false;
@@ -215,7 +215,7 @@ public final class DfaUtil {
         }
       }
     }
-    var interceptor = new BlockNullabilityInterceptor();
+    var interceptor = new BlockNullabilityListener();
     final RunnerResult rc = dfaRunner.analyzeMethod(body, interceptor);
 
     if (rc == RunnerResult.OK) {
@@ -240,7 +240,7 @@ public final class DfaUtil {
 
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
-   * (e.g. passed to {@link StandardDataFlowRunner#analyzeMethodRecursively(PsiElement, DfaInterceptor)}) to cover
+   * (e.g. passed to {@link StandardDataFlowRunner#analyzeMethodRecursively(PsiElement, DfaListener)}) to cover
    * given expression.
    *
    * @param expression expression to cover

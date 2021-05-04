@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -212,7 +212,7 @@ public final class CommonDataflow {
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
     StandardDataFlowRunner runner = new StandardDataFlowRunner(block.getProject(), block, ThreeState.UNSURE);
-    var interceptor = new CommonDataflowInterceptor();
+    var interceptor = new CommonDataflowListener();
     RunnerResult result = runner.analyzeMethodRecursively(block, interceptor);
     if (result != RunnerResult.OK) return new DataflowResult(result);
     if (!(block instanceof PsiClass)) return interceptor.myResult;
@@ -328,7 +328,7 @@ public final class CommonDataflow {
     return getDfType(expressionToAnalyze).getConstantOfType(Object.class);
   }
 
-  private static class CommonDataflowInterceptor implements JavaDfaInterceptor {
+  private static class CommonDataflowListener implements JavaDfaListener {
     private DataflowResult myResult = new DataflowResult(RunnerResult.OK);
     private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
 

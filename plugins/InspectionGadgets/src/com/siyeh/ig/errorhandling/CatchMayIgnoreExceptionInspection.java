@@ -13,7 +13,7 @@ import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.EnsureInstruction;
@@ -193,7 +193,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     final @NotNull PsiCodeBlock myBlock;
 
     CatchDataFlowInterpreter(@NotNull PsiClassType exception, @NotNull PsiParameter parameter, @NotNull ControlFlow flow) {
-      super(flow, DfaInterceptor.EMPTY);
+      super(flow, DfaListener.EMPTY);
       myParameter = parameter;
       myBlock = (PsiCodeBlock)flow.getPsiAnchor();
       PsiClass exceptionClass = Objects.requireNonNull(exception.resolve());

@@ -14,7 +14,7 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
@@ -446,7 +446,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (returnedExpressions.isEmpty()) return true;
 
     final var dfaRunner = new StandardDataFlowRunner(myProject);
-    final var returnChecker = new JavaDfaInterceptor() {
+    final var returnChecker = new JavaDfaListener() {
       @Override
       public void beforeValueReturn(@NotNull DfaValue value,
                                     @Nullable PsiExpression expression,
@@ -483,7 +483,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private static Nullability inferNullability(@NotNull PsiCodeBlock block, @NotNull PsiExpression expr) {
     final var dfaRunner = new StandardDataFlowRunner(block.getProject());
 
-    var interceptor = new JavaDfaInterceptor() {
+    var interceptor = new JavaDfaListener() {
       DfaNullability myNullability = DfaNullability.NOT_NULL;
       boolean myVisited = false;
 

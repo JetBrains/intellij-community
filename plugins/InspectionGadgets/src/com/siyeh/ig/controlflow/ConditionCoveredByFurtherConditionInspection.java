@@ -10,7 +10,7 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
@@ -143,7 +143,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     DfaValueFactory factory = new DfaValueFactory(expressionToAnalyze.getProject(), null);
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(expressionToAnalyze, factory, true);
     if (flow == null) return Map.of();
-    var interceptor = new JavaDfaInterceptor() {
+    var interceptor = new JavaDfaListener() {
       final Map<PsiExpression, ThreeState> values = new HashMap<>();
 
       @Override

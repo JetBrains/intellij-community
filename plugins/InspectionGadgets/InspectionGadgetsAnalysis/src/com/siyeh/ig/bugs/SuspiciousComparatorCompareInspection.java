@@ -21,7 +21,7 @@ import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -131,7 +131,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       DfaVariableValue var1 = PlainDescriptor.createVariableValue(factory, parameters[0]);
       DfaVariableValue var2 = PlainDescriptor.createVariableValue(factory, parameters[1]);
       state.applyCondition(var1.eq(var2));
-      var interceptor = new ComparatorInterceptor(owner);
+      var interceptor = new ComparatorListener(owner);
       if (new JvmDataFlowInterpreter(flow, interceptor).interpret(state) != RunnerResult.OK) return;
       if (interceptor.myRange.contains(0) || interceptor.myContexts.isEmpty()) return;
       PsiElement context = null;
@@ -156,12 +156,12 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                     InspectionGadgetsBundle.message("suspicious.comparator.compare.descriptor.non.reflexive"));
     }
 
-    private static final class ComparatorInterceptor implements JavaDfaInterceptor {
+    private static final class ComparatorListener implements JavaDfaListener {
       private final PsiParameterListOwner myOwner;
       private final Set<PsiElement> myContexts = new HashSet<>();
       LongRangeSet myRange = LongRangeSet.empty();
 
-      private ComparatorInterceptor(PsiParameterListOwner owner) {
+      private ComparatorListener(PsiParameterListOwner owner) {
         myOwner = owner;
       }
 

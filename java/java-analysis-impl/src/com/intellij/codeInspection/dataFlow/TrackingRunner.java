@@ -9,12 +9,12 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactExtractor
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateChange;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.CheckNotNullInstruction;
@@ -79,9 +79,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @Override
-  protected @NotNull JvmDataFlowInterpreter createInterpreter(@NotNull DfaInterceptor interceptor,
+  protected @NotNull JvmDataFlowInterpreter createInterpreter(@NotNull DfaListener listener,
                                                               @NotNull ControlFlow flow) {
-    return new JvmDataFlowInterpreter(flow, interceptor, true) {
+    return new JvmDataFlowInterpreter(flow, listener, true) {
       @Override
       protected void beforeInstruction(Instruction instruction) {
         afterStates.clear();
@@ -152,7 +152,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
 
   private boolean analyze(PsiExpression expression, PsiElement body) {
     List<DfaMemoryState> endOfInitializerStates = new ArrayList<>();
-    var interceptor = new JavaDfaInterceptor() {
+    var interceptor = new JavaDfaListener() {
       @Override
       public void beforeInstanceInitializerEnd(@NotNull DfaMemoryState state) {
         endOfInitializerStates.add(state.createCopy());
