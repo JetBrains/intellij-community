@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
 import org.junit.*;
@@ -56,7 +57,7 @@ public class JBCefHwPopupTest {
       .setCancelOnWindowDeactivation(true)
       .createPopup();
 
-    invokeAndWaitForLoad(browser, () -> popup.showInFocusCenter());
+    invokeAndWaitForLoad(browser, () -> popup.show(new RelativePoint(frame, new Point(64, 48))));
 
     //
     // Check the popup has not closed immediately
