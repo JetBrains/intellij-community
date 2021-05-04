@@ -460,9 +460,7 @@
           <action id="RestoreDefaultSettings" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
         </group>
         <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
-          <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction">
-            <override-text place="MainMenu"/>
-          </action>
+          <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
           <reference ref="RunConfigurationTemplatesForNewProjects"/>
           <group id="FileSettingsGroup"/>
         </group>
