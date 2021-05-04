@@ -6,8 +6,10 @@ import com.intellij.analysis.problemsView.HighlightingDuplicate
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsListener
+import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -17,6 +19,7 @@ import com.intellij.ui.AppUIUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
+  private val providerClassFilter = Registry.stringValue("ide.problems.view.provider.class.filter").split(" ,/|").toSet()
   private val fileProblems = mutableMapOf<VirtualFile, MutableSet<FileProblem>>()
   private val otherProblems = mutableSetOf<Problem>()
   private val problemCount = AtomicInteger()
@@ -45,7 +48,7 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
 
   override fun problemAppeared(problem: Problem) {
     notify(problem, when {
-      problem.provider.project != project -> SetUpdateState.IGNORED
+      isIgnored(problem.provider) -> SetUpdateState.IGNORED
       problem is FileProblem -> process(problem, true) { set ->
         when {
           // do not add HighlightingDuplicate if there is any HighlightingProblem
@@ -64,16 +67,18 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   }
 
   override fun problemDisappeared(problem: Problem) = notify(problem, when {
-    problem.provider.project != project -> SetUpdateState.IGNORED
+    isIgnored(problem.provider) -> SetUpdateState.IGNORED
     problem is FileProblem -> process(problem, false) { SetUpdateState.remove(problem, it) }
     else -> synchronized(otherProblems) { SetUpdateState.remove(problem, otherProblems) }
   })
 
   override fun problemUpdated(problem: Problem) = notify(problem, when {
-    problem.provider.project != project -> SetUpdateState.IGNORED
+    isIgnored(problem.provider) -> SetUpdateState.IGNORED
     problem is FileProblem -> process(problem, false) { SetUpdateState.update(problem, it) }
     else -> synchronized(otherProblems) { SetUpdateState.update(problem, otherProblems) }
   })
+
+  private fun isIgnored(provider: ProblemsProvider) = provider.project != project || providerClassFilter.contains(provider.javaClass.name)
 
   private fun process(problem: FileProblem, create: Boolean, function: (MutableSet<FileProblem>) -> SetUpdateState): SetUpdateState {
     val file = problem.file
