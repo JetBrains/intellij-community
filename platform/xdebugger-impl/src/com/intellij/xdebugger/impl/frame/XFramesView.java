@@ -20,6 +20,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -99,6 +100,7 @@ public final class XFramesView extends XDebugView {
       }
     };
     myFrameSelectionHandler.install(myFramesList);
+    EditSourceOnDoubleClickHandler.install(myFramesList);
 
     myFramesList.addMouseListener(new PopupHandler() {
       @Override
