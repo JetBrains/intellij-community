@@ -229,7 +229,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl E",                   SECOND_STROKE, "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox"},
     { "shift alt RIGHT",          "Diff.ApplyLeftSide", "EditorRightWithSelection"},
     { "ctrl N",                   "FileChooser.NewFolder", "NewElement"},
-    { "ctrl F5",                  "Run", "RunClass"},
     { "shift F5",                 "Graph.ApplyCurrentLayout", "Stop"},
     { "ctrl alt W",               "ActivateWebToolWindow", "Vcs.UpdateProject"},
     { "shift alt ENTER",          "JupyterDebugAction", "ToggleFullScreen"},
