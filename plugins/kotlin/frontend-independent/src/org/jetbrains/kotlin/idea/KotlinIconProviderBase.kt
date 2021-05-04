@@ -13,7 +13,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacadeImpl
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -120,7 +120,7 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
 
         fun PsiElement.getBaseIcon(): Icon? = when (this) {
             is KtPackageDirective -> PlatformIcons.PACKAGE_ICON
-            is KtFile, is KtLightClassForFacadeImpl -> KotlinIconsIndependent.FILE
+            is KtFile, is KtLightClassForFacade -> KotlinIconsIndependent.FILE
             is KtLightClassForSourceDeclaration -> navigationElement.getBaseIcon()
             is KtNamedFunction -> when {
                 receiverTypeReference != null ->
