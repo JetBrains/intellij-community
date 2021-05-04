@@ -44,8 +44,7 @@ public class SimpleMethodInliner implements CallInliner {
     return true;
   }
 
-  private static boolean isSimple(PsiExpression value) {
-    if (value == null) return true;
+  private static boolean isSimple(@NotNull PsiExpression value) {
     Ref<Boolean> hasFieldRefs = Ref.create(false);
     boolean allowed = PsiTreeUtil.processElements(value, e -> {
       if (!(e instanceof PsiExpression)) return true;
