@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
 import com.intellij.ide.IdeBundle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -250,7 +251,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public int getBufferMaxLinesCount() {
-    final int linesCount = Registry.get("terminal.buffer.max.lines.count").asInteger();
+    final int linesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count");
     if (linesCount > 0) {
       return linesCount;
     }
