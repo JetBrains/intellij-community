@@ -178,7 +178,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     final JpsModule module = getModule();
     final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
 
-    final StringBuilder logBuilder = LOG.isDebugEnabled()? new StringBuilder() : null;
+    final StringBuilder logBuilder = LOG.isTraceEnabled() ? new StringBuilder() : null;
 
     int fingerprint = getDependenciesFingerprint(logBuilder, relativizer);
 
@@ -220,7 +220,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     final String hash = Integer.toHexString(fingerprint);
     out.write(hash);
     if (logBuilder != null) {
-      LOG.debug("Configuration hash for " + getPresentableName() + ": " + hash + "\n" + logBuilder);
+      LOG.trace("Configuration hash for " + getPresentableName() + ": " + hash + "\n" + logBuilder);
     }
   }
 
