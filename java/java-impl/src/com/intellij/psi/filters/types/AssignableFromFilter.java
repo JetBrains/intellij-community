@@ -112,11 +112,19 @@ public class AssignableFromFilter implements ElementFilter{
 
   private static boolean isReturnTypeInferrable(PsiMethod method, PsiElement place, PsiType expectedType, @Nullable PsiSubstitutor substitutor) {
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
-    for (final PsiTypeParameter parameter : method.getTypeParameters()) {
-      PsiType returnType = method.getReturnType();
-      if (substitutor != null) {
-        returnType = substitutor.substitute(returnType);
+    PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    if (typeParameters.length == 0) return false;
+    PsiType returnType = method.getReturnType();
+    if (substitutor != null) {
+      returnType = substitutor.substitute(returnType);
+    }
+    if (returnType instanceof PsiClassType) {
+      PsiClass target = ((PsiClassType)returnType).resolve();
+      if (!(target instanceof PsiTypeParameter) && !expectedType.isAssignableFrom(((PsiClassType)returnType).rawType())) {
+        return false;
       }
+    }
+    for (final PsiTypeParameter parameter : typeParameters) {
       final PsiType substitutionForParameter = helper.getSubstitutionForTypeParameter(parameter,
                                                                                       returnType,
                                                                                       expectedType,
