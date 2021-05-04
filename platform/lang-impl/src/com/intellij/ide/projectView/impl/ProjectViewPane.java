@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -15,6 +15,7 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -93,7 +94,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
       @Override
       public void setFont(Font font) {
-        if (Registry.is("bigger.font.in.project.view")) {
+        if (AdvancedSettings.getBoolean("bigger.font.in.project.view")) {
           font = font.deriveFont(font.getSize() + 1.0f);
         }
         super.setFont(font);
