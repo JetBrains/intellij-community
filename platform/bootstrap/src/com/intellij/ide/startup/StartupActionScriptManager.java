@@ -2,7 +2,7 @@
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -262,8 +262,7 @@ public final class StartupActionScriptManager {
 
     @Override
     public void execute() throws IOException {
-      // source may be a directory - Files.deleteIfExists must be not used here (todo use NioFiles, see IDEA-CR-69550)
-      FileUtilRt.delete(new File(mySource));
+      NioFiles.deleteRecursively(Path.of(mySource));
     }
 
     @Override
