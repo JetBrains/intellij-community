@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacadeImpl
 import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -84,7 +84,7 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
         val requiredTypes = elementTypes(requiredType)
         return when {
             !canConvert(element, requiredTypes) || !element.isJvmElement -> null
-            element is PsiFile || element is KtLightClassForFacade -> convertDeclaration(element, null, requiredTypes)
+            element is PsiFile || element is KtLightClassForFacadeImpl -> convertDeclaration(element, null, requiredTypes)
             else -> convertDeclarationOrElement(element, null, requiredTypes)
         }
     }
