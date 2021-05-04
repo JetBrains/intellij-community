@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,20 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/presentation")
 public class PresentationAnnotationInspectionTest extends JavaCodeInsightFixtureTestCase {
+
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/presentation";
@@ -41,12 +43,10 @@ public class PresentationAnnotationInspectionTest extends JavaCodeInsightFixture
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    String platformIdeJar = PathUtil.getJarPathForClass(IdeBundle.class);
-    moduleBuilder.addLibrary("presentation", platformIdeJar);
-    String iconsJar = PathUtil.getJarPathForClass(AllIcons.class);
-    moduleBuilder.addLibrary("icons", iconsJar);
+    moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
+    moduleBuilder.addLibrary("analysis", PathUtil.getJarPathForClass(Presentation.class));
+    moduleBuilder.addLibrary("icons", PathUtil.getJarPathForClass(AllIcons.class));
   }
-
 
   public void testValidIcon() {
     myFixture.testHighlighting("ValidIcon.java");
