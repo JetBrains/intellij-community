@@ -304,7 +304,7 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
 TODO(b/118034991): generate product-info.json files (or not) */
 
       String zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-      List<Path> dirs = [Paths.get(buildContext.paths.distAll), winDistPath, productJsonDir] + jreDirectoryPaths
+      List<Path> dirs = [Paths.get(buildContext.paths.distAll), winDistPath]  // Android Studio: modified by Change I5f8329b4
       BuildHelper.zip(buildContext, targetFile, dirs, zipPrefix)
 /* TODO(b/118034991): generate product-info.json files (or not)
       ProductInfoValidator.checkInArchive(buildContext, targetFile.toString(), zipPrefix)
