@@ -694,10 +694,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (state.editorAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForEditor()) {
       state.editorAAType = AntialiasingType.GREYSCALE
     }
-    if (state.moveMouseOnDefaultButton) {
-      Registry.get("ide.settings.move.mouse.on.default.button").setValue(true)
-      state.moveMouseOnDefaultButton = false
-    }
     if (!state.allowMergeButtons) {
       Registry.get("ide.allow.merge.buttons").setValue(false)
       state.allowMergeButtons = true
