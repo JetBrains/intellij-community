@@ -1,17 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.*;
@@ -570,7 +568,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
           font = UIManager.getFont(getPropertyPrefix() + ".font");
           component.setFont(!monospaced
                             ? !SystemInfo.isMacOSCatalina ? font : disableKerning(font)
-                            : new FontUIResource(Font.MONOSPACED, font.getStyle(), font.getSize()));
+                            : EditorUtil.getEditorFont(font.getSize()));
         }
       }
     }
