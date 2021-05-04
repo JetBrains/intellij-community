@@ -3,6 +3,7 @@ package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
@@ -597,7 +598,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void collapsePath(TreePath path) {
-    int row = Registry.is("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
+    int row = AdvancedSettings.getBoolean("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
     if (row < 0) {
       super.collapsePath(path);
     }
