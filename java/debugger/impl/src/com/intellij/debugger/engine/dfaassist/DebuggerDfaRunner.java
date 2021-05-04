@@ -63,7 +63,7 @@ class DebuggerDfaRunner {
   private final DfaValueFactory myFactory;
 
   DebuggerDfaRunner(@NotNull PsiElement body, @NotNull PsiElement anchor, @NotNull StackFrameProxyEx proxy) throws EvaluateException {
-    myFactory = new DfaValueFactory(body.getProject(), body.getParent() instanceof PsiClassInitializer ? ((PsiClassInitializer)body.getParent()).getContainingClass() : body);
+    myFactory = new DfaValueFactory(body.getProject());
     myBody = body;
     myAnchor = anchor;
     myProject = body.getProject();

@@ -74,7 +74,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   private TrackingRunner(@NotNull PsiElement context,
                          PsiExpression expression,
                          boolean ignoreAssertions) {
-    super(context.getProject(), context, ThreeState.fromBoolean(ignoreAssertions));
+    super(context.getProject(), ThreeState.fromBoolean(ignoreAssertions));
     myExpression = expression;
   }
 

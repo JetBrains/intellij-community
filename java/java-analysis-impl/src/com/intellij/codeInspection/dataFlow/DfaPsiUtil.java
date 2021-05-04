@@ -332,7 +332,7 @@ public final class DfaPsiUtil {
       @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
-        DfaValueFactory factory = new DfaValueFactory(body.getProject(), null);
+        DfaValueFactory factory = new DfaValueFactory(body.getProject());
         ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
         if (flow == null) {
           return Result.create(Set.of(), body, PsiModificationTracker.MODIFICATION_COUNT);

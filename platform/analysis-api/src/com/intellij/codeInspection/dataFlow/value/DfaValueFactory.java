@@ -18,15 +18,13 @@ import java.util.*;
 public class DfaValueFactory {
   private final @NotNull List<DfaValue> myValues = new ArrayList<>();
   private final @NotNull Project myProject;
-  private final @Nullable PsiElement myContext;
+  private @Nullable PsiElement myContext;
 
   /**
    * @param project a project in which context the analysis is performed
-   * @param context an item to analyze (code-block, expression, class)
    */
-  public DfaValueFactory(@NotNull Project project, @Nullable PsiElement context) {
+  public DfaValueFactory(@NotNull Project project) {
     myProject = project;
-    myContext = context;
     myValues.add(null);
     myVarFactory = new DfaVariableValue.Factory(this);
     myBoxedFactory = new DfaWrappedValue.Factory(this);
@@ -34,8 +32,28 @@ public class DfaValueFactory {
     myTypeValueFactory = new DfaTypeValue.Factory(this);
   }
 
-  public @Nullable PsiElement getContext() {
+  /**
+   * @return context (can be used to determine variable initial values)
+   */
+  @Nullable
+  public PsiElement getContext() {
     return myContext;
+  }
+
+  /**
+   * Sets the analysis context used to determine variable initial values.
+   * Must be set before interpretation start by {@link com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter}.
+   * Has no meaning during flow building.
+   * 
+   * @param context current analysis context
+   */
+  public void setContext(@NotNull PsiElement context) {
+    myContext = context;
+    for (DfaValue value : myValues) {
+      if (value instanceof DfaVariableValue) {
+        ((DfaVariableValue)value).resetInherentType();
+      }
+    }
   }
 
   int registerValue(DfaValue value) {

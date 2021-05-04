@@ -161,6 +161,10 @@ public final class DfaVariableValue extends DfaValue {
     }
     return myInherentType;
   }
+  
+  void resetInherentType() {
+    myInherentType = null;
+  }
 
   public boolean isFlushableByCalls() {
     return !myDescriptor.isStable() || (myQualifier != null && myQualifier.isFlushableByCalls());

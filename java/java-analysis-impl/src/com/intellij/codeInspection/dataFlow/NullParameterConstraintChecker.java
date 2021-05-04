@@ -56,7 +56,7 @@ final class NullParameterConstraintChecker {
     }
     if (nullableParameters.isEmpty()) return PsiParameter.EMPTY_ARRAY;
 
-    DfaValueFactory factory = new DfaValueFactory(method.getProject(), null);
+    DfaValueFactory factory = new DfaValueFactory(method.getProject());
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(method.getBody(), factory, true);
     if (flow == null) return PsiParameter.EMPTY_ARRAY;
     var interpreter = new NullParameterCheckerInterpreter(flow, nullableParameters);

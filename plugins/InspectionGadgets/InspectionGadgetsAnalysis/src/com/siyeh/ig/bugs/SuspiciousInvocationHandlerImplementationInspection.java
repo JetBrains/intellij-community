@@ -166,7 +166,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
     InvocationHandlerAnalysisRunner(@NotNull ProblemsHolder holder,
                                     PsiElement body,
                                     PsiParameter methodParameter) {
-      super(holder.getProject(), body);
+      super(holder.getProject());
       myBody = body;
       PsiClass methodClass = PsiUtil.resolveClassInClassTypeOnly(methodParameter.getType());
       if (methodClass == null) return;

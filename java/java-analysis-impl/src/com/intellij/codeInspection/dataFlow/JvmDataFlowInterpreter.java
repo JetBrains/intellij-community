@@ -70,6 +70,7 @@ public class JvmDataFlowInterpreter implements DataFlowInterpreter {
     DfaInstructionState lastInstructionState = null;
     myNestedClosures.clear();
     myWasForciblyMerged = false;
+    myValueFactory.setContext(myPsiAnchor);
 
     final StateQueue queue = new StateQueue();
     for (DfaInstructionState state : startingStates) {

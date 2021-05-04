@@ -2195,7 +2195,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       CachedValuesManager.getCachedValue(file, () ->
         CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
     return fileMap.computeIfAbsent(psiBlock, psi -> {
-      DfaValueFactory factory = new DfaValueFactory(file.getProject(), psiBlock);
+      DfaValueFactory factory = new DfaValueFactory(file.getProject());
       ControlFlow flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
       return Optional.ofNullable(flow);
     }).map(flow -> new ControlFlow(flow, targetFactory)).orElse(null);

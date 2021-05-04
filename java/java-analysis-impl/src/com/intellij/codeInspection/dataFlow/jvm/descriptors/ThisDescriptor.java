@@ -75,14 +75,18 @@ public final class ThisDescriptor extends PsiVarDescriptor {
                                           @Nullable PsiElement context) {
     DfType dfType = getDfType(thisValue.getQualifier());
     // In class initializer this variable is local until escaped
-    if (myQualifier.equals(context)) {
-      return dfType.meet(DfTypes.LOCAL_OBJECT);
-    }
     if (context != null) {
       PsiMethod method = ObjectUtils.tryCast(context.getParent(), PsiMethod.class);
-      if (method != null && !method.isConstructor() &&
-          myQualifier.equals(method.getContainingClass()) && MutationSignature.fromMethod(method).preservesThis()) {
-        return dfType.meet(Mutability.UNMODIFIABLE_VIEW.asDfType());
+      if (method != null && myQualifier.equals(method.getContainingClass())) {
+        if (!method.isConstructor() && MutationSignature.fromMethod(method).preservesThis()) {
+          return dfType.meet(Mutability.UNMODIFIABLE_VIEW.asDfType());
+        }
+        else if (method.isConstructor()) {
+          return dfType.meet(DfTypes.LOCAL_OBJECT);
+        }
+      }
+      if (myQualifier.equals(context)) {
+        return dfType.meet(DfTypes.LOCAL_OBJECT);
       }
     }
     return dfType;

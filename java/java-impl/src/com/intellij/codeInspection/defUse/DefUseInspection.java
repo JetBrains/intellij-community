@@ -109,7 +109,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   }
 
   private void processFieldsViaDfa(PsiCodeBlock body, ProblemsHolder holder) {
-    DfaValueFactory factory = new DfaValueFactory(holder.getProject(), body);
+    DfaValueFactory factory = new DfaValueFactory(holder.getProject());
     var flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
     if (flow != null) {
       Set<AssignInstruction> variables = new OverwrittenFieldAnalyzer(flow).getOverwrittenFields();

@@ -124,7 +124,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     private void checkReflexivity(PsiParameterListOwner owner, PsiParameter[] parameters, PsiElement body) {
-      DfaValueFactory factory = new DfaValueFactory(owner.getProject(), body);
+      DfaValueFactory factory = new DfaValueFactory(owner.getProject());
       ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
       if (flow == null) return;
       DfaMemoryState state = new DfaMemoryStateImpl(factory);

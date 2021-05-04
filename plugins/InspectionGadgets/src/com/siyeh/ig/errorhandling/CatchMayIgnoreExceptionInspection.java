@@ -172,7 +172,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         PsiClass exceptionClass = exception.resolve();
         if (exceptionClass == null) return false;
 
-        DfaValueFactory factory = new DfaValueFactory(project, null);
+        DfaValueFactory factory = new DfaValueFactory(project);
         ControlFlow flow = ControlFlowAnalyzer.buildFlow(block, factory, true);
         if (flow == null) return false;
         var interpreter = new CatchDataFlowInterpreter(exception, parameter, flow);

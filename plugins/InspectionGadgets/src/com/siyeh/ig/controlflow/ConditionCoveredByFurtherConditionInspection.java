@@ -140,7 +140,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
 
   @NotNull
   private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
-    DfaValueFactory factory = new DfaValueFactory(expressionToAnalyze.getProject(), null);
+    DfaValueFactory factory = new DfaValueFactory(expressionToAnalyze.getProject());
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(expressionToAnalyze, factory, true);
     if (flow == null) return Map.of();
     var interceptor = new JavaDfaListener() {

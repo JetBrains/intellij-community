@@ -51,24 +51,19 @@ public class StandardDataFlowRunner {
   private boolean myInlining = true;
   private JvmDataFlowInterpreter myInterpreter;
 
+  /**
+   * @param project current project
+   */
   public StandardDataFlowRunner(@NotNull Project project) {
-    this(project, null);
-  }
-
-  public StandardDataFlowRunner(@NotNull Project project, @Nullable PsiElement context) {
-    this(project, context, ThreeState.NO);
+    this(project, ThreeState.NO);
   }
 
   /**
    * @param project current project
-   * @param context analysis context element (code block, class, expression, etc.); used to determine whether we can trust
- *                field initializers (e.g. we usually cannot if context is a constructor)
-   * @param ignoreAssertions if true, assertion statements will be ignored, as if JVM is started with -da.
+   * @param ignoreAssertions assertion status: YES (-da), NO (-ea), or UNSURE (either)
    */
-  public StandardDataFlowRunner(@NotNull Project project,
-                                @Nullable PsiElement context,
-                                @NotNull ThreeState ignoreAssertions) {
-    myValueFactory = new DfaValueFactory(project, context);
+  public StandardDataFlowRunner(@NotNull Project project, @NotNull ThreeState ignoreAssertions) {
+    myValueFactory = new DfaValueFactory(project);
     myIgnoreAssertions = ignoreAssertions;
   }
 

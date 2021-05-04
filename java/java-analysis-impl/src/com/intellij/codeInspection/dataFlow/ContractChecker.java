@@ -111,7 +111,7 @@ final class ContractChecker {
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
 
-    DfaValueFactory factory = new DfaValueFactory(method.getProject(), null);
+    DfaValueFactory factory = new DfaValueFactory(method.getProject());
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
     if (flow == null) return Collections.emptyMap();
     ContractCheckListener interceptor = new ContractCheckListener(method, contract, ownContract);
