@@ -91,6 +91,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     fixers.add(new MissingForBodyFixer());
     fixers.add(new MissingForeachBodyFixer());
     fixers.add(new ParameterListFixer());
+    fixers.add(new MissingCommaFixer());
     fixers.add(new MissingMethodBodyFixer());
     fixers.add(new MissingClassBodyFixer());
     fixers.add(new MissingReturnExpressionFixer());
