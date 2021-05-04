@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.*
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.*
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.createKeywordConstructLookupElement
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.*
@@ -46,67 +46,77 @@ open class KeywordLookupObject {
     override fun hashCode(): Int = javaClass.hashCode()
 }
 
-object KeywordCompletion {
-    private val ALL_KEYWORDS = (KEYWORDS.types + SOFT_KEYWORDS.types)
-        .map { it as KtKeywordToken }
+class KeywordCompletion(private val languageVersionSettingProvider: LanguageVersionSettingProvider) {
+    interface LanguageVersionSettingProvider {
+        fun getLanguageVersionSetting(element: PsiElement): LanguageVersionSettings
+        fun getLanguageVersionSetting(module: Module): LanguageVersionSettings
+    }
 
-    private val INCOMPATIBLE_KEYWORDS_AROUND_SEALED = setOf(
-        SEALED_KEYWORD,
-        ANNOTATION_KEYWORD,
-        DATA_KEYWORD,
-        ENUM_KEYWORD,
-        OPEN_KEYWORD,
-        INNER_KEYWORD,
-        ABSTRACT_KEYWORD
-    ).mapTo(HashSet()) { it.value }
+    companion object {
+        private val ALL_KEYWORDS = (KEYWORDS.types + SOFT_KEYWORDS.types)
+            .map { it as KtKeywordToken }
 
-    private val COMPOUND_KEYWORDS = mapOf<KtKeywordToken, Set<KtKeywordToken>>(
-        COMPANION_KEYWORD to setOf(OBJECT_KEYWORD),
-        DATA_KEYWORD to setOf(CLASS_KEYWORD),
-        ENUM_KEYWORD to setOf(CLASS_KEYWORD),
-        ANNOTATION_KEYWORD to setOf(CLASS_KEYWORD),
-        SEALED_KEYWORD to setOf(CLASS_KEYWORD, INTERFACE_KEYWORD, FUN_KEYWORD),
-        LATEINIT_KEYWORD to setOf(VAR_KEYWORD),
-        CONST_KEYWORD to setOf(VAL_KEYWORD),
-        SUSPEND_KEYWORD to setOf(FUN_KEYWORD)
-    )
+        private val KEYWORDS_TO_IGNORE_PREFIX =
+            TokenSet.create(OVERRIDE_KEYWORD /* it's needed to complete overrides that should be work by member name too */)
 
-    private val COMPOUND_KEYWORDS_NOT_SUGGEST_TOGETHER = mapOf<KtKeywordToken, Set<KtKeywordToken>>(
-        // 'fun' can follow 'sealed', e.g. "sealed fun interface". But "sealed fun" looks irrelevant differ to "sealed interface/class".
-        SEALED_KEYWORD to setOf(FUN_KEYWORD),
-    )
+        private val INCOMPATIBLE_KEYWORDS_AROUND_SEALED = setOf(
+            SEALED_KEYWORD,
+            ANNOTATION_KEYWORD,
+            DATA_KEYWORD,
+            ENUM_KEYWORD,
+            OPEN_KEYWORD,
+            INNER_KEYWORD,
+            ABSTRACT_KEYWORD
+        ).mapTo(HashSet()) { it.value }
 
-    private val KEYWORD_CONSTRUCTS = mapOf<KtKeywordToken, String>(
-        IF_KEYWORD to "fun foo() { if (caret)",
-        WHILE_KEYWORD to "fun foo() { while(caret)",
-        FOR_KEYWORD to "fun foo() { for(caret)",
-        TRY_KEYWORD to "fun foo() { try {\ncaret\n}",
-        CATCH_KEYWORD to "fun foo() { try {} catch (caret)",
-        FINALLY_KEYWORD to "fun foo() { try {\n}\nfinally{\ncaret\n}",
-        DO_KEYWORD to "fun foo() { do {\ncaret\n}",
-        INIT_KEYWORD to "class C { init {\ncaret\n}",
-        CONSTRUCTOR_KEYWORD to "class C { constructor(caret)"
-    )
+        private val COMPOUND_KEYWORDS = mapOf<KtKeywordToken, Set<KtKeywordToken>>(
+            COMPANION_KEYWORD to setOf(OBJECT_KEYWORD),
+            DATA_KEYWORD to setOf(CLASS_KEYWORD),
+            ENUM_KEYWORD to setOf(CLASS_KEYWORD),
+            ANNOTATION_KEYWORD to setOf(CLASS_KEYWORD),
+            SEALED_KEYWORD to setOf(CLASS_KEYWORD, INTERFACE_KEYWORD, FUN_KEYWORD),
+            LATEINIT_KEYWORD to setOf(VAR_KEYWORD),
+            CONST_KEYWORD to setOf(VAL_KEYWORD),
+            SUSPEND_KEYWORD to setOf(FUN_KEYWORD)
+        )
 
-    private val NO_SPACE_AFTER = listOf(
-        THIS_KEYWORD,
-        SUPER_KEYWORD,
-        NULL_KEYWORD,
-        TRUE_KEYWORD,
-        FALSE_KEYWORD,
-        BREAK_KEYWORD,
-        CONTINUE_KEYWORD,
-        ELSE_KEYWORD,
-        WHEN_KEYWORD,
-        FILE_KEYWORD,
-        DYNAMIC_KEYWORD,
-        GET_KEYWORD,
-        SET_KEYWORD
-    ).map { it.value } + "companion object"
+        private val COMPOUND_KEYWORDS_NOT_SUGGEST_TOGETHER = mapOf<KtKeywordToken, Set<KtKeywordToken>>(
+            // 'fun' can follow 'sealed', e.g. "sealed fun interface". But "sealed fun" looks irrelevant differ to "sealed interface/class".
+            SEALED_KEYWORD to setOf(FUN_KEYWORD),
+        )
+
+        private val KEYWORD_CONSTRUCTS = mapOf<KtKeywordToken, String>(
+            IF_KEYWORD to "fun foo() { if (caret)",
+            WHILE_KEYWORD to "fun foo() { while(caret)",
+            FOR_KEYWORD to "fun foo() { for(caret)",
+            TRY_KEYWORD to "fun foo() { try {\ncaret\n}",
+            CATCH_KEYWORD to "fun foo() { try {} catch (caret)",
+            FINALLY_KEYWORD to "fun foo() { try {\n}\nfinally{\ncaret\n}",
+            DO_KEYWORD to "fun foo() { do {\ncaret\n}",
+            INIT_KEYWORD to "class C { init {\ncaret\n}",
+            CONSTRUCTOR_KEYWORD to "class C { constructor(caret)"
+        )
+
+        private val NO_SPACE_AFTER = listOf(
+            THIS_KEYWORD,
+            SUPER_KEYWORD,
+            NULL_KEYWORD,
+            TRUE_KEYWORD,
+            FALSE_KEYWORD,
+            BREAK_KEYWORD,
+            CONTINUE_KEYWORD,
+            ELSE_KEYWORD,
+            WHEN_KEYWORD,
+            FILE_KEYWORD,
+            DYNAMIC_KEYWORD,
+            GET_KEYWORD,
+            SET_KEYWORD
+        ).map { it.value } + "companion object"
+    }
 
     fun complete(position: PsiElement, prefixMatcher: PrefixMatcher, isJvmModule: Boolean, consumer: (LookupElement) -> Unit) {
         if (!GENERAL_FILTER.isAcceptable(position, position)) return
-        val sealedInterfacesEnabled = position.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)
+        val sealedInterfacesEnabled = languageVersionSettingProvider.getLanguageVersionSetting(position).supportsFeature(LanguageFeature.SealedInterfaces)
 
         val parserFilter = buildFilter(position)
         for (keywordToken in ALL_KEYWORDS) {
@@ -432,9 +442,9 @@ object KeywordCompletion {
         fun isKeywordCorrectlyApplied(keywordTokenType: KtKeywordToken, file: KtFile): Boolean {
             val elementAt = file.findElementAt(prefixText.length)!!
 
-            val languageVersionSettings = ModuleUtilCore.findModuleForPsiElement(position)?.languageVersionSettings
-                ?: LanguageVersionSettingsImpl.DEFAULT
-
+            val languageVersionSettings =
+                ModuleUtilCore.findModuleForPsiElement(position)?.let(languageVersionSettingProvider::getLanguageVersionSetting)
+                    ?: LanguageVersionSettingsImpl.DEFAULT
             when {
                 !elementAt.node!!.elementType.matchesKeyword(keywordTokenType) -> return false
 
