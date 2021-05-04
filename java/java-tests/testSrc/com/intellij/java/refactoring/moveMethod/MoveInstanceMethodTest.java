@@ -92,6 +92,10 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
     doTest(true, 0);
   }
 
+  public void testDefaultInClass() {
+    doTest(true, 0);
+  }
+
   public void testQualifyFieldAccess() {
     doTest(false, 0);
   }
