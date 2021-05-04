@@ -171,7 +171,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   /**
    * @param selectedRange range which is relative to the {@code editor}
    */
-  static void restoreSelection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+   public static void restoreSelection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
     if (handleSelectionIntersection(editor, selectedRange)) {
       return;
     }
