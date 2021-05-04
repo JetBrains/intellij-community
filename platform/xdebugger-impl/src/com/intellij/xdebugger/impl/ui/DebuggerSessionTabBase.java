@@ -27,6 +27,8 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public abstract class DebuggerSessionTabBase extends RunTab {
   protected ExecutionConsole myConsole;
 
@@ -54,9 +56,13 @@ public abstract class DebuggerSessionTabBase extends RunTab {
   protected void attachNotificationTo(final Content content) {
     if (myConsole instanceof ObservableConsoleView) {
       ObservableConsoleView observable = (ObservableConsoleView)myConsole;
-      observable.addChangeListener(types -> {
-        if (types.contains(ConsoleViewContentType.ERROR_OUTPUT) || types.contains(ConsoleViewContentType.NORMAL_OUTPUT)) {
-          content.fireAlert();
+      AtomicBoolean alertFired = new AtomicBoolean();
+      observable.addChangeListener(new ObservableConsoleView.ChangeListener() {
+        @Override
+        public void textAdded(@NotNull String text, @NotNull ConsoleViewContentType type) {
+          if ((type.equals(ConsoleViewContentType.ERROR_OUTPUT) || type.equals(ConsoleViewContentType.NORMAL_OUTPUT)) && alertFired.compareAndSet(false, true)) {
+            content.fireAlert();
+          }
         }
       }, content);
       RunProfile profile = getRunProfile();
