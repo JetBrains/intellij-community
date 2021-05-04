@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBInsets;
@@ -18,7 +18,11 @@ public class CellRendererPanel extends JPanel {
   private boolean mySelected;
 
   public CellRendererPanel() {
-    super(null); // we do the layout ourselves
+    this(null);
+  }
+
+  public CellRendererPanel(LayoutManager lm) {
+    super(lm);
     super.setOpaque(false); // to be consistent with #isOpaque
     super.setFont(null);
   }

@@ -22,11 +22,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.ToolWindowEventSource
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.problems.WolfTheProblemSolver
-import com.intellij.ui.BackgroundSupplier
-import com.intellij.ui.CellRendererPanel
-import com.intellij.ui.JBColor
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.paint.EffectPainter.LINE_UNDERSCORE
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
@@ -166,8 +162,7 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
   private val SEPARATOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
   private val main = SimpleColoredComponent().apply { isOpaque = false }
   private val extra = SimpleColoredComponent().apply { isOpaque = false }
-  private val panel = CellRendererPanel().apply {
-    layout = BorderLayout()
+  private val panel = CellRendererPanel(BorderLayout()).apply {
     add(BorderLayout.WEST, main)
     add(BorderLayout.EAST, extra)
   }
