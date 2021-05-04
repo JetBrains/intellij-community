@@ -348,7 +348,7 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
         }
       }
 
-      val exitCode = ProjectUtil.confirmOpenNewProject(false, projectDir?.fileName?.toString())
+      val exitCode = ProjectUtil.confirmOpenNewProject(false, projectDir?.fileName?.toString() ?: projectDir?.toString())
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
         if (!projectManager.closeAndDispose(projectToClose)) {
           result = true
