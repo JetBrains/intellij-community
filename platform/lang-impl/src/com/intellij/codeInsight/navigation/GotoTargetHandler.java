@@ -1,5 +1,4 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -41,14 +40,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 
 public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(GotoTargetHandler.class);
   private final PsiElementListCellRenderer myDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
-  private final DefaultListCellRenderer myActionElementRenderer = new ActionCellRenderer();
 
   @Override
   public boolean startInWriteAction() {
@@ -132,17 +128,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    builder.setRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value == null) return super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
-        if (value instanceof AdditionalAction) {
-          return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        }
-        PsiElementListCellRenderer<?> renderer = getRenderer(value, gotoData);
-        return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      }
-    }).
+    builder.setRenderer(new GotoTargetRenderer(value -> getRenderer(value, gotoData))).
       setItemsChosenCallback(selectedElements -> {
         for (Object element : selectedElements) {
           if (element instanceof AdditionalAction) {
@@ -359,19 +345,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
 
       return null;
-    }
-  }
-
-  private static class ActionCellRenderer extends DefaultListCellRenderer {
-    @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (value != null) {
-        AdditionalAction action = (AdditionalAction)value;
-        setText(action.getText());
-        setIcon(action.getIcon());
-      }
-      return result;
     }
   }
 }
