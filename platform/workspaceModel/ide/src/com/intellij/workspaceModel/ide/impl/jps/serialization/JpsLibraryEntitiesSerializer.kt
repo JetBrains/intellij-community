@@ -6,6 +6,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
@@ -41,6 +42,19 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
                                 entitySource: JpsFileEntitySource.FileInDirectory,
                                 virtualFileManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<LibraryEntity> {
     return JpsLibraryEntitiesSerializer(virtualFileManager.fromUrl(fileUrl), entitySource, LibraryTableId.ProjectLibraryTableId)
+  }
+
+  override fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder, configLocation: JpsProjectConfigLocation) {
+    builder.entities(LibraryEntity::class.java).forEach {
+      if (it.tableId == LibraryTableId.ProjectLibraryTableId) {
+        builder.changeSource(it, JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(configLocation))
+      }
+    }
+    builder.entities(LibraryPropertiesEntity::class.java).forEach {
+      if (it.library.tableId == LibraryTableId.ProjectLibraryTableId) {
+        builder.changeSource(it, it.library.entitySource)
+      }
+    }
   }
 }
 
