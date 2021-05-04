@@ -65,7 +65,7 @@ class LessonManager {
     OpenPassedContext(project).apply(lesson.lessonContent)
     learnPanel.scrollRectToVisible(Rectangle(0, 0, 1, 1))
     learnPanel.makeNextButtonSelected()
-    learnPanel.learnToolWindow?.showGotItAboutRestart()
+    learnPanel.learnToolWindow.showGotItAboutRestart()
   }
 
   internal fun initDslLesson(editor: Editor?, cLesson: Lesson, lessonExecutor: LessonExecutor) {

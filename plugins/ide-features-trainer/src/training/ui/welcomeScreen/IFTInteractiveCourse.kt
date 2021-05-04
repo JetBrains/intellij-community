@@ -75,7 +75,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   private fun moduleDescription(module: IftModule): HeightLimitedPane {
-    return HeightLimitedPane(module.description ?: "", -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
+    return HeightLimitedPane(module.description, -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
   }
 
   private fun moduleHeader(module: IftModule): LinkLabel<Any> {

@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -276,7 +275,7 @@ fun TaskContext.checkToolWindowState(toolWindowId: String, isShowing: Boolean) {
   }
 }
 
-fun <L> TaskRuntimeContext.subscribeForMessageBus(topic: Topic<L>, handler: L) {
+fun <L: Any> TaskRuntimeContext.subscribeForMessageBus(topic: Topic<L>, handler: L) {
   project.messageBus.connect(taskDisposable).subscribe(topic, handler)
 }
 
@@ -312,12 +311,6 @@ fun TaskRuntimeContext.closeAllFindTabs() {
   while (usageViewManager.selectedContent.also { selectedContent = it } != null) {
     usageViewManager.closeContent(selectedContent!!)
   }
-}
-
-fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String) {
-  val gotIt = CompletableFuture<Boolean>()
-  text(text, LearningBalloonConfig(position, width, false) { gotIt.complete(true) })
-  addStep(gotIt)
 }
 
 fun String.dropMnemonic(): String {

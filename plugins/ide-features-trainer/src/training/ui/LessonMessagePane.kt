@@ -145,6 +145,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
 
   fun messagesNumber(): Int = activeMessages.size
 
+  @Suppress("SameParameterValue")
   private fun removeMessagesRange(startIdx: Int, endIdx: Int, list: MutableList<LessonMessage>) {
     if (startIdx == endIdx) return
     list.subList(startIdx, endIdx).clear()
@@ -345,22 +346,25 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     for (lessonMessage in allLessonMessages()) {
       val myMessages = lessonMessage.messageParts
       for (myMessage in myMessages) {
-        if (myMessage.type == MessagePart.MessageType.SHORTCUT) {
-          val bg = UISettings.instance.shortcutBackgroundColor
-          val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
-          drawRectangleAroundText(myMessage, g2d, needColor) { r2d ->
-            g2d.fill(r2d)
+        @Suppress("NON_EXHAUSTIVE_WHEN")
+        when (myMessage.type) {
+          MessagePart.MessageType.SHORTCUT -> {
+            val bg = UISettings.instance.shortcutBackgroundColor
+            val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
+            drawRectangleAroundText(myMessage, g2d, needColor) { r2d ->
+              g2d.fill(r2d)
+            }
           }
-        }
-        else if (myMessage.type == MessagePart.MessageType.CODE) {
-          drawRectangleAroundText(myMessage, g2d, UISettings.instance.codeBorderColor) { r2d ->
-            g2d.draw(r2d)
+          MessagePart.MessageType.CODE -> {
+            drawRectangleAroundText(myMessage, g2d, UISettings.instance.codeBorderColor) { r2d ->
+              g2d.draw(r2d)
+            }
           }
-        }
-        else if (myMessage.type == MessagePart.MessageType.ICON_IDX) {
-          val rect = modelToView2D(myMessage.startOffset + 1)
-          val icon = LearningUiManager.iconMap[myMessage.text]
-          icon?.paintIcon(this, g2d, rect.x.toInt(), rect.y.toInt())
+          MessagePart.MessageType.ICON_IDX -> {
+            val rect = modelToView2D(myMessage.startOffset + 1)
+            val icon = LearningUiManager.iconMap[myMessage.text]
+            icon?.paintIcon(this, g2d, rect.x.toInt(), rect.y.toInt())
+          }
         }
       }
     }
@@ -389,14 +393,10 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
 
     g2d.color = needColor
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    val r2d: RoundRectangle2D = if (!SystemInfo.isMac)
-      RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent + JBUIScale.scale(2f),
-                              rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 2 * indent).toDouble(),
-                              arc.toDouble(), arc.toDouble())
-    else
-      RoundRectangle2D.Double(rectangleStart.getX() - 2 * indent, rectangleStart.getY() - indent + JBUIScale.scale(1f),
-                              rectangleEnd.getX() - rectangleStart.getX() + 4 * indent, (fontSize + 2 * indent).toDouble(),
-                              arc.toDouble(), arc.toDouble())
+    val shift = if (SystemInfo.isMac) 1f else 2f
+    val r2d = RoundRectangle2D.Double(rectangleStart.x - 2 * indent, rectangleStart.y - indent + JBUIScale.scale(shift),
+                                      rectangleEnd.x - rectangleStart.x + 4 * indent, (fontSize + 2 * indent).toDouble(),
+                                      arc.toDouble(), arc.toDouble())
     draw(r2d)
     g2d.color = color
   }

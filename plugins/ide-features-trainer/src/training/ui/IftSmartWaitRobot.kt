@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
 import javax.swing.JPopupMenu
 import javax.swing.SwingUtilities
+import kotlin.math.ln
 
 // It is a copy-paster from testGuiFramework (with several changes)
 internal class IftSmartWaitRobot : Robot {
@@ -220,7 +221,7 @@ internal class IftSmartWaitRobot : Robot {
     }
     else {
       Pause.pause(waitConst)
-      if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
+      if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait { }
     }
   }
 
@@ -245,8 +246,8 @@ internal class IftSmartWaitRobot : Robot {
       }
 
       basicRobot.moveMouse(
-        (start.x + dx * ((Math.log(1.0 * step / n) - Math.log(1.0 / n)) * n / (0 - Math.log(1.0 / n)))).toInt(),
-        (start.y + dy * ((Math.log(1.0 * step / n) - Math.log(1.0 / n)) * n / (0 - Math.log(1.0 / n)))).toInt())
+        (start.x + dx * ((ln(1.0 * step / n) - ln(1.0 / n)) * n / (0 - ln(1.0 / n)))).toInt(),
+        (start.y + dy * ((ln(1.0 * step / n) - ln(1.0 / n)) * n / (0 - ln(1.0 / n)))).toInt())
     }
     basicRobot.moveMouse(x, y)
   }

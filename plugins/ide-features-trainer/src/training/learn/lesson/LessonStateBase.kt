@@ -37,5 +37,6 @@ object LessonStateManager {
     }
   }
 
-  fun getStateFromBase(lessonId: String): LessonState = LessonStateBase.instance.map.getOrPut(lessonId.toLowerCase(), { LessonState.NOT_PASSED })
+  fun getStateFromBase(lessonId: String): LessonState =
+    LessonStateBase.instance.map.getOrPut(lessonId.toLowerCase()) { LessonState.NOT_PASSED }
 }

@@ -16,6 +16,7 @@ abstract class IftModule(@Nls val name: String,
 
   init {
     for (lesson in lessons) {
+      @Suppress("LeakingThis")
       lesson.module = this
     }
   }

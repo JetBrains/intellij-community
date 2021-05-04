@@ -28,7 +28,7 @@ class LearnToolWindow internal constructor(val project: Project, private val who
   val parentDisposable: Disposable = wholeToolWindow.disposable
 
   val learnPanel: LearnPanel = LearnPanel(this)
-  private val modulesPanel: ModulesPanel = ModulesPanel()
+  private val modulesPanel: ModulesPanel = ModulesPanel(project)
   private val scrollPane: JBScrollPane = if (LangManager.getInstance().languages.isEmpty()) {
     JBScrollPane(JLabel(LearnBundle.message("no.supported.languages.found")))
   }

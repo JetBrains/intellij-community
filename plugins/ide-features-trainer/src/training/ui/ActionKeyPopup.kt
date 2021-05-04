@@ -26,8 +26,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, actionId: String) {
-  val action = ActionManager.getInstance().getAction(actionId)
-  if (action == null) return
+  val action = ActionManager.getInstance().getAction(actionId) ?: return
 
   lateinit var balloon: Balloon
   val jPanel = JPanel()

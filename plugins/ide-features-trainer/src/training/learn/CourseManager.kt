@@ -73,17 +73,6 @@ class CourseManager internal constructor() : Disposable {
     return lessonsForModules.firstOrNull { it.name.equals(lessonName, ignoreCase = true) }
   }
 
-  fun calcLessonsForLanguage(primaryLangSupport: LangSupport): Int {
-    return ContainerUtil.concat(filterByLanguage(primaryLangSupport).map { m -> m.lessons }).size
-  }
-
-  fun calcPassedLessonsForLanguage(primaryLangSupport: LangSupport): Int {
-    return filterByLanguage(primaryLangSupport)
-      .flatMap { m -> m.lessons }
-      .filter { it.passed }
-      .size
-  }
-
   private fun initAllModules(): List<IftModule> = COURSE_MODULES_EP.extensions
     .filter { courseCanBeUsed(it.language) }
     .map { it.instance.modules() }.flatten()
