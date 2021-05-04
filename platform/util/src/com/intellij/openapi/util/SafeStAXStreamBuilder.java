@@ -69,9 +69,10 @@ public final class SafeStAXStreamBuilder {
     return document;
   }
 
-  static Element build(@NotNull XMLStreamReader2 stream,
-                       @SuppressWarnings("SameParameterValue") boolean isIgnoreBoundaryWhitespace,
-                       @NotNull SafeJdomFactory factory) throws XMLStreamException {
+  public static Element build(@NotNull XMLStreamReader2 stream,
+                              @SuppressWarnings("SameParameterValue") boolean isIgnoreBoundaryWhitespace,
+                              boolean isNsSupported,
+                              @NotNull SafeJdomFactory factory) throws XMLStreamException {
     int state = stream.getEventType();
 
     if (state != START_DOCUMENT) {
@@ -90,7 +91,7 @@ public final class SafeStAXStreamBuilder {
           break;
 
         case START_ELEMENT:
-          rootElement = processElementFragment(stream, isIgnoreBoundaryWhitespace, true, factory);
+          rootElement = processElementFragment(stream, isIgnoreBoundaryWhitespace, isNsSupported, factory);
           break;
 
         default:

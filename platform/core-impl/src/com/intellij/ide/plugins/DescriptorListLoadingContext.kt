@@ -3,13 +3,9 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.SafeJdomFactory
+import com.intellij.util.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
-import org.jdom.Attribute
-import org.jdom.Element
-import org.jdom.Namespace
-import org.jdom.Text
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -29,11 +25,11 @@ class DescriptorListLoadingContext constructor(
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
 ) : AutoCloseable, ReadModuleContext {
-  private val toDispose = ConcurrentLinkedQueue<Array<PluginXmlFactory?>>()
+  private val toDispose = ConcurrentLinkedQueue<Array<MyXmlInterner?>>()
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
-    val factory = PluginXmlFactory()
-    val ref = arrayOf<PluginXmlFactory?>(factory)
+    val factory = MyXmlInterner()
+    val ref = arrayOf<MyXmlInterner?>(factory)
     toDispose.add(ref)
     ref
   })
@@ -57,17 +53,13 @@ class DescriptorListLoadingContext constructor(
     return PluginManagerCore.CORE_ID != id && disabledPlugins.contains(id)
   }
 
-  override val jdomFactory: SafeJdomFactory
+  override val interner: XmlInterner
     get() = threadLocalXmlFactory.get()[0]!!
 
   override fun close() {
     for (ref in toDispose) {
       ref[0] = null
     }
-  }
-
-  fun internString(string: String): String {
-    return threadLocalXmlFactory.get()[0]!!.intern(string)
   }
 
   val visitedFiles: MutableList<String>
@@ -101,10 +93,9 @@ private val CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
   "qualifiedName"))
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-private val EXTRA_STRINGS = Arrays.asList("id", PluginManagerCore.VENDOR_JETBRAINS)
+private val EXTRA_STRINGS = Arrays.asList("id", "order", "os", PluginManagerCore.VENDOR_JETBRAINS)
 
-// don't intern CDATA because in most cases it is used for some unique large text (e.g. plugin description)
-internal class PluginXmlFactory : SafeJdomFactory.BaseSafeJdomFactory() {
+private class MyXmlInterner : XmlInterner {
   @Suppress("SSBasedInspection")
   private val strings = ObjectOpenHashSet<String>(CLASS_NAMES.size + EXTRA_STRINGS.size)
 
@@ -115,22 +106,10 @@ internal class PluginXmlFactory : SafeJdomFactory.BaseSafeJdomFactory() {
     strings.addAll(EXTRA_STRINGS)
   }
 
-  // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
-  fun intern(string: String): String = if (string.length < 64) strings.addOrGet(string) else string
+  override fun name(value: String): String = strings.addOrGet(value)
 
-  override fun element(name: String, namespace: Namespace?) = super.element(intern(name), namespace)
-
-  override fun attribute(name: String, value: String, namespace: Namespace?): Attribute {
-    val internedName = intern(name)
-    return if (CLASS_NAMES.contains(internedName)) {
-      super.attribute(internedName, value, namespace)
-    }
-    else {
-      super.attribute(internedName, intern(value), namespace)
-    }
-  }
-
-  override fun text(text: String, parentElement: Element): Text {
-    return Text(if (CLASS_NAMES.contains(parentElement.name)) text else intern(text))
+  override fun value(name: String, value: String): String {
+    // doesn't make sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
+    return if (value.length > 64 || CLASS_NAMES.contains(name)) value else strings.addOrGet(value)
   }
 }

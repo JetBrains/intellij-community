@@ -375,7 +375,6 @@
     <applicationService serviceInterface="com.intellij.ide.StatisticsNotificationManager"
                         serviceImplementation="com.intellij.internal.statistic.notification.StatisticsNotificationManagerImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
                         serviceImplementation="com.intellij.openapi.util.WindowStateApplicationService"/>
     <projectService serviceInterface="com.intellij.openapi.util.WindowStateService"
@@ -1208,8 +1207,6 @@
     <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.GradleGroovy"/>
     <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.Maven"/>
     <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.Intellij"/>
-
-    <applicationService serviceImplementation="com.intellij.terminal.TerminalUiSettingsManager"/>
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 

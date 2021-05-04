@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.OptionDescription;
@@ -28,46 +28,38 @@ final class RegistryOptionsTopHitProvider implements OptionsTopHitProvider.Appli
   @NotNull
   @Override
   public Collection<OptionDescription> getOptions() {
-    return Holder.ourValues;
+    List<OptionDescription> result = new ArrayList<>();
+    for (RegistryValue value : Registry.getAll()) {
+      if (value.isBoolean()) {
+        String key = value.getKey();
+        RegistryBooleanOptionDescriptor optionDescriptor = new RegistryBooleanOptionDescriptor(key, key);
+        if (value.isChangedFromDefault()) {
+          result.add(0, optionDescriptor);
+        }
+        else {
+          result.add(optionDescriptor);
+        }
+      }
+      else {
+        result.add(new RegistryTextOptionDescriptor(value));
+      }
+    }
+    for (ExperimentalFeature feature : Experiments.EP_NAME.getExtensionList()) {
+      @NlsSafe String optionName = feature.id; // Probably need to add localized feature.name
+      ExperimentalFeatureBooleanOptionDescriptor descriptor = new ExperimentalFeatureBooleanOptionDescriptor(optionName, feature.id);
+      if (Experiments.getInstance().isChanged(feature.id)) {
+        result.add(0, descriptor);
+      }
+      else {
+        result.add(descriptor);
+      }
+    }
+    return result;
   }
 
   @NotNull
   @Override
   public String getId() {
     return "registry";
-  }
-
-  private static class Holder {
-    private static final List<OptionDescription> ourValues = initValues();
-
-    private static List<OptionDescription> initValues() {
-      final List<OptionDescription> result = new ArrayList<>();
-      for (RegistryValue value : Registry.getAll()) {
-        if (value.isBoolean()) {
-          String key = value.getKey();
-          RegistryBooleanOptionDescriptor optionDescriptor = new RegistryBooleanOptionDescriptor(key, key);
-          if (value.isChangedFromDefault()) {
-            result.add(0, optionDescriptor);
-          }
-          else {
-            result.add(optionDescriptor);
-          }
-        }
-        else {
-          result.add(new RegistryTextOptionDescriptor(value));
-        }
-      }
-      for (ExperimentalFeature feature : Experiments.EP_NAME.getExtensions()) {
-        @NlsSafe String optionName = feature.id; // Probably need to add localized feature.name
-        ExperimentalFeatureBooleanOptionDescriptor descriptor = new ExperimentalFeatureBooleanOptionDescriptor(optionName, feature.id);
-        if (Experiments.getInstance().isChanged(feature.id)) {
-          result.add(0, descriptor);
-        }
-        else {
-          result.add(descriptor);
-        }
-      }
-      return result;
-    }
   }
 }

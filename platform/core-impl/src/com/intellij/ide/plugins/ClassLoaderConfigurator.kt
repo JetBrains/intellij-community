@@ -301,7 +301,7 @@ class ClassLoaderConfigurator(
 
     val loader = dependency.classLoader
     if (loader == null) {
-      log.error(PluginLoadingError.formatErrorMessage(dependent, "requires missing class loader for '${dependency.getName()}'"))
+      log.error(PluginLoadingError.formatErrorMessage(dependent, "requires missing class loader for '${dependency.name}'"))
     }
     else if (loader !== coreLoader) {
       loaders.add(loader)
@@ -313,7 +313,7 @@ class ClassLoaderConfigurator(
                                   loaders: MutableCollection<ClassLoader>) {
     val loader = dependency.classLoader
     if (loader == null) {
-      log.error(PluginLoadingError.formatErrorMessage(dependent, "requires missing class loader for '${dependency.getName()}'"))
+      log.error(PluginLoadingError.formatErrorMessage(dependent, "requires missing class loader for '${dependency.name}'"))
     }
     else if (loader !== coreLoader) {
       loaders.add(loader)
@@ -591,12 +591,18 @@ private fun collectPackagePrefixes(dependent: IdeaPluginDescriptorImpl, packageP
   // from extensions
   dependent.unsortedEpNameToExtensionElements.values.forEach { extensionDescriptors ->
     for (extensionDescriptor in extensionDescriptors) {
-      if (!extensionDescriptor.element.hasAttributes()) {
+      if (extensionDescriptor.implementation != null) {
+        addPackageByClassNameIfNeeded(extensionDescriptor.implementation, packagePrefixes)
+        break
+      }
+
+      val element = extensionDescriptor.element ?: continue
+      if (!element.attributes.isEmpty()) {
         continue
       }
 
       for (attributeName in IMPL_CLASS_NAMES) {
-        val className = extensionDescriptor.element.getAttributeValue(attributeName)
+        val className = element.getAttributeValue(attributeName)
         if (className != null && !className.isEmpty()) {
           addPackageByClassNameIfNeeded(className, packagePrefixes)
           break

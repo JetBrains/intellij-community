@@ -5,14 +5,13 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.SafeJdomFactory
-import com.intellij.openapi.util.SafeStAXStreamBuilder
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.NoOpXmlInterner
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
@@ -483,8 +482,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
   val raw = readModuleDescriptor(
     input = input,
     readContext = object : ReadModuleContext {
-      override val jdomFactory: SafeJdomFactory
-        get() = SafeStAXStreamBuilder.FACTORY
+      override val interner = NoOpXmlInterner
       override val isMissingIncludeIgnored: Boolean
         get() = false
     },

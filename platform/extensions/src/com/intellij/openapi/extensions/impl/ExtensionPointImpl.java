@@ -928,9 +928,9 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
   }
 
-  protected abstract @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor extensionElement,
-                                                                      @NotNull PluginDescriptor pluginDescriptor,
-                                                                      @NotNull ComponentManager componentManager);
+  abstract @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor extensionElement,
+                                                            @NotNull PluginDescriptor pluginDescriptor,
+                                                            @NotNull ComponentManager componentManager);
 
   /**
    * {@link #clearCache} is not called.
@@ -969,7 +969,6 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       return;
     }
 
-
     List<ExtensionComponentAdapter> addedAdapters = Collections.emptyList();
     for (ExtensionPointListener<T> listener : listeners) {
       if (!(listener instanceof ExtensionPointAdapter)) {
@@ -988,8 +987,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
 
     List<ExtensionComponentAdapter> finalAddedAdapters = addedAdapters;
-    Runnable runnable = () -> notifyListeners(false, finalAddedAdapters, listeners);
-    listenerCallbacks.add(runnable);
+    listenerCallbacks.add(() -> notifyListeners(false, finalAddedAdapters, listeners));
   }
 
   @TestOnly

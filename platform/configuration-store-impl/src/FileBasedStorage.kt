@@ -12,6 +12,8 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SafeStAXStreamBuilder
+import com.intellij.openapi.util.createXmlStreamReader
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -29,6 +31,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
+import javax.xml.stream.XMLStreamException
 
 open class FileBasedStorage(file: Path,
                             fileSpec: String,
@@ -146,6 +149,9 @@ open class FileBasedStorage(file: Path,
     catch (e: JDOMException) {
       processReadException(e)
     }
+    catch (e: XMLStreamException) {
+      processReadException(e)
+    }
     catch (e: IOException) {
       processReadException(e)
     }
@@ -195,7 +201,13 @@ open class FileBasedStorage(file: Path,
     if (isUseUnixLineSeparator) {
       // do not load the whole data into memory if no need to detect line separator
       lineSeparator = LineSeparator.LF
-      return JDOMUtil.load(Files.newInputStream(file))
+      val xmlStreamReader = createXmlStreamReader(Files.newInputStream(file))
+      try {
+        return SafeStAXStreamBuilder.build(xmlStreamReader, true, false, SafeStAXStreamBuilder.FACTORY)
+      }
+      finally {
+        xmlStreamReader.close()
+      }
     }
     else {
       val data = CharsetToolkit.inputStreamSkippingBOM(Files.newInputStream(file)).reader().readCharSequence(attributes.size().toInt())

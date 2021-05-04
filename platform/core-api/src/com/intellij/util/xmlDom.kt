@@ -1,73 +1,105 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:JvmName("XmlDomReader")
+@file:ApiStatus.Internal
 package com.intellij.util
 
+import com.intellij.openapi.util.createXmlStreamReader
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
+import java.io.InputStream
 import java.util.*
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 
-private val EMPTY_ARRAY = emptyArray<XmlElement>()
-
-@ApiStatus.Internal
-data class XmlElement(
-  @JvmField val name: String,
-  @JvmField val attributes: Map<String, String>,
-
-  @JvmField var children: List<XmlElement>,
-
-  @JvmField var content: String?,
-) {
-  fun count(name: String): Int = children.count { it.name == name }
+private class XmlElementBuilder(@JvmField var name: String, @JvmField var attributes: Map<String, String>) {
+  @JvmField var content: String? = null
+  @JvmField val children: ArrayList<XmlElement> = ArrayList()
 }
 
-fun readXmlAsModel(reader: XMLStreamReader2): XmlElement {
-  val fragment = XmlElement(name = reader.localName, attributes = readAttributes(reader = reader), children = Collections.emptyList(), content = null)
+interface XmlInterner {
+  fun name(value: String): String
+
+  /**
+   * [name] is interned.
+   */
+  fun value(name: String, value: String): String
+}
+
+object NoOpXmlInterner : XmlInterner {
+  override fun name(value: String) = value
+
+  override fun value(name: String, value: String) = value
+}
+
+@ApiStatus.Internal
+fun readXmlAsModel(inputStream: InputStream): XmlElement {
+  val reader = createXmlStreamReader(inputStream)
+  reader.nextTag()
+  return readXmlAsModel(reader, null, NoOpXmlInterner)
+}
+
+@ApiStatus.Internal
+fun readXmlAsModel(reader: XMLStreamReader2,
+                   rootName: String?,
+                   interner: XmlInterner): XmlElement {
+  val fragment = XmlElementBuilder(name = if (rootName == null) "" else interner.name(rootName), attributes = readAttributes(reader = reader, interner = interner))
   var current = fragment
-  var currentChildren = ArrayList<XmlElement>()
-  val stack = ArrayDeque<XmlElement>()
-  val currentChildrenStack = ArrayDeque<ArrayList<XmlElement>>()
-  val listPool = ArrayDeque<ArrayList<XmlElement>>()
+  val stack = ArrayDeque<XmlElementBuilder>()
+  val elementPool = ArrayDeque<XmlElementBuilder>()
   var depth = 1
-  while (depth > 0 && reader.hasNext()) {
+  while (reader.hasNext()) {
     when (reader.next()) {
       XMLStreamConstants.START_ELEMENT -> {
-        val child = XmlElement(reader.localName, attributes = readAttributes(reader), children = Collections.emptyList(), content = null)
-        currentChildren.add(child)
-
+        val name = interner.name(reader.localName)
+        val attributes = readAttributes(reader, interner = interner)
         if (reader.isEmptyElement) {
+          current.children.add(XmlElement(name = name,
+                                          attributes = attributes,
+                                          children = Collections.emptyList(),
+                                          content = null))
           reader.skipElement()
           continue
         }
 
-        currentChildrenStack.add(currentChildren)
+        var child = elementPool.pollLast()
+        if (child == null) {
+          child = XmlElementBuilder(name = name, attributes = attributes)
+        }
+        else {
+          child.name = name
+          child.attributes = attributes
+        }
         stack.addLast(current)
-
-        currentChildren = listPool.pollLast() ?: ArrayList<XmlElement>()
         current = child
         depth++
       }
       XMLStreamConstants.END_ELEMENT -> {
-        if (!currentChildren.isEmpty()) {
+        val children: List<XmlElement>
+        if (current.children.isEmpty()) {
+          children = Collections.emptyList()
+        }
+        else {
           @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-          current.children = Arrays.asList(*currentChildren.toArray(EMPTY_ARRAY))
+          children = Arrays.asList(*current.children.toArray(arrayOfNulls<XmlElement>(current.children.size)))
+          current.children.clear()
         }
 
-        currentChildren.clear()
-        listPool.addLast(currentChildren)
+        val result = XmlElement(name = current.name, attributes = current.attributes, children = children, content = current.content)
+        current.content = null
+        elementPool.addLast(current)
 
         depth--
         if (depth == 0) {
-          return fragment
+          return result
         }
 
-        currentChildren = currentChildrenStack.removeLast()
         current = stack.removeLast()
+        current.children.add(result)
       }
       XMLStreamConstants.CDATA -> {
         if (current.content == null) {
-          current.content = reader.text
+          current.content = interner.value(current.name, reader.text)
         }
         else {
           current.content += reader.text
@@ -88,16 +120,16 @@ fun readXmlAsModel(reader: XMLStreamReader2): XmlElement {
       else -> throw XMLStreamException("Unexpected XMLStream event ${reader.eventType}", reader.location)
     }
   }
-  return fragment
+
+  throw throw XMLStreamException("Unexpected end of input: ${reader.eventType}", reader.location)
 }
 
-private fun readAttributes(reader: XMLStreamReader2): Map<String, String> {
+private fun readAttributes(reader: XMLStreamReader2, interner: XmlInterner): Map<String, String> {
   return when (val attributeCount = reader.attributeCount) {
-    0 -> {
-      Collections.emptyMap()
-    }
+    0 -> Collections.emptyMap()
     1 -> {
-      Collections.singletonMap(reader.getAttributeLocalName(0), reader.getAttributeValue(0))
+      val name = interner.name(reader.getAttributeLocalName(0))
+      Collections.singletonMap(name, interner.value(name, reader.getAttributeValue(0)))
     }
     else -> {
       // Map.of cannot be used here - in core-impl only Java 8 is allowed
@@ -105,7 +137,8 @@ private fun readAttributes(reader: XMLStreamReader2): Map<String, String> {
       val result = Object2ObjectOpenHashMap<String, String>(attributeCount)
       var i = 0
       while (i < attributeCount) {
-        result.put(reader.getAttributeLocalName(i), reader.getAttributeValue(i))
+        val name = interner.name(reader.getAttributeLocalName(i))
+        result.put(name, interner.value(name, reader.getAttributeValue(i)))
         i++
       }
       result

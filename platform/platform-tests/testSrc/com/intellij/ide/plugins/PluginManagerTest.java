@@ -3,7 +3,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.util.plugins.DataLoader;
@@ -11,17 +10,21 @@ import com.intellij.platform.util.plugins.LocalFsDataLoader;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.XmlDomReader;
+import com.intellij.util.XmlElement;
 import org.easymock.EasyMock;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
 
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
@@ -188,7 +191,8 @@ public class PluginManagerTest {
     assertTrue("Plugin should be pre installed", loadingResult.getShadowedBundledIds().contains(pluginId));
   }
 
-  private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled) throws IOException, JDOMException {
+  private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled)
+    throws IOException, XMLStreamException {
     PluginManagerCore.getAndClearPluginLoadingErrors();
     PluginManagerState loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
     String actual = StringUtil.join(loadPluginResult.sortedPlugins, o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
@@ -220,11 +224,11 @@ public class PluginManagerTest {
   }
 
   private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
-    throws IOException, JDOMException {
+    throws IOException, XMLStreamException {
     Path file = Path.of(getTestDataPath(), testDataName);
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(Collections.emptySet(), createPluginLoadingResult(true), false, false, false);
 
-    Element root = JDOMUtil.load(file, parentContext.getJdomFactory());
+    XmlElement root = XmlDomReader.readXmlAsModel(Files.newInputStream(file));
     PathResolver pathResolver = new PathResolver() {
       @Override
       public boolean isFlat() {
@@ -245,17 +249,28 @@ public class PluginManagerTest {
                                                       @NotNull DataLoader dataLoader,
                                                       @NotNull String relativePath,
                                                       @Nullable RawPluginDescriptor readInto) {
-        for (Element child : root.getChildren("config-file-idea-plugin")) {
-          String url = Objects.requireNonNull(child.getAttributeValue("url"));
-          if (url.endsWith("/" + relativePath)) {
-            return XmlReader.readModuleDescriptor(elementAsBytes(child), readContext, this, dataLoader, null, readInto, null);
+        for (XmlElement child : root.children) {
+          if (child.name.equals("config-file-idea-plugin")) {
+            String url = Objects.requireNonNull(child.getAttributeValue("url"));
+            if (url.endsWith("/" + relativePath)) {
+              try {
+                return XmlReader.readModuleDescriptor(elementAsBytes(child), readContext, this, dataLoader, null, readInto, null);
+              }
+              catch (XMLStreamException e) {
+                throw new RuntimeException(e);
+              }
+            }
           }
         }
         throw new AssertionError("Unexpected: " + relativePath);
       }
     };
 
-    for (Element element : root.getChildren("idea-plugin")) {
+    for (XmlElement element : root.children) {
+      if (!element.name.equals("idea-plugin")) {
+        continue;
+      }
+
       Path pluginPath = Path.of(Objects.requireNonNull(element.getAttributeValue("url")));
       IdeaPluginDescriptorImpl descriptor = PluginDescriptorTestKt.createFromDescriptor(pluginPath,
                                                                                         isBundled,
@@ -270,8 +285,25 @@ public class PluginManagerTest {
     return PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
   }
 
-  private static @NotNull byte[] elementAsBytes(Element child) {
-    return JDOMUtil.write(child).getBytes(StandardCharsets.UTF_8);
+  private static byte @NotNull [] elementAsBytes(XmlElement child) throws XMLStreamException {
+    ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+    XMLStreamWriter writer = XMLOutputFactory.newDefaultFactory().createXMLStreamWriter(byteOut, "utf-8");
+    writeXmlElement(child, writer);
+    return byteOut.toByteArray();
+  }
+
+  private static void writeXmlElement(XmlElement element, XMLStreamWriter writer) throws XMLStreamException {
+    writer.writeStartElement(element.name);
+    for (Map.Entry<String, String> entry : element.attributes.entrySet()) {
+      writer.writeAttribute(entry.getKey(), entry.getValue());
+    }
+    if (element.content != null) {
+      writer.writeCharacters(element.content);
+    }
+    for (XmlElement child : element.children) {
+      writeXmlElement(child, writer);
+    }
+    writer.writeEndElement();
   }
 
   /** @noinspection unused */

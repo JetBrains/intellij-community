@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -19,8 +20,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Service(Service.Level.APP)
 final class TerminalUiSettingsManager implements Disposable {
-
   private @NotNull EditorColorsScheme myColorsScheme;
   private int myFontSize;
   private JBTerminalSchemeColorPalette myColorPalette;

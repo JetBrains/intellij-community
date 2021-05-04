@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.XmlElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +13,7 @@ import java.lang.reflect.Type;
 
 abstract class BasePrimitiveBinding implements NestedBinding {
   protected final MutableAccessor myAccessor;
-  protected final String myName;
+  protected final String name;
 
   protected final @Nullable Converter<Object> myConverter;
 
@@ -21,7 +22,7 @@ abstract class BasePrimitiveBinding implements NestedBinding {
   protected BasePrimitiveBinding(@NotNull MutableAccessor accessor, @Nullable String suggestedName, @Nullable Class<? extends Converter> converterClass) {
     myAccessor = accessor;
 
-    myName = StringUtil.isEmpty(suggestedName) ? myAccessor.getName() : suggestedName;
+    name = StringUtil.isEmpty(suggestedName) ? myAccessor.getName() : suggestedName;
     //noinspection unchecked
     myConverter = converterClass == null || converterClass == Converter.class ? null : ReflectionUtil.newInstance(converterClass);
   }
@@ -45,12 +46,17 @@ abstract class BasePrimitiveBinding implements NestedBinding {
 
   public abstract @Nullable Object serialize(@NotNull Object o, @Nullable SerializationFilter filter);
 
-  public @NotNull Object deserialize(@NotNull Object context, @NotNull Element element) {
-    return context;
-  }
+  public abstract @NotNull Object deserialize(@NotNull Object context, @NotNull Element element);
+
+  public abstract @NotNull Object deserialize(@NotNull Object context, @NotNull XmlElement element);
 
   @Override
   public final Object deserializeUnsafe(Object context, @NotNull Element element) {
+    return deserialize(context, element);
+  }
+
+  @Override
+  public final Object deserializeUnsafe(Object context, @NotNull XmlElement element) {
     return deserialize(context, element);
   }
 

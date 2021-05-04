@@ -2,10 +2,7 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import org.jdom.Attribute;
-import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,22 +27,20 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   }
 
   @Override
-  protected @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor descriptor, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
-    Element element = descriptor.element;
-    assert element != null;
-    String implementationClassName = element.getAttributeValue("implementation");
+  @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor descriptor,
+                                                   @NotNull PluginDescriptor pluginDescriptor,
+                                                   @NotNull ComponentManager componentManager) {
+    // see comment in readExtensions WHY element maybe created for interface extension point adapter
+    descriptor.element = null;
+    String implementationClassName = descriptor.implementation;
     if (implementationClassName == null) {
-      // deprecated
-      implementationClassName = element.getAttributeValue("implementationClass");
-      if (implementationClassName == null) {
-        throw componentManager.createError("Attribute \"implementation\" is not specified for \"" + getName() + "\" extension", pluginDescriptor.getPluginId());
-      }
+      throw componentManager.createError("Attribute \"implementation\" is not specified for \"" + getName() + "\" extension",
+                                         pluginDescriptor.getPluginId());
     }
 
-    LoadingOrder order = LoadingOrder.readOrder(descriptor.order);
-    Element effectiveElement = shouldDeserializeInstance(element) ? element : null;
-    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, descriptor.orderId, order,
-                                                                     effectiveElement,
+    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor,
+                                                                     descriptor.orderId, descriptor.order,
+                                                                     null,
                                                                      InterfaceExtensionImplementationClassResolver.INSTANCE);
   }
 
@@ -56,25 +51,5 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
                             @NotNull List<Runnable> priorityListenerCallbacks,
                             @NotNull List<Runnable> listenerCallbacks) {
     unregisterExtensions(adapter -> adapter.getPluginDescriptor() != pluginDescriptor, false, priorityListenerCallbacks, listenerCallbacks);
-  }
-
-  private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {
-    // has content
-    if (!extensionElement.getContent().isEmpty()) {
-      return true;
-    }
-
-    // has custom attributes
-    for (Attribute attribute : extensionElement.getAttributes()) {
-      String name = attribute.getName();
-      if (!("implementation".equals(name) ||
-            "implementationClass".equals(name) ||
-            "id".equals(name) ||
-            "order".equals(name) ||
-            "os".equals(name))) {
-        return true;
-      }
-    }
-    return false;
   }
 }

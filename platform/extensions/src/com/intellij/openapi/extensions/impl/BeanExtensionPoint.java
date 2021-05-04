@@ -2,7 +2,6 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -32,16 +31,16 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> implement
   }
 
   @Override
-  protected @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor descriptor,
-                                                             @NotNull PluginDescriptor pluginDescriptor,
-                                                             @NotNull ComponentManager componentManager) {
-    LoadingOrder order = LoadingOrder.readOrder(descriptor.order);
+  @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor descriptor,
+                                                   @NotNull PluginDescriptor pluginDescriptor,
+                                                   @NotNull ComponentManager componentManager) {
     if (componentManager.isInjectionForExtensionSupported()) {
-      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, descriptor.orderId, order,
+      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, descriptor.orderId,
+                                                                       descriptor.order,
                                                                        descriptor.element, this);
     }
     else {
-      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, descriptor.orderId, order, descriptor.element, this);
+      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, this);
     }
   }
 

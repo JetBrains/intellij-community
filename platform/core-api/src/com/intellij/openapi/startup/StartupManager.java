@@ -18,17 +18,8 @@ public abstract class StartupManager {
    * @param project the project for which the instance should be returned.
    * @return the startup manager instance.
    */
-  public static StartupManager getInstance(Project project) {
+  public static StartupManager getInstance(@NotNull Project project) {
     return project.getService(StartupManager.class);
-  }
-
-  /**
-   * @deprecated Use {@link #registerStartupActivity(Runnable)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void registerPreStartupActivity(@NotNull Runnable runnable) {
-    registerStartupActivity(runnable);
   }
 
   /**
