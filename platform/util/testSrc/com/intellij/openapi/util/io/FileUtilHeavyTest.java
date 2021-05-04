@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -288,6 +290,23 @@ public class FileUtilHeavyTest {
     File missing = new File(tempDir.getRoot(), "missing");
     FileUtil.delete(missing.toPath());
     assertTrue(FileUtil.delete(missing));
+  }
+
+  @Test
+  public void deleteCallbackInvocation() throws IOException {
+    try (FileSystem fs = MemoryFileSystemBuilder.newEmpty().build(FileUtilHeavyTest.class.getSimpleName())) {
+      Path file = Files.createFile(fs.getPath("file"));
+
+      Path dir = Files.createDirectory(fs.getPath("d1"));
+      Files.createFile(
+        Files.createDirectory(dir.resolve("d2"))
+          .resolve("f"));
+
+      List<String> visited = new ArrayList<>(3);
+      NioFiles.deleteRecursively(file, p -> visited.add(p.getFileName().toString()));
+      NioFiles.deleteRecursively(dir, p -> visited.add(p.getFileName().toString()));
+      assertThat(visited).containsExactly("file", "f", "d2", "d1");
+    }
   }
 
   @Test

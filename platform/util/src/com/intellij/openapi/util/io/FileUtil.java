@@ -365,7 +365,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void delete(@NotNull Path path) throws IOException {
-    FileUtilRt.deleteRecursivelyNIO(path);
+    FileUtilRt.deleteRecursivelyNIO(path, null);
   }
 
   public static boolean createParentDirs(@NotNull File file) {

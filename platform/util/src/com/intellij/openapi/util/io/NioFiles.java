@@ -9,6 +9,7 @@ import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 
@@ -78,5 +79,25 @@ public final class NioFiles {
     catch (IOException e) {
       return Collections.emptyList();
     }
+  }
+
+  /**
+   * See {@link #deleteRecursively(Path, Consumer)}.
+   */
+  public static void deleteRecursively(@NotNull Path fileOrDirectory) throws IOException {
+    FileUtilRt.deleteRecursivelyNIO(fileOrDirectory, null);
+  }
+
+  /**
+   * <p>Recursively deletes the given directory or file, if it exists. Does not follow symlinks or junctions
+   * (i.e. deletes just links, not targets). Invokes the callback before deleting a file or a directory
+   * (the latter - after deleting it's content). Fails fast (throws an exception right after meeting a problematic file and
+   * does not tries to delete the rest first).</p>
+   *
+   * <p>Implementation detail: the method tries to delete a file up to 10 times with 10 ms pause between attempts -
+   * usually it's enough to overcome intermittent file lock on Windows.</p>
+   */
+  public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<Path> callback) throws IOException {
+    FileUtilRt.deleteRecursivelyNIO(fileOrDirectory, o -> callback.accept((Path)o));
   }
 }
