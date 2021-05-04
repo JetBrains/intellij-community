@@ -107,9 +107,12 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             "mavenCentral()",
             "mavenLocal()",
             "google()",
-            "jcenter()",
             "gradlePluginPortal()"
         )
+
+        if (!gradleVersionMatches("7.0+")) {
+            repositories.add("jcenter()")
+        }
 
         fun addCustomRepository(url: String) {
             repositories += if (useKts) "maven(\"$url\")" else "maven { url '$url' }"
