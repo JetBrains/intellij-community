@@ -1097,6 +1097,7 @@ final class DistributionJARsBuilder {
       }
 
       boolean copyFiles = layoutSpec.copyFiles
+/* Android Studio: work around commit 1052a20b
       if (copyFiles) {
         Files.createDirectories(libOutputDir)
         if (!removeVersionFromJarName && files.size() > 1) {
@@ -1110,6 +1111,7 @@ final class DistributionJARsBuilder {
           continue libProcessing
         }
       }
+Android Studio: work around commit 1052a20b */ Files.createDirectories(libOutputDir)
 
       for (Path file in nioFiles) {
         Matcher matcher = file.fileName.toString() =~ LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN
