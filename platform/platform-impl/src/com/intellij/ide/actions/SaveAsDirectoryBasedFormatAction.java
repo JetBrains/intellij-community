@@ -6,6 +6,7 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -66,7 +67,7 @@ public final class SaveAsDirectoryBasedFormatAction extends AnAction implements 
     store.clearStorages();
     store.setPath(baseDir);
     if (WorkspaceModel.isEnabled()) {
-      JpsProjectModelSynchronizer.Companion.getInstance(project).convertToDirectoryBasedFormat();
+      WriteAction.run(() -> JpsProjectModelSynchronizer.Companion.getInstance(project).convertToDirectoryBasedFormat());
     }
   }
 
