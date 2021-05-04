@@ -15,16 +15,20 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.MethodContract;
-import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -120,19 +124,15 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     private void checkReflexivity(PsiParameterListOwner owner, PsiParameter[] parameters, PsiElement body) {
-      var runner = new StandardDataFlowRunner(owner.getProject(), body) {
-        @NotNull
-        @Override
-        protected DfaMemoryState createMemoryState() {
-          DfaMemoryState state = super.createMemoryState();
-          DfaVariableValue var1 = PlainDescriptor.createVariableValue(getFactory(), parameters[0]);
-          DfaVariableValue var2 = PlainDescriptor.createVariableValue(getFactory(), parameters[1]);
-          state.applyCondition(var1.eq(var2));
-          return state;
-        }
-      };
+      DfaValueFactory factory = new DfaValueFactory(owner.getProject(), body);
+      ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
+      if (flow == null) return;
+      DfaMemoryState state = new DfaMemoryStateImpl(factory);
+      DfaVariableValue var1 = PlainDescriptor.createVariableValue(factory, parameters[0]);
+      DfaVariableValue var2 = PlainDescriptor.createVariableValue(factory, parameters[1]);
+      state.applyCondition(var1.eq(var2));
       var interceptor = new ComparatorInterceptor(owner);
-      if (runner.analyzeMethod(body, interceptor) != RunnerResult.OK) return;
+      if (new JvmDataFlowInterpreter(flow, interceptor).interpret(state) != RunnerResult.OK) return;
       if (interceptor.myRange.contains(0) || interceptor.myContexts.isEmpty()) return;
       PsiElement context = null;
       if (interceptor.myContexts.size() == 1) {

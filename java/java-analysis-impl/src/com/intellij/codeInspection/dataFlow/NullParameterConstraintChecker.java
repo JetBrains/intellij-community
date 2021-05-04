@@ -3,8 +3,10 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.PushInstruction;
@@ -15,7 +17,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -39,18 +40,7 @@ import java.util.Set;
  *
  * All remaining violated parameters is required to be not-null for successful method execution.
  */
-final class NullParameterConstraintChecker extends StandardDataFlowRunner {
-  private final Set<PsiParameter> myPossiblyViolatedParameters;
-  private final Set<PsiParameter> myUsedParameters;
-  private final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;
-
-  private NullParameterConstraintChecker(Project project, Collection<PsiParameter> parameters) {
-    super(project);
-    myPossiblyViolatedParameters = new HashSet<>(parameters);
-    myParametersWithSuccessfulExecutionInNotNullState = new HashSet<>();
-    myUsedParameters = new HashSet<>();
-  }
-
+final class NullParameterConstraintChecker {
   static PsiParameter @NotNull [] checkMethodParameters(PsiMethod method) {
     if (method.getBody() == null) return PsiParameter.EMPTY_ARRAY;
 
@@ -66,65 +56,25 @@ final class NullParameterConstraintChecker extends StandardDataFlowRunner {
     }
     if (nullableParameters.isEmpty()) return PsiParameter.EMPTY_ARRAY;
 
-    NullParameterConstraintChecker checker = new NullParameterConstraintChecker(method.getProject(), nullableParameters);
-    checker.analyzeMethod(method.getBody(), DfaInterceptor.EMPTY);
+    DfaValueFactory factory = new DfaValueFactory(method.getProject(), null);
+    ControlFlow flow = ControlFlowAnalyzer.buildFlow(method.getBody(), factory, true);
+    if (flow == null) return PsiParameter.EMPTY_ARRAY;
+    var interpreter = new NullParameterCheckerInterpreter(flow, nullableParameters);
+    interpreter.interpret(new MyDfaMemoryState(factory, interpreter.myPossiblyViolatedParameters));
 
-    return checker.myPossiblyViolatedParameters
+    return interpreter.myPossiblyViolatedParameters
       .stream()
-      .filter(checker.myUsedParameters::contains)
-      .filter(checker.myParametersWithSuccessfulExecutionInNotNullState::contains)
+      .filter(interpreter.myUsedParameters::contains)
+      .filter(interpreter.myParametersWithSuccessfulExecutionInNotNullState::contains)
       .toArray(PsiParameter[]::new);
   }
 
-  @Override
-  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
-    Instruction instruction = instructionState.getInstruction();
-    if (instruction instanceof PushInstruction) {
-      final DfaValue var = ((PushInstruction)instruction).getValue();
-      if (var instanceof DfaVariableValue) {
-        final PsiElement psiVar = ((DfaVariableValue)var).getPsiVariable();
-        if (psiVar instanceof PsiParameter) {
-          myUsedParameters.add((PsiParameter)psiVar);
-        }
-      }
-    }
+  private static class MyDfaMemoryState extends DfaMemoryStateImpl {
+    final Set<PsiParameter> myPossiblyViolatedParameters;
 
-    if (instruction instanceof AssignInstruction) {
-      final DfaValue value = ((AssignInstruction)instruction).getAssignedValue();
-      if (value instanceof DfaVariableValue) {
-        final PsiElement psiVariable = ((DfaVariableValue)value).getPsiVariable();
-        if (psiVariable instanceof PsiParameter) {
-          myPossiblyViolatedParameters.remove(psiVariable);
-        }
-      }
-    }
-
-    if (instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
-      DfaMemoryState memState = instructionState.getMemoryState();
-      for (PsiParameter parameter : myPossiblyViolatedParameters.toArray(PsiParameter.EMPTY_ARRAY)) {
-        final DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), parameter);
-        if (!memState.getDfType(dfaVar).isSuperType(DfTypes.NULL)) {
-          myParametersWithSuccessfulExecutionInNotNullState.add(parameter);
-        }
-        else {
-          myPossiblyViolatedParameters.remove(parameter);
-        }
-      }
-    }
-
-    return super.acceptInstruction(instructionState);
-  }
-
-  @NotNull
-  @Override
-  protected DfaMemoryState createMemoryState() {
-    return new MyDfaMemoryState(getFactory());
-  }
-
-  private class MyDfaMemoryState extends DfaMemoryStateImpl {
-
-    protected MyDfaMemoryState(DfaValueFactory factory) {
+    protected MyDfaMemoryState(DfaValueFactory factory, Set<PsiParameter> possiblyViolatedParameters) {
       super(factory);
+      myPossiblyViolatedParameters = possiblyViolatedParameters;
       for (PsiParameter parameter : myPossiblyViolatedParameters) {
         recordVariableType(PlainDescriptor.createVariableValue(getFactory(), parameter),
                            DfaNullability.NULLABLE.asDfType());
@@ -133,6 +83,7 @@ final class NullParameterConstraintChecker extends StandardDataFlowRunner {
 
     protected MyDfaMemoryState(MyDfaMemoryState toCopy) {
       super(toCopy);
+      myPossiblyViolatedParameters = toCopy.myPossiblyViolatedParameters;
     }
 
     @Override
@@ -146,6 +97,58 @@ final class NullParameterConstraintChecker extends StandardDataFlowRunner {
     @Override
     public DfaMemoryStateImpl createCopy() {
       return new MyDfaMemoryState(this);
+    }
+  }
+
+  private static class NullParameterCheckerInterpreter extends JvmDataFlowInterpreter {
+    final Set<PsiParameter> myPossiblyViolatedParameters;
+    final Set<PsiParameter> myUsedParameters;
+    final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;
+
+    private NullParameterCheckerInterpreter(ControlFlow flow, Collection<PsiParameter> nullableParameters) {
+      super(flow, DfaInterceptor.EMPTY);
+      myPossiblyViolatedParameters = new HashSet<>(nullableParameters);
+      myUsedParameters = new HashSet<>();
+      myParametersWithSuccessfulExecutionInNotNullState = new HashSet<>();
+    }
+
+    @Override
+    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
+      Instruction instruction = instructionState.getInstruction();
+      if (instruction instanceof PushInstruction) {
+        final DfaValue var = ((PushInstruction)instruction).getValue();
+        if (var instanceof DfaVariableValue) {
+          final PsiElement psiVar = ((DfaVariableValue)var).getPsiVariable();
+          if (psiVar instanceof PsiParameter) {
+            myUsedParameters.add((PsiParameter)psiVar);
+          }
+        }
+      }
+
+      if (instruction instanceof AssignInstruction) {
+        final DfaValue value = ((AssignInstruction)instruction).getAssignedValue();
+        if (value instanceof DfaVariableValue) {
+          final PsiElement psiVariable = ((DfaVariableValue)value).getPsiVariable();
+          if (psiVariable instanceof PsiParameter) {
+            myPossiblyViolatedParameters.remove(psiVariable);
+          }
+        }
+      }
+
+      if (instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
+        DfaMemoryState memState = instructionState.getMemoryState();
+        for (PsiParameter parameter : myPossiblyViolatedParameters.toArray(PsiParameter.EMPTY_ARRAY)) {
+          final DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), parameter);
+          if (!memState.getDfType(dfaVar).isSuperType(DfTypes.NULL)) {
+            myParametersWithSuccessfulExecutionInNotNullState.add(parameter);
+          }
+          else {
+            myPossiblyViolatedParameters.remove(parameter);
+          }
+        }
+      }
+
+      return super.acceptInstruction(instructionState);
     }
   }
 }

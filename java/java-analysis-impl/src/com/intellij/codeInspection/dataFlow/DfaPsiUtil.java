@@ -8,6 +8,8 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
@@ -16,11 +18,11 @@ import com.intellij.codeInspection.dataFlow.lang.ir.FinishElementInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
-import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
@@ -330,10 +332,13 @@ public final class DfaPsiUtil {
       @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
-        final Map<PsiField, Boolean> map = new HashMap<>();
-        final var dfaRunner = new StandardDataFlowRunner(body.getProject()) {
-          PsiElement currentBlock;
-
+        DfaValueFactory factory = new DfaValueFactory(body.getProject(), null);
+        ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
+        if (flow == null) {
+          return Result.create(Set.of(), body, PsiModificationTracker.MODIFICATION_COUNT);
+        }
+        var interpreter = new JvmDataFlowInterpreter(flow, DfaInterceptor.EMPTY) {
+          final Map<PsiField, Boolean> map = new HashMap<>();
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction)) {
               return false;
@@ -371,14 +376,6 @@ public final class DfaPsiUtil {
           }
 
           @Override
-          protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                                      @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                                      @NotNull ControlFlow flow) {
-            currentBlock = psiBlock;
-            return super.createInitialInstructionStates(psiBlock, memStates, flow);
-          }
-
-          @Override
           protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
             if (instruction instanceof FinishElementInstruction) {
@@ -388,8 +385,7 @@ public final class DfaPsiUtil {
                 return variable instanceof PsiField && ((PsiField)variable).getContainingClass() == containingClass;
               });
             }
-            if (currentBlock == body &&
-                (isCallExposingNonInitializedFields(instruction) ||
+            if ((isCallExposingNonInitializedFields(instruction) ||
                  instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {
               for (PsiField field : containingClass.getFields()) {
                 DfaVariableValue value = PlainDescriptor.createVariableValue(getFactory(), field);
@@ -406,14 +402,19 @@ public final class DfaPsiUtil {
             return super.acceptInstruction(instructionState);
           }
         };
-        final RunnerResult rc = dfaRunner.analyzeMethod(body, DfaInterceptor.EMPTY);
+        DfaMemoryStateImpl state = new DfaMemoryStateImpl(factory);
+        DfaVariableValue assertionStatus = AssertionDisabledDescriptor.getAssertionsDisabledVar(factory);
+        if (assertionStatus != null) {
+          state.applyCondition(assertionStatus.eq(DfTypes.FALSE));
+        }
+        final RunnerResult rc = interpreter.interpret(state);
         Set<PsiField> notNullFields = new HashSet<>();
         if (rc == RunnerResult.OK) {
-          for (Map.Entry<PsiField, Boolean> entry : map.entrySet()) {
-            if (entry.getValue()) {
-              notNullFields.add(entry.getKey());
+          interpreter.map.forEach((key, value) -> {
+            if (value) {
+              notNullFields.add(key);
             }
-          }
+          });
         }
         return Result.create(notNullFields, body, PsiModificationTracker.MODIFICATION_COUNT);
       }

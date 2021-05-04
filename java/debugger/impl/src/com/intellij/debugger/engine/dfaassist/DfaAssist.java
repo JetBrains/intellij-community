@@ -4,7 +4,6 @@ package com.intellij.debugger.engine.dfaassist;
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
-import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -223,9 +222,8 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
   }
 
   private static @NotNull Map<PsiExpression, DfaHint> computeHints(@NotNull DebuggerDfaRunner runner) {
-    DebuggerDfaInterceptor interceptor = new DebuggerDfaInterceptor();
-    RunnerResult result = runner.interpret(interceptor);
-    if (result != RunnerResult.OK) return Collections.emptyMap();
+    DebuggerDfaInterceptor interceptor = runner.interpret();
+    if (interceptor == null) return Collections.emptyMap();
     interceptor.cleanup();
     return interceptor.getHints();
   }

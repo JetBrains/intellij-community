@@ -7,17 +7,20 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
-import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.EnsureInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -37,7 +40,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
@@ -52,7 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -166,45 +167,37 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         // Will it produce any side-effect?
         String className = type.equalsToText(CommonClassNames.JAVA_LANG_ERROR) ? "java.lang.StackOverflowError"
                                                                                : CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION;
-        PsiClassType exception = JavaPsiFacade.getElementFactory(parameter.getProject()).createTypeByFQClassName(
-          className, parameter.getResolveScope());
+        Project project = parameter.getProject();
+        PsiClassType exception = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(className, parameter.getResolveScope());
         PsiClass exceptionClass = exception.resolve();
         if (exceptionClass == null) return false;
 
-        CatchDataFlowRunner runner = new CatchDataFlowRunner(exception, parameter, block);
-        var interceptor = new JavaDfaInterceptor() {
-          @Override
-          public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
-                                  @NotNull DfaValue value,
-                                  @NotNull ThreeState failed,
-                                  @NotNull DfaMemoryState state) {
-            if (failed != ThreeState.NO && problem instanceof ContractFailureProblem) {
-              runner.cancel();
-            }
-          }
-        };
-        return runner.analyzeCodeBlock(block, interceptor) == RunnerResult.OK;
+        DfaValueFactory factory = new DfaValueFactory(project, null);
+        ControlFlow flow = ControlFlowAnalyzer.buildFlow(block, factory, true);
+        if (flow == null) return false;
+        var interpreter = new CatchDataFlowInterpreter(exception, parameter, flow);
+        DfaMemoryState memState = new DfaMemoryStateImpl(factory);
+        DfaVariableValue stableExceptionVar = PlainDescriptor.createVariableValue(factory, new LightParameter("tmp", exception, block));
+        DfaVariableValue exceptionVar = PlainDescriptor.createVariableValue(factory, parameter);
+        memState.applyCondition(exceptionVar.eq(stableExceptionVar));
+        memState.applyCondition(exceptionVar.cond(RelationType.IS, DfTypes.typedObject(exception, Nullability.NOT_NULL)));
+        return interpreter.interpret(memState) == RunnerResult.OK;
       }
     };
   }
 
-  private static class CatchDataFlowRunner extends StandardDataFlowRunner {
+  private static class CatchDataFlowInterpreter extends JvmDataFlowInterpreter {
     final DfaVariableValue myExceptionVar;
-    final DfaVariableValue myStableExceptionVar;
     final @NotNull List<PsiMethod> myMethods;
     final @NotNull PsiParameter myParameter;
     final @NotNull PsiCodeBlock myBlock;
-    final @NotNull PsiClassType myException;
 
-    CatchDataFlowRunner(@NotNull PsiClassType exception, @NotNull PsiParameter parameter, @NotNull PsiCodeBlock block) {
-      super(block.getProject(), block);
+    CatchDataFlowInterpreter(@NotNull PsiClassType exception, @NotNull PsiParameter parameter, @NotNull ControlFlow flow) {
+      super(flow, DfaInterceptor.EMPTY);
       myParameter = parameter;
-      myBlock = block;
-      DfaValueFactory factory = getFactory();
-      myException = exception;
-      PsiClass exceptionClass = Objects.requireNonNull(myException.resolve());
-      myExceptionVar = PlainDescriptor.createVariableValue(factory, parameter);
-      myStableExceptionVar = PlainDescriptor.createVariableValue(factory, new LightParameter("tmp", exception, block));
+      myBlock = (PsiCodeBlock)flow.getPsiAnchor();
+      PsiClass exceptionClass = Objects.requireNonNull(exception.resolve());
+      myExceptionVar = PlainDescriptor.createVariableValue(getFactory(), parameter);
       myMethods = StreamEx.of("getMessage", "getLocalizedMessage", "getCause")
         .flatArray(name -> exceptionClass.findMethodsByName(name, true))
         .filter(m -> m.getParameterList().isEmpty())
@@ -215,6 +208,12 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
       Instruction instruction = instructionState.getInstruction();
       DfaMemoryState memState = instructionState.getMemoryState();
+      if (instruction instanceof EnsureInstruction) {
+        if (((EnsureInstruction)instruction).getProblem() instanceof ContractFailureProblem &&
+            memState.peek().getDfType().equals(DfType.FAIL)) {
+          cancel();
+        }
+      }
       if (instruction instanceof MethodCallInstruction) {
         if (myMethods.contains(((MethodCallInstruction)instruction).getTargetMethod())) {
           DfaValue qualifier = memState.peek();
@@ -250,18 +249,6 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         return !((MethodCallInstruction)instruction).getMutationSignature().isPure();
       }
       return false;
-    }
-
-    @NotNull
-    @Override
-    protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                       @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                       @NotNull ControlFlow flow) {
-      for (DfaMemoryState memState : memStates) {
-        memState.applyCondition(myExceptionVar.eq(myStableExceptionVar));
-        memState.applyCondition(myExceptionVar.cond(RelationType.IS, DfTypes.typedObject(myException, Nullability.NOT_NULL)));
-      }
-      return super.createInitialInstructionStates(psiBlock, memStates, flow);
     }
 
     protected boolean isModificationAllowed(DfaValue variable) {

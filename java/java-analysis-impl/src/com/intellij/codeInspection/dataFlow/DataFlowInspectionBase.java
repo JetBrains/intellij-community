@@ -214,7 +214,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
           (ApplicationManager.getApplication().isUnitTestMode() || Registry.is("ide.dfa.report.imprecise"))) {
         reportAnalysisQualityProblem(holder, scope, "dataflow.not.precise");
       }
-      createDescription(holder, visitor, scope, dfaRunner.getInstructions());
+      createDescription(holder, visitor, scope, flow.getInstructions());
       dfaRunner.forNestedClosures((closure, states) -> analyzeDfaWithNestedClosures(closure, holder, dfaRunner, states));
     }
     else if (rc == RunnerResult.TOO_COMPLEX) {

@@ -45,7 +45,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final LinkedHashMap<DfaVariableValue,DfType> myVariableTypes;
   private boolean myEphemeral;
 
-  protected DfaMemoryStateImpl(final DfaValueFactory factory) {
+  public DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
     myEqClasses = new ArrayList<>();
     myVariableTypes = new LinkedHashMap<>();

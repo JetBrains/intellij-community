@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A context for running the dataflow analysis
+ * An interpreter that performs abstract interpretation of {@link com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow}
  */
 public interface DataFlowRunner {
   /**

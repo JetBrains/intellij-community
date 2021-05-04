@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.CheckNotNullInstruction;
@@ -78,58 +79,64 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @Override
-  protected void beforeInstruction(Instruction instruction) {
-    afterStates.clear();
-    killedStates.clear();
-  }
-
-  @Override
-  protected void afterInstruction(Instruction instruction) {
-    if (afterStates.size() <= 1 && killedStates.isEmpty()) return;
-    Map<Instruction, List<TrackingDfaMemoryState>> instructionToState =
-      StreamEx.of(afterStates).mapToEntry(s -> s.getInstruction(), s -> (TrackingDfaMemoryState)s.getMemoryState()).grouping();
-    if (instructionToState.size() <= 1 && killedStates.isEmpty()) return;
-    instructionToState.forEach((target, memStates) -> {
-      List<TrackingDfaMemoryState> bridgeChanges =
-        StreamEx.of(afterStates).filter(s -> s.getInstruction() != target)
-          .map(s -> ((TrackingDfaMemoryState)s.getMemoryState()))
-          .append(killedStates)
-          .toList();
-      for (TrackingDfaMemoryState state : memStates) {
-        state.addBridge(instruction, bridgeChanges);
+  protected @NotNull JvmDataFlowInterpreter createInterpreter(@NotNull DfaInterceptor interceptor,
+                                                              @NotNull ControlFlow flow) {
+    return new JvmDataFlowInterpreter(flow, interceptor, true) {
+      @Override
+      protected void beforeInstruction(Instruction instruction) {
+        afterStates.clear();
+        killedStates.clear();
       }
-    });
+
+      @Override
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
+        Instruction instruction = instructionState.getInstruction();
+        TrackingDfaMemoryState memState = (TrackingDfaMemoryState)instructionState.getMemoryState().createCopy();
+        DfaInstructionState[] states = super.acceptInstruction(instructionState);
+        for (DfaInstructionState state : states) {
+          afterStates.add(state);
+          ((TrackingDfaMemoryState)state.getMemoryState()).recordChange(instruction, memState);
+        }
+        if (states.length == 0) {
+          killedStates.add(memState);
+        }
+        if (instruction instanceof ExpressionPushingInstruction) {
+          ExpressionPushingInstruction pushing = (ExpressionPushingInstruction)instruction;
+          if (pushing.getDfaAnchor() instanceof JavaExpressionAnchor &&
+              ((JavaExpressionAnchor)pushing.getDfaAnchor()).getExpression() == myExpression) {
+            for (DfaInstructionState state : states) {
+              MemoryStateChange history = ((TrackingDfaMemoryState)state.getMemoryState()).getHistory();
+              myHistoryForContext = myHistoryForContext == null ? history : myHistoryForContext.merge(history);
+            }
+          }
+        }
+        return states;
+      }
+
+      @Override
+      protected void afterInstruction(Instruction instruction) {
+        if (afterStates.size() <= 1 && killedStates.isEmpty()) return;
+        Map<Instruction, List<TrackingDfaMemoryState>> instructionToState =
+          StreamEx.of(afterStates).mapToEntry(s -> s.getInstruction(), s -> (TrackingDfaMemoryState)s.getMemoryState()).grouping();
+        if (instructionToState.size() <= 1 && killedStates.isEmpty()) return;
+        instructionToState.forEach((target, memStates) -> {
+          List<TrackingDfaMemoryState> bridgeChanges =
+            StreamEx.of(afterStates).filter(s -> s.getInstruction() != target)
+              .map(s -> ((TrackingDfaMemoryState)s.getMemoryState()))
+              .append(killedStates)
+              .toList();
+          for (TrackingDfaMemoryState state : memStates) {
+            state.addBridge(instruction, bridgeChanges);
+          }
+        });
+      }
+    };
   }
 
   @NotNull
   @Override
   protected DfaMemoryState createMemoryState() {
     return new TrackingDfaMemoryState(getFactory());
-  }
-
-  @Override
-  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
-    Instruction instruction = instructionState.getInstruction();
-    TrackingDfaMemoryState memState = (TrackingDfaMemoryState)instructionState.getMemoryState().createCopy();
-    DfaInstructionState[] states = super.acceptInstruction(instructionState);
-    for (DfaInstructionState state : states) {
-      afterStates.add(state);
-      ((TrackingDfaMemoryState)state.getMemoryState()).recordChange(instruction, memState);
-    }
-    if (states.length == 0) {
-      killedStates.add(memState);
-    }
-    if (instruction instanceof ExpressionPushingInstruction) {
-      ExpressionPushingInstruction pushing = (ExpressionPushingInstruction)instruction;
-      if (pushing.getDfaAnchor() instanceof JavaExpressionAnchor &&
-          ((JavaExpressionAnchor)pushing.getDfaAnchor()).getExpression() == myExpression) {
-        for (DfaInstructionState state : states) {
-          MemoryStateChange history = ((TrackingDfaMemoryState)state.getMemoryState()).getHistory();
-          myHistoryForContext = myHistoryForContext == null ? history : myHistoryForContext.merge(history);
-        }
-      }
-    }
-    return states;
   }
 
   @Nullable
@@ -141,11 +148,6 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     TrackingRunner runner = new TrackingRunner(body, expression, ignoreAssertions);
     if (!runner.analyze(expression, body)) return null;
     return runner.findProblemCause(expression, type);
-  }
-
-  @Override
-  public boolean stopOnNull() {
-    return true;
   }
 
   private boolean analyze(PsiExpression expression, PsiElement body) {

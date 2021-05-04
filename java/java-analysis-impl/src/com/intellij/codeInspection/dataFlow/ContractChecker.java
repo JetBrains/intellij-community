@@ -3,10 +3,12 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInterceptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
@@ -109,13 +111,11 @@ final class ContractChecker {
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
 
+    DfaValueFactory factory = new DfaValueFactory(method.getProject(), null);
+    ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
+    if (flow == null) return Collections.emptyMap();
     ContractCheckInterceptor interceptor = new ContractCheckInterceptor(method, contract, ownContract);
-    StandardDataFlowRunner runner = new StandardDataFlowRunner(method.getProject(), null) {
-      @Override 
-      public boolean stopOnNull() {
-        return true;
-      }
-
+    JvmDataFlowInterpreter interpreter = new JvmDataFlowInterpreter(flow, interceptor, true) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();
@@ -137,7 +137,7 @@ final class ContractChecker {
             }
             if (ContractCheckInterceptor.weCannotInferAnythingAboutMethodReturnValue((MethodCallInstruction)instruction)) {
               DfaInstructionState[] states = super.acceptInstruction(instructionState);
-              for (DfaInstructionState state: states) {
+              for (DfaInstructionState state : states) {
                 state.getMemoryState().markEphemeral();
               }
               return states;
@@ -147,10 +147,8 @@ final class ContractChecker {
         return super.acceptInstruction(instructionState);
       }
     };
-
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    final DfaMemoryState initialState = runner.createMemoryState();
-    final DfaValueFactory factory = runner.getFactory();
+    final DfaMemoryState initialState = new DfaMemoryStateImpl(factory);
     for (int i = 0; i < contract.getParameterCount(); i++) {
       ValueConstraint constraint = contract.getParameterConstraint(i);
       DfaValue comparisonValue = constraint.getComparisonValue(factory);
@@ -160,8 +158,7 @@ final class ContractChecker {
         initialState.applyCondition(dfaParam.cond(RelationType.equivalence(!negated), comparisonValue));
       }
     }
-
-    runner.analyzeMethod(body, interceptor, Collections.singletonList(initialState));
+    interpreter.interpret(initialState);
     return interceptor.getErrors();
   }
 }

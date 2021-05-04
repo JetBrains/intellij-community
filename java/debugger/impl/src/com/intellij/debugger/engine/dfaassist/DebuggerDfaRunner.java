@@ -1,14 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.dfaassist;
 
-import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -40,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class DebuggerDfaRunner extends StandardDataFlowRunner {
+class DebuggerDfaRunner {
   private static final Value NullConst = new Value() {
     @Override
     public VirtualMachine virtualMachine() { return null; }
@@ -59,13 +60,14 @@ class DebuggerDfaRunner extends StandardDataFlowRunner {
   private final @Nullable ControlFlow myFlow;
   private final @Nullable DfaInstructionState myStartingState;
   private final long myModificationStamp;
+  private final DfaValueFactory myFactory;
 
   DebuggerDfaRunner(@NotNull PsiElement body, @NotNull PsiElement anchor, @NotNull StackFrameProxyEx proxy) throws EvaluateException {
-    super(body.getProject(), body.getParent() instanceof PsiClassInitializer ? ((PsiClassInitializer)body.getParent()).getContainingClass() : body);
+    myFactory = new DfaValueFactory(body.getProject(), body.getParent() instanceof PsiClassInitializer ? ((PsiClassInitializer)body.getParent()).getContainingClass() : body);
     myBody = body;
     myAnchor = anchor;
     myProject = body.getProject();
-    myFlow = buildFlow(myBody);
+    myFlow = ControlFlowAnalyzer.buildFlow(myBody, myFactory, true);
     myStartingState = getStartingState(proxy);
     myModificationStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
   }
@@ -74,17 +76,14 @@ class DebuggerDfaRunner extends StandardDataFlowRunner {
     return myStartingState != null;
   }
 
-  RunnerResult interpret(DfaInterceptor interceptor) {
+  @Nullable DebuggerDfaInterceptor interpret() {
     if (myFlow == null || myStartingState == null ||
         PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myModificationStamp) {
-      return RunnerResult.ABORTED;
+      return null;
     }
-    return interpret(myBody, interceptor, myFlow, Collections.singletonList(myStartingState));
-  }
-
-  @Override
-  public boolean stopOnNull() {
-    return true;
+    var interceptor = new DebuggerDfaInterceptor();
+    JvmDataFlowInterpreter interpreter = new JvmDataFlowInterpreter(myFlow, interceptor, true);
+    return interpreter.interpret(List.of(myStartingState)) == RunnerResult.OK ? interceptor : null;
   }
 
   @Nullable
@@ -92,9 +91,9 @@ class DebuggerDfaRunner extends StandardDataFlowRunner {
     if (myFlow == null) return null;
     int offset = myFlow.getStartOffset(myAnchor).getInstructionOffset();
     if (offset < 0) return null;
-    DfaMemoryState state = super.createMemoryState();
+    DfaMemoryState state = new DfaMemoryStateImpl(myFactory);
     StateBuilder builder = new StateBuilder(proxy, state);
-    for (DfaValue dfaValue : getFactory().getValues().toArray(new DfaValue[0])) {
+    for (DfaValue dfaValue : myFactory.getValues().toArray(new DfaValue[0])) {
       if (dfaValue instanceof DfaVariableValue) {
         DfaVariableValue var = (DfaVariableValue)dfaValue;
         builder.resolveJdi(var);
@@ -128,7 +127,6 @@ class DebuggerDfaRunner extends StandardDataFlowRunner {
 
   private class StateBuilder {
     private final @NotNull PsiElementFactory myPsiFactory = JavaPsiFacade.getElementFactory(myProject);
-    private final @NotNull DfaValueFactory myFactory = getFactory();
     private final @Nullable ClassLoaderReference myContextLoader;
     private final @NotNull DfaMemoryState myMemState;
     private final @NotNull Map<Value, DfaVariableValue> myCanonicalMap = new HashMap<>();

@@ -16,8 +16,8 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
@@ -66,7 +66,8 @@ public class CheckNotNullInstruction extends Instruction {
       checkNotNullable(runner, stateBefore, stateBefore.peek(), problem);
     } else {
       DfaValue value = stateBefore.pop();
-      boolean isNull = runner instanceof StandardDataFlowRunner && ((StandardDataFlowRunner)runner).stopOnNull() &&
+      boolean isNull = runner instanceof JvmDataFlowInterpreter &&
+                       ((JvmDataFlowInterpreter)runner).stopOnNull() &&
                        stateBefore.getDfType(value) == NULL;
       if (myTransferValue == null) {
         stateBefore.push(dereference(runner, stateBefore, value, problem));

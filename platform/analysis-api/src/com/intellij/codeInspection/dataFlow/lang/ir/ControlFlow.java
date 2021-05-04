@@ -25,10 +25,12 @@ public final class ControlFlow {
   private @NotNull final Object2IntMap<PsiElement> myElementToStartOffsetMap;
   private @NotNull final Object2IntMap<PsiElement> myElementToEndOffsetMap;
   private @NotNull final DfaValueFactory myFactory;
+  private @NotNull final PsiElement myPsiAnchor;
   private int[] myLoopNumbers;
 
-  public ControlFlow(@NotNull final DfaValueFactory factory) {
+  public ControlFlow(@NotNull final DfaValueFactory factory, @NotNull PsiElement psiAnchor) {
     myFactory = factory;
+    myPsiAnchor = psiAnchor;
     myInstructions = new ArrayList<>();
     myElementToEndOffsetMap = new Object2IntOpenHashMap<>();
     myElementToStartOffsetMap = new Object2IntOpenHashMap<>();
@@ -43,10 +45,15 @@ public final class ControlFlow {
    */
   public ControlFlow(@NotNull ControlFlow flow, @NotNull DfaValueFactory factory) {
     myFactory = factory;
+    myPsiAnchor = flow.myPsiAnchor;
     myElementToEndOffsetMap = flow.myElementToEndOffsetMap;
     myElementToStartOffsetMap = flow.myElementToStartOffsetMap;
     myLoopNumbers = flow.myLoopNumbers;
     myInstructions = StreamEx.of(flow.myInstructions).map(instruction -> instruction.bindToFactory(factory)).toImmutableList();
+  }
+
+  public PsiElement getPsiAnchor() {
+    return myPsiAnchor;
   }
 
   public Instruction[] getInstructions(){

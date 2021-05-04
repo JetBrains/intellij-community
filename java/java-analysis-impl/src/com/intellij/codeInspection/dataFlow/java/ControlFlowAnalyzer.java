@@ -115,7 +115,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Nullable ControlFlow buildControlFlow() {
-    myCurrentFlow = new ControlFlow(myFactory);
+    myCurrentFlow = new ControlFlow(myFactory, myCodeFragment);
     addInstruction(new FinishElementInstruction(null)); // to initialize LVA
     try {
       if(myCodeFragment instanceof PsiClass) {
@@ -2169,6 +2169,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    */
   public static boolean inlinerMayInferPreciseType(PsiExpression expression) {
     return ContainerUtil.exists(INLINERS, inliner -> inliner.mayInferPreciseType(expression));
+  }
+
+  @Nullable
+  public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, DfaValueFactory targetFactory) {
+    return buildFlow(psiBlock, targetFactory, true);
   }
 
   /**
