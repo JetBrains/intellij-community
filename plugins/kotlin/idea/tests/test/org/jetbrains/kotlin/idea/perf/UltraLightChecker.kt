@@ -64,7 +64,7 @@ object UltraLightChecker {
         fqName: FqName,
         searchScope: GlobalSearchScope,
         project: Project
-    ): KtLightClassForFacadeImpl? {
+    ): KtLightClassForFacade? {
 
         val oldForceFlag = KtUltraLightSupport.forceUsingOldLightClasses
         KtUltraLightSupport.forceUsingOldLightClasses = true
