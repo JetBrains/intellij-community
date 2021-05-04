@@ -128,7 +128,6 @@ public class FileUtilRt {
         final Class<?> filesClass = Class.forName("java.nio.file.Files");
         ourNoSuchFileExceptionClass = Class.forName("java.nio.file.NoSuchFileException");
         ourAccessDeniedExceptionClass = Class.forName("java.nio.file.AccessDeniedException");
-
         ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
         ourPathToFileMethod = pathClass.getMethod("toFile");
         ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
@@ -163,7 +162,7 @@ public class FileUtilRt {
                   notDirectory = Boolean.TRUE.equals(ourAttributesIsOtherMethod.invoke(second));
                 }
                 catch (Throwable ignored) { }
-                if (notDirectory) {
+                if (notDirectory) {  // probably an NTFS reparse point
                   performDelete(args[0]);
                   return Result_Skip;
                 }
@@ -222,12 +221,8 @@ public class FileUtilRt {
       }
       catch (Throwable ignored) {
         logger().info("Was not able to detect NIO API");
-        ourFileToPathMethod = null;
-        ourFilesWalkMethod = null;
-        ourFilesDeleteIfExistsMethod = null;
-        ourDeletionVisitor = null;
-        ourNoSuchFileExceptionClass = null;
       }
+
       IS_AVAILABLE = initSuccess;
     }
   }
@@ -904,7 +899,7 @@ public class FileUtilRt {
    * <b>IMPORTANT</b>: the method is not symlinks- or junction-aware when invoked on Java 6 or earlier.
    *
    * @param file file or directory to delete
-   * @return true if the file did not exist or was successfully deleted
+   * @return {@code true} if the file did not exist or was successfully deleted
    */
   public static boolean delete(@NotNull File file) {
     if (NIOReflect.IS_AVAILABLE) {
