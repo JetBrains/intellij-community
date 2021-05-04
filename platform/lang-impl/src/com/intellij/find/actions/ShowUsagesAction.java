@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -144,7 +145,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   public static int getUsagesPageSize() {
-    return Math.max(1, Registry.intValue("ide.usages.page.size", 100));
+    return Math.max(1, AdvancedSettings.getInt("ide.usages.page.size"));
   }
 
   @Override
