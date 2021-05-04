@@ -60,6 +60,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class JarRepositoryManager {
   private static final Logger LOG = Logger.getInstance(JarRepositoryManager.class);
@@ -147,7 +149,7 @@ public final class JarRepositoryManager {
   private static NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props,
                                                                        Collection<? extends OrderRoot> roots) {
     return new NewLibraryConfiguration(
-      RepositoryLibraryDescription.findDescription(props).getDisplayName(props.getVersion()),
+      suggestLibraryName(props),
       RepositoryLibraryType.getInstance(),
       props) {
       @Override
@@ -155,6 +157,15 @@ public final class JarRepositoryManager {
         editor.addRoots(roots);
       }
     };
+  }
+
+  private static String suggestLibraryName(RepositoryLibraryProperties props) {
+    return
+      Stream.of(props.getGroupId(), props.getArtifactId())
+        .flatMap(s -> Stream.of(s.split("[.:-]")))
+        .distinct()
+        .filter(s -> !s.equals("com") && !s.equals("org"))
+        .collect(Collectors.joining("."));
   }
 
 
