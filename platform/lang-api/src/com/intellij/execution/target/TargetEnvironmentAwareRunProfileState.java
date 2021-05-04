@@ -10,7 +10,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -50,7 +53,7 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
         }
         catch (Throwable t) {
           logger.warn(logFailureMessage, t);
-          promise.setError(StringUtil.notNullize(t.getLocalizedMessage()));
+          promise.setError(t);
         }
       });
       return promise;
