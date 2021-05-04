@@ -10,4 +10,4 @@ fun main(args: Array<String>) {
     val (a, <caret>b) = p
 }
 
-// REF: (in a.MyPair).component2()
+// REF: b

@@ -10,4 +10,4 @@ fun main(args: Array<String>) {
     val (a, <caret>b) = A()
 }
 
-// REF: (for A in a).component2()
+// REF: b
