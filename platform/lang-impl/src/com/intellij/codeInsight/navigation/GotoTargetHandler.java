@@ -38,10 +38,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -108,7 +105,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return;
     }
 
-    gotoData.presentations.putAll(computePresentationInBackground(project, gotoData, targets));
+    gotoData.initPresentations();
 
     final String name = ((NavigationItem)gotoData.source).getName();
     final String title = getChooserTitle(gotoData.source, name, targets.length, finished);
@@ -340,6 +337,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         presentation.getContainerText(),
         presentation.getLocationText()
       ).filter(Objects::nonNull).collect(Collectors.joining(" "));
+    }
+
+    @VisibleForTesting
+    public void initPresentations() {
+      presentations.putAll(computePresentationInBackground(source.getProject(), this, targets));
     }
   }
 

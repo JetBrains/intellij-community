@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
@@ -265,6 +265,7 @@ public final class CodeInsightTestUtil {
   @TestOnly
   public static GotoTargetHandler.GotoData gotoImplementation(Editor editor, PsiFile file) {
     GotoTargetHandler.GotoData data = new GotoImplementationHandler().getSourceAndTargetElements(editor, file);
+    data.initPresentations();
     if (data.listUpdaterTask != null) {
       JBList<Object> list = new JBList<>();
       CollectionListModel<Object> model = new CollectionListModel<>(new ArrayList<>());
