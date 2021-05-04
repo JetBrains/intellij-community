@@ -10,7 +10,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacadeImpl
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -97,7 +97,7 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
         is KtLightClass ->
             when (element) {
                 is KtLightClassForSourceDeclaration -> element.kotlinOrigin
-                is KtLightClassForFacade -> element
+                is KtLightClassForFacadeImpl -> element
                 else -> throw AssertionError("Should not be suggested to rename element of type " + element::class.java + " " + element)
             }
 
