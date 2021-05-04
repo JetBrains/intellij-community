@@ -23,13 +23,13 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
   val buildNumber = BuildNumber.fromString("2042.42")
   val parentContext = DescriptorListLoadingContext(disabledPlugins = disabledPlugins,
                                                    result = PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
-  val result = PluginDescriptorLoader.loadDescriptorFromFileOrDir(file = dir,
-                                                                  pathName = PluginManagerCore.PLUGIN_XML,
-                                                                  context = parentContext,
-                                                                  pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                                                  isBundled = isBundled,
-                                                                  isEssential = true,
-                                                                  isDirectory = Files.isDirectory(dir))
+  val result = loadDescriptorFromFileOrDir(file = dir,
+                                           pathName = PluginManagerCore.PLUGIN_XML,
+                                           context = parentContext,
+                                           pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                           isBundled = isBundled,
+                                           isEssential = true,
+                                           isDirectory = Files.isDirectory(dir))
   if (result == null) {
     @Suppress("USELESS_CAST")
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()

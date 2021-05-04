@@ -11,11 +11,9 @@ import java.util.zip.ZipFile
 @Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolver {
   companion object {
-    @JvmField
     // don't use Kotlin emptyList here
-    val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(Collections.emptyList())
+    @JvmField val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(Collections.emptyList())
 
-    @JvmStatic
     private fun loadUsingZipFile(readInto: RawPluginDescriptor,
                                  readContext: ReadModuleContext,
                                  pathResolver: PathResolver,
@@ -45,14 +43,12 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
       }
     }
 
-    @JvmStatic
-    fun getParentPath(path: String): String {
+    internal fun getParentPath(path: String): String {
       val end = path.lastIndexOf('/')
       return if (end == -1) "" else path.substring(0, end)
     }
 
-    @JvmStatic
-    fun toLoadPath(relativePath: String, base: String?): String {
+    internal fun toLoadPath(relativePath: String, base: String?): String {
       return when {
         relativePath[0] == '/' -> relativePath.substring(1)
         relativePath.startsWith("intellij.") -> relativePath
@@ -61,8 +57,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
       }
     }
 
-    @JvmStatic
-    fun getChildBase(base: String?, relativePath: String): String? {
+    internal fun getChildBase(base: String?, relativePath: String): String? {
       val end = relativePath.lastIndexOf('/')
       if (end <= 0 || relativePath.startsWith("/META-INF/")) {
         return base

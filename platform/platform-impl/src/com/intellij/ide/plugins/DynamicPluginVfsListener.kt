@@ -43,7 +43,7 @@ class DynamicPluginVfsListenerInitializer : PreloadingActivity() {
   }
 }
 
-class DynamicPluginVfsListener : AsyncFileListener {
+internal class DynamicPluginVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
     if (!SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return null
     if (!initialRefreshDone) return null
@@ -60,10 +60,12 @@ class DynamicPluginVfsListener : AsyncFileListener {
     }
     val descriptorsToReload = pluginsToReload
       .filter { it.isEnabled }
-      .map { PluginDescriptorLoader.loadFullDescriptor(it) }
+      .map { loadFullDescriptor(it) }
       .filter { DynamicPlugins.allowLoadUnloadWithoutRestart(it) }
 
-    if (descriptorsToReload.isEmpty()) return null
+    if (descriptorsToReload.isEmpty()) {
+      return null
+    }
 
     return object : AsyncFileListener.ChangeApplier {
       override fun afterVfsChange() {

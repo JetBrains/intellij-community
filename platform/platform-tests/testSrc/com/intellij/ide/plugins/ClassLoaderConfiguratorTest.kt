@@ -90,7 +90,7 @@ private fun loadDescriptors(dir: Path): PluginLoadingResult {
   val paths: List<Path> = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
     for (file in paths) {
-      result.add(PluginDescriptorLoader.loadDescriptor(file, false, context) ?: continue, false)
+      result.add(loadDescriptor(file, false, context) ?: continue, false)
     }
   }
   result.finishLoading()

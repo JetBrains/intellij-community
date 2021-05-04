@@ -43,7 +43,7 @@ private fun loadDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins
   val paths: List<Path> = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
     for (file in paths) {
-      val descriptor = PluginDescriptorLoader.loadDescriptor(file, false, context) ?: continue
+      val descriptor = loadDescriptor(file, false, context) ?: continue
       context.result.add(descriptor, false)
     }
   }
@@ -109,7 +109,7 @@ class PluginDescriptorTest {
       Path.of(testDataPath, "duplicate1.jar").toUri().toURL(),
       Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
     )
-    assertThat(PluginDescriptorLoader.testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
+    assertThat(testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
   }
 
   @Test
@@ -131,7 +131,7 @@ class PluginDescriptorTest {
         urls.add(path.toUri().toURL())
       }
     }
-    val descriptors = PluginDescriptorLoader.testLoadDescriptorsFromClassPath(URLClassLoader(urls.toTypedArray(), null))
+    val descriptors = testLoadDescriptorsFromClassPath(URLClassLoader(urls.toTypedArray(), null))
     // core and com.intellij.workspace
     assertThat(descriptors).hasSize(1)
   }
@@ -385,13 +385,13 @@ class PluginDescriptorTest {
     }
 
     val loader1 = TestLoader("", "/spaces%20spaces/")
-    TestCase.assertEquals(1, PluginDescriptorLoader.testLoadDescriptorsFromClassPath(loader1).size)
+    TestCase.assertEquals(1, testLoadDescriptorsFromClassPath(loader1).size)
     val loader2 = TestLoader("", "/spaces spaces/")
-    TestCase.assertEquals(1, PluginDescriptorLoader.testLoadDescriptorsFromClassPath(loader2).size)
+    TestCase.assertEquals(1, testLoadDescriptorsFromClassPath(loader2).size)
     val loader3 = TestLoader("jar:", "/jar%20spaces.jar!/")
-    TestCase.assertEquals(1, PluginDescriptorLoader.testLoadDescriptorsFromClassPath(loader3).size)
+    TestCase.assertEquals(1, testLoadDescriptorsFromClassPath(loader3).size)
     val loader4 = TestLoader("jar:", "/jar spaces.jar!/")
-    assertThat(PluginDescriptorLoader.testLoadDescriptorsFromClassPath(loader4)).hasSize(1)
+    assertThat(testLoadDescriptorsFromClassPath(loader4)).hasSize(1)
   }
 
   @Test

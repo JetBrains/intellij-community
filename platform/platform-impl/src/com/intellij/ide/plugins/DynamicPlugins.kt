@@ -158,7 +158,7 @@ object DynamicPlugins {
       .asSequence()
       .filterIsInstance<IdeaPluginDescriptorImpl>()
       .filterNot { loadedPlugins.contains(it.pluginId) == load }
-      .map { PluginDescriptorLoader.loadFullDescriptor(it) }
+      .map { loadFullDescriptor(it) }
       .toList()
 
     val operationText = if (load) "load" else "unload"
@@ -337,7 +337,7 @@ object DynamicPlugins {
                                                               processor: (loadedDescriptor: IdeaPluginDescriptorImpl, fullDescriptor: IdeaPluginDescriptorImpl) -> Boolean) {
     PluginManager.getInstance().processAllBackwardDependencies(pluginDescriptor, false) { loadedDescriptor ->
       if (loadedDescriptor.isImplementationDetail) {
-        val fullDescriptor = PluginDescriptorLoader.loadFullDescriptor(loadedDescriptor as IdeaPluginDescriptorImpl)
+        val fullDescriptor = loadFullDescriptor(loadedDescriptor as IdeaPluginDescriptorImpl)
         if (processor(loadedDescriptor, fullDescriptor)) FileVisitResult.CONTINUE else FileVisitResult.TERMINATE
       }
       else {
@@ -1015,7 +1015,7 @@ private class OptionalDependencyDescriptorLoader {
   private val listContext = DescriptorListLoadingContext(disabledPlugins = DisabledPluginsState.disabledPlugins())
 
   fun load(mainDescriptor: IdeaPluginDescriptorImpl, dependencyConfigFile: String): IdeaPluginDescriptorImpl? {
-    val pathResolver = PluginDescriptorLoader.createPathResolverForPlugin(mainDescriptor, true)
+    val pathResolver = createPathResolverForPlugin(mainDescriptor, true)
     val zipFilePool = ZipFilePoolImpl()
     ZipFilePool.POOL = zipFilePool
     try {
