@@ -1,12 +1,12 @@
 <html>
 <body>
-Reports situations where a Java 9 module <code>A</code> requires a Java 9 module <code>B</code>,
+Reports situations in which a Java 9 module <code>A</code> requires a Java 9 module <code>B</code>,
 but <code>A</code> doesn't use any package from <code>B</code>.
-Also, requiring the module <code>java.base</code> is redundant.
+Also, the directive that requires the <code>java.base</code> module is redundant.
 <!-- tooltip end -->
 <p>
   The fix deletes the <code>requires</code> directive for such redundant dependencies.
-  If the deleted dependency re-exported modules that are actually used, the fix adds a <code>requires</code> directive for these modules.
+  If the deleted dependency re-exported the modules that are actually used, the fix adds a <code>requires</code> directive for these modules.
 </p>
 <small>New in 2017.1</small>
 </body>
