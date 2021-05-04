@@ -11,11 +11,14 @@ import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.*;
+
+import java.util.function.Function;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnTrue;
@@ -39,8 +42,12 @@ public enum JvmSpecialField implements SpecialField {
       return accessor instanceof PsiField && "length".equals(accessor.getName()) && PsiUtil.isArrayClass(accessor.getContainingClass());
     }
 
-    @NotNull
     @Override
+    public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue, @Nullable PsiElement context) {
+      return getDfType(thisValue.getQualifier()).meet(fromInitializer(thisValue, context, this::fromInitializer));
+    }
+
+    @NotNull
     DfType fromInitializer(PsiExpression initializer) {
       if (initializer instanceof PsiArrayInitializerExpression) {
         return DfTypes.intValue(((PsiArrayInitializerExpression)initializer).getInitializers().length);
@@ -62,10 +69,10 @@ public enum JvmSpecialField implements SpecialField {
     }
   },
   STRING_LENGTH("length", "special.field.string.length", true) {
-    @NotNull
     @Override
-    DfType fromInitializer(PsiExpression initializer) {
-      return fromConstant(ExpressionUtils.computeConstantExpression(initializer));
+    public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue, @Nullable PsiElement context) {
+      return getDfType(thisValue.getQualifier()).meet(
+        fromInitializer(thisValue, context, initializer -> fromConstant(ExpressionUtils.computeConstantExpression(initializer))));
     }
 
     @Override
@@ -288,24 +295,30 @@ public enum JvmSpecialField implements SpecialField {
       return ((DfaWrappedValue)qualifier).getWrappedValue();
     }
     if (qualifier instanceof DfaVariableValue) {
-      DfaVariableValue variableValue = (DfaVariableValue)qualifier;
-      PsiField psiVariable = ObjectUtils.tryCast(variableValue.getPsiVariable(), PsiField.class);
-      if (psiVariable != null &&
-          FieldChecker.getChecker(factory.getContext()).canTrustFieldInitializer(psiVariable) &&
-          psiVariable.hasModifierProperty(PsiModifier.STATIC) &&
-          psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
-        PsiExpression initializer = psiVariable.getInitializer();
-        if (initializer != null) {
-          DfType dfType = fromInitializer(initializer);
-          if (dfType != DfType.TOP) {
-            return factory.fromDfType(dfType);
-          }
-        }
-      }
-      return factory.getVarFactory().createVariableValue(this, variableValue);
+      return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
     }
     DfType dfType = qualifier == null ? DfType.TOP : getFromQualifier(qualifier.getDfType());
     return factory.fromDfType(dfType.meet(getDefaultValue(forAccessor)));
+  }
+
+  @NotNull
+  static DfType fromInitializer(@NotNull DfaVariableValue thisValue,
+                                @Nullable PsiElement context,
+                                @NotNull Function<PsiExpression, DfType> typeByInitializer) {
+    DfaVariableValue qualifier = thisValue.getQualifier();
+    if (qualifier != null) {
+      PsiField psiVariable = ObjectUtils.tryCast(qualifier.getPsiVariable(), PsiField.class);
+      if (psiVariable != null &&
+          FieldChecker.getChecker(context).canTrustFieldInitializer(psiVariable) &&
+          psiVariable.hasModifierProperty(PsiModifier.STATIC) &&
+          psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
+        PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(psiVariable);
+        if (initializer != null) {
+          return typeByInitializer.apply(initializer);
+        }
+      }
+    }
+    return DfType.TOP;
   }
 
   /**
@@ -323,11 +336,6 @@ public enum JvmSpecialField implements SpecialField {
   @Override
   public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
     return getDefaultValue(false);
-  }
-
-  @NotNull
-  DfType fromInitializer(PsiExpression initializer) {
-    return DfType.TOP;
   }
 
   @NotNull
