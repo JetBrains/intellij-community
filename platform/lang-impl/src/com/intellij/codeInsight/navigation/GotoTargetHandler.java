@@ -10,6 +10,8 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.TargetPresentation;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -34,6 +36,8 @@ import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +45,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(GotoTargetHandler.class);
-  private final PsiElementListCellRenderer myDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
+  private static final PsiElementListCellRenderer<?> ourDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
 
   @Override
   public boolean startInWriteAction() {
@@ -102,9 +108,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return;
     }
 
-    for (PsiElement eachTarget : targets) {
-      gotoData.renderers.put(eachTarget, createRenderer(gotoData, eachTarget));
-    }
+    gotoData.presentations.putAll(computePresentationInBackground(project, gotoData, targets));
 
     final String name = ((NavigationItem)gotoData.source).getName();
     final String title = getChooserTitle(gotoData.source, name, targets.length, finished);
@@ -123,12 +127,12 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       if (o instanceof AdditionalAction) {
         return ((AdditionalAction)o).getText();
       }
-      return getRenderer(o, gotoData).getElementText((PsiElement)o);
+      return gotoData.getPresentation(o).getPresentableText();
     }).setTitle(title);
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    builder.setRenderer(new GotoTargetRenderer(value -> getRenderer(value, gotoData))).
+    builder.setRenderer(new GotoTargetRenderer(gotoData::getPresentation)).
       setItemsChosenCallback(selectedElements -> {
         for (Object element : selectedElements) {
           if (element instanceof AdditionalAction) {
@@ -189,23 +193,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   @NotNull
-  protected PsiElementListCellRenderer getRenderer(Object value, @NotNull GotoData gotoData) {
-    PsiElementListCellRenderer renderer = gotoData.getRenderer(value);
-    return renderer != null ? renderer : myDefaultTargetElementRenderer;
-  }
-
-  @NotNull
   protected Comparator<PsiElement> createComparator(@NotNull GotoData gotoData) {
-    return new Comparator<>() {
-      @Override
-      public int compare(PsiElement o1, PsiElement o2) {
-        return getComparingObject(o1).compareTo(getComparingObject(o2));
-      }
-
-      private Comparable getComparingObject(PsiElement o1) {
-        return getRenderer(o1, gotoData).getComparingObject(o1);
-      }
-    };
+    return Comparator.comparing(gotoData::getComparingObject);
   }
 
   public static PsiElementListCellRenderer createRenderer(@NotNull GotoData gotoData, @NotNull PsiElement eachTarget) {
@@ -214,6 +203,32 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       if (renderer != null) return renderer;
     }
     return null;
+  }
+
+  private static Map<PsiElement, TargetPresentation> computePresentationInBackground(
+    @NotNull Project project,
+    @NotNull GotoData gotoData,
+    PsiElement[] targets
+  ) {
+    return ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"), () -> {
+      Map<PsiElement, TargetPresentation> presentations = new HashMap<>();
+      for (PsiElement eachTarget : targets) {
+        presentations.put(eachTarget, computePresentation(gotoData, eachTarget));
+      }
+      return presentations;
+    });
+  }
+
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  public static @NotNull TargetPresentation computePresentation(@NotNull GotoData gotoData, @NotNull PsiElement element) {
+    for (GotoTargetRendererProvider eachProvider : GotoTargetRendererProvider.EP_NAME.getExtensionList()) {
+      PsiElementListCellRenderer<?> renderer = eachProvider.getRenderer(element, gotoData);
+      if (renderer != null) {
+        return renderer.computePresentation(element);
+      }
+    }
+    return ourDefaultTargetElementRenderer.computePresentation(element);
   }
 
   protected boolean navigateToElement(PsiElement target) {
@@ -280,7 +295,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     private boolean hasDifferentNames;
     public BackgroundUpdaterTask listUpdaterTask;
     protected final Set<String> myNames;
-    public Map<Object, PsiElementListCellRenderer> renderers = new HashMap<>();
+    public Map<Object, TargetPresentation> presentations = new HashMap<>();
 
     public GotoData(@NotNull PsiElement source, PsiElement @NotNull [] targets, @NotNull List<AdditionalAction> additionalActions) {
       this.source = source;
@@ -305,7 +320,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     public boolean addTarget(final PsiElement element) {
       if (ArrayUtil.find(targets, element) > -1) return false;
       targets = ArrayUtil.append(targets, element);
-      renderers.put(element, createRenderer(this, element));
+      presentations.put(element, computePresentation(this, element));
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
         final String name = ReadAction.compute(() -> ((PsiNamedElement)element).getName());
         myNames.add(name);
@@ -314,8 +329,17 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return true;
     }
 
-    public PsiElementListCellRenderer getRenderer(Object value) {
-      return renderers.get(value);
+    public @NotNull TargetPresentation getPresentation(Object value) {
+      return Objects.requireNonNull(presentations.get(value));
+    }
+
+    public @NotNull String getComparingObject(Object value) {
+      TargetPresentation presentation = getPresentation(value);
+      return Stream.of(
+        presentation.getPresentableText(),
+        presentation.getContainerText(),
+        presentation.getLocationText()
+      ).filter(Objects::nonNull).collect(Collectors.joining(" "));
     }
   }
 

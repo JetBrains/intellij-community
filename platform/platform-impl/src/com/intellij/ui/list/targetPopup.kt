@@ -46,7 +46,7 @@ fun <T> buildTargetPopup(
     }.setItemChosenCallback(processor::accept)
 }
 
-private fun <T> createTargetPresentationRenderer(presentationProvider: Function<in T, out TargetPresentation>): ListCellRenderer<T> {
+fun <T> createTargetPresentationRenderer(presentationProvider: Function<in T, out TargetPresentation>): ListCellRenderer<T> {
   return if (UISettings.instance.showIconInQuickNavigation) {
     TargetPresentationRenderer(presentationProvider)
   }

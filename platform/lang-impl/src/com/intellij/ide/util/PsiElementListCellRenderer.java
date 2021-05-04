@@ -387,9 +387,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     });
   }
 
+  @ApiStatus.Internal
   @SuppressWarnings("unchecked")
   @RequiresReadLock
-  final @NotNull TargetPresentation computePresentation(@NotNull PsiElement element) {
+  public final @NotNull TargetPresentation computePresentation(@NotNull PsiElement element) {
     return computePresentationInner((T)element);
   }
 
