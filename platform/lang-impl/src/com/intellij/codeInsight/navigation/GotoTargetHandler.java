@@ -320,7 +320,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     public boolean addTarget(final PsiElement element) {
       if (ArrayUtil.find(targets, element) > -1) return false;
       targets = ArrayUtil.append(targets, element);
-      presentations.put(element, computePresentation(this, element));
+      presentations.put(element, ReadAction.compute(() -> computePresentation(this, element)));
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
         final String name = ReadAction.compute(() -> ((PsiNamedElement)element).getName());
         myNames.add(name);
