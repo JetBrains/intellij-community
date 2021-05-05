@@ -4125,6 +4125,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/changeVisibility/protected/noModifier.kt");
             }
 
+            @TestMetadata("notForAnnotationPrimaryConstructor.kt")
+            public void testNotForAnnotationPrimaryConstructor() throws Exception {
+                runTest("idea/testData/intentions/changeVisibility/protected/notForAnnotationPrimaryConstructor.kt");
+            }
+
             @TestMetadata("notForNonValParameter.kt")
             public void testNotForNonValParameter() throws Exception {
                 runTest("testData/intentions/changeVisibility/protected/notForNonValParameter.kt");
@@ -4143,6 +4148,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("notForTopLevel.kt")
             public void testNotForTopLevel() throws Exception {
                 runTest("testData/intentions/changeVisibility/protected/notForTopLevel.kt");
+            }
+
+            @TestMetadata("primaryConstructor.kt")
+            public void testPrimaryConstructor() throws Exception {
+                runTest("idea/testData/intentions/changeVisibility/protected/primaryConstructor.kt");
             }
 
             @TestMetadata("propertySetter.kt")
