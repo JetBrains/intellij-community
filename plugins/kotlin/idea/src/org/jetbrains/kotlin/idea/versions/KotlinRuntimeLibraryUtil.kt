@@ -137,7 +137,11 @@ enum class LibraryJarDescriptor(
 
 fun bundledRuntimeVersion(): String = KotlinCompilerVersion.VERSION
 
-fun kotlinCompilerVersionForWizard() = KotlinCompilerVersion.VERSION.substringBefore("-release")
+/**
+ * Bundled compiler version usually looks like: `1.5.0-release-759`.
+ * `kotlinCompilerVersionShort` would return `1.5.0` in such case
+ */
+fun kotlinCompilerVersionShort() = KotlinCompilerVersion.VERSION.substringBefore("-release")
 
 data class BinaryVersionedFile<out T : BinaryVersion>(val file: VirtualFile, val version: T, val supportedVersion: T)
 

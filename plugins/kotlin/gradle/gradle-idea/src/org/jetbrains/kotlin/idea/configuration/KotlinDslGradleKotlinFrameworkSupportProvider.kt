@@ -48,7 +48,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
         modifiableModelsProvider: ModifiableModelsProvider,
         buildScriptData: BuildScriptDataBuilder
     ) {
-        var kotlinVersion = kotlinCompilerVersionForWizard()
+        var kotlinVersion = kotlinCompilerVersionShort()
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
         if (isSnapshot(bundledRuntimeVersion())) {
             kotlinVersion = LAST_SNAPSHOT_VERSION

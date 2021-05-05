@@ -170,17 +170,17 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         public static Collection<String> loadVersions(String minimumVersion) throws Exception {
         List<String> versions = new ArrayList<>();
 
-        String bundledRuntimeVersion = KotlinRuntimeLibraryUtilKt.bundledRuntimeVersion();
-        RepositoryDescription repositoryDescription = ConfigureKotlinInProjectUtilsKt.getRepositoryForVersion(bundledRuntimeVersion);
+        String kotlinCompilerVersionShort = KotlinRuntimeLibraryUtilKt.kotlinCompilerVersionShort();
+        RepositoryDescription repositoryDescription = ConfigureKotlinInProjectUtilsKt.getRepositoryForVersion(kotlinCompilerVersionShort);
         if (repositoryDescription != null && repositoryDescription.getBintrayUrl() != null) {
-            HttpURLConnection eapConnection = HttpConfigurable.getInstance().openHttpConnection(repositoryDescription.getBintrayUrl() + bundledRuntimeVersion);
+            HttpURLConnection eapConnection = HttpConfigurable.getInstance().openHttpConnection(repositoryDescription.getBintrayUrl() + kotlinCompilerVersionShort);
             try {
                 int timeout = (int) TimeUnit.SECONDS.toMillis(30);
                 eapConnection.setConnectTimeout(timeout);
                 eapConnection.setReadTimeout(timeout);
 
                 if (eapConnection.getResponseCode() == 200) {
-                    versions.add(bundledRuntimeVersion);
+                    versions.add(kotlinCompilerVersionShort);
                 }
             }
             finally {
@@ -218,9 +218,9 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         Collections.sort(versions, VersionComparatorUtil.COMPARATOR.reversed());
 
         // Handle the case when the new version has just been released and the Maven search index hasn't been updated yet
-        if (!VersioningKt.isEap(bundledRuntimeVersion) && !KotlinPluginUtil.isSnapshotVersion() &&
-            !bundledRuntimeVersion.contains("dev") && !versions.contains(bundledRuntimeVersion)) {
-            versions.add(0, bundledRuntimeVersion);
+        if (!VersioningKt.isEap(kotlinCompilerVersionShort) && !KotlinPluginUtil.isSnapshotVersion() &&
+            !kotlinCompilerVersionShort.contains("dev") && !versions.contains(kotlinCompilerVersionShort)) {
+            versions.add(0, kotlinCompilerVersionShort);
         }
 
         return versions;

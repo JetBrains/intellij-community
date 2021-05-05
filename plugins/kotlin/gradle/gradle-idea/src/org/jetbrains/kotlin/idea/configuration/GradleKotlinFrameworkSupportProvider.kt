@@ -76,7 +76,7 @@ abstract class GradleKotlinFrameworkSupportProvider(
         specifyPluginVersionIfNeeded: Boolean,
         explicitPluginVersion: String? = null
     ) {
-        var kotlinVersion = explicitPluginVersion ?: kotlinCompilerVersionForWizard()
+        var kotlinVersion = explicitPluginVersion ?: kotlinCompilerVersionShort()
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
         if (isSnapshot(kotlinVersion)) {
             kotlinVersion = LAST_SNAPSHOT_VERSION
