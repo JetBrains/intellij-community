@@ -6,6 +6,7 @@ import com.intellij.ide.util.scopeChooser.ScopeConfigurable;
 import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.MasterDetailsStateService;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
@@ -74,6 +75,7 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
     }
     finally {
       panel.cancelCurrentProgress();
+      Disposer.dispose(panel);
     }
   }
 }
