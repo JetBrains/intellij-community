@@ -19,6 +19,9 @@ public interface DfJvmIntegralType extends DfIntegralType, DfPrimitiveType {
    */
   @Override
   default @NotNull DfType castTo(@NotNull PsiPrimitiveType type) {
+    if (getConstantOfType(Object.class) != null) {
+      return DfPrimitiveType.super.castTo(type);
+    }
     if (type.equals(PsiType.DOUBLE) || type.equals(PsiType.FLOAT)) {
       // No widening support for doubles, so we translate the wide range 
       // to avoid diverged states if (int)(double)x cast is performed
