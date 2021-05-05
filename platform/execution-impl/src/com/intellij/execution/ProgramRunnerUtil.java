@@ -100,8 +100,8 @@ public final class ProgramRunnerUtil {
       JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(new File(exePath).getParentFile().getParent());
       if (jdkVersionInfo != null) {
         description += "<br/>";
-        description += ExecutionBundle.message(jdkVersionInfo.version.feature >= 11 ? "dialog.message.command.line.too.long.java11" 
-                                                                                    : "dialog.message.command.line.too.long.java10");
+        description += ExecutionBundle.message(jdkVersionInfo.version.feature >= 9 ? "dialog.message.command.line.too.long.java9" 
+                                                                                   : "dialog.message.command.line.too.long.java8");
       }
 
       listener = event -> {
