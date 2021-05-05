@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
@@ -81,6 +81,6 @@ public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
 
   @Override
   public String getHTMLFooter() {
-    return IdeBundle.message("label.launcher.script.can.be.created.later.via.tools.create.command.line.launcher");
+    return IdeBundle.message("label.launcher.script.later");
   }
 }

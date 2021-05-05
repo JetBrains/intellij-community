@@ -459,7 +459,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
             keyDesc += ", " + KeymapUtil.getKeystrokeText(ksc.getSecondKeyStroke());
           final int result = Messages.showYesNoCancelDialog(
             parent,
-            IdeBundle.message("message.action.shortcut.0.is.already.assigned.to.system.action.1.do.you.want.to.remove.this.shortcut", keyDesc, kscs.get(ksc)),
+            IdeBundle.message("message.action.remove.system.assigned.shortcut", keyDesc, kscs.get(ksc)),
             KeyMapBundle.message("conflict.shortcut.dialog.title"),
             KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
             KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),

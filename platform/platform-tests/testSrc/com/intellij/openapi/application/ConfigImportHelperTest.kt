@@ -25,9 +25,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Predicate
 
-private val LOG = logger<ConfigImportHelperTest>()
-
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
+  private val LOG = logger<ConfigImportHelperTest>()
+
   @Test fun `config directory is valid for import`() {
     PropertiesComponent.getInstance().setValue("property.ConfigImportHelperTest", true)
     try {

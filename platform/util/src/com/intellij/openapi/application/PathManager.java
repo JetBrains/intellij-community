@@ -731,11 +731,7 @@ public final class PathManager {
     throw new UnsupportedOperationException("Unsupported OS: " + SystemInfoRt.OS_NAME);
   }
 
-  @NotNull
-  private static String getUnixPlatformPath(String userHome, String selector,
-                                            String xdgVar,
-                                            String xdgDfl,
-                                            String xdgSub) {
+  private static String getUnixPlatformPath(String userHome, String selector, @Nullable String xdgVar, String xdgDfl, String xdgSub) {
     String dir = xdgVar != null ? System.getenv(xdgVar) : null;
     if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
     dir = dir + '/' + vendorName();

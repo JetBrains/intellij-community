@@ -401,10 +401,10 @@ public final class ConfigImportHelper {
   }
 
   static class ConfigDirsSearchResult {
-    private final @NotNull List<? extends Pair<Path, FileTime>> directories;
+    private final List<Pair<Path, FileTime>> directories;
     private final boolean fromSameProduct;
 
-    ConfigDirsSearchResult(@NotNull List<? extends Pair<Path, FileTime>> directories, boolean fromSameProduct) {
+    private ConfigDirsSearchResult(List<Pair<Path, FileTime>> directories, boolean fromSameProduct) {
       this.directories = directories;
       this.fromSameProduct = fromSameProduct;
     }
@@ -511,7 +511,7 @@ public final class ConfigImportHelper {
         catch (IOException ignore) { }
       }
 
-      lastModified.add(Pair.create(candidate, max != null ? max : FileTime.fromMillis(0)));
+      lastModified.add(pair(candidate, max != null ? max : FileTime.fromMillis(0)));
     }
 
     lastModified.sort((o1, o2) -> {
@@ -521,6 +521,7 @@ public final class ConfigImportHelper {
       }
       return diff;
     });
+
     return new ConfigDirsSearchResult(lastModified, exact);
   }
 
