@@ -3,12 +3,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +40,7 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
 
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(member.getProject());
     String name = member.getName();
-    if (name != null && hasUsages(member, name, searchHelper, member.getResolveScope())) {
+    if (name != null && hasUsages(member, name, searchHelper, member.getUseScope())) {
       holder.registerProblem(identifier, JavaAnalysisBundle.message("deprecated.member.0.is.still.used", name));
     }
   }
@@ -50,13 +49,8 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
     if (!PsiImplUtil.isDeprecated(javaModule)) {
       return;
     }
-    Module module = ModuleUtilCore.findModuleForPsiElement(javaModule);
-    if (module == null) {
-      return;
-    }
-    GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(javaModule.getProject());
-    if (hasUsages(javaModule, javaModule.getName(), searchHelper, searchScope)) {
+    if (hasUsages(javaModule, javaModule.getName(), searchHelper, javaModule.getUseScope())) {
       holder.registerProblem(javaModule.getNameIdentifier(),
                              JavaAnalysisBundle.message("deprecated.member.0.is.still.used", javaModule.getName()));
     }
@@ -68,10 +62,12 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
 
 
   private static boolean hasUsages(@NotNull PsiElement element,
-                                       @NotNull String name,
-                                       @NotNull PsiSearchHelper psiSearchHelper,
-                                       @NotNull GlobalSearchScope searchScope) {
-    PsiSearchHelper.SearchCostResult cheapEnough = psiSearchHelper.isCheapEnoughToSearch(name, searchScope, null, null);
+                                   @NotNull String name,
+                                   @NotNull PsiSearchHelper psiSearchHelper,
+                                   @NotNull SearchScope searchScope) {
+    PsiSearchHelper.SearchCostResult cheapEnough 
+      = searchScope instanceof GlobalSearchScope ?
+        psiSearchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)searchScope, null, null) : null;
     if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ||
         cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
       return false;
