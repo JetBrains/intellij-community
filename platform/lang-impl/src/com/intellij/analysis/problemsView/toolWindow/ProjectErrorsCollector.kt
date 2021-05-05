@@ -47,8 +47,9 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   }
 
   override fun problemAppeared(problem: Problem) {
+    val ignored = isIgnored(problem.provider)
     notify(problem, when {
-      isIgnored(problem.provider) -> SetUpdateState.IGNORED
+      ignored -> SetUpdateState.IGNORED
       problem is FileProblem -> process(problem, true) { set ->
         when {
           // do not add HighlightingDuplicate if there is any HighlightingProblem
@@ -58,7 +59,7 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
       }
       else -> synchronized(otherProblems) { SetUpdateState.add(problem, otherProblems) }
     })
-    if (problem is HighlightingProblem) {
+    if (!ignored && problem is HighlightingProblem) {
       // remove any HighlightingDuplicate if HighlightingProblem is appeared
       synchronized(fileProblems) {
         fileProblems[problem.file]?.filter { it is HighlightingDuplicate }
