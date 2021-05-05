@@ -12,7 +12,10 @@ import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.*;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,8 +74,6 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   private static final long USED_LONG_VALUE_MASK = 1L << 62;
   private static final int POSITIVE_VALUE_SHIFT = 1;
   private final int myParentValueRefOffset;
-  private final ThreadLocal<byte @NotNull []> myRecordBuffer;
-  private final ThreadLocal<byte @NotNull []> mySmallRecordBuffer;
   private final boolean myIntMapping;
   private final boolean myDirectlyStoreLongFileOffsetMode;
   private final boolean myCanReEnumerate;
@@ -145,40 +146,11 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && builder.getInlineValues(false);
     myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
 
-    myRecordBuffer = ThreadLocal
-      .withInitial(() -> myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 8]);
-    mySmallRecordBuffer = ThreadLocal
-      .withInitial(() -> myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 4]);
-
-    myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>>() {
-      @Override
-      int recordWriteOffset(PersistentEnumeratorBase<?> enumerator, byte[] buf) {
-        return recordHandler.recordWriteOffset(enumerator, buf);
-      }
-
-      @Override
-      byte @NotNull [] getRecordBuffer(PersistentEnumeratorBase<?> enumerator) {
-        return myIntAddressForNewRecord ? mySmallRecordBuffer.get() : myRecordBuffer.get();
-      }
-
-      @Override
-      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, byte @NotNull [] buf) {
-        recordHandler.setupRecord(enumerator, hashCode, dataOffset, buf);
-        for (int i = myParentValueRefOffset; i < buf.length; i++) {
-          buf[i] = 0;
-        }
-      }
+    myEnumerator.setRecordHandler(new MyEnumeratorRecordHandler(recordHandler));
+    myEnumerator.setMarkCleanCallback(() -> {
+      myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
+      myEnumerator.putMetaData2(myLargeIndexWatermarkId | ((long)myReadCompactionGarbageSize << 32));
     });
-
-    myEnumerator.setMarkCleanCallback(
-      new Flushable() {
-        @Override
-        public void flush() {
-          myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
-          myEnumerator.putMetaData2(myLargeIndexWatermarkId | ((long)myReadCompactionGarbageSize << 32));
-        }
-      }
-    );
 
     if (myDoTrace) LOG.info("Opened " + file);
     try {
@@ -647,7 +619,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       return doContainsMapping(key);
     }
     finally {
-      getReadLock().unlock();
+      getReadLock().lock();
     }
   }
 
@@ -1079,6 +1051,38 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     }
     catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private class MyEnumeratorRecordHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> {
+    private final ThreadLocal<byte @NotNull []> myRecordBuffer;
+    private final ThreadLocal<byte @NotNull []> mySmallRecordBuffer;
+    private final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
+
+    MyEnumeratorRecordHandler(PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler) {
+      myRecordHandler = recordHandler;
+      myRecordBuffer = ThreadLocal
+        .withInitial(() -> myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 8]);
+      mySmallRecordBuffer = ThreadLocal
+        .withInitial(() -> myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 4]);
+    }
+
+    @Override
+    int recordWriteOffset(PersistentEnumeratorBase<?> enumerator, byte[] buf) {
+      return myRecordHandler.recordWriteOffset(enumerator, buf);
+    }
+
+    @Override
+    byte @NotNull [] getRecordBuffer(PersistentEnumeratorBase<?> enumerator) {
+      return myIntAddressForNewRecord ? mySmallRecordBuffer.get() : myRecordBuffer.get();
+    }
+
+    @Override
+    void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, byte @NotNull [] buf) {
+      myRecordHandler.setupRecord(enumerator, hashCode, dataOffset, buf);
+      for (int i = myParentValueRefOffset; i < buf.length; i++) {
+        buf[i] = 0;
+      }
     }
   }
 }

@@ -67,7 +67,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private boolean myDirty;
   private boolean myCorrupted;
   private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
-  private Flushable myMarkCleanCallback;
+  private @Nullable Flushable myMarkCleanCallback;
 
   public static class Version {
     private static final int DIRTY_MAGIC = 0xbabe1977;
@@ -244,7 +244,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     myRecordHandler = recordHandler;
   }
 
-  void setMarkCleanCallback(Flushable markCleanCallback) {
+  void setMarkCleanCallback(@NotNull Flushable markCleanCallback) {
     myMarkCleanCallback = markCleanCallback;
   }
 
