@@ -15,7 +15,7 @@ public final class DeleteOldAppDirectoriesAction extends DumbAwareAction {
     new Task.Backgroundable(e.getProject(), IdeBundle.message("old.dirs.action.progress")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        OldDirectoryCleaner.seekAndDestroy(e.getProject(), indicator);
+        new OldDirectoryCleaner(0).seekAndDestroy(e.getProject(), indicator);
       }
     }.queue();
   }

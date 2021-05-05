@@ -425,8 +425,8 @@ public final class ConfigImportHelper {
       return getNameWithVersion(config);
     }
 
-    @NotNull List<Path> findRelatedDirectories(@NotNull Path config) {
-      return getRelatedDirectories(config);
+    @NotNull List<Path> findRelatedDirectories(@NotNull Path config, boolean forAutoClean) {
+      return getRelatedDirectories(config, forAutoClean);
     }
   }
 
@@ -1041,29 +1041,36 @@ public final class ConfigImportHelper {
     return !m.matches() || "2020.1".compareTo(m.group(2)) <= 0;
   }
 
-  private static List<Path> getRelatedDirectories(Path config) {
+  private static List<Path> getRelatedDirectories(Path config, boolean forAutoClean) {
     String selector = getNameWithVersion(config);
     FileSystem fs = config.getFileSystem();
     Path system = fs.getPath(defaultSystemPath(selector));
 
-    Path commonParent = config.getParent();
-    if (commonParent.equals(system.getParent())) {
-      List<Path> files = NioFiles.list(commonParent);
-      if (files.size() == 1 || files.size() == 2 && files.containsAll(List.of(config, system))) {
-        return List.of(commonParent);
+    if (!forAutoClean) {
+      Path commonParent = config.getParent();
+      if (commonParent.equals(system.getParent())) {
+        List<Path> files = NioFiles.list(commonParent);
+        if (files.size() == 1 || files.size() == 2 && files.containsAll(List.of(config, system))) {
+          return List.of(commonParent);
+        }
       }
     }
 
     List<Path> result = new ArrayList<>();
-    result.add(config);
+
+    if (!forAutoClean) {
+      result.add(config);
+    }
 
     if (Files.exists(system)) {
       result.add(system);
     }
 
-    Path plugins = fs.getPath(defaultPluginsPath(selector));
-    if (!plugins.startsWith(config) && Files.exists(plugins)) {
-      result.add(plugins);
+    if (!forAutoClean) {
+      Path plugins = fs.getPath(defaultPluginsPath(selector));
+      if (!plugins.startsWith(config) && Files.exists(plugins)) {
+        result.add(plugins);
+      }
     }
 
     Path logs = fs.getPath(defaultLogsPath(selector));

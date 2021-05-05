@@ -385,13 +385,21 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       SystemInfo.isMac -> listOf(cfg203, sys203, logs203)
       else -> listOf(cfg203, sys203, plugins203)
     }
+    val cachesAndLogs203 = when {
+      SystemInfo.isMac -> listOf(sys203, logs203)
+      else -> listOf(sys203)
+    }
 
     val current = createConfigDir("2021.2")
     val result = ConfigImportHelper.findConfigDirectories(current)
     assertThat(result.paths).containsExactlyInAnyOrder(cfg191, cfg192, cfg193, cfg201, cfg202, cfg203)
 
-    val related = result.paths.map { result.findRelatedDirectories(it) }
+    val related = result.paths.map { result.findRelatedDirectories(it, false) }
     assertThat(related).containsExactlyInAnyOrder(
       listOf(cfg191), listOf(cfg192.parent), listOf(cfg193.parent), listOf(cfg201), listOf(cfg202, sys202), expected203)
+
+    val cachesAndLogs = result.paths.map { result.findRelatedDirectories(it, true) }.filter { it.isNotEmpty() }
+    assertThat(cachesAndLogs).containsExactlyInAnyOrder(
+      listOf(sys193), listOf(sys202), cachesAndLogs203)
   }
 }

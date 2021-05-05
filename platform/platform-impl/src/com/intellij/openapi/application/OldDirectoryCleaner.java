@@ -44,20 +44,35 @@ import java.util.stream.IntStream;
 import static com.intellij.ide.IdeBundle.message;
 import static com.intellij.notification.NotificationAction.createSimpleExpiring;
 
+@SuppressWarnings("NonConstantLogger")
 public final class OldDirectoryCleaner {
-  private OldDirectoryCleaner() { }
+  private final Logger myLogger = Logger.getInstance(OldDirectoryCleaner.class);
+  private final long myBestBefore;
+
+  public OldDirectoryCleaner(long bestBefore) {
+    myBestBefore = bestBefore;
+  }
 
   @RequiresBackgroundThread
-  public static void seekAndDestroy(@Nullable Project project, @Nullable ProgressIndicator indicator) {
+  public void seekAndDestroy(@Nullable Project project, @Nullable ProgressIndicator indicator) {
     ConfigDirsSearchResult result = ConfigImportHelper.findConfigDirectories(PathManager.getConfigDir());
     List<DirectoryGroup> groups = collectDirectoryData(result, indicator);
+    if (myLogger.isDebugEnabled()) {
+      myLogger.debug("configs: " + result.getPaths());
+      myLogger.debug("groups: " + groups);
+    }
 
     if (!result.isEmpty()) {
-      String text = message("old.dirs.notification.text", ApplicationNamesInfo.getInstance().getFullProductName());
-      UpdateChecker.getNotificationGroup()
-        .createNotification(text, NotificationType.INFORMATION)
-        .addAction(createSimpleExpiring(message("action.delete.ellipsis"), () -> confirmAndDelete(project, groups)))
-        .notify(project);
+      if (myBestBefore != 0) {
+        deleteCowardly(groups);
+      }
+      else {
+        String text = message("old.dirs.notification.text", ApplicationNamesInfo.getInstance().getFullProductName());
+        UpdateChecker.getNotificationGroup()
+          .createNotification(text, NotificationType.INFORMATION)
+          .addAction(createSimpleExpiring(message("action.delete.ellipsis"), () -> confirmAndDelete(project, groups)))
+          .notify(project);
+      }
     }
   }
 
@@ -75,13 +90,21 @@ public final class OldDirectoryCleaner {
       this.size = size;
       this.entriesToDelete = entriesToDelete;
     }
+
+    @Override
+    public String toString() {
+      return "{" + directories + ' ' + lastUpdated + '}';
+    }
   }
 
-  private static List<DirectoryGroup> collectDirectoryData(ConfigDirsSearchResult result, @Nullable ProgressIndicator indicator) {
+  private List<DirectoryGroup> collectDirectoryData(ConfigDirsSearchResult result, @Nullable ProgressIndicator indicator) {
     List<Path> configs = result.getPaths();
     List<DirectoryGroup> groups = new ArrayList<>(configs.size());
+
     for (Path config : configs) {
-      List<Path> directories = result.findRelatedDirectories(config);
+      List<Path> directories = result.findRelatedDirectories(config, myBestBefore != 0);
+      if (directories.isEmpty()) continue;
+
       long lastUpdated = 0, size = 0;
       int entriesToDelete = 0;
       for (Path directory : directories) {
@@ -90,14 +113,17 @@ public final class OldDirectoryCleaner {
           Files.walkFileTree(directory, visitor);
         }
         catch (IOException e) {
-          Logger.getInstance(OldDirectoryCleaner.class).debug(e);
+          myLogger.debug(e);
         }
         lastUpdated = Math.max(lastUpdated, visitor.lastUpdated);
         size += visitor.size;
         entriesToDelete += visitor.entriesToDelete;
       }
-      groups.add(new DirectoryGroup(result.getNameAndVersion(config), directories, lastUpdated, size, entriesToDelete));
+      if (myBestBefore == 0 || lastUpdated <= myBestBefore) {
+        groups.add(new DirectoryGroup(result.getNameAndVersion(config), directories, lastUpdated, size, entriesToDelete));
+      }
     }
+
     return groups;
   }
 
@@ -126,7 +152,21 @@ public final class OldDirectoryCleaner {
     }
   }
 
-  private static void confirmAndDelete(Project project, List<DirectoryGroup> groups) {
+  private void deleteCowardly(List<DirectoryGroup> groups) {
+    for (DirectoryGroup group : groups) {
+      for (Path directory : group.directories) {
+        myLogger.info("deleting " + directory);
+        try {
+          NioFiles.deleteRecursively(directory);
+        }
+        catch (IOException e) {
+          myLogger.error(e);
+        }
+      }
+    }
+  }
+
+  private void confirmAndDelete(Project project, List<DirectoryGroup> groups) {
     MenuDialog dialog = new MenuDialog(project, groups);
     if (dialog.showAndGet()) {
       List<DirectoryGroup> selectedGroups = dialog.getSelectedGroups();
@@ -138,7 +178,6 @@ public final class OldDirectoryCleaner {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             indicator.setIndeterminate(false);
-            Logger logger = Logger.getInstance(OldDirectoryCleaner.class);
             int total = selectedGroups.stream().mapToInt(g -> g.entriesToDelete).sum();
             List<String> errors = new ArrayList<>();
 
@@ -146,7 +185,7 @@ public final class OldDirectoryCleaner {
               for (Path directory : group.directories) {
                 indicator.checkCanceled();
                 indicator.setText(directory.toString());
-                if (logger.isDebugEnabled()) logger.debug("deleting " + directory);
+                if (myLogger.isDebugEnabled()) myLogger.debug("deleting " + directory);
                 currentRoot = directory;
                 try {
                   NioFiles.deleteRecursively(directory, p -> {
@@ -156,7 +195,7 @@ public final class OldDirectoryCleaner {
                   });
                 }
                 catch (IOException e) {
-                  logger.error(e);
+                  myLogger.error(e);
                   errors.add(directory + " (" + IoErrorText.message(e) + ')');
                 }
               }

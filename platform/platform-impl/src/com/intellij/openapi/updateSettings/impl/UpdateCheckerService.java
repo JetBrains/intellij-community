@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +57,7 @@ final class UpdateCheckerService {
   private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
   private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";
   private static final int OLD_DIRECTORIES_SCAN_DELAY_DAYS = 7;
+  private static final int OLD_DIRECTORIES_SHELF_LIFE_MONTHS = 6;
 
   private volatile ScheduledFuture<?> myScheduledCheck;
 
@@ -160,17 +162,7 @@ final class UpdateCheckerService {
 
       ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
 
-      if (ConfigImportHelper.isFirstSession()) {
-        long scheduledAt = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
-        properties.setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));
-      }
-      else {
-        String value = properties.getValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
-        if (value != null && System.currentTimeMillis() >= Long.parseLong(value)) {
-          ProcessIOExecutorService.INSTANCE.execute(() -> OldDirectoryCleaner.seekAndDestroy(project, null));
-          properties.unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
-        }
-      }
+      deleteOldApplicationDirectories();
     }
   }
 
@@ -319,5 +311,23 @@ final class UpdateCheckerService {
 
   private static Path getUpdatedPluginsFile() {
     return Path.of(PathManager.getConfigPath(), ".updated_plugins_list");
+  }
+
+  private static void deleteOldApplicationDirectories() {
+    if (ConfigImportHelper.isConfigImported()) {
+      long scheduledAt = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
+      LOG.info("scheduling old directories scan after " + DateFormatUtil.formatDateTime(scheduledAt));
+      PropertiesComponent.getInstance().setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));
+    }
+    else {
+      String value = PropertiesComponent.getInstance().getValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
+      if (value != null && System.currentTimeMillis() >= Long.parseLong(value)) {
+        LOG.info("starting old directories scan");
+        long expireAfter = ZonedDateTime.now().minusMonths(OLD_DIRECTORIES_SHELF_LIFE_MONTHS).toEpochSecond() * 1000;
+        ProcessIOExecutorService.INSTANCE.execute(() -> new OldDirectoryCleaner(expireAfter).seekAndDestroy(null, null));
+        PropertiesComponent.getInstance().unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
+        LOG.info("old directories scan complete");
+      }
+    }
   }
 }
