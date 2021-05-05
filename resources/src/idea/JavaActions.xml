@@ -616,10 +616,6 @@
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
 
-    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction" internal="true">
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ExportImportGroup"/>
-    </action>
-
     <group id="Debugger.FramePanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
       <reference ref="Debugger.MarkObject"/>
