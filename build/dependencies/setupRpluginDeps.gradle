@@ -12,12 +12,18 @@ dependencies {
 task setupRkernel(dependsOn: configurations.rkernel) {
   group = 'rplugin'
   inputs.files(configurations.rkernel)
-  outputs.dir("$buildDir/rplugin")
+  def output = "$buildDir/rplugin"
+  def version = file("$output/rkernelVersion.txt")
+  outputs.dir(output)
+  outputs.file(version)
   copy {
     configurations.rkernel.files.each {
       from tarTree(it)
     }
     into("$buildDir/rplugin")
+  }
+  doLast {
+    version.write("$rkernelVersion")
   }
 }
 
