@@ -54,6 +54,8 @@ final class UpdateCheckerService {
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
   private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
+  private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";
+  private static final int OLD_DIRECTORIES_SCAN_DELAY_DAYS = 7;
 
   private volatile ScheduledFuture<?> myScheduledCheck;
 
@@ -157,6 +159,18 @@ final class UpdateCheckerService {
       showUpdatedPluginsNotification(project);
 
       ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
+
+      if (ConfigImportHelper.isFirstSession()) {
+        long scheduledAt = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
+        properties.setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));
+      }
+      else {
+        String value = properties.getValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
+        if (value != null && System.currentTimeMillis() >= Long.parseLong(value)) {
+          ProcessIOExecutorService.INSTANCE.execute(() -> OldDirectoryCleaner.seekAndDestroy(project, null));
+          properties.unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
+        }
+      }
     }
   }
 

@@ -820,6 +820,7 @@
           <synonym key="action.ShowLog.Explorer.text"/>
         </action>
         <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
+        <action id="DeleteOldAppDirs" class="com.intellij.ide.actions.DeleteOldAppDirectoriesAction"/>
         <separator/>
         <group id="HelpDiagnosticTools" popup="true">
           <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"/>

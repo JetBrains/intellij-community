@@ -12,6 +12,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableNotNullBiFunction
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
+import com.intellij.util.io.createDirectories
 import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -21,6 +22,7 @@ import org.junit.Test
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.function.Predicate
 
 private val LOG = logger<ConfigImportHelperTest>()
@@ -345,5 +347,51 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
 
     assertThat(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName())).hasContent("-XX:MaxJavaStackTraceDepth=10000")
+  }
+
+  @Test fun `finding related directories`() {
+    fun populate(config: Path, plugins: Path?, system: Path?, logs: Path?) {
+      writeStorageFile(config, System.nanoTime() / 1_000_000)
+      plugins?.createDirectories()
+      system?.createDirectories()
+      logs?.createDirectories()
+    }
+
+    val cfg191 = createConfigDir("2019.1")
+    populate(cfg191, null, null, null)
+    Files.writeString(cfg191.parent.resolve("some_file.txt"), "...")
+
+    val cfg192 = createConfigDir("2019.2")
+    populate(cfg192, null, null, null)
+
+    val cfg193 = createConfigDir("2019.3")
+    val sys193 = cfg193.parent.resolve("system")
+    populate(cfg193, cfg193.resolve("plugins"), sys193, sys193.resolve("logs"))
+
+    val cfg201 = createConfigDir("2020.1")
+    populate(cfg201, null, null, null)
+
+    val cfg202 = createConfigDir("2020.2")
+    val sys202 = cfg202.fileSystem.getPath(PathManager.getDefaultSystemPathFor(cfg202.fileName.toString()))
+    populate(cfg202, null, sys202, null)
+
+    val cfg203 = createConfigDir("2020.3")
+    val sys203 = cfg203.fileSystem.getPath(PathManager.getDefaultSystemPathFor(cfg203.fileName.toString()))
+    val plugins203 = cfg203.fileSystem.getPath(PathManager.getDefaultPluginPathFor(cfg203.fileName.toString()))
+    val logs203 = cfg203.fileSystem.getPath(PathManager.getDefaultLogPathFor(cfg203.fileName.toString()))
+    populate(cfg203, plugins203, sys203, logs203)
+    val expected203 = when {
+      SystemInfo.isWindows -> listOf(cfg203, sys203)
+      SystemInfo.isMac -> listOf(cfg203, sys203, logs203)
+      else -> listOf(cfg203, sys203, plugins203)
+    }
+
+    val current = createConfigDir("2021.2")
+    val result = ConfigImportHelper.findConfigDirectories(current)
+    assertThat(result.paths).containsExactlyInAnyOrder(cfg191, cfg192, cfg193, cfg201, cfg202, cfg203)
+
+    val related = result.paths.map { result.findRelatedDirectories(it) }
+    assertThat(related).containsExactlyInAnyOrder(
+      listOf(cfg191), listOf(cfg192.parent), listOf(cfg193.parent), listOf(cfg201), listOf(cfg202, sys202), expected203)
   }
 }
