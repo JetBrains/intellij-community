@@ -3,18 +3,19 @@ package com.intellij.openapi.options.advanced
 
  import com.intellij.ide.ui.search.SearchUtil
  import com.intellij.ide.ui.search.SearchableOptionsRegistrar
-import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.UiDslConfigurable
+ import com.intellij.openapi.application.ApplicationBundle
+ import com.intellij.openapi.options.SearchableConfigurable
+ import com.intellij.openapi.options.UiDslConfigurable
  import com.intellij.openapi.util.NlsSafe
  import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.SearchTextField
-import com.intellij.ui.layout.*
-import com.intellij.util.Alarm
+ import com.intellij.ui.SearchTextField
+ import com.intellij.ui.layout.*
+ import com.intellij.util.Alarm
  import com.intellij.util.ui.UIUtil
  import javax.swing.AbstractButton
  import javax.swing.JComponent
  import javax.swing.JLabel
+ import javax.swing.SwingConstants
  import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfigurable {
@@ -22,10 +23,13 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
   private val settingsRows = mutableListOf<SettingsRow>()
   private val groupRows = mutableListOf<Row>()
+  private lateinit var nothingFoundRow: Row
 
   private val searchAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
 
   private val searchField = SearchTextField().apply {
+    textEditor.emptyText.text = ApplicationBundle.message("search.advanced.settings")
+
     addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         searchAlarm.cancelAllRequests()
@@ -57,6 +61,17 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
           }
         }
       }
+    }
+
+    nothingFoundRow = row {
+      label(ApplicationBundle.message("search.advanced.settings.nothing.found"))
+        .constraints(CCFlags.growX, CCFlags.growY)
+        .also {
+          it.component.foreground = UIUtil.getInactiveTextColor()
+          it.component.horizontalAlignment = SwingConstants.CENTER
+        }
+    }.also {
+      it.visible = false
     }
   }
 
@@ -117,6 +132,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
         settingsRow.row.subRowsVisible = true
         updateMatchText(settingsRow.component, settingsRow.text, null)
       }
+      nothingFoundRow.visible = false
       return
     }
 
@@ -141,6 +157,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
         groupRow.subRowsVisible = false
       }
     }
+    nothingFoundRow.visible = visibleGroupRows.isEmpty()
   }
 
   private fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
