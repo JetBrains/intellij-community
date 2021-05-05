@@ -209,7 +209,7 @@ public final class LambdaRefactoringUtil {
             }
           }
         } else {
-          buf.append(((PsiMember)resolveElement).getName());
+          buf.append(getMemberQualifier((PsiMember)resolveElement));
 
           final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
 
@@ -243,6 +243,14 @@ public final class LambdaRefactoringUtil {
       buf.append(";}");
     }
     return buf.toString();
+  }
+
+  private static String getMemberQualifier(PsiMember member) {
+    if (member instanceof PsiClass) {
+      return ((PsiClass)member).getQualifiedName();
+    } else {
+      return member.getName();
+    }
   }
 
   private static boolean isQualifierUnnecessary(PsiElement qualifier, PsiClass containingClass) {
