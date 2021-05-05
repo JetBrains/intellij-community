@@ -994,9 +994,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiAnnotation anno = info == null ? null : info.getAnnotation();
     Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
     if (nullability == Nullability.NULLABLE) {
-      if (!AnnotationUtil.isInferredAnnotation(anno)) return;
-      if (DfaPsiUtil.getTypeNullability(method.getReturnType()) == Nullability.NULLABLE) return;
+      if (!info.isInferred() || DfaPsiUtil.getTypeNullability(method.getReturnType()) == Nullability.NULLABLE) return;
     }
+    // In rare cases, inference may produce different result (e.g. if nullable method overrides non-null method)
+    if (nullability == Nullability.NOT_NULL && info.isInferred()) return;
 
     if (nullability != Nullability.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
@@ -1013,7 +1014,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
       boolean exactlyNull = isNullLiteralExpression(expr) || expressions.get(expr) == ConstantResult.NULL;
       if (!REPORT_UNSOUND_WARNINGS && !exactlyNull) continue;
-      if (nullability == Nullability.NOT_NULL && !info.isInferred()) {
+      if (nullability == Nullability.NOT_NULL) {
         String presentable = NullableStuffInspectionBase.getPresentableAnnoName(anno);
         final String text = exactlyNull
                             ? JavaAnalysisBundle.message("dataflow.message.return.null.from.notnull", presentable)

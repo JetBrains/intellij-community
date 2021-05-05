@@ -700,4 +700,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testCastInCatch() { doTest(); }
   public void testInitArrayInConstructor() { doTest(); }
   public void testGetterNullityAfterCheck() { doTest(); }
+  public void testInferenceNullityMismatch() { doTestWith(insp -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false); }
 }
