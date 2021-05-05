@@ -3,13 +3,11 @@ package org.jetbrains.uast.analysis
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.IntRef
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiArrayType
 import com.intellij.util.castSafelyTo
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
-import java.util.*
 import kotlin.collections.HashSet
 
 internal class DependencyGraphBuilder private constructor(
@@ -17,7 +15,6 @@ internal class DependencyGraphBuilder private constructor(
   private var currentDepth: Int,
   val dependents: MutableMap<UElement, MutableSet<Dependent>> = mutableMapOf(),
   val dependencies: MutableMap<UElement, MutableSet<Dependency>> = mutableMapOf(),
-  private var operationIndex: IntRef = IntRef(),
 ) : AbstractUastVisitor() {
 
   constructor(): this(currentDepth = 0)
@@ -25,11 +22,10 @@ internal class DependencyGraphBuilder private constructor(
   private val elementsProcessedAsReceiver: MutableSet<UExpression> = HashSet()
 
   private fun createVisitor(scope: LocalScopeContext) =
-    DependencyGraphBuilder(scope, currentDepth, dependents, dependencies, operationIndex)
+    DependencyGraphBuilder(scope, currentDepth, dependents, dependencies)
 
   inline fun checkedDepthCall(node: UElement, body: () -> Boolean): Boolean {
     currentDepth++
-    operationIndex.inc()
     try {
       if (currentDepth > maxBuildDepth) {
         thisLogger().info("build overflow in $node because depth is greater than $maxBuildDepth")
@@ -109,7 +105,7 @@ internal class DependencyGraphBuilder private constructor(
     node.receiver.accept(this)
     if (node.getOutermostQualified() == node) {
       (node.getQualifiedChain().first() as? USimpleNameReferenceExpression)?.identifier?.takeIf { it in currentScope }?.let {
-        currentScope.setLastPotentialUpdate(it, node, operationIndex.get())
+        currentScope.setLastPotentialUpdate(it, node)
       }
     }
     return@checkedDepthCall true
@@ -137,7 +133,7 @@ internal class DependencyGraphBuilder private constructor(
     }
 
     val potentialDependenciesCandidates = currentScope.getLastPotentialUpdate(node.identifier)
-    if (potentialDependenciesCandidates.isNotEmpty()) {
+    if (potentialDependenciesCandidates != null) {
       registerDependency(Dependent.CommonDependent(node), Dependency.PotentialSideEffectDependency(potentialDependenciesCandidates))
     }
     return@checkedDepthCall super.visitSimpleNameReferenceExpression(node)
@@ -166,7 +162,7 @@ internal class DependencyGraphBuilder private constructor(
         ?.let {
           currentScope[it.identifier] = extractedBranchesResult.elements
           updatePotentialEqualReferences(it.identifier, extractedBranchesResult.elements)
-          currentScope.setLastPotentialUpdateMany(it.identifier, extractedBranchesResult.elements, operationIndex.get())
+          currentScope.setLastPotentialUpdateAsAssignment(it.identifier, extractedBranchesResult.elements)
         }
       registerDependency(Dependent.Assigment(node.leftOperand), extractedBranchesResult)
       return true
@@ -346,6 +342,7 @@ internal class DependencyGraphBuilder private constructor(
 
 private typealias SideEffectChangeCandidate = Dependency.PotentialSideEffectDependency.SideEffectChangeCandidate
 private typealias DependencyEvidence = Dependency.PotentialSideEffectDependency.DependencyEvidence
+private typealias CandidatesTree = Dependency.PotentialSideEffectDependency.CandidatesTree
 
 private class LocalScopeContext(private val parent: LocalScopeContext?) {
   private val definedInScopeVariables = HashSet<UElement>()
@@ -354,7 +351,7 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
   private val lastAssignmentOf = mutableMapOf<UElement, Set<UElement>>()
   private val lastDeclarationOf = mutableMapOf<String?, UElement>()
 
-  private val lastPotentialUpdatesOf = mutableMapOf<String, Set<SortedSet<SideEffectChangeCandidate>>>()
+  private val lastPotentialUpdatesOf = mutableMapOf<String, CandidatesTree>()
 
   private val referencesModel: ReferencesModel = ReferencesModel(parent?.referencesModel)
 
@@ -389,32 +386,30 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
 
   fun createChild() = LocalScopeContext(this)
 
-  fun setLastPotentialUpdate(variable: String, updateElement: UElement, operationIndex: Int) {
-    lastPotentialUpdatesOf[variable] = setOf(
-      sortedSetOf(SideEffectChangeCandidate(operationIndex, updateElement, DependencyEvidence(true)))
-    )
+  fun setLastPotentialUpdate(variable: String, updateElement: UElement) {
+    lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(SideEffectChangeCandidate(updateElement, DependencyEvidence(true)))
     for ((reference, evidence) in getAllPotentialEqualReferences(variable)) {
-      val branchesForReference = lastPotentialUpdatesOf.getOrPut(reference) { setOf(sortedSetOf()) }
-      for (branch in branchesForReference) {
-        // add to each branch, because mb it is not equal references and we should skip this element
-        branch.add(SideEffectChangeCandidate(operationIndex, updateElement, evidence))
-      }
+      val newCandidate = SideEffectChangeCandidate(updateElement, evidence)
+      val candidatesForReference = lastPotentialUpdatesOf[reference]
+      lastPotentialUpdatesOf[reference] = candidatesForReference?.addToBegin(newCandidate) ?: CandidatesTree.fromCandidate(newCandidate)
     }
   }
 
-  fun setLastPotentialUpdateMany(variable: String, updateElements: Collection<UElement>, operationIndex: Int) {
+  fun setLastPotentialUpdateAsAssignment(variable: String, updateElements: Collection<UElement>) {
     if (updateElements.size == 1) {
-      setLastPotentialUpdate(variable, updateElements.first(), operationIndex)
+      lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(
+        SideEffectChangeCandidate(updateElements.first(), DependencyEvidence(true))
+      )
     }
     else {
-      lastPotentialUpdatesOf[variable] = updateElements.mapTo(mutableSetOf()) {
-        sortedSetOf(SideEffectChangeCandidate(operationIndex, it, DependencyEvidence(true)))
-      }
+      lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidates(
+        updateElements.mapTo(mutableSetOf()) { SideEffectChangeCandidate(it, DependencyEvidence(true)) }
+      )
     }
   }
 
-  fun getLastPotentialUpdate(variable: String): Set<SortedSet<SideEffectChangeCandidate>> =
-    lastPotentialUpdatesOf[variable] ?: parent?.getLastPotentialUpdate(variable).orEmpty()
+  fun getLastPotentialUpdate(variable: String): CandidatesTree? =
+    lastPotentialUpdatesOf[variable] ?: parent?.getLastPotentialUpdate(variable)
 
   fun setPotentialEquality(assigneeReference: String, targetReference: String, evidence: DependencyEvidence) {
     referencesModel.setPossibleEquality(assigneeReference, targetReference, evidence)
@@ -449,12 +444,14 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
       }
     }
     for (variableName in variablesNames) {
-      mutableSetOf<SortedSet<SideEffectChangeCandidate>>().apply {
+      mutableSetOf<CandidatesTree>().apply {
         for (other in others) {
-          other.getLastPotentialUpdate(variableName).mapTo(this) { TreeSet(it) }
+          other.getLastPotentialUpdate(variableName)?.let {
+            add(it)
+          }
         }
       }.takeUnless { it.isEmpty() }?.let { candidates ->
-          lastPotentialUpdatesOf[variableName] = candidates
+          lastPotentialUpdatesOf[variableName] = CandidatesTree.merge(candidates)
       }
     }
   }

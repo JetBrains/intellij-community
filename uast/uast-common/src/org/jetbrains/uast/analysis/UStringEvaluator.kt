@@ -203,11 +203,9 @@ class UStringEvaluator {
       is Dependency.PotentialSideEffectDependency -> if (!builderEvaluator.allowSideEffects) null
       else {
         dependency.candidates
-          .mapNotNull { branch ->
-            branch.firstOrNull { provePossibleDependency(it.dependencyEvidence, builderEvaluator) }
-              ?.let { candidate ->
-                calculateBuilder(graph, candidate.updateElement, configuration, builderEvaluator)
-              }
+          .selectPotentialCandidates { provePossibleDependency(it, builderEvaluator) }
+          .mapNotNull { candidate ->
+            calculateBuilder(graph, candidate.updateElement, configuration, builderEvaluator)
           }
           .collapse(element)
       }

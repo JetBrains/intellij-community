@@ -101,8 +101,8 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
-  //@Suppress("unused")
-  fun `test StringBuilder change through possible reference`() {
+  @Suppress("unused")
+  fun `ignore test StringBuilder change through possible reference`() {
     doTest(
       """
       class MyFile {
@@ -304,37 +304,99 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
-  fun `test StringBuilder with false deep evidence`() {
-    class CloneAwareStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator<PartiallyKnownString?> by UStringBuilderEvaluator {
-      override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration) -> PartiallyKnownString?>
-        get() = UStringBuilderEvaluator.methodDescriptions + mapOf(
-          PsiJavaPatterns.psiMethod().withName("clone") to { _, partiallyKnownString, _, _ ->
-            partiallyKnownString
-          }
-        )
-    }
-
-    doTest(
-      """
-        class MyFile {
-          String a(boolean param) {
-            StringBuilder sb = new StringBuilder("a");
-            StringBuilder sb1 = sb.clone();
-            StringBuilder sb2 = sb1.append("c");
-            
-            sb2.append("dd");
-            
-            return sb.toStrin<caret>g();
-          }
+  fun `test StringBuilder with false deep evidence`() = doTest(
+    """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          StringBuilder sb1 = sb.clone();
+          StringBuilder sb2 = sb1.append("c");
+          
+          sb2.append("dd");
+          
+          return sb.toStrin<caret>g();
         }
-      """.trimIndent(),
-      "'a'",
-      retrieveElement = UElement?::getUCallExpression,
-      configuration = {
-        UStringEvaluator.Configuration(
-          builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
-        )
       }
-    )
+    """.trimIndent(),
+    "'a'",
+    retrieveElement = UElement?::getUCallExpression,
+    configuration = {
+      UStringEvaluator.Configuration(
+        builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
+      )
+    }
+  )
+
+  fun `test candidates in different scopes`() = doTest(
+    """
+      class MyFile {
+        String falseEvidenceInIf(boolean param, boolean param2) {
+          StringBuilder sb = new StringBuilder("aaa");
+  
+          if (param) {
+            StringBuilder sb1 = sb.clone();
+            if (param2) {
+                sb1.append("c");
+            }
+            sb.append("d");
+          } else {
+            sb.append("e");
+          }
+  
+          return sb.toSt<caret>ring();
+        }
+      }
+    """.trimIndent(),
+    "'aaa'{'d'|'e'}",
+    retrieveElement = UElement?::getUCallExpression,
+    configuration = {
+      UStringEvaluator.Configuration(
+        builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
+      )
+    }
+  )
+
+  fun `test false candidates with many branches`() = doTest(
+    """
+      class MyFile {
+        String falseEvidenceInIf(boolean param, boolean param2, boolean param3) {
+          StringBuilder sb = new StringBuilder("a");
+          StringBuilder sb1 = sb.clone();
+  
+          if (param) {
+            if (param2) {
+              if (param3) {
+                sb.append("1");
+              } else {
+                sb1.append("2");
+              }
+              sb1.append("b");
+            } else {
+              sb.append("c");
+            }
+          } else {
+            sb.append("d");
+          }
+  
+          return sb.toSt<caret>ring();
+        }
+      }
+    """.trimIndent(),
+    "'a'{'1'|'c'|'d'}",
+    retrieveElement = UElement?::getUCallExpression,
+    configuration = {
+      UStringEvaluator.Configuration(
+        builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
+      )
+    }
+  )
+
+  private class CloneAwareStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator<PartiallyKnownString?> by UStringBuilderEvaluator {
+    override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration) -> PartiallyKnownString?>
+      get() = UStringBuilderEvaluator.methodDescriptions + mapOf(
+        PsiJavaPatterns.psiMethod().withName("clone") to { _, partiallyKnownString, _, _ ->
+          partiallyKnownString
+        }
+      )
   }
 }

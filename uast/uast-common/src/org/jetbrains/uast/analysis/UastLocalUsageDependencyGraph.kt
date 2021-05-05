@@ -13,7 +13,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
-import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
@@ -203,28 +202,46 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
     append("\n")
   }
 
-  val sideEffectCandidatesBranchToID = dependencies.values.flatten()
+  val candidatesTreeToID = dependencies.values.flatten()
     .filterIsInstance<Dependency.PotentialSideEffectDependency>()
-    .flatMap { it.candidates }
+    .map { it.candidates }
     .mapIndexed { index, branch ->
       branch to index
     }
     .toMap()
 
-  fun sideEffectBranchName(branch: SortedSet<Dependency.PotentialSideEffectDependency.SideEffectChangeCandidate>) =
-    "SideEffectBranch_${sideEffectCandidatesBranchToID[branch]}"
+  fun candidateTreeName(branch: Dependency.PotentialSideEffectDependency.CandidatesTree) =
+    "CandidatesTree_${candidatesTreeToID[branch]}"
 
-  var candidateIndex = 0
-  for ((branch, id) in sideEffectCandidatesBranchToID) {
-    append("package SideEffectBranch_").append(id).append(" {\n")
-    for (candidate in branch) {
-      indent().append("object Candidate_").append(candidateIndex).append(" {\n")
-      indent().indent().append("priority = ").append(candidate.priority).append("\n")
-      indent().indent().append("evidence = ").append(candidate.dependencyEvidence.evidenceElement?.asRenderString()?.escape()).append("\n")
-      indent().indent().append("strict = ").append(candidate.dependencyEvidence.strict).append("\n")
+  var nodeIndexShift = 0
+  for ((tree, id) in candidatesTreeToID) {
+    append("package CandidatesTree_").append(id).append(" {\n")
+
+    val nodeToID = tree.allNodes().withIndex().map { (index, node) -> node to index + nodeIndexShift }.toMap()
+    nodeIndexShift += nodeToID.size
+
+    fun candidateNodeName(node: Dependency.PotentialSideEffectDependency.CandidatesTree.Node) =
+      "CandidateNode_${nodeToID[node]}"
+
+    for ((node, nodeId) in nodeToID) {
+      indent().append("object CandidateNode_").append(nodeId).append(" {\n")
+      indent().indent().append("type = ").append(node.javaClass.simpleName).append("\n")
+      if (node is Dependency.PotentialSideEffectDependency.CandidatesTree.Node.CandidateNode) {
+        val candidate = node.candidate
+        indent().indent().append("evidence = ").append(candidate.dependencyEvidence.evidenceElement?.asRenderString()?.escape()).append("\n")
+        indent().indent().append("strict = ").append(candidate.dependencyEvidence.strict).append("\n")
+      }
       indent().append("}\n")
-      indent().edge("Candidate_$candidateIndex", ".u.>", elementName(candidate.updateElement))
-      candidateIndex++
+      if (node is Dependency.PotentialSideEffectDependency.CandidatesTree.Node.CandidateNode) {
+        val candidate = node.candidate
+        indent().edge("CandidateNode_$nodeId", ".u.>", elementName(candidate.updateElement))
+      }
+    }
+
+    for (node in nodeToID.keys) {
+      for (anotherNode in node.next) {
+        indent().edge(candidateNodeName(node), "-u->", candidateNodeName(anotherNode))
+      }
     }
     append("}\n")
   }
@@ -239,9 +256,7 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
       is Dependency.ConnectionDependency -> {
       }
       is Dependency.PotentialSideEffectDependency -> {
-        for (branch in dependency.candidates) {
-          edge(dependencyName(dependency), ".u.>", sideEffectBranchName(branch))
-        }
+        edge(dependencyName(dependency), ".u.>", candidateTreeName(dependency.candidates))
       }
     }
   }

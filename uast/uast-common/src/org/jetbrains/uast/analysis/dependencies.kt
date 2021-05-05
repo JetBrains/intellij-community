@@ -4,7 +4,6 @@ package org.jetbrains.uast.analysis
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiType
 import org.jetbrains.uast.*
-import java.util.*
 
 sealed class Dependent : UserDataHolderBase() {
   abstract val element: UElement
@@ -63,17 +62,11 @@ sealed class Dependency : UserDataHolderBase() {
       get() = dependencyFromConnectedGraph.elements
   }
 
-  /**
-   * Represents list of branches, where each branch is sorted by candidates priority
-   */
-  data class PotentialSideEffectDependency(val candidates: Set<SortedSet<SideEffectChangeCandidate>>) : Dependency() {
+  data class PotentialSideEffectDependency(val candidates: CandidatesTree) : Dependency() {
     data class SideEffectChangeCandidate(
-      val priority: Int,
       val updateElement: UElement,
       val dependencyEvidence: DependencyEvidence
-    ) : Comparable<SideEffectChangeCandidate> {
-      override fun compareTo(other: SideEffectChangeCandidate): Int = -priority.compareTo(other.priority)
-    }
+    )
 
     data class DependencyEvidence(
       val strict: Boolean,
@@ -82,8 +75,65 @@ sealed class Dependency : UserDataHolderBase() {
       val requires: DependencyEvidence? = null
     )
 
+    /**
+     * Represents tree of possible update candidates. All branches represents superposition of possible updates, which exist simultaneously,
+     * but real candidates should be chosen via [selectPotentialCandidates] method.
+     */
+    class CandidatesTree private constructor(private val root: Node) {
+      internal sealed class Node {
+        abstract val next: Set<Node>
+
+        class ServiceNode(override val next: Set<Node> = emptySet()) : Node()
+
+        class CandidateNode(val candidate: SideEffectChangeCandidate, override val next: Set<Node> = emptySet()) : Node()
+      }
+
+      /**
+       * Select first proven candidate on each path to leaf.
+       */
+      fun selectPotentialCandidates(evidenceChecker: (DependencyEvidence) -> Boolean): Collection<SideEffectChangeCandidate> {
+        return selectFromBranches(root, evidenceChecker)
+      }
+
+      fun addToBegin(candidate: SideEffectChangeCandidate): CandidatesTree {
+        return CandidatesTree(Node.CandidateNode(candidate, next = setOf(root)))
+      }
+
+      internal fun allNodes(): Sequence<Node> =
+        generateSequence(listOf(root)) { nextLevel -> nextLevel.flatMap { it.next }.takeUnless { it.isEmpty() } }.flatten()
+
+      internal fun allElements(): Sequence<UElement> {
+        return allNodes()
+          .filterIsInstance<Node.CandidateNode>()
+          .map { it.candidate.updateElement }
+      }
+
+      companion object {
+        private fun selectFromBranches(node: Node, evidenceChecker: (DependencyEvidence) -> Boolean): Collection<SideEffectChangeCandidate> {
+          return if (node is Node.CandidateNode && evidenceChecker(node.candidate.dependencyEvidence)) {
+            listOf(node.candidate)
+          }
+          else {
+            node.next.flatMap { selectFromBranches(it, evidenceChecker) }
+          }
+        }
+
+        internal fun fromCandidates(candidates: Iterable<SideEffectChangeCandidate>): CandidatesTree {
+          return CandidatesTree(Node.ServiceNode(candidates.map { Node.CandidateNode(it) }.toSet()))
+        }
+
+        internal fun merge(trees: Iterable<CandidatesTree>): CandidatesTree {
+          return CandidatesTree(Node.ServiceNode(trees.map { it.root }.toSet()))
+        }
+
+        internal fun fromCandidate(candidate: SideEffectChangeCandidate): CandidatesTree {
+          return CandidatesTree(Node.CandidateNode(candidate))
+        }
+      }
+    }
+
     override val elements: Set<UElement>
-      get() = candidates.flatMap { it.map { candidate -> candidate.updateElement } }.toSet()
+      get() = candidates.allElements().toSet()
   }
 
   fun and(other: Dependency): Dependency {
