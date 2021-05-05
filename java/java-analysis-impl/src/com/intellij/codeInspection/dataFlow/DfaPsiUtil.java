@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
@@ -18,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.FinishElementInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -402,11 +402,7 @@ public final class DfaPsiUtil {
             return super.acceptInstruction(instructionState);
           }
         };
-        DfaMemoryStateImpl state = new DfaMemoryStateImpl(factory);
-        DfaVariableValue assertionStatus = AssertionDisabledDescriptor.getAssertionsDisabledVar(factory);
-        if (assertionStatus != null) {
-          state.applyCondition(assertionStatus.eq(DfTypes.FALSE));
-        }
+        DfaMemoryState state = DfaUtil.createStateWithEnabledAssertions(factory);
         final RunnerResult rc = interpreter.interpret(state);
         Set<PsiField> notNullFields = new HashSet<>();
         if (rc == RunnerResult.OK) {
