@@ -619,7 +619,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       return doContainsMapping(key);
     }
     finally {
-      getReadLock().lock();
+      getReadLock().unlock();
     }
   }
 
