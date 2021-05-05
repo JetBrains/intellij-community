@@ -865,10 +865,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean propagateConstant(DfaVariableValue value, DfConstantType<?> constant) {
-    JvmSpecialField field = JvmSpecialField.fromQualifierType(constant);
-    if (field != null) {
-      if (!meetDfType(field.createValue(getFactory(), value), field.fromConstant(constant.getValue()))) return false;
-    }
     DfType dfType = constant.tryNegate();
     if (dfType == null) return true;
     EqClass eqClass = getEqClass(value);
