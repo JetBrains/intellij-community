@@ -1,19 +1,24 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.advanced
 
+ import com.intellij.ide.ui.search.SearchUtil
  import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UiDslConfigurable
-import com.intellij.ui.DocumentAdapter
+ import com.intellij.openapi.util.NlsSafe
+ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
-import javax.swing.JComponent
-import javax.swing.event.DocumentEvent
+ import com.intellij.util.ui.UIUtil
+ import javax.swing.AbstractButton
+ import javax.swing.JComponent
+ import javax.swing.JLabel
+ import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfigurable {
-  private class SettingsRow(val row: Row, val text: String, val groupRow: Row)
+  private class SettingsRow(val row: Row, val component: JComponent, val text: String, val groupRow: Row)
 
   private val settingsRows = mutableListOf<SettingsRow>()
   private val groupRows = mutableListOf<Row>()
@@ -44,29 +49,28 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
         groupRows.add(groupRow)
 
         for (extension in extensions) {
-          val row = row {
-            control(extension).also {
-              extension.description()?.let { description -> it.comment(description) }
-            }
+          row {
+            val (label, component) = control(extension)
+            extension.description()?.let { description -> component.comment(description) }
+            val textComponent = label?.component ?: component.component
+            settingsRows.add(SettingsRow(this, textComponent, extension.title(), groupRow))
           }
-          settingsRows.add(SettingsRow(row, extension.title(), groupRow))
         }
       }
     }
   }
 
-  private fun Row.control(extension: AdvancedSettingBean): CellBuilder<JComponent> {
+  private fun Row.control(extension: AdvancedSettingBean): Pair<CellBuilder<JLabel>?, CellBuilder<JComponent>> {
     return when (extension.type()) {
       AdvancedSettingType.Bool ->
-        checkBox(
+        null to checkBox(
           extension.title(),
           { AdvancedSettings.getBoolean(extension.id) },
           { AdvancedSettings.setBoolean(extension.id, it) }
         )
 
       AdvancedSettingType.Int -> {
-        label(extension.title() + ":")
-        intTextField(
+        label(extension.title() + ":") to intTextField(
           { AdvancedSettings.getInt(extension.id) },
           { AdvancedSettings.setInt(extension.id, it) },
           columns = 10
@@ -74,8 +78,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
       }
 
       AdvancedSettingType.String -> {
-        label(extension.title() + ":")
-        textField(
+        label(extension.title() + ":") to textField(
           { AdvancedSettings.getString(extension.id) },
           { AdvancedSettings.setString(extension.id, it) },
           columns = 20
@@ -94,7 +97,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
             }
           }
         }
-        builder
+        builder to builder
       }
     }
   }
@@ -103,20 +106,22 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
     applyFilter(searchField.text)
   }
 
-  private fun applyFilter(text: String?) {
-    if (text.isNullOrBlank()) {
+  private fun applyFilter(searchText: String?) {
+    if (searchText.isNullOrBlank()) {
       for (groupRow in groupRows) {
         groupRow.visible = true
+        groupRow.subRowsVisible = true
       }
       for (settingsRow in settingsRows) {
         settingsRow.row.visible = true
         settingsRow.row.subRowsVisible = true
+        updateMatchText(settingsRow.component, settingsRow.text, null)
       }
       return
     }
 
     val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
-    val filterWords = searchableOptionsRegistrar.getProcessedWords(text)
+    val filterWords = searchableOptionsRegistrar.getProcessedWords(searchText)
     val visibleGroupRows = mutableSetOf<Row>()
     for (settingsRow in settingsRows) {
       val textWords = searchableOptionsRegistrar.getProcessedWords(settingsRow.text)
@@ -127,6 +132,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
         settingsRow.groupRow.visible = true
         settingsRow.groupRow.subRowsVisible = true
         visibleGroupRows.add(settingsRow.groupRow)
+        updateMatchText(settingsRow.component, settingsRow.text, searchText)
       }
     }
     for (groupRow in groupRows) {
@@ -134,6 +140,16 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
         groupRow.visible = false
         groupRow.subRowsVisible = false
       }
+    }
+  }
+
+  private fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
+    val text = searchText?.let {
+      "<html>" + SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL), UIUtil.getSearchMatchGradientStartColor())
+    } ?: baseText
+    when (component) {
+      is JLabel -> component.text = text
+      is AbstractButton -> component.text = text
     }
   }
 
