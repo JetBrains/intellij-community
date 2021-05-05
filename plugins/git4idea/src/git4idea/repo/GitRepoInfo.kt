@@ -2,10 +2,11 @@
 package git4idea.repo
 
 import com.intellij.dvcs.repo.Repository
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcs.log.Hash
 import git4idea.GitLocalBranch
+import git4idea.GitReference
 import git4idea.GitRemoteBranch
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.NonNls
 
 data class GitRepoInfo(val currentBranch: GitLocalBranch?,
@@ -18,9 +19,8 @@ data class GitRepoInfo(val currentBranch: GitLocalBranch?,
                        val submodules: Collection<GitSubmoduleInfo>,
                        val hooksInfo: GitHooksInfo,
                        val isShallow: Boolean) {
-  val branchTrackInfosMap: MutableMap<String, GitBranchTrackInfo> = CollectionFactory.createFilePathMap<GitBranchTrackInfo>().apply {
-    branchTrackInfos.associateByTo(this) { it.localBranch.name }
-  }
+  val branchTrackInfosMap: Map<String, GitBranchTrackInfo> =
+    branchTrackInfos.associateByTo(Object2ObjectOpenCustomHashMap(GitReference.BRANCH_NAME_HASHING_STRATEGY)) { it.localBranch.name }
 
   val remoteBranches: Collection<GitRemoteBranch>
     @Deprecated("")
