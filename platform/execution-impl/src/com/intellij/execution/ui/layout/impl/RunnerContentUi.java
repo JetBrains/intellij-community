@@ -1748,7 +1748,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     getStateFor(content).setMinimizedInGrid(true);
     myManager.removeContent(content, false);
     saveUiState();
-    updateTabsUI(false);
   }
 
   public void restore(@NotNull Content content) {
@@ -1757,14 +1756,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       getStateFor(content).assignTab(myLayoutSettings.getOrCreateTab(-1));
     }
     else {
-      //noinspection ConstantConditions
-      ((GridCellImpl)findCellFor(content)).restore(content);
+      grid.getCellFor(content).restore(content);
     }
     getStateFor(content).setMinimizedInGrid(false);
     myManager.addContent(content);
     saveUiState();
-    select(content, true);
-    updateTabsUI(false);
   }
 
   @Override
