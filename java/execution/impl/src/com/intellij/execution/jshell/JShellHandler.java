@@ -40,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -323,6 +324,7 @@ public final class JShellHandler {
           request.addClasspathItem(path);
         }
       }
+      UIUtil.invokeLaterIfNeeded(() ->
       myConsoleView.performWhenNoDeferredOutput(() -> {
         try {
           myMessageWriter.send(request);
@@ -330,7 +332,7 @@ public final class JShellHandler {
         catch (IOException e) {
           LOG.info(e);
         }
-      });
+      }));
     }
     final StringBuilder stdOut = new StringBuilder();
     Response response = null;

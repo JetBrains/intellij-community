@@ -116,7 +116,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private MyDiffContainer myJLayeredPane;
   private JPanel myMainPanel;
   private boolean myAllowHeavyFilters;
-  private boolean myCancelStickToEnd;
+  private boolean myCancelStickToEnd; // accessed in EDT only
 
   private final Alarm myFlushAlarm = new Alarm(this);
 
@@ -320,7 +320,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public void requestScrollingToEnd() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (getEditor() == null) {
       return;
     }
@@ -373,17 +372,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @Override
   public void performWhenNoDeferredOutput(@NotNull Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (hasDeferredOutput()) {
-      performLaterWhenNoDeferredOutput(runnable);
-    }
-    else {
+    if (!hasDeferredOutput()) {
       runnable.run();
+      return;
     }
-  }
-
-  private void performLaterWhenNoDeferredOutput(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (mySpareTimeAlarm.isDisposed()) return;
+    if (mySpareTimeAlarm.isDisposed()) {
+      return;
+    }
     if (myJLayeredPane == null) {
       getComponent();
     }
@@ -1290,7 +1285,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Nullable
   protected OccurenceInfo calcNextOccurrence(int delta) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     Editor editor = getEditor();
     if (isDisposed() || editor == null) {
       return null;
