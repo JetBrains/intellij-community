@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.remote.RemoteProcess;
@@ -27,7 +26,6 @@ import java.util.Set;
 public class KillableProcessHandler extends OSProcessHandler implements KillableProcess {
 
   private static final Logger LOG = Logger.getInstance(KillableProcessHandler.class);
-  private static final Key<Boolean> MEDIATOR_KEY = Key.create("KillableProcessHandler.Mediator.Process");
 
   private boolean myShouldKillProcessSoftly = true;
   private final boolean myMediatedProcess;
@@ -35,7 +33,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
-    myMediatedProcess = MEDIATOR_KEY.get(commandLine) == Boolean.TRUE;
+    myMediatedProcess = RunnerMediator.isRunnerCommandInjected(commandLine);
   }
 
   /**
@@ -73,9 +71,8 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   @NotNull
   protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
-    if (withMediator && SystemInfo.isWindows && MEDIATOR_KEY.get(commandLine) == null) {
-      boolean mediatorInjected = RunnerMediator.injectRunnerCommand(commandLine, showConsole);
-      MEDIATOR_KEY.set(commandLine, mediatorInjected);
+    if (withMediator && SystemInfo.isWindows) {
+      RunnerMediator.injectRunnerCommand(commandLine, showConsole);
     }
     return commandLine;
   }

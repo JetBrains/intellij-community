@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.Platform;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +31,7 @@ public class RunnerMediator {
   private static final String RUNNERW = "runnerw.exe";
   private static final String RUNNERW_64 = "runnerw64.exe";
   @NonNls private static final String IDEA_RUNNERW = "IDEA_RUNNERW";
+  private static final Key<Boolean> MEDIATOR_KEY = Key.create("KillableProcessHandler.Mediator.Process");
 
   /**
    * Creates default runner mediator
@@ -94,16 +96,23 @@ public class RunnerMediator {
     return null;
   }
 
-  static boolean injectRunnerCommand(@NotNull GeneralCommandLine commandLine, boolean showConsole) {
+  static void injectRunnerCommand(@NotNull GeneralCommandLine commandLine, boolean showConsole) {
+    if (isRunnerCommandInjected(commandLine)) {
+      return;
+    }
     final String path = getRunnerPath();
     if (path != null) {
       commandLine.getParametersList().addAt(0, commandLine.getExePath());
-      if (showConsole)
+      if (showConsole) {
         commandLine.getParametersList().addAt(0, "/C");
+      }
       commandLine.setExePath(path);
-      return true;
+      MEDIATOR_KEY.set(commandLine, true);
     }
-    return false;
+  }
+
+  static boolean isRunnerCommandInjected(@NotNull GeneralCommandLine commandLine) {
+    return MEDIATOR_KEY.get(commandLine) == Boolean.TRUE;
   }
 
   /**
