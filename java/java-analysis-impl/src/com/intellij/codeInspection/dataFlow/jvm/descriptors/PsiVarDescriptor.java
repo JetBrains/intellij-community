@@ -71,14 +71,12 @@ abstract class PsiVarDescriptor extends JvmVariableDescriptor {
     }
     if (dfType instanceof DfReferenceType) {
       dfType = dfType.meet(Mutability.getMutability(psi).asDfType());
-      dfType = dfType.meet(calcCanBeNull(psi, thisValue, context).asDfType());
+      dfType = dfType.meet(calcCanBeNull(thisValue, context).asDfType());
     }
     return dfType;
   }
 
-  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var,
-                                        @NotNull DfaVariableValue value,
-                                        @Nullable PsiElement context) {
+  @NotNull DfaNullability calcCanBeNull(@NotNull DfaVariableValue value, @Nullable PsiElement context) {
     return DfaNullability.UNKNOWN;
   }
 }

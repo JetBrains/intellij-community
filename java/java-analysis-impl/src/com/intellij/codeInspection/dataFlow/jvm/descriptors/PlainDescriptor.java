@@ -13,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -94,39 +95,52 @@ public final class PlainDescriptor extends PsiVarDescriptor {
   }
 
   @Override
-  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var,
-                                        @NotNull DfaVariableValue value,
-                                        @Nullable PsiElement context) {
-    PsiField field = ObjectUtils.tryCast(var, PsiField.class);
+  @NotNull DfaNullability calcCanBeNull(@NotNull DfaVariableValue value, @Nullable PsiElement context) {
+    PsiField field = ObjectUtils.tryCast(myVariable, PsiField.class);
     if (field != null && hasInitializationHacks(field)) {
       return DfaNullability.FLUSHED;
     }
 
+    DfaVariableValue qualifier = value.getQualifier();
     if (field != null && context != null) {
       PsiMethod method = ObjectUtils.tryCast(context.getParent(), PsiMethod.class);
-      if (method != null && !method.isConstructor() && isEffectivelyUnqualified(value) && isPossiblyNonInitialized(field, method)) {
-        return DfaNullability.NULLABLE;
-      }
-    }
-
-    PsiType type = getType(value.getQualifier());
-    Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, var);
-    if (nullability != Nullability.UNKNOWN) {
-      return DfaNullability.fromNullability(nullability);
-    }
-
-    if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
-      if (iteratedValue != null) {
-        PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-        if (itemType != null) {
-          return DfaNullability.fromNullability(DfaPsiUtil.getElementNullability(itemType, var));
+      if (method != null) {
+        PsiClass methodClass = method.getContainingClass();
+        if (methodClass != null && methodClass.equals(field.getContainingClass())) {
+          VariableDescriptor qualifierDescriptor = qualifier == null ? null : qualifier.getDescriptor();
+          if (qualifierDescriptor instanceof ThisDescriptor && ((ThisDescriptor)qualifierDescriptor).getPsiElement().equals(methodClass)) {
+            if (!method.isConstructor() && isPossiblyNonInitialized(field, method)) {
+              return DfaNullability.NULLABLE;
+            }
+            else if (method.isConstructor()) {
+              return DfaNullability.UNKNOWN;
+            }
+          }
+          if (field.hasModifierProperty(PsiModifier.STATIC) && isPossiblyNonInitialized(field, method)) {
+            return DfaNullability.NULLABLE;
+          }
         }
       }
     }
 
-    if (var instanceof PsiField && FieldChecker.getChecker(context).canTrustFieldInitializer((PsiField)var)) {
-      return DfaNullability.fromNullability(NullabilityUtil.getNullabilityFromFieldInitializers((PsiField)var).second);
+    PsiType type = getType(qualifier);
+    Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, myVariable);
+    if (nullability != Nullability.UNKNOWN) {
+      return DfaNullability.fromNullability(nullability);
+    }
+
+    if (myVariable instanceof PsiParameter && myVariable.getParent() instanceof PsiForeachStatement) {
+      PsiExpression iteratedValue = ((PsiForeachStatement)myVariable.getParent()).getIteratedValue();
+      if (iteratedValue != null) {
+        PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
+        if (itemType != null) {
+          return DfaNullability.fromNullability(DfaPsiUtil.getElementNullability(itemType, myVariable));
+        }
+      }
+    }
+
+    if (field != null && FieldChecker.getChecker(context).canTrustFieldInitializer(field)) {
+      return DfaNullability.fromNullability(NullabilityUtil.getNullabilityFromFieldInitializers(field).second);
     }
     return DfaNullability.UNKNOWN;
   }
@@ -200,11 +214,6 @@ public final class PlainDescriptor extends PsiVarDescriptor {
       }
     }
     return Integer.MAX_VALUE; // accessed after initialization or at unknown moment
-  }
-
-  private static boolean isEffectivelyUnqualified(DfaVariableValue variableValue) {
-    return variableValue.getQualifier() == null ||
-           variableValue.getQualifier().getDescriptor() instanceof ThisDescriptor;
   }
 
   /**

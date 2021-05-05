@@ -46,7 +46,7 @@ public final class ThisDescriptor extends PsiVarDescriptor {
   }
 
   @Override
-  public PsiClass getPsiElement() {
+  public @NotNull PsiClass getPsiElement() {
     return myQualifier;
   }
 
