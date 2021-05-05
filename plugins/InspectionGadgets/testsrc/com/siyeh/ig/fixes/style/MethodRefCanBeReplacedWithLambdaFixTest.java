@@ -157,6 +157,10 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
     doTest();
   }
 
+  public void testLocalClassReference(){
+    doTest();
+  }
+
   public void testEnsureNoConversionIsSuggestedWhenLambdaWithoutCantBeInferredAndFormalParametersAreNotDenotable() {
     assertQuickfixNotAvailable();
   }

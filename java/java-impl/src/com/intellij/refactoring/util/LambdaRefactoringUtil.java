@@ -28,10 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class LambdaRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(LambdaRefactoringUtil.class);
@@ -245,12 +242,15 @@ public final class LambdaRefactoringUtil {
     return buf.toString();
   }
 
-  private static String getMemberQualifier(PsiMember member) {
+  private static @NotNull String getMemberQualifier(PsiMember member) {
+    String qualifiedName = null;
     if (member instanceof PsiClass) {
-      return ((PsiClass)member).getQualifiedName();
-    } else {
-      return member.getName();
+      qualifiedName = ((PsiClass)member).getQualifiedName();
     }
+    if (qualifiedName == null) {
+      qualifiedName = Objects.requireNonNull(member.getName());
+    }
+    return qualifiedName;
   }
 
   private static boolean isQualifierUnnecessary(PsiElement qualifier, PsiClass containingClass) {
