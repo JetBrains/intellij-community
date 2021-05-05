@@ -29,7 +29,6 @@ import com.intellij.vcs.log.util.VcsLogUtil.SHORT_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
-import gnu.trove.TIntHashSet
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.BiConsumer
@@ -213,7 +212,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         if (resolvedRange != null) {
           val commits = getCommitsByRange(dataPack, root, resolvedRange)
           if (commits == null) return RangeFilterResult.Error // error => will be handled by the VCS provider
-          else TroveUtil.addAll(set, commits)
+          else set.addAll(commits)
           rangeResolvedAnywhere = true
         }
       }
@@ -237,7 +236,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return from to to
   }
 
-  private fun getCommitsByRange(dataPack: DataPack, root: VirtualFile, range: Pair<CommitId, CommitId>): TIntHashSet? {
+  private fun getCommitsByRange(dataPack: DataPack, root: VirtualFile, range: Pair<CommitId, CommitId>): IntSet? {
     val fromIndex = storage.getCommitIndex(range.first.hash, root)
     val toIndex = storage.getCommitIndex(range.second.hash, root)
 

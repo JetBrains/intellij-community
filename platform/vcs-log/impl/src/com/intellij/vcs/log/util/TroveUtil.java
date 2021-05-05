@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThrowableConsumer;
 import gnu.trove.*;
+import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
@@ -59,9 +61,14 @@ public final class TroveUtil {
     return result;
   }
 
-  public static boolean intersects(@NotNull TIntHashSet set1, @NotNull TIntHashSet set2) {
+  public static boolean intersects(@NotNull IntSet set1, @NotNull IntSet set2) {
     if (set1.size() <= set2.size()) {
-      return !set1.forEach(value -> !set2.contains(value));
+      IntIterator it = set1.intIterator();
+      while (it.hasNext()) {
+        int value = it.nextInt();
+        if (set2.contains(value)) return true;
+      }
+      return false;
     }
     return intersects(set2, set1);
   }
@@ -175,26 +182,25 @@ public final class TroveUtil {
   }
 
   @NotNull
-  public static <T> TIntHashSet map2IntSet(@NotNull Collection<? extends T> set, @NotNull ToIntFunction<? super T> function) {
-    TIntHashSet result = new TIntHashSet();
-    for (T t : set) {
+  public static <T> IntSet map2IntSet(@NotNull Collection<? extends T> collection, @NotNull ToIntFunction<? super T> function) {
+    IntOpenHashSet result = new IntOpenHashSet();
+    for (T t : collection) {
       result.add(function.applyAsInt(t));
     }
     return result;
   }
 
   @NotNull
-  public static <T> Map<T, TIntHashSet> group(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
-    Map<T, TIntHashSet> result = new HashMap<>();
-    set.forEach(it -> {
+  public static <T> Map<T, IntSet> groupByAsIntSet(@NotNull IntCollection collection, @NotNull IntFunction<? extends T> function) {
+    Map<T, IntSet> result = new HashMap<>();
+    collection.forEach((IntConsumer)(it) -> {
       T key = function.apply(it);
-      TIntHashSet values = result.get(key);
+      IntSet values = result.get(key);
       if (values == null) {
-        values = new TIntHashSet();
+        values = new IntOpenHashSet();
         result.put(key, values);
       }
       values.add(it);
-      return true;
     });
     return result;
   }
