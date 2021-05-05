@@ -27,7 +27,7 @@ class TomlParserDefinition : ParserDefinition {
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile = TomlFile(viewProvider)
 
-    override fun spaceExistanceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements =
+    override fun spaceExistenceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements =
         LanguageUtil.canStickTokensTogetherByLexer(left, right, TomlLexer())
 
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
@@ -49,5 +49,3 @@ class TomlParserDefinition : ParserDefinition {
         val COMMENTS: TokenSet = TokenSet.create(TomlElementTypes.COMMENT)
     }
 }
-
-
