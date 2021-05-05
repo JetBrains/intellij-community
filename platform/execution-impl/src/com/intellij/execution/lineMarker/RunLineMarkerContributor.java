@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.lineMarker;
 
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.testframework.TestIconMapper;
@@ -17,8 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.List;
 import java.util.function.Function;
 
 public abstract class RunLineMarkerContributor {

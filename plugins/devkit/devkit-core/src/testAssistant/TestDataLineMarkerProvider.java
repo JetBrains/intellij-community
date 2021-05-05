@@ -2,7 +2,11 @@
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.DumbService;
@@ -14,23 +18,42 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.*;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 
-public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
+public final class TestDataLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
-  public @Nullable Info getInfo(@NotNull PsiElement element) {
+  public String getName() {
+    return DevKitBundle.message("gutter.name.test.data.line.marker");
+  }
+
+  @Override
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     return null;
   }
 
   @Override
-  public Info getSlowInfo(@NotNull PsiElement e) {
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
+                                     @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    for (PsiElement element : elements) {
+      RunLineMarkerContributor.Info info = getSlowInfo(element);
+      if (info != null) {
+        result.add(RunLineMarkerProvider.createLineMarker(element, AllIcons.Nodes.Folder, Collections.singletonList(info)));
+      }
+    }
+  }
+
+  private static RunLineMarkerContributor.Info getSlowInfo(@NotNull PsiElement e) {
     final Project project = e.getProject();
     if (DumbService.isDumb(project) || !PsiUtil.isPluginProject(project)) {
       return null;
@@ -48,7 +71,15 @@ public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
     }
 
     if (uElement instanceof UMethod) {
-      return new Info(ActionManager.getInstance().getAction("TestData.Navigate"));
+      UElement uParent = uElement.getUastParent();
+      if (uParent != null) {
+        PsiElement psiClass = uParent.getJavaPsi();
+        TestFramework testFramework = psiClass instanceof PsiClass ? TestFrameworks.detectFramework((PsiClass)psiClass) : null;
+        if (testFramework != null && testFramework.isTestMethod(uElement.getJavaPsi())) {
+          return new RunLineMarkerContributor.Info(ActionManager.getInstance().getAction("TestData.Navigate"));
+        }
+      }
+      return null;
     }
 
     final PsiClass psiClass = ((UClass)uElement).getJavaPsi();
@@ -56,7 +87,7 @@ public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
     if (testDataBasePath == null) {
       return null;
     }
-    return new Info(new GotoTestDataAction(testDataBasePath, psiClass.getProject(), AllIcons.Nodes.Folder));
+    return new RunLineMarkerContributor.Info(new GotoTestDataAction(testDataBasePath, psiClass.getProject(), AllIcons.Nodes.Folder));
   }
 
   @Nullable

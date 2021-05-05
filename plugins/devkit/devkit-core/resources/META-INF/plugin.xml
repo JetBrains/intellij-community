@@ -29,8 +29,7 @@
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
     <highlightingPassFactory implementation="org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory"/>
 
-    <runLineMarkerContributor language="UAST" order="last"
-                              implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="UAST" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
