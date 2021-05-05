@@ -20,7 +20,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
 
   public CapturingProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
-    myProcessRunner = new CapturingProcessRunner(this, processOutput -> createProcessAdapter(processOutput));
+    myProcessRunner = new CapturingProcessRunner(this);
   }
 
   /** @deprecated Use {@link #CapturingProcessHandler(Process, Charset, String)} instead */
@@ -36,7 +36,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
    */
   public CapturingProcessHandler(@NotNull Process process, @Nullable Charset charset, /*@NotNull*/ String commandLine) {
     super(process, commandLine, charset);
-    myProcessRunner = new CapturingProcessRunner(this, processOutput -> createProcessAdapter(processOutput));
+    myProcessRunner = new CapturingProcessRunner(this);
   }
 
   protected CapturingProcessAdapter createProcessAdapter(ProcessOutput processOutput) {
