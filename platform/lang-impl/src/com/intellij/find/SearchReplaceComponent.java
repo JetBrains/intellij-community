@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -179,6 +180,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     mySearchActionsToolbar.setForceShowFirstComponent(true);
     JPanel searchPair = new NonOpaquePanel(new BorderLayout());
     searchPair.add(mySearchActionsToolbar, BorderLayout.CENTER);
+    if (Registry.is("ide.new.editor.tabs.ui")) {
+      mySearchActionsToolbar.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+      searchPair.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    }
 
     myReplaceActionsToolbar = createReplaceToolbar1(replaceToolbar1Actions);
     myReplaceActionsToolbar.setBorder(JBUI.Borders.empty());
@@ -215,7 +220,13 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      mySplitter.setOpaque(false);
+      if (Registry.is("ide.new.editor.tabs.ui")) {
+        mySearchActionsToolbar.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        mySplitter.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        mySplitter.setOpaque(true);
+      } else {
+        mySplitter.setOpaque(false);
+      }
       mySplitter.getDivider().setOpaque(false);
       add(mySplitter, BorderLayout.CENTER);
 
