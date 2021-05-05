@@ -1139,6 +1139,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON310);
   }
 
+  public void testPatternMatchingLeadingAndTrailingComments() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }
