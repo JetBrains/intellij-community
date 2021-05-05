@@ -76,7 +76,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
       }
       data.addAll(actionEventData(event));
     }
-    if (project != null) {
+    if (project != null && !project.isDisposed()) {
       data.add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)));
     }
     if (customData != null) {
