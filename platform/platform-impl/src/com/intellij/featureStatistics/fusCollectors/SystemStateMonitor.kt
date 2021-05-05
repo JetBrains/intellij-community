@@ -19,11 +19,12 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfo
 import java.time.OffsetDateTime
+import java.util.Locale
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 internal class SystemStateMonitor : FeatureUsageStateEventTracker {
-  private val OS_GROUP = EventLogGroup("system.os", 6)
+  private val OS_GROUP = EventLogGroup("system.os", 7)
   private val INITIAL_DELAY = 5
   private val PERIOD_DELAY = 24 * 60
 
@@ -59,7 +60,7 @@ internal class SystemStateMonitor : FeatureUsageStateEventTracker {
     /** Record OS name in both old and new format to have a smooth transition on the server **/
     val dataOS = newDataWithOsVersion()
     osEvents.add(newMetric(getOSName(), dataOS))
-    osEvents.add(newMetric("os.name", dataOS.copy().addData("name", getOSName())))
+    osEvents.add(newMetric("os.name", dataOS.copy().addData("name", getOSName()).addData("locale", getOSLocale())))
 
     /** writing current os timezone as os.timezone event_id **/
     val currentZoneOffset = OffsetDateTime.now().offset
@@ -108,5 +109,9 @@ internal class SystemStateMonitor : FeatureUsageStateEventTracker {
       SystemInfo.isSolaris -> "Solaris"
       else -> "Other"
     }
+  }
+
+  private fun getOSLocale(): String {
+    return Locale.getDefault().toLanguageTag()
   }
 }
