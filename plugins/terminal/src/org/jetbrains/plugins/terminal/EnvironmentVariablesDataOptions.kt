@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.XMap
 class EnvironmentVariablesDataOptions : BaseState() {
   @Property(description = "Environment variables")
   @get:XMap(entryTagName = "env", keyAttributeName = "key")
-  val envs by linkedMap<String, String>()
+  val envs by map<String, String>()
 
   var isPassParentEnvs by property(true)
 
