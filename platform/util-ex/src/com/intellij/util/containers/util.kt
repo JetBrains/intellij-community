@@ -184,7 +184,7 @@ inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
       Collections.singleton(transform(first()))
     }
     0 -> emptySet()
-    else -> mapTo(HashSet(size), transform)
+    else -> mapTo(java.util.HashSet(size), transform)
   }
 }
 
