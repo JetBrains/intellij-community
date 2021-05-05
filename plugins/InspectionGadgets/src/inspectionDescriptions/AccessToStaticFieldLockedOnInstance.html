@@ -1,12 +1,24 @@
 <html>
 <body>
-Reports on any access to a non-constant <b>static</b> field which is
-locked on either <b>this</b> or an instance field of <b>this</b>.
-Locking a <b>static</b> field on instance data does not prevent the field from being
-modified by other instances, and thus may result in surprising race conditions.
+Reports on any access to a non-constant static field which is
+locked on either <code>this</code> or an instance field of <code>this</code>.
+<p>
+  Locking a static field on instance data does not prevent the field from being
+  modified by other instances, and thus may result in surprising race conditions.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  static int num;
+  public void foo() {
+      synchronized (this) {
+          System.out.println(num); // warning
+      }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the table below to specify classes to ignore. Any static fields of the types specified will be ignored by this inspection.
+  Use the table below to specify classes to ignore. Any static fields of the types
+  specified will be ignored by this inspection.
 <p>
 
 </body>

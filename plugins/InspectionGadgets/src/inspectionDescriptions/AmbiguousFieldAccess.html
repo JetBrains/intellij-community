@@ -1,39 +1,44 @@
 <html>
 <body>
-Reports ambiguous accesses of a super class field from an inner or anonymous class, where a local variable, parameter or field with identical name is available
-in the surrounding code. In this situation a cursory examination of the code may suggest that an element in the surrounding code is
-accessed, when in actual fact a field from the super class is accessed. To clarify the intent of the code it is recommended to add a
-<code>super</code> qualifier to the field access.
-<p>Example:</p>
-<pre>
-class X {
-  protected String s;
-}
-class Y {
-  void foo(String s) {
-    new X() {
-      {
-        System.out.println(s); // here the field is accessed not the parameter
-      }
-    };
+Reports ambiguous accesses of a super class field from an inner or anonymous class,
+where a local variable, parameter or field with identical name is available in the
+surrounding code.
+<p>
+  In this situation a cursory examination of the code may suggest that an element
+  in the surrounding code is accessed, when in actual fact a field from the super
+  class is accessed. To clarify the intent of the code it is recommended to add a
+  <code>super</code> qualifier to the field access.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class X {
+      protected String s;
   }
-}
-</pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
-class X {
-    protected String s;
-}
-class Y {
-    void foo(String s) {
-        new X() {
-            {
-                System.out.println(super.s);
-            }
-        };
-    }
-}
-</pre>
+  class Y {
+      void foo(String s) {
+          new X() {
+              {
+                  System.out.println(s); // here the field is accessed not the parameter
+              }
+          };
+      }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class X {
+      protected String s;
+  }
+  class Y {
+      void foo(String s) {
+          new X() {
+              {
+                  System.out.println(super.s);
+              }
+          };
+      }
+  }
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>
