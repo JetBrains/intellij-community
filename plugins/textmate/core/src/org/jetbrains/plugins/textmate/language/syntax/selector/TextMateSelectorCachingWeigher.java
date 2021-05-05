@@ -14,7 +14,7 @@ public class TextMateSelectorCachingWeigher implements TextMateSelectorWeigher {
 
   public TextMateSelectorCachingWeigher(@NotNull TextMateSelectorWeigher originalWeigher) {
     myOriginalWeigher = originalWeigher;
-    myCache = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build();
+    myCache = Caffeine.newBuilder().maximumSize(100_000).expireAfterAccess(1, TimeUnit.MINUTES).build();
   }
 
   @Override
