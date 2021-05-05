@@ -2823,7 +2823,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public boolean isSingleRow() {
-    return mySingleRow;
+    return mySingleRow || Registry.is("ide.new.editor.tabs.ui");
   }
 
   public boolean isSideComponentVertical() {
