@@ -2,7 +2,9 @@
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
@@ -15,8 +17,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -167,6 +168,50 @@ public final class WSLUtil {
       LOG.warn(e);
       return ThreeState.UNSURE;
     }
+  }
+
+  /**
+   * @param distribution
+   * @return version if it can be determined or -1 instead
+   */
+  public static int getWslVersion(@NotNull WSLDistribution distribution) {
+    Path wslExe = WSLDistribution.findWslExe();
+    if (wslExe == null) {
+      LOG.warn("wsl.exe is not found");
+      return -1;
+    }
+
+    GeneralCommandLine commandLine = new GeneralCommandLine(wslExe.toString(), "-l", "-v").withCharset(StandardCharsets.UTF_16LE);
+
+    ProcessOutput output;
+    try {
+      output = ExecUtil.execAndGetOutput(commandLine, 10_000);
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Failed to run " + commandLine.getCommandLineString(), e);
+      return -1;
+    }
+    if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
+      String details = StringUtil.join(ContainerUtil.newArrayList(
+        "timeout: " + output.isTimeout(),
+        "exitCode: " + output.getExitCode(),
+        "stdout: " + output.getStdout(),
+        "stderr: " + output.getStderr()
+      ), ", ");
+      LOG.warn("Failed to run " + commandLine.getCommandLineString() + ": " + details);
+      return -1;
+    }
+
+    List<@NlsSafe String> lines = output.getStdoutLines();
+    return lines.stream().skip(1).mapToInt(l -> {
+      List<String> words = StringUtil.split(l, " ");
+
+      int size = words.size();
+      if (size >= 3 && distribution.getMsId().equals(words.get(size - 3))) {
+        return StringUtil.parseInt(words.get(size - 1), -1);
+      }
+      return -1;
+    }).filter(v -> v != -1).findFirst().orElse(-1);
   }
 
   public static @NotNull @NlsSafe String getMsId(@NotNull @NlsSafe String msOrInternalId) {
