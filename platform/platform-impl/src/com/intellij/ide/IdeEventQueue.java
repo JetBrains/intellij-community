@@ -223,7 +223,7 @@ public final class IdeEventQueue extends EventQueue {
       myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
     }
 
-    if (SystemProperties.getBooleanProperty("custom.kfm.typeahead.handler", true)) {
+    if (SystemProperties.getBooleanProperty("custom.kfm.typeahead.handler", false)) {
       ((IdeKeyboardFocusManager)KeyboardFocusManager.getCurrentKeyboardFocusManager()).setTypeaheadHandler(ke -> {
         if (myKeyEventDispatcher.dispatchKeyEvent(ke)) {
           ke.consume();
