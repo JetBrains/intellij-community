@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.CommonBundle;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
@@ -475,9 +476,19 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, packageName);
     PackageWrapper targetPackage = new PackageWrapper(myManager, packageName);
     if (!targetPackage.exists()) {
-      final int ret = Messages.showYesNoDialog(myProject, JavaRefactoringBundle.message("package.does.not.exist", packageName),
-                                               RefactoringBundle.message("move.title"), Messages.getQuestionIcon());
-      if (ret != Messages.YES) return null;
+      if (isPreviewUsages()) {
+        int res = Messages.showOkCancelDialog(myProject, 
+                                              JavaRefactoringBundle.message("package.does.not.exist.preview", packageName),
+                                              RefactoringBundle.message("move.title"), 
+                                              CommonBundle.getOkButtonText(),
+                                              CommonBundle.getCancelButtonText(), null);
+        if (res != Messages.OK) return null;
+      }
+      else {
+        final int ret = Messages.showYesNoDialog(myProject, JavaRefactoringBundle.message("package.does.not.exist", packageName),
+                                                 RefactoringBundle.message("move.title"), Messages.getQuestionIcon());
+        if (ret != Messages.YES) return null;
+      }
     }
 
     return ((DestinationFolderComboBox)myDestinationFolderCB).selectDirectory(targetPackage, mySuggestToMoveToAnotherRoot);
