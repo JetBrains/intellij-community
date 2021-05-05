@@ -33,6 +33,10 @@ class AdvancedSettingBean : PluginAware {
     this.pluginDescriptor = pluginDescriptor
   }
 
+  fun getPluginDescriptor(): PluginDescriptor? {
+    return this.pluginDescriptor
+  }
+
   @Attribute("id")
   @JvmField
   var id: String = ""
@@ -96,6 +100,7 @@ class AdvancedSettingBean : PluginAware {
   }
 
   companion object {
+    @JvmField
     val EP_NAME = ExtensionPointName.create<AdvancedSettingBean>("com.intellij.advancedSetting")
   }
 }
@@ -146,6 +151,10 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponent<Advanc
       }
     }
     return value to option.type()
+  }
+
+  fun isNonDefault(id: String): Boolean {
+    return id in state.settings
   }
 
   @TestOnly
