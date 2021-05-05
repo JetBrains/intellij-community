@@ -8,49 +8,17 @@ import org.jdom.input.SAXBuilder
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
-import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.File
 import java.security.MessageDigest
 
-/**
- * This is used via reflection in [KotlinArtifacts]
- */
-@Suppress("unused")
-private class TestKotlinArtifacts : KotlinArtifacts(run {
-    val outDir = File(PathManager.getHomePath(), "out")
-    val kotlincDistDir = outDir.resolve("kotlinc-dist")
-    val hashFile = outDir.resolve("kotlinc-dist/kotlinc-dist.md5")
-    val kotlincJar = findLibrary(
-        RepoLocation.MAVEN_REPOSITORY,
-        "kotlinc_kotlin_dist.xml",
-        "org.jetbrains.kotlin",
-        "kotlin-dist-for-ide"
-    )
-    val hash = kotlincJar.md5()
-    if (hashFile.exists() && hashFile.readText() == hash && kotlincDistDir.exists()) {
-        return@run kotlincDistDir
-    }
-    val dirWhereToExtractKotlinc = kotlincDistDir.resolve("kotlinc").also {
-        it.deleteRecursively()
-        it.mkdirs()
-    }
-    hashFile.writeText(hash)
-    Decompressor.Zip(kotlincJar).extract(dirWhereToExtractKotlinc)
-    return@run kotlincDistDir
-})
-
-private fun File.md5(): String {
-    return MessageDigest.getInstance("MD5").digest(readBytes()).joinToString("") { "%02x".format(it) }
-}
-
-private fun findLibrary(
+internal fun findLibrary(
         repoLocation: RepoLocation,
         library: String,
         groupId: String,
         artifactId: String,
         kind: LibraryFileKind = LibraryFileKind.CLASSES
 ): File {
-    val librariesDir = File(KotlinRoot.REPO, ".idea/libraries")
+    val librariesDir = File(PathManager.getHomePath(), ".idea/libraries")
     if (!librariesDir.exists()) {
         throw IllegalStateException("Can't find $librariesDir")
     }
@@ -87,33 +55,7 @@ private fun findLibrary(
     return result
 }
 
-object AdditionalKotlinArtifacts {
-    val kotlinStdlibCommon: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common")
-    }
-
-    val kotlinStdlibCommonSources: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common", LibraryFileKind.SOURCES)
-    }
-
-    val jsr305: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "jsr305.xml", "com.google.code.findbugs", "jsr305")
-    }
-
-    val junit3: File by lazy {
-        findLibrary(RepoLocation.MAVEN_REPOSITORY, "JUnit3.xml", "junit", "junit")
-    }
-
-    val parcelizeRuntime: File by lazy {
-        KotlinArtifacts.instance.kotlincDistDir.resolve("kotlinc/lib/parcelize-runtime.jar").also { check(it.exists()) }
-    }
-
-    val androidExtensionsRuntime by lazy {
-        KotlinArtifacts.instance.kotlincDistDir.resolve("kotlinc/lib/android-extensions-runtime.jar").also { check(it.exists()) }
-    }
-}
-
-private enum class RepoLocation {
+internal enum class RepoLocation {
     PROJECT_DIR {
         override fun toString(): String {
             return "\$PROJECT_DIR\$"
@@ -126,12 +68,12 @@ private enum class RepoLocation {
     }
 }
 
-private enum class LibraryFileKind(val classifierSuffix: String, val artifactKind: ArtifactKind) {
+internal enum class LibraryFileKind(val classifierSuffix: String, val artifactKind: ArtifactKind) {
     CLASSES("", ArtifactKind.ARTIFACT), SOURCES("-sources", ArtifactKind.SOURCES);
 }
 
 private val remoteMavenRepositories: List<RemoteRepository> by lazy {
-    val jarRepositoriesFile = File(KotlinRoot.REPO, ".idea/jarRepositories.xml")
+    val jarRepositoriesFile = File(PathManager.getHomePath(), ".idea/jarRepositories.xml")
     val document = jarRepositoriesFile.inputStream().use { stream -> SAXBuilder().build(stream) }
 
     val repositories = mutableListOf<RemoteRepository>()
@@ -154,7 +96,7 @@ private val remoteMavenRepositories: List<RemoteRepository> by lazy {
 
 private fun substitutePathVariables(path: String): String {
     if (path.startsWith("${RepoLocation.PROJECT_DIR}/")) {
-        val projectDir = KotlinRoot.REPO
+        val projectDir = File(PathManager.getHomePath())
         return projectDir.resolve(path.drop(RepoLocation.PROJECT_DIR.toString().length)).absolutePath
     }
     else if (path.startsWith("${RepoLocation.MAVEN_REPOSITORY}/")) {
