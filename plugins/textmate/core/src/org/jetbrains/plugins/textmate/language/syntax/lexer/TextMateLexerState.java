@@ -14,6 +14,7 @@ public class TextMateLexerState {
   @NotNull public final SyntaxNodeDescriptor syntaxRule;
   @NotNull public final MatchData matchData;
   @NotNull public final TextMateWeigh.Priority priorityMatch;
+  public final boolean matchedEOL;
   @Nullable public final StringWithId string;
 
   TextMateLexerState(@NotNull SyntaxNodeDescriptor syntaxRule,
@@ -23,6 +24,7 @@ public class TextMateLexerState {
     this.syntaxRule = syntaxRule;
     this.matchData = matchData;
     this.priorityMatch = priority;
+    this.matchedEOL = matchData.matched() && line != null && matchData.byteOffset().end == line.bytes.length;
     string = matchData.matched() ? line : null;
     hashcode = Objects.hash(syntaxRule, matchData, priorityMatch, stringId());
   }

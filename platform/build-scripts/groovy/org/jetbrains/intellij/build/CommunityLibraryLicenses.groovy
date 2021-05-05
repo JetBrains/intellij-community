@@ -372,7 +372,7 @@ class CommunityLibraryLicenses {
                        url: "https://bitbucket.org/chromiumembedded/java-cef"),
     new LibraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License",
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
-    new LibraryLicense(name: "JCodings", libraryName: "joni", transitiveDependency: true, version: "1.0.44",
+    new LibraryLicense(name: "JCodings", libraryName: "joni", transitiveDependency: true, version: "1.0.55",
                        url: "https://github.com/jruby/jcodings", licenseUrl: "https://github.com/jruby/jcodings/blob/master/pom.xml").mit(),
     new LibraryLicense(name: "JDOM (JetBrains's fork)", libraryName: "JDOM", license: "modified Apache",
                        url: "https://github.com/JetBrains/intellij-deps-jdom",

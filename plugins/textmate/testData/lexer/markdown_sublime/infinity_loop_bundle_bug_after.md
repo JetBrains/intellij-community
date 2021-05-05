@@ -571,14 +571,18 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6541, 6542], { }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6542, 6557], {p = Person.new
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6557, 6590], {#=> #<Person id: nil, name: nil>
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6557, 6560], {#=>}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6560, 6562], { #}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown meta.other.valid-bracket.markdown: [6562, 6563], {<}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6563, 6590], {Person id: nil, name: nil>
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6590, 6591], {>}
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6591, 6592], {>}
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6592, 6593], { }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6593, 6602], {p.errors
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6602, 6609], {#=> {}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6602, 6605], {#=>}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6605, 6609], { {}
 }
 text.html.markdown: [6609, 6610], {
 }
@@ -587,14 +591,16 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6612, 6613], { }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6613, 6622], {p.valid?
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6622, 6632], {#=> false
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6622, 6625], {#=>}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6625, 6632], { false
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6632, 6633], {>}
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6633, 6634], {>}
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6634, 6635], { }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6635, 6644], {p.errors
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6644, 6674], {#=> {name:["can't be blank"]}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6644, 6647], {#=>}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6647, 6674], { {name:["can't be blank"]}
 }
 text.html.markdown: [6674, 6675], {
 }
@@ -603,14 +609,18 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6677, 6678], { }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6678, 6696], {p = Person.create
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6696, 6729], {#=> #<Person id: nil, name: nil>
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6696, 6699], {#=>}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6699, 6701], { #}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown meta.other.valid-bracket.markdown: [6701, 6702], {<}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6702, 6729], {Person id: nil, name: nil>
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6729, 6730], {>}
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6730, 6731], {>}
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6731, 6732], { }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6732, 6741], {p.errors
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6741, 6771], {#=> {name:["can't be blank"]}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6741, 6744], {#=>}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6744, 6771], { {name:["can't be blank"]}
 }
 text.html.markdown: [6771, 6772], {
 }
@@ -619,7 +629,8 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6774, 6775], { }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6775, 6782], {p.save
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6782, 6792], {#=> false
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6782, 6785], {#=>}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6785, 6792], { false
 }
 text.html.markdown: [6792, 6793], {
 }
@@ -628,7 +639,8 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6795, 6796], { }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6796, 6804], {p.save!
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6804, 6876], {#=> ActiveRecord::RecordInvalid: Validation failed: Name can't be blank
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6804, 6807], {#=>}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6807, 6876], { ActiveRecord::RecordInvalid: Validation failed: Name can't be blank
 }
 text.html.markdown: [6876, 6877], {
 }
@@ -637,7 +649,8 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6879, 6880], { }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6880, 6895], {Person.create!
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6895, 6967], {#=> ActiveRecord::RecordInvalid: Validation failed: Name can't be blank
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6895, 6898], {#=>}
+text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6898, 6967], { ActiveRecord::RecordInvalid: Validation failed: Name can't be blank
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6967, 6971], {```
 }

@@ -19,6 +19,7 @@ public class TestUtil {
   @NonNls public static final String CHEF = "chef";
   @NonNls public static final String HTML = "html";
   @NonNls public static final String HTML_VSC = "html_vsc";
+  @NonNls public static final String CSS_VSC = "css_vsc";
   @NonNls public static final String DOCKER = "docker";
   @NonNls public static final String MARKDOWN_SUBLIME = "markdown_sublime";
   @NonNls public static final String MARKDOWN_TEXTMATE = "markdown_textmate";

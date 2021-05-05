@@ -98,6 +98,8 @@ public final class TextMateLexer {
     int startLineOffset = myCurrentOffset;
     int linePosition = 0;
     int lineByteOffset = 0;
+    boolean matchBeginOfString = startLineOffset == 0;
+    int anchorOffset = -1; // makes sense only for a line, cannot be used across lines
     String line = lineCharSequence.length() > 0 && lineCharSequence.charAt(lineCharSequence.length() - 1) == '\n'
                   ? lineCharSequence.toString()
                   : lineCharSequence + "\n";
@@ -105,15 +107,21 @@ public final class TextMateLexer {
     StringWithId string = new StringWithId(line);
     while (true) {
       final TextMateLexerState lexerState = myStates.getHead();
-      if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null
-          && !SyntaxMatchUtils.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, lexerState).matched()) {
-        closeScopeSelector(output, linePosition + startLineOffset);
-        closeScopeSelector(output, linePosition + startLineOffset);
-        myStates = myStates.getTail();
+      if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
+        MatchData matchWhile = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, anchorOffset,
+                                                                 matchBeginOfString, lexerState);
+        if (!matchWhile.matched()) {
+          closeScopeSelector(output, linePosition + startLineOffset);
+          closeScopeSelector(output, linePosition + startLineOffset);
+          myStates = myStates.getTail();
+          // this is happening on line start, none of previous states couldn't be run on this line, so no need to update anchorOffset
+          continue;
+        }
+        else {
+          anchorOffset = matchWhile.byteOffset().end;
+        }
       }
-      else {
-        break;
-      }
+      break;
     }
 
     final Object2IntMap<List<TextMateLexerState>> localStates = new Object2IntOpenHashMap<>();
@@ -121,17 +129,23 @@ public final class TextMateLexer {
       TextMateLexerState lastState = myStates.getHead();
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
 
-      TextMateLexerState currentState =
-        SyntaxMatchUtils.matchFirst(lastRule, string, lineByteOffset, TextMateWeigh.Priority.NORMAL, myCurrentScope);
+      TextMateLexerState currentState = SyntaxMatchUtils.matchFirst(lastRule, string, lineByteOffset, anchorOffset, matchBeginOfString,
+                                                                    TextMateWeigh.Priority.NORMAL, myCurrentScope);
       SyntaxNodeDescriptor currentRule = currentState.syntaxRule;
       MatchData currentMatch = currentState.matchData;
 
       int endPosition;
-      MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, lastState);
+      MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, anchorOffset, matchBeginOfString, lastState);
       if (endMatch.matched() && (!currentMatch.matched() ||
                                  currentMatch.byteOffset().start >= endMatch.byteOffset().start ||
                                  lastState.equals(currentState))) {
+        TextMateLexerState beginMatchState = myStates.getHead();
+        if (beginMatchState.matchData.matched() && !beginMatchState.matchedEOL) {
+          // if begin hasn't matched EOL, it was performed on the same line, we need to use its anchor
+          anchorOffset = beginMatchState.matchData.byteOffset().end;
+        }
         myStates = myStates.getTail();
+
         TextMateRange endRange = endMatch.charRange(line, string.bytes);
         int startPosition = endPosition = endRange.start;
         closeScopeSelector(output, startPosition + startLineOffset); // closing content scope
@@ -148,10 +162,14 @@ public final class TextMateLexer {
         closeScopeSelector(output, endPosition + startLineOffset); // closing basic scope
       }
       else if (currentMatch.matched()) {
+        anchorOffset = currentMatch.byteOffset().end;
+
         TextMateRange currentRange = currentMatch.charRange(line, string.bytes);
         int startPosition = currentRange.start;
         endPosition = currentRange.end;
         if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
+          myStates = myStates.prepend(currentState);
+
           String name = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.NAME), string, currentMatch, '$');
           openScopeSelector(output, name, startPosition + startLineOffset);
 
@@ -160,8 +178,6 @@ public final class TextMateLexer {
 
           String contentName = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.CONTENT_NAME), string, currentMatch, '$');
           openScopeSelector(output, contentName, endPosition + startLineOffset);
-
-          myStates = myStates.prepend(currentState);
         }
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
           String name = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.NAME), string, currentMatch, '$');
