@@ -188,14 +188,6 @@ public interface DfaMemoryState {
   boolean isEphemeral();
 
   /**
-   * Returns true if two given values should be compared by content, rather than by reference.
-   * @param dfaLeft left value
-   * @param dfaRight right value
-   * @return true if two given values should be compared by content, rather than by reference.
-   */
-  boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight);
-
-  /**
    * Widen this memory state on back-branches
    */
   void widen();

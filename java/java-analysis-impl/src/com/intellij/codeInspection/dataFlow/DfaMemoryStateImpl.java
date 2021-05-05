@@ -350,15 +350,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return thisToThat;
   }
 
-  @Override
-  public boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight) {
-    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaWrappedValue) && !(dfaLeft.getDfType() instanceof DfConstantType)) {
-      return false;
-    }
-    return TypeConstraint.fromDfType(getDfType(dfaLeft)).isComparedByEquals() &&
-           TypeConstraint.fromDfType(getDfType(dfaRight)).isComparedByEquals();
-  }
-
   private static boolean isSuperValue(DfaValue superValue, DfaValue subValue) {
     if (DfaTypeValue.isUnknown(superValue) || superValue == subValue) return true;
     if (superValue instanceof DfaTypeValue && subValue instanceof DfaTypeValue) {
@@ -614,7 +605,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       case MOD:
         Long value = rightDfType.getRange().getConstantValue();
         if (value != null) {
-          leftConstraint = leftDfType.meetRange(LongRangeSet.fromRemainder(value, DfLongType.extractRange(targetRange)));
+          leftConstraint = leftDfType.meetRange(LongRangeSet.fromRemainder(value, extractRange(targetRange)));
         }
         break;
     }
@@ -703,6 +694,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
   }
 
+  private static @NotNull LongRangeSet extractRange(@NotNull DfType type) {
+    return type instanceof DfIntegralType ? ((DfIntegralType)type).getRange() : LongRangeSet.all();
+  }
+
   private boolean applyBinOpRelations(DfaValue left, RelationType type, DfaValue right) {
     if (type != RelationType.LT && type != RelationType.GT && type != RelationType.NE && type != RelationType.EQ) return true;
     if (!(left instanceof DfaBinOpValue)) {
@@ -716,13 +711,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (op != LongRangeBinOp.PLUS && op != LongRangeBinOp.MINUS) return true;
     DfaVariableValue leftLeft = binOp.getLeft();
     DfaValue leftRight = binOp.getRight();
-    LongRangeSet leftRange = DfLongType.extractRange(getDfType(leftLeft));
-    LongRangeSet rightRange = DfLongType.extractRange(getDfType(leftRight));
+    LongRangeSet leftRange = extractRange(getDfType(leftLeft));
+    LongRangeSet rightRange = extractRange(getDfType(leftRight));
     boolean isLong = binOp.getDfType() instanceof DfLongType;
     LongRangeSet rightNegated = rightRange.negate(isLong);
     LongRangeSet rightCorrected = op == LongRangeBinOp.MINUS ? rightNegated : rightRange;
 
-    LongRangeSet resultRange = DfLongType.extractRange(getDfType(right));
+    LongRangeSet resultRange = extractRange(getDfType(right));
     RelationType correctedRelation = correctRelation(type, leftRange, rightCorrected, resultRange, isLong);
     if (op == LongRangeBinOp.MINUS) {
       long min = resultRange.min();

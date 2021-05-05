@@ -17,14 +17,17 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaWrappedValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -81,11 +84,27 @@ public class BooleanBinaryInstruction extends ExpressionPushingInstruction imple
     }
   }
 
+  /**
+   * Returns true if two given values should be compared by content, rather than by reference.
+   * @param memState memory state
+   * @param dfaLeft left value
+   * @param dfaRight right value
+   * @return true if two given values should be compared by content, rather than by reference.
+   */
+  private static boolean shouldCompareByEquals(@NotNull DfaMemoryState memState, @NotNull DfaValue dfaLeft, @NotNull DfaValue dfaRight) {
+    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaWrappedValue) && !(dfaLeft.getDfType() instanceof DfConstantType)) {
+      return false;
+    }
+    return TypeConstraint.fromDfType(memState.getDfType(dfaLeft)).isComparedByEquals() &&
+           TypeConstraint.fromDfType(memState.getDfType(dfaRight)).isComparedByEquals();
+
+  }
+  
   private DfaInstructionState @NotNull [] handleRelationBinop(@NotNull DataFlowInterpreter runner,
                                                               @NotNull DfaMemoryState memState,
                                                               @NotNull DfaValue dfaRight,
                                                               @NotNull DfaValue dfaLeft) {
-    if((myOpSign == EQEQ || myOpSign == NE) && memState.shouldCompareByEquals(dfaLeft, dfaRight)) {
+    if((myOpSign == EQEQ || myOpSign == NE) && shouldCompareByEquals(memState, dfaLeft, dfaRight)) {
       ArrayList<DfaInstructionState> states = new ArrayList<>(2);
       DfaMemoryState equality = memState.createCopy();
       DfaCondition condition = dfaLeft.eq(dfaRight);
