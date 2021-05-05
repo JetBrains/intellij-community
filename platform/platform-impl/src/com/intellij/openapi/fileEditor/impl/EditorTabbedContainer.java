@@ -680,6 +680,9 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
           insets.top += layoutInsets.top;
           insets.bottom += layoutInsets.bottom;
 
+          if (Registry.is("ide.new.editor.tabs.ui")) {
+            insets.top -= 7;
+          }
           return super.getPreferredHeight() - insets.top - insets.bottom;
         }
       };
