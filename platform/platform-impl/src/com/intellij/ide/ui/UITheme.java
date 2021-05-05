@@ -6,7 +6,6 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
@@ -441,7 +440,7 @@ public final class UITheme {
     }
 
     if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = IconLoader.findIcon(value, DarculaLaf.class, true, false);
+      Icon icon = IconLoader.findIcon(value, classLoader);
       if (icon != null) {
         return icon;
       }
