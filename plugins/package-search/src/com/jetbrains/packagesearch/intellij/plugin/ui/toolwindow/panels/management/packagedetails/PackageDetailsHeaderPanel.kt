@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
@@ -25,6 +26,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetMo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.AbstractLayoutManager2
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.MenuAction
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.bottom
@@ -50,7 +52,6 @@ import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JTextArea
 import javax.swing.text.JTextComponent
 
 private val minPopupMenuWidth = 175.scaled()
@@ -64,23 +65,14 @@ internal class PackageDetailsHeaderPanel(
         isVisible = false
     }
 
-    private val nameLabel = JTextArea().apply {
+    private val nameLabel = HtmlEditorPane().apply {
         border = emptyBorder()
         font = JBFont.label().asBold().deriveFont(16.scaledFontSize())
-        foreground = PackageSearchUI.getTextColorPrimary()
-        background = PackageSearchUI.UsualBackgroundColor
-        isEditable = false
-        lineWrap = true
-        wrapStyleWord = true
     }
 
-    private val identifierLabel = JTextArea().apply {
+    private val identifierLabel = HtmlEditorPane().apply {
         border = emptyBorder()
         foreground = PackageSearchUI.getTextColorSecondary()
-        background = PackageSearchUI.UsualBackgroundColor
-        isEditable = false
-        lineWrap = true
-        wrapStyleWord = true
     }
 
     private val primaryActionButton = ColorButton().apply {
@@ -162,11 +154,17 @@ internal class PackageDetailsHeaderPanel(
 
         val name = packageModel.remoteInfo?.name
         if (name != null && name != packageModel.identifier) {
-            nameLabel.text = StringUtils.normalizeSpace(packageModel.remoteInfo.name)
-            identifierLabel.text = packageModel.identifier
+            @Suppress("HardCodedStringLiteral") // Name comes from the API
+            nameLabel.setBody(
+                listOf(
+                    HtmlChunk.span("font-size: ${16.scaledFontSize()};")
+                        .addRaw("<b>" + StringUtils.normalizeSpace(packageModel.remoteInfo.name) + "</b>")
+                )
+            )
+            identifierLabel.setBodyText(packageModel.identifier)
             identifierLabel.isVisible = true
         } else {
-            nameLabel.text = packageModel.identifier
+            nameLabel.setBodyText(packageModel.identifier)
             identifierLabel.text = null
             identifierLabel.isVisible = false
         }

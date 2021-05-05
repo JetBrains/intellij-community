@@ -13,7 +13,7 @@ import java.awt.event.KeyEvent
 class PackagesSmartSearchField(
     searchFieldFocus: IVoidSignal,
     lifetime: Lifetime
-) : SearchTextField(false) {
+) : SearchTextField(true, "pkgs.search.history") {
 
     init {
         @Suppress("MagicNumber") // Swing dimension constants
@@ -46,4 +46,9 @@ class PackagesSmartSearchField(
     }
 
     override fun getBackground() = PackageSearchUI.HeaderBackgroundColor
+
+    override fun onFocusLost() {
+        super.onFocusLost()
+        addCurrentTextToHistory()
+    }
 }
