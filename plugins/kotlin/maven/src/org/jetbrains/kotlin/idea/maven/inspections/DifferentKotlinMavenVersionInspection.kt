@@ -16,11 +16,11 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.inspections.PluginVersionDependentInspection
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
-import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
+import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 
 class DifferentKotlinMavenVersionInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java),
     PluginVersionDependentInspection {
-    private val idePluginVersion by lazy { bundledRuntimeVersion() }
+    private val idePluginVersion by lazy { kotlinCompilerVersionShort() }
 
     override var testVersionMessage: String? = null
         @TestOnly set

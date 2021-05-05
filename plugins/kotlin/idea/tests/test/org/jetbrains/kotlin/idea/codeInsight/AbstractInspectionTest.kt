@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
+import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.plugins.groovy.GroovyFileType
@@ -104,7 +104,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
 
                         file.extension == "gradle" -> {
                             val text = FileUtil.loadFile(file, true)
-                            val fileText = text.replace("\$PLUGIN_VERSION", bundledRuntimeVersion())
+                            val fileText = text.replace("\$PLUGIN_VERSION", kotlinCompilerVersionShort())
                             configureByText(file.name, fileText)!!
                         }
 

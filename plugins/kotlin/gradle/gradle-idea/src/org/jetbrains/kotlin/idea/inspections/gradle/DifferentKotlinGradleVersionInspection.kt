@@ -19,7 +19,7 @@ package org.jetbrains.kotlin.idea.inspections.gradle
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.inspections.PluginVersionDependentInspection
-import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
+import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
@@ -66,7 +66,7 @@ class DifferentKotlinGradleVersionInspection : BaseInspection(), PluginVersionDe
     }
 
     private inner class MyVisitor : VersionFinder() {
-        private val idePluginVersion by lazy { bundledRuntimeVersion() }
+        private val idePluginVersion by lazy { kotlinCompilerVersionShort() }
 
         override fun onFound(kotlinPluginVersion: String, kotlinPluginStatement: GrCallExpression) {
             if (kotlinPluginVersion != idePluginVersion) {
