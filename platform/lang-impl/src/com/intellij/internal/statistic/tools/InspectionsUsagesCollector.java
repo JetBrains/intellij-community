@@ -43,8 +43,8 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
   private static final Predicate<ScopeToolState> ENABLED = state -> !state.getTool().isEnabledByDefault() && state.isEnabled();
   private static final Predicate<ScopeToolState> DISABLED = state -> state.getTool().isEnabledByDefault() && !state.isEnabled();
 
-  private static final StringEventField INSPECTION_ID_FIELD = EventFields.StringValidatedByCustomRule("inspection_id", "tool");
-  private static final StringEventField SCOPE_FIELD = EventFields.String("scope", List.of(
+  private static final List<String> ALLOWED_SCOPES = List.of(
+    "custom",
     CustomScopesProviderEx.getAllScope().getScopeId(),
     ProjectFilesScope.INSTANCE.getScopeId(),
     NonProjectFilesScope.NAME,
@@ -53,8 +53,12 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
     OpenFilesScope.INSTANCE.getScopeId(),
     GeneratedFilesScope.INSTANCE.getScopeId(),
     ScratchesNamedScope.ID
-  ));
-  private static final StringEventField SEVERITY_FIELD = EventFields.String("severity", ContainerUtil.map(HighlightSeverity.DEFAULT_SEVERITIES, severity -> severity.getName()));
+  );
+  private static final List<String> ALLOWED_SEVERITIES = ContainerUtil.concat(List.of("custom"), ContainerUtil.map(HighlightSeverity.DEFAULT_SEVERITIES, severity -> severity.getName()));
+
+  private static final StringEventField INSPECTION_ID_FIELD = EventFields.StringValidatedByCustomRule("inspection_id", "tool");
+  private static final StringEventField SCOPE_FIELD = EventFields.String("scope", ALLOWED_SCOPES);
+  private static final StringEventField SEVERITY_FIELD = EventFields.String("severity", ALLOWED_SEVERITIES);
   private static final BooleanEventField ENABLED_FIELD = EventFields.Boolean("enabled");
   private static final BooleanEventField INSPECTION_ENABLED_FIELD = EventFields.Boolean("inspection_enabled");
   private static final PrimitiveEventField<Object> OPTION_VALUE_FIELD = new PrimitiveEventField<>() {
@@ -83,7 +87,7 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
     new StringEventField.ValidatedByAllowedValues("option_type", Arrays.asList("boolean", "integer"));
   private static final StringEventField OPTION_NAME_FIELD = EventFields.StringValidatedByCustomRule("option_name", "plugin_info");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 9);
+  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 10);
 
   private static final VarargEventId NOT_DEFAULT_STATE =
     GROUP.registerVarargEvent("not.default.state",
@@ -107,11 +111,12 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
                         EventFields.Boolean("project_level"),
                         EventFields.Boolean("default"),
                         EventFields.Boolean("locked"));
-  private static final EventId3<String, String, String> NOT_DEFAULT_SCOPE_AND_SEVERITY =
-    GROUP.registerEvent("not.default.scope.and.severity",
-                        INSPECTION_ID_FIELD,
-                        SCOPE_FIELD,
-                        SEVERITY_FIELD);
+  private static final VarargEventId NOT_DEFAULT_SCOPE_AND_SEVERITY =
+    GROUP.registerVarargEvent("not.default.scope.and.severity",
+                              INSPECTION_ID_FIELD,
+                              SCOPE_FIELD,
+                              SEVERITY_FIELD,
+                              EventFields.PluginInfo);
 
   @Override
   public EventLogGroup getGroup() {
@@ -270,10 +275,14 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
 
     if (!(tool.getScopeName().equals(CustomScopesProviderEx.getAllScope().getScopeId()) &&
           tool.getLevel().getSeverity().getName().equals(tool.getTool().getDefaultLevel().getSeverity().getName()))) {
+      final String scopeId = tool.getScopeName();
+      final String severity = tool.getLevel().getName();
+
       return NOT_DEFAULT_SCOPE_AND_SEVERITY.metric(
-        tool.getTool().getID(),
-        tool.getScopeName(),
-        tool.getLevel().toString()
+        INSPECTION_ID_FIELD.with(isSafeToReport(info) ? tool.getTool().getID() : "third.party"),
+        SCOPE_FIELD.with(ALLOWED_SCOPES.contains(scopeId) ? scopeId : "custom"),
+        SEVERITY_FIELD.with(ALLOWED_SEVERITIES.contains(severity) ? severity : "custom"),
+        EventFields.PluginInfo.with(info)
       );
     }
 
