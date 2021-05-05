@@ -5,7 +5,7 @@ import com.intellij.DynamicBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -105,13 +105,14 @@ class AdvancedSettingBean : PluginAware {
   }
 }
 
-@State(name = "AdvancedSettings", storages = [Storage(value = "other.xml")], reportStatistic = false)
-class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponent<AdvancedSettingsImpl.AdvancedSettingsState> {
+@State(name = "AdvancedSettings", storages = [Storage(value = "other.xml")])
+class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState> {
   class AdvancedSettingsState {
     var settings = mutableMapOf<String, String>()
   }
 
   private var state: AdvancedSettingsState = AdvancedSettingsState()
+  private var modificationCount = 0L
 
   override fun getState(): AdvancedSettingsState {
     return state
@@ -121,12 +122,17 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponent<Advanc
     this.state = state
   }
 
+  override fun getStateModificationCount(): Long {
+    return modificationCount
+  }
+
   override fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
     val (oldValue, type) = getSetting(id)
     if (type != expectType) {
       throw IllegalArgumentException("Setting type $type does not match parameter type $expectType")
     }
     state.settings[id] = if (expectType == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString()
+    modificationCount++
     ApplicationManager.getApplication().messageBus.syncPublisher(AdvancedSettingsChangeListener.TOPIC).advancedSettingChanged(id, oldValue, value)
   }
 
