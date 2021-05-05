@@ -48,7 +48,6 @@ class JUnit3LightTestFramework: AbstractLightTestFramework() {
     private fun KtNamedFunction.isTearDownMethod(): Boolean = name == "tearDown"
 
     override fun isAUnitTestMethod(namedDeclaration: KtNamedFunction): Boolean? {
-        if (!namedDeclaration.containingKtFile.hasThisFramework()) return false
         if (namedDeclaration.isSetUpMethod() || namedDeclaration.isTearDownMethod()) return null
         return (namedDeclaration.name?.startsWith("test") == true &&
                 namedDeclaration.getParentOfType<KtClassOrObject>(true)?.let {

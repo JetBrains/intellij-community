@@ -41,7 +41,7 @@ class JUnit4LightTestFramework: AbstractLightTestFramework() {
 
     private fun isJUnit4TestClass(ktClassOrObject: KtClassOrObject): Boolean? {
         getTopmostClass(ktClassOrObject)?.let { topLevelClass ->
-            topLevelClass.annotationEntries.find { it.isFqName(JUnitUtil.RUN_WITH) }?.let { return true }
+            topLevelClass.annotationEntries.find { it.isFqName(JUnitUtil.RUN_WITH) }?.let { return false }
         }
         return ktClassOrObject.declarations.filterIsInstance<KtNamedFunction>().filterNot { isNotACandidateFastCheck(it) }
             .any { isJUnit4TestMethod(it) }.takeIf { it }
