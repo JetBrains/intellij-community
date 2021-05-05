@@ -8,7 +8,8 @@ import java.awt.Insets
 import javax.swing.border.Border
 
 abstract class JBTabsBorder(val tabs: JBTabsImpl) : Border {
-  var thickness: Int = JBUI.scale(1)
+  val thickness: Int
+    get() = if (tabs.tabPainter == null) JBUI.scale(1) else tabs.tabPainter.getTabTheme().topBorderThickness
 
   override fun getBorderInsets(c: Component?): Insets = JBUI.emptyInsets()
 
