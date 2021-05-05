@@ -31,7 +31,7 @@ internal class HighlightingErrorsProvider(override val project: Project) : Probl
 
   override fun problemsAppeared(file: VirtualFile) {
     if (!file.isValid || FileTypeRegistry.getInstance().isFileIgnored(file)) return
-    if (project.isDisposed || !ProjectFileIndex.getInstance(project).isInSourceContent(file)) return
+    if (project.isDisposed || ProjectFileIndex.getInstance(project).isExcluded(file)) return
     synchronized(watchers) {
       watchers.computeIfAbsent(file) { file ->
         HighlightingWatcher(this, ProblemsCollector.getInstance(project), file, ERROR.myVal).also { watcher ->
