@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -448,7 +448,7 @@ public final class ClassUtils {
 
   /**
    * For use with property files.
-   * <code>{0, choice, 1#class|2#interface|3#anonymous class extending|4#annotation type|5#enum|6#record}</code>
+   * <code>{0, choice, 1#class|2#interface|3#anonymous class derived from|4#annotation type|5#enum|6#record}</code>
    */
   public static int getTypeOrdinal(PsiClass aClass) {
     if (aClass instanceof PsiAnonymousClass) return 3;
