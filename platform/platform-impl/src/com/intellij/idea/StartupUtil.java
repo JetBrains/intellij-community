@@ -361,19 +361,8 @@ public final class StartupUtil {
     /* called from IDE init thread */
     default void beforeImportConfigs() {}
 
-    /* called from EDT */
-    default void beforeStartupWizard() {}
-
-    /* called from EDT */
-    default void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {}
-
     /* called from IDE init thread */
     default void importFinished(@NotNull Path newConfigDir) {}
-
-    /* called from EDT */
-    default int customizeIdeWizardDialog(@NotNull List<? extends AbstractCustomizeWizardStep> steps) {
-      return -1;
-    }
   }
 
   private static void runPreAppClass(@NotNull Logger log, @NotNull String[] args) {
