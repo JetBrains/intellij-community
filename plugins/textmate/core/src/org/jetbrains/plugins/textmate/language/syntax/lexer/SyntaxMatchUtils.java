@@ -132,13 +132,13 @@ public final class SyntaxMatchUtils {
     if (match != null) {
       RegexFacade regex = regex(match.toString());
       MatchData matchData = regex.match(string, byteOffset, gosOffset, matchBeginOfString, ourCheckCancelledCallback);
-      return new TextMateLexerState(syntaxNodeDescriptor, matchData, priority, string);
+      return new TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string);
     }
     CharSequence begin = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.BEGIN);
     if (begin != null) {
       RegexFacade regex = regex(begin.toString());
       MatchData matchData = regex.match(string, byteOffset, gosOffset, matchBeginOfString, ourCheckCancelledCallback);
-      return new TextMateLexerState(syntaxNodeDescriptor, matchData, priority, string);
+      return new TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string);
     }
     if (syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.END) != null) {
       return TextMateLexerState.notMatched(syntaxNodeDescriptor);
