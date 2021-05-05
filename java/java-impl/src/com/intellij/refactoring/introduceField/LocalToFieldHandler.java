@@ -333,10 +333,9 @@ public abstract class LocalToFieldHandler {
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurences, myField, mySettings.getFieldVisibility());
         }
-        PsiElement finalAnchorElement;
-        for (finalAnchorElement = myLocal;
-             finalAnchorElement != null && finalAnchorElement.getParent() != myDestinationClass;
-             finalAnchorElement = finalAnchorElement.getParent()) {
+        PsiElement finalAnchorElement = myLocal;
+        while (finalAnchorElement != null && finalAnchorElement.getParent() != myDestinationClass) {
+          finalAnchorElement = finalAnchorElement.getParent();
         }
         PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
         //required to check anchors as rearranger allows any configuration 

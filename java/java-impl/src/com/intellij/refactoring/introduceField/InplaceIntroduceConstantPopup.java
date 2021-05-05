@@ -148,11 +148,9 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
       PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
       myVisibility = getSelectedVisibility();
       PsiUtil.setModifierProperty(field, myVisibility, true);
-      final PsiElement anchorElementIfAll = getAnchorElementIfAll();
-      PsiElement finalAnchorElement;
-      for (finalAnchorElement = anchorElementIfAll;
-           finalAnchorElement != null && finalAnchorElement.getParent() != parentClass;
-           finalAnchorElement = finalAnchorElement.getParent()) {
+      PsiElement finalAnchorElement = getAnchorElementIfAll();
+      while (finalAnchorElement != null && finalAnchorElement.getParent() != parentClass) {
+        finalAnchorElement = finalAnchorElement.getParent();
       }
       PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
       field = BaseExpressionToFieldHandler.ConvertToFieldRunnable
