@@ -72,14 +72,14 @@ sealed class Dependency : UserDataHolderBase() {
       val updateElement: UElement,
       val dependencyEvidence: DependencyEvidence
     ) : Comparable<SideEffectChangeCandidate> {
-      override fun compareTo(other: SideEffectChangeCandidate): Int =
-        -(priority.compareTo(other.priority))
+      override fun compareTo(other: SideEffectChangeCandidate): Int = -priority.compareTo(other.priority)
     }
 
     data class DependencyEvidence(
       val strict: Boolean,
       val evidenceElement: UReferenceExpression? = null,
-      val dependencyWitnessIdentifier: String? = null
+      val dependencyWitnessIdentifier: String? = null,
+      val requires: DependencyEvidence? = null
     )
 
     override val elements: Set<UElement>

@@ -221,6 +221,7 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
       indent().append("object Candidate_").append(candidateIndex).append(" {\n")
       indent().indent().append("priority = ").append(candidate.priority).append("\n")
       indent().indent().append("evidence = ").append(candidate.dependencyEvidence.evidenceElement?.asRenderString()?.escape()).append("\n")
+      indent().indent().append("strict = ").append(candidate.dependencyEvidence.strict).append("\n")
       indent().append("}\n")
       indent().edge("Candidate_$candidateIndex", ".u.>", elementName(candidate.updateElement))
       candidateIndex++

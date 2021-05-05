@@ -204,10 +204,7 @@ class UStringEvaluator {
       else {
         dependency.candidates
           .mapNotNull { branch ->
-            branch.firstOrNull {
-              it.dependencyEvidence.evidenceElement == null || builderEvaluator.isExpressionReturnSelf(
-                it.dependencyEvidence.evidenceElement)
-            }
+            branch.firstOrNull { provePossibleDependency(it.dependencyEvidence, builderEvaluator) }
               ?.let { candidate ->
                 calculateBuilder(graph, candidate.updateElement, configuration, builderEvaluator)
               }
@@ -216,6 +213,14 @@ class UStringEvaluator {
       }
       else -> null
     }
+  }
+
+  private fun provePossibleDependency(
+    evidence: Dependency.PotentialSideEffectDependency.DependencyEvidence,
+    builderEvaluator: BuilderLikeExpressionEvaluator<PartiallyKnownString?>
+  ): Boolean {
+    return (evidence.evidenceElement == null || builderEvaluator.isExpressionReturnSelf(evidence.evidenceElement)) &&
+           (evidence.requires == null || provePossibleDependency(evidence.requires, builderEvaluator))
   }
 
   fun interface DeclarationValueProvider {

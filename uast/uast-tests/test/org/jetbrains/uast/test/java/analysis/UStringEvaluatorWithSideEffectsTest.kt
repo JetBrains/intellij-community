@@ -1,6 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.java.analysis
 
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.PsiJavaPatterns
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.PartiallyKnownString
+import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.analysis.UStringBuilderEvaluator
 import org.jetbrains.uast.analysis.UStringEvaluator
@@ -275,25 +280,59 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
   fun `test StringBuilder update through reference with lower scope`() {
     doTest(
       """
-      class MyFile {
-        String a(boolean param) {
-          StringBuilder sb = new StringBuilder("a");
-          StringBuilder sb1 = sb.append("b");
-          
-          if (param) {
-            StringBuilder sb2 = sb1.append("c");
-            sb2.append("d");
+        class MyFile {
+          String a(boolean param) {
+            StringBuilder sb = new StringBuilder("a");
+            StringBuilder sb1 = sb.append("b");
+            
+            if (param) {
+              StringBuilder sb2 = sb1.append("c");
+              sb2.append("d");
+            }
+            
+            return sb.toStrin<caret>g();
           }
-          
-          return sb.toStrin<caret>g();
         }
-      }
-    """.trimIndent(),
+      """.trimIndent(),
       """'a''b'{|'c''d'}""",
       retrieveElement = UElement?::getUCallExpression,
       configuration = {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
+        )
+      }
+    )
+  }
+
+  fun `test StringBuilder with false deep evidence`() {
+    class CloneAwareStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator<PartiallyKnownString?> by UStringBuilderEvaluator {
+      override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration) -> PartiallyKnownString?>
+        get() = UStringBuilderEvaluator.methodDescriptions + mapOf(
+          PsiJavaPatterns.psiMethod().withName("clone") to { _, partiallyKnownString, _, _ ->
+            partiallyKnownString
+          }
+        )
+    }
+
+    doTest(
+      """
+        class MyFile {
+          String a(boolean param) {
+            StringBuilder sb = new StringBuilder("a");
+            StringBuilder sb1 = sb.clone();
+            StringBuilder sb2 = sb1.append("c");
+            
+            sb2.append("dd");
+            
+            return sb.toStrin<caret>g();
+          }
+        }
+      """.trimIndent(),
+      "'a'",
+      retrieveElement = UElement?::getUCallExpression,
+      configuration = {
+        UStringEvaluator.Configuration(
+          builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
         )
       }
     )

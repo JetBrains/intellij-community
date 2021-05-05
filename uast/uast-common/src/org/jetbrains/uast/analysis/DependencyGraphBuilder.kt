@@ -396,7 +396,7 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
     for ((reference, evidence) in getAllPotentialEqualReferences(variable)) {
       val branchesForReference = lastPotentialUpdatesOf.getOrPut(reference) { setOf(sortedSetOf()) }
       for (branch in branchesForReference) {
-        // add to each branch, because mb it is not equal references and we should scip this element
+        // add to each branch, because mb it is not equal references and we should skip this element
         branch.add(SideEffectChangeCandidate(operationIndex, updateElement, evidence))
       }
     }
@@ -472,32 +472,32 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
   private class ReferencesModel(private val parent: ReferencesModel?) {
     private class Target
 
-    private val referencesTargets = mutableMapOf<String, MutableList<Target>>()
-    private val targetsReferences = mutableMapOf<Target, MutableMap<String, DependencyEvidence>>()
+    private val referencesTargets = mutableMapOf<String, MutableMap<Target, DependencyEvidence>>()
+    private val targetsReferences = mutableMapOf<Target, MutableSet<String>>()
 
-    private fun getAllReferences(target: Target): Map<String, DependencyEvidence> =
+    private fun getAllReferences(target: Target): Set<String> =
       parent?.getAllReferences(target).orEmpty() + targetsReferences[target].orEmpty()
 
-    private fun getAllTargets(reference: String): List<Target> =
-      listOfNotNull(referencesTargets[reference], parent?.getAllTargets(reference)).flatten()
+    private fun getAllTargets(reference: String): Map<Target, DependencyEvidence> =
+      listOfNotNull(referencesTargets[reference], parent?.getAllTargets(reference)).fold(emptyMap()) { result, current ->
+        (result.keys + current.keys).associateWith { (result[it] ?: current[it])!! }
+      }
 
     fun setPossibleEquality(assigneeReference: String, targetReference: String, evidence: DependencyEvidence) {
-      val targets = getAllTargets(targetReference).toMutableList()
+      val targets = getAllTargets(targetReference).toMutableMap()
       if (targets.isEmpty()) {
         val newTarget = Target()
-        referencesTargets[targetReference] = mutableListOf(newTarget)
-        referencesTargets.getOrPut(assigneeReference) { mutableListOf() }.add(newTarget)
+        referencesTargets[targetReference] = mutableMapOf(newTarget to DependencyEvidence(true)) // equal by default
+        referencesTargets.getOrPut(assigneeReference) { mutableMapOf() }[newTarget] = evidence
 
-        targetsReferences[newTarget] = mutableMapOf(
-          assigneeReference to evidence,
-          targetReference to DependencyEvidence(true) // equal by default
-        )
+        targetsReferences[newTarget] = mutableSetOf(assigneeReference, targetReference)
         return
       }
-      referencesTargets[assigneeReference] = targets
+      referencesTargets.getOrPut(assigneeReference) { mutableMapOf() }
+        .putAll(targets.mapValues { (_, evidenceForTarget) -> evidence.copy(requires = evidenceForTarget) })
 
-      for (target in targets) {
-        targetsReferences.getOrPut(target) { mutableMapOf() }[assigneeReference] = evidence
+      for (target in targets.keys) {
+        targetsReferences.getOrPut(target) { mutableSetOf() }.add(assigneeReference)
       }
     }
 
@@ -505,7 +505,7 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
       val targets = referencesTargets[reference] ?: return
       referencesTargets.remove(reference)
 
-      for (target in targets) {
+      for (target in targets.keys) {
         targetsReferences[target]?.let { references ->
           references.remove(reference)
           if (references.isEmpty()) {
@@ -517,9 +517,11 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
 
     fun getAllPossiblyEqualReferences(reference: String): Map<String, DependencyEvidence> =
       getAllTargets(reference)
-        .map { getAllReferences(it) }
-        .fold<Map<String, DependencyEvidence>, Map<String, DependencyEvidence>>(emptyMap()) { result, current -> result + current }
-        .filterKeys { it != reference }
+        .map { (target, evidence) -> getAllReferences(target).map { it to evidence } }
+        .flatten()
+        .filter { it.first != reference }
+        .toMap()
+
   }
 }
 
