@@ -16,14 +16,14 @@ task setupRkernel(dependsOn: configurations.rkernel) {
   def version = file("$output/rkernelVersion.txt")
   outputs.dir(output)
   outputs.file(version)
-  copy {
-    configurations.rkernel.files.each {
-      from tarTree(it)
-    }
-    into("$buildDir/rplugin")
-  }
   doLast {
-    version.write("$rkernelVersion")
+    file("$output/rkernelVersion.txt").write("$rkernelVersion")
+    copy {
+      configurations.rkernel.files.each {
+        from tarTree(it)
+      }
+      into("$buildDir/rplugin")
+    }
   }
 }
 
@@ -31,24 +31,26 @@ task copyFsNotifierForRPlugin {
   setupRkernel.dependsOn(it)
   group = setupRkernel.group
   outputs.file("$buildDir/rplugin/fsnotifier-linux")
-  copy {
-    from "$projectDir/../../bin/linux/"
-    into "$buildDir/rplugin/"
-    include "fsnotifier64"
-    rename "fsnotifier64", "fsnotifier-linux"
-  }
   outputs.file("$buildDir/rplugin/fsnotifier-osx")
-  copy {
-    from "$projectDir/../../bin/mac/"
-    into "$buildDir/rplugin/"
-    include "fsnotifier"
-    rename "fsnotifier", "fsnotifier-osx"
-  }
   outputs.file("$buildDir/rplugin/fsnotifier-win.exe")
-  copy {
-    from "$projectDir/../../bin/win/"
-    into "$buildDir/rplugin/"
-    include "fsnotifier.exe"
-    rename "fsnotifier.exe", "fsnotifier-win.exe"
+  doLast {
+    copy {
+      from "$projectDir/../../bin/linux/"
+      into "$buildDir/rplugin/"
+      include "fsnotifier64"
+      rename "fsnotifier64", "fsnotifier-linux"
+    }
+    copy {
+      from "$projectDir/../../bin/mac/"
+      into "$buildDir/rplugin/"
+      include "fsnotifier"
+      rename "fsnotifier", "fsnotifier-osx"
+    }
+    copy {
+      from "$projectDir/../../bin/win/"
+      into "$buildDir/rplugin/"
+      include "fsnotifier.exe"
+      rename "fsnotifier.exe", "fsnotifier-win.exe"
+    }
   }
 }
