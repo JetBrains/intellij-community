@@ -128,8 +128,12 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
                                    new RenameFix(generateName(block), false, false), fix);
           }
         }
-        else if (mayIgnoreVMException(parameter, block)) {
-          holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.vm.ignored.message"), fix);
+        else {
+          String className = mayIgnoreVMException(parameter, block);
+          if (className != null) {
+            String message = InspectionGadgetsBundle.message("inspection.catch.ignores.exception.vm.ignored.message", className);
+            holder.registerProblem(catchToken, message, fix);
+          }
         }
       }
 
@@ -155,13 +159,13 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
        * @param block     a catch block body
        * @return true if it's determined that catch block may ignore VM exception
        */
-      private boolean mayIgnoreVMException(PsiParameter parameter, PsiCodeBlock block) {
+      private @Nullable String mayIgnoreVMException(PsiParameter parameter, PsiCodeBlock block) {
         PsiType type = parameter.getType();
         if (!type.equalsToText(CommonClassNames.JAVA_LANG_THROWABLE) &&
             !type.equalsToText(CommonClassNames.JAVA_LANG_EXCEPTION) &&
             !type.equalsToText(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) &&
             !type.equalsToText(CommonClassNames.JAVA_LANG_ERROR)) {
-          return false;
+          return null;
         }
         // Let's assume that exception is NPE or SOE with null cause and null message and see what happens during dataflow.
         // Will it produce any side-effect?
@@ -170,18 +174,18 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         Project project = parameter.getProject();
         PsiClassType exception = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(className, parameter.getResolveScope());
         PsiClass exceptionClass = exception.resolve();
-        if (exceptionClass == null) return false;
+        if (exceptionClass == null) return null;
 
         DfaValueFactory factory = new DfaValueFactory(project);
         ControlFlow flow = ControlFlowAnalyzer.buildFlow(block, factory, true);
-        if (flow == null) return false;
+        if (flow == null) return null;
         var interpreter = new CatchDataFlowInterpreter(exception, parameter, flow);
         DfaMemoryState memState = new DfaMemoryStateImpl(factory);
         DfaVariableValue stableExceptionVar = PlainDescriptor.createVariableValue(factory, new LightParameter("tmp", exception, block));
         DfaVariableValue exceptionVar = PlainDescriptor.createVariableValue(factory, parameter);
         memState.applyCondition(exceptionVar.eq(stableExceptionVar));
         memState.applyCondition(exceptionVar.cond(RelationType.IS, DfTypes.typedObject(exception, Nullability.NOT_NULL)));
-        return interpreter.interpret(memState) == RunnerResult.OK;
+        return interpreter.interpret(memState) == RunnerResult.OK ? className : null;
       }
     };
   }
