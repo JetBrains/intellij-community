@@ -24,7 +24,7 @@ class ModulesTreeItemRenderer : ColoredTreeCellRenderer() {
         if (value !is DefaultMutableTreeNode) return
         clear()
 
-        @Suppress("MagicNumber") // Gotta love Swing APIs
+        @Suppress("MagicNumber") // Swing dimension constants
         iconTextGap = 4.scaled()
 
         when (val nodeTarget = value.userObject as TargetModules) {

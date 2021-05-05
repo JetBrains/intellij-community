@@ -9,7 +9,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import javax.swing.BoxLayout
 
-internal class DependencyUsagesPanel : HtmlEditorPane() {
+internal class PackageUsagesPanel : HtmlEditorPane() {
 
     private val linkActionsMap = mutableMapOf<String, Navigatable?>()
 

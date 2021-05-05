@@ -25,7 +25,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 @Suppress("MagicNumber") // Swing dimension constants
-internal class PackagesDetailsInfoPanel : JPanel() {
+internal class PackageDetailsInfoPanel : JPanel() {
 
     @ScaledPixels private val maxRowHeight = 180.scaled()
 
@@ -35,10 +35,9 @@ internal class PackagesDetailsInfoPanel : JPanel() {
             .withHtmlStyling(wordWrap = true)
     }.withMaxHeight(maxRowHeight)
 
-    private val repositoriesLabel = PackageSearchUI.createLabel()
-        .withMaxHeight(maxRowHeight)
+    private val descriptionLabel = PackageSearchUI.createLabel()
 
-    private val authorsLabel = PackageSearchUI.createLabel()
+    private val repositoriesLabel = PackageSearchUI.createLabel()
         .withMaxHeight(maxRowHeight)
 
     private val gitHubPanel = GitHubInfoPanel()
@@ -53,9 +52,11 @@ internal class PackagesDetailsInfoPanel : JPanel() {
 
     private val readmeLinkLabel = PackageSearchUI.createLabelWithLink()
 
-    private val kotlinPlatformsPanel = DependencyKotlinPlatformsPanel()
+    private val kotlinPlatformsPanel = PackageKotlinPlatformsPanel()
 
-    private val usagesPanel = DependencyUsagesPanel()
+    private val usagesPanel = PackageUsagesPanel()
+
+    private val authorsLabel = PackageSearchUI.createLabel()
 
     init {
         layout = MigLayout(
@@ -65,6 +66,7 @@ internal class PackagesDetailsInfoPanel : JPanel() {
                 .gridGap("0", 8.scaledAsString()),
             AC().grow(), // One column only
             AC().fill().gap() // All rows are filling all available width
+                .fill().gap()
                 .fill().gap()
                 .fill().gap()
                 .fill().gap()
@@ -82,7 +84,7 @@ internal class PackagesDetailsInfoPanel : JPanel() {
 
         add(noDataLabel, CC().wrap())
         add(repositoriesLabel, CC().wrap())
-        add(authorsLabel, CC().wrap())
+        add(descriptionLabel, CC().wrap())
         add(gitHubPanel, CC().wrap())
         add(licensesLinkLabel, CC().compensateForHighlightableComponentMarginLeft().wrap())
         add(projectWebsiteLinkLabel, CC().compensateForHighlightableComponentMarginLeft().wrap())
@@ -90,6 +92,7 @@ internal class PackagesDetailsInfoPanel : JPanel() {
         add(readmeLinkLabel, CC().compensateForHighlightableComponentMarginLeft().wrap())
         add(kotlinPlatformsPanel, CC().wrap())
         add(usagesPanel, CC().wrap())
+        add(authorsLabel, CC().wrap())
     }
 
     fun display(
@@ -103,6 +106,8 @@ internal class PackagesDetailsInfoPanel : JPanel() {
         }
 
         noDataLabel.isVisible = false
+
+        displayDescriptionIfAny(packageModel.remoteInfo)
 
         val selectedVersionInfo = packageModel.remoteInfo.versions.find { it.version == selectedVersion.versionName }
         displayRepositoriesIfAny(selectedVersionInfo, allKnownRepositories)
@@ -125,6 +130,7 @@ internal class PackagesDetailsInfoPanel : JPanel() {
     private fun clearPanelContents() {
         noDataLabel.isVisible = true
 
+        descriptionLabel.isVisible = false
         repositoriesLabel.isVisible = false
         authorsLabel.isVisible = false
         gitHubPanel.isVisible = false
@@ -139,6 +145,18 @@ internal class PackagesDetailsInfoPanel : JPanel() {
         usagesPanel.clear()
 
         updateAndRepaint()
+    }
+
+    private fun displayDescriptionIfAny(remoteInfo: ApiStandardPackage) {
+        @Suppress("HardCodedStringLiteral") // Comes from the API, it's @NlsSafe
+        val description = remoteInfo.description
+        if (description.isNullOrBlank() || description == name) {
+            descriptionLabel.isVisible = false
+            return
+        }
+
+        descriptionLabel.isVisible = true
+        descriptionLabel.text = description.withHtmlStyling(wordWrap = true)
     }
 
     private fun displayRepositoriesIfAny(

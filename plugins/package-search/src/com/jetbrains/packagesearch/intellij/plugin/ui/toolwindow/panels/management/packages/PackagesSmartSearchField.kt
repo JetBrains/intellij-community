@@ -10,19 +10,18 @@ import com.jetbrains.rd.util.reactive.IVoidSignal
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 
-@Suppress("MagicNumber") // Swing dimension constants
 class PackagesSmartSearchField(
     searchFieldFocus: IVoidSignal,
     lifetime: Lifetime
 ) : SearchTextField(false) {
 
     init {
+        @Suppress("MagicNumber") // Swing dimension constants
         PackageSearchUI.setHeight(this, height = 25.scaled())
 
-        @Suppress("MagicNumber") // Gotta love Swing APIs
+        @Suppress("MagicNumber") // Swing dimension constants
         minimumSize = Dimension(100.scaled(), minimumSize.height)
 
-        font = PackageSearchUI.BigFont
         textEditor.setTextToTriggerEmptyTextStatus(PackageSearchBundle.message("packagesearch.search.hint"))
         textEditor.emptyText.isShowAboveCenter = true
 

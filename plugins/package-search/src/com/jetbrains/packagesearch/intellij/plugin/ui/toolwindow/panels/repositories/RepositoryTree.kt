@@ -40,7 +40,7 @@ internal class RepositoryTree(
         isRootVisible = false
         showsRootHandles = true
 
-        @Suppress("MagicNumber") // Gotta love Swing APIs
+        @Suppress("MagicNumber") // Swing dimension constants
         border = scaledEmptyBorder(left = 8)
         emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.repositories.no.repositories.configured")
 

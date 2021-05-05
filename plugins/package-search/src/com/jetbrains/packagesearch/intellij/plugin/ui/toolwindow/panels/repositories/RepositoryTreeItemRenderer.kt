@@ -16,7 +16,7 @@ internal class RepositoryTreeItemRenderer : ColoredTreeCellRenderer() {
         val item = value.userObject as? RepositoryTreeItem ?: return
         clear()
 
-        @Suppress("MagicNumber") // Gotta love Swing APIs
+        @Suppress("MagicNumber") // Swing dimension constants
         iconTextGap = 4.scaled()
 
         when (item) {

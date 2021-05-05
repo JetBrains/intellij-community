@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
@@ -13,6 +14,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageS
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import java.awt.CardLayout
+import java.awt.Point
 import javax.swing.JPanel
 import javax.swing.JViewport
 import javax.swing.SwingConstants
@@ -22,13 +24,20 @@ internal class PackageDetailsPanel(
     operationExecutor: OperationExecutor
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.selectedPackage")) {
 
+    private var currentPanelName = EMPTY_STATE
+
     private val cardPanel = PackageSearchUI.cardPanel {
         border = emptyBorder()
     }
 
     private val headerPanel = PackageDetailsHeaderPanel(operationFactory, operationExecutor)
 
-    private val infoPanel = PackagesDetailsInfoPanel()
+    private val infoPanel = PackageDetailsInfoPanel()
+
+    private val scrollPanel = PackageSearchUI.verticalScrollPane(infoPanel).apply {
+        viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE // https://stackoverflow.com/a/54550638/95901
+        UIUtil.putClientProperty(verticalScrollBar, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true)
+    }
 
     private val emptyStatePanel = PackageSearchUI.borderPanel {
         border = scaledEmptyBorder(12)
@@ -47,11 +56,6 @@ internal class PackageDetailsPanel(
         val contentPanel = PackageSearchUI.borderPanel {
             border = emptyBorder()
             addToTop(headerPanel)
-
-            val scrollPanel = PackageSearchUI.verticalScrollPane(infoPanel).apply {
-                viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE // https://stackoverflow.com/a/54550638/95901
-                UIUtil.putClientProperty(verticalScrollBar, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true)
-            }
             addToCenter(scrollPanel)
         }
         cardPanel.add(contentPanel, CONTENT_PANEL)
@@ -71,12 +75,15 @@ internal class PackageDetailsPanel(
             infoPanel.display(selectedPackageModel.packageModel, selectedPackageModel.selectedVersion, allKnownRepositories)
 
             showPanel(CONTENT_PANEL)
+
+            AppUIExecutor.onUiThread().later().execute {
+                scrollPanel.viewport.viewPosition = Point(0, 0)
+            }
         } else {
             showPanel(EMPTY_STATE)
         }
     }
 
-    private var currentPanelName = EMPTY_STATE
     private fun showPanel(panelName: String) {
         if (currentPanelName == panelName) return
         (cardPanel.layout as CardLayout).show(cardPanel, panelName)

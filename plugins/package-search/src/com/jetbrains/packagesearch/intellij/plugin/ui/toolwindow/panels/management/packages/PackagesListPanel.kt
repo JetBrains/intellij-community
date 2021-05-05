@@ -289,7 +289,7 @@ internal class PackagesListPanel(
     }
 
     private fun updateLaf() {
-        @Suppress("MagicNumber") // Gotta love Swing APIs
+        @Suppress("MagicNumber") // Dimension constants
         with(searchTextField) {
             textEditor.putClientProperty("JTextField.Search.Gap", 6.scaled())
             textEditor.putClientProperty("JTextField.Search.GapEmptyText", (-1).scaled())
@@ -304,7 +304,7 @@ internal class PackagesListPanel(
         add(headerPanel)
         add(listPanel)
 
-        @Suppress("MagicNumber") // Swing APIs are <3
+        @Suppress("MagicNumber") // Dimension constants
         minimumSize = Dimension(200.scaled(), minimumSize.height)
     }
 

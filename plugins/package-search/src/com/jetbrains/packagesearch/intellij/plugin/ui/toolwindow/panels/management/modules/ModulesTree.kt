@@ -53,7 +53,7 @@ internal class ModulesTree(
         showsRootHandles = true
         emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.modulesTree.empty")
 
-        @Suppress("MagicNumber") // Gotta love Swing APIs
+        @Suppress("MagicNumber") // Swing dimension constants
         border = scaledEmptyBorder(left = 8)
 
         addTreeSelectionListener { event ->

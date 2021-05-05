@@ -11,7 +11,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import javax.swing.BoxLayout
 
-internal class DependencyKotlinPlatformsPanel : HtmlEditorPane() {
+internal class PackageKotlinPlatformsPanel : HtmlEditorPane() {
 
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
