@@ -459,7 +459,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     ProblemHighlightType type;
     String message;
-    if (ref instanceof PsiMethodCallExpression || ref instanceof PsiPolyadicExpression) {
+    if (ref instanceof PsiMethodCallExpression || ref instanceof PsiPolyadicExpression || ref instanceof PsiTypeCastExpression) {
       type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       message = JavaAnalysisBundle.message("dataflow.message.constant.expression", presentableName);
     }
@@ -491,6 +491,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
           ContainerUtil.and(call.getArgumentList().getExpressions(), PsiUtil::isConstantExpression)) {
         return false;
       }
+    }
+    else if (ref instanceof PsiTypeCastExpression) {
+      PsiExpression operand = ((PsiTypeCastExpression)ref).getOperand();
+      return operand != null && TypeConversionUtil.isFloatOrDoubleType(operand.getType());
     }
     else {
       return false;
@@ -872,7 +876,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   private static boolean shouldBeSuppressed(PsiElement anchor) {
     if (!(anchor instanceof PsiExpression)) return false;
     // Don't report System.out.println(b = false) or doSomething((Type)null)
-    if (anchor instanceof PsiAssignmentExpression || anchor instanceof PsiTypeCastExpression) return true;
+    if (anchor instanceof PsiAssignmentExpression ||
+        (anchor instanceof PsiTypeCastExpression && !(((PsiTypeCastExpression)anchor).getType() instanceof PsiPrimitiveType))) {
+      return true;
+    }
     // For conditional the root cause (constant condition or both branches constant) should be already reported for branches
     if (anchor instanceof PsiConditionalExpression) return true;
     PsiExpression expression = (PsiExpression)anchor;

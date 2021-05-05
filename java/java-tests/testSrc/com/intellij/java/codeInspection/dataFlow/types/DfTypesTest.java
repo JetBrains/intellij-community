@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection.dataFlow.types;
 
-import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.psi.PsiType;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -40,5 +41,22 @@ public class DfTypesTest {
     assertEquals("double < 1.0 || > 2.0 (or NaN)", exclude12.toString());
     DfType exclude03 = exclude02.meet(exclude13);
     assertEquals("double < 0.0 || > 3.0 (or NaN)", exclude03.toString());
+  }
+  
+  @Test
+  public void testDoubleCast() {
+    assertEquals("double >= -9.223372036854776E18 && <= 9.223372036854776E18 not NaN", DfTypes.LONG.castTo(PsiType.DOUBLE).toString());
+    assertEquals("double >= -2.147483648E9 && <= 2.147483647E9 not NaN", DfTypes.INT.castTo(PsiType.DOUBLE).toString());
+    assertEquals("int", DfTypes.DOUBLE.castTo(PsiType.INT).toString());
+    assertEquals("int in {-32768..32767}", DfTypes.DOUBLE.castTo(PsiType.SHORT).toString());
+    assertEquals("2147483647", ((DfDoubleType)DfTypes.doubleRange(1e10, 1e20)).castTo(PsiType.INT).toString());
+    assertEquals("-1", ((DfDoubleType)DfTypes.doubleRange(1e10, 1e20)).castTo(PsiType.SHORT).toString());
+    assertEquals("long", ((DfDoubleType)DfTypes.LONG.castTo(PsiType.DOUBLE)).castTo(PsiType.LONG).toString());
+    DfLongType range = (DfLongType)DfTypes.longRange(LongRangeSet.range(-1_234_567_890_123_456_789L, 1_234_567_890_123_456_789L));
+    assertEquals("long in {-1234567890123456789..1234567890123456789}", range.toString());
+    assertEquals("double >= -1.23456789012345677E18 && <= 1.23456789012345677E18 not NaN", range.castTo(PsiType.DOUBLE).toString());
+    assertEquals("long in {-1234567890123456768..1234567890123456768}", ((DfDoubleType)range.castTo(PsiType.DOUBLE)).castTo(PsiType.LONG).toString());
+    assertEquals("long", ((DfFloatType)DfTypes.LONG.castTo(PsiType.FLOAT)).castTo(PsiType.LONG).toString());
+    assertEquals("long <= 0 or >= 10", ((DfDoubleType)DfTypes.doubleRange(1.0, 10.0).tryNegate()).castTo(PsiType.LONG).toString());
   }
 }

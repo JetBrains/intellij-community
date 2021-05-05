@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -211,6 +214,54 @@ class DfFloatRangeType implements DfFloatType {
   @Override
   public @NotNull DfType tryNegate() {
     return create(myFrom, myTo, !myInvert, !myNaN);
+  }
+
+  @Override
+  public @NotNull DfType castTo(@NotNull PsiPrimitiveType type) {
+    if (type.equals(PsiType.LONG)) {
+      LongRangeSet range;
+      if (!myInvert) {
+        range = LongRangeSet.range((long)myFrom, (long)myTo);
+      } else {
+        range = LongRangeSet.empty();
+        if (myFrom > Float.NEGATIVE_INFINITY) {
+          range = range.unite(LongRangeSet.range(Long.MIN_VALUE, (long)myFrom));
+        }
+        if (myTo < Float.POSITIVE_INFINITY) {
+          range = range.unite(LongRangeSet.range((long)myTo, Long.MAX_VALUE));
+        }
+      }
+      if (myNaN) {
+        range = range.unite(LongRangeSet.point(0));
+      }
+      return DfTypes.longRange(range);
+    }
+    if (type.equals(PsiType.INT) || type.equals(PsiType.SHORT) || type.equals(PsiType.BYTE) || type.equals(PsiType.CHAR)) {
+      LongRangeSet range;
+      if (!myInvert) {
+        range = LongRangeSet.range((int)myFrom, (int)myTo);
+      } else {
+        range = LongRangeSet.empty();
+        if (myFrom > Float.NEGATIVE_INFINITY) {
+          range = range.unite(LongRangeSet.range(Integer.MIN_VALUE, (int)myFrom));
+        }
+        if (myTo < Float.POSITIVE_INFINITY) {
+          range = range.unite(LongRangeSet.range((int)myTo, Integer.MAX_VALUE));
+        }
+      }
+      if (myNaN) {
+        range = range.unite(LongRangeSet.point(0));
+      }
+      DfType result = DfTypes.intRange(range);
+      if (result instanceof DfPrimitiveType && !type.equals(PsiType.INT)) {
+        return ((DfPrimitiveType)result).castTo(type);
+      }
+      return result;
+    }
+    if (type.equals(PsiType.FLOAT)) {
+      return this;
+    }
+    return DfType.TOP;
   }
 
   @Override

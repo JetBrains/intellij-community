@@ -171,7 +171,17 @@ public final class CustomMethodHandlers {
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterTypes("T[]"), CustomMethodHandlers::collectionToArray)
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterCount(0), CustomMethodHandlers::collectionToArray)
     .register(instanceCall(JAVA_LANG_STRING, "toCharArray").parameterCount(0), CustomMethodHandlers::stringToCharArray)
-    .register(exactInstanceCall(JAVA_LANG_OBJECT, "getClass").parameterCount(0), toValue(CustomMethodHandlers::objectGetClass));
+    .register(exactInstanceCall(JAVA_LANG_OBJECT, "getClass").parameterCount(0), toValue(CustomMethodHandlers::objectGetClass))
+    .register(anyOf(staticCall(JAVA_LANG_MATH, "random").parameterCount(0),
+                    instanceCall("java.util.Random", "nextDouble").parameterCount(0),
+                    instanceCall("java.util.SplittableRandom", "nextDouble").parameterCount(0)), 
+              toValue((arguments, state, factory, method) -> doubleRange(0.0, Math.nextDown(1.0))))
+    .register(instanceCall("java.util.Random", "nextFloat").parameterCount(0), 
+              toValue((arguments, state, factory, method) -> floatRange(0.0f, Math.nextDown(1.0f))))
+    .register(staticCall(JAVA_LANG_DOUBLE, "isNaN").parameterTypes("double"),
+              toValue((arguments, state, factory, method) -> isNaN(arguments, state, DOUBLE_NAN)))
+    .register(staticCall(JAVA_LANG_FLOAT, "isNaN").parameterTypes("float"), 
+              toValue((arguments, state, factory, method) -> isNaN(arguments, state, FLOAT_NAN)));
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
@@ -563,5 +573,10 @@ public final class CustomMethodHandlers {
     DfaValue stringLength = STRING_LENGTH.createValue(factory, string);
     return factory.getWrapperFactory().createWrapper(typedObject(PsiType.CHAR.createArrayType(), Nullability.NOT_NULL)
       .meet(LOCAL_OBJECT), ARRAY_LENGTH, stringLength);
+  }
+
+  private static @NotNull DfType isNaN(DfaCallArguments arguments, DfaMemoryState state, DfType nan) {
+    DfType type = state.getDfType(arguments.myArguments[0]);
+    return type.isSuperType(nan) ? type.equals(FLOAT_NAN) ? TRUE : BOOLEAN : FALSE;
   }
 }
