@@ -20,6 +20,13 @@ public class FloatingPointRanges {
       }
     }
   }
+  
+  void testCompareToNaN(double d) {
+    double d1 = Double.NaN;
+    if (<warning descr="Condition 'd == d1' is always 'false'">d == d1</warning>) {}
+    // suppressed: reported by another inspection
+    if (d == Double.NaN) {}
+  }
 
   void testSimpleFloat(float d) {
     if (<warning descr="Condition 'd > Float.POSITIVE_INFINITY' is always 'false'">d > Float.POSITIVE_INFINITY</warning>) {}

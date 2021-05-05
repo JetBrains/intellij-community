@@ -36,6 +36,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.bugs.EqualsWithItselfInspection;
 import com.siyeh.ig.fixes.EqualsToEqualityFix;
+import com.siyeh.ig.numeric.ComparisonToNaNInspection;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -948,9 +949,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     while (expression != null && BoolUtils.isNegation(expression)) {
       expression = BoolUtils.getNegated(expression);
     }
-    PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
-    // Reported by "Equals with itself" inspection; avoid double reporting
-    return call != null && EqualsWithItselfInspection.isEqualsWithItself(call);
+    // Avoid double reporting
+    return expression instanceof PsiMethodCallExpression && EqualsWithItselfInspection.isEqualsWithItself((PsiMethodCallExpression)expression) ||
+           expression instanceof PsiBinaryExpression && ComparisonToNaNInspection.extractNaNFromComparison((PsiBinaryExpression)expression) != null;
   }
 
   private static boolean isDereferenceContext(PsiExpression ref) {
