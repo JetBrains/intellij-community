@@ -170,7 +170,8 @@ public abstract class BundleBase {
     }
 
     if (assertOnMissedKeys) {
-      LOG.error("'" + key + "' is not found in " + bundle);
+      String bundleName = bundle != null ? "(" + bundle.getBaseBundleName() + ")" : "";
+      LOG.error("'" + key + "' is not found in " + bundle + bundleName);
     }
 
     return "!" + key + "!";
