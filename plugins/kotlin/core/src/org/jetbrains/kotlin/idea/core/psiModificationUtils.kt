@@ -386,6 +386,8 @@ fun KtModifierListOwner.canBePrivate(): Boolean {
     return true
 }
 
+fun KtModifierListOwner.canBePublic(): Boolean = !isSealedClassConstructor()
+
 fun KtModifierListOwner.canBeProtected(): Boolean {
     val parent = when (this) {
         is KtPropertyAccessor -> this.property.parent
@@ -404,11 +406,17 @@ fun KtModifierListOwner.canBeInternal(): Boolean {
         val objectDeclaration = getStrictParentOfType<KtObjectDeclaration>() ?: return false
         if (objectDeclaration.isCompanion() && hasJvmFieldAnnotation()) return false
     }
-    return !isAnnotationClassPrimaryConstructor()
+    return !isAnnotationClassPrimaryConstructor() && !isSealedClassConstructor()
 }
 
 private fun KtModifierListOwner.isAnnotationClassPrimaryConstructor(): Boolean =
     this is KtPrimaryConstructor && (this.parent as? KtClass)?.hasModifier(KtTokens.ANNOTATION_KEYWORD) ?: false
+
+private fun KtModifierListOwner.isSealedClassConstructor(): Boolean {
+    if (this !is KtConstructor<*>) return false
+    val ktClass = getContainingClassOrObject().safeAs<KtClass>() ?: return false
+    return ktClass.isSealed()
+}
 
 fun KtClass.isInheritable(): Boolean {
     return when (getModalityFromDescriptor()) {
