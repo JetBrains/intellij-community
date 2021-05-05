@@ -915,45 +915,24 @@ public final class StartupUtil {
     return path;
   }
 
+  /**
+   * Used in Rider
+   */
   private static void runStartupWizard(@NotNull AppStarter appStarter) {
-    String stepsProviderName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardStepsProvider();
-    if (stepsProviderName == null) {
-      return;
-    }
+    String stepsDialogName = ApplicationInfoImpl.getShadowInstance().getWelcomeWizardDialog();
+    if (stepsDialogName == null) return;
 
-    CustomizeIDEWizardStepsProvider provider;
     try {
-      Class<?> providerClass = Class.forName(stepsProviderName);
-      provider = (CustomizeIDEWizardStepsProvider)providerClass.getDeclaredConstructor().newInstance();
+      Class<?> dialogClass = Class.forName(stepsDialogName);
+      Constructor<?> constr = dialogClass.getConstructor(AppStarter.class);
+      ((CommonCustomizeIDEWizardDialog) constr.newInstance(appStarter)).showIfNeeded();
     }
     catch (Throwable e) {
       Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
       return;
     }
 
-    appStarter.beforeStartupWizard();
-
-    String stepsDialogName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardDialog();
-    if (System.getProperty("idea.temp.change.ide.wizard") != null) { // temporary until 211 release
-      stepsDialogName = System.getProperty("idea.temp.change.ide.wizard");
-    }
-    if (stepsDialogName != null) {
-      try {
-        Class<?> dialogClass = Class.forName(stepsDialogName);
-        Constructor<?> constr = dialogClass.getConstructor(AppStarter.class);
-        ((CommonCustomizeIDEWizardDialog) constr.newInstance(appStarter)).showIfNeeded();
-      }
-      catch (Throwable e) {
-        Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
-        return;
-      }
-    }
-    else if (Boolean.parseBoolean(System.getProperty("idea.show.customize.ide.wizard"))) {
-      new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
-    }
-
     PluginManagerCore.invalidatePlugins();
-    appStarter.startupWizardFinished(provider);
   }
 
   // must be called from EDT

@@ -9,8 +9,6 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.runChild
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
-import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
-import com.intellij.ide.customize.CustomizeIDEWizardDialog
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
@@ -23,7 +21,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -114,7 +111,7 @@ open class IdeStarter : ApplicationStarter {
     }
 
     if (JetBrainsProtocolHandler.appStartedWithCommand()) {
-      val needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject = false)
+      val needToOpenProject = showWelcomeFrame(lifecyclePublisher, willOpenProject = false)
       frameInitActivity.end()
       LifecycleUsageTriggerCollector.onIdeStart()
 
@@ -131,7 +128,7 @@ open class IdeStarter : ApplicationStarter {
       val recentProjectManager = RecentProjectsManager.getInstance()
       val willReopenRecentProjectOnStart = recentProjectManager.willReopenProjectOnStart()
       val willOpenProject = willReopenRecentProjectOnStart || !args.isEmpty() || !filesToLoad.isEmpty()
-      val needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
+      val needToOpenProject = showWelcomeFrame(lifecyclePublisher, willOpenProject)
       frameInitActivity.end()
       ForkJoinPool.commonPool().execute {
         LifecycleUsageTriggerCollector.onIdeStart()
@@ -163,47 +160,14 @@ open class IdeStarter : ApplicationStarter {
     return CompletableFuture.completedFuture(null)
   }
 
-  private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
+  private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
     val doShowWelcomeFrame = if (willOpenProject) null else WelcomeFrame.prepareToShow()
-    // do not show Customize IDE Wizard [IDEA-249516]
-    val wizardStepProvider = wizardStepProvider
-    if (wizardStepProvider == null || System.getProperty("idea.show.customize.ide.wizard")?.toBoolean() != true) {
-      if (doShowWelcomeFrame == null) {
-        return true
-      }
 
-      ApplicationManager.getApplication().invokeLater {
-        doShowWelcomeFrame.run()
-        lifecyclePublisher.welcomeScreenDisplayed()
-      }
-      return false
-    }
+    if (doShowWelcomeFrame == null) return true
 
-    // temporary until 211 release
-    val stepDialogName = System.getProperty("idea.temp.change.ide.wizard")
-                         ?: ApplicationInfoImpl.getShadowInstance().customizeIDEWizardDialog
     ApplicationManager.getApplication().invokeLater {
-      val wizardDialog: CommonCustomizeIDEWizardDialog?
-      if (stepDialogName.isNullOrBlank()) {
-        wizardDialog = CustomizeIDEWizardDialog(wizardStepProvider, null, false, true)
-      }
-      else {
-        wizardDialog = try {
-          Class.forName(stepDialogName).getConstructor(StartupUtil.AppStarter::class.java)
-            .newInstance(null) as CommonCustomizeIDEWizardDialog
-        }
-        catch (e: Throwable) {
-          Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e)
-          null
-        }
-      }
-
-      wizardDialog?.showIfNeeded()
-
-      if (doShowWelcomeFrame != null) {
-        doShowWelcomeFrame.run()
-        lifecyclePublisher.welcomeScreenDisplayed()
-      }
+      doShowWelcomeFrame.run()
+      lifecyclePublisher.welcomeScreenDisplayed()
     }
     return false
   }
