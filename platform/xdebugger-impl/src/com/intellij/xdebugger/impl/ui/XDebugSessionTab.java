@@ -375,21 +375,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XDebugSessionTab tab = session != null ? session.getSessionTab() : null;
     if (tab != null) {
       tab.toFront(false, null);
-      // restore watches tab if minimized
-      tab.restoreContent(viewId);
-
-      RunnerLayoutUi layoutUi = tab.getUi();
-      if (layoutUi instanceof DataProvider) {
-        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)layoutUi));
-        if (ui != null) {
-          Content content = ui.findContent(viewId);
-
-          // if the view is not visible (e.g. Console tab is selected, while Debugger tab is not)
-          // make sure we make it visible to the user
-          if (content != null) {
-            ui.select(content, false);
-          }
-        }
+      Content content = tab.findOrRestoreContentIfNeeded(viewId);
+      // make sure we make it visible to the user
+      if (content != null) {
+        tab.myUi.selectAndFocus(content, false, false);
       }
     }
   }
@@ -445,8 +434,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private void removeContent(String contentId) {
-    restoreContent(contentId); //findContent returns null if content is minimized
-    myUi.removeContent(myUi.findContent(contentId), true);
+    myUi.removeContent(findOrRestoreContentIfNeeded(contentId), true);
     unregisterView(contentId);
   }
 
@@ -457,12 +445,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  protected void restoreContent(String contentId) {
-    if (myUi instanceof DataProvider) {
-      RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)myUi));
-      if (ui != null) {
-        ui.restoreContent(contentId);
-      }
+  public @Nullable Content findOrRestoreContentIfNeeded(@NotNull String contentId) {
+    RunnerContentUi contentUi = myUi instanceof DataProvider ? RunnerContentUi.KEY.getData(((DataProvider)myUi)) : null;
+    if (contentUi != null) {
+      return contentUi.findOrRestoreContentIfNeeded(contentId);
     }
+    return myUi.findContent(contentId);
   }
 }
