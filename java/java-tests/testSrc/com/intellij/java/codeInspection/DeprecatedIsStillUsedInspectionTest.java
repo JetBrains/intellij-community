@@ -20,6 +20,8 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.DeprecatedIsStillUsedInspection;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class DeprecatedIsStillUsedInspectionTest extends LightJava9ModulesCodeInsightFixtureTestCase {
   @Override
@@ -38,20 +40,21 @@ public class DeprecatedIsStillUsedInspectionTest extends LightJava9ModulesCodeIn
   }
 
   public void testJavaModuleIsDeprecated() {
-    moduleInfo("module first {requires second;}", ModuleDescriptor.MAIN);
-    moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
-    testJavaModule("@Deprecated module <warning descr=\"Deprecated member 'second' is still used\">second</warning> {}");
+    VirtualFile firstModuleInfo = moduleInfo("module first {requires second;}", ModuleDescriptor.MAIN);
+    VirtualFile secondModuleInfo = moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
+    testJavaModule("@Deprecated module <warning descr=\"Deprecated member 'second' is still used\">second</warning> {}",
+                   firstModuleInfo, secondModuleInfo);
   }
 
   public void testJavaModuleDependantIsDeprecatedToo() {
-    moduleInfo("@Deprecated module first {requires second;}", ModuleDescriptor.MAIN);
-    moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
-    testJavaModule("@Deprecated module second {}");
+    VirtualFile firstModuleInfo = moduleInfo("@Deprecated module first {requires second;}", ModuleDescriptor.MAIN);
+    VirtualFile secondModuleInfo = moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
+    testJavaModule("@Deprecated module second {}", firstModuleInfo, secondModuleInfo);
   }
 
-  private void testJavaModule(String expectedResult) {
-    myFixture.addClass("package java.lang; public @interface Deprecated {}");
-    myFixture.allowTreeAccessForAllFiles();
+  private void testJavaModule(@NotNull String expectedResult, @NotNull VirtualFile firstModuleInfo, @NotNull VirtualFile secondModuleInfo) {
+    myFixture.allowTreeAccessForFile(firstModuleInfo);
+    myFixture.allowTreeAccessForFile(secondModuleInfo);
     myFixture.configureFromExistingVirtualFile(addFile("module-info.java", expectedResult, ModuleDescriptor.M2));
     myFixture.checkHighlighting();
   }
