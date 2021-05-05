@@ -13,9 +13,10 @@ import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfigurable {
-  private class SettingsRow(val row: Row, val text: String)
+  private class SettingsRow(val row: Row, val text: String, val groupRow: Row)
 
   private val settingsRows = mutableListOf<SettingsRow>()
+  private val groupRows = mutableListOf<Row>()
 
   private val searchAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
 
@@ -39,13 +40,16 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
     for ((group, extensions) in groupedExtensions) {
       titledRow(group) {
+        val groupRow = this
+        groupRows.add(groupRow)
+
         for (extension in extensions) {
           val row = row {
             control(extension).also {
               extension.description()?.let { description -> it.comment(description) }
             }
           }
-          settingsRows.add(SettingsRow(row, extension.title()))
+          settingsRows.add(SettingsRow(row, extension.title(), groupRow))
         }
       }
     }
@@ -101,6 +105,9 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
   private fun applyFilter(text: String?) {
     if (text.isNullOrBlank()) {
+      for (groupRow in groupRows) {
+        groupRow.visible = true
+      }
       for (settingsRow in settingsRows) {
         settingsRow.row.visible = true
         settingsRow.row.subRowsVisible = true
@@ -110,11 +117,23 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
     val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     val filterWords = searchableOptionsRegistrar.getProcessedWords(text)
+    val visibleGroupRows = mutableSetOf<Row>()
     for (settingsRow in settingsRows) {
       val textWords = searchableOptionsRegistrar.getProcessedWords(settingsRow.text)
       val matches = textWords.containsAll(filterWords)
       settingsRow.row.visible = matches
       settingsRow.row.subRowsVisible = matches
+      if (matches) {
+        settingsRow.groupRow.visible = true
+        settingsRow.groupRow.subRowsVisible = true
+        visibleGroupRows.add(settingsRow.groupRow)
+      }
+    }
+    for (groupRow in groupRows) {
+      if (groupRow !in visibleGroupRows) {
+        groupRow.visible = false
+        groupRow.subRowsVisible = false
+      }
     }
   }
 
