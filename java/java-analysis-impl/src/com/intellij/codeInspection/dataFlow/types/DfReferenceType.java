@@ -6,9 +6,12 @@ import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Type that corresponds to JVM reference type; represents subset of possible reference values (may include null)
@@ -156,6 +159,30 @@ public interface DfReferenceType extends DfType {
       newType = newType.dropMutability();
     }
     return newType;
+  }
+
+  @Override
+  @NotNull
+  default DfType getBasicType() {
+    return dropSpecialField();
+  }
+
+  @Override
+  default @NotNull List<@NotNull VariableDescriptor> getDerivedVariables() {
+    JvmSpecialField field = JvmSpecialField.fromQualifierType(this);
+    if (field != null) {
+      return List.of(field);
+    }
+    return List.of();
+  }
+
+  @Override
+  @NotNull
+  default DfType getDerivedValue(@NotNull VariableDescriptor derivedDescriptor) {
+    if (getSpecialField() == derivedDescriptor) {
+      return getSpecialFieldType();
+    }
+    return DfType.TOP;
   }
 
   @Override

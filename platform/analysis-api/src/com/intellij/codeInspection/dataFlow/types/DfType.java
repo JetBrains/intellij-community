@@ -2,11 +2,13 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -278,6 +280,31 @@ public interface DfType {
    */
   default @NotNull DfType correctForRelationResult(@NotNull RelationType relation, boolean result) {
     return this;
+  }
+
+  /**
+   * @return basic type for this type. Some types could represent several derived variables. For example,
+   * the type "string of length 3" could be decomposed to basic type "string" and derived variable "length"
+   * with value "3".
+   */
+  default @NotNull DfType getBasicType() {
+    return this;
+  }
+
+  /**
+   * @return list of possible derived variables that could be recorded inside this type.
+   * E.g. the type "string of length 3" records the derived variable "string length" inside.
+   */
+  default @NotNull List<@NotNull VariableDescriptor> getDerivedVariables() {
+    return List.of();
+  }
+
+  /**
+   * @param derivedDescriptor descriptor returned from {@link #getDerivedVariables()}
+   * @return value for derived variable, if known
+   */
+  default @NotNull DfType getDerivedValue(@NotNull VariableDescriptor derivedDescriptor) {
+    return DfType.TOP;
   }
 
   /**

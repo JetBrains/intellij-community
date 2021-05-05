@@ -13,7 +13,6 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -223,9 +222,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     recordVariableType(var, dfType);
     applyBinOpRelations(value, RelationType.EQ, var);
     applyRelation(var, value, false);
-    Couple<DfaValue> specialFields = getSpecialEquivalencePair(var, value);
-    if (specialFields != null && specialFields.getFirst() instanceof DfaVariableValue) {
-      setVarValue((DfaVariableValue)specialFields.getFirst(), specialFields.getSecond());
+    if (!(value instanceof DfaVariableValue)) {
+      for (VariableDescriptor desc : dfType.getDerivedVariables()) {
+        DfaValue derivedVar = desc.createValue(getFactory(), var);
+        DfaValue derivedValue = desc.createValue(getFactory(), value);
+        if (derivedVar instanceof DfaVariableValue) {
+          setVarValue((DfaVariableValue)derivedVar, derivedValue);
+        }
+      }
     }
   }
 
@@ -567,6 +571,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (result.equals(type)) return true;
       if (result == DfType.BOTTOM) return false;
       recordVariableType(var, result);
+      for (VariableDescriptor desc : result.getDerivedVariables()) {
+        if (!meetDfType(desc.createValue(getFactory(), var), result.getDerivedValue(desc))) {
+          return false;
+        }
+      }
       TypeConstraint newConstraint = TypeConstraint.fromDfType(result);
       if (newConstraint.isComparedByEquals() && !newConstraint.equals(TypeConstraint.fromDfType(type))) {
         // Type is narrowed to java.lang.String, java.lang.Integer, etc.: we consider String & boxed types
@@ -824,7 +833,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    if (type == RelationType.EQ && !applySpecialFieldEquivalence(dfaLeft, dfaRight)) return false;
+    if (type == RelationType.EQ && !applyDerivedVariablesEquivalence(dfaLeft, dfaRight)) return false;
 
     if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue && !isNegated) {
       if (!updateQualifierOnEquality((DfaVariableValue)dfaLeft, dfaRight) ||
@@ -898,21 +907,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private Couple<DfaValue> getSpecialEquivalencePair(DfaVariableValue left, DfaValue right) {
-    if (right instanceof DfaVariableValue) return null;
-    SpecialField field = JvmSpecialField.fromQualifier(left);
-    if (field == null) return null;
-    DfaValue leftValue = field.createValue(myFactory, left);
-    DfaValue rightValue = field.createValue(myFactory, right);
-    return Couple.of(leftValue, rightValue);
-  }
-
-  private boolean applySpecialFieldEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
-    Couple<DfaValue> pair = left instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)left, right) :
-                            right instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)right, left) : null;
-    if (pair == null) return true;
-    DfType result = getDfType(pair.getFirst()).meet(getDfType(pair.getSecond()));
-    return meetDfType(pair.getFirst(), result) && meetDfType(pair.getSecond(), result);
+  private boolean applyDerivedVariablesEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
+    return StreamEx.of(left, right).flatCollection(val -> val.getDfType().getDerivedVariables())
+      .allMatch(field -> {
+        DfaValue leftValue = field.createValue(myFactory, left);
+        DfaValue rightValue = field.createValue(myFactory, right);
+        DfType result = getDfType(leftValue).meet(getDfType(rightValue));
+        return meetDfType(leftValue, result) && meetDfType(rightValue, result);
+      });
   }
 
   private boolean applyUnboxedRelation(@NotNull DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
@@ -1047,9 +1049,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   void recordVariableType(@NotNull DfaVariableValue dfaVar, @NotNull DfType type) {
     dfaVar = canonicalize(dfaVar);
-    if (type instanceof DfReferenceType) {
-      type = ((DfReferenceType)type).dropSpecialField();
-    }
+    type = type.getBasicType();
     if (type.equals(dfaVar.getInherentType())) {
       myVariableTypes.remove(dfaVar);
     } else {
