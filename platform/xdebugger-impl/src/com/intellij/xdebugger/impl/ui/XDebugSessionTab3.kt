@@ -251,6 +251,10 @@ class XDebugSessionTab3(
       val icon = if (session.isStopped) session.runProfile?.icon else ExecutionUtil.getLiveIndicator(session.runProfile?.icon)
       return@Producer create(icon, StringUtil.shortenTextWithEllipsis(session.sessionName, 15, 0) + ":")
     })
+
+    val settings = DefaultActionGroup(*myUi.options.settingsActionsList)
+    registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), settings)
+    (toolWindow as ToolWindowEx).setAdditionalGearActions(settings)
   }
 
   private fun setHeaderState() {
@@ -323,7 +327,7 @@ class XDebugSessionTab3(
       add(Separator.getInstance(), constraints)
     }
 
-    super.registerAdditionalActions(leftToolbar, settings, topLeftToolbar)
+    super.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
   }
 
   override fun dispose() {
