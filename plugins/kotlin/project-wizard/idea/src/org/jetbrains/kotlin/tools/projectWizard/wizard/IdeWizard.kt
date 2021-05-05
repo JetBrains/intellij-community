@@ -42,10 +42,13 @@ class IdeWizard(
         WizardLoggingSession::class to WizardLoggingSession.createWithRandomId(),
     )
 
-    val jpsData = JpsData(
-        JavaRuntimeLibraryDescription(null),
-        LibrariesContainerFactory.createContainer(null as Project?),
-    )
+    val jpsData by lazy {
+        val libraryDescription = JavaRuntimeLibraryDescription(null)
+        val librariesContainer = LibrariesContainerFactory.createContainer(null as Project?)
+        val libraryOptionsPanel = LibraryOptionsPanel(libraryDescription, "", FrameworkLibraryVersionFilter.ALL, librariesContainer, false)
+        JpsData(libraryDescription, librariesContainer, libraryOptionsPanel)
+    }
+
     var jdk: Sdk? = null
 
     var projectPath by setting(StructurePlugin.projectPath.reference)
@@ -74,13 +77,7 @@ class IdeWizard(
     data class JpsData(
         val libraryDescription: JavaRuntimeLibraryDescription,
         val librariesContainer: LibrariesContainer,
-        val libraryOptionsPanel: LibraryOptionsPanel = LibraryOptionsPanel(
-            libraryDescription,
-            "",
-            FrameworkLibraryVersionFilter.ALL,
-            librariesContainer,
-            false
-        )
+        val libraryOptionsPanel: LibraryOptionsPanel,
     )
 }
 
