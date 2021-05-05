@@ -503,6 +503,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.getLatest(), false, false);
   }
 
+  // PY-48008
+  public void testMatchAndCaseKeywords() {
+    doTest(LanguageLevel.PYTHON310, false, true);
+  }
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
