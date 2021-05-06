@@ -24,18 +24,16 @@ public class AnnotationMethodReturnTypeFix extends MethodReturnTypeFix {
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     super.invoke(project, file, editor, startElement, endElement);
-    WriteCommandAction.writeCommandAction(project, file).run(() -> {
-      if (!myFromDefaultValue) {
-        if (startElement instanceof PsiAnnotationMethod) {
-          final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)startElement).getDefaultValue();
-          if (defaultValue != null) {
-            if (editor != null) {
-              editor.getCaretModel().moveToOffset(defaultValue.getTextOffset());
-            }
-            new CommentTracker().deleteAndRestoreComments(defaultValue);
+    if (!myFromDefaultValue && startElement instanceof PsiAnnotationMethod) {
+      WriteCommandAction.writeCommandAction(project, file).run(() -> {
+        final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)startElement).getDefaultValue();
+        if (defaultValue != null) {
+          if (editor != null) {
+            editor.getCaretModel().moveToOffset(defaultValue.getTextOffset());
           }
+          new CommentTracker().deleteAndRestoreComments(defaultValue);
         }
-      }
-    });
+      });
+    }
   }
 }

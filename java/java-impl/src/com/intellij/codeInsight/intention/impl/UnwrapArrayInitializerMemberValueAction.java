@@ -21,10 +21,15 @@ import org.jetbrains.annotations.Nullable;
 public class UnwrapArrayInitializerMemberValueAction extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final String myInitializerText;
 
-  public UnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue) {
+  private UnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue,
+                                                  @NotNull String initializerText) {
     super(arrayValue);
+    myInitializerText = initializerText;
+  }
+
+  public static @Nullable UnwrapArrayInitializerMemberValueAction createFix(@NotNull PsiArrayInitializerMemberValue arrayValue) {
     final PsiAnnotationMemberValue initializer = ArrayUtil.getFirstElement(arrayValue.getInitializers());
-    myInitializerText = (initializer != null) ? initializer.getText() : null;
+    return (initializer != null) ? new UnwrapArrayInitializerMemberValueAction(arrayValue, initializer.getText()) : null;
   }
 
   @Override
@@ -32,8 +37,7 @@ public class UnwrapArrayInitializerMemberValueAction extends LocalQuickFixAndInt
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     final PsiArrayInitializerMemberValue arrayValue = ObjectUtils.tryCast(startElement, PsiArrayInitializerMemberValue.class);
-    if (arrayValue == null) return false;
-    return arrayValue.getInitializers().length == 1;
+    return arrayValue != null && arrayValue.getInitializers().length == 1;
   }
 
   @Override
@@ -43,9 +47,8 @@ public class UnwrapArrayInitializerMemberValueAction extends LocalQuickFixAndInt
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiArrayInitializerMemberValue arrayValue = ObjectUtils.tryCast(startElement, PsiArrayInitializerMemberValue.class);
-    if (arrayValue == null) return;
-    final CommentTracker ct = new CommentTracker();
-    ct.replaceAndRestoreComments(arrayValue, arrayValue.getInitializers()[0]);
+    if (arrayValue == null || arrayValue.getInitializers().length != 1) return;
+    new CommentTracker().replaceAndRestoreComments(arrayValue, arrayValue.getInitializers()[0]);
   }
 
   @Override

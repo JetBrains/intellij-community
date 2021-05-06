@@ -525,7 +525,8 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createConvertInterfaceToClassFix(@NotNull PsiClass aClass);
 
-  public abstract @NotNull IntentionAction createUnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue);
+  @Nullable
+  public abstract IntentionAction createUnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue);
 
   public abstract @NotNull IntentionAction createIntroduceVariableAction(@NotNull PsiExpression expression);
 
