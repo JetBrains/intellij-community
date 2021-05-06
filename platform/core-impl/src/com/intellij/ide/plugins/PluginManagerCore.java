@@ -557,18 +557,12 @@ public final class PluginManagerCore {
 
   public static @Nullable @NlsContexts.Label String getShortLoadingErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor) {
     PluginLoadingError error = ourPluginLoadingErrors.get(pluginDescriptor.getPluginId());
-    if (error != null) {
-      return error.getShortMessage();
-    }
-    return null;
+    return error == null ? null : error.getShortMessage();
   }
 
   public static @Nullable PluginId getFirstDisabledDependency(@NotNull IdeaPluginDescriptor pluginDescriptor) {
     PluginLoadingError error = ourPluginLoadingErrors.get(pluginDescriptor.getPluginId());
-    if (error != null) {
-      return error.getDisabledDependency();
-    }
-    return null;
+    return error == null ? null : error.disabledDependency;
   }
 
   static @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
@@ -908,8 +902,9 @@ public final class PluginManagerCore {
       Set<String> set = brokenPluginVersions.get(descriptor.getPluginId());
       if (set != null && set.contains(descriptor.getVersion())) {
         descriptor.setEnabled(false);
-        PluginLoadingError.create(descriptor, message("plugin.loading.error.long.marked.as.broken", descriptor.getName(), descriptor.getVersion()),
-                                  message("plugin.loading.error.short.marked.as.broken")).register(errors);
+        errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
+                                  message("plugin.loading.error.long.marked.as.broken", descriptor.getName(), descriptor.getVersion()),
+                                  message("plugin.loading.error.short.marked.as.broken")));
       }
       else if (explicitlyEnabled != null) {
         if (!explicitlyEnabled.contains(descriptor)) {
@@ -922,14 +917,19 @@ public final class PluginManagerCore {
       }
       else if (!shouldLoadPlugins) {
         descriptor.setEnabled(false);
-        PluginLoadingError.create(descriptor, message("plugin.loading.error.long.plugin.loading.disabled", descriptor.getName()),
-                                  message("plugin.loading.error.short.plugin.loading.disabled")).register(errors);
+        errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
+                                                                       message("plugin.loading.error.long.plugin.loading.disabled",
+                                                                               descriptor.getName()),
+                                                                       message("plugin.loading.error.short.plugin.loading.disabled")));
       }
       else if (isNonBundledPluginDisabled && !descriptor.isBundled()) {
         descriptor.setEnabled(false);
-        PluginLoadingError.create(descriptor,
-                                  message("plugin.loading.error.long.custom.plugin.loading.disabled", descriptor.getName()),
-                                  message("plugin.loading.error.short.custom.plugin.loading.disabled"), false).register(errors);
+        errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
+                                                                    message("plugin.loading.error.long.custom.plugin.loading.disabled",
+                                                                            descriptor.getName()),
+                                                                    message("plugin.loading.error.short.custom.plugin.loading.disabled"),
+                                                                    false,
+                                                                    null));
       }
     }
   }
@@ -960,20 +960,20 @@ public final class PluginManagerCore {
     try {
       BuildNumber sinceBuildNumber = sinceBuild == null ? null : BuildNumber.fromString(sinceBuild, null, null);
       if (sinceBuildNumber != null && sinceBuildNumber.compareTo(ideBuildNumber) > 0) {
-        return PluginLoadingError.create(descriptor, message("plugin.loading.error.long.incompatible.since.build", descriptor.getName(), descriptor.getVersion(), sinceBuild, ideBuildNumber),
+        return new PluginLoadingError(descriptor, message("plugin.loading.error.long.incompatible.since.build", descriptor.getName(), descriptor.getVersion(), sinceBuild, ideBuildNumber),
                                          message("plugin.loading.error.short.incompatible.since.build", sinceBuild));
       }
 
       BuildNumber untilBuildNumber = untilBuild == null ? null : BuildNumber.fromString(untilBuild, null, null);
       if (untilBuildNumber != null && untilBuildNumber.compareTo(ideBuildNumber) < 0) {
-        return PluginLoadingError.create(descriptor, message("plugin.loading.error.long.incompatible.until.build", descriptor.getName(), descriptor.getVersion(), untilBuild, ideBuildNumber),
+        return new PluginLoadingError(descriptor, message("plugin.loading.error.long.incompatible.until.build", descriptor.getName(), descriptor.getVersion(), untilBuild, ideBuildNumber),
                                          message("plugin.loading.error.short.incompatible.until.build", untilBuild));
       }
       return null;
     }
     catch (Exception e) {
       getLogger().error(e);
-      return PluginLoadingError.create(descriptor,
+      return new PluginLoadingError(descriptor,
                                        message("plugin.loading.error.long.failed.to.load.requirements.for.ide.version", descriptor.getName()),
                                        message("plugin.loading.error.short.failed.to.load.requirements.for.ide.version"));
     }
@@ -999,7 +999,7 @@ public final class PluginManagerCore {
 
   static @NotNull PluginManagerState initializePlugins(@NotNull DescriptorListLoadingContext context, @NotNull ClassLoader coreLoader, boolean checkEssentialPlugins) {
     PluginLoadingResult loadingResult = context.result;
-    Map<PluginId, PluginLoadingError> pluginErrors = new HashMap<>(loadingResult.getPluginErrors());
+    Map<PluginId, PluginLoadingError> pluginErrors = new HashMap<>(loadingResult.getPluginErrors$intellij_platform_core_impl());
     @NotNull List<Supplier<String>> globalErrors = loadingResult.getGlobalErrors();
 
     if (loadingResult.duplicateModuleMap != null) {
@@ -1205,7 +1205,7 @@ public final class PluginManagerCore {
                                               @NotNull Set<PluginId> loadedPluginIds,
                                               @NotNull Set<PluginId> loadedModuleIds,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                              @NotNull Set<? super PluginId> disabledRequiredIds,
+                                              @NotNull Set<PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
                                               @NotNull Map<PluginId, PluginLoadingError> errors) {
     if (CORE_ID.equals(descriptor.getPluginId())) {
@@ -1222,8 +1222,13 @@ public final class PluginManagerCore {
 
       result = false;
       String presentableName = incompatibleId.getIdString();
-      PluginLoadingError.create(descriptor, message("plugin.loading.error.long.ide.contains.conflicting.module", descriptor.getName(), presentableName),
-                                message("plugin.loading.error.short.ide.contains.conflicting.module", presentableName), notifyUser).register(errors);
+      errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
+                                                                  message("plugin.loading.error.long.ide.contains.conflicting.module",
+                                                                          descriptor.getName(), presentableName),
+                                                                  message("plugin.loading.error.short.ide.contains.conflicting.module",
+                                                                          presentableName),
+                                                                  notifyUser,
+                                                                  null));
     }
 
     // no deps at all
@@ -1248,20 +1253,33 @@ public final class PluginManagerCore {
       if (depName == null) {
         @NlsSafe String depPresentableId = depId.getIdString();
         if (errors.containsKey(depId)) {
-          PluginLoadingError.create(descriptor, message("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.getName(), depPresentableId),
-                                    message("plugin.loading.error.short.depends.on.failed.to.load.plugin", depPresentableId), notifyUser).register(errors);
+          errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
+                                                                      message("plugin.loading.error.long.depends.on.failed.to.load.plugin",
+                                                                              descriptor.getName(),
+                                                                              depPresentableId),
+                                                                      message("plugin.loading.error.short.depends.on.failed.to.load.plugin",
+                                                                              depPresentableId), notifyUser,
+                                                                      null));
         }
         else {
-          PluginLoadingError.create(descriptor, message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.getName(), depPresentableId),
-                                    message("plugin.loading.error.short.depends.on.not.installed.plugin", depPresentableId), notifyUser).register(errors);
+          errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
+                                                                      message("plugin.loading.error.long.depends.on.not.installed.plugin",
+                                                                              descriptor.getName(),
+                                                                              depPresentableId),
+                                                                      message("plugin.loading.error.short.depends.on.not.installed.plugin",
+                                                                              depPresentableId),
+                                                                      notifyUser,
+                                                                      null));
         }
       }
       else {
-        PluginLoadingError
-          error = PluginLoadingError.create(descriptor, message("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.getName(), depName),
-                                            message("plugin.loading.error.short.depends.on.disabled.plugin", depName), notifyUser);
-        error.setDisabledDependency(dep.getPluginId());
-        error.register(errors);
+        errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
+                                                                    message("plugin.loading.error.long.depends.on.disabled.plugin",
+                                                                            descriptor.getName(), depName),
+                                                                    message("plugin.loading.error.short.depends.on.disabled.plugin",
+                                                                            depName),
+                                                                    notifyUser,
+                                                                    dep.getPluginId()));
       }
     }
     return result;

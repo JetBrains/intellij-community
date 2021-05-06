@@ -227,7 +227,7 @@ class PluginDescriptorTest {
       </idea-plugin>""")
 
     val result = loadDescriptors(pluginDir, BuildNumber.fromString("4.0")!!).result
-    assertThat(result.getPluginErrors()).isEmpty()
+    assertThat(result.hasPluginErrors).isFalse()
     val plugins = result.getEnabledPlugins()
     assertThat(plugins).hasSize(1)
     assertThat(result.duplicateModuleMap).isNull()

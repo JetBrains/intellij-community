@@ -7,6 +7,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.PlatformUtils
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -32,6 +33,10 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
   // result, after calling finishLoading
   private var enabledPlugins: List<IdeaPluginDescriptorImpl>? = null
 
+  @get:TestOnly
+  val hasPluginErrors: Boolean
+    get() = !pluginErrors.isEmpty()
+
   fun getEnabledPlugins(): List<IdeaPluginDescriptorImpl> = enabledPlugins!!
 
   fun enabledPluginCount() = plugins.size
@@ -50,7 +55,7 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     return descriptor != null && set.contains(descriptor.version)
   }
 
-  fun getPluginErrors(): Map<PluginId, PluginLoadingError> = Collections.unmodifiableMap(pluginErrors)
+  internal fun getPluginErrors(): Map<PluginId, PluginLoadingError> = Collections.unmodifiableMap(pluginErrors)
 
   fun getGlobalErrors(): List<Supplier<String>> {
     synchronized(globalErrors) {
@@ -58,7 +63,7 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     }
   }
 
-  fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError?) {
+  internal fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError?) {
     if (!idMap.containsKey(plugin.pluginId)) {
       incompletePlugins.put(plugin.pluginId, plugin)
     }
@@ -67,13 +72,12 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     }
   }
 
-  fun reportIncompatiblePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError) {
+  internal fun reportIncompatiblePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError) {
     // do not report if some compatible plugin were already added
     // no race condition here: plugins from classpath are loaded before and not in parallel to loading from plugin dir
-    if (idMap.containsKey(plugin.pluginId)) {
-      return
+    if (!idMap.containsKey(plugin.pluginId)) {
+      pluginErrors.put(plugin.pluginId, error)
     }
-    error.register(pluginErrors)
   }
 
   fun reportCannotLoad(file: Path, e: Throwable?) {
@@ -91,10 +95,10 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
 
     if (!descriptor.isBundled) {
       if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
-        val error = PluginLoadingError.create(
-          descriptor,
-          { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) }
-        ) { CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only") }
+        val error = PluginLoadingError(plugin = descriptor,
+                                       detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
+                                       shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only") },
+                                       isNotifyUser = true)
         addIncompletePlugin(descriptor, error)
         return false
       }

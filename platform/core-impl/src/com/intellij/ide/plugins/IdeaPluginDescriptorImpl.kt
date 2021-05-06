@@ -314,13 +314,16 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     val wasIncomplete = isIncomplete
     isIncomplete = true
     isEnabled = false
-    if (!wasIncomplete) {
-      val pluginError = if (shortMessage == null) null else PluginLoadingError.createWithoutNotification(this, shortMessage)
-      if (pluginError != null && disabledDependency != null) {
-        pluginError.disabledDependency = disabledDependency
-      }
-      context.result.addIncompletePlugin(this, pluginError)
+    if (wasIncomplete) {
+      return
     }
+
+    val pluginError = if (shortMessage == null) null else PluginLoadingError(plugin = this,
+                                                                             detailedMessageSupplier = null,
+                                                                             shortMessageSupplier = shortMessage,
+                                                                             isNotifyUser = false,
+                                                                             disabledDependency = disabledDependency)
+    context.result.addIncompletePlugin(this, pluginError)
   }
 
   @ApiStatus.Internal
