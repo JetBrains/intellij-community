@@ -64,11 +64,11 @@ abstract class GitStageTree(project: Project,
 
   override fun getToggleClickCount(): Int = 2
 
-  abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
+  protected abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
 
-  abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
+  protected abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
 
-  abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>);
+  protected abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>);
 
   override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
     if (node == root) return null
@@ -77,19 +77,6 @@ abstract class GitStageTree(project: Project,
     val operation = operations.find { it.matches(statusNode) } ?: return null
     if (operation.icon == null) return null
     return GitStageHoverIcon(operation)
-  }
-
-  private inner class GitStageHoverIcon(val operation: StagingAreaOperation)
-    : HoverIcon(operation.icon!!, operation.actionText.get()) {
-    override fun invokeAction(node: ChangesBrowserNode<*>) {
-      val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
-      performStageOperation(nodes, operation)
-    }
-
-    override fun equals(other: Any?): Boolean = other is GitStageHoverIcon &&
-                                                operation == other.operation
-
-    override fun hashCode(): Int = operation.hashCode()
   }
 
   override fun rebuildTree() {
@@ -161,6 +148,19 @@ abstract class GitStageTree(project: Project,
     else {
       ListSelection.create(allEntries, selected)
     }
+  }
+
+  private inner class GitStageHoverIcon(val operation: StagingAreaOperation)
+    : HoverIcon(operation.icon!!, operation.actionText.get()) {
+    override fun invokeAction(node: ChangesBrowserNode<*>) {
+      val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
+      performStageOperation(nodes, operation)
+    }
+
+    override fun equals(other: Any?): Boolean = other is GitStageHoverIcon &&
+                                                operation == other.operation
+
+    override fun hashCode(): Int = operation.hashCode()
   }
 
   private inner class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory)
