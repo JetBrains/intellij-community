@@ -7,6 +7,7 @@ package com.intellij.openapi.options.advanced
  import com.intellij.openapi.options.SearchableConfigurable
  import com.intellij.openapi.options.UiDslConfigurable
  import com.intellij.openapi.util.NlsSafe
+ import com.intellij.ui.CollectionComboBoxModel
  import com.intellij.ui.DocumentAdapter
  import com.intellij.ui.SearchTextField
  import com.intellij.ui.layout.*
@@ -57,7 +58,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
             val (label, component) = control(extension)
             extension.description()?.let { description -> component.comment(description) }
             val textComponent = label?.component ?: component.component
-            settingsRows.add(SettingsRow(this, textComponent, extension.id, extension.title(), groupRow))
+            settingsRows.add(SettingsRow(this, textComponent, extension.id, label?.component?.text ?: extension.title(), groupRow))
           }
         }
       }
@@ -101,18 +102,11 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
       }
 
       AdvancedSettingType.Enum -> {
-        val builder = label(extension.title() + ":")
-        cell {
-          buttonGroup(
-            { AdvancedSettings.getEnum(extension.id, extension.enumKlass!!) },
-            { AdvancedSettings.setEnum(extension.id, it) }
-          ) {
-            for (enumConstant in extension.enumKlass!!.enumConstants) {
-              radioButton(enumConstant.toString(), enumConstant)
-            }
-          }
-        }
-        builder to builder
+        val comboBoxModel = CollectionComboBoxModel(extension.enumKlass!!.enumConstants.toList())
+        label(extension.title() + ":") to comboBox(
+          comboBoxModel,
+          { AdvancedSettings.getEnum(extension.id, extension.enumKlass!!) },
+          { AdvancedSettings.setEnum(extension.id, it as Enum<*>) })
       }
     }
   }
