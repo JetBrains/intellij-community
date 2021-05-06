@@ -103,20 +103,26 @@ public final class PlainDescriptor extends PsiVarDescriptor {
 
     DfaVariableValue qualifier = value.getQualifier();
     if (field != null && context != null) {
-      PsiMethod method = ObjectUtils.tryCast(context.getParent(), PsiMethod.class);
-      if (method != null) {
-        PsiClass methodClass = method.getContainingClass();
+      PsiMember member = ObjectUtils.tryCast(context.getParent(), PsiMember.class);
+      if (member != null) {
+        PsiClass methodClass = member.getContainingClass();
         if (methodClass != null && methodClass.equals(field.getContainingClass())) {
+          PsiMethod method = ObjectUtils.tryCast(member, PsiMethod.class);
           VariableDescriptor qualifierDescriptor = qualifier == null ? null : qualifier.getDescriptor();
           if (qualifierDescriptor instanceof ThisDescriptor && ((ThisDescriptor)qualifierDescriptor).getPsiElement().equals(methodClass)) {
-            if (!method.isConstructor() && isPossiblyNonInitialized(field, method)) {
-              return DfaNullability.NULLABLE;
-            }
-            else if (method.isConstructor()) {
+            if (member instanceof PsiClassInitializer) {
               return DfaNullability.UNKNOWN;
             }
+            if (method != null) {
+              if (!method.isConstructor() && isPossiblyNonInitialized(field, method)) {
+                return DfaNullability.NULLABLE;
+              }
+              else if (method.isConstructor()) {
+                return DfaNullability.UNKNOWN;
+              }
+            }
           }
-          if (field.hasModifierProperty(PsiModifier.STATIC) && isPossiblyNonInitialized(field, method)) {
+          if (method != null && field.hasModifierProperty(PsiModifier.STATIC) && isPossiblyNonInitialized(field, method)) {
             return DfaNullability.NULLABLE;
           }
         }

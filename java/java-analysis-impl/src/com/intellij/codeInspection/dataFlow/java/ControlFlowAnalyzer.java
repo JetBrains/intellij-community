@@ -2115,6 +2115,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private static List<PsiElement> getClosures(@NotNull PsiClass nestedClass) {
     List<PsiElement> closures = new ArrayList<>();
+    closures.add(nestedClass); // process fields and initializers
     for (PsiMethod method : nestedClass.getMethods()) {
       PsiCodeBlock body = method.getBody();
       if (body != null && (method.isPhysical() || !nestedClass.isPhysical())) {
@@ -2122,10 +2123,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         closures.add(body);
       }
     }
-    for (PsiClassInitializer initializer : nestedClass.getInitializers()) {
-      closures.add(initializer.getBody());
-    }
-    Collections.addAll(closures, nestedClass.getFields());
     return closures;
   }
 
