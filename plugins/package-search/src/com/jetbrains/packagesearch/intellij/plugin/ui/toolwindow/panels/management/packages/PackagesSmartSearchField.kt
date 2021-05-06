@@ -13,7 +13,7 @@ import java.awt.event.KeyEvent
 class PackagesSmartSearchField(
     searchFieldFocus: IVoidSignal,
     lifetime: Lifetime
-) : SearchTextField(true, "pkgs.search.history") {
+) : SearchTextField(false) {
 
     init {
         @Suppress("MagicNumber") // Swing dimension constants
