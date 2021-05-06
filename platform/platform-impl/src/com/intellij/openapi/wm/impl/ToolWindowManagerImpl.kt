@@ -137,6 +137,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val toolWindow = decorator.toolWindow
       return toolWindow.toolWindowManager.getRegisteredMutableInfoOrLogError(toolWindow.id)
     }
+
+    fun getAdjustedRatio(partSize: Int, totalSize: Int, direction: Int): Float {
+      var ratio = partSize.toFloat() / totalSize
+      ratio += (((partSize.toFloat() + direction) / totalSize) - ratio) / 2
+      return ratio
+    }
   }
 
   internal fun getFrame() = frame
@@ -2078,13 +2084,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
   }
-
-  private fun getAdjustedRatio(partSize: Int, totalSize: Int, direction: Int): Float {
-    var ratio = partSize.toFloat() / totalSize
-    ratio += (((partSize.toFloat() + direction) / totalSize) - ratio) / 2
-    return ratio
-  }
-
   private fun focusToolWindowByDefault() {
     var toFocus: ToolWindowEntry? = null
     for (each in activeStack.stack) {
