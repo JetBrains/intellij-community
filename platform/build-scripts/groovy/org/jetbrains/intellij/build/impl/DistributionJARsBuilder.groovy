@@ -240,7 +240,9 @@ final class DistributionJARsBuilder {
                                                                                   currentBuildString,
                                                                                   buildContext.options.isInDevelopmentMode,
                                                                                   buildContext.messages)
-      buildContext.addDistFile(new Pair<Path, String>(targetFile, "bin"))
+      if (Files.exists(targetFile)) {
+        buildContext.addDistFile(new Pair<Path, String>(targetFile, "bin"))
+      }
     }
   }
 
