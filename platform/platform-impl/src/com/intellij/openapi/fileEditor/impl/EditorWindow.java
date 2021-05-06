@@ -370,7 +370,7 @@ public final class EditorWindow {
   }
 
   void updateFileBackgroundColor(@NotNull VirtualFile file) {
-    int index = findEditorIndex(findFileComposite(file));
+    int index = findFileEditorIndex(file);
     if (index != -1) {
       Color color = EditorTabPresentationUtil.getEditorTabBackgroundColor(getManager().getProject(), file, this);
       setBackgroundColorAt(index, color);
@@ -1076,6 +1076,11 @@ public final class EditorWindow {
     }
   }
 
+  private int findFileEditorIndex(@NotNull VirtualFile file) {
+    EditorWithProviderComposite composite = findFileComposite(file);
+    return composite == null ? -1 : findEditorIndex(composite);
+  }
+
   void updateFileIcon(@NotNull VirtualFile file, @NotNull Icon icon) {
     EditorWithProviderComposite composite = findFileComposite(file);
     if (composite == null) return;
@@ -1085,7 +1090,7 @@ public final class EditorWindow {
   }
 
   void updateFileName(@NotNull VirtualFile file) {
-    int index = findEditorIndex(findFileComposite(file));
+    int index = findFileEditorIndex(file);
     if (index != -1) {
       setTitleAt(index, SlowOperations.allowSlowOperations(
         () -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file, this)
