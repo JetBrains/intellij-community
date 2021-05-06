@@ -39,6 +39,7 @@ import com.intellij.ui.GuiUtils
 import com.intellij.util.lang.JavaVersion
 import java.io.IOException
 import java.net.URL
+import javax.swing.Icon
 
 abstract class StarterModuleBuilder : ModuleBuilder() {
 
@@ -99,6 +100,11 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   override fun getParentGroup(): String = JavaModuleType.BUILD_TOOLS_GROUP
   override fun getWeight(): Int = JavaModuleBuilder.BUILD_SYSTEM_WEIGHT + 10
   open fun getHelpId(): String? = null
+
+  abstract override fun getBuilderId(): String
+  abstract override fun getNodeIcon(): Icon?
+  abstract override fun getPresentableName(): String
+  abstract override fun getDescription(): String
 
   protected abstract fun getProjectTypes() : List<StarterProjectType>
   protected abstract fun getLanguages(): List<StarterLanguage>
