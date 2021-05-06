@@ -110,7 +110,7 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
     val prevDescriptor = plugins.put(pluginId, descriptor)
     if (prevDescriptor == null) {
       idMap.put(pluginId, descriptor)
-      for (module in descriptor.getModules()) {
+      for (module in descriptor.modules) {
         checkAndAdd(descriptor, module)
       }
       return true

@@ -6,15 +6,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.List;
-
 public interface ExtensionsArea  {
   @TestOnly
-  void registerExtensionPoint(@NonNls @NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind);
+  void registerExtensionPoint(@NonNls @NotNull String extensionPointName,
+                              @NotNull String extensionPointBeanClass,
+                              @NotNull ExtensionPoint.Kind kind,
+                              boolean isDynamic);
+
+  /**
+   * @deprecated Use {@link #registerExtensionPoint(String, String, ExtensionPoint.Kind, boolean)}
+   */
+  @TestOnly
+  @Deprecated
+  default void registerExtensionPoint(@NonNls @NotNull String extensionPointName,
+                              @NotNull String extensionPointBeanClass,
+                              @NotNull ExtensionPoint.Kind kind) {
+    registerExtensionPoint(extensionPointName, extensionPointBeanClass, kind, false);
+  }
 
   @TestOnly
-  void registerDynamicExtensionPoint(@NonNls @NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind);
-
   void unregisterExtensionPoint(@NonNls @NotNull String extensionPointName);
 
   boolean hasExtensionPoint(@NonNls @NotNull String extensionPointName);
@@ -29,6 +39,4 @@ public interface ExtensionsArea  {
 
   @NotNull
   <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName);
-
-  @NotNull List<ExtensionPoint<?>> getExtensionPoints();
 }

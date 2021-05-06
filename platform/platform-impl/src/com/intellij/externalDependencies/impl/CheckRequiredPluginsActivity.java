@@ -75,10 +75,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       if (!plugin.isEnabled() || pluginTracker.isDisabled(pluginId)) {
         boolean canEnableWithoutRestart = false;
         if (Registry.is("ide.plugins.load.automatically")) {
-          IdeaPluginDescriptorImpl fullDescriptor = PluginDescriptorLoader.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)plugin);
-          String message = fullDescriptor == null
-                           ? "Cannot load full descriptor for " + plugin.getPluginId()
-                           : DynamicPlugins.checkCanUnloadWithoutRestart((IdeaPluginDescriptorImpl)plugin);
+          String message = DynamicPlugins.checkCanUnloadWithoutRestart((IdeaPluginDescriptorImpl)plugin);
           if (message == null) {
             canEnableWithoutRestart = true;
             pluginsToEnableWithoutRestart.add(plugin);

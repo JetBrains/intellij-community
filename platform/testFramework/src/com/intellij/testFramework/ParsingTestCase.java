@@ -213,7 +213,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
       return extensionArea.getExtensionPoint(name);
     }
     else {
-      return extensionArea.registerPoint(name, extensionClass, getPluginDescriptor());
+      return extensionArea.registerPoint(name, extensionClass, getPluginDescriptor(), false);
     }
   }
 

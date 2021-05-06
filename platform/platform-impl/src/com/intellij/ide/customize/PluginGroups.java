@@ -293,7 +293,7 @@ public class PluginGroups {
     accumulator.add(pluginId);
 
     for (IdeaPluginDescriptorImpl plugin : pluginsById.apply(pluginId)) {
-      for (PluginDependency dependency : plugin.getPluginDependencies()) {
+      for (PluginDependency dependency : plugin.pluginDependencies) {
         PluginId dependencyId = dependency.getPluginId();
         if (!dependency.isOptional() && predicate.test(dependencyId, pluginId)) {
           collectInvolvedIds(dependencyId, accumulator, predicate, pluginsById);

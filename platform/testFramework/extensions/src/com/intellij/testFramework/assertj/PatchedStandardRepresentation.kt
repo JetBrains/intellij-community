@@ -9,7 +9,7 @@ import org.assertj.core.presentation.StandardRepresentation
  * `UserDataHolderBase` will be shown as `AtomicReference[...]`.
  */
 class PatchedStandardRepresentation : StandardRepresentation() {
-  override fun toStringOf(o: Any?): String {
+  override fun toStringOf(o: Any?): String? {
     if (o is UserDataHolderBase) {
       return o.toString()
     }

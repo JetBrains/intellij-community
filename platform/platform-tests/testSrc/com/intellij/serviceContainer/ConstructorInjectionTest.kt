@@ -14,7 +14,7 @@ class ConstructorInjectionTest {
   fun `interface extension`() {
     val componentManager = TestComponentManager(isGetComponentAdapterOfTypeCheckEnabled = false)
     val area = componentManager.extensionArea
-    val point = area.registerPoint("bar", Bar::class.java, pluginDescriptor)
+    val point = area.registerPoint("bar", Bar::class.java, pluginDescriptor, false)
     @Suppress("DEPRECATION")
     point.registerExtension(BarImpl())
 

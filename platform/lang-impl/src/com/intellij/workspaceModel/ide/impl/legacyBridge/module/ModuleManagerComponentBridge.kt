@@ -319,21 +319,30 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
     val (unloadedEntities, loadedEntities) = entities.partition { it.name in unloadedModuleNames }
     LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
-    val fileSystem = LocalFileSystem.getInstance()
-    for (module in loadedEntities) {
-      getModuleVirtualFileUrl(module)?.let {
-        fileSystem.refreshAndFindFileByPath(JpsPathUtil.urlToPath(it.url))
-      }
-    }
 
-    val tasks = ForkJoinTask.invokeAll(loadedEntities.map { moduleEntity ->
+    val toRefresh = ArrayList<VirtualFileUrl>(loadedEntities.size)
+    val tasks = loadedEntities.map { moduleEntity ->
+      val fileUrl = getModuleVirtualFileUrl(moduleEntity)
+      if (fileUrl != null) {
+        toRefresh.add(fileUrl)
+      }
       ForkJoinTask.adapt(Callable {
         runCatching {
-          val module = createModuleInstance(moduleEntity, entityStore, null, false)
+          val module = createModuleInstance(moduleEntity = moduleEntity, moduleFileUrl = fileUrl,
+                                            versionedStorage = entityStore, diff = null, isNew = false)
           moduleEntity to module
         }.getOrLogException(LOG)
       })
-    })
+    }
+
+    if (!toRefresh.isEmpty()) {
+      val fileSystem = LocalFileSystem.getInstance()
+      for (fileUrl in toRefresh) {
+        fileSystem.refreshAndFindFileByPath(JpsPathUtil.urlToPath(fileUrl.url))
+      }
+    }
+
+    ForkJoinTask.invokeAll(tasks)
     UnloadedModuleDescriptionBridge.createDescriptions(unloadedEntities).associateByTo(unloadedModules) { it.name }
 
     WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
@@ -528,11 +537,18 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     return entitySource.directory.append("${moduleEntity.name}.iml")
   }
 
-  fun createModuleInstance(moduleEntity: ModuleEntity,
-                           versionedStorage: VersionedEntityStorage,
-                           diff: WorkspaceEntityStorageDiffBuilder?,
-                           isNew: Boolean): ModuleBridge {
-    val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
+  internal fun createModuleInstance(moduleEntity: ModuleEntity,
+                                      versionedStorage: VersionedEntityStorage,
+                                      diff: WorkspaceEntityStorageDiffBuilder?,
+                                      isNew: Boolean): ModuleBridge {
+    return createModuleInstance(moduleEntity, getModuleVirtualFileUrl(moduleEntity), versionedStorage, diff, isNew)
+  }
+
+  private fun createModuleInstance(moduleEntity: ModuleEntity,
+                                   moduleFileUrl: VirtualFileUrl?,
+                                   versionedStorage: VersionedEntityStorage,
+                                   diff: WorkspaceEntityStorageDiffBuilder?,
+                                   isNew: Boolean): ModuleBridge {
     val module = ModuleBridgeImpl(
       name = moduleEntity.name,
       project = project,

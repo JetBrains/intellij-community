@@ -61,7 +61,7 @@ class ClassLoaderConfigurator(
     for ((mainDependent, value) in mainToSub) {
       val mainDependentClassLoader = mainDependent.classLoader as PluginClassLoader
       if (isClassloaderPerDescriptorEnabled(mainDependent)) {
-        for (dependency in mainDependent.pluginDependencies!!) {
+        for (dependency in mainDependent.pluginDependencies) {
           urlClassLoaderBuilder.files(mainDependentClassLoader.files)
           for (subDescriptor in value) {
             if (subDescriptor === dependency.subDescriptor) {
@@ -119,7 +119,7 @@ class ClassLoaderConfigurator(
     urlClassLoaderBuilder.files(classPath)
 
     val pluginDependencies = mainDependent.pluginDependencies
-    if (pluginDependencies == null) {
+    if (pluginDependencies.isEmpty()) {
       assert(!mainDependent.isUseIdeaClassLoader)
       mainDependent.classLoader = createPluginClassLoader(mainDependent)
       return
@@ -226,11 +226,9 @@ class ClassLoaderConfigurator(
     val pluginDependencies = dependent.pluginDependencies
 
     // add config-less dependencies to classloader parents
-    if (pluginDependencies != null) {
-      for (subDependency in pluginDependencies) {
-        if (!subDependency.isDisabledOrBroken && subDependency.subDescriptor == null) {
-          addClassloaderIfDependencyEnabled(subDependency.pluginId, dependent)
-        }
+    for (subDependency in pluginDependencies) {
+      if (!subDependency.isDisabledOrBroken && subDependency.subDescriptor == null) {
+        addClassloaderIfDependencyEnabled(subDependency.pluginId, dependent)
       }
     }
     val subClassloader = if (pluginPackagePrefix == null) {
@@ -245,10 +243,8 @@ class ClassLoaderConfigurator(
     }
 
     dependent.classLoader = subClassloader
-    if (pluginDependencies != null) {
-      for (subDependency in pluginDependencies) {
-        configureSubPlugin(subDependency, subClassloader, dependent)
-      }
+    for (subDependency in pluginDependencies) {
+      configureSubPlugin(subDependency, subClassloader, dependent)
     }
   }
 
@@ -265,7 +261,7 @@ class ClassLoaderConfigurator(
           "(descriptorFile=${dependent.descriptorPath})", parentDescriptor.id
         )
       }
-      for (dependencyPluginDependency in parentDescriptor.pluginDependencies!!) {
+      for (dependencyPluginDependency in parentDescriptor.pluginDependencies) {
         if (!dependencyPluginDependency.isDisabledOrBroken && dependencyPluginDependency.subDescriptor != null &&
             dependentModuleDependency.packageName == dependencyPluginDependency.subDescriptor!!.packagePrefix) {
           val classLoader = dependencyPluginDependency.subDescriptor!!.classLoader
@@ -285,7 +281,7 @@ class ClassLoaderConfigurator(
 
     // must be first to ensure that it is used first to search classes (very important if main plugin descriptor doesn't have package prefix)
     // check dependencies between optional descriptors (aka modules in a new model) from different plugins
-    if (ClassLoaderConfigurationData.SEPARATE_CLASSLOADER_FOR_SUB && dependency.pluginDependencies != null) {
+    if (ClassLoaderConfigurationData.SEPARATE_CLASSLOADER_FOR_SUB && !dependency.pluginDependencies.isEmpty()) {
       for (dependentModuleDependency in dependent.dependencyDescriptor.modules) {
         if (dependency.contentDescriptor.findModuleByName(dependentModuleDependency.name) != null) {
           for (pluginDependency in dependency.pluginDependencies) {
@@ -322,7 +318,7 @@ class ClassLoaderConfigurator(
 
   private fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
     rootDescriptor.classLoader = classLoader
-    for (dependency in rootDescriptor.getPluginDependencies()) {
+    for (dependency in rootDescriptor.pluginDependencies) {
       if (dependency.subDescriptor != null) {
         val descriptor = idMap.get(dependency.pluginId)
         if (descriptor != null && descriptor.isEnabled) {
@@ -592,8 +588,8 @@ private fun collectPackagePrefixes(dependent: IdeaPluginDescriptorImpl, packageP
   dependent.unsortedEpNameToExtensionElements.values.forEach { extensionDescriptors ->
     for (extensionDescriptor in extensionDescriptors) {
       if (extensionDescriptor.implementation != null) {
-        addPackageByClassNameIfNeeded(extensionDescriptor.implementation, packagePrefixes)
-        break
+        addPackageByClassNameIfNeeded(extensionDescriptor.implementation!!, packagePrefixes)
+        continue
       }
 
       val element = extensionDescriptor.element ?: continue

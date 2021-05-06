@@ -1,34 +1,44 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.extensions.impl;
+package com.intellij.openapi.extensions
 
-import com.intellij.openapi.extensions.LoadingOrder;
-import com.intellij.util.XmlElement;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.XmlElement
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public final class ExtensionDescriptor {
-  public final String implementation;
+class ExtensionDescriptor(@JvmField val implementation: String?,
+                          @JvmField val os: Os?,
+                          @JvmField val orderId: String?,
+                          @JvmField val order: LoadingOrder,
+                          @JvmField var element: XmlElement?) {
+  @Suppress("EnumEntryName")
+  enum class Os {
+    mac, linux, windows, unix, freebsd
+  }
+}
 
-  public final Os os;
-  public final String orderId;
-  public final LoadingOrder order;
-  public @Nullable XmlElement element;
+@ApiStatus.Internal
+class ExtensionPointDescriptor(@JvmField val name: String,
+                               @JvmField val isNameQualified: Boolean,
+                               @JvmField val className: String,
+                               @JvmField val isBean: Boolean,
+                               @JvmField val isDynamic: Boolean) {
+  fun getQualifiedName(pluginDescriptor: PluginDescriptor) = if (isNameQualified) name else "${pluginDescriptor.pluginId}.$name"
 
-  public ExtensionDescriptor(@Nullable String implementation,
-                             @Nullable Os os,
-                             @Nullable String orderId,
-                             @NotNull LoadingOrder order,
-                             @Nullable XmlElement element) {
-    this.implementation = implementation;
-    this.os = os;
-    this.orderId = orderId;
-    this.order = order;
-    this.element = element;
+  // getQualifiedName() can be used instead, but this method allows to avoid temp string creation
+  fun nameEquals(qualifiedName: String, pluginDescriptor: PluginDescriptor): Boolean {
+    if (isNameQualified) {
+      return qualifiedName == name
+    }
+    else {
+      val pluginId = pluginDescriptor.pluginId.idString
+      return (qualifiedName.length == (pluginId.length + 1 + name.length)) &&
+             qualifiedName[pluginId.length] == '.' &&
+             qualifiedName.startsWith(pluginId) &&
+             qualifiedName.endsWith(name)
+    }
   }
 
-  public enum Os {
-    mac, linux, windows, unix, freebsd
+  override fun toString(): String {
+    return "ExtensionPointDescriptor(name=$name, isNameQualified=$isNameQualified, className=$className, isBean=$isBean, isDynamic=$isDynamic)"
   }
 }

@@ -317,10 +317,10 @@ public class PluginManagerTest {
       sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPluginPath().getFileName().getParent()).append("/META-INF/plugin.xml\">");
       sb.append("\n    <id>").append(escape.apply(d.getPluginId().getIdString())).append("</id>");
       sb.append("\n    <name>").append(StringUtil.escapeXmlEntities(d.getName())).append("</name>");
-      for (PluginId module : d.getModules()) {
+      for (PluginId module : d.modules) {
         sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
-      for (PluginDependency dependency : d.getPluginDependencies()) {
+      for (PluginDependency dependency : d.pluginDependencies) {
         if (!dependency.isOptional()) {
           sb.append("\n    <depends>").append(escape.apply(dependency.getPluginId().getIdString())).append("</depends>");
         }

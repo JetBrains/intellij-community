@@ -93,7 +93,14 @@ private val CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
   "qualifiedName"))
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-private val EXTRA_STRINGS = Arrays.asList("id", "order", "os", PluginManagerCore.VENDOR_JETBRAINS)
+private val EXTRA_STRINGS = Arrays.asList(
+  "id", "order", "os", PluginManagerCore.VENDOR_JETBRAINS,
+  "com.intellij.applicationService",
+  "com.intellij.projectService",
+  "com.intellij.moduleService",
+  "com.intellij.postStartupActivity",
+  "com.intellij",
+)
 
 private class MyXmlInterner : XmlInterner {
   @Suppress("SSBasedInspection")

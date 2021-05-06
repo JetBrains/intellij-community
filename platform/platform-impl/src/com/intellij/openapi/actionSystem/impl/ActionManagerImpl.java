@@ -163,14 +163,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     for (IdeaPluginDescriptorImpl plugin : plugins) {
       registerPluginActions(plugin, keymapManager);
-      for (PluginDependency pluginDependency : plugin.getPluginDependencies()) {
+      for (PluginDependency pluginDependency : plugin.pluginDependencies) {
         IdeaPluginDescriptorImpl subPlugin = pluginDependency.isDisabledOrBroken ? null : pluginDependency.subDescriptor;
         if (subPlugin == null) {
           continue;
         }
 
         registerPluginActions(subPlugin, keymapManager);
-        for (PluginDependency subPluginDependency : subPlugin.getPluginDependencies()) {
+        for (PluginDependency subPluginDependency : subPlugin.pluginDependencies) {
           IdeaPluginDescriptorImpl subSubPlugin = subPluginDependency.isDisabledOrBroken ? null : subPluginDependency.subDescriptor;
           if (subSubPlugin != null) {
             registerPluginActions(subSubPlugin, keymapManager);
@@ -434,7 +434,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private void registerPluginActions(@NotNull IdeaPluginDescriptorImpl pluginDescriptor, @NotNull KeymapManagerEx keymapManager) {
-    List<RawPluginDescriptor.ActionDescriptor> elements = pluginDescriptor.getActionDescriptionElements();
+    List<RawPluginDescriptor.ActionDescriptor> elements = pluginDescriptor.actions;
     if (elements == null) {
       return;
     }
@@ -1129,7 +1129,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @ApiStatus.Internal
   public static @Nullable String checkUnloadActions(PluginId pluginId, @NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    List<RawPluginDescriptor.ActionDescriptor> descriptors = pluginDescriptor.getActionDescriptionElements();
+    List<RawPluginDescriptor.ActionDescriptor> descriptors = pluginDescriptor.actions;
     if (descriptors == null) {
       return null;
     }
@@ -1159,12 +1159,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   public void unloadActions(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    List<RawPluginDescriptor.ActionDescriptor> elements = pluginDescriptor.getActionDescriptionElements();
-    if (elements == null) {
+    List<RawPluginDescriptor.ActionDescriptor> descriptors = pluginDescriptor.actions;
+    if (descriptors == null) {
       return;
     }
 
-    for (RawPluginDescriptor.ActionDescriptor descriptor : ContainerUtil.reverse(elements)) {
+    for (int i = descriptors.size() - 1; i >= 0; i--) {
+      RawPluginDescriptor.ActionDescriptor descriptor = descriptors.get(i);
       XmlElement element = descriptor.element;
       switch (descriptor.name) {
         case ACTION_ELEMENT_NAME:

@@ -122,7 +122,7 @@ private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecu
 private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit) {
   for (plugin in PluginManagerCore.getLoadedPlugins(null)) {
     // we don't check classloader for sub descriptors because url set is the same
-    if (plugin.classLoader !is PluginClassLoader || plugin.getPluginDependencies().isEmpty()) {
+    if (plugin.classLoader !is PluginClassLoader || plugin.pluginDependencies.isEmpty()) {
       continue
     }
 
@@ -167,7 +167,7 @@ private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit) {
 
 private fun loadLightServiceClass(lightService: ClassInfo, mainDescriptor: IdeaPluginDescriptorImpl): Class<*> {
   //
-  for (pluginDependency in mainDescriptor.getPluginDependencies()) {
+  for (pluginDependency in mainDescriptor.pluginDependencies) {
     val subPluginClassLoader = pluginDependency.subDescriptor?.classLoader as? PluginClassLoader ?: continue
     val packagePrefix = subPluginClassLoader.packagePrefix ?: continue
     if (lightService.name.startsWith(packagePrefix)) {
@@ -175,7 +175,7 @@ private fun loadLightServiceClass(lightService: ClassInfo, mainDescriptor: IdeaP
     }
   }
 
-  for (pluginDependency in mainDescriptor.getPluginDependencies()) {
+  for (pluginDependency in mainDescriptor.pluginDependencies) {
     val subPluginClassLoader = pluginDependency.subDescriptor?.classLoader as? PluginClassLoader ?: continue
     val clazz = subPluginClassLoader.loadClass(lightService.name, true)
     if (clazz != null && clazz.classLoader === subPluginClassLoader) {

@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.extensions.impl.ExtensionDescriptor
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.XmlElement
 import org.jetbrains.annotations.ApiStatus
@@ -42,7 +42,7 @@ class RawPluginDescriptor {
   @JvmField internal var modules: MutableList<PluginId>? = null
 
   @JvmField internal var depends: MutableList<PluginDependency>? = null
-  @JvmField internal var actionElements: MutableList<ActionDescriptor>? = null
+  @JvmField internal var actions: MutableList<ActionDescriptor>? = null
 
   @JvmField var incompatibilities: MutableList<PluginId>? = null
 
@@ -50,7 +50,7 @@ class RawPluginDescriptor {
   @JvmField val projectContainerDescriptor = ContainerDescriptor()
   @JvmField val moduleContainerDescriptor = ContainerDescriptor()
 
-  @JvmField var epNameToExtensionElements: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
+  @JvmField var epNameToExtensions: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
 
   @JvmField internal var contentDescriptor = PluginContentDescriptor.EMPTY
   @JvmField internal var dependencyDescriptor = ModuleDependenciesDescriptor.EMPTY

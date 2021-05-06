@@ -52,7 +52,7 @@ internal class ClassLoaderConfiguratorTest {
   fun regularPluginClassLoaderIsUsedIfPackageSpecified() {
     loadPlugins {
       PluginBuilder().noDepends().packagePrefix("com.example.extraSupportedFeature")
-    }.getEnabledPlugins().get(1).getPluginDependencies().get(0).subDescriptor!!.classLoader!!.javaClass === PluginClassLoader::class.java
+    }.getEnabledPlugins().get(1).pluginDependencies.get(0).subDescriptor!!.classLoader!!.javaClass === PluginClassLoader::class.java
   }
 
   private fun loadPlugins(dependent: () -> PluginBuilder): PluginLoadingResult {

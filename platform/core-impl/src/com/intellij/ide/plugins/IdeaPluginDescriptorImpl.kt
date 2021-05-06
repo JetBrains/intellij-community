@@ -5,19 +5,17 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.extensions.impl.BeanExtensionPoint
-import com.intellij.openapi.extensions.impl.ExtensionDescriptor
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.util.plugins.DataLoader
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.PropertyKey
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.time.ZoneOffset
 import java.util.*
-import java.util.function.Supplier
 
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
@@ -51,8 +49,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   private val vendorUrl = raw.vendorUrl
   private var category: String? = raw.category
   @JvmField internal val url = raw.url
-  @JvmField internal val pluginDependencies: List<PluginDependency>?
-  @JvmField val incompatibilities: List<PluginId>? = raw.incompatibilities
+  @JvmField val pluginDependencies: List<PluginDependency>
+  @JvmField val incompatibilities: List<PluginId> = raw.incompatibilities ?: Collections.emptyList()
 
   init {
     // https://youtrack.jetbrains.com/issue/IDEA-206274
@@ -72,16 +70,16 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
         }
       }
     }
-    pluginDependencies = list
+    pluginDependencies = list ?: Collections.emptyList()
   }
 
   @Transient @JvmField internal var jarFiles: List<Path>? = null
   @JvmField var classLoader: ClassLoader? = null
 
-  @JvmField internal val actionElements = raw.actionElements
+  @JvmField val actions: List<RawPluginDescriptor.ActionDescriptor>? = raw.actions
 
-  // extension point name -> list of extension elements
-  private var epNameToExtensionElements = raw.epNameToExtensionElements
+  // extension point name -> list of extension descriptors
+  val epNameToExtensions: Map<String, MutableList<ExtensionDescriptor>>? = raw.epNameToExtensions
 
   @JvmField val appContainerDescriptor = raw.appContainerDescriptor
   @JvmField val projectContainerDescriptor = raw.projectContainerDescriptor
@@ -89,7 +87,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   @JvmField internal val contentDescriptor = raw.contentDescriptor
   @JvmField internal val dependencyDescriptor = raw.dependencyDescriptor
-  private val modules = raw.modules
+  @JvmField val modules: List<PluginId> = raw.modules ?: Collections.emptyList()
 
   private val descriptionChildText = raw.description
 
@@ -117,11 +115,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   override fun getDescriptorPath() = descriptorPath
 
   override fun getDependencies(): List<IdeaPluginDependency> {
-    return Collections.unmodifiableList(pluginDependencies ?: return Collections.emptyList())
+    return if (pluginDependencies.isEmpty()) Collections.emptyList() else Collections.unmodifiableList(pluginDependencies)
   }
-
-  @ApiStatus.Internal
-  fun getPluginDependencies(): List<PluginDependency> = pluginDependencies ?: Collections.emptyList()
 
   override fun getPluginPath() = path
 
@@ -140,7 +135,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                    pathResolver: PathResolver,
                    context: DescriptorListLoadingContext,
                    isSub: Boolean,
-                   dataLoader: DataLoader): Boolean {
+                   dataLoader: DataLoader) {
     // include module file descriptor if not specified as `depends` (old way - xi:include)
     // must be first because merged into raw descriptor
     if (!isSub) {
@@ -164,14 +159,14 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
     if (raw.resourceBundleBaseName != null) {
       if (id == PluginManagerCore.CORE_ID) {
-        LOG.warn(
-          "<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor included into the platform part of the IDE " +
-          "but the platform part uses predefined bundles (e.g. ActionsBundle for actions) anyway; " +
-          "this tag must be replaced by a corresponding attribute in some inner tags (e.g. by 'resource-bundle' attribute in 'actions' tag)")
+        LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +
+                 " included into the platform part of the IDE but the platform part uses predefined bundles " +
+                 "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
+                 "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
       }
       if (resourceBundleBaseName != null && resourceBundleBaseName != raw.resourceBundleBaseName) {
-        LOG.warn("Resource bundle redefinition for plugin $id." +
-                                              " Old value: $resourceBundleBaseName, new value: ${raw.resourceBundleBaseName}")
+        LOG.warn("Resource bundle redefinition for plugin $id. " +
+                 "Old value: $resourceBundleBaseName, new value: ${raw.resourceBundleBaseName}")
       }
       resourceBundleBaseName = raw.resourceBundleBaseName
     }
@@ -182,44 +177,28 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
     if (context.isPluginDisabled(id)) {
       markAsIncomplete(context, null, null)
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Skipping reading of $id from $path (reason: disabled)")
-      }
-      return false
     }
-
-    if (isIncomplete || !checkCompatibility(context)) {
-      return false
-    }
-
-    for (pluginDependency in dependencyDescriptor.plugins) {
-      if (context.isPluginDisabled(pluginDependency.id)) {
-        markAsIncomplete(context, pluginDependency.id) {
-          CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", pluginDependency.id)
+    else {
+      for (pluginDependency in dependencyDescriptor.plugins) {
+        if (context.isPluginDisabled(pluginDependency.id)) {
+          markAsIncomplete(context, pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
         }
-        return false
-      }
-      else if (context.result.isBroken(pluginDependency.id)) {
-        markAsIncomplete(context, null) {
-          CoreBundle.message("plugin.loading.error.short.depends.on.broken.plugin", pluginDependency.id)
+        else if (context.result.isBroken(pluginDependency.id)) {
+          markAsIncomplete(context = context,
+                           disabledDependency = null,
+                           shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
+                           pluginId = pluginDependency.id)
         }
-        return false
       }
     }
 
-    createExtensionPoints(appContainerDescriptor, this)
-    createExtensionPoints(projectContainerDescriptor, this)
-    createExtensionPoints(moduleContainerDescriptor, this)
+    processOldDependencies(descriptor = this,
+                           context = context,
+                           pathResolver = pathResolver,
+                           dependencies = pluginDependencies,
+                           dataLoader = dataLoader)
 
-    pluginDependencies?.let {
-      processOldDependencies(descriptor = this,
-                             context = context,
-                             pathResolver = pathResolver,
-                             dependencies = it,
-                             dataLoader = dataLoader)
-    }
-
-    return true
+    checkCompatibility(context)
   }
 
   private fun processOldDependencies(descriptor: IdeaPluginDescriptorImpl,
@@ -232,25 +211,18 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       // context.isPluginIncomplete must be not checked here as another version of plugin maybe supplied later from another source
       if (context.isPluginDisabled(dependency.pluginId)) {
         if (!dependency.isOptional && !isIncomplete) {
-          markAsIncomplete(context, dependency.pluginId) {
-            CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependency.pluginId)
-          }
+          markAsIncomplete(context, dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
         }
         dependency.isDisabledOrBroken = true
       }
       else if (context.result.isBroken(dependency.pluginId)) {
         if (!dependency.isOptional && !isIncomplete) {
-          LOG.info("Skipping reading of $id from $path " +
-                                                "(reason: non-optional dependency ${dependency.pluginId} is broken)")
-          markAsIncomplete(context = context, disabledDependency = null) {
-            CoreBundle.message("plugin.loading.error.short.depends.on.broken.plugin", dependency.pluginId)
-          }
+          markAsIncomplete(context = context,
+                           disabledDependency = null,
+                           shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
+                           pluginId = dependency.pluginId)
         }
         dependency.isDisabledOrBroken = true
-      }
-
-      if (dependency.isDisabledOrBroken) {
-        continue
       }
 
       // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
@@ -290,84 +262,110 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
       val subDescriptor = descriptor.createSub(raw, configFile)
       visitedFiles.add(configFile)
-      if (subDescriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = true, dataLoader = dataLoader)) {
-        dependency.subDescriptor = subDescriptor
-      }
+
+      subDescriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = true, dataLoader = dataLoader)
+      dependency.subDescriptor = subDescriptor
       visitedFiles.clear()
     }
   }
 
-  private fun checkCompatibility(context: DescriptorListLoadingContext): Boolean {
-    if (isBundled || sinceBuild == null && untilBuild == null) {
-      return true
+  private fun checkCompatibility(context: DescriptorListLoadingContext) {
+    if (isBundled || (sinceBuild == null && untilBuild == null)) {
+      return
     }
 
-    val error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get()) ?: return true
+    val error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get()) ?: return
 
     // error will be added by reportIncompatiblePlugin
     markAsIncomplete(context = context, disabledDependency = null, shortMessage = null)
     context.result.reportIncompatiblePlugin(this, error)
-    return false
   }
 
-  internal fun markAsIncomplete(context: DescriptorListLoadingContext, disabledDependency: PluginId?, shortMessage: Supplier<String>?) {
-    val wasIncomplete = isIncomplete
-    isIncomplete = true
-    isEnabled = false
-    if (wasIncomplete) {
+  private fun markAsIncomplete(context: DescriptorListLoadingContext,
+                               disabledDependency: PluginId?,
+                               @PropertyKey(resourceBundle = CoreBundle.BUNDLE) shortMessage: String?,
+                               pluginId: PluginId? = disabledDependency) {
+    if (isIncomplete) {
       return
     }
 
-    val pluginError = if (shortMessage == null) null else PluginLoadingError(plugin = this,
-                                                                             detailedMessageSupplier = null,
-                                                                             shortMessageSupplier = shortMessage,
-                                                                             isNotifyUser = false,
-                                                                             disabledDependency = disabledDependency)
+    isIncomplete = true
+    isEnabled = false
+
+    val pluginError = if (shortMessage == null) {
+      null
+    }
+    else {
+      PluginLoadingError(plugin = this,
+                         detailedMessageSupplier = null,
+                         shortMessageSupplier = {
+                           CoreBundle.message(shortMessage, pluginId!!)
+                         },
+                         isNotifyUser = false,
+                         disabledDependency = disabledDependency)
+    }
     context.result.addIncompletePlugin(this, pluginError)
   }
 
   @ApiStatus.Internal
-  fun registerExtensions(area: ExtensionsAreaImpl, containerDescriptor: ContainerDescriptor, listenerCallbacks: List<Runnable>?) {
-    var extensions = containerDescriptor.extensions
-    if (extensions != null) {
-      area.registerExtensions(extensions, this, listenerCallbacks)
+  fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>,
+                         containerDescriptor: ContainerDescriptor,
+                         listenerCallbacks: List<Runnable>?) {
+    containerDescriptor.extensions?.let {
+      if (!it.isEmpty()) {
+        @Suppress("JavaMapForEach")
+        it.forEach { name, list ->
+          nameToPoint.get(name)?.registerExtensions(list, this, listenerCallbacks)
+        }
+      }
       return
     }
 
-    extensions = epNameToExtensionElements
-    if (extensions == null) {
-      return
-    }
+    val unsortedMap = epNameToExtensions ?: return
 
     // app container: in most cases will be only app-level extensions - to reduce map copying, assume that all extensions are app-level and then filter out
     // project container: rest of extensions wil be mostly project level
     // module container: just use rest, area will not register unrelated extension anyway as no registered point
-    containerDescriptor.extensions = extensions
-    var other: LinkedHashMap<String, MutableList<ExtensionDescriptor>>? = null
-    val iterator = extensions.entries.iterator()
-    while (iterator.hasNext()) {
-      val (key, value) = iterator.next()
-      if (!area.registerExtensions(key, value, this, listenerCallbacks)) {
-        iterator.remove()
-        if (other == null) {
-          other = LinkedHashMap()
-        }
-        addExtensionList(other, key, value)
+
+    if (containerDescriptor == appContainerDescriptor) {
+      val registeredCount = doRegisterExtensions(unsortedMap, nameToPoint, listenerCallbacks)
+      containerDescriptor.distinctExtensionPointCount = registeredCount
+
+      if (registeredCount == unsortedMap.size) {
+        projectContainerDescriptor.extensions = Collections.emptyMap()
+        moduleContainerDescriptor.extensions = Collections.emptyMap()
       }
     }
+    else if (containerDescriptor == projectContainerDescriptor) {
+      val registeredCount = doRegisterExtensions(unsortedMap, nameToPoint, listenerCallbacks)
+      containerDescriptor.distinctExtensionPointCount = registeredCount
 
-    if (extensions.isEmpty()) {
-      containerDescriptor.extensions = Collections.emptyMap()
-    }
-
-    if (containerDescriptor == projectContainerDescriptor) {
-      // assign unsorted to module level to avoid concurrent access during parallel module loading
-      moduleContainerDescriptor.extensions = other
-      epNameToExtensionElements = null
+      if (registeredCount == unsortedMap.size) {
+        containerDescriptor.extensions = unsortedMap
+        moduleContainerDescriptor.extensions = Collections.emptyMap()
+      }
+      else if (registeredCount == (unsortedMap.size - appContainerDescriptor.distinctExtensionPointCount)) {
+        moduleContainerDescriptor.extensions = Collections.emptyMap()
+      }
     }
     else {
-      epNameToExtensionElements = other
+      val registeredCount = doRegisterExtensions(unsortedMap, nameToPoint, listenerCallbacks)
+      if (registeredCount == 0) {
+        moduleContainerDescriptor.extensions = Collections.emptyMap()
+      }
     }
+  }
+
+  private fun doRegisterExtensions(unsortedMap: Map<String, MutableList<ExtensionDescriptor>>,
+                                   nameToPoint: Map<String, ExtensionPointImpl<*>>,
+                                   listenerCallbacks: List<Runnable>?): Int {
+    var registeredCount = 0
+    for (entry in unsortedMap) {
+      val point = nameToPoint.get(entry.key) ?: continue
+      point.registerExtensions(entry.value, this, listenerCallbacks)
+      registeredCount++
+    }
+    return registeredCount
   }
 
   override fun getDescription(): String? {
@@ -410,7 +408,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getOptionalDependentPluginIds(): Array<PluginId> {
     val pluginDependencies = pluginDependencies
-    if (pluginDependencies == null || pluginDependencies.isEmpty()) {
+    if (pluginDependencies.isEmpty()) {
       return PluginId.EMPTY_ARRAY
     }
     else {
@@ -439,20 +437,14 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   val unsortedEpNameToExtensionElements: Map<String, List<ExtensionDescriptor>>
     get() {
-      return Collections.unmodifiableMap(epNameToExtensionElements ?: return Collections.emptyMap())
+      return Collections.unmodifiableMap(epNameToExtensions ?: return Collections.emptyMap())
     }
-
-  fun getActionDescriptionElements(): List<RawPluginDescriptor.ActionDescriptor>? = actionElements
 
   override fun getVendorEmail() = vendorEmail
 
   override fun getVendorUrl() = vendorUrl
 
   override fun getUrl() = url!!
-
-  //fun setUrl(`val`: String?) {
-  //  url = `val`
-  //}
 
   override fun getPluginId() = id
 
@@ -480,8 +472,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun isRequireRestart() = isRestartRequired
 
-  fun getModules(): List<PluginId> = modules ?: Collections.emptyList()
-
   override fun equals(other: Any?) = this === other || id == if (other is IdeaPluginDescriptorImpl) other.id else null
 
   override fun hashCode() = id.hashCode()
@@ -495,28 +485,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 // don't expose user home in error messages
 internal fun pluginPathToUserString(file: Path): String {
   return file.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")
-}
-
-private fun addExtensionList(map: MutableMap<String, MutableList<ExtensionDescriptor>>, name: String, list: MutableList<ExtensionDescriptor>) {
-  val mapList = map.computeIfAbsent(name) { list }
-  if (mapList !== list) {
-    mapList.addAll(list)
-  }
-}
-
-private fun createExtensionPoints(containerDescriptor: ContainerDescriptor, pluginDescriptor: IdeaPluginDescriptorImpl) {
-  containerDescriptor.extensionPoints = (containerDescriptor.extensionPointDescriptors ?: return)
-    .mapTo(ArrayList()) {
-      val name = it.qualifiedName ?: "${pluginDescriptor.id}.${it.name!!}"
-      if (it.`interface` == null) {
-        @Suppress("RemoveExplicitTypeArguments")
-        BeanExtensionPoint<Any>(name, it.beanClass!!, pluginDescriptor, it.dynamic)
-      }
-      else {
-        @Suppress("RemoveExplicitTypeArguments")
-        InterfaceExtensionPoint<Any>(name, it.`interface`, pluginDescriptor, null, it.dynamic)
-      }
-    }
 }
 
 private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String, visitedFiles: List<String>) {

@@ -2,6 +2,7 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,16 +15,10 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   public InterfaceExtensionPoint(@NotNull String name,
                                  @NotNull String className,
                                  @NotNull PluginDescriptor pluginDescriptor,
+                                 @NotNull ComponentManager componentManager,
                                  @Nullable Class<T> clazz,
                                  boolean dynamic) {
-    super(name, className, pluginDescriptor, clazz, dynamic);
-  }
-
-  @Override
-  public @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
-    InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), null, isDynamic());
-    result.setComponentManager(manager);
-    return result;
+    super(name, className, pluginDescriptor, componentManager, clazz, dynamic);
   }
 
   @Override

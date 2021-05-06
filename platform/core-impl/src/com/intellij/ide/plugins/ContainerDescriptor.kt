@@ -3,19 +3,14 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
-import com.intellij.openapi.extensions.impl.ExtensionDescriptor
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.extensions.ExtensionDescriptor
+import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.util.messages.ListenerDescriptor
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @ApiStatus.Internal
 class ContainerDescriptor {
-  class ExtensionPointDescriptor(val name: String?,
-                                 val qualifiedName: String?,
-                                 val `interface`: String?,
-                                 val beanClass: String?,
-                                 val dynamic: Boolean)
   private var _services: MutableList<ServiceDescriptor>? = null
   val services: List<ServiceDescriptor>
     get() = _services ?: Collections.emptyList()
@@ -23,12 +18,10 @@ class ContainerDescriptor {
   @JvmField var components: MutableList<ComponentConfig>? = null
   @JvmField var listeners: MutableList<ListenerDescriptor>? = null
 
-  @Transient
-  @JvmField var extensionPoints: MutableList<ExtensionPointImpl<*>>? = null
-  @JvmField var extensionPointDescriptors: MutableList<ExtensionPointDescriptor>? = null
+  @JvmField var extensionPoints: MutableList<ExtensionPointDescriptor>? = null
 
-  @Transient
-  @JvmField var extensions: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
+  @Transient var distinctExtensionPointCount = -1
+  @Transient @JvmField var extensions: Map<String, MutableList<ExtensionDescriptor>>? = null
 
   fun addService(serviceDescriptor: ServiceDescriptor) {
     if (_services == null) {

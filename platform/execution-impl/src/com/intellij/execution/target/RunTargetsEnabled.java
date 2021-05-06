@@ -10,13 +10,16 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-public class RunTargetsEnabled {
-  private static boolean myForceEnable;
+public final class RunTargetsEnabled {
+  private static boolean forceEnable;
 
   public static boolean get() {
-    if (myForceEnable) return true;
-    IdeaPluginDescriptorImpl corePluginDescriptor = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(PluginId.getId("com.intellij"));
-    return corePluginDescriptor != null && corePluginDescriptor.getModules().contains(PluginId.getId("com.intellij.modules.run.targets"));
+    if (forceEnable) {
+      return true;
+    }
+
+    IdeaPluginDescriptorImpl corePluginDescriptor = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
+    return corePluginDescriptor != null && corePluginDescriptor.modules.contains(PluginId.getId("com.intellij.modules.run.targets"));
   }
 
   @TestOnly
@@ -24,7 +27,8 @@ public class RunTargetsEnabled {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       throw new IllegalArgumentException("Can only be used in tests");
     }
-    myForceEnable = true;
-    Disposer.register(parentDisposable, () -> myForceEnable = false);
+
+    forceEnable = true;
+    Disposer.register(parentDisposable, () -> forceEnable = false);
   }
 }

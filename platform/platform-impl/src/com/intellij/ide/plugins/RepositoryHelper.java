@@ -177,7 +177,7 @@ public final class RepositoryHelper {
   private static boolean ideContainsUltimateModule() {
     IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
     IdeaPluginDescriptorImpl corePluginImpl = (corePlugin instanceof IdeaPluginDescriptorImpl) ? (IdeaPluginDescriptorImpl)corePlugin : null;
-    return corePluginImpl != null && corePluginImpl.getModules().contains(PluginId.getId(ULTIMATE_MODULE));
+    return corePluginImpl != null && corePluginImpl.modules.contains(PluginId.getId(ULTIMATE_MODULE));
   }
 
   @ApiStatus.Internal

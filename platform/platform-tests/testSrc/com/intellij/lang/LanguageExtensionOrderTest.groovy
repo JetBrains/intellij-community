@@ -3,8 +3,6 @@ package com.intellij.lang
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginDescriptorTestKt
-import com.intellij.ide.plugins.RawPluginDescriptor
-import com.intellij.ide.plugins.XmlReader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -51,11 +49,10 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
   private void registerExtensions(String... xmls) {
     for (ext in xmls) {
       String moduleXml = "<idea-plugin><extensions>" + ext + "</extensions></idea-plugin>"
-      RawPluginDescriptor raw = XmlReader.readModuleDescriptorForTest(moduleXml.getBytes(StandardCharsets.UTF_8))
 
       IdeaPluginDescriptorImpl pluginDescriptor =
         PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), myDescriptor.pluginId)
-      pluginDescriptor.registerExtensions(myArea, pluginDescriptor.appContainerDescriptor, null)
+      pluginDescriptor.registerExtensions(myArea.extensionPoints, pluginDescriptor.appContainerDescriptor, null)
     }
   }
 

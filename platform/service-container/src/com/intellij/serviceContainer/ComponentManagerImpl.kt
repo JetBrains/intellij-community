@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
-import com.intellij.openapi.extensions.impl.ExtensionDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -79,7 +78,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
                                            componentManager: ComponentManagerImpl,
                                            task: (IdeaPluginDescriptorImpl, ContainerDescriptor) -> Unit) {
       task(mainPluginDescriptor, mainContainerDescriptor)
-      for (dep in mainPluginDescriptor.getPluginDependencies()) {
+      for (dep in mainPluginDescriptor.pluginDependencies) {
         if (dep.isDisabledOrBroken) {
           continue
         }
@@ -87,11 +86,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         val subPluginDescriptor = dep.subDescriptor ?: continue
         task(subPluginDescriptor, componentManager.getContainerDescriptor(subPluginDescriptor))
 
-        for (subDep in subPluginDescriptor.getPluginDependencies()) {
+        for (subDep in subPluginDescriptor.pluginDependencies) {
           if (!subDep.isDisabledOrBroken) {
             val d = subDep.subDescriptor ?: continue
             task(d, componentManager.getContainerDescriptor(d))
-            assert(d.getPluginDependencies().isEmpty() || d.getPluginDependencies().all { it.subDescriptor == null })
+            assert(d.pluginDependencies.isEmpty() || d.pluginDependencies.all { it.subDescriptor == null })
           }
         }
       }
@@ -251,16 +250,15 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val isHeadless = app == null || app.isHeadlessEnvironment
     val isUnitTestMode = app?.isUnitTestMode ?: false
 
-    val clonePoint = parent != null
-
     var activity = activityNamePrefix?.let { startActivity("${it}service and ep registration") }
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
+    val extensionPoints = HashMap(extensionArea.extensionPoints)
     for (mainPlugin in plugins) {
       val mainContainerDescriptor = getContainerDescriptor(mainPlugin)
 
       executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
-        registerServices(containerDescriptor.services ?: return@executeRegisterTask, pluginDescriptor)
+        registerServices(containerDescriptor.services, pluginDescriptor)
       }
 
       executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
@@ -289,12 +287,15 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         }
       }
 
-      executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { _, containerDescriptor ->
+      executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
         containerDescriptor.extensionPoints?.let {
-          extensionArea.registerExtensionPoints(it, clonePoint)
+          ExtensionsAreaImpl.createExtensionPoints(it, this, extensionPoints, pluginDescriptor)
         }
       }
     }
+
+    val immutableExtensionPoints = if (extensionPoints.isEmpty()) Collections.emptyMap() else java.util.Map.copyOf(extensionPoints)
+    extensionArea.setPoints(immutableExtensionPoints)
 
     if (activity != null) {
       activity = activity.endAndStart("${activityNamePrefix}extension registration")
@@ -302,7 +303,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     for (mainPlugin in plugins) {
       executeRegisterTask(mainPlugin, getContainerDescriptor(mainPlugin), this) { pluginDescriptor, containerDescriptor ->
-        pluginDescriptor.registerExtensions(extensionArea, containerDescriptor, listenerCallbacks)
+        pluginDescriptor.registerExtensions(immutableExtensionPoints, containerDescriptor, listenerCallbacks)
       }
     }
     activity?.end()
@@ -975,7 +976,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     val syncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     for (plugin in plugins) {
-      serviceLoop@ for (service in getContainerDescriptor(plugin).services ?: continue) {
+      serviceLoop@ for (service in getContainerDescriptor(plugin).services) {
         val list: MutableList<ForkJoinTask<*>> = when (service.preload) {
           PreloadMode.TRUE -> {
             if (onlyIfAwait) {

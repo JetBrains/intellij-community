@@ -109,7 +109,7 @@ private fun loadDescriptorFromDir(file: Path,
   }
 }
 
-internal fun loadDescriptorFromJar(file: Path,
+private fun loadDescriptorFromJar(file: Path,
                                   fileName: String,
                                   pathResolver: PathResolver,
                                   context: DescriptorLoadingContext,
@@ -152,9 +152,8 @@ internal fun loadDescriptorFromJar(file: Path,
     }
 
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginPath ?: file, isBundled = isBundled, id = null)
-    if (descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = parentContext, isSub = false, dataLoader = dataLoader)) {
-      descriptor.jarFiles = listOf(descriptor.pluginPath)
-    }
+    descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = parentContext, isSub = false, dataLoader = dataLoader)
+    descriptor.jarFiles = listOf(descriptor.pluginPath)
     return descriptor
   }
   catch (e: Throwable) {
@@ -196,12 +195,12 @@ fun loadDescriptorFromFileOrDir(file: Path,
   }
 }
 
-internal fun loadDescriptorFromDirAndNormalize(file: Path,
-                                               pathName: String,
-                                               parentContext: DescriptorListLoadingContext,
-                                               isBundled: Boolean,
-                                               isEssential: Boolean,
-                                               pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
+private fun loadDescriptorFromDirAndNormalize(file: Path,
+                                              pathName: String,
+                                              parentContext: DescriptorListLoadingContext,
+                                              isBundled: Boolean,
+                                              isEssential: Boolean,
+                                              pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
   val descriptorRelativePath = "${PluginManagerCore.META_INF}$pathName"
   loadDescriptorFromDir(file = file,
                         descriptorRelativePath = descriptorRelativePath,
@@ -356,7 +355,7 @@ private fun loadDescriptorsFromProperty(result: PluginLoadingResult, context: De
   }
 }
 
-fun loadDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boolean): DescriptorListLoadingContext {
+internal fun loadDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boolean): DescriptorListLoadingContext {
   val result = createPluginLoadingResult(null)
   val bundledPluginPath: Path? = if (isUnitTestMode) {
     null
@@ -527,19 +526,6 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
   }
 }
 
-fun tryLoadFullDescriptor(descriptor: IdeaPluginDescriptorImpl): IdeaPluginDescriptorImpl? {
-  @Suppress("LiftReturnOrAssignment")
-  if (!PluginManagerCore.hasDescriptorByIdentity(descriptor) || PluginManagerCore.getLoadedPlugins().contains(descriptor)) {
-    return descriptor
-  }
-  else {
-    return loadDescriptor(file = descriptor.pluginPath,
-                          disabledPlugins = emptySet(),
-                          isBundled = descriptor.isBundled,
-                          pathResolver = createPathResolverForPlugin(descriptor = descriptor, checkPluginJarFiles = false))
-  }
-}
-
 fun loadDescriptor(file: Path,
                    disabledPlugins: Set<PluginId>,
                    isBundled: Boolean,
@@ -610,18 +596,6 @@ fun createPathResolverForPlugin(descriptor: IdeaPluginDescriptorImpl, checkPlugi
     }
   }
   return PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
-}
-
-fun loadFullDescriptor(descriptor: IdeaPluginDescriptorImpl): IdeaPluginDescriptorImpl {
-  // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
-  val fullDescriptor = tryLoadFullDescriptor(descriptor)
-  if (fullDescriptor == null) {
-    LOG.error("Could not load full descriptor for plugin ${descriptor.pluginPath}")
-    return descriptor
-  }
-  else {
-    return fullDescriptor
-  }
 }
 
 @TestOnly

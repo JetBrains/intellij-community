@@ -80,7 +80,7 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
 
 internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
   rootDescriptor.classLoader = classLoader
-  for (dependency in rootDescriptor.getPluginDependencies()) {
+  for (dependency in rootDescriptor.pluginDependencies) {
     if (dependency.subDescriptor != null) {
       dependency.subDescriptor!!.classLoader = classLoader
     }
