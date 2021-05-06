@@ -68,7 +68,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
                                @NotNull FileEditor preview,
                                @NotNull @Nls String editorName,
                                @NotNull Layout defaultLayout) {
-    this(editor, preview, editorName, defaultLayout, true);
+    this(editor, preview, editorName, defaultLayout, false);
   }
 
   public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull @Nls String editorName) {
