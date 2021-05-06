@@ -33,7 +33,7 @@ public class BooleanExpressionMayBeConditionalFixTest extends IGQuickFixesTestCa
                  "}",
                  "void test(boolean foo, boolean bar) {\n" +
                  "    boolean c = false;\n" +
-                 "    boolean b = foo ? true : (c = bar);}"
+                 "    boolean b = wwwwwwwwwwwwwwwwwwwwwwwwwww ? true : (c = bar);}"
                  );
   }
 
