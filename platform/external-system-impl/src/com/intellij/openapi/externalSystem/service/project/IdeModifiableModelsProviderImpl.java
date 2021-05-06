@@ -153,21 +153,24 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
       if (ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
         updateSubstitutions();
       }
+      LibraryTable.ModifiableModel projectLibrariesModel = getModifiableProjectLibrariesModel();
       for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
         Library fromLibrary = entry.getKey();
+        String libraryName = fromLibrary.getName();
         Library.ModifiableModel modifiableModel = entry.getValue();
-        // removed and (previously) not committed library is being disposed by LibraryTableBase.LibraryModel.removeLibrary
-        // the modifiable model of such library shouldn't be committed
 
-        if ((fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) ||
-            (getModifiableWorkspace() != null && getModifiableWorkspace().isSubstituted(fromLibrary.getName()))) {
+        // Modifiable model for the new library which was disposed via ModifiableModel.removeLibrary should also be disposed
+        // Modifiable model for the old library which was removed from ProjectLibraryTable should also be disposed
+        if ((fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed())
+            || (fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null)
+            || (getModifiableWorkspace() != null && getModifiableWorkspace().isSubstituted(fromLibrary.getName()))) {
           Disposer.dispose(modifiableModel);
         }
         else {
           ((LibraryModifiableModelBridge)modifiableModel).prepareForCommit();
         }
       }
-      ((ProjectModifiableLibraryTableBridge)getModifiableProjectLibrariesModel()).prepareForCommit();
+      ((ProjectModifiableLibraryTableBridge)projectLibrariesModel).prepareForCommit();
 
       Collection<ModifiableRootModel> rootModels = myModifiableRootModels.values();
       ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[0]);
