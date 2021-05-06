@@ -471,7 +471,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       SimpleTextAttributes attributes = fragment.attributes;
       boolean isSmaller = attributes.isSmaller();
       if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
-        font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
+        font = deriveFont(font, attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
       }
       wasSmaller = isSmaller;
 
@@ -604,7 +604,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         SimpleTextAttributes attributes = fragment.attributes;
         boolean isSmaller = attributes.isSmaller();
         if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
-          font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
+          font = deriveFont(font, attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
         }
         wasSmaller = isSmaller;
 
@@ -825,7 +825,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         Font font = g.getFont();
         boolean isSmaller = attributes.isSmaller();
         if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
-          font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
+          font = deriveFont(font, attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
         }
         wasSmaller = isSmaller;
 
@@ -1173,6 +1173,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       accessibleContext = new AccessibleSimpleColoredComponent();
     }
     return accessibleContext;
+  }
+
+  private static Font deriveFont(Font originalFont, int style, float size) {
+    Font styledFont = originalFont.deriveFont(style);
+    if (!Font.DIALOG.equals(originalFont.getFamily()) && Font.DIALOG.equals(styledFont.getFamily())) {
+      // workaround for JBR-3423
+      styledFont = originalFont;
+    }
+    return styledFont.deriveFont(size);
   }
 
   protected class AccessibleSimpleColoredComponent extends JComponent.AccessibleJComponent {
