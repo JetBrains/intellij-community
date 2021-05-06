@@ -43,11 +43,16 @@ abstract class AbstractLightTestFramework: LightTestFramework {
                     return NoLightTestFrameworkResult
                 }
 
-                when(isAUnitTestMethod(namedDeclaration)) {
-                    true -> ResolvedLightTestFrameworkResult(testFramework)
+                when (namedDeclaration.getParentOfType<KtClassOrObject>(true)?.run { isAUnitTestClass(this) }) {
+                    true -> when (isAUnitTestMethod(namedDeclaration)) {
+                        true -> ResolvedLightTestFrameworkResult(testFramework)
+                        false -> UnsureLightTestFrameworkResult
+                        null -> NoLightTestFrameworkResult
+                    }
                     false -> UnsureLightTestFrameworkResult
                     null -> NoLightTestFrameworkResult
                 }
+
             }
             else -> UnsureLightTestFrameworkResult
         }
