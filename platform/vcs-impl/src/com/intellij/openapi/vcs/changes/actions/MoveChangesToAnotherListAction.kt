@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser
@@ -136,7 +137,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
         .ifEmpty { nonAffectedLists }
       val defaultSelection = guessPreferredList(preferredList)
 
-      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection, title.removeSuffix("..."), null)
+      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection, StringUtil.removeEllipsisSuffix(title), null)
       chooser.show()
       return chooser.selectedList
     }
