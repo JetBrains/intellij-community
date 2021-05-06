@@ -221,6 +221,18 @@ public class WSLDistribution {
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
+    return patchCommandLine(commandLine, project, options, 0);
+  }
+
+  /**
+   * Works like {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)},
+   * but in addition it allows to workaround WSL1 problem
+   * <a href="https://github.com/microsoft/WSL/issues/4082">Output from WSL command pipeline is randomly truncated</a>
+   */
+  public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
+                                                                    @Nullable Project project,
+                                                                    @NotNull WSLCommandLineOptions options,
+                                                                    double sleepTimeoutSec) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
     Path executable = getExecutablePath();
     boolean launchWithWslExe = options.isLaunchWithWslExe() || executable == null;
@@ -282,6 +294,9 @@ public class WSLDistribution {
 
     commandLine.getParametersList().clearAll();
     String linuxCommandStr = StringUtil.join(linuxCommand, " ");
+    if (sleepTimeoutSec > 0) {
+      linuxCommandStr += " && sleep " + sleepTimeoutSec;
+    }
     if (wslExe != null) {
       commandLine.setExePath(wslExe.toString());
       commandLine.addParameters("--distribution", getMsId());
@@ -338,7 +353,7 @@ public class WSLDistribution {
     return file != null ? file.toPath() : null;
   }
 
-  public static @NotNull List<String> buildLinuxCommand(@NotNull GeneralCommandLine commandLine, boolean executeCommandInShell) {
+  private static @NotNull List<String> buildLinuxCommand(@NotNull GeneralCommandLine commandLine, boolean executeCommandInShell) {
     List<String> command = ContainerUtil.concat(List.of(commandLine.getExePath()), commandLine.getParametersList().getList());
     return new ArrayList<>(ContainerUtil.map(command, executeCommandInShell ? CommandLineUtil::posixQuote : Functions.identity()));
   }
