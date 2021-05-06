@@ -15,8 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-//import java.util.Arrays;
-
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -115,9 +113,6 @@ public class BooleanExpressionMayBeFactorizedInspection extends BaseInspection i
       if (!JavaTokenType.OROR.equals(tokenType)) {
         return;
       }
-      //if (!Arrays.asList(JavaTokenType.OROR, JavaTokenType.ANDAND, JavaTokenType.OR, JavaTokenType.AND, JavaTokenType.XOR).contains(tokenType)) {
-      //  return;
-      //}
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       if (!(lhs instanceof PsiBinaryExpression) || !(rhs instanceof PsiBinaryExpression)) {
