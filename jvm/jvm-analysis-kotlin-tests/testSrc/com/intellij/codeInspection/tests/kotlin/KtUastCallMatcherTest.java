@@ -27,7 +27,6 @@ public class KtUastCallMatcherTest extends UastCallMatcherTestBase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     super.tuneFixture(moduleBuilder);
-    //TODO check if adding kotlin-stdlib is redundant
     File kotlinStdlib = KotlinArtifacts.getInstance().getKotlinStdlib();
     moduleBuilder.addLibraryJars("kotlin-stdlib", kotlinStdlib.getParent(), kotlinStdlib.getName());
   }
