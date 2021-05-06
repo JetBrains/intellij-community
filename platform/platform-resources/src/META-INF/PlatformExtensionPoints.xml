@@ -187,6 +187,7 @@
 
     <extensionPoint name="statistic.eventLog.eventLoggerProvider" interface="com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider"/>
     <extensionPoint name="statistic.eventLog.fusStateEventTracker" interface="com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker"/>
+    <extensionPoint name="statistic.eventLog.groupEndpointSubstitutor" interface="com.intellij.internal.statistic.eventLog.GroupEndpointSubstitutor" dynamic="true"/>
 
     <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
 

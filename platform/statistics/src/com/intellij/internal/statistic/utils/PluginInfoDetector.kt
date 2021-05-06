@@ -157,6 +157,8 @@ fun findPluginTypeByValue(value: String): PluginType? {
   return null
 }
 
+private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
+
 data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
   /**
    * @return true if code is from IntelliJ platform or JB plugin.
@@ -167,6 +169,8 @@ data class PluginInfo(val type: PluginType, val id: String?, val version: String
    * @return true if code is from IntelliJ platform, JB plugin or plugin from JB plugin repository.
    */
   fun isSafeToReport() = type.isSafeToReport()
+
+  fun isAllowedToInjectIntoFUS(): Boolean = isDevelopedByJetBrains() && id == tbePluginId
 }
 
 val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null, null)
