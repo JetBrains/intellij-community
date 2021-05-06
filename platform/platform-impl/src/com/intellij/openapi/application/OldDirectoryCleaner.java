@@ -70,7 +70,7 @@ public final class OldDirectoryCleaner {
         String text = message("old.dirs.notification.text", ApplicationNamesInfo.getInstance().getFullProductName());
         UpdateChecker.getNotificationGroup()
           .createNotification(text, NotificationType.INFORMATION)
-          .addAction(createSimpleExpiring(message("action.delete.ellipsis"), () -> confirmAndDelete(project, groups)))
+          .addAction(createSimpleExpiring(message("old.dirs.notification.action"), () -> confirmAndDelete(project, groups)))
           .notify(project);
       }
     }
