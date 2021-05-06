@@ -9,8 +9,6 @@ import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.frontend.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
 import org.jetbrains.kotlin.idea.quickfix.fixes.InitializePropertyQuickFixFactory
-import org.jetbrains.kotlin.idea.quickfix.fixes.ChangeTypeQuickFix
-import org.jetbrains.kotlin.idea.quickfix.fixes.ReplaceCallFixFactories
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     private val modifiers = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -75,9 +73,9 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     }
 
     private val overrides = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerApplicator(ChangeTypeQuickFix.changeFunctionReturnTypeOnOverride)
-        registerApplicator(ChangeTypeQuickFix.changePropertyReturnTypeOnOverride)
-        registerApplicator(ChangeTypeQuickFix.changeVariableReturnTypeOnOverride)
+        registerApplicator(ChangeTypeQuickFixFactories.changeFunctionReturnTypeOnOverride)
+        registerApplicator(ChangeTypeQuickFixFactories.changePropertyReturnTypeOnOverride)
+        registerApplicator(ChangeTypeQuickFixFactories.changeVariableReturnTypeOnOverride)
         registerApplicator(MemberNotImplementedQuickfixFactories.abstractMemberNotImplemented)
         registerApplicator(MemberNotImplementedQuickfixFactories.abstractClassMemberNotImplemented)
         registerApplicator(MemberNotImplementedQuickfixFactories.manyInterfacesMemberNotImplemented)
@@ -117,6 +115,11 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerApplicator(WrapWithSafeLetCallFixFactories.forArgumentTypeMismatch)
     }
 
+    private val returnTypes = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(ChangeTypeQuickFixFactories.componentFunctionReturnTypeMismatch)
+        registerApplicator(ChangeTypeQuickFixFactories.returnTypeMismatch)
+    }
+
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         modifiers,
         propertyInitialization,
@@ -124,5 +127,6 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         imports,
         mutability,
         expressions,
+        returnTypes
     )
 }
