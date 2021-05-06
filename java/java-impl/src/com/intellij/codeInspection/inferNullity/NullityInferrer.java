@@ -699,7 +699,7 @@ public class NullityInferrer {
       if (field instanceof PsiEnumConstant) {
         return;
       }
-      if (field.getType() instanceof PsiPrimitiveType ||
+      if ((field.getType() instanceof PsiPrimitiveType && !(field.getType() instanceof PsiArrayType)) ||
           isNotNull(field) || isNullable(field)) {
         return;
       }
