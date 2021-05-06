@@ -635,7 +635,7 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
   }
 }
 
-private fun <T> ComboBox<T>.bind(property: GraphProperty<T>) {
+fun <T> ComboBox<T>.bind(property: GraphProperty<T>) {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -655,7 +655,7 @@ private fun <T> ComboBox<T>.bind(property: GraphProperty<T>) {
 private val TextFieldWithBrowseButton.emptyText
   get() = (textField as JBTextField).emptyText
 
-private fun StatusText.bind(property: GraphProperty<String>) {
+fun StatusText.bind(property: GraphProperty<String>) {
   text = property.get()
   property.afterChange {
     text = it
@@ -665,11 +665,11 @@ private fun StatusText.bind(property: GraphProperty<String>) {
   }
 }
 
-private fun TextFieldWithBrowseButton.bind(property: GraphProperty<String>) {
+fun TextFieldWithBrowseButton.bind(property: GraphProperty<String>) {
   textField.bind(property)
 }
 
-private fun JTextComponent.bind(property: GraphProperty<String>) {
+fun JTextComponent.bind(property: GraphProperty<String>) {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {

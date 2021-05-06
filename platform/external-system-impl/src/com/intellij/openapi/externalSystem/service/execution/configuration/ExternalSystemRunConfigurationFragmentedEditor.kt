@@ -6,10 +6,10 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ui.*
 import com.intellij.ide.macro.MacrosDialog
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
-import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemProjectPathField
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.ui.LabeledComponent
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.RawCommandLineEditor
 import java.awt.BorderLayout
 
@@ -57,21 +57,19 @@ class ExternalSystemRunConfigurationFragmentedEditor(
     }
   }
 
-  private fun createProjectPath(): SettingsEditorFragment<ExternalSystemRunConfiguration, LabeledComponent<ExternalProjectPathField>> {
+  private fun createProjectPath(): SettingsEditorFragment<ExternalSystemRunConfiguration, LabeledComponent<ExternalSystemProjectPathField>> {
     val externalSystemId = mySettings.externalSystemId
-    val title = ExternalSystemBundle.message("settings.label.select.project", externalSystemId.readableName)
-    val fileChooserDescriptor = ExternalSystemApiUtil.getExternalProjectConfigDescriptor(externalSystemId)
-    val projectPathField = ExternalProjectPathField(project, externalSystemId, fileChooserDescriptor, title)
+    val projectPathField = ExternalSystemProjectPathField(project, externalSystemId, this)
     val projectPathLabel = ExternalSystemBundle.message("run.configuration.project.path.label", externalSystemId.readableName)
-    return SettingsEditorFragment<ExternalSystemRunConfiguration, LabeledComponent<ExternalProjectPathField>>(
+    return SettingsEditorFragment<ExternalSystemRunConfiguration, LabeledComponent<ExternalSystemProjectPathField>>(
       "external.system.project.path.fragment",
       ExternalSystemBundle.message("run.configuration.project.path.name", externalSystemId.readableName),
       null,
       LabeledComponent.create(projectPathField, projectPathLabel, BorderLayout.WEST),
       -10,
       SettingsEditorFragment.Type.EDITOR,
-      { it, c -> c.component.text = it.externalProjectPath },
-      { it, c -> it.externalProjectPath = c.component.text },
+      { it, c -> c.component.projectPath = it.externalProjectPath ?: "" },
+      { it, c -> it.externalProjectPath = FileUtil.toCanonicalPath(c.component.projectPath) },
       { true }
     ).apply {
       isCanBeHidden = false
