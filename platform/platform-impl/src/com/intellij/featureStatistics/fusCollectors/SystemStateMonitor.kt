@@ -112,6 +112,6 @@ internal class SystemStateMonitor : FeatureUsageStateEventTracker {
   }
 
   private fun getOSLocale(): String {
-    return Locale.getDefault().toLanguageTag()
+    return Locale.getDefault().language
   }
 }
