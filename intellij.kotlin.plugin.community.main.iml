@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.old" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.services" exported="" />
     <orderEntry type="module" module-name="kotlin.jps-common" exported="" />
+    <orderEntry type="module" module-name="kotlin.jps-plugin" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" exported="" />
