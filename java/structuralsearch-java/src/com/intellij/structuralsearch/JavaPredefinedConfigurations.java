@@ -140,6 +140,13 @@ final class JavaPredefinedConfigurations {
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.anonymous.classes"), "anonymous classes",
                                 "new 'AnonymousClass() {}",
                                 getClassType(), JavaFileType.INSTANCE),
+      createConfiguration(SSRBundle.message("predefined.configuration.local.classes"), "Local classes",
+                          "{\n" +
+                          "  '_before*;\n" +
+                          "  class 'Local {}\n" +
+                          "  '_after*;\n" +
+                          "}",
+                          getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.class.implements.two.interfaces"),
                                 "class implementing two interfaces",
                                 "class 'A implements '_Interface1:[regex( *java\\.lang\\.Cloneable )], '_Interface2:*java\\.io\\.Serializable {\n}",
@@ -319,7 +326,7 @@ final class JavaPredefinedConfigurations {
                                 "class '_Class implements '_Interface:*Cloneable {\n" +
                                 "  Object 'CloningMethod:*clone ();\n" +
                                 "}", getMiscType(), JavaFileType.INSTANCE),
-      createLegacyNonRecursiveConfiguration(SSRBundle.message("predefined.configuration.]junit.test.cases"), "junit test cases",
+      createLegacyNonRecursiveConfiguration(SSRBundle.message("predefined.configuration.junit.test.cases"), "junit test cases",
                                             "public class 'TestCase extends '_TestCaseClazz:*TestCase {\n" +
                                             "  public void '_testMethod+:test.* ();\n" +
                                             "}", getMiscType(), JavaFileType.INSTANCE, null),
