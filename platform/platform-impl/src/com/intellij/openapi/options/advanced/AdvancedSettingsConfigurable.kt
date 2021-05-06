@@ -19,7 +19,7 @@ package com.intellij.openapi.options.advanced
  import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfigurable {
-  private class SettingsRow(val row: Row, val component: JComponent, val text: String, val groupRow: Row)
+  private class SettingsRow(val row: Row, val component: JComponent, val id: String, val text: String, val groupRow: Row)
 
   private val settingsRows = mutableListOf<SettingsRow>()
   private val groupRows = mutableListOf<Row>()
@@ -57,7 +57,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
             val (label, component) = control(extension)
             extension.description()?.let { description -> component.comment(description) }
             val textComponent = label?.component ?: component.component
-            settingsRows.add(SettingsRow(this, textComponent, extension.title(), groupRow))
+            settingsRows.add(SettingsRow(this, textComponent, extension.id, extension.title(), groupRow))
           }
         }
       }
@@ -141,7 +141,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
     val visibleGroupRows = mutableSetOf<Row>()
     for (settingsRow in settingsRows) {
       val textWords = searchableOptionsRegistrar.getProcessedWords(settingsRow.text)
-      val matches = textWords.containsAll(filterWords)
+      val matches = textWords.containsAll(filterWords) || searchText in settingsRow.id
       settingsRow.row.visible = matches
       settingsRow.row.subRowsVisible = matches
       if (matches) {
