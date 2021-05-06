@@ -116,7 +116,6 @@
     <module old-name="idea-ui" new-name="intellij.java.ui" />
     <module old-name="idea-ui-tests" new-name="intellij.java.ui.tests" />
     <module old-name="images-build-scripts" new-name="intellij.platform.images.build" />
-    <module old-name="index-tools" new-name="intellij.tools.index" />
     <module old-name="indexing-api" new-name="intellij.platform.indexing" />
     <module old-name="indexing-impl" new-name="intellij.platform.indexing.impl" />
     <module old-name="instant-run-annotations" new-name="android.sdktools.instant-run-annotations" />
@@ -836,7 +835,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/textmate/core/intellij.textmate.core.iml" filepath="$PROJECT_DIR$/plugins/textmate/core/intellij.textmate.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/intellij.tools.dependencies.iml" filepath="$PROJECT_DIR$/build/dependencies/intellij.tools.dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/gradle-api-deps/intellij.tools.dependencies.gradle.iml" filepath="$PROJECT_DIR$/build/dependencies/gradle-api-deps/intellij.tools.dependencies.gradle.iml" />
-      <module fileurl="file://$PROJECT_DIR$/tools/index-tools/intellij.tools.index.iml" filepath="$PROJECT_DIR$/tools/index-tools/intellij.tools.index.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" filepath="$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/intellij.tools.jps.buildScriptDependencies.iml" filepath="$PROJECT_DIR$/platform/build-scripts/intellij.tools.jps.buildScriptDependencies.iml" />

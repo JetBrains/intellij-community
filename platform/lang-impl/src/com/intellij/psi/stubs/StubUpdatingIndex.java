@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
-import com.intellij.index.PrebuiltIndexProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -160,21 +159,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       @Override
       @Nullable
       protected SerializedStubTree computeValue(@NotNull final FileContent inputData, @NotNull StubBuilderType type) {
-        try {
-          SerializedStubTree prebuiltTree = findPrebuiltSerializedStubTree(inputData);
-          if (prebuiltTree != null) {
-            prebuiltTree = prebuiltTree.reSerialize(mySerializationManager, myStubIndexesExternalizer);
-            if (PrebuiltIndexProvider.DEBUG_PREBUILT_INDICES) {
-              assertPrebuiltStubTreeMatchesActualTree(prebuiltTree, inputData, type);
-            }
-            return prebuiltTree;
-          }
-        } catch (ProcessCanceledException pce) {
-          throw pce;
-        } catch (Exception e) {
-          LOG.error("Error while indexing: " + inputData.getFileName() + " using prebuilt stub index", e);
-        }
-
         Stub stub;
         try {
           stub = StubTreeBuilder.buildStubTree(inputData, type);
@@ -207,18 +191,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
         return serializedStubTree;
       }
     };
-  }
-
-  @Nullable
-  static SerializedStubTree findPrebuiltSerializedStubTree(@NotNull FileContent fileContent) {
-    if (!PrebuiltIndexProvider.USE_PREBUILT_INDEX) {
-      return null;
-    }
-    PrebuiltStubsProvider prebuiltStubsProvider = PrebuiltStubsKt.getPrebuiltStubsProvider().forFileType(fileContent.getFileType());
-    if (prebuiltStubsProvider == null) {
-      return null;
-    }
-    return prebuiltStubsProvider.findStub(fileContent);
   }
 
   private static void assertDeserializedStubMatchesOriginalStub(@NotNull SerializedStubTree stubTree,
@@ -255,28 +227,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
 
     return true;
-  }
-
-  private void assertPrebuiltStubTreeMatchesActualTree(@NotNull SerializedStubTree prebuiltStubTree,
-                                                       @NotNull FileContent fileContent,
-                                                       @NotNull StubBuilderType type) {
-    try {
-      Stub stub = StubTreeBuilder.buildStubTree(fileContent, type);
-      if (stub == null) {
-        return;
-      }
-      SerializedStubTree actualTree = SerializedStubTree.serializeStub(stub, mySerializationManager, myStubIndexesExternalizer);
-      if (!IndexDataComparer.INSTANCE.areStubTreesTheSame(actualTree, prebuiltStubTree)) {
-        throw new RuntimeExceptionWithAttachments(
-          "Prebuilt stub tree does not match actual stub tree",
-          new Attachment("actual-stub-tree.txt", IndexDataPresenter.INSTANCE.getPresentableSerializedStubTree(actualTree)),
-          new Attachment("prebuilt-stub-tree.txt", IndexDataPresenter.INSTANCE.getPresentableSerializedStubTree(prebuiltStubTree))
-        );
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private static final byte IS_BINARY_MASK = 1;

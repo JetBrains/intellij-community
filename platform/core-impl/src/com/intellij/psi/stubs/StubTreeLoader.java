@@ -66,13 +66,7 @@ public abstract class StubTreeLoader {
       IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
       boolean upToDate = indexingStampInfo != null && indexingStampInfo.isUpToDate(document, file, psiFile);
 
-      boolean canBePrebuilt = isPrebuilt(psiFile.getVirtualFile());
-
       @NonNls String msg = "PSI and index do not match.\nPlease report the problem to JetBrains with the files attached\n";
-
-      if (canBePrebuilt) {
-        msg += "This stub can have pre-built origin\n";
-      }
 
       if (upToDate) {
         msg += "INDEXED VERSION IS THE CURRENT ONE";
@@ -133,8 +127,6 @@ public abstract class StubTreeLoader {
              new RuntimeExceptionWithAttachments(msg, cause, attachments);
     });
   }
-
-  protected abstract boolean isPrebuilt(@NotNull VirtualFile virtualFile);
 
   private static RuntimeExceptionWithAttachments handleUpToDateMismatch(@NotNull String message, Attachment[] attachments, @Nullable Throwable cause) {
     return new UpToDateStubIndexMismatch(message, cause, attachments);
