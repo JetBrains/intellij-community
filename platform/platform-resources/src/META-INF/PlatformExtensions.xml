@@ -946,10 +946,6 @@
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.PluginTroubleInfoCollector"/>
 
     <!-- experiments -->
-    <experimentalFeature id="inline.browse.button" percentOfUsers="100">
-      <description>Inlines browse button inside TextFieldWithBrowseButton component</description>
-    </experimentalFeature>
-
     <experimentalFeature id="wsl.legacy.distribution" percentOfUsers="0">
       <description>Makes legacy Ubuntu distribution (bash.exe) available</description>
     </experimentalFeature>
