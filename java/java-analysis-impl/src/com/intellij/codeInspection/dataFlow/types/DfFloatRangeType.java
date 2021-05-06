@@ -148,7 +148,7 @@ class DfFloatRangeType implements DfFloatType {
           return create(myFrom, nextDown(range.myFrom), false, nan);
         }
         if (myFrom == Float.NEGATIVE_INFINITY && myTo == Float.POSITIVE_INFINITY) {
-          return create(range.myFrom, range.myTo, false, nan);
+          return create(range.myFrom, range.myTo, true, nan);
         }
         // disjoint [myFrom, nextDown(range.myFrom)] U [nextUp(range.myTo), myTo] -- not supported
         return create(myFrom, myTo, false, nan);
