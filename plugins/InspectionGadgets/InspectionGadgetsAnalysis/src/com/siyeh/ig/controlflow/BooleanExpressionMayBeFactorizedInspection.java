@@ -88,7 +88,7 @@ public class BooleanExpressionMayBeFactorizedInspection extends BaseInspection i
       }
       CommentTracker commentTracker = new CommentTracker();
       PsiReplacementUtil.replaceExpression(binaryExpression,
-                                           getTextForAnd(llhs, commentTracker) + '&& (' + getTextForOr(thenExpression, commentTracker) + '||' + getTextForOr(elseExpression, commentTracker) + ')',
+                                           getTextForAnd(llhs, commentTracker) + "&& (" + getTextForOr(thenExpression, commentTracker) + "||" + getTextForOr(elseExpression, commentTracker) + ')',
                                            commentTracker);
     }
 
