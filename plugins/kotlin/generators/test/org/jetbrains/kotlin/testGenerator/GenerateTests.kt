@@ -1074,6 +1074,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirSealedInheritorsTest> {
             model("resolveSealed", pattern = DIRECTORY, isRecursive = false)
         }
+        testClass<AbstractFirOnAirResolveTest> {
+            model("onAirResolve")
+        }
         testClass<AbstractFirLazyDeclarationResolveTest> {
             model("lazyResolve")
         }
