@@ -24,10 +24,12 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -70,6 +72,14 @@ public class EditorFactoryImpl extends EditorFactory {
       @Override
       public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
         refreshAllEditors();
+      }
+    });
+    busConnection.subscribe(AdvancedSettingsChangeListener.TOPIC, new AdvancedSettingsChangeListener() {
+      @Override
+      public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
+        if (id.equals(EditorSettingsExternalizable.DISTRACTION_FREE_MARGIN)) {
+          refreshAllEditors();
+        }
       }
     });
 

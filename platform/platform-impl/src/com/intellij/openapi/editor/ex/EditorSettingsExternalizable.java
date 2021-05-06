@@ -50,6 +50,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @NonNls private static final String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
   private static final String EDITOR_TAB_PAINTING = "editor.tab.painting";
   private static final String SHOW_SPECIAL_CHARS = "editor.show.special.chars";
+  public static final String DISTRACTION_FREE_MARGIN = "editor.distraction.free.margin";
 
   //Q: make it interface?
   public static final class OptionSet {

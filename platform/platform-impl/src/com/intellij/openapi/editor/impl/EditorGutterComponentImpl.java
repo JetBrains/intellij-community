@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -826,6 +827,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void calcAnnotationExtraSize() {
     myTextAnnotationExtraSize = 0;
     if (!myEditor.isInDistractionFreeMode() || isMirrored()) return;
+
+    int marginFromSettings = AdvancedSettings.getInt(EditorSettingsExternalizable.DISTRACTION_FREE_MARGIN);
+    if (marginFromSettings != -1) {
+      myTextAnnotationExtraSize = marginFromSettings;
+      return;
+    }
 
     Component outerContainer = ComponentUtil.findParentByCondition(myEditor.getComponent(), c -> EditorComposite.isEditorComposite(c));
     if (outerContainer == null) return;
