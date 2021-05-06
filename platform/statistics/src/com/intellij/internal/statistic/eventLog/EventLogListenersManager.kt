@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 class EventLogListenersManager {
   private val subscribers = MultiMap.createConcurrent<String, StatisticsEventLogListener>()
 
-  fun notifySubscribers(recorderId: String, validatedEvent: LogEvent, rawEventId: String, rawData: Map<String, Any>) {
+  fun notifySubscribers(recorderId: String, validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
     val listeners = subscribers[recorderId]
     for (listener in listeners) {
       listener.onLogEvent(validatedEvent, rawEventId, rawData)
@@ -31,5 +31,11 @@ class EventLogListenersManager {
 }
 
 interface StatisticsEventLogListener {
-  fun onLogEvent(validatedEvent: LogEvent, rawEventId: String, rawData: Map<String, Any>)
+  /**
+   * @param rawEventId Event id before validation.
+   * @param rawData Event data before validation.
+   *
+   * [rawEventId] and [rawData] should be used only for testing purpose, so available only in fus test mode, otherwise will be null.
+   */
+  fun onLogEvent(validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?)
 }

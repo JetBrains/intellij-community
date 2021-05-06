@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.CompletableFuture
@@ -64,7 +64,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     }
     else {
       logLastEvent()
-      lastEvent = FusEvent(event, rawEventId, rawData)
+      lastEvent = if(StatisticsRecorderUtil.isTestModeEnabled(recorderId)) FusEvent(event, rawEventId, rawData) else FusEvent(event, null, null)
       lastEventTime = event.time
       lastEventCreatedTime = createdTime
     }
@@ -90,8 +90,8 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         event.addData("system_headless", true)
       }
       writer.log(it.validatedEvent)
-      ServiceManager.getService(EventLogListenersManager::class.java).notifySubscribers(recorderId, it.validatedEvent, it.rawEventId,
-                                                                                        it.rawData)
+      ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
+        .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData)
     }
     lastEvent = null
   }
@@ -125,6 +125,6 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   }
 
   private data class FusEvent(val validatedEvent: LogEvent,
-                              val rawEventId: String,
-                              val rawData: Map<String, Any>)
+                              val rawEventId: String?,
+                              val rawData: Map<String, Any>?)
 }

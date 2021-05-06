@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.toolwindow
 
 import com.intellij.diagnostic.logging.LogConsoleBase
@@ -40,7 +40,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
     val model = StatisticsLogFilterModel()
     consoleLog = StatisticsEventLogConsole(project, model, recorderId)
     eventLogListener = object : StatisticsEventLogListener {
-      override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String, rawData: Map<String, Any>) {
+      override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
         consoleLog.addLogLine(messageBuilder.buildLogMessage(validatedEvent, rawEventId, rawData))
       }
     }
