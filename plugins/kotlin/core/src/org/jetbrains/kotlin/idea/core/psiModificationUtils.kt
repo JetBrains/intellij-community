@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.addRemoveModifier.MODIFIERS_ORDER
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.synthetics.findClassDescriptor
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.OverridingUtil
@@ -49,6 +50,7 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCallExpression {
     val ktExpression = this.getArgumentExpression()
@@ -394,9 +396,9 @@ fun KtModifierListOwner.canBeProtected(): Boolean {
         else -> this.parent
     }
     return when (parent) {
-        is KtClassBody -> parent.parent is KtClass
+        is KtClassBody -> parent.parent is KtClass && !this.isFinalClassConstructor()
         is KtParameterList -> parent.parent is KtPrimaryConstructor
-        is KtClass -> !this.isAnnotationClassPrimaryConstructor()
+        is KtClass -> !this.isAnnotationClassPrimaryConstructor() && !this.isFinalClassConstructor()
         else -> false
     }
 }
@@ -411,6 +413,12 @@ fun KtModifierListOwner.canBeInternal(): Boolean {
 
 private fun KtModifierListOwner.isAnnotationClassPrimaryConstructor(): Boolean =
     this is KtPrimaryConstructor && (this.parent as? KtClass)?.hasModifier(KtTokens.ANNOTATION_KEYWORD) ?: false
+
+private fun KtModifierListOwner.isFinalClassConstructor(): Boolean {
+    if (this !is KtConstructor<*>) return false
+    val ktClass = getContainingClassOrObject().safeAs<KtClass>() ?: return false
+    return ktClass.toDescriptor().safeAs<ClassDescriptor>()?.isFinalOrEnum ?: return false
+}
 
 private fun KtModifierListOwner.isSealedClassConstructor(): Boolean {
     if (this !is KtConstructor<*>) return false
