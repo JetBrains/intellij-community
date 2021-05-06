@@ -168,6 +168,10 @@ public final class UIUtil {
   }
 
   public static int getTransparentTitleBarHeight(JRootPane rootPane) {
+    Object property = rootPane.getClientProperty("Window.transparentTitleBarHeight");
+    if (property instanceof Integer) {
+      return (int)property;
+    }
     return "small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 24;
   }
 

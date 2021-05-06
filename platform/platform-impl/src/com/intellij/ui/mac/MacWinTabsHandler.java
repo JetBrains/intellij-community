@@ -12,11 +12,14 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
@@ -46,14 +49,16 @@ public class MacWinTabsHandler {
       return northComponent;
     }
 
-    NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
+    JPanel panel = new NonOpaquePanel(new BorderLayout());
 
-    NonOpaquePanel filler = new NonOpaquePanel();
+    JPanel filler = new OpaquePanel();
+    filler.setBorder(JBUI.Borders.customLineBottom(UIUtil.getTooltipSeparatorColor()));
     filler.setVisible(false);
 
     panel.add(filler, BorderLayout.NORTH);
     panel.add(northComponent);
     rootPane.putClientProperty(WIN_TAB_FILLER, filler);
+    rootPane.putClientProperty("Window.transparentTitleBarHeight", 28);
     return panel;
   }
 
@@ -233,6 +238,9 @@ public class MacWinTabsHandler {
     JComponent filler = (JComponent)frame.getRootPane().getClientProperty(WIN_TAB_FILLER);
     if (filler == null) {
       return;
+    }
+    if (height > 0 && Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
+      height++;
     }
     boolean visible = height > 0;
     boolean oldVisible = filler.isVisible();

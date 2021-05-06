@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeRootPane;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -293,7 +294,10 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     if (pane != null) {
       y -= pane.getBottomHeight();
       if (SystemInfoRt.isMac && Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
-        y -= pane.getY();
+        ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper((Window)myParent.getParent());
+        if (helper == null || !helper.isInFullScreen()) {
+          y -= UIUtil.getTransparentTitleBarHeight(myParent);
+        }
       }
     }
     if (myParent instanceof IdeRootPane) {
