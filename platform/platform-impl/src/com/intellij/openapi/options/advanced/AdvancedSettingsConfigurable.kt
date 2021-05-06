@@ -90,7 +90,9 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
           { AdvancedSettings.getInt(extension.id) },
           { AdvancedSettings.setInt(extension.id, it) },
           columns = 10
-        )
+        ).also {
+          extension.trailingLabel()?.let { label(it) }
+        }
       }
 
       AdvancedSettingType.String -> {
@@ -98,7 +100,9 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
           { AdvancedSettings.getString(extension.id) },
           { AdvancedSettings.setString(extension.id, it) },
           columns = 20
-        )
+        ).also {
+          extension.trailingLabel()?.let { label(it) }
+        }
       }
 
       AdvancedSettingType.Enum -> {

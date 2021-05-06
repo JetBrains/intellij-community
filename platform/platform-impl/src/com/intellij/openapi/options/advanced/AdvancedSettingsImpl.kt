@@ -60,6 +60,10 @@ class AdvancedSettingBean : PluginAware {
   @JvmField
   var descriptionKey: String = ""
 
+  @Attribute("trailingLabelKey")
+  @JvmField
+  var trailingLabelKey: String = ""
+
   @Attribute("bundle")
   @JvmField
   var bundle: String = ""
@@ -92,6 +96,12 @@ class AdvancedSettingBean : PluginAware {
   fun description(): String? {
     val descriptionKey = descriptionKey.ifEmpty { "advanced.setting.$id.description" }
     return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.getString(descriptionKey)
+  }
+
+  @Nls
+  fun trailingLabel(): String? {
+    val trailingLabelKey = trailingLabelKey.ifEmpty { "advanced.setting.$id.trailingLabel" }
+    return findBundle()?.takeIf { it.containsKey(trailingLabelKey) }?.getString(trailingLabelKey)
   }
 
   private fun findBundle(): ResourceBundle? {
