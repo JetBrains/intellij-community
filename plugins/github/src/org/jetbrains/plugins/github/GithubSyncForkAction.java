@@ -197,13 +197,6 @@ public class GithubSyncForkAction extends DumbAwareAction {
                                       GithubBundle.message("cannot.validate.upstream", upstreamRemoteUrl));
         return;
       }
-      if (isUpstreamWithSameUsername(indicator, userAndRepo)) {
-        GithubNotifications.showError(myProject,
-                                      GithubNotificationIdsHolder.REBASE_UPSTREAM_IS_OWN_REPO,
-                                      GithubBundle.message("rebase.error"),
-                                      GithubBundle.message("rebase.error.upstream.is.own.repo", upstreamRemoteUrl));
-        return;
-      }
       String name = getDefaultBranchName(indicator, userAndRepo);
       if (name == null) {
         return;
@@ -219,20 +212,6 @@ public class GithubSyncForkAction extends DumbAwareAction {
       LOG.info("Rebasing current branch");
       indicator.setText(GithubBundle.message("rebase.process.rebasing.branch.onto", onto));
       rebaseCurrentBranch(indicator, onto);
-    }
-
-    private boolean isUpstreamWithSameUsername(@NotNull ProgressIndicator indicator, @NotNull GHRepositoryPath userAndRepo) {
-      try {
-        String username = myRequestExecutor.execute(indicator, GithubApiRequests.CurrentUser.get(myServer)).getLogin();
-        return userAndRepo.getOwner().equals(username);
-      }
-      catch (IOException e) {
-        GithubNotifications.showError(myProject,
-                                      GithubNotificationIdsHolder.REBASE_CANNOT_GER_USER_INFO,
-                                      GithubBundle.message("rebase.error"),
-                                      GithubBundle.message("cannot.get.user.info"));
-        return true;
-      }
     }
 
     @Nullable
