@@ -337,4 +337,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTestWith(insp -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
   }
   public void testReturnOrElseNull() { doTestWith(insp -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
+  public void testArrayIntersectionType() { doTest(); }
 }

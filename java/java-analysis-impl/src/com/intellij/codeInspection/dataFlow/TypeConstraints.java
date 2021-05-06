@@ -138,7 +138,15 @@ public final class TypeConstraints {
   @NotNull
   private static PsiType normalizeType(@NotNull PsiType psiType) {
     if (psiType instanceof PsiArrayType) {
-      return PsiTypesUtil.createArrayType(normalizeType(psiType.getDeepComponentType()), psiType.getArrayDimensions());
+      PsiType normalized = normalizeType(psiType.getDeepComponentType());
+      int dimensions = psiType.getArrayDimensions();
+      if (normalized instanceof PsiIntersectionType) {
+        PsiType[] types = StreamEx.of(((PsiIntersectionType)normalized).getConjuncts())
+          .map(t -> PsiTypesUtil.createArrayType(t, dimensions))
+          .toArray(PsiType.EMPTY_ARRAY);
+        return PsiIntersectionType.createIntersection(true, types);
+      }
+      return PsiTypesUtil.createArrayType(normalized, dimensions);
     }
     if (psiType instanceof PsiWildcardType) {
       return normalizeType(((PsiWildcardType)psiType).getExtendsBound());
