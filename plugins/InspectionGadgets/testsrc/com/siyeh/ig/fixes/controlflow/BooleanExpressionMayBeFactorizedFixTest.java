@@ -29,11 +29,11 @@ public class BooleanExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCas
     doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  "void test(boolean foo, boolean bar) {\n" +
                  "    boolean c = false;\n" +
-                 "    boolean b = (!foo &&/**/ (c = bar)) || (foo && true);" +
+                 "    boolean b = (foo &&/**/ (c = bar)) || (foo && true);" +
                  "}",
                  "void test(boolean foo, boolean bar) {\n" +
                  "    boolean c = false;\n" +
-                 "    boolean b = foo ? true : (c = bar);}"
+                 "    boolean b = foo && ((c = bar) || true);}"
                  );
   }
 
@@ -42,7 +42,7 @@ public class BooleanExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCas
            "class X {" +
            "  boolean b = true;" +
            "  void test(boolean foo) {" +
-           "    boolean c = b && foo ||/**/ !b && complex();" +
+           "    boolean c = b && foo ||/**/ b && complex();" +
            "  }" +
            "  boolean complex() {" +
            "    b = !b;" +
@@ -52,7 +52,7 @@ public class BooleanExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCas
            "class X {" +
            "  boolean b = true;" +
            "  void test(boolean foo) {" +
-           "    boolean c = b ? foo : complex();" +
+           "    boolean c = b && (foo || complex());" +
            "  }" +
            "  boolean complex() {" +
            "    b = !b;" +
@@ -66,7 +66,7 @@ public class BooleanExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCas
            "class X {" +
            "  boolean b = true;" +
            "  void test(boolean foo) {" +
-           "    boolean c = complex() && foo ||/**/ !complex() && b;" +
+           "    boolean c = complex() && foo ||/**/ complex() && b;" +
            "  }" +
            "  boolean complex() {" +
            "    b = !b;" +
@@ -79,12 +79,12 @@ public class BooleanExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCas
     doTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
            "class X {\n" +
            "  boolean test(int x, int y, int z) {\n" +
-           "    return (x > y && z == 1) || /**/(x <= y && z == 2);\n" +
+           "    return (x > y && z == 1) || /**/(y < x && z == 2);\n" +
            "  }\n" +
            "}",
            "class X {\n" +
            "  boolean test(int x, int y, int z) {\n" +
-           "    return x > y ? z == 1 : z == 2;\n" +
+           "    return x > y && (z == 1 || z == 2);\n" +
            "  }\n" +
            "}");
   }
