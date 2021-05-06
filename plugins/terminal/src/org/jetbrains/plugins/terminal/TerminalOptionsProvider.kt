@@ -7,14 +7,13 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.Nls
 
 @State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var myState = State()
 
-  override fun getState(): State? {
+  override fun getState(): State {
     return myState
   }
 
@@ -69,8 +68,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
-    @get:Property(surroundWithTag = false, flat = true)
-    var envDataOptions = EnvironmentVariablesDataOptions()
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {
@@ -109,12 +106,13 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.myHighlightHyperlinks = highlight
   }
 
+  @Deprecated("To be removed", ReplaceWith("org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider.getEnvData"))
   fun getEnvData(): EnvironmentVariablesData {
-    return myState.envDataOptions.get()
+    return EnvironmentVariablesData.DEFAULT
   }
 
+  @Deprecated("To be removed", ReplaceWith("org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider.setEnvData"))
   fun setEnvData(envData: EnvironmentVariablesData) {
-    myState.envDataOptions.set(envData)
   }
 
   // replace with property delegate when Kotlin 1.4 arrives (KT-8658)
