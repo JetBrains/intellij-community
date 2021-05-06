@@ -13,7 +13,6 @@ import com.intellij.execution.ui.TargetAwareRunConfigurationEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
@@ -498,7 +497,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       boolean targetAware =
         configuration instanceof TargetEnvironmentAwareRunProfile &&
         ((TargetEnvironmentAwareRunProfile)configuration).getDefaultLanguageRuntimeType() != null &&
-        Experiments.getInstance().isFeatureEnabled("run.targets");
+        RunTargetsEnabled.get();
       myRunOnPanel.setVisible(targetAware);
       if (targetAware) {
         String defaultTargetName = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultTargetName();
