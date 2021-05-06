@@ -439,11 +439,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     Collection<EditorWindow> windows = findWindows(file);
     for (EditorWindow window : windows) {
       EditorWithProviderComposite composite = window.findFileComposite(file);
+      LOG.assertTrue(composite != null);
       int index = window.findEditorIndex(composite);
       LOG.assertTrue(index != -1);
       window.setForegroundAt(index, getManager().getFileColor(file));
       TextAttributes attributes = getManager().isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
-      if (composite != null && composite.isPreview()) {
+      if (composite.isPreview()) {
         var italic = new TextAttributes(null, null, null, null, Font.ITALIC);
         attributes = (attributes == null) ? italic : TextAttributes.merge(italic, attributes);
       }

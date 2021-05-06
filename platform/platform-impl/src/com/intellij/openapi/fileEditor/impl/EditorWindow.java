@@ -1227,7 +1227,7 @@ public final class EditorWindow {
     return -1;
   }
 
-  int findEditorIndex(EditorComposite editorToFind) {
+  int findEditorIndex(@NotNull EditorComposite editorToFind) {
     for (int i = 0; i != getTabCount(); ++i) {
       EditorWithProviderComposite editor = getEditorAt(i);
       if (editor.equals(editorToFind)) {
