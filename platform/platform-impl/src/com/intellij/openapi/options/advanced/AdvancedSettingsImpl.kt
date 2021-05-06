@@ -11,6 +11,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Attribute
@@ -38,10 +39,12 @@ class AdvancedSettingBean : PluginAware {
   }
 
   @Attribute("id")
+  @RequiredElement
   @JvmField
   var id: String = ""
 
   @Attribute("default")
+  @RequiredElement
   @JvmField
   var defaultValue = ""
 
