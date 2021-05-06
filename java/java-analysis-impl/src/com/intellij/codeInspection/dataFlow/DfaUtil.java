@@ -38,7 +38,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
- * @author Gregory.Shrago
+ * Utility methods to support DFA on Java
  */
 public final class DfaUtil {
   public static @NotNull Collection<PsiExpression> getVariableValues(@Nullable PsiVariable variable, @Nullable PsiElement context) {
@@ -358,5 +358,28 @@ public final class DfaUtil {
       initialState.applyCondition(assertionStatus.eq(DfTypes.FALSE));
     }
     return initialState;
+  }
+
+  /**
+   * Return the DfType of the value, automatically unboxing it (in terms of Java boxing), if necessary
+   * 
+   * @param state memory state
+   * @param value value to get the type of; if value is a primitive wrapper, it will be unboxed before fetching the DfType
+   * @return the DfType of the value within this memory state
+   */
+  public static @NotNull DfType getUnboxedDfType(DfaMemoryState state, @NotNull DfaValue value) {
+    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == SpecialField.UNBOX) {
+      return state.getDfType(((DfaWrappedValue)value).getWrappedValue());
+    }
+    if (value instanceof DfaVariableValue && TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
+      return state.getDfType(SpecialField.UNBOX.createValue(value.getFactory(), value));
+    }
+    if (value instanceof DfaTypeValue) {
+      DfReferenceType refType = tryCast(value.getDfType(), DfReferenceType.class);
+      if (refType != null && refType.getSpecialField() == SpecialField.UNBOX) {
+        return refType.getSpecialFieldType();
+      }
+    }
+    return state.getDfType(value);
   }
 }

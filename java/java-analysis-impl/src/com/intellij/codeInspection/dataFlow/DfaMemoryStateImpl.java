@@ -1014,23 +1014,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public @NotNull DfType getUnboxedDfType(@NotNull DfaValue value) {
-    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == SpecialField.UNBOX) {
-      return getDfType(((DfaWrappedValue)value).getWrappedValue());
-    }
-    if (value instanceof DfaVariableValue && TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
-      return getDfType(SpecialField.UNBOX.createValue(myFactory, value));
-    }
-    if (value instanceof DfaTypeValue) {
-      DfReferenceType refType = ObjectUtils.tryCast(value.getDfType(), DfReferenceType.class);
-      if (refType != null && refType.getSpecialField() == SpecialField.UNBOX) {
-        return refType.getSpecialFieldType();
-      }
-    }
-    return getDfType(value);
-  }
-
-  @Override
   public @NotNull DfType getDfType(@NotNull DfaValue value) {
     if (value instanceof DfaBinOpValue) {
       return getBinOpRange((DfaBinOpValue)value);

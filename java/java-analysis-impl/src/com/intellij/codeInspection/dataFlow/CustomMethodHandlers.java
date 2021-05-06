@@ -451,7 +451,7 @@ public final class CustomMethodHandlers {
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
-    DfType type = memoryState.getUnboxedDfType(value);
+    DfType type = DfaUtil.getUnboxedDfType(memoryState, value);
     Object constant = type.getConstantOfType(Object.class);
     if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
     return constant;

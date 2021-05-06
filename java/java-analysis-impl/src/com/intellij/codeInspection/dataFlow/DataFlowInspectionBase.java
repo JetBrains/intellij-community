@@ -1270,7 +1270,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     static @NotNull ConstantResult mergeValue(@Nullable ConstantResult state, @NotNull DfaMemoryState memState, @Nullable DfaValue value) {
       if (state == UNKNOWN || value == null) return UNKNOWN;
-      ConstantResult nextState = fromDfType(memState.getUnboxedDfType(value));
+      ConstantResult nextState = fromDfType(DfaUtil.getUnboxedDfType(memState, value));
       return state == null || state == nextState ? nextState : UNKNOWN;
     }
   }

@@ -139,12 +139,6 @@ public interface DfaMemoryState {
   @NotNull DfType getDfType(@NotNull DfaValue value);
 
   /**
-   * @param value value to get the type of; if value is a primitive wrapper, it will be unboxed before fetching the DfType
-   * @return the DfType of the value within this memory state
-   */
-  @NotNull DfType getUnboxedDfType(@NotNull DfaValue value);
-
-  /**
    * Forget values of all unstable fields that could be
    * qualified by one of specified qualifiers (including possible aliases).
    */
