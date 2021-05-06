@@ -78,9 +78,6 @@
 
     <completion.confidence language="UAST" implementationClass="com.intellij.lang.properties.PropertyKeyLiteralConfidence" id="propertyKeys" order="before javaSkipAutopopupInStrings"/>
 
-    <experimentalFeature id="property.value.inplace.editing" percentOfUsers="100">
-      <description>Edit property value at usage location, where it's displayed in folding placeholder</description>
-    </experimentalFeature>
     <applicationService serviceImplementation="com.intellij.lang.properties.PropertiesFoldingSettings"/>
     <codeFoldingOptionsProvider instance="com.intellij.lang.properties.PropertiesFoldingOptionsProvider"/>
   </extensions>
