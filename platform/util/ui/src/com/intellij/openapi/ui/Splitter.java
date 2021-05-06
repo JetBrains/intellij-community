@@ -331,44 +331,7 @@ public class Splitter extends JPanel implements Splittable {
         d = total;
       }
       else {
-        size1 = myProportion * (total - d);
-        double size2 = total - size1 - d;
-
-        if (isHonorMinimumSize()) {
-
-          double mSize1 = isVertical() ? myFirstComponent.getMinimumSize().getHeight() : myFirstComponent.getMinimumSize().getWidth();
-          double mSize2 = isVertical() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
-          double pSize1 = isVertical() ? myFirstComponent.getPreferredSize().getHeight() : myFirstComponent.getPreferredSize().getWidth();
-          double pSize2 = isVertical() ? mySecondComponent.getPreferredSize().getHeight() : mySecondComponent.getPreferredSize().getWidth();
-          if (myHonorPreferredSize && size1 > mSize1 && size2 > mSize2) {
-            mSize1 = pSize1;
-            mSize2 = pSize2;
-          }
-
-          if (size1 + size2 < mSize1 + mSize2) {
-            switch (myLackOfSpaceStrategy) {
-              case SIMPLE_RATIO:
-                double proportion = mSize1 / (mSize1 + mSize2);
-                size1 = proportion * (size1 + size2);
-                break;
-              case HONOR_THE_FIRST_MIN_SIZE:
-                size1 = mSize1;
-                break;
-              case HONOR_THE_SECOND_MIN_SIZE:
-                size1 = total - mSize2 - d;
-                break;
-            }
-          }
-          else {
-            if (size1 < mSize1) {
-              size1 = mSize1;
-            }
-            else if (size2 < mSize2) {
-              size2 = mSize2;
-              size1 = total - size2 - d;
-            }
-          }
-        }
+        size1 = computeFirstComponentSize(total - d);
       }
 
       int iSize1 = Math.max(0, (int)Math.round(size1));
@@ -421,6 +384,52 @@ public class Splitter extends JPanel implements Splittable {
       }
     }
     //myDivider.revalidate();
+  }
+
+  private double computeFirstComponentSize(int total) {
+    double size1 = myProportion * total;
+    double size2 = total - size1;
+
+    if (!isHonorMinimumSize()) {
+      return size1;
+    }
+    double mSize1 = getDimension(myFirstComponent.getMinimumSize());
+    double mSize2 = getDimension(mySecondComponent.getMinimumSize());
+    double pSize1 = getDimension(myFirstComponent.getPreferredSize());
+    double pSize2 = getDimension(mySecondComponent.getPreferredSize());
+    if (myHonorPreferredSize && size1 > mSize1 && size2 > mSize2) {
+      mSize1 = pSize1;
+      mSize2 = pSize2;
+    }
+
+    if (total < mSize1 + mSize2) {
+      switch (myLackOfSpaceStrategy) {
+        case SIMPLE_RATIO:
+          double proportion = mSize1 / (mSize1 + mSize2);
+          size1 = proportion * total;
+          break;
+        case HONOR_THE_FIRST_MIN_SIZE:
+          size1 = mSize1;
+          break;
+        case HONOR_THE_SECOND_MIN_SIZE:
+          size1 = total - mSize2;
+          break;
+      }
+    }
+    else {
+      if (size1 < mSize1) {
+        size1 = mSize1;
+      }
+      else if (size2 < mSize2) {
+        size2 = mSize2;
+        size1 = total - size2;
+      }
+    }
+    return size1;
+  }
+
+  private double getDimension(Dimension size) {
+    return isVertical() ? size.getHeight() : size.getWidth();
   }
 
   static boolean isNull(Component component) {
