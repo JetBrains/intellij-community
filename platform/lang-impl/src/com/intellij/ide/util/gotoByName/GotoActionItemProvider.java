@@ -12,7 +12,6 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -313,11 +312,9 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     Integer degree = calculateDegree(matcher, getActionText(element));
     if (degree == null) return null;
 
-    if (Experiments.getInstance().isFeatureEnabled("i18n.match.actions")) {
-      if (degree == 0) {
-        degree = calculateDegree(matcher, DefaultBundleService.getInstance().compute(() -> getAnActionOriginalText(getAction(element))));
-        if (degree == null) return null;
-      }
+    if (degree == 0) {
+      degree = calculateDegree(matcher, DefaultBundleService.getInstance().compute(() -> getAnActionOriginalText(getAction(element))));
+      if (degree == null) return null;
     }
 
     if (pattern.trim().contains(" ")) degree += BONUS_FOR_SPACE_IN_PATTERN;

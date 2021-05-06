@@ -1178,7 +1178,6 @@
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
     <iw.actionProvider implementation="com.intellij.codeInsight.actions.ReaderModeActionProvider"/>
     <gotoActionAliasMatcher implementation="com.intellij.ide.util.gotoByName.LocalizedActionAliasMatcher" />
-    <experimentalFeature id="i18n.match.actions" percentOfUsers="100"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.IconDbMaintainer" preload="notHeadless"/>
 
