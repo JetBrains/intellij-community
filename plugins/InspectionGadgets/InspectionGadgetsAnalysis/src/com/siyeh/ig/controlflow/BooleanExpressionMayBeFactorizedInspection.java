@@ -33,6 +33,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
@@ -86,20 +87,17 @@ public class BooleanExpressionMayBeFactorizedInspection extends BaseInspection i
         return;
       }
       CommentTracker commentTracker = new CommentTracker();
-      if (BoolUtils.isNegation(llhs) ) {
-        PsiReplacementUtil.replaceExpression(binaryExpression,
-                                             getText(lrhs, commentTracker) + '?' + getText(elseExpression, commentTracker) + ':' + getText(thenExpression, commentTracker),
-                                             commentTracker);
-      }
-      else {
-        PsiReplacementUtil.replaceExpression(binaryExpression,
-                                             getText(llhs, commentTracker) + '?' + getText(thenExpression, commentTracker) + ':' + getText(elseExpression, commentTracker),
-                                             commentTracker);
-      }
+      PsiReplacementUtil.replaceExpression(binaryExpression,
+                                           getTextForAnd(llhs, commentTracker) + '&& (' + getTextForOr(thenExpression, commentTracker) + '||' + getTextForOr(elseExpression, commentTracker) + ')',
+                                           commentTracker);
     }
 
-    private static String getText(@NotNull PsiExpression expression, CommentTracker commentTracker) {
-      return ParenthesesUtils.getText(commentTracker.markUnchanged(expression), ParenthesesUtils.CONDITIONAL_PRECEDENCE);
+    private static String getTextForAnd(@NotNull PsiExpression expression, CommentTracker commentTracker) {
+      return ParenthesesUtils.getText(commentTracker.markUnchanged(expression), ParenthesesUtils.AND_PRECEDENCE);
+    }
+
+    private static String getTextForOr(@NotNull PsiExpression expression, CommentTracker commentTracker) {
+      return ParenthesesUtils.getText(commentTracker.markUnchanged(expression), ParenthesesUtils.OR_PRECEDENCE);
     }
   }
 
@@ -134,7 +132,7 @@ public class BooleanExpressionMayBeFactorizedInspection extends BaseInspection i
       }
       final PsiExpression expression1 = PsiUtil.skipParenthesizedExprDown(lBinaryExpression.getLOperand());
       final PsiExpression expression2 = PsiUtil.skipParenthesizedExprDown(rBinaryExpression.getLOperand());
-      if (BoolUtils.areExpressionsOpposite(expression1, expression2) && !SideEffectChecker.mayHaveSideEffects(expression1)) {
+      if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression1, expression2) && !SideEffectChecker.mayHaveSideEffects(expression1)) {
         registerError(expression);
       }
     }
