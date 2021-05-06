@@ -188,7 +188,7 @@ public class PluginManagerTest {
   }
 
   private static void assertPluginPreInstalled(@NotNull PluginLoadingResult loadingResult, PluginId pluginId) {
-    assertTrue("Plugin should be pre installed", loadingResult.getShadowedBundledIds().contains(pluginId));
+    assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(pluginId));
   }
 
   private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled)

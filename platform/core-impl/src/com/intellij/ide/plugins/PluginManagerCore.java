@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -80,7 +79,7 @@ public final class PluginManagerCore {
   private static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
   private static final MethodType HAS_LOADED_CLASS_METHOD_TYPE = MethodType.methodType(boolean.class, String.class);
 
-  private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
+  private static Reference<Map<PluginId, Set<String>>> brokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
   private static volatile @Nullable Set<IdeaPluginDescriptorImpl> pluginIdentitySetCache;
   private static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
@@ -204,7 +203,7 @@ public final class PluginManagerCore {
   }
 
   public static void updateBrokenPlugins(Map<PluginId, Set<String>> brokenPlugins) {
-    ourBrokenPluginVersions = new SoftReference<>(brokenPlugins);
+    brokenPluginVersions = new SoftReference<>(brokenPlugins);
     Path updatedBrokenPluginFile = getUpdatedBrokenPluginFile();
     try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(updatedBrokenPluginFile), 32_000))) {
       out.write(1);
@@ -224,15 +223,15 @@ public final class PluginManagerCore {
     }
   }
 
-  private static @NotNull Map<PluginId, Set<String>> getBrokenPluginVersions() {
+  static @NotNull Map<@NotNull PluginId, @NotNull Set<String>> getBrokenPluginVersions() {
     if (IGNORE_DISABLED_PLUGINS) {
       return Collections.emptyMap();
     }
 
-    Map<PluginId, Set<String>> result = ourBrokenPluginVersions == null ? null : ourBrokenPluginVersions.get();
+    Map<PluginId, Set<String>> result = brokenPluginVersions == null ? null : brokenPluginVersions.get();
     if (result == null) {
       result = readBrokenPluginFile();
-      ourBrokenPluginVersions = new SoftReference<>(result);
+      brokenPluginVersions = new SoftReference<>(result);
     }
     return result;
   }
@@ -703,44 +702,6 @@ public final class PluginManagerCore {
     }
   }
 
-  public static void getDescriptorsToMigrate(@NotNull Path dir,
-                                             @Nullable BuildNumber compatibleBuildNumber,
-                                             @Nullable Path bundledPluginsPath,
-                                             @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
-                                             List<IdeaPluginDescriptorImpl> pluginsToMigrate,
-                                             List<IdeaPluginDescriptorImpl> incompatiblePlugins) throws ExecutionException, InterruptedException {
-    PluginLoadingResult loadingResult = new PluginLoadingResult(
-      brokenPluginVersions != null ? brokenPluginVersions : getBrokenPluginVersions(),
-      () -> compatibleBuildNumber == null ? getBuildNumber() : compatibleBuildNumber
-    );
-    DescriptorListLoadingContext context = new DescriptorListLoadingContext(Collections.emptySet(), loadingResult, true, true, false);
-
-    Path effectiveBundledPluginPath;
-    if (bundledPluginsPath != null || isUnitTestMode) {
-      effectiveBundledPluginPath = bundledPluginsPath;
-    }
-    else {
-      effectiveBundledPluginPath = Paths.get(PathManager.getPreInstalledPluginsPath());
-    }
-    PluginDescriptorLoader.loadBundledDescriptorsAndDescriptorsFromDir(context, dir, effectiveBundledPluginPath, isUnitTestMode, isRunningFromSources());
-
-    for (IdeaPluginDescriptorImpl descriptor : loadingResult.idMap.values()) {
-      if (!descriptor.isBundled()) {
-        if (loadingResult.isBroken(descriptor.getPluginId())) {
-          incompatiblePlugins.add(descriptor);
-        }
-        else {
-          pluginsToMigrate.add(descriptor);
-        }
-      }
-    }
-    for (IdeaPluginDescriptorImpl descriptor : loadingResult.incompletePlugins.values()) {
-      if (!descriptor.isBundled()) {
-        incompatiblePlugins.add(descriptor);
-      }
-    }
-  }
-
   private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, String> disabledIds,
                                                         @NotNull Set<PluginId> disabledRequiredIds,
                                                         @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idMap,
@@ -829,10 +790,6 @@ public final class PluginManagerCore {
       loadAndInitializePlugins(context, coreClassLoader);
       return ourLoadedPlugins;
     });
-  }
-
-  static @NotNull PluginLoadingResult createLoadingResult(@Nullable BuildNumber buildNumber) {
-    return new PluginLoadingResult(getBrokenPluginVersions(), () -> buildNumber == null ? getBuildNumber() : buildNumber);
   }
 
   private static @NotNull Map<String, String[]> loadAdditionalLayoutMap() {
@@ -996,28 +953,19 @@ public final class PluginManagerCore {
     return checkBuildNumberCompatibility(descriptor, buildNumber) != null;
   }
 
-  @Nullable
-  public static PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor,
-                                                                 @NotNull BuildNumber ideBuildNumber) {
-    return checkBuildNumberCompatibility(descriptor, ideBuildNumber, null);
-  }
-
   public static @Nullable PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor,
-                                                                           @NotNull BuildNumber ideBuildNumber,
-                                                                           @Nullable Runnable beforeCreateErrorCallback) {
+                                                                           @NotNull BuildNumber ideBuildNumber) {
     String sinceBuild = descriptor.getSinceBuild();
     String untilBuild = descriptor.getUntilBuild();
     try {
       BuildNumber sinceBuildNumber = sinceBuild == null ? null : BuildNumber.fromString(sinceBuild, null, null);
       if (sinceBuildNumber != null && sinceBuildNumber.compareTo(ideBuildNumber) > 0) {
-        if (beforeCreateErrorCallback != null) beforeCreateErrorCallback.run();
         return PluginLoadingError.create(descriptor, message("plugin.loading.error.long.incompatible.since.build", descriptor.getName(), descriptor.getVersion(), sinceBuild, ideBuildNumber),
                                          message("plugin.loading.error.short.incompatible.since.build", sinceBuild));
       }
 
       BuildNumber untilBuildNumber = untilBuild == null ? null : BuildNumber.fromString(untilBuild, null, null);
       if (untilBuildNumber != null && untilBuildNumber.compareTo(ideBuildNumber) < 0) {
-        if (beforeCreateErrorCallback != null) beforeCreateErrorCallback.run();
         return PluginLoadingError.create(descriptor, message("plugin.loading.error.long.incompatible.until.build", descriptor.getName(), descriptor.getVersion(), untilBuild, ideBuildNumber),
                                          message("plugin.loading.error.short.incompatible.until.build", untilBuild));
       }
@@ -1183,12 +1131,13 @@ public final class PluginManagerCore {
 
   private static @NotNull IdeaPluginDescriptorImpl @NotNull [] getTopologicallySorted(@NotNull InboundSemiGraph<IdeaPluginDescriptorImpl> graph) {
     DFSTBuilder<IdeaPluginDescriptorImpl> requiredOnlyGraph = new DFSTBuilder<>(GraphGenerator.generate(graph));
-    IdeaPluginDescriptorImpl[] sortedRequired = graph.getNodes().toArray(PluginLoadingResult.EMPTY_ARRAY);
+    IdeaPluginDescriptorImpl[] sortedRequired = graph.getNodes().toArray(new IdeaPluginDescriptorImpl[0]);
     Comparator<IdeaPluginDescriptorImpl> comparator = requiredOnlyGraph.comparator();
     // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
     // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
-    Arrays.sort(sortedRequired,
-                (o1, o2) -> CORE_ID.equals(o1.getPluginId()) ? -1 : CORE_ID.equals(o2.getPluginId()) ? 1 : comparator.compare(o1, o2));
+    Arrays.sort(sortedRequired, (o1, o2) -> {
+      return CORE_ID.equals(o1.getPluginId()) ? -1 : CORE_ID.equals(o2.getPluginId()) ? 1 : comparator.compare(o1, o2);
+    });
     return sortedRequired;
   }
 
@@ -1380,7 +1329,7 @@ public final class PluginManagerCore {
       ourPluginsToDisable = initResult.effectiveDisabledIds;
       ourPluginsToEnable = initResult.disabledRequiredIds;
       ourLoadedPlugins = initResult.sortedEnabledPlugins;
-      ourShadowedBundledPlugins = result.getShadowedBundledIds();
+      ourShadowedBundledPlugins = result.shadowedBundledIds;
 
       activity.end();
       activity.setDescription("plugin count: " + ourLoadedPlugins.size());

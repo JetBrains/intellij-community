@@ -801,11 +801,12 @@ public final class ConfigImportHelper {
       List<IdeaPluginDescriptorImpl> pluginsToMigrate = new ArrayList<>();
       List<IdeaPluginDescriptorImpl> incompatiblePlugins = new ArrayList<>();
       List<PluginId> pendingUpdates = collectPendingPluginUpdates(actionCommands, options);
-      PluginManagerCore.getDescriptorsToMigrate(oldPluginsDir,
-                                                options.compatibleBuildNumber,
-                                                options.bundledPluginPath,
-                                                options.brokenPluginVersions,
-                                                pluginsToMigrate, incompatiblePlugins);
+      PluginDescriptorLoader.getDescriptorsToMigrate(oldPluginsDir,
+                                                     options.compatibleBuildNumber,
+                                                     options.bundledPluginPath,
+                                                     options.brokenPluginVersions,
+                                                     pluginsToMigrate,
+                                                     incompatiblePlugins);
 
       migratePlugins(newPluginsDir, pluginsToMigrate, pendingUpdates, log);
 

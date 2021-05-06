@@ -27,15 +27,17 @@ import java.io.IOException
 import java.net.URL
 import java.nio.file.*
 import java.util.*
-import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.ForkJoinTask
-import java.util.concurrent.RecursiveAction
-import java.util.concurrent.RecursiveTask
+import java.util.concurrent.*
 import java.util.function.Supplier
 import javax.xml.stream.XMLStreamException
 
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
+
+internal fun createPluginLoadingResult(buildNumber: BuildNumber?): PluginLoadingResult {
+  return PluginLoadingResult(brokenPluginVersions = PluginManagerCore.getBrokenPluginVersions(),
+                             productBuildNumber = { buildNumber ?: PluginManagerCore.getBuildNumber() })
+}
 
 fun loadDescriptor(file: Path,
                    isBundled: Boolean,
@@ -355,7 +357,7 @@ private fun loadDescriptorsFromProperty(result: PluginLoadingResult, context: De
 }
 
 fun loadDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boolean): DescriptorListLoadingContext {
-  val result = PluginManagerCore.createLoadingResult(null)
+  val result = createPluginLoadingResult(null)
   val bundledPluginPath: Path? = if (isUnitTestMode) {
     null
   }
@@ -388,11 +390,11 @@ fun loadDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boolean): Des
   return context
 }
 
-fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListLoadingContext,
-                                                customPluginDir: Path,
-                                                bundledPluginDir: Path?,
-                                                isUnitTestMode: Boolean,
-                                                isRunningFromSources: Boolean) {
+private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListLoadingContext,
+                                                        customPluginDir: Path,
+                                                        bundledPluginDir: Path?,
+                                                        isUnitTestMode: Boolean,
+                                                        isRunningFromSources: Boolean) {
   val classLoader = DescriptorListLoadingContext::class.java.classLoader
   val pool = ForkJoinPool.commonPool()
   var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.DEFAULT)
@@ -477,14 +479,14 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader, urls: MutableMap<
  * Returns enabled plugins only.
  */
 fun loadUncachedDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boolean): List<IdeaPluginDescriptorImpl> {
-  return loadDescriptors(isUnitTestMode = isUnitTestMode, isRunningFromSources = isRunningFromSources).result.enabledPlugins
+  return loadDescriptors(isUnitTestMode = isUnitTestMode, isRunningFromSources = isRunningFromSources).result.getEnabledPlugins()
 }
 
 @Throws(IOException::class)
 fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
                                              disabledPlugins = DisabledPluginsState.disabledPlugins(),
-                                             result = PluginManagerCore.createLoadingResult(buildNumber))
+                                             result = createPluginLoadingResult(buildNumber))
   var outputDir: Path? = null
   try {
     var descriptor = loadDescriptorFromFileOrDir(file = file,
@@ -553,6 +555,48 @@ fun loadDescriptor(file: Path,
   }
 }
 
+@Throws(ExecutionException::class, InterruptedException::class)
+fun getDescriptorsToMigrate(dir: Path,
+                            compatibleBuildNumber: BuildNumber?,
+                            bundledPluginsPath: Path?,
+                            brokenPluginVersions: Map<PluginId, Set<String>>?,
+                            pluginsToMigrate: MutableList<IdeaPluginDescriptorImpl?>,
+                            incompatiblePlugins: MutableList<IdeaPluginDescriptorImpl?>) {
+  val loadingResult = PluginLoadingResult(brokenPluginVersions = brokenPluginVersions ?: PluginManagerCore.getBrokenPluginVersions(),
+                                          productBuildNumber = Supplier { compatibleBuildNumber ?: PluginManagerCore.getBuildNumber() }
+  )
+  val context = DescriptorListLoadingContext(disabledPlugins = emptySet(),
+                                             result = loadingResult,
+                                             isMissingIncludeIgnored = true,
+                                             isMissingSubDescriptorIgnored = true)
+  val effectiveBundledPluginPath = if (bundledPluginsPath != null || PluginManagerCore.isUnitTestMode) {
+    bundledPluginsPath
+  }
+  else {
+    Paths.get(PathManager.getPreInstalledPluginsPath())
+  }
+  loadBundledDescriptorsAndDescriptorsFromDir(context = context,
+                                              customPluginDir = dir,
+                                              bundledPluginDir = effectiveBundledPluginPath,
+                                              isUnitTestMode = PluginManagerCore.isUnitTestMode,
+                                              isRunningFromSources = PluginManagerCore.isRunningFromSources())
+  for (descriptor in loadingResult.idMap.values) {
+    if (!descriptor.isBundled) {
+      if (loadingResult.isBroken(descriptor.pluginId)) {
+        incompatiblePlugins.add(descriptor)
+      }
+      else {
+        pluginsToMigrate.add(descriptor)
+      }
+    }
+  }
+  for (descriptor in loadingResult.incompletePlugins.values) {
+    if (!descriptor.isBundled) {
+      incompatiblePlugins.add(descriptor)
+    }
+  }
+}
+
 fun createPathResolverForPlugin(descriptor: IdeaPluginDescriptorImpl, checkPluginJarFiles: Boolean): PathResolver {
   if (PluginManagerCore.isRunningFromSources() && descriptor.pluginPath.fileSystem == FileSystems.getDefault() &&
       descriptor.pluginPath.toString().contains("out/classes")) {
@@ -584,12 +628,14 @@ fun loadFullDescriptor(descriptor: IdeaPluginDescriptorImpl): IdeaPluginDescript
 fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescriptor> {
   val urlsFromClassPath = LinkedHashMap<URL, String>()
   collectPluginFilesInClassPath(loader, urlsFromClassPath)
-  val buildNumber = BuildNumber.fromString("2042.42")
+  val buildNumber = BuildNumber.fromString("2042.42")!!
   val context = DescriptorListLoadingContext(disabledPlugins = emptySet(),
-                                             result = PluginLoadingResult(emptyMap(), Supplier { buildNumber }, false))
+                                             result = PluginLoadingResult(brokenPluginVersions = emptyMap(),
+                                                                          productBuildNumber = Supplier { buildNumber },
+                                                                          checkModuleDependencies = false))
   LoadDescriptorsFromClassPathAction(urlsFromClassPath, context, null, ClassPathXmlPathResolver(loader)).compute()
   context.result.finishLoading()
-  return context.result.enabledPlugins
+  return context.result.getEnabledPlugins()
 }
 
 private class LoadDescriptorsFromDirAction(private val dir: Path,

@@ -20,7 +20,7 @@ import java.util.function.Supplier
 internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet(), isBundled: Boolean = false): IdeaPluginDescriptorImpl {
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
-  val buildNumber = BuildNumber.fromString("2042.42")
+  val buildNumber = BuildNumber.fromString("2042.42")!!
   val parentContext = DescriptorListLoadingContext(disabledPlugins = disabledPlugins,
                                                    result = PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
   val result = loadDescriptorFromFileOrDir(file = dir,

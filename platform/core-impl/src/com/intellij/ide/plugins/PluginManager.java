@@ -209,7 +209,7 @@ public final class PluginManager {
   @ApiStatus.Internal
   public void setPlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
     @SuppressWarnings("SuspiciousToArrayCall")
-    IdeaPluginDescriptorImpl[] list = descriptors.toArray(PluginLoadingResult.EMPTY_ARRAY);
+    IdeaPluginDescriptorImpl[] list = descriptors.toArray(new IdeaPluginDescriptorImpl[0]);
     PluginManagerCore.doSetPlugins(list);
   }
 

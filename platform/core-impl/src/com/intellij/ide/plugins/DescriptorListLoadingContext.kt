@@ -20,7 +20,7 @@ private val LOG: Logger
 @ApiStatus.Internal
 class DescriptorListLoadingContext constructor(
   @JvmField val disabledPlugins: Set<PluginId>,
-  @JvmField @Suppress("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR") val result: PluginLoadingResult = PluginManagerCore.createLoadingResult(null),
+  @JvmField val result: PluginLoadingResult = createPluginLoadingResult(buildNumber = null),
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,

@@ -302,7 +302,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       return true
     }
 
-    val error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get(), null) ?: return true
+    val error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get()) ?: return true
 
     // error will be added by reportIncompatiblePlugin
     markAsIncomplete(context = context, disabledDependency = null, shortMessage = null)
@@ -484,11 +484,14 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   override fun hashCode() = id.hashCode()
 
   override fun toString(): String {
-    // don't expose user home in error messages
-    val pathString = path.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")
     return "PluginDescriptor(name=$name, id=$id, descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-           "path=$pathString, version=$version, package=$packagePrefix)"
+           "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix)"
   }
+}
+
+// don't expose user home in error messages
+internal fun pluginPathToUserString(file: Path): String {
+  return file.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")
 }
 
 private fun addExtensionList(map: MutableMap<String, MutableList<ExtensionDescriptor>>, name: String, list: MutableList<ExtensionDescriptor>) {

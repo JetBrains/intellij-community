@@ -116,7 +116,9 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static @Nullable BuildNumber fromString(@Nullable String version) {
-    if (version == null) return null;
+    if (version == null) {
+      return null;
+    }
     version = version.trim();
     return version.isEmpty() ? null : fromString(version, null, null);
   }
