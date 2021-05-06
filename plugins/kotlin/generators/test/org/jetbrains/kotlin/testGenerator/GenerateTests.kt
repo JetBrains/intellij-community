@@ -1177,6 +1177,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
             model("quickfix/when", pattern = pattern)
             model("quickfix/wrapWithSafeLetCall", pattern = pattern)
+            model("quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern, filenameStartsLowerCase = true)
+            model("quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern, filenameStartsLowerCase = true)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
