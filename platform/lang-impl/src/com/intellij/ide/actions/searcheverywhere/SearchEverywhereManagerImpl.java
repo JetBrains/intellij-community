@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.OpenInRightSplitAction;
-import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
@@ -105,7 +104,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       .setCancelKeyEnabled(false)
       .setCancelCallback(() -> {
         saveSearchText();
-        SearchEverywhereUsageTriggerCollector.trigger(myProject, DIALOG_CLOSED);
+        DIALOG_CLOSED.log(myProject);
         return true;
       })
       .addUserData("SIMPLE_WINDOW")
