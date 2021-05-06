@@ -5,16 +5,15 @@ used to suspend a thread until a condition is true.
 Because the thread could have been waken up for a different reason, that condition should be checked after the <code>wait()</code>
 returns. A loop is a simple way to achieve this.
 <!-- tooltip end -->
-<p>For example:
+<p>Example:</p>
 <pre><code>
   <b>class</b> BoundedCounter {
+    <b>private int</b> count;
     <b>synchronized void</b> inc() <b>throws</b> InterruptedException {
       // condition not checked after wake-up
       <b>if</b> (count >= 10) wait();
       ++count;
     }
-
-    // ...
   }
 </code></pre>
 </body>

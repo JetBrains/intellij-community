@@ -1,22 +1,20 @@
 <html>
 <body>
 Reports any calls to <b>Thread.yield()</b>.
-The behavior of yield() is non-deterministic and platform dependent, and it is rarely appropriate to use this method.
+The behavior of <code>yield()</code> is non-deterministic and platform dependent, and it is rarely appropriate to use this method.
 Its use should be combined with detailed profiling and benchmarking to ensure that it actually has the desired effect.
 <!-- tooltip end -->
-<p>For example:</p>
+<p>Example:</p>
 <pre><code>
-  <b>class</b> Yield {
-    <b>public static void</b> main(String[] args) {
-      Runnable r = () -> {
-        <b>for</b> (<b>int</b> i = 0; i < 10; i++) {
-          System.out.println(i);
-          Thread.yield();
-        }
-      };
-      <b>new</b> Thread(r).start();
-      <b>new</b> Thread(r).start();
-    }
+  <b>public static void</b> main(String[] args) {
+    Runnable r = () -> {
+      <b>for</b> (<b>int</b> i = 0; i &lt; 10; i++) {
+        System.out.println(i);
+        Thread.yield();
+      }
+    };
+    <b>new</b> Thread(r).start();
+    <b>new</b> Thread(r).start();
   }
 </code></pre>
 

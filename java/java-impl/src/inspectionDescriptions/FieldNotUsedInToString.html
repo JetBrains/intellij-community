@@ -2,11 +2,11 @@
 <body>
 Reports any fields which are not used in the <code>toString()</code> method of a class. This can help discover
 fields that were added after the <code>toString()</code> method was created and for which the <code>toString()</code> method was not
-updated.
+updated. The quick-fix regenerates the <code>toString()</code> method.
 <p>
 In the settings accessible in the <em>Generate > toString()</em> dialog it is possible to exclude fields from this check.
 This inspection will also check for problems with getter methods if the <em>enable getters in code generation</em> option is enabled there.
-<p>For example:</p>
+<p>Example:</p>
 <pre><code>
   <b>public class</b> Relevant {
     <b>private</b> String name; // not used in toString()
@@ -20,7 +20,7 @@ This inspection will also check for problems with getter methods if the <em>enab
     }
   }
 </code></pre>
-<p>A quick fix is provided to generate a new <code>toString()</code> method:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   <b>public class</b> Relevant {
     <b>private</b> String name;
