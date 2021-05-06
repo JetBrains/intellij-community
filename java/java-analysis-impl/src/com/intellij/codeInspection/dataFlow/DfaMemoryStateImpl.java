@@ -206,11 +206,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     flushVariable(var, DfaNullability.fromDfType(var.getInherentType()) != DfaNullability.UNKNOWN);
     flushQualifiedMethods(var);
 
-    if (DfaTypeValue.isUnknown(value)) {
-      recordVariableType(var, withNotNull(getDfType(var)));
-      return;
-    }
-
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
     if (dfType == DfType.BOTTOM) return; // likely uncompilable code or bad CFG
     if (value instanceof DfaVariableValue && !ControlFlow.isTempVariable(var) &&
@@ -1150,11 +1145,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     myStack.replaceAll(val -> {
       DfType type = val.getDfType();
-      if (type instanceof DfReferenceType) {
-        DerivedVariableDescriptor field = ((DfReferenceType)type).getSpecialField();
-        if (field != null && !field.isStable() && qualifierStatusMap.shouldFlush(val, field.isCall())) {
-          return myFactory.fromDfType(((DfReferenceType)type).dropSpecialField());
-        }
+      if (ContainerUtil.or(type.getDerivedVariables(), dv -> !dv.isStable() && qualifierStatusMap.shouldFlush(val, dv.isCall()))) {
+        return myFactory.fromDfType(type.getBasicType());
       }
       return val;
     });
@@ -1431,14 +1423,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     groups.addAll(groupsInClasses.values());
     return groups;
-  }
-
-  private static DfType withNotNull(DfType type) {
-    if (type instanceof DfReferenceType) {
-      return ((DfReferenceType)type).getNullability() == DfaNullability.NOT_NULL ? type :
-             ((DfReferenceType)type).dropNullability();
-    }
-    return type;
   }
 
   enum QualifierStatus {
