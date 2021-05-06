@@ -281,7 +281,10 @@ idea.fatal.error.notification=disabled
         return file
       }
     }
-    buildContext.messages.error("Cannot find '$normalizedRelativePath' in sources of '$buildContext.productProperties.applicationInfoModule' and in $buildContext.productProperties.brandingResourcePaths")
+
+    buildContext.messages.error(
+      "Cannot find '$normalizedRelativePath' neither in sources of '$buildContext.productProperties.applicationInfoModule'" +
+      " nor in $buildContext.productProperties.brandingResourcePaths")
     return null
   }
 
@@ -633,7 +636,8 @@ idea.fatal.error.notification=disabled
 
     checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules")
     if (buildContext.productProperties.scrambleMainJar) {
-      checkModules(buildContext.proprietaryBuildTools.scrambleTool?.namesOfModulesRequiredToBeScrambled, "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled")
+      checkModules(buildContext.proprietaryBuildTools.scrambleTool?.namesOfModulesRequiredToBeScrambled,
+                   "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled")
     }
   }
 
@@ -663,7 +667,8 @@ idea.fatal.error.notification=disabled
     }
     if (layout.prepareCustomPluginRepositoryForPublishedPlugins && layout.pluginModulesToPublish.isEmpty() &&
         !layout.buildAllCompatiblePlugins) {
-      buildContext.messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled but no pluginModulesToPublish are specified")
+      buildContext.messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled" +
+                                  " but no pluginModulesToPublish are specified")
     }
 
     checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules")
@@ -959,7 +964,6 @@ idea.fatal.error.notification=disabled
     Files.createDirectories(newDir)
     for (Pair<Path, String> item : buildContext.distFiles) {
       Path file = item.getFirst()
-
       Path dir = newDir.resolve(item.getSecond())
       Files.createDirectories(dir)
       Files.copy(file, dir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
