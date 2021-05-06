@@ -297,22 +297,6 @@ private fun KtDeclarationWithBody.returnType(bindingContext: BindingContext): Ko
 internal val PsiElement.isInsideKtTypeReference: Boolean
     get() = getNonStrictParentOfType<KtTypeReference>() != null
 
-private fun createKeywordElementWithSpace(
-    keyword: String,
-    tail: String = "",
-    addSpaceAfter: Boolean = false,
-    lookupObject: KeywordLookupObject = KeywordLookupObject()
-): LookupElement {
-    val element = createKeywordElement(keyword, tail, lookupObject)
-    return if (addSpaceAfter) {
-        element.withInsertHandler(WithTailInsertHandler.SPACE.asPostInsertHandler)
-    } else {
-        element
-    }
-}
-
-
-
 fun BasicLookupElementFactory.createLookupElementForType(type: KotlinType): LookupElement? {
     if (type.isError) return null
 
