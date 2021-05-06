@@ -98,7 +98,7 @@ private object ProductionKotlinArtifacts : KotlinArtifacts(run {
 
             // Don't throw exception because someone may want to just try to initialize
             // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
-            File("<invalid_kotlinc_path>")
+            File("\"<invalid_kotlinc_path>\"")
         }
     } else {
         libFile.parent.toFile()
