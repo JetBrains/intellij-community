@@ -27,6 +27,7 @@ import com.intellij.util.indexing.IdFilter
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
@@ -543,11 +544,16 @@ class KotlinIndicesHelper(
         val ktFile = containingFile
         if (ktFile !is KtFile) {
             // https://ea.jetbrains.com/browser/ea_problems/219256
-            LOG.warn(
+            LOG.error(
                 KotlinExceptionWithAttachments("KtElement not inside KtFile ($ktFile, is valid: ${ktFile.isValid})")
-                    .withAttachment("file", ktFile.text)
+                    .withAttachment("file", ktFile)
+                    .withAttachment("virtualFile", containingFile.virtualFile)
+                    .withAttachment("compiledFile", IDEKotlinBinaryClassCache.getInstance().isKotlinJvmCompiledFile(containingFile.virtualFile))
                     .withAttachment("element", this)
                     .withAttachment("type", javaClass)
+                    .apply {
+                        kotlin.runCatching { ktFile.text }.getOrNull()?.let { s -> withAttachment("file.kt", s) }
+                    }
             )
 
             return emptyList()
