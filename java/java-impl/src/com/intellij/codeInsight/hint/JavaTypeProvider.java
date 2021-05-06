@@ -22,7 +22,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
@@ -136,7 +136,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
           }
           infoLines.add(Pair.create(JavaBundle.message("type.information.locality"),
                                     refType.isLocal() ? JavaBundle.message("type.information.local.object") : ""));
-          JvmSpecialField field = refType.getSpecialField();
+          SpecialField field = refType.getSpecialField();
           if (field != null) {
             infoLines.add(Pair.create(field.getPresentationName(), field.getPresentationText(refType.getSpecialFieldType(), type)));
           }

@@ -19,7 +19,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -178,7 +178,7 @@ public class OptionalChainInliner implements CallInliner {
       DfaVariableValue result = builder.createTempVariable(call.getType());
       builder
         .assign(result, DfTypes.typedObject(call.getType(), Nullability.NOT_NULL)) // stack: ...value opt
-        .push(JvmSpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), result)) // stack: ...value opt opt.value
+        .push(SpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), result)) // stack: ...value opt opt.value
         .splice(3, 1, 0, 2)
         .assign()
         .pop()
@@ -230,7 +230,7 @@ public class OptionalChainInliner implements CallInliner {
     }
     builder
       .pushExpression(expression, problem)
-      .unwrap(JvmSpecialField.OPTIONAL_VALUE)
+      .unwrap(SpecialField.OPTIONAL_VALUE)
       .assignTo(builder.createTempVariable(optionalElementType));
     return true;
   }

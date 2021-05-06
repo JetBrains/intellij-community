@@ -2,7 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.*;
@@ -475,7 +475,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       }
       String name = call.getMethodExpression().getReferenceName();
       if ("get".equals(name)) {
-        DfType dfType = JvmSpecialField.OPTIONAL_VALUE.getFromQualifier(CommonDataflow.getDfType(qualifier));
+        DfType dfType = SpecialField.OPTIONAL_VALUE.getFromQualifier(CommonDataflow.getDfType(qualifier));
         if (dfType.isSuperType(DfTypes.NULL)) return null;
       } else if ("orElse".equals(name)) {
         if (!ExpressionUtils.isNullLiteral(call.getArgumentList().getExpressions()[0])) return null;
@@ -816,7 +816,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
 
     private static boolean isPresentOptional(PsiExpression optionalExpression) {
-      return !JvmSpecialField.OPTIONAL_VALUE.getFromQualifier(CommonDataflow.getDfType(optionalExpression)).isSuperType(DfTypes.NULL);
+      return !SpecialField.OPTIONAL_VALUE.getFromQualifier(CommonDataflow.getDfType(optionalExpression)).isSuperType(DfTypes.NULL);
     }
 
     private static final class Context {

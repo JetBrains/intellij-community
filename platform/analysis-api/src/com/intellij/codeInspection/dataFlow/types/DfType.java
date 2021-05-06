@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -295,7 +295,7 @@ public interface DfType {
    * @return list of possible derived variables that could be recorded inside this type.
    * E.g. the type "string of length 3" records the derived variable "string length" inside.
    */
-  default @NotNull List<@NotNull VariableDescriptor> getDerivedVariables() {
+  default @NotNull List<@NotNull DerivedVariableDescriptor> getDerivedVariables() {
     return List.of();
   }
 
@@ -303,7 +303,7 @@ public interface DfType {
    * @param derivedDescriptor descriptor returned from {@link #getDerivedVariables()}
    * @return value for derived variable, if known
    */
-  default @NotNull DfType getDerivedValue(@NotNull VariableDescriptor derivedDescriptor) {
+  default @NotNull DfType getDerivedValue(@NotNull DerivedVariableDescriptor derivedDescriptor) {
     return DfType.TOP;
   }
 

@@ -2,7 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.memory.EqClass;
@@ -571,7 +571,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (result.equals(type)) return true;
       if (result == DfType.BOTTOM) return false;
       recordVariableType(var, result);
-      for (VariableDescriptor desc : result.getDerivedVariables()) {
+      for (DerivedVariableDescriptor desc : result.getDerivedVariables()) {
         if (!meetDfType(desc.createValue(getFactory(), var), result.getDerivedValue(desc))) {
           return false;
         }
@@ -930,8 +930,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return negated;
     }
 
-    DfaValue unboxedLeft = JvmSpecialField.UNBOX.createValue(myFactory, dfaLeft);
-    DfaValue unboxedRight = JvmSpecialField.UNBOX.createValue(myFactory, dfaRight);
+    DfaValue unboxedLeft = SpecialField.UNBOX.createValue(myFactory, dfaLeft);
+    DfaValue unboxedRight = SpecialField.UNBOX.createValue(myFactory, dfaRight);
     DfType leftDfType = getDfType(unboxedLeft);
     DfType rightDfType = getDfType(unboxedRight);
     if (leftDfType instanceof DfConstantType && rightDfType instanceof DfConstantType) {
@@ -1020,15 +1020,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public @NotNull DfType getUnboxedDfType(@NotNull DfaValue value) {
-    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == JvmSpecialField.UNBOX) {
+    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == SpecialField.UNBOX) {
       return getDfType(((DfaWrappedValue)value).getWrappedValue());
     }
     if (value instanceof DfaVariableValue && TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
-      return getDfType(JvmSpecialField.UNBOX.createValue(myFactory, value));
+      return getDfType(SpecialField.UNBOX.createValue(myFactory, value));
     }
     if (value instanceof DfaTypeValue) {
       DfReferenceType refType = ObjectUtils.tryCast(value.getDfType(), DfReferenceType.class);
-      if (refType != null && refType.getSpecialField() == JvmSpecialField.UNBOX) {
+      if (refType != null && refType.getSpecialField() == SpecialField.UNBOX) {
         return refType.getSpecialFieldType();
       }
     }
@@ -1151,7 +1151,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myStack.replaceAll(val -> {
       DfType type = val.getDfType();
       if (type instanceof DfReferenceType) {
-        SpecialField field = ((DfReferenceType)type).getSpecialField();
+        DerivedVariableDescriptor field = ((DfReferenceType)type).getSpecialField();
         if (field != null && !field.isStable() && qualifierStatusMap.shouldFlush(val, field.isCall())) {
           return myFactory.fromDfType(((DfReferenceType)type).dropSpecialField());
         }

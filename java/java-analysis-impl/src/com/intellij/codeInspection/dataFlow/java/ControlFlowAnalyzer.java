@@ -518,13 +518,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiType type = iteratedValue.getType();
       SpecialField length = null;
       if (type instanceof PsiArrayType) {
-        length = JvmSpecialField.ARRAY_LENGTH;
+        length = SpecialField.ARRAY_LENGTH;
       }
       else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
-        length = JvmSpecialField.COLLECTION_SIZE;
+        length = SpecialField.COLLECTION_SIZE;
       }
       if (length != null) {
-        addInstruction(new UnwrapSpecialFieldInstruction(length));
+        addInstruction(new UnwrapDerivedVariableInstruction(length));
         addInstruction(new ConditionalGotoInstruction(loopEndOffset, DfTypes.intValue(0)));
         hasSizeCheck = true;
       } else {
@@ -1297,7 +1297,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         arrayWriteTarget = null;
       }
     }
-    DfType arrayType = JvmSpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(initializers.length))
+    DfType arrayType = SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(initializers.length))
       .meet(type == null ? DfTypes.OBJECT_OR_NULL : TypeConstraints.exact(type).asDfType())
       .meet(DfTypes.LOCAL_OBJECT);
     if (arrayWriteTarget != null) {
@@ -1464,7 +1464,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
         TypeConversionUtil.isAssignableFromPrimitiveWrapper(toBound(actualType))) {
-      addInstruction(new UnwrapSpecialFieldInstruction(JvmSpecialField.UNBOX));
+      addInstruction(new UnwrapDerivedVariableInstruction(SpecialField.UNBOX));
       actualType = PsiPrimitiveType.getUnboxedType(actualType);
     }
     expectedType = toBound(expectedType);
@@ -1477,7 +1477,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (unboxedType != null && !unboxedType.equals(actualType)) {
         addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
       }
-      addInstruction(new WrapSpecialFieldInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL), JvmSpecialField.UNBOX));
+      addInstruction(new WrapDerivedVariableInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL), SpecialField.UNBOX));
     }
     else if (actualType != expectedType &&
              TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
@@ -1798,7 +1798,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
       }
       DfType arrayValue = TypeConstraints.exact(type).asDfType().meet(DfTypes.LOCAL_OBJECT);
-      addInstruction(new WrapSpecialFieldInstruction(arrayValue, JvmSpecialField.ARRAY_LENGTH));
+      addInstruction(new WrapDerivedVariableInstruction(arrayValue, SpecialField.ARRAY_LENGTH));
 
       initializeSmallArray((PsiArrayType)type, dimensions);
     }
@@ -1840,7 +1840,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private DfaValue getPrecalculatedNewValue(PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (type != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
-      DfType dfType = JvmSpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0))
+      DfType dfType = SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0))
         .meet(TypeConstraints.exact(type).asDfType())
         .meet(DfTypes.LOCAL_OBJECT);
       return myFactory.fromDfType(dfType);
@@ -1947,7 +1947,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
     }
     if (!(operandType instanceof PsiPrimitiveType)) {
-      addInstruction(new WrapSpecialFieldInstruction(DfTypes.typedObject(operandType, Nullability.NOT_NULL), JvmSpecialField.UNBOX));
+      addInstruction(new WrapDerivedVariableInstruction(DfTypes.typedObject(operandType, Nullability.NOT_NULL), SpecialField.UNBOX));
     }
     addInstruction(new AssignInstruction(operand, null, JavaDfaValueFactory.getExpressionDfaValue(myFactory, operand)));
     return true;

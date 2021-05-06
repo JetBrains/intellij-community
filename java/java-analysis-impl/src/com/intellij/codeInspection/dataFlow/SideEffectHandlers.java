@@ -19,7 +19,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField.COLLECTION_SIZE;
+import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.COLLECTION_SIZE;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;

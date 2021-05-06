@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +13,7 @@ import java.util.Set;
 public class DfReferenceConstantType extends DfConstantType<Object> implements DfReferenceType {
   private final @NotNull TypeConstraint myConstraint;
   private final @NotNull Mutability myMutability;
-  private final @Nullable JvmSpecialField myJvmSpecialField;
+  private final @Nullable SpecialField myJvmSpecialField;
   private final @NotNull DfType mySpecialFieldType;
   private final boolean myDropConstantOnWiden;
 
@@ -21,7 +21,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     super(constant);
     myConstraint = type;
     myMutability = constant instanceof PsiModifierListOwner ? Mutability.getMutability((PsiModifierListOwner)constant) : Mutability.UNKNOWN;
-    myJvmSpecialField = JvmSpecialField.fromQualifierType(this);
+    myJvmSpecialField = SpecialField.fromQualifierType(this);
     mySpecialFieldType = myJvmSpecialField == null ? BOTTOM : myJvmSpecialField.fromConstant(constant);
     myDropConstantOnWiden = dropConstantOnWiden;
   }
@@ -72,7 +72,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
 
   @Nullable
   @Override
-  public JvmSpecialField getSpecialField() {
+  public SpecialField getSpecialField() {
     return myJvmSpecialField;
   }
 
@@ -108,7 +108,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     DfaNullability nullability = getNullability().unite(type.getNullability());
     Mutability mutability = getMutability().unite(type.getMutability());
     boolean locality = isLocal() && type.isLocal();
-    JvmSpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
+    SpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
     DfType sfType = sf == null ? BOTTOM : getSpecialFieldType().join(type.getSpecialFieldType());
     return new DfGenericObjectType(Set.of(), constraint, nullability, mutability, sf, sfType, locality);
   }

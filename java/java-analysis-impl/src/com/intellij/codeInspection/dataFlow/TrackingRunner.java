@@ -13,7 +13,7 @@ import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
@@ -915,8 +915,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       }
     }
     if (relationType == RelationType.NE) {
-      SpecialField leftField = JvmSpecialField.fromQualifier(leftValue);
-      SpecialField rightField = JvmSpecialField.fromQualifier(rightValue);
+      SpecialField leftField = SpecialField.fromQualifier(leftValue);
+      SpecialField rightField = SpecialField.fromQualifier(rightValue);
       if (leftField != null && leftField == rightField) {
         DfaValue leftSpecial = leftField.createValue(getFactory(), leftValue);
         DfaValue rightSpecial = rightField.createValue(getFactory(), rightValue);
@@ -1398,8 +1398,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   private static CauseItem findRangeCause(MemoryStateChange factUse, DfaValue value, LongRangeSet range, @Nls String template) {
     if (value instanceof DfaVariableValue) {
       VariableDescriptor descriptor = ((DfaVariableValue)value).getDescriptor();
-      if (descriptor instanceof JvmSpecialField && range.equals(JvmPsiRangeSetUtil.indexRange())) {
-        switch (((JvmSpecialField)descriptor)) {
+      if (descriptor instanceof SpecialField && range.equals(JvmPsiRangeSetUtil.indexRange())) {
+        switch (((SpecialField)descriptor)) {
           case ARRAY_LENGTH:
             return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.array.length.is.always.non.negative"), factUse);
           case STRING_LENGTH:

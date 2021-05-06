@@ -5,7 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -277,7 +277,7 @@ public final class DfaUtil {
   public static DfaValue boxUnbox(DfaValue value, @NotNull DfType type) {
     if (TypeConstraint.fromDfType(type).isPrimitiveWrapper()) {
       if (value.getDfType() instanceof DfPrimitiveType) {
-        return value.getFactory().getWrapperFactory().createWrapper(type.meet(DfTypes.NOT_NULL_OBJECT), JvmSpecialField.UNBOX, value);
+        return value.getFactory().getWrapperFactory().createWrapper(type.meet(DfTypes.NOT_NULL_OBJECT), SpecialField.UNBOX, value);
       }
     }
     if (type instanceof DfPrimitiveType) {
@@ -289,7 +289,7 @@ public final class DfaUtil {
         }
       }
       if (value instanceof DfaWrappedValue || TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
-        return JvmSpecialField.UNBOX.createValue(value.getFactory(), value);
+        return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
       if (value.getDfType() instanceof DfReferenceType) {
         return value.getFactory().fromDfType(type);

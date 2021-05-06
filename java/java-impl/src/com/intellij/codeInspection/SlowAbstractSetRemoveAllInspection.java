@@ -3,11 +3,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.value.SpecialField;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -70,7 +69,7 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
 
   @NotNull
   private static LongRangeSet getSizeRangeOfCollection(PsiExpression expression) {
-    final SpecialField lengthField = JvmSpecialField.COLLECTION_SIZE;
+    final SpecialField lengthField = SpecialField.COLLECTION_SIZE;
     final DfType origType = CommonDataflow.getDfType(expression);
     final DfType length = lengthField.getFromQualifier(origType);
     final DfIntegralType dfType = ObjectUtils.tryCast(length, DfIntegralType.class);

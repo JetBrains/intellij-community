@@ -7,7 +7,7 @@ import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
@@ -434,7 +434,7 @@ public final class DfTypes {
   public static DfReferenceType customObject(@NotNull TypeConstraint constraint,
                                              @NotNull DfaNullability nullability,
                                              @NotNull Mutability mutability,
-                                             @Nullable JvmSpecialField jvmSpecialField,
+                                             @Nullable SpecialField jvmSpecialField,
                                              @NotNull DfType sfType) {
     if (nullability == DfaNullability.NULL) {
       throw new IllegalArgumentException();

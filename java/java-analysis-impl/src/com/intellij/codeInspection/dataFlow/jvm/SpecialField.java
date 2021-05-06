@@ -26,11 +26,11 @@ import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueC
 import static com.intellij.psi.CommonClassNames.*;
 
 /**
- * Represents a method which is handled as a field in DFA.
+ * Represents a derived JVM field
  *
  * @author Tagir Valeev
  */
-public enum JvmSpecialField implements SpecialField {
+public enum SpecialField implements DerivedVariableDescriptor {
   ARRAY_LENGTH("length", "special.field.array.length", true) {
     @Override
     boolean isMyQualifierType(DfType type) {
@@ -224,12 +224,12 @@ public enum JvmSpecialField implements SpecialField {
     }
   };
 
-  private static final JvmSpecialField[] VALUES = values();
+  private static final SpecialField[] VALUES = values();
   private final String myTitle;
   private final @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String myTitleKey;
   private final boolean myFinal;
 
-  JvmSpecialField(String title, @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String titleKey, boolean isFinal) {
+  SpecialField(String title, @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String titleKey, boolean isFinal) {
     myTitle = title;
     myTitleKey = titleKey;
     myFinal = isFinal;
@@ -264,10 +264,10 @@ public enum JvmSpecialField implements SpecialField {
    */
   @Contract("null -> null")
   @Nullable
-  public static JvmSpecialField findSpecialField(PsiElement accessor) {
+  public static SpecialField findSpecialField(PsiElement accessor) {
     if (!(accessor instanceof PsiMember)) return null;
     PsiMember member = (PsiMember)accessor;
-    for (JvmSpecialField sf : VALUES) {
+    for (SpecialField sf : VALUES) {
       if (sf.isMyAccessor(member)) {
         return sf;
       }
@@ -380,17 +380,6 @@ public enum JvmSpecialField implements SpecialField {
     return asDfType(fieldValue);
   }
 
-  @Override
-  @NotNull
-  public DfType getFromQualifier(@NotNull DfType dfType) {
-    if (dfType == DfType.TOP) return DfType.TOP;
-    if (!(dfType instanceof DfReferenceType)) return DfType.BOTTOM;
-    SpecialField sf = ((DfReferenceType)dfType).getSpecialField();
-    if (sf == null) return DfType.TOP;
-    if (sf != this) return DfType.BOTTOM;
-    return ((DfReferenceType)dfType).getSpecialFieldType();
-  }
-
   /**
    * Returns a special field which corresponds to given qualifier type
    * (currently it's assumed that only one special field may exist for given qualifier type)
@@ -399,11 +388,11 @@ public enum JvmSpecialField implements SpecialField {
    * @return a special field; null if no special field is available for given type
    */
   @Nullable
-  public static JvmSpecialField fromQualifierType(@NotNull DfType type) {
+  public static SpecialField fromQualifierType(@NotNull DfType type) {
     if (type instanceof DfReferenceType && ((DfReferenceType)type).getSpecialField() != null) {
       return ((DfReferenceType)type).getSpecialField();
     }
-    for (JvmSpecialField value : VALUES) {
+    for (SpecialField value : VALUES) {
       if (value.isMyQualifierType(type)) {
         return value;
       }

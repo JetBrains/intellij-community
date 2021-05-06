@@ -5,7 +5,7 @@ package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
@@ -84,7 +84,7 @@ public class MapUpdateInliner implements CallInliner {
   }
 
   private static void flushSize(CFGBuilder builder) {
-    builder.swap().unwrap(JvmSpecialField.COLLECTION_SIZE).pushUnknown().assign().pop();
+    builder.swap().unwrap(SpecialField.COLLECTION_SIZE).pushUnknown().assign().pop();
   }
 
   private static void inlineComputeIfAbsent(@NotNull CFGBuilder builder,

@@ -3,7 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -63,7 +63,7 @@ public final class CommonDataflow {
       if (myDfType == DfType.TOP) return;
       DfType newType = memState.getDfType(value);
       if (value instanceof DfaVariableValue) {
-        SpecialField field = JvmSpecialField.fromQualifier(value);
+        DerivedVariableDescriptor field = SpecialField.fromQualifier(value);
         if (field != null && newType instanceof DfReferenceType) {
           DfaValue specialField = field.createValue(value.getFactory(), value);
           DfType withSpecialField = field.asDfType(memState.getDfType(specialField));
@@ -72,7 +72,7 @@ public final class CommonDataflow {
         }
       }
       if (value instanceof DfaWrappedValue) {
-        SpecialField field = ((DfaWrappedValue)value).getSpecialField();
+        DerivedVariableDescriptor field = ((DfaWrappedValue)value).getSpecialField();
         DfaVariableValue var = ((DfaWrappedValue)value).getWrappedValue();
         newType = newType.meet(field.asDfType(memState.getDfType(var)));
       }

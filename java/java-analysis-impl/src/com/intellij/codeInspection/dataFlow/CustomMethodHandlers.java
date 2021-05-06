@@ -2,13 +2,17 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaBinOpValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -28,7 +32,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-import static com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField.*;
+import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.*;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;

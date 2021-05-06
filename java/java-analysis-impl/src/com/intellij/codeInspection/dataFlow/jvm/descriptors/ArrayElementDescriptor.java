@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
@@ -154,7 +154,7 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
     PsiType type = expression.getType();
     if (expression instanceof PsiArrayInitializerExpression) {
       int length = ((PsiArrayInitializerExpression)expression).getInitializers().length;
-      return factory.fromDfType(JvmSpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(length))
+      return factory.fromDfType(SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(length))
                                   .meet(DfTypes.typedObject(type, Nullability.NOT_NULL)));
     }
     DfType dfType = DfTypes.typedObject(type, NullabilityUtil.getExpressionNullability(expression));

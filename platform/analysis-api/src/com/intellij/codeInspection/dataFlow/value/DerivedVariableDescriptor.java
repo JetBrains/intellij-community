@@ -5,7 +5,11 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public interface SpecialField extends VariableDescriptor {
+/**
+ * A variable descriptor that could be used as a part of composite DfType 
+ * (assuming that its qualifier is a corresponding basic type)
+ */
+public interface DerivedVariableDescriptor extends VariableDescriptor {
   /**
    * @param fieldValue dfType of the special field value
    * @return a dfType that represents a value having this special field restricted to the supplied dfType
@@ -25,5 +29,8 @@ public interface SpecialField extends VariableDescriptor {
    * @param dfType of the qualifier
    * @return en extracted DfType
    */
-  @NotNull DfType getFromQualifier(@NotNull DfType dfType);
+  @NotNull
+  default DfType getFromQualifier(@NotNull DfType dfType) {
+    return dfType.getDerivedValue(this);
+  }
 }

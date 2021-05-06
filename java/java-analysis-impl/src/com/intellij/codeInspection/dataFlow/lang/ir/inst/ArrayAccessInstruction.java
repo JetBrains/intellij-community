@@ -19,7 +19,7 @@ import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
@@ -116,7 +116,7 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
                                           @NotNull DfaValue array,
                                           @NotNull DfaValue index) {
     DfaValueFactory factory = index.getFactory();
-    DfaValue length = JvmSpecialField.ARRAY_LENGTH.createValue(factory, array);
+    DfaValue length = SpecialField.ARRAY_LENGTH.createValue(factory, array);
     DfaCondition lengthMoreThanZero = length.cond(RelationType.GT, intValue(0));
     if (!memState.applyCondition(lengthMoreThanZero)) return false;
     DfaCondition indexNonNegative = index.cond(RelationType.GE, intValue(0));

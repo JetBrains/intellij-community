@@ -3,7 +3,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.CustomMethodHandlers;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -38,14 +38,14 @@ public class StringConcatInstruction extends EvalInstruction {
         leftString.length() + rightString.length() <= CustomMethodHandlers.MAX_STRING_CONSTANT_LENGTH_TO_TRACK) {
       return factory.fromDfType(concatenationResult(leftString + rightString, myStringType));
     }
-    DfaValue leftLength = JvmSpecialField.STRING_LENGTH.createValue(factory, left);
-    DfaValue rightLength = JvmSpecialField.STRING_LENGTH.createValue(factory, right);
+    DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, left);
+    DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, right);
     DfType leftRange = state.getDfType(leftLength);
     DfType rightRange = state.getDfType(rightLength);
     DfType resultRange = leftRange instanceof DfIntType ? ((DfIntType)leftRange).eval(rightRange, LongRangeBinOp.PLUS) : INT;
     DfType result = resultRange.isConst(0)
                     ? referenceConstant("", myStringType)
-                    : JvmSpecialField.STRING_LENGTH.asDfType(resultRange).meet(TypeConstraints.exact(myStringType).asDfType());
+                    : SpecialField.STRING_LENGTH.asDfType(resultRange).meet(TypeConstraints.exact(myStringType).asDfType());
     return factory.fromDfType(result);
   }
 

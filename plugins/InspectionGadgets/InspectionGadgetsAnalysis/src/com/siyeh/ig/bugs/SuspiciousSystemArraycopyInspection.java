@@ -17,7 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.psi.*;
@@ -113,8 +113,8 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(src);
       if (result == null) return;
 
-      LongRangeSet srcLengthSet = DfIntType.extractRange(JvmSpecialField.ARRAY_LENGTH.getFromQualifier(result.getDfType(src)));
-      LongRangeSet destLengthSet = DfIntType.extractRange(JvmSpecialField.ARRAY_LENGTH.getFromQualifier(result.getDfType(dest)));
+      LongRangeSet srcLengthSet = DfIntType.extractRange(SpecialField.ARRAY_LENGTH.getFromQualifier(result.getDfType(src)));
+      LongRangeSet destLengthSet = DfIntType.extractRange(SpecialField.ARRAY_LENGTH.getFromQualifier(result.getDfType(dest)));
       LongRangeSet srcPosSet = DfIntType.extractRange(result.getDfType(srcPos));
       LongRangeSet destPosSet = DfIntType.extractRange(result.getDfType(destPos));
       LongRangeSet lengthSet = DfIntType.extractRange(result.getDfType(length));

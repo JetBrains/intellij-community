@@ -16,21 +16,21 @@ import java.util.Map;
  */
 public final class DfaWrappedValue extends DfaValue {
   private final @NotNull DfaVariableValue myWrappedValue;
-  private final @NotNull SpecialField mySpecialField;
+  private final @NotNull DerivedVariableDescriptor myDerivedVariableDescriptor;
   private final @NotNull DfType myType;
 
   private DfaWrappedValue(@NotNull DfaVariableValue valueToWrap,
-                          @NotNull SpecialField field,
+                          @NotNull DerivedVariableDescriptor field,
                           @NotNull DfType type) {
     super(valueToWrap.getFactory());
     myWrappedValue = valueToWrap;
-    mySpecialField = field;
+    myDerivedVariableDescriptor = field;
     myType = type;
   }
 
   @NonNls
   public String toString() {
-    return myType + " [with " + mySpecialField + "=" + myWrappedValue + "]";
+    return myType + " [with " + myDerivedVariableDescriptor + "=" + myWrappedValue + "]";
   }
 
   @NotNull
@@ -39,13 +39,13 @@ public final class DfaWrappedValue extends DfaValue {
   }
 
   @NotNull
-  public SpecialField getSpecialField() {
-    return mySpecialField;
+  public DerivedVariableDescriptor getSpecialField() {
+    return myDerivedVariableDescriptor;
   }
 
   @Override
   public DfaValue bindToFactory(@NotNull DfaValueFactory factory) {
-    return factory.getWrapperFactory().createWrapper(myType, mySpecialField, myWrappedValue.bindToFactory(factory));
+    return factory.getWrapperFactory().createWrapper(myType, myDerivedVariableDescriptor, myWrappedValue.bindToFactory(factory));
   }
 
   @NotNull
@@ -64,7 +64,7 @@ public final class DfaWrappedValue extends DfaValue {
     }
 
     @NotNull
-    public DfaValue createWrapper(@NotNull DfType qualifierType, @NotNull SpecialField specialField, @NotNull DfaValue specialFieldValue) {
+    public DfaValue createWrapper(@NotNull DfType qualifierType, @NotNull DerivedVariableDescriptor specialField, @NotNull DfaValue specialFieldValue) {
       if (specialFieldValue instanceof DfaVariableValue && ((DfaVariableValue)specialFieldValue).getDescriptor() == specialField) {
         DfaVariableValue qualifier = ((DfaVariableValue)specialFieldValue).getQualifier();
         if (qualifier != null && qualifierType.isSuperType(qualifier.getDfType())) {

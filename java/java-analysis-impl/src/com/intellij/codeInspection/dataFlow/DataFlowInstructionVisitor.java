@@ -7,7 +7,7 @@ import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.*;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
@@ -317,7 +317,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   private void processOfNullableResult(@NotNull DfaValue value, @NotNull DfaMemoryState memState, PsiElement anchor) {
     DfaValueFactory factory = value.getFactory();
-    DfaValue optionalValue = JvmSpecialField.OPTIONAL_VALUE.createValue(factory, value);
+    DfaValue optionalValue = SpecialField.OPTIONAL_VALUE.createValue(factory, value);
     DfaNullability nullability = DfaNullability.fromDfType(memState.getDfType(optionalValue));
     ThreeState present;
     if (nullability == DfaNullability.NULL) {

@@ -22,12 +22,11 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.SpecialField;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -366,7 +365,7 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       if (myFunction != null) {
-        DfaVariableValue optValue = (DfaVariableValue)JvmSpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), myResult);
+        DfaVariableValue optValue = (DfaVariableValue)SpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), myResult);
         builder.push(optValue)
                .ifNotNull()
                  .push(DfTypes.NOT_NULL_OBJECT)
@@ -663,7 +662,7 @@ public class StreamChainInliner implements CallInliner {
     void iteration(CFGBuilder builder) {
       // do nothing currently: we can emulate calling collection.add,
       // but it's unnecessary for current analysis
-      builder.flush(JvmSpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), myResult)).pop();
+      builder.flush(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), myResult)).pop();
     }
 
     @Override
@@ -735,7 +734,7 @@ public class StreamChainInliner implements CallInliner {
                .end();
       }
       // Actual addition of Map element is unnecessary for current analysis
-      builder.flush(JvmSpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), myResult)).pop();
+      builder.flush(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), myResult)).pop();
     }
   }
 
@@ -831,11 +830,11 @@ public class StreamChainInliner implements CallInliner {
     SpecialField sizeField = null;
     if (array) {
       qualifierExpression = sourceCall.getArgumentList().getExpressions()[0];
-      sizeField = JvmSpecialField.ARRAY_LENGTH;
+      sizeField = SpecialField.ARRAY_LENGTH;
     }
     else if (COLLECTION_STREAM.test(sourceCall)) {
       qualifierExpression = sourceCall.getMethodExpression().getQualifierExpression();
-      sizeField = JvmSpecialField.COLLECTION_SIZE;
+      sizeField = SpecialField.COLLECTION_SIZE;
     }
     if (qualifierExpression != null) {
       builder.pushExpression(qualifierExpression)

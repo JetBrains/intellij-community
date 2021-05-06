@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -312,7 +312,7 @@ public abstract class ContractValue {
 
     @Override
     public String getPresentationText(PsiMethod method) {
-      return myQualifier.getPresentationText(method) + "." + myField + (myField == JvmSpecialField.ARRAY_LENGTH ? "" : "()");
+      return myQualifier.getPresentationText(method) + "." + myField + (myField == SpecialField.ARRAY_LENGTH ? "" : "()");
     }
 
     @Override

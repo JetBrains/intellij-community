@@ -5,13 +5,16 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.PsiFieldImpl;
@@ -121,7 +124,7 @@ public class JavaDfaValueFactory {
 
     DfaValue qualifier = getQualifierOrThisValue(factory, refExpr);
     DfaValue result = var.createValue(factory, qualifier, true);
-    if (var instanceof JvmSpecialField) {
+    if (var instanceof SpecialField) {
       PsiType wantedType = refExpr.getType();
       result = DfaUtil.boxUnbox(result, wantedType);
     }
@@ -185,7 +188,7 @@ public class JavaDfaValueFactory {
   @Contract("null -> null")
   @Nullable
   public static VariableDescriptor getAccessedVariableOrGetter(final PsiElement target) {
-    SpecialField sf = JvmSpecialField.findSpecialField(target);
+    SpecialField sf = SpecialField.findSpecialField(target);
     if (sf != null) {
       return sf;
     }
@@ -245,7 +248,7 @@ public class JavaDfaValueFactory {
       Boolean boo = computeJavaLangBooleanFieldReference(variable);
       if (boo != null) {
         DfaValue unboxed = factory.fromDfType(DfTypes.booleanValue(boo));
-        return factory.getWrapperFactory().createWrapper(DfTypes.typedObject(type, Nullability.NOT_NULL), JvmSpecialField.UNBOX, unboxed);
+        return factory.getWrapperFactory().createWrapper(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, unboxed);
       }
       if (DfaUtil.isEmptyCollectionConstantField(variable)) {
         return factory.fromDfType(DfTypes.constant(variable, type));

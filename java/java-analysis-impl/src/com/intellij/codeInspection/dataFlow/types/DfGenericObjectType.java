@@ -2,9 +2,8 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.codeInspection.dataFlow.value.SpecialField;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -19,7 +18,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
   private final @NotNull TypeConstraint myConstraint;
   private final @NotNull DfaNullability myNullability;
   private final @NotNull Mutability myMutability;
-  private final @Nullable JvmSpecialField myJvmSpecialField;
+  private final @Nullable SpecialField myJvmSpecialField;
   private final @NotNull DfType mySpecialFieldType;
   private final boolean myLocal;
 
@@ -27,7 +26,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
                       @NotNull TypeConstraint constraint,
                       @NotNull DfaNullability nullability,
                       @NotNull Mutability mutability,
-                      @Nullable JvmSpecialField field,
+                      @Nullable SpecialField field,
                       @NotNull DfType type,
                       boolean local) {
     super(notValues);
@@ -65,7 +64,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
 
   @Nullable
   @Override
-  public JvmSpecialField getSpecialField() {
+  public SpecialField getSpecialField() {
     return myJvmSpecialField;
   }
 
@@ -197,7 +196,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     DfaNullability nullability = getNullability().unite(type.getNullability());
     Mutability mutability = getMutability().unite(type.getMutability());
     boolean locality = isLocal() && type.isLocal();
-    JvmSpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
+    SpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
     DfType sfType = sf == null ? BOTTOM : getSpecialFieldType().join(type.getSpecialFieldType());
     Set<Object> notValues = myNotValues;
     if (type instanceof DfGenericObjectType) {
@@ -229,7 +228,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     if (nullability == null) return BOTTOM;
     Mutability mutability = getMutability().intersect(type.getMutability());
     boolean locality = isLocal() || type.isLocal();
-    JvmSpecialField sf;
+    SpecialField sf;
     DfType sfType;
     if (getSpecialField() == null) {
       sf = type.getSpecialField();

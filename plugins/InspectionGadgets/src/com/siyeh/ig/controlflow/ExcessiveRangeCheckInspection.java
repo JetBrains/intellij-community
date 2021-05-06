@@ -4,7 +4,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -83,10 +83,10 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
       PsiExpression qualifier = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
       if (qualifier != null && !SideEffectChecker.mayHaveSideEffects(qualifier)) {
         if (STRING_IS_EMPTY.matches(expression)) {
-          return new RangeConstraint(textRange, qualifier, JvmSpecialField.STRING_LENGTH, LongRangeSet.point(0));
+          return new RangeConstraint(textRange, qualifier, SpecialField.STRING_LENGTH, LongRangeSet.point(0));
         }
         else if (COLLECTION_IS_EMPTY.matches(expression)) {
-          return new RangeConstraint(textRange, qualifier, JvmSpecialField.COLLECTION_SIZE, LongRangeSet.point(0));
+          return new RangeConstraint(textRange, qualifier, SpecialField.COLLECTION_SIZE, LongRangeSet.point(0));
         }
       }
     }
@@ -123,12 +123,12 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
   private static final class RangeConstraint {
     private final @NotNull TextRange myRange;
     private final @NotNull PsiExpression myExpression;
-    private final @Nullable JvmSpecialField myField;
+    private final @Nullable SpecialField myField;
     private final @NotNull LongRangeSet myConstraint;
 
     private RangeConstraint(@NotNull TextRange range,
                             @NotNull PsiExpression expression,
-                            @Nullable JvmSpecialField field,
+                            @Nullable SpecialField field,
                             @NotNull LongRangeSet constraint) {
       myRange = range;
       myExpression = expression;
@@ -173,13 +173,13 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
 
     @Nullable
     static RangeConstraint create(TextRange textRange, PsiExpression expr, LongRangeSet set) {
-      JvmSpecialField field = null;
+      SpecialField field = null;
       PsiReferenceExpression ref = expr instanceof PsiReferenceExpression ? (PsiReferenceExpression)expr :
                                    expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).getMethodExpression() : null;
       if (ref != null) {
         PsiExpression qualifier = ref.getQualifierExpression();
         if (qualifier != null) {
-          field = JvmSpecialField.findSpecialField(ref.resolve());
+          field = SpecialField.findSpecialField(ref.resolve());
           if (field != null) {
             expr = qualifier;
           }

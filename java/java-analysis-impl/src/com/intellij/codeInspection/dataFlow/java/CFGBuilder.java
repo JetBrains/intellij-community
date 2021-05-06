@@ -120,11 +120,11 @@ public class CFGBuilder {
    * <p>
    * Stack after: ... loaded_field
    *
-   * @param descriptor a {@link SpecialField} which describes a field to get
+   * @param descriptor a {@link DerivedVariableDescriptor} which describes a field to get
    * @return this builder
    */
-  public CFGBuilder unwrap(@NotNull SpecialField descriptor) {
-    return add(new UnwrapSpecialFieldInstruction(descriptor));
+  public CFGBuilder unwrap(@NotNull DerivedVariableDescriptor descriptor) {
+    return add(new UnwrapDerivedVariableInstruction(descriptor));
   }
 
   /**

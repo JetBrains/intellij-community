@@ -24,7 +24,7 @@ import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.problems.MutabilityProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
@@ -404,7 +404,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue precalculated = getPrecalculatedReturnValue();
     PsiType type = getResultType();
 
-    SpecialField field = JvmSpecialField.findSpecialField(myTargetMethod);
+    SpecialField field = SpecialField.findSpecialField(myTargetMethod);
     if (qualifierValue instanceof DfaWrappedValue && ((DfaWrappedValue)qualifierValue).getSpecialField() == field) {
       return ((DfaWrappedValue)qualifierValue).getWrappedValue();
     }
@@ -507,7 +507,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         argValues = new DfaValue[paramCount];
         if (myVarArgCall) {
           PsiType arrayType = Objects.requireNonNull(paramList.getParameter(paramCount - 1)).getType();
-          DfType dfType = JvmSpecialField.ARRAY_LENGTH.asDfType(intValue(myArgCount - paramCount + 1))
+          DfType dfType = SpecialField.ARRAY_LENGTH.asDfType(intValue(myArgCount - paramCount + 1))
             .meet(TypeConstraints.exact(arrayType).asDfType());
           argValues[paramCount - 1] = runner.getFactory().fromDfType(dfType);
         }
@@ -550,7 +550,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         DfType dfType = memState.getDfType(arg);
         if (!Mutability.fromDfType(dfType).canBeModified() &&
             // Empty array cannot be modified at all
-            !memState.getDfType(JvmSpecialField.ARRAY_LENGTH.createValue(runner.getFactory(), arg)).equals(intValue(0))) {
+            !memState.getDfType(SpecialField.ARRAY_LENGTH.createValue(runner.getFactory(), arg)).equals(intValue(0))) {
           runner.getListener().onCondition(new MutabilityProblem(anchor, false), arg, ThreeState.YES, memState);
           if (dfType instanceof DfReferenceType) {
             memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));

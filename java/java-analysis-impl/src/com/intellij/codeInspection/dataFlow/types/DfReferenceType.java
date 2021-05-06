@@ -5,8 +5,8 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +48,7 @@ public interface DfReferenceType extends DfType {
    * @return special field if additional information is known about the special field of all referenced objects
    */
   @Nullable
-  default JvmSpecialField getSpecialField() {
+  default SpecialField getSpecialField() {
     return null;
   }
 
@@ -168,8 +168,8 @@ public interface DfReferenceType extends DfType {
   }
 
   @Override
-  default @NotNull List<@NotNull VariableDescriptor> getDerivedVariables() {
-    JvmSpecialField field = JvmSpecialField.fromQualifierType(this);
+  default @NotNull List<@NotNull DerivedVariableDescriptor> getDerivedVariables() {
+    SpecialField field = SpecialField.fromQualifierType(this);
     if (field != null) {
       return List.of(field);
     }
@@ -178,7 +178,7 @@ public interface DfReferenceType extends DfType {
 
   @Override
   @NotNull
-  default DfType getDerivedValue(@NotNull VariableDescriptor derivedDescriptor) {
+  default DfType getDerivedValue(@NotNull DerivedVariableDescriptor derivedDescriptor) {
     if (getSpecialField() == derivedDescriptor) {
       return getSpecialFieldType();
     }
