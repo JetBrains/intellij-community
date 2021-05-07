@@ -212,7 +212,8 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     val project = modifiableRootModel.project
     val sdk = if (moduleJdk != null) moduleJdk else getProjectJdk(project)
     if (sdk != null) {
-      if (!starterContext.isCreatingNewProject && sdk == getProjectJdk(project)) {
+      if (starterContext.isCreatingNewProject
+          || (!starterContext.isCreatingNewProject && sdk == getProjectJdk(project))) {
         modifiableRootModel.inheritSdk()
       }
       else {
