@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -633,6 +634,10 @@ public final class IdeEventQueue extends EventQueue {
       ExceptionUtil.rethrow(t);
     }
 
+    if (t instanceof ControlFlowException) {
+      // make sure the exception is reported
+      t = new RuntimeException(t);
+    }
     StartupAbortedException.processException(t);
   }
 
