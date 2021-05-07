@@ -50,6 +50,7 @@ public class Splitter extends JPanel implements Splittable {
 
 
   protected float myProportion;// first size divided by (first + second)
+  private Float myLagProportion;
 
   protected final Divider myDivider;
   private JComponent mySecondComponent;
@@ -280,6 +281,7 @@ public class Splitter extends JPanel implements Splittable {
         myProportion = getProportionForSecondSize((int)getDimension(mySecondComponent.getSize()), total);
       }
       else if (myDividerPositionStrategy == DividerPositionStrategy.DISTRIBUTE) {
+        if (myLagProportion == null) myLagProportion = myProportion;
         myProportion = getDistributeSizeChange(
           (int)getDimension(myFirstComponent.getSize()),
           (int)getDimension(myFirstComponent.getMinimumSize()),
@@ -287,7 +289,8 @@ public class Splitter extends JPanel implements Splittable {
           (int)getDimension(mySecondComponent.getSize()),
           (int)getDimension(mySecondComponent.getMinimumSize()),
           (int)getDimension(mySecondComponent.getPreferredSize()),
-          total - getDividerWidth());
+          total - getDividerWidth(),
+          myLagProportion);
       }
     }
     super.reshape(x, y, w, h);
@@ -297,12 +300,13 @@ public class Splitter extends JPanel implements Splittable {
     return !isNull(component) && component.isVisible() && !component.getBounds().isEmpty();
   }
 
-  private static float getDistributeSizeChange(int size1, int mSize1, int pSize1, int size2, int mSize2, int pSize2, int totalSize) {
+  private static float getDistributeSizeChange(int size1, int mSize1, int pSize1,
+                                               int size2, int mSize2, int pSize2,
+                                               int totalSize, float oldProportion) {
     //clamp
     if (pSize1 < mSize1) pSize1 = mSize1;
     if (pSize2 < mSize2) pSize2 = mSize2;
     int delta = totalSize - (size1 + size2);
-    double oldProportion = ((double)size1) /(size1 + size2);
 
     int[] size = {size1, size2};
     delta = stretchTo(size, mSize1, mSize2, delta, oldProportion);
@@ -540,6 +544,7 @@ public class Splitter extends JPanel implements Splittable {
 
   @Override
   public void setProportion(float proportion) {
+    myLagProportion = null;
     if (myProportion == proportion) {
       return;
     }
