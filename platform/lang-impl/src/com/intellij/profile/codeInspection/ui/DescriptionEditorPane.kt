@@ -24,8 +24,9 @@ open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
     val css = (this.editorKit as HTMLEditorKit).styleSheet
     with(EditorColorsManager.getInstance().globalScheme) {
       css.addRule("a {overflow-wrap: anywhere;}")
-      css.addRule("code, pre {background:#"
-                  + ColorUtil.toHex(ObjectUtils.notNull(getColor(EditorColors.READONLY_BACKGROUND_COLOR), defaultBackground)) + ";}")
+      css.addRule("pre {padding:10px; background:#"
+                  + ColorUtil.toHex(ObjectUtils.notNull(getColor(EditorColors.READONLY_BACKGROUND_COLOR), defaultBackground))
+                  + ";}")
     }
   }
 
