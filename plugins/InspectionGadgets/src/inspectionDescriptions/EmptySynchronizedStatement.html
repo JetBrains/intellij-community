@@ -1,13 +1,13 @@
 <html>
 <body>
 Reports <code>synchronized</code> statements having empty bodies.
-Empty synchronized statements are sometimes used to wait till other threads
+Empty <code>synchronized</code> statements are sometimes used to wait till other threads
 release a particular resource. However, nobody guarantees that the same resource
-won't be acquired again right after the empty synchronized statement finishes.
+won't be acquired again right after the empty <code>synchronized</code> statement finishes.
 For proper synchronization, the resource should be utilized inside the synchronized block.
 <p>
-  Also, empty synchronized block may appear during the refactoring 
-  when redundant code was deleted. In this case, the synchronized block
+  Also, empty <code>synchronized</code> block may appear during the refactoring 
+  when redundant code was deleted. In this case, the <code>synchronized</code> block
   itself will be redundant and should be deleted as well.
 </p>
 <p>Example:</p>
