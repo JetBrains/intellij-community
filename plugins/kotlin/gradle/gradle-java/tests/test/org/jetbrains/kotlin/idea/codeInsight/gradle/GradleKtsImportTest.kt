@@ -79,7 +79,7 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
                 "$expectedErrorMessage error has not been reported among other errors: $errors",
                 buildScriptErrors.isNotEmpty()
             )
-        }
+            checkConfiguration("build.gradle.kts")
     }
 
     class CompositeBuild2 : GradleKtsImportTest() {

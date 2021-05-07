@@ -142,6 +142,12 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         }
     }
 
+    override fun setUp() {
+        Assume.assumeFalse(AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio())
+        super.setUp()
+        GradleProcessOutputInterceptor.install(testRootDisposable)
+    }
+
     override fun handleImportFailure(errorMessage: String, errorDetails: String?) {
         val gradleOutput = GradleProcessOutputInterceptor.getInstance()?.getOutput().orEmpty()
 
