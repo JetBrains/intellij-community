@@ -9,9 +9,9 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import git4idea.conflicts.acceptConflictSide
-import git4idea.conflicts.getConflictOperationLock
-import git4idea.conflicts.showMergeWindow
+import git4idea.conflicts.GitConflictsUtil.acceptConflictSide
+import git4idea.conflicts.GitConflictsUtil.getConflictOperationLock
+import git4idea.conflicts.GitConflictsUtil.showMergeWindow
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.createMergeHandler
 import git4idea.repo.GitConflict

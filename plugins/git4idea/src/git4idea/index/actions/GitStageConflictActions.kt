@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.asJBIterable
 import git4idea.conflicts.GitMergeHandler
-import git4idea.conflicts.acceptConflictSide
-import git4idea.conflicts.getConflictOperationLock
-import git4idea.conflicts.showMergeWindow
+import git4idea.conflicts.GitConflictsUtil.acceptConflictSide
+import git4idea.conflicts.GitConflictsUtil.getConflictOperationLock
+import git4idea.conflicts.GitConflictsUtil.showMergeWindow
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.*
 import git4idea.repo.GitConflict

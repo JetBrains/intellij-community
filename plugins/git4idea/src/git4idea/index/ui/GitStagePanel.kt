@@ -47,8 +47,8 @@ import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import git4idea.GitVcs
 import git4idea.conflicts.GitMergeHandler
-import git4idea.conflicts.getConflictOperationLock
-import git4idea.conflicts.showMergeWindow
+import git4idea.conflicts.GitConflictsUtil.getConflictOperationLock
+import git4idea.conflicts.GitConflictsUtil.showMergeWindow
 import git4idea.i18n.GitBundle.message
 import git4idea.index.GitStageCommitWorkflow
 import git4idea.index.GitStageCommitWorkflowHandler
