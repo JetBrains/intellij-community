@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.gradle.configuration.utils
 
 import com.intellij.openapi.util.IntellijInternalApi
 
-
 // TODO: Replace heuristic with proper import!
 @RequiresOptIn(level = RequiresOptIn.Level.ERROR)
 annotation class UnsafeTestSourceSetHeuristicApi
