@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ProjectTopics
-import com.intellij.concurrency.JobSchedulerImpl
 import com.intellij.configurationStore.saveComponentManager
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
@@ -13,8 +12,8 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.*
 import com.intellij.openapi.module.impl.*
 import com.intellij.openapi.project.Project
@@ -25,7 +24,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
@@ -40,9 +38,11 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
+import java.util.concurrent.ForkJoinTask
 
 @Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
@@ -316,37 +316,33 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   internal val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
 
   internal fun loadModules(entities: Sequence<ModuleEntity>) {
-    val fileSystem = LocalFileSystem.getInstance()
     val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
     val (unloadedEntities, loadedEntities) = entities.partition { it.name in unloadedModuleNames }
     LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
-    loadedEntities.forEach { module -> getModuleVirtualFileUrl(module)?.let { fileSystem.refreshAndFindFileByNioFile(it.toPath()) } }
-
-    val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
-    try {
-      val tasks = loadedEntities
-        .map { moduleEntity ->
-          Callable {
-            LOG.runAndLogException {
-              val module = createModuleInstance(moduleEntity, entityStore, null, false)
-              moduleEntity to module
-            }
-          }
-        }
-
-      val results = service.invokeAll(tasks)
-      UnloadedModuleDescriptionBridge.createDescriptions(unloadedEntities).associateByTo(unloadedModules) { it.name }
-
-      WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
-        val moduleMap = builder.mutableModuleMap
-        results.mapNotNull { it.get() }.forEach { (entity, module) ->
-          moduleMap.addMapping(entity, module)
-          ModuleRootComponentBridge.getInstance(module).moduleLibraryTable.registerModuleLibraryInstances(builder)
-        }
+    val fileSystem = LocalFileSystem.getInstance()
+    for (module in loadedEntities) {
+      getModuleVirtualFileUrl(module)?.let {
+        fileSystem.refreshAndFindFileByPath(JpsPathUtil.urlToPath(it.url))
       }
     }
-    finally {
-      service.shutdownNow()
+
+    val tasks = ForkJoinTask.invokeAll(loadedEntities.map { moduleEntity ->
+      ForkJoinTask.adapt(Callable {
+        runCatching {
+          val module = createModuleInstance(moduleEntity, entityStore, null, false)
+          moduleEntity to module
+        }.getOrLogException(LOG)
+      })
+    })
+    UnloadedModuleDescriptionBridge.createDescriptions(unloadedEntities).associateByTo(unloadedModules) { it.name }
+
+    WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
+      val moduleMap = builder.mutableModuleMap
+      for (task in tasks) {
+        val (entity, module) = task.rawResult ?: continue
+        moduleMap.addMapping(entity, module)
+        ModuleRootComponentBridge.getInstance(module).moduleLibraryTable.registerModuleLibraryInstances(builder)
+      }
     }
   }
 
