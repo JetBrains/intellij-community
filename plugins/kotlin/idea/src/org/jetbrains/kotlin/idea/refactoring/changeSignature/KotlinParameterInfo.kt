@@ -29,7 +29,9 @@ import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.AbstractTypeCheckerContext
 import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.checker.ClassicTypeCheckerContext
+import org.jetbrains.kotlin.types.checker.ClassicTypeSystemContext
 import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 
 class KotlinParameterInfo(
     val callableDescriptor: CallableDescriptor,
@@ -264,19 +266,24 @@ private fun defaultValOrVar(callableDescriptor: CallableDescriptor): KotlinValVa
     else
         KotlinValVar.None
 
-private class OverridingTypeCheckerContext(private val matchingTypeConstructors: Map<TypeConstructor, TypeConstructor>) :
-    ClassicTypeCheckerContext(errorTypeEqualsToAnything = true) {
-    override fun areEqualTypeConstructors(a: TypeConstructor, b: TypeConstructor): Boolean = super.areEqualTypeConstructors(a, b) || run {
-        val img1 = matchingTypeConstructors[a]
-        val img2 = matchingTypeConstructors[b]
-        img1 != null && img1 == b || img2 != null && img2 == a
+private class OverridingTypeCheckerContext(private val matchingTypeConstructors: Map<TypeConstructorMarker, TypeConstructor>) :
+    ClassicTypeSystemContext {
+
+    override fun areEqualTypeConstructors(c1: TypeConstructorMarker, c2: TypeConstructorMarker): Boolean {
+        return super.areEqualTypeConstructors(c1, c2) || run {
+            val img1 = matchingTypeConstructors[c1]
+            val img2 = matchingTypeConstructors[c2]
+            img1 != null && img1 == c2 || img2 != null && img2 == c1
+        }
     }
 
     companion object {
-        fun createChecker(superDescriptor: CallableDescriptor, subDescriptor: CallableDescriptor): OverridingTypeCheckerContext {
-            return OverridingTypeCheckerContext(subDescriptor.typeParameters.zip(superDescriptor.typeParameters).associate {
+        fun createChecker(superDescriptor: CallableDescriptor, subDescriptor: CallableDescriptor): ClassicTypeCheckerContext {
+            val context = OverridingTypeCheckerContext(subDescriptor.typeParameters.zip(superDescriptor.typeParameters).associate {
                 it.first.typeConstructor to it.second.typeConstructor
             })
+
+            return ClassicTypeCheckerContext(errorTypeEqualsToAnything = false, typeSystemContext = context)
         }
     }
 }
