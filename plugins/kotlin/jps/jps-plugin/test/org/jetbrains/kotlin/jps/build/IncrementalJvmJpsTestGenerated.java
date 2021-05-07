@@ -315,11 +315,6 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
             runTest("testData/incremental/pureKotlin/companionConstantChanged/");
         }
 
-        @TestMetadata("companionConstantChanged")
-        public void testCompanionConstantChanged() throws Exception {
-            runTest("jps-plugin/testData/incremental/pureKotlin/companionConstantChanged/");
-        }
-
         @TestMetadata("compilationErrorThenFixedOtherPackage")
         public void testCompilationErrorThenFixedOtherPackage() throws Exception {
             runTest("testData/incremental/pureKotlin/compilationErrorThenFixedOtherPackage/");
@@ -1004,6 +999,11 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
             public static class SamConversions extends AbstractIncrementalJvmJpsTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                @TestMetadata("methodAddDefault")
+                public void testMethodAddDefault() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/samConversions/methodAddDefault/");
                 }
 
                 @TestMetadata("methodAdded")

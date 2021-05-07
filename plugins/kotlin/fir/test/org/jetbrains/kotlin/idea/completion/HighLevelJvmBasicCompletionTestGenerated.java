@@ -2220,16 +2220,6 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/tests/testData/basic/common/primitiveCompletion/insideFunctionWithParameters.kt");
             }
 
-            @TestMetadata("localClassConstructor.kt")
-            public void testLocalClassConstructor() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/localClassConstructor.kt");
-            }
-
-            @TestMetadata("localClassMember.kt")
-            public void testLocalClassMember() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/localClassMember.kt");
-            }
-
             @TestMetadata("localVariablesAndFunctions.kt")
             public void testLocalVariablesAndFunctions() throws Exception {
                 runTest("../completion/tests/testData/basic/common/primitiveCompletion/localVariablesAndFunctions.kt");
@@ -2732,26 +2722,6 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             @TestMetadata("VisibilityInSubclassForce.kt")
             public void testVisibilityInSubclassForce() throws Exception {
                 runTest("../completion/tests/testData/basic/common/visibility/VisibilityInSubclassForce.kt");
-            }
-
-            @TestMetadata("VisibilityOfClassMembersFromLocalClassConstructor.kt")
-            public void testVisibilityOfClassMembersFromLocalClassConstructor() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/visibility/VisibilityOfClassMembersFromLocalClassConstructor.kt");
-            }
-
-            @TestMetadata("VisibilityOfClassMembersFromLocalClassMember.kt")
-            public void testVisibilityOfClassMembersFromLocalClassMember() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/visibility/VisibilityOfClassMembersFromLocalClassMember.kt");
-            }
-
-            @TestMetadata("VisibilityOfCompanionObjectMembersFromOutside.kt")
-            public void testVisibilityOfCompanionObjectMembersFromOutside() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/visibility/VisibilityOfCompanionObjectMembersFromOutside.kt");
-            }
-
-            @TestMetadata("VisibilityOfCompanionObjectMembersFromSubclass.kt")
-            public void testVisibilityOfCompanionObjectMembersFromSubclass() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/visibility/VisibilityOfCompanionObjectMembersFromSubclass.kt");
             }
 
             @TestMetadata("VisibilityPrivateToThis.kt")
