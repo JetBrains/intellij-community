@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.perf.common
 
-import org.jetbrains.kotlin.idea.perf.AbstractPerformanceProjectsTest
+import org.jetbrains.kotlin.idea.perf.live.AbstractPerformanceProjectsTest
 import org.jetbrains.kotlin.idea.perf.Stats
 import org.jetbrains.kotlin.idea.perf.WarmUpProject
 import org.jetbrains.kotlin.idea.perf.util.TeamCity
