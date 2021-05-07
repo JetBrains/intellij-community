@@ -15,6 +15,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.cli.jvm.compiler.MockExternalAnnotationsManager
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
@@ -101,9 +102,7 @@ abstract class AbstractCompilerBasedTest : KotlinLightCodeInsightFixtureTestCase
 
 
     override fun setUp() {
-        if (!isAllFilesPresentInTest()) {
-            setupConfiguration()
-        }
+        setupConfiguration()
         super.setUp()
         registerMockExternalAnnotationManager()
     }
@@ -175,8 +174,6 @@ abstract class AbstractCompilerBasedTest : KotlinLightCodeInsightFixtureTestCase
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        if (isAllFilesPresentInTest()) return KotlinLightProjectDescriptor.INSTANCE
-
         val allDirectives = modules.allDirectives
 
         val configurationKind = JvmEnvironmentConfigurator.extractConfigurationKind(allDirectives)
@@ -185,8 +182,8 @@ abstract class AbstractCompilerBasedTest : KotlinLightCodeInsightFixtureTestCase
         @OptIn(ExperimentalStdlibApi::class)
         val libraryFiles = buildList {
             if (configurationKind.withRuntime) {
-                add(ForTestCompileRuntime.runtimeJarForTests())
-                add(ForTestCompileRuntime.scriptRuntimeJarForTests())
+                add(KotlinArtifacts.instance.kotlinStdlib)
+                add(KotlinArtifacts.instance.kotlinScriptRuntime)
             }
             addAll(JvmEnvironmentConfigurator.getLibraryFilesExceptRealRuntime(configurationKind, allDirectives))
         }
