@@ -70,6 +70,10 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
+      if (DeclarationSearchUtils.isTooExpensiveToSearch(method, false)) {
+        registerPossibleProblem(method.getNameIdentifier());
+        return;
+      }
       final MethodReferenceFinder processor = new MethodReferenceFinder(method);
       final PsiClass innerClass = processor.getOnlyAccessInnerClass();
       if (innerClass == null) {
@@ -123,9 +127,6 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
     }
 
     public PsiClass getOnlyAccessInnerClass() {
-      if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) {
-        return null;
-      }
       ReferencesSearch.search(method).forEach(this);
       return myContainingClass;
     }
