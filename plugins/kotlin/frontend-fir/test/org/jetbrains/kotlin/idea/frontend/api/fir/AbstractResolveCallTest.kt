@@ -39,7 +39,7 @@ abstract class AbstractResolveCallTest : @Suppress("DEPRECATION") LightJavaCodeI
 
     protected fun doTest(path: String) {
         addExternalTestFiles(path)
-        configureByFile(path)
+        myFixture.configureByFile(path)
         val elements = editor.caretModel.caretsAndSelections.map { selection ->
             getSingleSelectedElement(selection)
         }
