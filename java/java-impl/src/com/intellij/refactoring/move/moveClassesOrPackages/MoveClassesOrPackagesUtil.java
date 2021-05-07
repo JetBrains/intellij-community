@@ -145,6 +145,10 @@ public final class MoveClassesOrPackagesUtil {
     return new PsiPackageImpl(manager, qName) {
       @Override
       public boolean isValid() {
+        if (scope.getModelBranchesAffectingScope().isEmpty()) {
+          // Already merged -- PsiPackage can live longer than the branch
+          return super.isValid();
+        }
         return !getProject().isDisposed() &&
                PackageIndex.getInstance(getProject()).getDirsByPackageName(qName, scope).findFirst() != null;
       }
