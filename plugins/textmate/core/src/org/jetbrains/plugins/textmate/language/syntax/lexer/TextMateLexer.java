@@ -174,17 +174,17 @@ public final class TextMateLexer {
         if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
           myStates = myStates.prepend(currentState);
 
-          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.NAME), string, currentMatch, '$');
+          String name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
           openScopeSelector(output, name, startPosition + startLinePosition);
 
           parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, startLinePosition);
           parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLinePosition);
 
-          String contentName = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.CONTENT_NAME), string, currentMatch, '$');
+          String contentName = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch);
           openScopeSelector(output, contentName, endPosition + startLinePosition);
         }
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
-          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.NAME), string, currentMatch, '$');
+          String name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
           openScopeSelector(output, name, startPosition + startLinePosition);
           parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLinePosition);
           closeScopeSelector(output, endPosition + startLinePosition);
@@ -266,7 +266,9 @@ public final class TextMateLexer {
         }
         else if (ends.isEmpty()) {
           CaptureMatchData start = starts.removeLast();
-          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$');
+          CharSequence name = rule.hasBackReference(capturesKey, start.group)
+                              ? SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$')
+                              : start.selectorName;
           openScopeSelector(output, name, start.range.start + startLineOffset);
         }
         else if (ends.getLast().group < starts.getLast().group) {
@@ -275,7 +277,9 @@ public final class TextMateLexer {
         }
         else {
           CaptureMatchData start = starts.removeLast();
-          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$');
+          CharSequence name = rule.hasBackReference(capturesKey, start.group)
+                              ? SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$')
+                              : start.selectorName;
           openScopeSelector(output, name, start.range.start + startLineOffset);
         }
       }

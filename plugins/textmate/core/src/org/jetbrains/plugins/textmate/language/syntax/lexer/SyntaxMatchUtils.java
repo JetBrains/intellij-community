@@ -165,12 +165,24 @@ public final class SyntaxMatchUtils {
                                            int anchorOffset,
                                            boolean matchBeginOfString,
                                            @NotNull TextMateLexerState lexerState) {
-    CharSequence stringRegex = lexerState.syntaxRule.getStringAttribute(keyName);
-    if (stringRegex != null) {
-      return regex(replaceGroupsWithMatchData(stringRegex, lexerState.string, lexerState.matchData, '\\'))
-        .match(string, byteOffset, anchorOffset, matchBeginOfString, ourCheckCancelledCallback);
+    String regex = getStringAttribute(keyName, lexerState.syntaxRule, lexerState.string, lexerState.matchData);
+    return regex != null
+           ? regex(regex).match(string, byteOffset, anchorOffset, matchBeginOfString, ourCheckCancelledCallback)
+           : MatchData.NOT_MATCHED;
+  }
+
+  @Nullable
+  public static String getStringAttribute(Constants.@NotNull StringKey keyName,
+                                          @NotNull SyntaxNodeDescriptor syntaxRule,
+                                          @Nullable StringWithId string,
+                                          @NotNull MatchData matchData) {
+    CharSequence stringAttribute = syntaxRule.getStringAttribute(keyName);
+    if (stringAttribute == null) {
+      return null;
     }
-    return MatchData.NOT_MATCHED;
+    return syntaxRule.hasBackReference(keyName)
+           ? replaceGroupsWithMatchData(stringAttribute, string, matchData, keyName.backReferencePrefix)
+           : stringAttribute.toString();
   }
 
   /**
@@ -187,7 +199,7 @@ public final class SyntaxMatchUtils {
   public static String replaceGroupsWithMatchData(@Nullable CharSequence string,
                                                   @Nullable StringWithId matchingString,
                                                   @NotNull MatchData matchData,
-                                                  char prefix) {
+                                                  char groupPrefix) {
     if (string == null) {
       return null;
     }
@@ -200,7 +212,7 @@ public final class SyntaxMatchUtils {
     int length = string.length();
     while (charIndex < length) {
       char c = string.charAt(charIndex);
-      if (c == prefix) {
+      if (c == groupPrefix) {
         boolean hasGroupIndex = false;
         int groupIndex = 0;
         int digitIndex = charIndex + 1;
