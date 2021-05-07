@@ -290,7 +290,9 @@ public class Splitter extends JPanel implements Splittable {
           (int)getDimension(mySecondComponent.getMinimumSize()),
           (int)getDimension(mySecondComponent.getPreferredSize()),
           total - getDividerWidth(),
-          myLagProportion);
+          myLagProportion,
+          myLackOfSpaceStrategy == LackOfSpaceStrategy.SIMPLE_RATIO ? null :
+          myLackOfSpaceStrategy == LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
       }
     }
     super.reshape(x, y, w, h);
@@ -302,7 +304,8 @@ public class Splitter extends JPanel implements Splittable {
 
   private static float getDistributeSizeChange(int size1, int mSize1, int pSize1,
                                                int size2, int mSize2, int pSize2,
-                                               int totalSize, float oldProportion) {
+                                               int totalSize, float oldProportion,
+                                               @Nullable Boolean stretchFirst) {
     //clamp
     if (pSize1 < mSize1) pSize1 = mSize1;
     if (pSize2 < mSize2) pSize2 = mSize2;
@@ -312,9 +315,14 @@ public class Splitter extends JPanel implements Splittable {
     delta = stretchTo(size, mSize1, mSize2, delta, oldProportion);
     delta = stretchTo(size, pSize1, pSize2, delta, oldProportion);
     if (delta != 0) {
-      int p0 = computePortion(size, delta, oldProportion);
-      size[0] += p0;
-      size[1] += delta - p0;
+      if (stretchFirst == null) {
+        int p0 = computePortion(size, delta, oldProportion);
+        size[0] += p0;
+        size[1] += delta - p0;
+      }
+      else {
+        size[stretchFirst ? 0 : 1] += delta;
+      }
     }
     return (float)size[0] / totalSize;
   }
