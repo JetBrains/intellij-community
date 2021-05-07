@@ -318,6 +318,166 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  // PY-48760
+  public void testMatchStatementSingleClauseCapturePattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseWildcardPattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseLiteralPattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseBindingSequencePattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementTwoClausesCapturePatternFirst() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementTwoClausesCapturePatternLast() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseAliasedRefutableOrPattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseRefutableOrPattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseIrrefutableOrPatternCaptureVariantFirst() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseIrrefutableOrPatternCaptureVariantLast() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseRefutableOrPatternWithNonBindingVariants() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseRefutableOrPatternWithWildcard() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseSequencePatternWithSingleOrPattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseNestedOrPatterns() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseClassPattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseMappingPattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseSequencePattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseParenthesizedCapturePattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseNamedSingleStarPatternIsIrrefutable() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseWildcardSingleStarPatternIsIrrefutable() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseDoubleStarPatternIsIrrefutable() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementClauseWithBreak() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementClauseWithContinue() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementClauseWithReturn() {
+    doTestFirstStatement();
+  }
+
+  // PY-48760
+  public void testMatchStatementNestedMatchStatementLastInClause() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementNestedMatchStatement() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseTrivialGuard() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseDisjunctionGuard() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseConjunctionGuard() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseDisjunctionConjunctionGuard() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseRefutablePatternAndConjunctionGuard() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testMatchStatementSingleClauseGuardWithNonTopLevelDisjunction() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false);
     configureByFile(testName + ".py");

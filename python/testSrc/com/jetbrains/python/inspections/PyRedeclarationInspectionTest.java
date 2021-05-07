@@ -198,6 +198,16 @@ public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-48760
+  public void testNotReportedForNameRedeclarationInOrPattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testPatternBindsSameNameTwice() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

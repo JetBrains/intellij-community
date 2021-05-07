@@ -362,6 +362,21 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
                  "    print(<warning descr=\"Name 'r' can be undefined\">r</warning>)");
   }
 
+  // PY-48760
+  public void testCapturePatternNameUsedAfterMatchStatement() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testOrPatternAlternativesDefineDifferentNames() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testNameDefinedInCaseClauseBodyUsedAfterMatchStatement() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
