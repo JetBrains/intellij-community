@@ -170,6 +170,9 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
+  @SuppressWarnings("unused")
+  protected void onLayoutChange(Layout oldValue, Layout newValue) {}
+
   private void adjustEditorsVisibility() {
     myEditor.getComponent().setVisible(myLayout == Layout.SHOW_EDITOR || myLayout == Layout.SHOW_EDITOR_AND_PREVIEW);
     myPreview.getComponent().setVisible(myLayout == Layout.SHOW_PREVIEW || myLayout == Layout.SHOW_EDITOR_AND_PREVIEW);
@@ -445,9 +448,11 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
+        Layout oldLayout = myLayout;
         myLayout = myActionLayout;
         PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myId, myDefaultLayout.myId);
         adjustEditorsVisibility();
+        onLayoutChange(oldLayout, myLayout);
       } else {
         if (myActionLayout == Layout.SHOW_EDITOR_AND_PREVIEW) {
           mySplitter.setOrientation(!myIsVerticalSplit);
