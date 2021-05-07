@@ -102,6 +102,10 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
     if (arg == null) {
       return PsiType.NULL;
     }
+    PsiClass paramClass = ((PsiClassType)param).resolve();
+    if (!(paramClass instanceof PsiTypeParameter) && !arg.isAssignableFrom(((PsiClassType)param).rawType())) {
+      return PsiType.NULL;
+    }
     final PsiType[] leftTypes;
     final PsiType[] rightTypes;
     if (isContraVariantPosition) {
