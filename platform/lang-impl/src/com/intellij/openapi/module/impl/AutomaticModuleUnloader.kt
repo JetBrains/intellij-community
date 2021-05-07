@@ -24,8 +24,8 @@ import com.intellij.xml.util.XmlStringUtil
  * aren't required for loaded modules.
  */
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
-@Service
-class AutomaticModuleUnloader(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()) {
+@Service(Service.Level.PROJECT)
+internal class AutomaticModuleUnloader(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()) {
   fun processNewModules(modulesToLoad: Set<ModulePath>, modulesToUnload: List<UnloadedModuleDescriptionImpl>): UnloadedModulesListChange {
     val oldLoaded = state.modules.toSet()
     if (oldLoaded.isEmpty() || modulesToLoad.all { it.moduleName in oldLoaded }) {
@@ -62,12 +62,16 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
     if (oldLoaded.isEmpty()) return
 
     val unloadedStorage = UnloadedModulesListStorage.getInstance(project)
-    val unloadedModules = unloadedStorage.unloadedModuleNames.toSet()
-    //if no modules were unloaded by user, automatic unloading shouldn't start
-    if (unloadedModules.isEmpty()) return
+    val unloadedModules = unloadedStorage.unloadedModuleNames
+    // if no modules were unloaded by user, automatic unloading shouldn't start
+    if (unloadedModules.isEmpty()) {
+      return
+    }
 
     //no new modules were added, nothing to process
-    if (currentModules.all { it in oldLoaded || it in unloadedModules }) return
+    if (currentModules.all { it in oldLoaded || it in unloadedModules }) {
+      return
+    }
 
     val oldLoadedWithDependencies = HashSet<String>()
     for (name in oldLoaded) {
@@ -82,7 +86,7 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
       LOG.info("New modules to unload: $toUnload")
     }
     fireNotifications(toLoad, toUnload)
-    unloadedStorage.unloadedModuleNames = unloadedStorage.unloadedModuleNames + toUnload
+    unloadedStorage.addUnloadedModuleNames(toUnload)
   }
 
   private fun processTransitiveDependencies(moduleId: ModuleId, storage: WorkspaceEntityStorage, explicitlyUnloaded: Set<String>,

@@ -12,7 +12,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -47,8 +46,6 @@ import java.util.concurrent.Callable
 
 @Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
-  private val LOG = Logger.getInstance(javaClass)
-
   private val unloadedModules: MutableMap<String, UnloadedModuleDescription> = LinkedHashMap()
 
   override fun dispose() {
@@ -120,33 +117,43 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               LOG.debug("Process changed modules and facets")
               incModificationCount()
 
-              val unloadedModulesSet = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
+              val unloadedModulesSet = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
               val oldModuleNames = mutableMapOf<Module, String>()
 
-              for (change in moduleLibraryChanges) when (change) {
-                is EntityChange.Removed -> processModuleLibraryChange(change, event)
-                is EntityChange.Replaced -> processModuleLibraryChange(change, event)
-                is EntityChange.Added -> Unit
+              for (change in moduleLibraryChanges) {
+                when (change) {
+                  is EntityChange.Removed -> processModuleLibraryChange(change, event)
+                  is EntityChange.Replaced -> processModuleLibraryChange(change, event)
+                  is EntityChange.Added -> Unit
+                }
               }
 
-              for (change in facetChanges) when (change) {
-                is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
-                is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
-                is EntityChange.Added -> Unit
+              for (change in facetChanges) {
+                when (change) {
+                  is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
+                  is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
+                  is EntityChange.Added -> Unit
+                }
               }
 
-              for (change in changes) processModuleChange(change, unloadedModulesSet, oldModuleNames, event)
-
-              for (change in moduleLibraryChanges) when (change) {
-                is EntityChange.Removed -> Unit
-                is EntityChange.Replaced -> Unit
-                is EntityChange.Added -> processModuleLibraryChange(change, event)
+              for (change in changes) {
+                processModuleChange(change, unloadedModulesSet, oldModuleNames, event)
               }
 
-              for (change in facetChanges) when (change) {
-                is EntityChange.Removed -> Unit
-                is EntityChange.Replaced -> Unit
-                is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
+              for (change in moduleLibraryChanges) {
+                when (change) {
+                  is EntityChange.Removed -> Unit
+                  is EntityChange.Replaced -> Unit
+                  is EntityChange.Added -> processModuleLibraryChange(change, event)
+                }
+              }
+
+              for (change in facetChanges) {
+                when (change) {
+                  is EntityChange.Removed -> Unit
+                  is EntityChange.Replaced -> Unit
+                  is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
+                }
               }
 
               // After every change processed
@@ -310,7 +317,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
   internal fun loadModules(entities: Sequence<ModuleEntity>) {
     val fileSystem = LocalFileSystem.getInstance()
-    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
+    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
     val (unloadedEntities, loadedEntities) = entities.partition { it.name in unloadedModuleNames }
     LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
     loadedEntities.forEach { module -> getModuleVirtualFileUrl(module)?.let { fileSystem.refreshAndFindFileByNioFile(it.toPath()) } }
@@ -446,12 +453,12 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   override fun setUnloadedModules(unloadedModuleNames: List<String>) {
-    if (unloadedModules.keys == unloadedModuleNames.toSet()) {
-      //optimization
+    if (unloadedModules.keys == unloadedModuleNames) {
+      // optimization
       return
     }
 
-    UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = unloadedModuleNames
+    UnloadedModulesListStorage.getInstance(project).setUnloadedModuleNames(unloadedModuleNames)
 
     if (unloadedModuleNames.isNotEmpty()) {
       val loadedModules = modules.map { it.name }.toMutableList()
@@ -510,7 +517,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
     unloadedModules.forEach { this.unloadedModules.remove(it.name) }
 
-    UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
+    UnloadedModulesListStorage.getInstance(project).setUnloadedModuleNames(this.unloadedModules.keys)
   }
 
   internal fun getModuleVirtualFileUrl(moduleEntity: ModuleEntity): VirtualFileUrl? {
@@ -546,7 +553,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           moduleStore.setPath(moduleFileUrl.toPath(), null, isNew)
         }
         catch (t: Throwable) {
-          logger<ModuleManagerComponentBridge>().error(t)
+          LOG.error(t)
         }
       }
     }
@@ -555,15 +562,18 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   companion object {
-    @JvmStatic
+    private val LOG = logger<ModuleManagerComponentBridge>()
+
     fun getInstance(project: Project): ModuleManagerComponentBridge {
       return ModuleManager.getInstance(project) as ModuleManagerComponentBridge
     }
 
-    private fun EntityChange<LibraryEntity>.isModuleLibrary(): Boolean = when (this) {
-      is EntityChange.Added -> entity.tableId is LibraryTableId.ModuleLibraryTableId
-      is EntityChange.Removed -> entity.tableId is LibraryTableId.ModuleLibraryTableId
-      is EntityChange.Replaced -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
+    private fun EntityChange<LibraryEntity>.isModuleLibrary(): Boolean {
+      return when (this) {
+        is EntityChange.Added -> entity.tableId is LibraryTableId.ModuleLibraryTableId
+        is EntityChange.Removed -> entity.tableId is LibraryTableId.ModuleLibraryTableId
+        is EntityChange.Replaced -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
+      }
     }
 
     private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() = filter { it.isModuleLibrary() }
@@ -573,13 +583,16 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       return moduleEntity.groupPath?.path?.toTypedArray()
     }
 
-    internal fun getModulePath(module: Module, entityStorage: VersionedEntityStorage): ModulePath = ModulePath(
-      path = module.moduleFilePath,
-      group = getModuleGroupPath(module, entityStorage)?.joinToString(separator = MODULE_GROUP_SEPARATOR)
-    )
+    internal fun getModulePath(module: Module, entityStorage: VersionedEntityStorage): ModulePath {
+      return ModulePath(
+        path = module.moduleFilePath,
+        group = getModuleGroupPath(module, entityStorage)?.joinToString(separator = MODULE_GROUP_SEPARATOR)
+      )
+    }
 
-    internal fun hasModuleGroups(entityStorage: VersionedEntityStorage) =
-      entityStorage.current.entities(ModuleGroupPathEntity::class.java).firstOrNull() != null
+    internal fun hasModuleGroups(entityStorage: VersionedEntityStorage): Boolean {
+      return entityStorage.current.entities(ModuleGroupPathEntity::class.java).firstOrNull() != null
+    }
 
     private const val MODULE_BRIDGE_MAPPING_ID = "intellij.modules.bridge"
 
@@ -588,11 +601,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     internal val WorkspaceEntityStorageDiffBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
-    @JvmStatic
     fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) =
       moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
 
-    @JvmStatic
     fun WorkspaceEntityStorage.findModuleByEntity(entity: ModuleEntity): ModuleBridge? = moduleMap.getDataByEntity(entity)
 
     private val dependencyGraphWithTestsValue = CachedValue { storage ->
