@@ -4,10 +4,10 @@ package testing
 import kotlin.test.*
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
+import org.junit.Test
 
 @RunWith(Suite::class)
-class <lineMarker descr="Run Test">SessionTest0</lineMarker> {
-
+class <lineMarker descr="Run Test">SessionTest0</lineMarker> {// LIGHT_CLASS_FALLBACK
 }
 
 class <lineMarker descr="Run Test">SessionTest</lineMarker> {

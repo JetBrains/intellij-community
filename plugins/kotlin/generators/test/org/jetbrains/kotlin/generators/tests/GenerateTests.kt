@@ -698,6 +698,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("codeInsight/lineMarker")
         }
 
+        testClass<AbstractLightTestRunLineMarkersTest> {
+            model("codeInsight/lineMarker/runMarkers", pattern = "^((jUnit|test).*)\\.kt$".toRegex(), testMethodName = "doLightTest", testClassName="WithLightTestFramework")
+            model("codeInsight/lineMarker/runMarkers", pattern = "^((jUnit|test).*)\\.kt$".toRegex(), testMethodName = "doPureTest", testClassName="WithoutLightTestFramework")
+        }
+
         testClass<AbstractLineMarkersTestInLibrarySources> {
             model("codeInsightInLibrary/lineMarker", testMethodName = "doTestWithLibrary")
         }

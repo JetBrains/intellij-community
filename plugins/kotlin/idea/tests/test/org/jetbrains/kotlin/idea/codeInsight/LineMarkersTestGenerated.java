@@ -292,6 +292,11 @@ public class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit3TestFile.kt");
         }
 
+        @TestMetadata("jUnit3TestFileWithJUnit4.kt")
+        public void testJUnit3TestFileWithJUnit4() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit3TestFileWithJUnit4.kt");
+        }
+
         @TestMetadata("jUnit4TestFile.kt")
         public void testJUnit4TestFile() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit4TestFile.kt");
