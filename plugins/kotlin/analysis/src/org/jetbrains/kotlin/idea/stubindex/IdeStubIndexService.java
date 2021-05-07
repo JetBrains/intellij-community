@@ -241,6 +241,8 @@ public class IdeStubIndexService extends StubIndexService {
                 }
             }
         }
+
+        IndexUtilsKt.indexJvmNameAnnotation(stub, sink);
     }
 
     private static KotlinFileStub getContainingFileStub(StubElement stub) {
