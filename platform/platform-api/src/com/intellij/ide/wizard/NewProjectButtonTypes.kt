@@ -6,10 +6,9 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import kotlin.reflect.KMutableProperty0
 
-open class BuildSystemButton(val buildSystemType: BuildSystemType, settings: KMutableProperty0<String>) : WizardToggleButton(
-  buildSystemType.name, settings)
+open class BuildSystemButton(val buildSystemType: BuildSystemType)
 
-open class LanguageButton(val language: String, override val settings: KMutableProperty0<String>) : WizardToggleButton(language, settings)
+open class LanguageButton(val language: String)
 
 abstract class WizardToggleButton(val button: String, open val settings: KMutableProperty0<String>) : ToggleAction(button) {
   init {

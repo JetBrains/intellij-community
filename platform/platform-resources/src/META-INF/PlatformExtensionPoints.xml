@@ -409,7 +409,7 @@
     <extensionPoint name="jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider"/>
     <extensionPoint name="documentationActionProvider" interface="com.intellij.codeInsight.documentation.DocumentationActionProvider" dynamic="true"/>
 
-    <extensionPoint name="newProjectWizard" interface="com.intellij.ide.wizard.NewProjectWizard" dynamic="true"/>
+    <extensionPoint name="newProjectWizard" interface="com.intellij.ide.NewProjectWizard" dynamic="true"/>
     <extensionPoint name="newProjectWizard.buildSystem" interface="com.intellij.ide.wizard.BuildSystemType" dynamic="true"/>
 
     <extensionPoint name="projectOriginInfoProvider" interface="com.intellij.ide.impl.ProjectOriginInfoProvider" dynamic="true"/>

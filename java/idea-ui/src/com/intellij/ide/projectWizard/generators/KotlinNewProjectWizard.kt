@@ -2,27 +2,30 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.wizard.BuildSystemButton
-import com.intellij.ide.wizard.BuildSystemType.Companion.EP_BUILD_SYSTEM
-import com.intellij.ide.wizard.LabelAndComponent
-import com.intellij.ide.wizard.NewProjectWizard
-import com.intellij.ide.wizard.NewProjectWizard.Companion.PLACE
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ide.LabelAndComponent
+import com.intellij.ide.NewProjectWizard
+import com.intellij.ide.wizard.*
+import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
+import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
+import javax.swing.JComponent
 
 class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
   override val language: String = "Kotlin"
   override var settingsFactory = { KotlinSettings() }
+
+  private val propertyGraph: PropertyGraph = PropertyGraph()
+  private val buildSystemProperty: GraphProperty<BuildSystemButton> = propertyGraph.graphProperty { BuildSystemButton(GradleGroovy) }
 
   private fun getProjectTemplates() = listOf(
     NewProjectTemplate("Console application"),
@@ -39,14 +42,22 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
       addListSelectionListener { settings.template = selectedValue }
     }
 
-    val buildSystemButtons = EP_BUILD_SYSTEM.extensions.map { BuildSystemButton(it, settings::buildSystemSettings) }
-    buildSystemButtons.first().setSelected(true)
+    val buildSystemButtons = BuildSystemType.EP_BUILD_SYSTEM.extensions
+      .filter { it.name == GradleGroovy.name || it.name == Maven.name || it.name == Intellij.name }
+      .map { BuildSystemButton(it) }
+
+    var component: JComponent? = null
+    panel {
+      row {
+        component = buttonSelector(buildSystemButtons, buildSystemProperty) {it.buildSystemType.name}.component
+      }
+    }
 
     return listOf(
-      LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.templates")), templateList),
-      LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.build.system")),
-                        ActionManager.getInstance().createActionToolbar(PLACE, DefaultActionGroup(buildSystemButtons.toList()), true).component),
-      LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), JdkComboBox(null, ProjectSdksModel(), null, null, null, null))
+      LabelAndComponent(JavaUiBundle.message("label.project.wizard.new.project.templates"), templateList),
+      LabelAndComponent(JavaUiBundle.message("label.project.wizard.new.project.build.system"), component!!),
+      LabelAndComponent(JavaUiBundle.message("label.project.wizard.new.project.jdk"),
+                        JdkComboBox(null, ProjectSdksModel(), null, null, null, null))
     )
   }
 

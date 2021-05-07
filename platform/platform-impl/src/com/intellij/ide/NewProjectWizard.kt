@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.wizard
+package com.intellij.ide
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import javax.swing.JComponent
-import javax.swing.JLabel
 
 interface NewProjectWizard<T> {
   val language: String
@@ -16,8 +15,7 @@ interface NewProjectWizard<T> {
 
   companion object {
     var EP_WIZARD = ExtensionPointName<NewProjectWizard<*>>("com.intellij.newProjectWizard")
-    const val PLACE = "Project Wizard"
   }
 }
 
-data class LabelAndComponent(val label: JLabel? = null, val component: JComponent)
+data class LabelAndComponent(val text: String? = null, val component: JComponent)
