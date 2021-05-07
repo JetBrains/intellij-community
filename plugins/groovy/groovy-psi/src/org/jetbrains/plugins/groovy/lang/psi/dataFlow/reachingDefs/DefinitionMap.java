@@ -56,14 +56,6 @@ public final class DefinitionMap {
     return true;
   }
 
-  public void copyFrom(DefinitionMap other, int otherIndex, int myIndex) {
-    IntSet otherDefs = other.myMap.get(otherIndex);
-    if (otherDefs == null) {
-      otherDefs = new IntOpenHashSet();
-    }
-    myMap.put(myIndex, otherDefs);
-  }
-
   public int @Nullable [] getDefinitions(int varIndex) {
     IntSet defs = myMap.get(varIndex);
     return defs == null ? null : defs.toIntArray();
