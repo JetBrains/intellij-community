@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.idea.frontend.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.fir.buildSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtSymbol
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 
 class KtFirArrayAccessReference(
@@ -23,14 +22,6 @@ class KtFirArrayAccessReference(
         check(this is KtFirAnalysisSession)
         val fir = element.getOrBuildFirSafe<FirFunctionCall>(firResolveState) ?: return emptyList()
         return listOfNotNull(fir.getCalleeSymbol()?.fir?.buildSymbol(firSymbolBuilder))
-    }
-
-    override fun moveFunctionLiteralOutsideParentheses(callExpression: KtCallExpression) {
-        TODO("Not yet implemented")
-    }
-
-    override fun canMoveLambdaOutsideParentheses(callExpression: KtCallExpression): Boolean {
-        TODO("Not yet implemented")
     }
 
     override fun doRenameImplicitConventionalCall(newName: String?): KtExpression {
