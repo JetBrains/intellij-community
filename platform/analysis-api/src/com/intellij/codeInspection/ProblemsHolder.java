@@ -119,6 +119,11 @@ public class ProblemsHolder {
     registerProblem(reference, unresolvedReferenceMessage(reference), highlightType);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral", "DialogTitleCapitalization"})
+  public void registerPossibleProblem(PsiElement identifier) {
+    registerProblem(identifier, "possible problem", ProblemHighlightType.POSSIBLE_PROBLEM);
+  }
+
   /**
    * Returns {@link EmptyResolveMessageProvider#getUnresolvedMessagePattern()} (if implemented),
    * otherwise, default message "Cannot resolve symbol '[reference.getCanonicalText()]'".
@@ -129,7 +134,6 @@ public class ProblemsHolder {
     if (reference instanceof EmptyResolveMessageProvider) {
       String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
       try {
-        //noinspection HardCodedStringLiteral
         message = BundleBase.format(pattern, reference.getCanonicalText()); // avoid double formatting
       }
       catch (IllegalArgumentException ex) {
