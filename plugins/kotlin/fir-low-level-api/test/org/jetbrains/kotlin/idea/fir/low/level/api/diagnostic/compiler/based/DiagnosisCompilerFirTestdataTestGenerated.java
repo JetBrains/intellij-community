@@ -46095,6 +46095,11 @@ public abstract class DiagnosisCompilerFirTestdataTestGenerated extends Abstract
                 runTest("../idea/tests/testData/compiler/diagnostics/testsWithStdLib/tryCatch/falsePositiveSmartcasts_after.kt");
             }
 
+            @TestMetadata("capturedTypeInEquality.kt")
+            public void testCapturedTypeInEquality() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/capturedTypeInEquality.kt");
+            }
+
             @TestMetadata("falsePositiveSmartcasts_after.fir.kt")
             public void testFalsePositiveSmartcasts_after_fir() throws Exception {
                 runTest("../idea/tests/testData/compiler/diagnostics/testsWithStdLib/tryCatch/falsePositiveSmartcasts_after.fir.kt");
