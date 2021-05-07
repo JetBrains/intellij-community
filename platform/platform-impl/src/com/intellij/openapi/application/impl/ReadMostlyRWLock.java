@@ -3,6 +3,8 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.containers.ConcurrentList;
@@ -103,12 +105,15 @@ final class ReadMostlyRWLock {
     if (tryReadLock(status)) {
       return;
     }
+    ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
     for (int iter = 0; ; iter++) {
       if (tryReadLock(status)) {
         break;
       }
-
-      ProgressManager.checkCanceled();
+      // do not run any checkCanceled hooks to avoid deadlock
+      if (progress != null && progress.isCanceled()) {
+        throw new ProcessCanceledException();
+      }
       waitABit(status, iter);
     }
   }
