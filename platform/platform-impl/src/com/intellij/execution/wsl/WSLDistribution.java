@@ -601,7 +601,7 @@ public class WSLDistribution {
     if (wsl1LoopbackAddress != null) {
       return wsl1LoopbackAddress;
     }
-    if (Registry.is("wsl.obtain.windows.host.ip.alternatively")) {
+    if (Registry.is("wsl.obtain.windows.host.ip.alternatively", true)) {
       InetAddress wslAddr = getWslIpAddress();
       try (DatagramSocket datagramSocket = new DatagramSocket()) {
         datagramSocket.connect(wslAddr, 0);
