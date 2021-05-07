@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -169,9 +170,12 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   @Override
   public List<AnAction> promote(@NotNull List<? extends AnAction> actions,
                                 @NotNull DataContext context) {
+
     ArrayList<AnAction> sorted = new ArrayList<>(actions);
-    sorted.remove(this);
-    sorted.add(this);
+    if (context.getData(PlatformDataKeys.CONTEXT_COMPONENT) instanceof EditorComponentImpl) {
+      sorted.remove(this);
+      sorted.add(this);
+    }
     return sorted;
   }
 
