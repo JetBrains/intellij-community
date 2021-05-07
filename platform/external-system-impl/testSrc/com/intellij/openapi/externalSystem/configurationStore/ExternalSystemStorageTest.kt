@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -51,7 +51,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.externalSystemOptions
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.apache.log4j.Logger
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -734,14 +733,11 @@ class ExternalSystemStorageTest {
     val oldInstance = LoggedErrorProcessor.getInstance()
     try {
       LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-        override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
-          if (message?.contains("Trying to load multiple modules with the same name.") == true) return
-          super.processError(message, t, details, logger)
-        }
+        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
+          message == null || !message.contains("Trying to load multiple modules with the same name.")
       })
 
       action()
-
     }
     finally {
       LoggedErrorProcessor.setNewInstance(oldInstance)

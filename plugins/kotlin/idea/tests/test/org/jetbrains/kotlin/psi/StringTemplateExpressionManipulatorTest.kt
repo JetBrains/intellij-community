@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.psi
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
 import com.intellij.testFramework.LoggedErrorProcessor
-import org.apache.log4j.Logger
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -92,7 +91,7 @@ private fun <T> suppressFallingOnLogError(call: () -> T) {
     val loggedErrorProcessor = LoggedErrorProcessor.getInstance()
     try {
         LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-            override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {}
+            override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean = false
         })
         call()
     } finally {

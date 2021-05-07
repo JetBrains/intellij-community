@@ -42,7 +42,6 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
-import org.apache.log4j.Logger
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
@@ -116,9 +115,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
         if (captureExceptions) {
             LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-                override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
+                override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
                     exceptions.addIfNotNull(t)
-                    super.processError(message, t, details, logger)
+                    return super.processError(category, message, t, details)
                 }
             })
         }

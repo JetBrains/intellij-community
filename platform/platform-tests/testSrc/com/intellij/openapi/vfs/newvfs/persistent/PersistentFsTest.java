@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
@@ -43,7 +43,6 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
-import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Rule;
@@ -203,9 +202,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     int[] logCount = {0};
     LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
       @Override
-      public void processWarn(String message, Throwable t, @NotNull Logger logger) {
-        super.processWarn(message, t, logger);
+      public boolean processWarn(@NotNull String category, String message, Throwable t) {
         if (message.contains(jarFile.getName())) logCount[0]++;
+        return super.processWarn(category, message, t);
       }
     });
     try {

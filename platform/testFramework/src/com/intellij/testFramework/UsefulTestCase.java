@@ -1112,7 +1112,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     catch (Throwable e) {
       Throwable cause = e;
-      while (cause instanceof LoggedErrorProcessor.TestLoggerAssertionError && cause.getCause() != null) {
+      while (cause instanceof TestLogger.TestLoggerAssertionError && cause.getCause() != null) {
         cause = cause.getCause();
       }
 
@@ -1154,7 +1154,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     catch (Throwable e) {
       Throwable cause = e;
-      while (cause instanceof LoggedErrorProcessor.TestLoggerAssertionError && cause.getCause() != null) {
+      while (cause instanceof TestLogger.TestLoggerAssertionError && cause.getCause() != null) {
         cause = cause.getCause();
       }
 
