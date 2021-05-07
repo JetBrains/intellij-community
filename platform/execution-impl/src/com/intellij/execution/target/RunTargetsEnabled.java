@@ -15,7 +15,7 @@ public class RunTargetsEnabled {
 
   public static boolean get() {
     if (myForceEnable) return true;
-    IdeaPluginDescriptorImpl corePluginDescriptor = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(PluginId.getId("com.intelliij"));
+    IdeaPluginDescriptorImpl corePluginDescriptor = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(PluginId.getId("com.intellij"));
     return corePluginDescriptor != null && corePluginDescriptor.getModules().contains(PluginId.getId("com.intellij.modules.run.targets"));
   }
 
