@@ -351,6 +351,40 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     """.trimIndent())
   }
 
+  fun testIndentInFE() {
+    myFixture.configureByText("test.yaml", """
+        X: |
+          <html>
+            <body>hello world</body>
+          </html<caret>>
+          
+        Y: 12
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val quickEditHandler = QuickEditAction().invokeImpl(project,
+                                                        myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
+    val fe = myInjectionFixture.openInFragmentEditor(quickEditHandler)
+    fe.performEditorAction(IdeActions.ACTION_SELECT_ALL)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_INDENT_SELECTION)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    TestCase.assertTrue("editor should survive adding enter to the end", quickEditHandler.isValid)
+    assertEquals("fragment editor should be", """
+      |    <html>
+      |      <body>hello world</body>
+      |    </html>
+      |
+    """.trimMargin(), fe.file.text)
+    myFixture.checkResult("""
+        X: |
+              <html>
+                <body>hello world</body>
+              </html>
+          
+        Y: 12
+    """.trimIndent())
+  }
+  
 
   private fun assertInjectedAndLiteralValue(expectedText: String) {
     assertEquals("fragment editor should be", expectedText, myInjectionFixture.openInFragmentEditor().file.text)

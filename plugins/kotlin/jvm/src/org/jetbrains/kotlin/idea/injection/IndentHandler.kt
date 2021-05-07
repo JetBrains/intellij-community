@@ -16,8 +16,6 @@ internal object NoIndentHandler: IndentHandler {
     override fun getUntrimmedRanges(literal: KtStringTemplateExpression, givenRange: TextRange): List<TextRange> = listOf(givenRange)
 }
 
-private val STORED_TRIM_LENGTH = Key.create<Int>("STORED_TRIM_LENGTH")
-
 internal class TrimIndentHandler(val marginChar: String? = null) : IndentHandler {
     override fun getUntrimmedRanges(literal: KtStringTemplateExpression, givenRange: TextRange): List<TextRange> {
         val text = literal.text
@@ -51,13 +49,9 @@ internal class TrimIndentHandler(val marginChar: String? = null) : IndentHandler
         }
 
         if (ranges.isEmpty()) return listOf(givenRange)
-
-        val storedTrimLength = STORED_TRIM_LENGTH.get(literal)
-        // Dont change the indent if Fragment Editor is open
-        if(QuickEditHandler.getFragmentEditors(literal).isNotEmpty() && storedTrimLength != null)
-            minLength = storedTrimLength
         
-        STORED_TRIM_LENGTH[literal] = minLength
+        // Dont change the indent if Fragment Editor is open
+        minLength = com.intellij.codeInsight.intention.impl.reuseFragmentEditorIndent(literal) { minLength }
 
         val indentText = minLength?.let { " ".repeat(it) }?.let { spaces ->
             if (marginChar == null) return@let spaces
