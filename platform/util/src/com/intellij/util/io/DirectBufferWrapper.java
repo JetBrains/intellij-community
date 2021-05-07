@@ -6,9 +6,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 @ApiStatus.Internal
 public final class DirectBufferWrapper {
+  @NotNull
+  private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
+
   private final @NotNull PagedFileStorage myFile;
   private final long myPosition;
   private final int myLength;
@@ -16,17 +20,19 @@ public final class DirectBufferWrapper {
 
   private volatile ByteBuffer myBuffer;
   private volatile boolean myDirty;
+  private volatile boolean myReleased = false;
 
-  DirectBufferWrapper(@NotNull PagedFileStorage file, long offset, int length, boolean readOnly) {
+  DirectBufferWrapper(@NotNull PagedFileStorage file, long offset, int length, boolean readOnly) throws IOException {
     myFile = file;
     myPosition = offset;
     myLength = length;
     myReadOnly = readOnly;
+    myBuffer = DirectByteBufferAllocator.allocate(() -> create());
   }
 
-  void markDirty() throws IOException {
+  private void markDirty() {
     if (myReadOnly) {
-      throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
+      throw new IllegalStateException("Read-only byte buffer can't be modified. File: " + myFile);
     }
     if (!myDirty) myDirty = true;
   }
@@ -35,17 +41,79 @@ public final class DirectBufferWrapper {
     return myDirty;
   }
 
-  public ByteBuffer getCachedBuffer() {
-    return myBuffer;
+  public ByteBuffer copy() {
+    try {
+      return DirectByteBufferAllocator.allocate(() -> {
+        ByteBuffer duplicate = myBuffer.duplicate();
+        duplicate.order(myBuffer.order());
+        return duplicate;
+      });
+    }
+    catch (IOException e) {
+      // not expected there
+      throw new RuntimeException(e);
+    }
   }
 
-  ByteBuffer getBuffer() throws IOException {
-    ByteBuffer buffer = myBuffer;
-    if (buffer == null) {
-      myBuffer = buffer = DirectByteBufferAllocator.allocate(() -> create());
-    }
-    return buffer;
+  public byte get(int index) {
+    return myBuffer.get(index);
   }
+
+  public long getLong(int index) {
+    return myBuffer.getLong(index);
+  }
+
+  public ByteBuffer putLong(int index, long value) {
+    markDirty();
+    return myBuffer.putLong(index, value);
+  }
+
+  public int getInt(int index) {
+    return myBuffer.getInt(index);
+  }
+
+  public ByteBuffer putInt(int index, int value) {
+    markDirty();
+    return myBuffer.putInt(index, value);
+  }
+
+  public void position(int newPosition) {
+    myBuffer.position(newPosition);
+  }
+
+  public int position() {
+    return myBuffer.position();
+  }
+
+  public void put(ByteBuffer src) {
+    markDirty();
+    myBuffer.put(src);
+  }
+
+  public void put(int index, byte b) {
+    markDirty();
+    myBuffer.put(index, b);
+  }
+
+  public void readToArray(byte[] dst, int o, int page_offset, int page_len) throws IllegalArgumentException {
+    // TODO do a proper synchronization
+    //noinspection SynchronizeOnNonFinalField
+    synchronized (myBuffer) {
+      myBuffer.position(page_offset);
+      myBuffer.get(dst, o, page_len);
+    }
+  }
+
+  public void putFromArray(byte[] src, int o, int page_offset, int page_len) throws IllegalArgumentException {
+    markDirty();
+    // TODO do a proper synchronization
+    //noinspection SynchronizeOnNonFinalField
+    synchronized (myBuffer) {
+      myBuffer.position(page_offset);
+      myBuffer.put(src, o, page_len);
+    }
+  }
+
 
   private ByteBuffer create() throws IOException {
     return myFile.useChannel(ch -> {
@@ -60,14 +128,19 @@ public final class DirectBufferWrapper {
     if (myBuffer != null) {
       ByteBufferUtil.cleanBuffer(myBuffer);
       myBuffer = null;
+      myReleased = true;
     }
+  }
+
+  boolean isReleased() {
+    return myReleased;
   }
 
   void force() throws IOException {
     assert !myReadOnly;
-    ByteBuffer buffer = getCachedBuffer();
-    if (buffer != null && isDirty()) {
+    if (!isReleased() && isDirty()) {
       myFile.useChannel(ch -> {
+        ByteBuffer buffer = myBuffer;
         buffer.rewind();
         ch.write(buffer, myPosition);
         myDirty = false;
@@ -85,11 +158,17 @@ public final class DirectBufferWrapper {
     return "Buffer for " + myFile + ", offset:" + myPosition + ", size: " + myLength;
   }
 
-  public static DirectBufferWrapper readWriteDirect(PagedFileStorage file, long offset, int length) {
+  public void useNativeByteOrder() {
+    if (myBuffer.order() != ourNativeByteOrder) {
+      myBuffer.order(ourNativeByteOrder);
+    }
+  }
+
+  public static DirectBufferWrapper readWriteDirect(PagedFileStorage file, long offset, int length) throws IOException {
     return new DirectBufferWrapper(file, offset, length, false);
   }
 
-  public static DirectBufferWrapper readOnlyDirect(PagedFileStorage file, long offset, int length) {
+  public static DirectBufferWrapper readOnlyDirect(PagedFileStorage file, long offset, int length) throws IOException {
     return new DirectBufferWrapper(file, offset, length, true);
   }
 }

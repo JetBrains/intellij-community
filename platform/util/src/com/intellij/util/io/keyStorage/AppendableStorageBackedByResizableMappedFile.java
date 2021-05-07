@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -187,7 +186,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
         int base = addr;
         int address = storage.getOffsetInPage(addr);
         boolean same = true;
-        ByteBuffer buffer = storage.getByteBuffer(addr, false).getCachedBuffer();
+        DirectBufferWrapper buffer = storage.getByteBuffer(addr, false);
         final int myPageSize = storage.getPageSize();
 
         @Override
@@ -195,7 +194,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
           if (same) {
             if (myPageSize == address && address < myFileLength) {    // reached end of current byte buffer
               base += address;
-              buffer = storage.getByteBuffer(base, false).getCachedBuffer();
+              buffer = storage.getByteBuffer(base, false);
               address = 0;
             }
             same = address < myFileLength && buffer.get(address++) == (byte)b;

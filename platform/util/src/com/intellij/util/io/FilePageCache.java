@@ -129,7 +129,7 @@ public final class FilePageCache {
     return myIndex2Storage.get(index);
   }
 
-  DirectBufferWrapper get(Integer key, boolean read, boolean readOnly) {
+  DirectBufferWrapper get(Integer key, boolean read, boolean readOnly) throws IOException {
     DirectBufferWrapper wrapper;
     try {         // fast path
       mySegmentsAccessLock.lock();
@@ -213,7 +213,7 @@ public final class FilePageCache {
   }
 
   @NotNull
-  private DirectBufferWrapper createValue(Integer key, boolean read, boolean readOnly) {
+  private DirectBufferWrapper createValue(Integer key, boolean read, boolean readOnly) throws IOException {
     final int storageIndex = key & FILE_INDEX_MASK;
     PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(storageIndex);
     owner.getStorageLockContext().checkThreadAccess(read);
@@ -224,57 +224,9 @@ public final class FilePageCache {
     }
 
     int min = (int)Math.min(ownerLength - off, owner.myPageSize);
-    DirectBufferWrapper wrapper = readOnly
-                                ? DirectBufferWrapper.readOnlyDirect(owner, off, min)
-                                : DirectBufferWrapper.readWriteDirect(owner, off, min);
-    Throwable oome = null;
-    while (true) {
-      try {
-        // ensure it's allocated
-        wrapper.getBuffer();
-        if (oome != null) {
-          LOG.info("Successfully recovered OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / PagedFileStorage.MB + "MB " +
-                   "new size limit: " + mySizeLimit / PagedFileStorage.MB + "MB " +
-                   "trying to allocate " + wrapper.getLength() + " block");
-        }
-        return wrapper;
-      }
-      catch (IOException e) {
-        throw new MappingFailedException("Cannot map buffer", e);
-      }
-      catch (OutOfMemoryError e) {
-        oome = e;
-        if (mySizeLimit > LOWER_LIMIT) {
-          mySizeLimit -= owner.myPageSize;
-        }
-        long newSize = mySize - owner.myPageSize;
-        if (newSize < 0) {
-          LOG.info("Currently allocated:" + mySize);
-          LOG.info("Mapping failed due to OOME. Current buffers: " + mySegments);
-          LOG.info(oome);
-          try {
-            Class<?> aClass = Class.forName("java.nio.Bits");
-            Field reservedMemory = aClass.getDeclaredField("reservedMemory");
-            reservedMemory.setAccessible(true);
-            Field maxMemory = aClass.getDeclaredField("maxMemory");
-            maxMemory.setAccessible(true);
-            Object max, reserved;
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (aClass) {
-              max = maxMemory.get(null);
-              reserved = reservedMemory.get(null);
-            }
-            LOG.info("Max memory:" + max + ", reserved memory:" + reserved);
-          }
-          catch (Throwable ignored) { }
-          throw new MappingFailedException(
-            "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / PagedFileStorage.MB + "MB " +
-            "new size limit: " + mySizeLimit / PagedFileStorage.MB + "MB " +
-            "trying to allocate " + wrapper.getLength() + " block", e);
-        }
-        ensureSize(newSize); // next try
-      }
-    }
+    return readOnly
+           ? DirectBufferWrapper.readOnlyDirect(owner, off, min)
+           : DirectBufferWrapper.readWriteDirect(owner, off, min);
   }
 
   @Nullable

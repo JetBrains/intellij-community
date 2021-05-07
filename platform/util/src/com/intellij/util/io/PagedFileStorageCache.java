@@ -32,18 +32,15 @@ class PagedFileStorageCache {
   @Nullable
   synchronized DirectBufferWrapper getPageFromCache(long page, int mappingChangeCount) {
     if (myLastPage == page) {
-      ByteBuffer buf = myLastBuffer.getCachedBuffer();
-      if (buf != null && myLastChangeCount == mappingChangeCount) {
+      if (!myLastBuffer.isReleased() && myLastChangeCount == mappingChangeCount) {
         return myLastBuffer;
       }
     } else if (myLastPage2 == page) {
-      ByteBuffer buf = myLastBuffer2.getCachedBuffer();
-      if (buf != null && myLastChangeCount2 == mappingChangeCount) {
+      if (!myLastBuffer2.isReleased() && myLastChangeCount2 == mappingChangeCount) {
         return myLastBuffer2;
       }
     } else if (myLastPage3 == page) {
-      ByteBuffer buf = myLastBuffer3.getCachedBuffer();
-      if (buf != null && myLastChangeCount3 == mappingChangeCount) {
+      if (!myLastBuffer3.isReleased() && myLastChangeCount3 == mappingChangeCount) {
         return myLastBuffer3;
       }
     }
