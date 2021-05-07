@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.Messages
@@ -99,4 +100,21 @@ fun validateJavaVersion(sdkProperty: GraphProperty<Sdk?>, javaVersion: String?):
   }
 
   return true
+}
+
+fun setupNewModuleJdk(modifiableRootModel: ModifiableRootModel, selectedJdk: Sdk?, isCreatingNewProject: Boolean): Sdk? {
+  val sdk = selectedJdk ?: getProjectJdk(modifiableRootModel.project)
+  if (sdk != null) {
+    if (isCreatingNewProject || (!isCreatingNewProject && sdk == getProjectJdk(modifiableRootModel.project))) {
+      modifiableRootModel.inheritSdk()
+    }
+    else {
+      modifiableRootModel.sdk = sdk
+    }
+  }
+  return sdk
+}
+
+private fun getProjectJdk(project: Project): Sdk? {
+  return ProjectRootManager.getInstance(project).projectSdk
 }

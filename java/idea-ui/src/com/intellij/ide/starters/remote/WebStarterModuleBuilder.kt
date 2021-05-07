@@ -36,11 +36,14 @@ import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.roots.ui.configuration.setupNewModuleJdk
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
@@ -209,17 +212,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   }
 
   override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
-    val project = modifiableRootModel.project
-    val sdk = if (moduleJdk != null) moduleJdk else getProjectJdk(project)
-    if (sdk != null) {
-      if (starterContext.isCreatingNewProject
-          || (!starterContext.isCreatingNewProject && sdk == getProjectJdk(project))) {
-        modifiableRootModel.inheritSdk()
-      }
-      else {
-        modifiableRootModel.sdk = sdk
-      }
-    }
+    val sdk = setupNewModuleJdk(modifiableRootModel, moduleJdk, starterContext.isCreatingNewProject)
     val moduleExt = modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension::class.java)
     if (moduleExt != null && sdk != null) {
       val languageLevel = starterContext.languageLevel
@@ -232,10 +225,6 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       }
     }
     doAddContentEntry(modifiableRootModel)
-  }
-
-  private fun getProjectJdk(project: Project): Sdk? {
-    return ProjectRootManager.getInstance(project).projectSdk
   }
 
   private fun extractAndImport(module: Module) {

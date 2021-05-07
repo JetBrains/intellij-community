@@ -1,14 +1,14 @@
 package com.intellij.ide.starters.local
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.ide.projectWizard.ProjectSettingsStep
 import com.intellij.ide.starters.JavaStartersBundle
+import com.intellij.ide.starters.StarterModuleImporter
+import com.intellij.ide.starters.StarterModulePreprocessor
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
 import com.intellij.ide.starters.shared.*
-import com.intellij.ide.projectWizard.ProjectSettingsStep
-import com.intellij.ide.starters.StarterModuleImporter
-import com.intellij.ide.starters.StarterModulePreprocessor
 import com.intellij.ide.util.projectWizard.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -28,8 +28,8 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.roots.ui.configuration.setupNewModuleJdk
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -186,10 +186,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   internal fun getMinJavaVersionInternal() : JavaVersion? = getMinJavaVersion()
 
   override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
-    val sdk = if (moduleJdk != null) moduleJdk else ProjectRootManager.getInstance(modifiableRootModel.project).projectSdk
-    if (sdk != null) {
-      modifiableRootModel.sdk = sdk
-    }
+    setupNewModuleJdk(modifiableRootModel, moduleJdk, starterContext.isCreatingNewProject)
     doAddContentEntry(modifiableRootModel)
   }
 
