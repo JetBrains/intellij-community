@@ -397,18 +397,16 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   public enum Layout {
-    SHOW_EDITOR("Editor only", IdeBundle.messagePointer("tab.title.editor.only"), AllIcons.General.LayoutEditorOnly),
-    SHOW_PREVIEW("Preview only", IdeBundle.messagePointer("tab.title.preview.only"), AllIcons.General.LayoutPreviewOnly),
-    SHOW_EDITOR_AND_PREVIEW("Editor and Preview", IdeBundle.messagePointer("tab.title.editor.and.preview"), AllIcons.General.LayoutEditorPreview);
+    SHOW_EDITOR("Editor only", IdeBundle.messagePointer("tab.title.editor.only")),
+    SHOW_PREVIEW("Preview only", IdeBundle.messagePointer("tab.title.preview.only")),
+    SHOW_EDITOR_AND_PREVIEW("Editor and Preview", IdeBundle.messagePointer("tab.title.editor.and.preview"));
 
     private final @NotNull Supplier<@Nls String> myName;
-    private final Icon myIcon;
     private final String myId;
 
-    Layout(String id, @NotNull Supplier<String> name, Icon icon) {
+    Layout(String id, @NotNull Supplier<String> name) {
       myId = id;
       myName = name;
-      myIcon = icon;
     }
 
     public static Layout fromId(String id, Layout defaultValue) {
@@ -424,8 +422,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       return myName.get();
     }
 
-    public Icon getIcon() {
-      return myIcon;
+    public Icon getIcon(TextEditorWithPreview editor) {
+      if (this == SHOW_EDITOR) return AllIcons.General.LayoutEditorOnly;
+      if (this == SHOW_PREVIEW) return AllIcons.General.LayoutPreviewOnly;
+      return editor.myIsVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
     }
   }
 
@@ -433,7 +433,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     private final Layout myActionLayout;
 
     ChangeViewModeAction(Layout layout) {
-      super(layout.getName(), layout.getName(), layout.getIcon());
+      super(layout.getName(), layout.getName(), layout.getIcon(TextEditorWithPreview.this));
       myActionLayout = layout;
     }
 
@@ -449,6 +449,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
         PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myId, myDefaultLayout.myId);
         adjustEditorsVisibility();
       }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setIcon(myActionLayout.getIcon(TextEditorWithPreview.this));
     }
   }
 
