@@ -104,7 +104,7 @@ final class ReadMostlyRWLock {
           break;
         }
         // do not run any checkCanceled hooks to avoid deadlock
-        if (progress != null && progress.isCanceled()) {
+        if (progress != null && progress.isCanceled() && !ProgressManager.getInstance().isInNonCancelableSection()) {
           throw new ProcessCanceledException();
         }
         waitABit(status, iter);
