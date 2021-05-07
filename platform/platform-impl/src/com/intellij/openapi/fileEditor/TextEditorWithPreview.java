@@ -448,6 +448,11 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
         myLayout = myActionLayout;
         PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myId, myDefaultLayout.myId);
         adjustEditorsVisibility();
+      } else {
+        if (myActionLayout == Layout.SHOW_EDITOR_AND_PREVIEW) {
+          mySplitter.setOrientation(!myIsVerticalSplit);
+          myIsVerticalSplit = !myIsVerticalSplit;
+        }
       }
     }
 
