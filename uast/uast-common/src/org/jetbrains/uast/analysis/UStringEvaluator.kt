@@ -5,11 +5,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReference
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
+import com.intellij.util.Plow
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -122,8 +125,18 @@ class UStringEvaluator {
     if (configuration.parameterUsagesDepth < 2) return emptyList()
 
     val parameterIndex = method.uastParameters.indexOf(parameter)
-    return ReferencesSearch.search(method.sourcePsi!!, configuration.usagesSearchScope).asSequence()
-      .take(3)
+
+    val scope = if (configuration.usagesSearchScope is GlobalSearchScope) {
+      GlobalSearchScope.getScopeRestrictedByFileTypes(
+        configuration.usagesSearchScope,
+        *UastLanguagePlugin.getInstances().mapNotNull { it.language.associatedFileType }.toTypedArray()
+      )
+    }
+    else {
+      configuration.usagesSearchScope
+    }
+    return Plow.of<PsiReference> { processor -> ReferencesSearch.search(method.sourcePsi!!, scope).forEach(processor) }
+      .limit(3)
       .mapNotNull { it.element.parent.toUElement() as? UCallExpression }
       .mapNotNull {
         it.getArgumentForParameter(parameterIndex)?.let { argument ->
