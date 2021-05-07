@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -46,6 +45,16 @@ object GitConflictsUtil {
     }.queue()
   }
 
+  private fun hasActiveMergeWindow(conflict: GitConflict) : Boolean {
+    val file = LocalFileSystem.getInstance().findFileByPath(conflict.filePath.path) ?: return false
+    return MergeConflictResolveUtil.hasActiveMergeWindow(file);
+  }
+
+  internal fun canShowMergeWindow(project: Project, handler: GitMergeHandler, conflict: GitConflict): Boolean {
+    return handler.canResolveConflict(conflict) &&
+           (!getConflictOperationLock(project, conflict).isLocked || hasActiveMergeWindow(conflict))
+  }
+
   internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>) {
     showMergeWindow(project, handler, selectedConflicts, { root -> isReversedRoot(project, root) })
   }
@@ -54,7 +63,7 @@ object GitConflictsUtil {
                                handler: GitMergeHandler,
                                selectedConflicts: List<GitConflict>,
                                isReversed: (root: VirtualFile) -> Boolean) {
-    val conflicts = selectedConflicts.filter { handler.canResolveConflict(it) && !getConflictOperationLock(project, it).isLocked }.toList()
+    val conflicts = selectedConflicts.filter { canShowMergeWindow(project, handler, it) }.toList()
     if (conflicts.isEmpty()) return
 
     for (conflict in conflicts) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.containers.asJBIterable
 import git4idea.conflicts.GitMergeHandler
 import git4idea.conflicts.GitConflictsUtil.acceptConflictSide
+import git4idea.conflicts.GitConflictsUtil.canShowMergeWindow
 import git4idea.conflicts.GitConflictsUtil.getConflictOperationLock
 import git4idea.conflicts.GitConflictsUtil.showMergeWindow
 import git4idea.i18n.GitBundle
@@ -57,9 +58,7 @@ class GitStageMergeConflictAction : GitStageConflictAction(GitBundle.messagePoin
 
   override fun isEnabled(project: Project, conflicts: Sequence<GitConflict>): Boolean {
     val handler = createMergeHandler(project)
-    return conflicts.any { conflict ->
-      !getConflictOperationLock(project, conflict).isLocked && handler.canResolveConflict(conflict)
-    }
+    return conflicts.any { conflict -> canShowMergeWindow(project, handler, conflict) }
   }
 
   override fun perform(project: Project, handler: GitMergeHandler, conflicts: List<GitConflict>) {

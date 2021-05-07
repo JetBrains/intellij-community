@@ -46,8 +46,8 @@ import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import git4idea.GitVcs
+import git4idea.conflicts.GitConflictsUtil.canShowMergeWindow
 import git4idea.conflicts.GitMergeHandler
-import git4idea.conflicts.GitConflictsUtil.getConflictOperationLock
 import git4idea.conflicts.GitConflictsUtil.showMergeWindow
 import git4idea.i18n.GitBundle.message
 import git4idea.index.GitStageCommitWorkflow
@@ -317,9 +317,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     override fun createHoverIcon(node: ChangesBrowserGitFileStatusNode): HoverIcon? {
       val conflict = node.conflict ?: return null
-      if (getConflictOperationLock(project, conflict).isLocked) return null
       val mergeHandler = createMergeHandler(project)
-      if (!mergeHandler.canResolveConflict(conflict)) return null
+      if (!canShowMergeWindow(project, mergeHandler, conflict)) return null
       return GitStageMergeHoverIcon(mergeHandler, conflict)
     }
 

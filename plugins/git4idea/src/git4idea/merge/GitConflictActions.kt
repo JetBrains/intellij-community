@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import git4idea.conflicts.GitConflictsUtil.acceptConflictSide
+import git4idea.conflicts.GitConflictsUtil.canShowMergeWindow
 import git4idea.conflicts.GitConflictsUtil.getConflictOperationLock
 import git4idea.conflicts.GitConflictsUtil.showMergeWindow
 import git4idea.i18n.GitBundle
@@ -72,10 +73,7 @@ abstract class GitAcceptConflictSideAction(text: Supplier<@Nls String>, private 
 class GitMergeConflictAction : GitConflictAction(GitBundle.messagePointer("action.Git.Merge.text")) {
   override fun isEnabled(project: Project, conflicts: List<GitConflict>): Boolean {
     val handler = createMergeHandler(project)
-    return conflicts.any { conflict ->
-      !getConflictOperationLock(project, conflict).isLocked &&
-      handler.canResolveConflict(conflict)
-    }
+    return conflicts.any { conflict -> canShowMergeWindow(project, handler, conflict) }
   }
 
   override fun perform(project: Project, conflicts: List<GitConflict>) {
