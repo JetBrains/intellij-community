@@ -2,6 +2,7 @@
 package git4idea.index.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
@@ -46,6 +47,8 @@ import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import git4idea.GitVcs
 import git4idea.conflicts.GitMergeHandler
+import git4idea.conflicts.getConflictOperationLock
+import git4idea.conflicts.showMergeWindow
 import git4idea.i18n.GitBundle.message
 import git4idea.index.GitStageCommitWorkflow
 import git4idea.index.GitStageCommitWorkflowHandler
@@ -56,6 +59,7 @@ import git4idea.index.actions.GitResetOperation
 import git4idea.index.actions.StagingAreaOperation
 import git4idea.index.actions.performStageOperation
 import git4idea.merge.GitDefaultMergeDialogCustomizer
+import git4idea.repo.GitConflict
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitRefreshListener
@@ -311,6 +315,14 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       AbstractVcsHelper.getInstance(project).showMergeDialog(conflictedFiles)
     }
 
+    override fun createHoverIcon(node: ChangesBrowserGitFileStatusNode): HoverIcon? {
+      val conflict = node.conflict ?: return null
+      if (getConflictOperationLock(project, conflict).isLocked) return null
+      val mergeHandler = createMergeHandler(project)
+      if (!mergeHandler.canResolveConflict(conflict)) return null
+      return GitStageMergeHoverIcon(mergeHandler, conflict)
+    }
+
     fun getIncludedRoots(): Collection<VirtualFile> {
       if (!isInclusionEnabled()) return state.allRoots
 
@@ -361,6 +373,29 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
       installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, *DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
       return result
+    }
+
+    private inner class GitStageMergeHoverIcon(private val handler: GitMergeHandler, private val conflict: GitConflict) :
+      HoverIcon(AllIcons.Vcs.Merge, message("changes.view.merge.action.text")) {
+
+      override fun invokeAction(node: ChangesBrowserNode<*>) {
+        showMergeWindow(project, handler, listOf(conflict))
+      }
+
+      override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as GitStageMergeHoverIcon
+
+        if (conflict != other.conflict) return false
+
+        return true
+      }
+
+      override fun hashCode(): Int {
+        return conflict.hashCode()
+      }
     }
   }
 

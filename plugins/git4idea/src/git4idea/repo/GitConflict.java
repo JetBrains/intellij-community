@@ -5,6 +5,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class GitConflict {
   @NotNull private final VirtualFile myRoot;
   @NotNull private final FilePath myFilePath;
@@ -44,6 +46,22 @@ public class GitConflict {
     else {
       return !isReversed ? myTheirStatus : myOurStatus;
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GitConflict conflict = (GitConflict)o;
+    return myRoot.equals(conflict.myRoot) &&
+           myFilePath.equals(conflict.myFilePath) &&
+           myOurStatus == conflict.myOurStatus &&
+           myTheirStatus == conflict.myTheirStatus;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myRoot, myFilePath, myOurStatus, myTheirStatus);
   }
 
   public enum Status {

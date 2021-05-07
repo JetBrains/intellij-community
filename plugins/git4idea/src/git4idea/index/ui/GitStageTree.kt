@@ -68,10 +68,16 @@ abstract class GitStageTree(project: Project,
 
   protected abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
 
-  protected abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>);
+  protected abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>)
+
+  protected abstract fun createHoverIcon(node: ChangesBrowserGitFileStatusNode): HoverIcon?
 
   override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
     if (node == root) return null
+    if (node is ChangesBrowserGitFileStatusNode) {
+      val hoverIcon = createHoverIcon(node)
+      if (hoverIcon != null) return hoverIcon
+    }
     val statusNode = VcsTreeModelData.children(node).userObjectsStream(GitFileStatusNode::class.java).findFirst().orElse(null)
                      ?: return null
     val operation = operations.find { it.matches(statusNode) } ?: return null
@@ -229,10 +235,10 @@ abstract class GitStageTree(project: Project,
     }
   }
 
-  private class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
+  protected class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
     AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.fileStatus) {
     private val movedRelativePath by lazy { getMovedRelativePath(getUserObject()) }
-    private val conflict by lazy { getUserObject().createConflict() }
+    internal val conflict by lazy { getUserObject().createConflict() }
 
     override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
 
