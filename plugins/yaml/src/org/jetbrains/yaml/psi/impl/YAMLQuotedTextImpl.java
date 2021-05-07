@@ -75,19 +75,9 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
     return result;
   }
 
-  @NotNull
   @Override
-  protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
-    final TextRange leftRange = contentRanges.get(indexBefore);
-    if (leftRange.isEmpty() || !isSingleQuote() && text.charAt(leftRange.getEndOffset() - 1) == '\\') {
-      return "\n";
-    }
-    else if (contentRanges.get(indexBefore + 1).isEmpty()) {
-      return "";
-    }
-    else {
-      return " ";
-    }
+  public @NotNull YamlScalarTextEvaluator getTextEvaluator() {
+    return new YAMLQuotedTextTextEvaluator(this);
   }
 
   @SuppressWarnings("AssignmentToForLoopParameter")
@@ -143,7 +133,7 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
           result.add(Pair.create(TextRange.from(i, 1), "\\\n" + indentString + "\\n"));
         }
         else {
-          result.add(Pair.create(TextRange.from(i, 1), "\n\n" + indentString));
+          result.add(Pair.create(TextRange.from(i, 1), "\n" + indentString));
         }
         currentLength = 0;
         continue;
