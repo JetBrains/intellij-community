@@ -224,11 +224,6 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("idea/idea-completion/testData/basic/multifile/NoGenericFunDuplication/");
     }
 
-    @TestMetadata("NotImportedClass")
-    public void testNotImportedClass() throws Exception {
-        runTest("idea/idea-completion/testData/basic/multifile/NotImportedClass/");
-    }
-
     @TestMetadata("NotImportedExtensionForImplicitReceiver")
     public void testNotImportedExtensionForImplicitReceiver() throws Exception {
         runTest("idea/idea-completion/testData/basic/multifile/NotImportedExtensionForImplicitReceiver/");
@@ -272,11 +267,6 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("NotImportedJavaClass")
     public void testNotImportedJavaClass() throws Exception {
         runTest("idea/idea-completion/testData/basic/multifile/NotImportedJavaClass/");
-    }
-
-    @TestMetadata("NotImportedNestedClassFromPrivateClass")
-    public void testNotImportedNestedClassFromPrivateClass() throws Exception {
-        runTest("idea/idea-completion/testData/basic/multifile/NotImportedNestedClassFromPrivateClass/");
     }
 
     @TestMetadata("NotImportedObject")

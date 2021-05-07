@@ -1856,24 +1856,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/moveToSealedParent")
-    public static class MoveToSealedParent extends AbstractQuickFixMultiFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-        }
-
-        @TestMetadata("nestedDeclarationToSealed.test")
-        public void testNestedDeclarationToSealed() throws Exception {
-            runTest("testData/quickfix/moveToSealedParent/nestedDeclarationToSealed.test");
-        }
-
-        @TestMetadata("topLevelDeclarationToSealed.test")
-        public void testTopLevelDeclarationToSealed() throws Exception {
-            runTest("testData/quickfix/moveToSealedParent/topLevelDeclarationToSealed.test");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/optimizeImports")
     public static class OptimizeImports extends AbstractQuickFixMultiFileTest {
         private void runTest(String testDataFilePath) throws Exception {

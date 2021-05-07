@@ -1198,6 +1198,19 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/addJvmInline")
+    public static class AddJvmInline extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("testData/intentions/addJvmInline/valueClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addJvmOverloads")
     public static class AddJvmOverloads extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1388,6 +1401,152 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("withReturn.kt")
         public void testWithReturn() throws Exception {
             runTest("testData/intentions/addLabeledReturnInLambda/withReturn.kt");
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall")
+        public static class ConvertToIndexedFunctionCall extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extension.kt")
+            public void testExtension() throws Exception {
+                runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/extension.kt");
+            }
+
+            @TestMetadata("hasIndexParameter.kt")
+            public void testHasIndexParameter() throws Exception {
+                runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/hasIndexParameter.kt");
+            }
+
+            @TestMetadata("hasIndexVariable.kt")
+            public void testHasIndexVariable() throws Exception {
+                runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/hasIndexVariable.kt");
+            }
+
+            @TestMetadata("hasIndexVariableInLambda.kt")
+            public void testHasIndexVariableInLambda() throws Exception {
+                runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/hasIndexVariableInLambda.kt");
+            }
+
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/labeledReturn.kt");
+            }
+
+            @TestMetadata("labeledReturn2.kt")
+            public void testLabeledReturn2() throws Exception {
+                runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/labeledReturn2.kt");
+            }
+
+            @TestMetadata("lambdaInParentheses.kt")
+            public void testLambdaInParentheses() throws Exception {
+                runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/lambdaInParentheses.kt");
+            }
+
+            @TestMetadata("noLambdaParameter.kt")
+            public void testNoLambdaParameter() throws Exception {
+                runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/noLambdaParameter.kt");
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic")
+            public static class Basic extends AbstractIntentionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("filter.kt")
+                public void testFilter() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/filter.kt");
+                }
+
+                @TestMetadata("filterTo.kt")
+                public void testFilterTo() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/filterTo.kt");
+                }
+
+                @TestMetadata("fold.kt")
+                public void testFold() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/fold.kt");
+                }
+
+                @TestMetadata("foldRight.kt")
+                public void testFoldRight() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/foldRight.kt");
+                }
+
+                @TestMetadata("forEach.kt")
+                public void testForEach() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/forEach.kt");
+                }
+
+                @TestMetadata("map.kt")
+                public void testMap() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/map.kt");
+                }
+
+                @TestMetadata("mapNotNull.kt")
+                public void testMapNotNull() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/mapNotNull.kt");
+                }
+
+                @TestMetadata("mapNotNullTo.kt")
+                public void testMapNotNullTo() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/mapNotNullTo.kt");
+                }
+
+                @TestMetadata("mapTo.kt")
+                public void testMapTo() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/mapTo.kt");
+                }
+
+                @TestMetadata("onEach.kt")
+                public void testOnEach() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/onEach.kt");
+                }
+
+                @TestMetadata("reduce.kt")
+                public void testReduce() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/reduce.kt");
+                }
+
+                @TestMetadata("reduceOrNull.kt")
+                public void testReduceOrNull() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/reduceOrNull.kt");
+                }
+
+                @TestMetadata("reduceRight.kt")
+                public void testReduceRight() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/reduceRight.kt");
+                }
+
+                @TestMetadata("reduceRightOrNull.kt")
+                public void testReduceRightOrNull() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/reduceRightOrNull.kt");
+                }
+
+                @TestMetadata("runningFold.kt")
+                public void testRunningFold() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/runningFold.kt");
+                }
+
+                @TestMetadata("runningReduce.kt")
+                public void testRunningReduce() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/runningReduce.kt");
+                }
+
+                @TestMetadata("scan.kt")
+                public void testScan() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/scan.kt");
+                }
+
+                @TestMetadata("scanReduce.kt")
+                public void testScanReduce() throws Exception {
+                    runTest("testData/intentions/addLabeledReturnInLambda/convertToIndexedFunctionCall/basic/scanReduce.kt");
+                }
+            }
         }
     }
 

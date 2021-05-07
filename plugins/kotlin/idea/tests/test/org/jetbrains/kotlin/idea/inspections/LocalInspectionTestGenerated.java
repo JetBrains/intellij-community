@@ -5929,22 +5929,22 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @TestMetadata("afterRightBrace.kt")
             public void testAfterRightBrace() throws Exception {
-                runTest("idea/testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace.kt");
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace.kt");
             }
 
             @TestMetadata("afterRightBrace2.kt")
             public void testAfterRightBrace2() throws Exception {
-                runTest("idea/testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace2.kt");
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace2.kt");
             }
 
             @TestMetadata("afterRightBrace3.kt")
             public void testAfterRightBrace3() throws Exception {
-                runTest("idea/testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace3.kt");
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace3.kt");
             }
 
             @TestMetadata("afterRightParenthesis.kt")
             public void testAfterRightParenthesis() throws Exception {
-                runTest("idea/testData/inspectionsLocal/liftOut/ifToAssignment/afterRightParenthesis.kt");
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightParenthesis.kt");
             }
 
             @TestMetadata("cascadeIf.kt")
@@ -7740,6 +7740,190 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("simple5.kt")
         public void testSimple5() throws Exception {
             runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/simple5.kt");
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty")
+        public static class ReplaceIsEmptyWithIfEmpty extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("defaultValueBlockHasMultiStatement.kt")
+            public void testDefaultValueBlockHasMultiStatement() throws Exception {
+                runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/defaultValueBlockHasMultiStatement.kt");
+            }
+
+            @TestMetadata("defaultValueBlockHasMultiStatement2.kt")
+            public void testDefaultValueBlockHasMultiStatement2() throws Exception {
+                runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/defaultValueBlockHasMultiStatement2.kt");
+            }
+
+            @TestMetadata("elseIf.kt")
+            public void testElseIf() throws Exception {
+                runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/elseIf.kt");
+            }
+
+            @TestMetadata("implicitReceiver.kt")
+            public void testImplicitReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/implicitReceiver.kt");
+            }
+
+            @TestMetadata("negated.kt")
+            public void testNegated() throws Exception {
+                runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/negated.kt");
+            }
+
+            @TestMetadata("noElse.kt")
+            public void testNoElse() throws Exception {
+                runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/noElse.kt");
+            }
+
+            @TestMetadata("notSelfValue.kt")
+            public void testNotSelfValue() throws Exception {
+                runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/notSelfValue.kt");
+            }
+
+            @TestMetadata("notSelfValue2.kt")
+            public void testNotSelfValue2() throws Exception {
+                runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/notSelfValue2.kt");
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/array")
+            public static class Array extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("isEmpty.kt")
+                public void testIsEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/array/isEmpty.kt");
+                }
+
+                @TestMetadata("isNotEmpty.kt")
+                public void testIsNotEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/array/isNotEmpty.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/collection")
+            public static class Collection extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("isEmpty.kt")
+                public void testIsEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/collection/isEmpty.kt");
+                }
+
+                @TestMetadata("isNotEmpty.kt")
+                public void testIsNotEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/collection/isNotEmpty.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/intArray")
+            public static class IntArray extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("isEmpty.kt")
+                public void testIsEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/intArray/isEmpty.kt");
+                }
+
+                @TestMetadata("isNotEmpty.kt")
+                public void testIsNotEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/intArray/isNotEmpty.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/list")
+            public static class List extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("isEmpty.kt")
+                public void testIsEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/list/isEmpty.kt");
+                }
+
+                @TestMetadata("isNotEmpty.kt")
+                public void testIsNotEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/list/isNotEmpty.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/map")
+            public static class Map extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("isEmpty.kt")
+                public void testIsEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/map/isEmpty.kt");
+                }
+
+                @TestMetadata("isNotEmpty.kt")
+                public void testIsNotEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/map/isNotEmpty.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/set")
+            public static class Set extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("isEmpty.kt")
+                public void testIsEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/set/isEmpty.kt");
+                }
+
+                @TestMetadata("isNotEmpty.kt")
+                public void testIsNotEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/set/isNotEmpty.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/str")
+            public static class Str extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("isBlank.kt")
+                public void testIsBlank() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/str/isBlank.kt");
+                }
+
+                @TestMetadata("isEmpty.kt")
+                public void testIsEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/str/isEmpty.kt");
+                }
+
+                @TestMetadata("isNotBlank.kt")
+                public void testIsNotBlank() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/str/isNotBlank.kt");
+                }
+
+                @TestMetadata("isNotEmpty.kt")
+                public void testIsNotEmpty() throws Exception {
+                    runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration/replaceIsEmptyWithIfEmpty/str/isNotEmpty.kt");
+                }
+            }
         }
     }
 

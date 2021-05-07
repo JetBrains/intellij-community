@@ -210,7 +210,7 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
 
     @TestMetadata("platformDependencyInCommon")
     public void testPlatformDependencyInCommon() throws Exception {
-        runTest("idea/testData/multiplatform/platformDependencyInCommon/");
+        runTest("testData/multiplatform/platformDependencyInCommon/");
     }
 
     @TestMetadata("platformSpecificChecksInCommon")
