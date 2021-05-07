@@ -691,6 +691,11 @@ public class WSLDistribution {
     // Let's print some unique message before executing the command to know where command output begins in the result output.
     String prefixText = "intellij: executing command...";
     options.addInitCommand("echo " + CommandLineUtil.posixQuote(prefixText));
+    if (options.isExecuteCommandInInteractiveShell()) {
+      // Disable oh-my-zsh auto update on shell initialization
+      commandLine.getEnvironment().put(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE, "true");
+      options.setPassEnvVarsUsingInterop(true);
+    }
     ProcessOutput output = executeOnWsl(commandLine, options, timeout);
     String stdout = output.getStdout();
     String markerText = prefixText + LineSeparator.LF.getSeparatorString();
