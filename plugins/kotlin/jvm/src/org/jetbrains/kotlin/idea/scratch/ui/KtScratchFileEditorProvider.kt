@@ -181,14 +181,9 @@ class KtScratchFileEditorWithPreview private constructor(
         templatePresentation.description = KotlinJvmBundle.message("scratch.side.panel.output.mode.description")
     }
 
-    /*override*/ fun setLayout(newLayout: Layout) {
-        val previous = layout
-        //super.setLayout(newLayout)
-        val current = layout
-
+    override fun onLayoutChange(oldValue: Layout?, newValue: Layout?) {
         when {
-            previous == Layout.SHOW_EDITOR && current != Layout.SHOW_EDITOR -> clearOutputHandlers()
-            previous != Layout.SHOW_EDITOR && current == Layout.SHOW_EDITOR -> clearOutputHandlers()
+            oldValue != newValue -> clearOutputHandlers()
         }
     }
 
