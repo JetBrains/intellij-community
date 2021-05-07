@@ -142,10 +142,10 @@ class DfFloatRangeType implements DfFloatType {
         float fromCmp = Float.compare(myFrom, range.myFrom);
         float toCmp = Float.compare(range.myTo, myTo);
         if (fromCmp >= 0) {
-          return create(nextUp(range.myTo), myTo, false, nan);
+          return create(Math.max(myFrom, nextUp(range.myTo)), myTo, false, nan);
         }
         if (toCmp >= 0) {
-          return create(myFrom, nextDown(range.myFrom), false, nan);
+          return create(myFrom, Math.min(myTo, nextDown(range.myFrom)), false, nan);
         }
         if (myFrom == Float.NEGATIVE_INFINITY && myTo == Float.POSITIVE_INFINITY) {
           return create(range.myFrom, range.myTo, true, nan);
@@ -225,10 +225,10 @@ class DfFloatRangeType implements DfFloatType {
       } else {
         range = LongRangeSet.empty();
         if (myFrom > Float.NEGATIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range(Long.MIN_VALUE, (long)myFrom));
+          range = range.unite(LongRangeSet.range(Long.MIN_VALUE, (long)nextDown(myFrom)));
         }
         if (myTo < Float.POSITIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range((long)myTo, Long.MAX_VALUE));
+          range = range.unite(LongRangeSet.range((long)nextUp(myTo), Long.MAX_VALUE));
         }
       }
       if (myNaN) {
@@ -243,10 +243,10 @@ class DfFloatRangeType implements DfFloatType {
       } else {
         range = LongRangeSet.empty();
         if (myFrom > Float.NEGATIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range(Integer.MIN_VALUE, (int)myFrom));
+          range = range.unite(LongRangeSet.range(Integer.MIN_VALUE, (int)nextDown(myFrom)));
         }
         if (myTo < Float.POSITIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range((int)myTo, Integer.MAX_VALUE));
+          range = range.unite(LongRangeSet.range((int)nextUp(myTo), Integer.MAX_VALUE));
         }
       }
       if (myNaN) {

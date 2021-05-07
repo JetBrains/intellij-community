@@ -142,10 +142,10 @@ class DfDoubleRangeType implements DfDoubleType {
         double fromCmp = Double.compare(myFrom, range.myFrom);
         double toCmp = Double.compare(range.myTo, myTo);
         if (fromCmp >= 0) {
-          return create(nextUp(range.myTo), myTo, false, nan);
+          return create(Math.max(myFrom, nextUp(range.myTo)), myTo, false, nan);
         }
         if (toCmp >= 0) {
-          return create(myFrom, nextDown(range.myFrom), false, nan);
+          return create(myFrom, Math.min(myTo, nextDown(range.myFrom)), false, nan);
         }
         if (myFrom == Double.NEGATIVE_INFINITY && myTo == Double.POSITIVE_INFINITY) {
           return create(range.myFrom, range.myTo, true, nan);

@@ -47,6 +47,12 @@ public class DfTypesTest {
     assertEquals("double < 0.0 || > 1.0 (or NaN)", withNaN.toString());
     DfType withoutNaN = withNaN.meet(DfTypes.doubleRange(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
     assertEquals("double < 0.0 || > 1.0 not NaN", withoutNaN.toString());
+
+    assertEquals("double >= 3.0 && <= 4.0 not NaN", withNaN.meet(DfTypes.doubleRange(3.0, 4.0)).toString());
+    assertEquals("double >= -4.0 && <= -3.0 not NaN", withNaN.meet(DfTypes.doubleRange(-4.0, -3.0)).toString());
+    assertEquals("double > 1.0 && <= 1.5 not NaN", withNaN.meet(DfTypes.doubleRange(0.5, 1.5)).toString());
+    assertEquals("double >= -1.5 && < 0.0 not NaN", withNaN.meet(DfTypes.doubleRange(-1.5, 0.5)).toString());
+    assertEquals("double >= -4.0 && <= 4.0 not NaN", withNaN.meet(DfTypes.doubleRange(-4.0, 4.0)).toString());
   }
   
   @Test
