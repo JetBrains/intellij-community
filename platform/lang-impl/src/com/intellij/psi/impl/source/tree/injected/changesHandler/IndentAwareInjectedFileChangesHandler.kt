@@ -74,13 +74,16 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       var rangeInHost = affectedMarker.hostMarker.range
 
       myHostEditor.caretModel.moveToOffset(rangeInHost.startOffset)
-      val newText0 = CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->
-        preProcessor.preprocessOnPaste(myProject, hostPsiFile, myHostEditor, newText, null).also { r ->
-          if (r != newText) {
-            LOG.debug { "preprocessed by $preProcessor '${newText.esclbr()}' -> '${r.esclbr()}'" }
+      val newText0 = if (affectedMarker.host?.getUserData(InjectionMeta.SUPPRESS_COPY_PASTE_HANDLER_IN_FE) == true)
+        markerText
+      else
+        CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->
+          preProcessor.preprocessOnPaste(myProject, hostPsiFile, myHostEditor, newText, null).also { r ->
+            if (r != newText) {
+              LOG.debug { "preprocessed by $preProcessor '${newText.esclbr()}' -> '${r.esclbr()}'" }
+            }
           }
         }
-      }
 
       val indent = affectedMarker.host?.getUserData(InjectionMeta.INJECTION_INDENT)
       val newText = indentHeuristically(indent, newText0, newText0 != markerText)
@@ -128,10 +131,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       indent == null -> newText0
       // on the following line we heuristically guess that it was already indented by KotlinLiteralCopyPasteProcessor
       // TODO: come to the agreement with KotlinLiteralCopyPasteProcessor who will eventually indent eveything
-      maybeIndented && lines.all { it == "\n" || it.startsWith(indent) } -> newText0  
-      // on the following line we heuristically guess that it was already indented by YAMLCopyPasteProcessor
-      // TODO: come to the agreement with YAMLCopyPasteProcessor who will eventually indent eveything
-      maybeIndented && lines.lastOrNull() == indent -> indentHeuristically(indent, newText0.removeSuffix(indent), maybeIndented)
+      maybeIndented && lines.all { it == "\n" || it.startsWith(indent) } -> newText0
       lines.size <= 1 -> newText0
       else -> buildString {
         append(lines.first())

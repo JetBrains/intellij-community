@@ -33,6 +33,7 @@ class YamlLanguageInjectionPerformer : LanguageInjectionPerformer {
 
       if(context is YAMLBlockScalarImpl){
         context.putUserData(InjectionMeta.INJECTION_INDENT, " ".repeat(context.locateIndent()))
+        context.putUserData(InjectionMeta.SUPPRESS_COPY_PASTE_HANDLER_IN_FE, true)
       }
       
       if (contentRanges.isEmpty()) {

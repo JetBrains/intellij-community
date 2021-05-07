@@ -324,7 +324,34 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
         Y: 12
     """.trimIndent())
   }
-  
+
+  fun testSplitHtmlFromEmpty() {
+    myFixture.configureByText("test.yaml", """
+        X: |
+          <html><caret></html>
+          
+        Y: 12
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val quickEditHandler = QuickEditAction().invokeImpl(project,
+                                                        myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
+    val fe = myInjectionFixture.openInFragmentEditor(quickEditHandler)
+    fe.editor.caretModel.moveToOffset("<html>".length)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assertEquals("fragment editor should be", "<html>\n    \n</html>\n", fe.file.text)
+    myFixture.checkResult("""
+        X: |
+          <html>
+              
+          </html>
+          
+        Y: 12
+    """.trimIndent())
+  }
+
+
   private fun assertInjectedAndLiteralValue(expectedText: String) {
     assertEquals("fragment editor should be", expectedText, myInjectionFixture.openInFragmentEditor().file.text)
     assertEquals("literal text should be", expectedText, literalTextAtTheCaret)
