@@ -264,41 +264,42 @@ public class PluginGroups {
   public void setPluginEnabledWithDependencies(@NotNull PluginId pluginId, boolean enabled) {
     initIfNeeded();
 
-    Function<PluginId, Collection<IdeaPluginDescriptorImpl>> pluginsById = enabled ?
-                                                                           id -> {
-                                                                             IdeaPluginDescriptorImpl descriptor = myEnabledPlugins.get(id);
-                                                                             return descriptor != null ? List.of(descriptor) : List.of();
-                                                                           } : (__ -> myEnabledPlugins.values());
-
-    BiPredicate<PluginId, PluginId> predicate =
-      enabled ?
-      (dependencyId, __) -> !PluginManagerCore.CORE_ID.equals(dependencyId) :
-      Objects::equals;
-
-    Set<PluginId> pluginIds = getAllPluginIds(collectInvolvedIds(pluginId, predicate, pluginsById));
+    Set<PluginId> accumulator = new HashSet<>();
     if (enabled) {
-      myDisabledPluginIds.removeAll(pluginIds);
+      collectInvolvedIds(pluginId,
+                         accumulator,
+                         (dependencyId, __) -> !PluginManagerCore.CORE_ID.equals(dependencyId),
+                         id -> {
+                           IdeaPluginDescriptorImpl descriptor = myEnabledPlugins.get(id);
+                           return descriptor != null ? List.of(descriptor) : List.of();
+                         });
+
+      myDisabledPluginIds.removeAll(getAllPluginIds(accumulator));
     }
     else {
-      myDisabledPluginIds.addAll(pluginIds);
+      collectInvolvedIds(pluginId,
+                         accumulator,
+                         Objects::equals,
+                         __ -> myEnabledPlugins.values());
+
+      myDisabledPluginIds.addAll(getAllPluginIds(accumulator));
     }
   }
 
-  private static @NotNull Set<PluginId> collectInvolvedIds(@NotNull PluginId pluginId,
-                                                           @NotNull BiPredicate<@NotNull PluginId, @NotNull PluginId> predicate,
-                                                           @NotNull Function<@NotNull PluginId, @NotNull Collection<IdeaPluginDescriptorImpl>> pluginsById) {
-    Set<PluginId> pluginIds = new HashSet<>();
-    pluginIds.add(pluginId);
+  private static void collectInvolvedIds(@NotNull PluginId pluginId,
+                                         @NotNull Set<PluginId> accumulator,
+                                         @NotNull BiPredicate<@NotNull PluginId, @NotNull PluginId> predicate,
+                                         @NotNull Function<@NotNull PluginId, @NotNull Collection<IdeaPluginDescriptorImpl>> pluginsById) {
+    accumulator.add(pluginId);
 
     for (IdeaPluginDescriptorImpl plugin : pluginsById.apply(pluginId)) {
       for (PluginDependency dependency : plugin.getPluginDependencies()) {
-        if (!dependency.isOptional() && predicate.test(dependency.getPluginId(), pluginId)) {
-          pluginIds.addAll(collectInvolvedIds(dependency.getPluginId(), predicate, pluginsById));
+        PluginId dependencyId = dependency.getPluginId();
+        if (!dependency.isOptional() && predicate.test(dependencyId, pluginId)) {
+          collectInvolvedIds(dependencyId, accumulator, predicate, pluginsById);
         }
       }
     }
-
-    return pluginIds;
   }
 
   private @Nullable IdSet createIdSet(@Nls @Nullable String title,
