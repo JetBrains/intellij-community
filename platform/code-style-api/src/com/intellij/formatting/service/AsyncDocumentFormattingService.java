@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,24 +22,13 @@ import java.util.List;
 
 /**
  * Extend this class if there is a long lasting formatting operation which may block EDT. The actual formatting code is placed then
- * in {@link #asyncFormat(AsyncFormattingRequest)} method which may be slow. A cancellable operation in {@code asyncFormat} method must be
- * placed into {@link #runCancellable(AsyncFormattingRequest, AsyncFormattingRequest.CancellableRunnable)} method, for example:
- * <pre><code>
- *   void asyncFormat(AsyncFormattingRequest request) {
- *     ...
- *     runCancellable(request, new CancellableRunnable() {
- *       ...
- *       boolean cancel() {
- *         // Cancellation code
- *       }
- *     }
- *   }
- * </code></pre>
+ * in {@link FormattingTask#run()} method which may be slow.
+ * <p>
  * If another {@code formatDocument()} call is made for the same document, the previous request is cancelled. On success, if
  * {@code cancel()} returns {@code true}, another request replaces the previous one. Otherwise the newer request is rejected.
  * <p>
- * Before the actual formatting starts, {@link #prepare(FormattingContext)} method is called. It should be fast enough not to block EDT.
- * If it succeeds (returns {@code true}), {@link #asyncFormat(AsyncFormattingRequest)} method is invoked.
+ * Before the actual formatting starts, {@link #createFormattingTask(AsyncFormattingRequest)} method is called. It should be fast enough not to
+ * block EDT. If it succeeds (doesn't return null), further formatting is started using the created runnable on a separate thread.
  */
 @ApiStatus.Experimental
 public abstract class AsyncDocumentFormattingService extends AbstractDocumentFormattingService {
@@ -58,9 +48,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
         return;
       }
     }
-    if (prepare(formattingContext)) {
-      AsyncFormattingRequest formattingRequest = new FormattingRequestImpl(formattingContext, document, formattingRanges,
-                                                                           canChangeWhiteSpaceOnly);
+    FormattingRequestImpl formattingRequest = new FormattingRequestImpl(formattingContext, document, formattingRanges,
+                                                                         canChangeWhiteSpaceOnly);
+    FormattingTask formattingTask = createFormattingTask(formattingRequest);
+    if (formattingTask != null) {
+      formattingRequest.setTask(formattingTask);
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         runAsyncFormat(formattingRequest);
       }
@@ -77,10 +69,10 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
   }
 
-  private void runAsyncFormat(@NotNull AsyncFormattingRequest formattingRequest) {
+  private void runAsyncFormat(@NotNull FormattingRequestImpl formattingRequest) {
     myPendingRequests.add(formattingRequest);
     try {
-      asyncFormat(formattingRequest);
+      formattingRequest.runTask();
     }
     finally {
       myPendingRequests.remove(formattingRequest);
@@ -88,40 +80,13 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   }
 
   /**
-   * Called before the actual formatting starts. Any specific data can be put to {@link FormattingContext}'s user data. The same
-   * {@code FormattingContext} is passed then to {@link #asyncFormat(AsyncFormattingRequest)}.
+   * Called before the actual formatting starts.
    *
-   * @param formattingContext The formatting context to use and store specific data.
-   * @return {@code true} if successful and formatting can proceed, {@code false} otherwise. The latter may be a result, for example,
-   * of misconfiguration.
+   * @param formattingRequest The formatting request to create the formatting task for.
+   * @return {@link FormattingTask} if successful and formatting can proceed, {@code null} otherwise. The latter may be a result, for
+   * example, of misconfiguration.
    */
-  protected abstract boolean prepare(@NotNull FormattingContext formattingContext);
-
-  /**
-   * Format a document using the {@link AsyncFormattingRequest}.
-   * <p>
-   * {@code asyncFormat()} method is run asynchronously on a pooled thread. The method may be slow and perform I/O operations and/or
-   * run system processes. It is a responsibility of an implementor to handle timeouts if necessary.
-   * <p>
-   * Call {@link AsyncFormattingRequest#getDocumentText()} to get a document text. Use {@link AsyncFormattingRequest#getContext()} for
-   * more context information. Return result via {@link AsyncFormattingRequest#onTextReady(String)} or call
-   * {@link AsyncFormattingRequest#onError(String, String)}. In case of an error, a notification will be shown to an end user.
-   * <p>
-   * For example:
-   * <pre><code>
-   *   void asyncFormat(AsyncFormattingRequest request) {
-   *     ...
-   *     if (error) {
-   *       request.onError(title, message);
-   *       return;
-   *     }
-   *     request.onTextReady(formattedText);
-   *   }
-   * </code></pre>
-   *
-   * @param request The formatting request to process.
-   */
-  protected abstract void asyncFormat(@NotNull AsyncFormattingRequest request);
+  protected abstract FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest formattingRequest);
 
   /**
    * Merge changes if the document has changed since {@code asyncFormat()} was called. The default implementation does nothing and
@@ -132,28 +97,6 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
    */
   @SuppressWarnings("unused")
   protected void mergeChanges(@NotNull Document document, @NotNull String updatedText) {}
-
-  /**
-   * Run a long-lasting cancellable runnable.
-   *
-   * @param currentRequest The current request passed to {@link #asyncFormat(AsyncFormattingRequest)} as a parameter.
-   * @param runnable The cancellable runnable.
-   */
-  protected final void runCancellable(@NotNull AsyncFormattingRequest currentRequest,
-                                      @NotNull AsyncFormattingRequest.CancellableRunnable runnable) {
-    FormattingRequestImpl request = (FormattingRequestImpl)currentRequest;
-    if (request.myCancellableRunnable != null) {
-      LOG.error("Another CancellableRunnable is currently active, can't run two of them simultaneously.");
-    }
-    try {
-      request.setCancellableRunnable(runnable);
-      runnable.run();
-    }
-    finally {
-      request.setCancellableRunnable(null);
-    }
-  }
-
 
   /**
    * @return A notification group ID to use when error messages are shown to an end user.
@@ -167,7 +110,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     private final FormattingContext myContext;
     private final boolean           myCanChangeWhitespaceOnly;
 
-    private volatile @Nullable CancellableRunnable myCancellableRunnable;
+    private volatile @Nullable FormattingTask myTask;
 
     private FormattingRequestImpl(@NotNull FormattingContext formattingContext,
                                   @NotNull Document document,
@@ -186,7 +129,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     private boolean cancel() {
-      CancellableRunnable runnable = myCancellableRunnable;
+      FormattingTask runnable = myTask;
       if (runnable != null) {
         return runnable.cancel();
       }
@@ -212,8 +155,12 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       return myContext;
     }
 
-    private void setCancellableRunnable(@Nullable CancellableRunnable cancellableRunnable) {
-      myCancellableRunnable = cancellableRunnable;
+    private void setTask(@Nullable FormattingTask formattingTask) {
+      myTask = formattingTask;
+    }
+
+    private void runTask() {
+      ObjectUtils.consumeIfNotNull(myTask, Runnable::run);
     }
 
     @Override
@@ -241,5 +188,14 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     public void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
       FormattingNotificationService.getInstance(myContext.getProject()).reportError(getNotificationGroupId(), title, message);
     }
+  }
+
+
+  protected interface FormattingTask extends Runnable {
+    /**
+     * Cancel the current runnable.
+     * @return {@code true} if the runnable has been successfully cancelled, {@code false} otherwise.
+     */
+    boolean cancel();
   }
 }

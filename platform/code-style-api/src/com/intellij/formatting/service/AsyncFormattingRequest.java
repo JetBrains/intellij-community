@@ -52,11 +52,4 @@ public interface AsyncFormattingRequest {
    */
   void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message);
 
-  interface CancellableRunnable extends Runnable {
-    /**
-     * Cancel the current runnable.
-     * @return {@code true} if the runnable has been successfully cancelled, {@code false} otherwise.
-     */
-    boolean cancel();
-  }
 }
