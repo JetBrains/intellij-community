@@ -1,6 +1,4 @@
-import org.eclipse.jdt.annotation.*;
-
-@NonNullByDefault
+@foo.NonnullByDefault
 record Record(String name){}
 
 class Test {
