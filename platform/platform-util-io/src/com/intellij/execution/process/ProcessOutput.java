@@ -122,12 +122,12 @@ public class ProcessOutput {
 
   @Override
   public String toString() {
-    return "ProcessOutput{" +
-           "myExitCode=" + myExitCode +
-           ", myTimeout=" + myTimeout +
-           ", myCancelled=" + myCancelled +
-           ", myStdoutBuilder=" + myStdoutBuilder +
-           ", myStderrBuilder=" + myStderrBuilder +
+    return "{" +
+           "exitCode=" + myExitCode +
+           ", timeout=" + myTimeout +
+           ", cancelled=" + myCancelled +
+           ", stdout=" + myStdoutBuilder +
+           ", stderr=" + myStderrBuilder +
            '}';
   }
 }
