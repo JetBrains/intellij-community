@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UI;
@@ -60,7 +61,7 @@ public final class UiUtils {
 
   public static JPanel createAddRemovePanel(final ListTable table, @NlsContexts.Label final String panelLabel, boolean removeHeader) {
     if (removeHeader) table.setTableHeader(null);
-    var panel = createAddRemovePanel(table);
+    final JPanel panel = createAddRemovePanel(table);
     return UI.PanelFactory.panel(panel).withLabel(panelLabel).moveLabelOnTop().resizeY(true).createPanel();
   }
 
@@ -68,7 +69,7 @@ public final class UiUtils {
                                                             @NonNls String... ancestorClasses) {
     final ClassFilter filter;
     if (ancestorClasses.length == 0) {
-      filter = ClassFilter.ALL;
+      filter = c -> !PsiUtil.isLocalClass(c);
     }
     else {
       filter = new SubclassFilter(ancestorClasses);
@@ -121,7 +122,7 @@ public final class UiUtils {
                                                             boolean removeHeader,
                                                             @NonNls String... ancestorClasses) {
     if (removeHeader) table.setTableHeader(null);
-    final var panel = createAddRemoveTreeClassChooserPanel(table, chooserTitle, ancestorClasses);
+    final JPanel panel = createAddRemoveTreeClassChooserPanel(table, chooserTitle, ancestorClasses);
     return UI.PanelFactory.panel(panel).withLabel(treeLabel).moveLabelOnTop().resizeY(true).createPanel();
   }
 
@@ -203,6 +204,7 @@ public final class UiUtils {
 
     @Override
     public boolean isAccepted(PsiClass aClass) {
+      if (PsiUtil.isLocalClass(aClass)) return false;
       for (String ancestorClass : ancestorClasses) {
         if (InheritanceUtil.isInheritor(aClass, ancestorClass)) {
           return true;
