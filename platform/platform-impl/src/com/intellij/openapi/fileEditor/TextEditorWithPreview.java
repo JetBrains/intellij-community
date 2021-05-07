@@ -410,7 +410,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
 
     public static Layout fromId(String id, Layout defaultValue) {
-      for (Layout layout : Layout.values()) {
+      for (Layout layout : values()) {
         if (layout.myId.equals(id)) {
           return layout;
         }
