@@ -23,10 +23,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
-import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
-import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
-import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
-import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ExpressionTypeProvider;
@@ -125,6 +122,12 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
           String rangeText = JvmPsiRangeSetUtil.getPresentationText(((DfIntegralType)dfType).getRange(), type);
           if (!rangeText.equals(InspectionsBundle.message("long.range.set.presentation.any"))) {
             infoLines.add(Pair.create(JavaBundle.message("type.information.range"), rangeText));
+          }
+        }
+        else if (dfType instanceof DfFloatingPointType && !(dfType instanceof DfConstantType)) {
+          String presentation = dfType.toString().replaceFirst("^(double|float) ?", ""); //NON-NLS
+          if (!presentation.isEmpty()) {
+            infoLines.add(Pair.create(JavaBundle.message("type.information.range"), presentation));
           }
         }
         else if (dfType instanceof DfReferenceType) {
