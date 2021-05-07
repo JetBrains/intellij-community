@@ -81,10 +81,10 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   }
 
   protected @Nullable VirtualFile getInitialFile() {
-    var directoryName = myAccessor.getText(myTextComponent).trim();
-    if (directoryName.isBlank()) return null;
+    var directoryName = myAccessor.getText(myTextComponent);
+    if (directoryName == null || directoryName.isBlank()) return null;
 
-    var path = NioFiles.toPath(expandPath(directoryName));
+    var path = NioFiles.toPath(expandPath(directoryName.trim()));
     if (path == null || !path.isAbsolute()) return null;
 
     while (path != null) {
@@ -115,7 +115,11 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   }
 
   protected String getComponentText() {
-    return myAccessor.getText(myTextComponent).trim();
+    var directoryName = myAccessor.getText(myTextComponent);
+    if (directoryName == null || directoryName.isBlank()) {
+      return "";
+    }
+    return directoryName.trim();
   }
 
   protected void onFileChosen(@NotNull VirtualFile chosenFile) {
