@@ -99,7 +99,7 @@ public final class IntToIntBtree {
     }
   }
 
-  protected void doAllocateRoot() {
+  private void doAllocateRoot() {
     nextPage(); // allocate root
     root.setAddress(0);
     root.getNodeView().setIndexLeaf(true);
@@ -493,9 +493,9 @@ public final class IntToIntBtree {
       return isHashedLeaf;
     }
 
-    void setHashedLeaf(boolean value) {
-      isHashedLeaf = value;
-      setFlag(HASHED_LEAF_MASK, value);
+    void setHashedLeaf() {
+      isHashedLeaf = true;
+      setFlag(HASHED_LEAF_MASK, true);
     }
 
     final short getMaxChildrenCount() {
@@ -622,63 +622,27 @@ public final class IntToIntBtree {
       setNextPage(newIndexNode.address);
       newIndexNode.setNextPage(nextPage);
 
-      int medianKey = -1;
+      int medianKey;
 
       if (indexLeaf && hashedLeaf) {
         if (hashLeafData == null) hashLeafData = new HashLeafData(this, recordCount);
         final int[] keys = hashLeafData.keys;
 
-        boolean defaultSplit = true;
+        hashLeafData.clean();
 
-        //if (keys[keys.length - 1] < newValue && btree.height <= 3) {  // optimization for adding element to last block
-        //  btree.root.syncWithStore();
-        //  if (btree.height == 2 && btree.root.search(keys[0]) == btree.root.getChildrenCount() - 1) {
-        //    defaultSplit = false;
-        //  } else if (btree.height == 3 &&
-        //             btree.root.search(keys[0]) == -btree.root.getChildrenCount() - 1 &&
-        //             parent.search(keys[0]) == parent.getChildrenCount() - 1
-        //            ) {
-        //    defaultSplit = false;
-        //  }
-        //
-        //  if (!defaultSplit) {
-        //    newIndexNode.setChildrenCount((short)0);
-        //    newIndexNode.insert(newValue, 0);
-        //    ++btree.count;
-        //    medianKey = newValue;
-        //  }
-        //}
+        final Int2IntMap map = hashLeafData.values;
 
-        if (defaultSplit) {
-          hashLeafData.clean();
+        final int avg = keys.length / 2;
+        medianKey = keys[avg];
+        --btree.hashedPagesCount;
+        setChildrenCount((short)0);  // this node becomes dirty
+        newIndexNode.setChildrenCount((short)0);
 
-          final Int2IntMap map = hashLeafData.values;
-
-          final int avg = keys.length / 2;
-          medianKey = keys[avg];
-          --btree.hashedPagesCount;
-          setChildrenCount((short)0);  // this node becomes dirty
-          newIndexNode.setChildrenCount((short)0);
-
-          for(int i = 0; i < avg; ++i) {
-            int key = keys[i];
-            insert(key, map.get(key));
-            key = keys[avg + i];
-            newIndexNode.insert(key, map.get(key));
-          }
-
-          /*setHashedLeaf(false);
-                  setChildrenCount((short)keys.length);
-
-                  --btree.hashedPagesCount;
-                  btree.movedMembersCount += keys.length;
-
-                  for(int i = 0; i < keys.length; ++i) {
-                    int key = keys[i];
-                    setKeyAt(i, key);
-                    setAddressAt(i, map.get(key));
-                  }
-                  return parentAddress;*/
+        for(int i = 0; i < avg; ++i) {
+          int key = keys[i];
+          insert(key, map.get(key));
+          key = keys[avg + i];
+          newIndexNode.insert(key, map.get(key));
         }
       } else {
         short recordCountInNewNode = (short)(recordCount - maxIndex);
@@ -934,7 +898,7 @@ public final class IntToIntBtree {
       }
     }
 
-    protected void dump(String s) {
+    void dump(String s) {
       if (doDump) {
         immediateDump(s);
       }
@@ -996,7 +960,7 @@ public final class IntToIntBtree {
 
       if (indexLeaf) {
         if (recordCount == 0 && indexNodeIsHashTable) {
-          setHashedLeaf(true);
+          setHashedLeaf();
           ++btree.hashedPagesCount;
         }
 
