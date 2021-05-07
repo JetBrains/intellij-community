@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.findUsages.*
 import org.jetbrains.kotlin.formatter.AbstractEnterHandlerTest
 import org.jetbrains.kotlin.formatter.AbstractFormatterTest
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
+import org.jetbrains.kotlin.formatter.AbstractTypingIndentationTestBase
 import org.jetbrains.kotlin.idea.AbstractExpressionSelectionTest
 import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
@@ -1122,9 +1123,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         "idea/idea-frontend-fir/idea-fir-low-level-api/tests",
         "compiler/fir/analysis-tests/testData",
     ) {
-        testClass<AbstractDiagnosisCompilerTestDataTest>(suiteTestClassName = "DiagnosisCompilerFirTestdataTestGenerated") {
-            model("resolve", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
-            model("resolveWithStdlib", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME, )
+        testClass<AbstractDiagnosisCompilerTestDataTest>(generatedClassName = "DiagnosisCompilerFirTestdataTestGenerated") {
+            model("resolve", pattern = KT_WITHOUT_DOTS)
+            model("resolveWithStdlib", pattern = KT_WITHOUT_DOTS)
         }
     }
 
@@ -1132,16 +1133,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         "idea/idea-frontend-fir/idea-fir-low-level-api/tests",
         "compiler/testData",
     ) {
-        testClass<AbstractDiagnosisCompilerTestDataTest>(suiteTestClassName = "DiagnosisCompilerTestFE10TestdataTestGenerated") {
-            model(
-                "diagnostics/tests",
-                excludedPattern = excludedFirTestdataPattern,
-            )
-            model(
-                "diagnostics/testsWithStdLib",
-                excludedPattern = excludedFirTestdataPattern,
-                excludeDirs = listOf("native")
-            )
+        testClass<AbstractDiagnosisCompilerTestDataTest>(generatedClassName = "DiagnosisCompilerTestFE10TestdataTestGenerated") {
+            model("diagnostics/tests")
+            model("diagnostics/testsWithStdLib")
         }
     }
 

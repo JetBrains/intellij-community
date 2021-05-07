@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.test.util.slashedPath
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import java.io.File
 
