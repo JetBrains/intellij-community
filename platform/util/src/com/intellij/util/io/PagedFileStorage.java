@@ -362,7 +362,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  private void markDirty() throws IOException {
+  void markDirty() {
     if (!isDirty) isDirty = true;
   }
 
@@ -376,6 +376,12 @@ public class PagedFileStorage implements Forceable {
 
     if (isDirty) {
       myStorageLockContext.getBufferCache().flushBuffersForOwner(myStorageIndex, myStorageLockContext);
+      if (!myReadOnly) {
+        useChannel(ch -> {
+          ch.force(true);
+          return null;
+        }, false);
+      }
       isDirty = false;
     }
 

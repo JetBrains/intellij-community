@@ -34,7 +34,10 @@ public final class DirectBufferWrapper {
     if (myReadOnly) {
       throw new IllegalStateException("Read-only byte buffer can't be modified. File: " + myFile);
     }
-    if (!myDirty) myDirty = true;
+    if (!myDirty) {
+      myDirty = true;
+      myFile.markDirty();
+    }
   }
 
   final boolean isDirty() {
@@ -139,13 +142,15 @@ public final class DirectBufferWrapper {
   void force() throws IOException {
     assert !myReadOnly;
     if (!isReleased() && isDirty()) {
+      ByteBuffer buffer = myBuffer;
+      buffer.rewind();
+
       myFile.useChannel(ch -> {
-        ByteBuffer buffer = myBuffer;
-        buffer.rewind();
         ch.write(buffer, myPosition);
-        myDirty = false;
         return null;
       }, myReadOnly);
+
+      myDirty = false;
     }
   }
 

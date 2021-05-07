@@ -32,6 +32,10 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
     myCache = new LinkedHashMap<>(cacheSizeLimit, 0.5f, true);
   }
 
+  /**
+   * Parameter {@param processor} should be idempotent because sometimes calculation might be restarted
+   * when file channel was closed by thread interruption
+   */
   <T> T useChannel(@NotNull Path path, @NotNull ChannelProcessor<T> processor, boolean read) throws IOException {
     ChannelDescriptor descriptor;
     synchronized (myLock) {

@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.channels.FileChannel;
 
+@ApiStatus.Internal
 public final class FileChannelUtil {
   private static final Logger LOG = Logger.getInstance(FileChannelUtil.class);
 
@@ -30,7 +32,6 @@ public final class FileChannelUtil {
     MethodHandle setUnInterruptible = null;
     try {
       if (sunNioChFileChannelImpl != null) {
-        // noinspection SpellCheckingInspection
         setUnInterruptible = MethodHandles
           .lookup()
           .findVirtual(sunNioChFileChannelImpl, "setUninterruptible", MethodType.methodType(void.class));
