@@ -96,6 +96,7 @@ class GradleKtsImportTest : KotlinGradleImportingTestCase() {
             "$build_script_errors_group error has not been reported among other errors: $errors",
             buildScriptErrors.isNotEmpty()
         )
+        checkConfiguration("build.gradle.kts")
     }
 
     @Test

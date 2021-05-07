@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.idea.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.kotlin.idea.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.configuration.utils.getKotlinModuleId
 
-
 internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesByCompilations(
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
