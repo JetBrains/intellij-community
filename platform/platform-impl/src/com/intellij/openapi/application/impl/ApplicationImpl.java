@@ -94,21 +94,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
 
-  private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
+  // defer reading isUnitTest flag until it's initialized
+  private static class Holder {
+    private static final int ourDumpThreadsOnLongWriteActionWaiting = ApplicationManager.getApplication().isUnitTestMode() ? 0 : Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
+  }
 
   private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
-
-  private static void lockAcquired(@NotNull Class<?> invokedClass, @NotNull LockKind lockKind) {
-    lockAcquired(invokedClass.getName(), lockKind);
-  }
-
-  private static void lockAcquired(@NotNull String invokedClassFqn, @NotNull LockKind lockKind) {
-    EventWatcher watcher = EventWatcher.getInstance();
-    if (watcher != null) {
-      watcher.lockAcquired(invokedClassFqn, lockKind);
-    }
-  }
 
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,
@@ -158,7 +150,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myLock = new ReadMostlyRWLock(edtThread.get());
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
-      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass()));
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
     activity.end();
 
@@ -206,7 +198,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myLock = new ReadMostlyRWLock(edtThread);
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
-      EventQueue.invokeLater(() -> acquireWriteIntentLock(getClass()));
+      EventQueue.invokeLater(() -> acquireWriteIntentLock(getClass().getName()));
     }
     activity.end();
 
@@ -842,7 +834,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       action.run();
     }
     else {
-      acquireWriteIntentLock(action.getClass());
+      acquireWriteIntentLock(action.getClass().getName());
       try {
         action.run();
       }
@@ -861,7 +853,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         return action.compute();
       }
       finally {
-        acquireWriteIntentLock(action.getClass());
+        acquireWriteIntentLock(action.getClass().getName());
       }
     }
     else {
@@ -871,82 +863,46 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public void runReadAction(@NotNull Runnable action) {
-    if (checkReadAccessAllowedAndNoPendingWrites()) {
+    ReadMostlyRWLock.Reader status = myLock.startRead();
+    try {
       action.run();
     }
-    else {
-      acquireReadLock(action.getClass());
-      try {
-        action.run();
-      }
-      finally {
-        releaseReadLock();
+    finally {
+      if (status != null) {
+        myLock.endRead(status);
       }
     }
   }
 
   @Override
   public <T> T runReadAction(@NotNull Computable<T> computation) {
-    if (checkReadAccessAllowedAndNoPendingWrites()) {
-      return computation.compute();
-    }
-    acquireReadLock(computation.getClass());
+    ReadMostlyRWLock.Reader status = myLock.startRead();
     try {
       return computation.compute();
     }
     finally {
-      releaseReadLock();
+      if (status != null) {
+        myLock.endRead(status);
+      }
     }
   }
 
   @Override
   public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    if (checkReadAccessAllowedAndNoPendingWrites()) {
-      return computation.compute();
-    }
-    acquireReadLock(computation.getClass());
+    ReadMostlyRWLock.Reader status = myLock.startRead();
     try {
       return computation.compute();
     }
     finally {
-      releaseReadLock();
+      if (status != null) {
+        myLock.endRead(status);
+      }
     }
-  }
-
-  private void acquireReadLock(@NotNull Class<?> invokedClass) {
-    myLock.readLock();
-    lockAcquired(invokedClass, LockKind.READ);
-  }
-
-  private boolean tryAcquireReadLock(@NotNull Class<? extends Runnable> invokedClass) {
-    boolean result = myLock.tryReadLock();
-    if (result) {
-      lockAcquired(invokedClass, LockKind.READ);
-    }
-    return result;
-  }
-
-  private void releaseReadLock() {
-    myLock.readUnlock();
-  }
-
-  private void acquireWriteLock(@NotNull Class<?> invokedClass) {
-    myLock.writeLock();
-    lockAcquired(invokedClass, LockKind.WRITE);
-  }
-
-  private void releaseWriteLock() {
-    myLock.writeUnlock();
-  }
-
-  private void acquireWriteIntentLock(@NotNull Class<?> invokedClass) {
-    acquireWriteIntentLock(invokedClass.getName());
   }
 
   @Override
   public void acquireWriteIntentLock(@NotNull String invokedClassFqn) {
     myLock.writeIntentLock();
-    lockAcquired(invokedClassFqn, LockKind.WRITE_INTENT);
   }
 
   @Override
@@ -1072,10 +1028,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return isWriteThread() || myLock.isReadLockedByThisThread();
   }
 
-  private boolean checkReadAccessAllowedAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
-    return isWriteThread() || myLock.checkReadLockedByThisThreadAndNoPendingWrites();
-  }
-
   @Override
   public void assertIsDispatchThread() {
     if (isDispatchThread()) return;
@@ -1115,7 +1067,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
       " Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue() +
       "\nCurrent thread: " + describe(Thread.currentThread()) +
-      "\nWrite thread (volatile): " + describe(myLock.writeThread),
+      "\nWrite thread: " + describe(myLock.writeThread),
       new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
@@ -1148,16 +1100,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
     //if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    if (checkReadAccessAllowedAndNoPendingWrites()) {
+    ReadMostlyRWLock.Reader status = myLock.startTryRead();
+    if (status != null && !status.readRequested) {
+      return false;
+    }
+    try {
       action.run();
     }
-    else {
-      if (!tryAcquireReadLock(action.getClass())) return false;
-      try {
-        action.run();
-      }
-      finally {
-        releaseReadLock();
+    finally {
+      if (status != null) {
+        myLock.endRead(status);
       }
     }
     return true;
@@ -1186,7 +1138,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     DeprecatedMethodException.report("Use runReadAction() instead");
 
     // if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    return checkReadAccessAllowedAndNoPendingWrites() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
+    return isWriteThread() || myLock.isReadLockedByThisThread() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
   }
 
   private volatile boolean myWriteActionPending;
@@ -1207,13 +1159,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       fireBeforeWriteActionStart(clazz);
 
       if (!myLock.isWriteLocked()) {
-        Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
+        int delay = Holder.ourDumpThreadsOnLongWriteActionWaiting;
+        Future<?> reportSlowWrite = delay <= 0 ? null :
                                     AppExecutorUtil.getAppScheduledExecutorService()
                                       .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
-                                                              ourDumpThreadsOnLongWriteActionWaiting,
-                                                              ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
+                                                              delay, delay, TimeUnit.MILLISECONDS);
         long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
-        acquireWriteLock(clazz);
+        myLock.writeLock();
         if (LOG.isDebugEnabled()) {
           long elapsed = System.currentTimeMillis() - t;
           if (elapsed != 0) {
@@ -1242,7 +1194,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     finally {
       myWriteActionsStack.pop();
       if (myWriteActionsStack.size() == myWriteStackBase) {
-        releaseWriteLock();
+        myLock.writeUnlock();
       }
       if (myWriteActionsStack.isEmpty()) {
         fireAfterWriteActionFinished(clazz);
@@ -1308,14 +1260,17 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  @Deprecated
   private final class ReadAccessToken extends AccessToken {
+    private final ReadMostlyRWLock.Reader myReader;
+
     private ReadAccessToken() {
-      acquireReadLock(Runnable.class);
+      myReader = myLock.startRead();
     }
 
     @Override
     public void finish() {
-      releaseReadLock();
+      myLock.endRead(myReader);
     }
   }
 
