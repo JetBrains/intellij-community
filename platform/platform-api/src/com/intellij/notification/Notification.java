@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
-import com.intellij.analysis.AnalysisBundle;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -57,7 +55,7 @@ public class Notification {
 
   private static final Logger LOG = Logger.getInstance(Notification.class);
 
-  public static final DataKey<Notification> KEY = DataKey.create("Notification");
+  private static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   public final String id;
 
@@ -257,7 +255,11 @@ public class Notification {
   }
 
   public static void fire(final @NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
-    NotificationsManager.getNotificationsManager().fire(notification, action, context);
+    DataContext contextWrapper = dataId -> Notification.KEY.is(dataId) ? notification : context != null ? context.getData(dataId) : null;
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, contextWrapper);
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    }
   }
 
   public static void setDataProvider(@NotNull Notification notification, @NotNull JComponent component) {
@@ -266,7 +268,7 @@ public class Notification {
 
   public @NotNull @LinkLabel String getDropDownText() {
     if (myDropDownText == null) {
-      myDropDownText = AnalysisBundle.message("link.label.actions");
+      myDropDownText = IdeBundle.message("link.label.actions");
     }
     return myDropDownText;
   }

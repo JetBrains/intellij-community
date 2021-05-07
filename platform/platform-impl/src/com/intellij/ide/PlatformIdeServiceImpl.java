@@ -2,44 +2,20 @@
 package com.intellij.ide;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import java.net.URL;
-
-public class PlatformIdeServiceImpl extends PlatformIdeService {
+public final class PlatformIdeServiceImpl extends PlatformIdeService {
   @Override
-  public void warningNotification(@NotNull @NonNls String groupId,
-                                  @Nullable Icon icon,
-                                  @Nullable @NlsContexts.NotificationTitle String title,
-                                  @Nullable @NlsContexts.NotificationSubtitle String subtitle,
-                                  @Nullable @NlsContexts.NotificationContent String content) {
-    notification(groupId, icon, title, subtitle, content, NotificationType.WARNING);
-  }
-
-  private static void notification(@NonNls @NotNull String groupId,
-                                   @Nullable Icon icon,
-                                   @Nullable @NlsContexts.NotificationTitle String title,
-                                   @Nullable @NlsContexts.NotificationSubtitle String subtitle,
-                                   @Nullable @NlsContexts.NotificationContent String content, @NotNull NotificationType notificationType) {
-    Notification notification = new Notification(groupId, icon, title, subtitle, content, notificationType, null);
-    Notifications.Bus.notify(notification);
-  }
-
-  @Override
-  public void browseHyperlinkEvent(HyperlinkEvent event) {
-    URL url = event.getURL();
-    if (url == null) {
-      BrowserUtil.browse(event.getDescription());
-    }
-    else {
-      BrowserUtil.browse(url);
-    }
+  public void notification(@NotNull String groupId,
+                           @NotNull PlatformIdeService.NotificationType type,
+                           @Nullable String title,
+                           @Nullable String subtitle,
+                           @NotNull String content,
+                           @Nullable Project project) {
+    new Notification(groupId, "", content, com.intellij.notification.NotificationType.valueOf(type.name()))
+      .setTitle(title, subtitle)
+      .notify(project);
   }
 }

@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +14,4 @@ public abstract class NotificationsManager {
   public abstract void expire(@NotNull Notification notification);
 
   public abstract <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project);
-
-  public abstract void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context);
 }
