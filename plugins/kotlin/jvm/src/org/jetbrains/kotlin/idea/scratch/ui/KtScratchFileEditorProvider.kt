@@ -16,10 +16,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorPolicy
-import com.intellij.openapi.fileEditor.FileEditorProvider
-import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -184,9 +181,9 @@ class KtScratchFileEditorWithPreview private constructor(
         templatePresentation.description = KotlinJvmBundle.message("scratch.side.panel.output.mode.description")
     }
 
-    override fun setLayout(newLayout: Layout) {
+    /*override*/ fun setLayout(newLayout: Layout) {
         val previous = layout
-        super.setLayout(newLayout)
+        //super.setLayout(newLayout)
         val current = layout
 
         when {
