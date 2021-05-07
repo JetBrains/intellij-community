@@ -241,6 +241,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt O",                    "SwitchHeaderSource", "ExportToTextFile"},
     { "ctrl H",                   "Replace", "Vcs.ShowMessageHistory"},
     { "shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorCompleteStatement", "Terminal.SmartCommandExecution.Debug", "org.jetbrains.r.actions.RRunAction"},
+    { "control alt button1",      "EditorAddOrRemoveCaret", "UiInspector"},
+    { "shift alt button1",        "EditorCreateRectangularSelection", "EditorCreateRectangularSelectionOnMouseDrag"},
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
