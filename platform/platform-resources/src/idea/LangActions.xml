@@ -1072,13 +1072,13 @@
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar3">
+      <reference ref="Rerun"/>
+      <reference ref="Stop"/>
+      <separator/>
       <reference ref="Resume"/>
       <reference ref="StepOver"/>
       <reference ref="StepInto"/>
       <reference ref="StepOut"/>
-      <separator/>
-      <reference ref="Rerun"/>
-      <reference ref="Stop"/>
       <separator/>
       <reference ref="ViewBreakpoints"/>
       <reference ref="XDebugger.MuteBreakpoints"/>
