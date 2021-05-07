@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.NioFiles;
@@ -67,9 +68,8 @@ public final class OldDirectoryCleaner {
         deleteCowardly(groups);
       }
       else {
-        String text = message("old.dirs.notification.text", ApplicationNamesInfo.getInstance().getFullProductName());
         UpdateChecker.getNotificationGroup()
-          .createNotification(text, NotificationType.INFORMATION)
+          .createNotification(message("old.dirs.notification.text"), NotificationType.INFORMATION)
           .addAction(createSimpleExpiring(message("old.dirs.notification.action"), () -> confirmAndDelete(project, groups)))
           .notify(project);
       }
@@ -216,14 +216,12 @@ public final class OldDirectoryCleaner {
 
   private static class MenuDialog extends DialogWrapper {
     private final MenuTableModel myModel;
-    private final @NlsSafe String myProductName;
 
     MenuDialog(Project project, List<DirectoryGroup> groups) {
       super(project, false);
       myModel = new MenuTableModel(groups);
-      myProductName = ApplicationNamesInfo.getInstance().getFullProductName();
-      setTitle(message("old.dirs.dialog.title", myProductName));
-      setOKButtonText(message("old.dirs.dialog.delete.button"));
+      setTitle(message("old.dirs.dialog.title"));
+      setOKButtonText(message("old.dirs.dialog.delete.button", groups.size()));
       init();
     }
 
@@ -235,10 +233,10 @@ public final class OldDirectoryCleaner {
     protected JComponent createCenterPanel() {
       JBTable table = new JBTable(myModel);
       table.setShowGrid(false);
-      table.getColumnModel().getColumn(0).setPreferredWidth(JBUI.scale(50));
-      table.getColumnModel().getColumn(1).setPreferredWidth(JBUI.scale(400));
-      table.getColumnModel().getColumn(2).setPreferredWidth(JBUI.scale(150));
-      table.getColumnModel().getColumn(3).setPreferredWidth(JBUI.scale(150));
+      table.getColumnModel().getColumn(0).setPreferredWidth(JBUI.scale(30));
+      table.getColumnModel().getColumn(1).setPreferredWidth(JBUI.scale(300));
+      table.getColumnModel().getColumn(2).setPreferredWidth(JBUI.scale(120));
+      table.getColumnModel().getColumn(3).setPreferredWidth(JBUI.scale(120));
       TableCellRenderer renderer = (tbl, value, selected, focused, row, col) -> {
         int alignment = col == 1 ? SwingConstants.LEFT : SwingConstants.RIGHT;
         return new JBLabel((String)value, alignment).withBorder(JBUI.Borders.empty(0, 5));
@@ -249,8 +247,13 @@ public final class OldDirectoryCleaner {
       table.getColumnModel().getColumn(2).setCellRenderer(renderer);
       table.getColumnModel().getColumn(3).setHeaderRenderer(renderer);
       table.getColumnModel().getColumn(3).setCellRenderer(renderer);
+      myModel.addTableModelListener(e -> {
+        int n = myModel.mySelected.cardinality();
+        setOKButtonText(message("old.dirs.dialog.delete.button", n));
+        setOKActionEnabled(n > 0);
+      });
       JPanel panel = new JPanel(new BorderLayout(0, JBUI.scale(5)));
-      panel.add(new JBLabel(message("old.dirs.dialog.text", myProductName)), BorderLayout.NORTH);
+      panel.add(new MultiLineLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
       JBScrollPane tableScroll = new JBScrollPane(table);
       table.setFillsViewportHeight(true);
       panel.add(tableScroll, BorderLayout.CENTER);
@@ -261,7 +264,7 @@ public final class OldDirectoryCleaner {
       private final List<DirectoryGroup> myGroups;
       private final BitSet mySelected = new BitSet();
       private final @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String[] myColumnNames =
-        {"old.dirs.column.checkbox", "old.dirs.column.name", "old.dirs.column.updated", "old.dirs.column.size"};
+        {"old.dirs.column.name", "old.dirs.column.updated", "old.dirs.column.size"};
       private final long myNow = System.currentTimeMillis();
 
       MenuTableModel(List<DirectoryGroup> groups) {
@@ -285,7 +288,7 @@ public final class OldDirectoryCleaner {
 
       @Override
       public String getColumnName(int column) {
-        return message(myColumnNames[column]);
+        return column == 0 ? "" : message(myColumnNames[column - 1]);
       }
 
       @Override
