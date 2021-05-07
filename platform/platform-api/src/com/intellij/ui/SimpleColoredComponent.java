@@ -1176,12 +1176,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private static Font deriveFont(Font originalFont, int style, float size) {
-    Font styledFont = originalFont.deriveFont(style);
-    if (!Font.DIALOG.equals(originalFont.getFamily()) && Font.DIALOG.equals(styledFont.getFamily())) {
+    Font derivedFont = originalFont.deriveFont(style, size);
+    if (Font.DIALOG.equals(derivedFont.getFamily()) && !Font.DIALOG.equals(originalFont.getFamily())) {
       // workaround for JBR-3423
-      styledFont = originalFont;
+      return originalFont.deriveFont(size);
     }
-    return styledFont.deriveFont(size);
+    return derivedFont;
   }
 
   protected class AccessibleSimpleColoredComponent extends JComponent.AccessibleJComponent {
