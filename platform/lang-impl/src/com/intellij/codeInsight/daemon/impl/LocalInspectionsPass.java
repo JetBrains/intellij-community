@@ -142,7 +142,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
       final String shortName = toolWrapper.getShortName();
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-        if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
+        ProblemHighlightType highlightType = descriptor.getHighlightType();
+        if (highlightType == ProblemHighlightType.INFORMATION) {
           if (ourToolsWithInformationProblems.add(shortName)) {
             String message = "Tool #" + shortName + " registers INFORMATION level problem in batch mode on " + getFile() + ". " +
                              "INFORMATION level 'warnings' are invisible in the editor and should not become visible in batch mode. " +
@@ -156,6 +157,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
               LOG.error(message);
             }
           }
+          continue;
+        }
+        else if (highlightType == ProblemHighlightType.POSSIBLE_PROBLEM) {
           continue;
         }
         addDescriptors(toolWrapper, descriptor, context);
