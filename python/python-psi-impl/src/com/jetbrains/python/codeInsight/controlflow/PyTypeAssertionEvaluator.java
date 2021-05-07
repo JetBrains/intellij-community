@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -14,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 import java.util.function.Function;
 
 public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {

@@ -95,7 +95,7 @@ public class DTDModelLoader implements ModelLoader {
         boolean required = attr.decl == DTDDecl.REQUIRED;
         FieldDesc fd1 = new FieldDesc(FieldDesc.ATTR, Util.toJavaFieldName(attrName), "String", null, "\"\"", required);
         fd1.tagName = attrName;
-        fd1.documentation = "Attribute " + attrName + "";
+        fd1.documentation = "Attribute " + attrName;
         fd1.realIndex = td.fdMap.size();
         duplicates = Util.addToNameMap(td.fdMap, fd1, false) || duplicates;
       }
@@ -235,7 +235,7 @@ public class DTDModelLoader implements ModelLoader {
           if (fd == null) {
             fd = td.fdMap.get(Util.pluralize(s));
             if (fd == null) {
-              Util.logerr("uknown choice element: " + s);
+              Util.logerr("unknown choice element: " + s);
               continue;
             }
           }
@@ -285,25 +285,13 @@ public class DTDModelLoader implements ModelLoader {
       this.many = many;
       this.p = p;
     }
-
-    Entry parent;
-    DTDItem it;
-    Vector choice;
-    int num;
-
-    Entry(Entry parent, DTDItem it, Vector choice, int num) {
-      this.parent = parent;
-      this.it = it;
-      this.choice = choice;
-      this.num = num;
-    }
   }
-
 
   private static void checkDTDRootElement(DTD dtd) throws Exception {
     if (dtd.rootElement == null) {
       StringBuilder sb = new StringBuilder("Empty root: possible elements: ");
-      HashMap map = new HashMap(dtd.elements);
+      //noinspection unchecked
+      HashMap<String, DTDElement> map = new HashMap<>(dtd.elements);
       for (Object o : dtd.elements.values()) {
         DTDElement el = (DTDElement) o;
         if (el.content instanceof DTDContainer) {

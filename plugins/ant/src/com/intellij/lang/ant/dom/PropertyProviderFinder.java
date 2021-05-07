@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -120,7 +121,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
     else if (myStage == Stage.RESOLVE_MAP_BUILDING_STAGE){
       final String declaredTargetName = target.getName().getRawText();
-      String effectiveTargetName = null;
+      String effectiveTargetName;
       final InclusionKind inclusionKind = myNameContext.getCurrentInclusionKind();
       switch (inclusionKind) {
         case IMPORT:
