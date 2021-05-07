@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -173,13 +174,12 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testNoExceptionEvenCreatedByThanosExtensionNotApplicableExceptionMustKillEDT() {
     assert SwingUtilities.isEventDispatchThread();
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    throwInIdeEventQueueDispatch(ExtensionNotApplicableException.INSTANCE, null); // ControlFlowException silently ignored
-    throwInIdeEventQueueDispatch(new ProcessCanceledException(), null);  // ControlFlowException silently ignored
-    Error error = new Error();
-    throwInIdeEventQueueDispatch(error, error);
+    throwInIdeEventQueueDispatch(ExtensionNotApplicableException.INSTANCE, true); // ControlFlowException wrapped
+    throwInIdeEventQueueDispatch(new ProcessCanceledException(), true);  // ControlFlowException wrapped
+    throwInIdeEventQueueDispatch(new Error(), false);
   }
 
-  private void throwInIdeEventQueueDispatch(@NotNull Throwable toThrow, Throwable expectedToBeLogged) {
+  private void throwInIdeEventQueueDispatch(@NotNull Throwable toThrow, boolean shouldBeWrapped) {
     AtomicBoolean run = new AtomicBoolean();
     InvocationEvent event = new InvocationEvent(this, () -> {
       run.set(true);
@@ -203,7 +203,15 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       LoggedErrorProcessor.setNewInstance(old);
     }
     assertTrue(run.get());
-    assertSame(expectedToBeLogged, error.get());
+    Throwable actual = error.get();
+    if (shouldBeWrapped) {
+      assertNotNull(actual);
+      assertFalse(actual instanceof ControlFlowException);
+      assertSame(toThrow, actual.getCause());
+    }
+    else {
+      assertSame(toThrow, actual);
+    }
   }
 
   public void testPumpEventsForHierarchyMustExitOnIsCancelEventCondition() {
