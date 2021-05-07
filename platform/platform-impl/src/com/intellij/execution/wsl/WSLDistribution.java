@@ -14,6 +14,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -63,6 +64,8 @@ public class WSLDistribution {
   private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(this::readWslIp);
   private final NullableLazyValue<String> myShellPath = NullableLazyValue.createValue(this::readShellPath);
   private final NullableLazyValue<String> myUserHomeProvider = NullableLazyValue.createValue(this::readUserHome);
+  private final @NotNull AtomicNotNullLazyValue<Boolean> isWSL1 =
+    AtomicNotNullLazyValue.createValue(() -> WSLUtil.isWsl1(this) != ThreeState.NO);
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -108,6 +111,10 @@ public class WSLDistribution {
       LOG.warn(e);
     }
     return null;
+  }
+
+  public boolean isWSL1() {
+    return isWSL1.getValue();
   }
 
   /**
@@ -221,18 +228,6 @@ public class WSLDistribution {
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
-    return patchCommandLine(commandLine, project, options, 0);
-  }
-
-  /**
-   * Works like {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)},
-   * but in addition it allows to workaround WSL1 problem
-   * <a href="https://github.com/microsoft/WSL/issues/4082">Output from WSL command pipeline is randomly truncated</a>
-   */
-  public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
-                                                                    @Nullable Project project,
-                                                                    @NotNull WSLCommandLineOptions options,
-                                                                    double sleepTimeoutSec) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
     Path executable = getExecutablePath();
     boolean launchWithWslExe = options.isLaunchWithWslExe() || executable == null;
@@ -294,13 +289,15 @@ public class WSLDistribution {
 
     commandLine.getParametersList().clearAll();
     String linuxCommandStr = StringUtil.join(linuxCommand, " ");
-    if (sleepTimeoutSec > 0) {
-      linuxCommandStr += " && sleep " + sleepTimeoutSec;
-    }
     if (wslExe != null) {
       commandLine.setExePath(wslExe.toString());
       commandLine.addParameters("--distribution", getMsId());
       if (options.isExecuteCommandInShell()) {
+        // workaround WSL1 problem: https://github.com/microsoft/WSL/issues/4082
+        if (options.getSleepTimeoutSec() > 0 && isWSL1()) {
+          linuxCommandStr += " && sleep " + options.getSleepTimeoutSec();
+        }
+
         if (options.isExecuteCommandInDefaultShell()) {
           commandLine.addParameters("$SHELL", "-c", linuxCommandStr);
         }
