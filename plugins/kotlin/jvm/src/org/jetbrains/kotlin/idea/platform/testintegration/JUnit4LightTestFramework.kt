@@ -4,6 +4,7 @@ import com.intellij.execution.junit.JUnitUtil
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JUnit4LightTestFramework: AbstractLightTestFramework() {
 
@@ -43,8 +44,14 @@ class JUnit4LightTestFramework: AbstractLightTestFramework() {
         getTopmostClass(ktClassOrObject)?.let { topLevelClass ->
             topLevelClass.annotationEntries.find { it.isFqName(JUnitUtil.RUN_WITH) }?.let { return false }
         }
-        return ktClassOrObject.declarations.filterIsInstance<KtNamedFunction>().filterNot { isNotACandidateFastCheck(it) }
+        return ktClassOrObject.declarations
+            .filterIsInstance<KtNamedFunction>()
+            .filterNot { isNotACandidateFastCheck(it) }
             .any { isJUnit4TestMethod(it) }.takeIf { it }
+            ?: false.takeUnless {
+            ktClassOrObject.superTypeListEntries.filterIsInstance<KtSuperTypeCallEntry>()
+                .singleOrNull()?.typeReference?.typeElement?.safeAs<KtUserType>()?.referencedName == "Any"
+        }
     }
 
     private fun KtAnnotated.isAnnotated(fqName: String): Boolean = annotationEntries.any {
