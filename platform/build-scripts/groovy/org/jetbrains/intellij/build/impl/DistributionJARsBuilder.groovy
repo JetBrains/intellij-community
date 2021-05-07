@@ -1043,7 +1043,8 @@ final class DistributionJARsBuilder {
     "jna", "Log4J", "sqlite", "Slf4j", "async-profiler", "precompiled_jshell-frontend",
     "dexlib2", // android-only lib
     "intellij-coverage", "intellij-test-discovery", // used as agent
-    "winp", "junixsocket-core", "pty4j" // contains native library
+    "winp", "junixsocket-core", "pty4j", // contains native library
+    "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
   )
 
   private static void copyProjectLibraries(Path outputDir,

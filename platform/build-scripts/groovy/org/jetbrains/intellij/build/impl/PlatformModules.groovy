@@ -204,7 +204,6 @@ final class PlatformModules {
         "netty-buffer",
         "netty-codec-http",
         "netty-handler-proxy",
-        "protobuf",
         "Log4J",
         "fastutil-min",
       ))
