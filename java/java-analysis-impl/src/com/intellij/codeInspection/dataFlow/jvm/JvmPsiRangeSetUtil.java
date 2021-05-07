@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow.jvm;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -160,7 +161,8 @@ public class JvmPsiRangeSetUtil {
     if (range.min() <= -addend && range.max() >= addend - 1) return Objects.requireNonNull(typeRange(type));
     if (range.min() >= -addend && range.max() <= addend - 1) return range;
     long mask = (1L << size) - 1;
-    return range.plus(LongRangeSet.point(addend), true).bitwiseAnd(LongRangeSet.point(mask)).plus(LongRangeSet.point(-addend), true);
+    return range.plus(LongRangeSet.point(addend), LongRangeType.INT64)
+      .bitwiseAnd(LongRangeSet.point(mask)).plus(LongRangeSet.point(-addend), LongRangeType.INT64);
   }
 
   /**
@@ -190,6 +192,16 @@ public class JvmPsiRangeSetUtil {
       }
     }
     return null;
+  }
+
+  public static @NotNull LongRangeType getLongRangeType(@NotNull PsiType jvmType) {
+    if (jvmType.equals(PsiType.LONG)) {
+      return LongRangeType.INT64;
+    }
+    else if (jvmType.equals(PsiType.INT)) {
+      return LongRangeType.INT32;
+    }
+    throw new UnsupportedOperationException();
   }
 
   /**

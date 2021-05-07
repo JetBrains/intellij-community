@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
@@ -178,11 +179,18 @@ public final class DfTypes {
   /**
    * A convenience selector method to call {@link #longRange(LongRangeSet)} or {@link #intRangeClamped(LongRangeSet)}
    * @param range range
-   * @param isLong whether int or long type should be created
-   * @return resulting type.
+   * @param lrType LongRangeType
+   * @return resulting DfType.
    */
-  public static @NotNull DfType rangeClamped(LongRangeSet range, boolean isLong) {
-    return isLong ? longRange(range) : intRangeClamped(range);
+  public static @NotNull DfType rangeClamped(@NotNull LongRangeSet range, @NotNull LongRangeType lrType) {
+    switch (lrType) {
+      case INT32:
+        return intRangeClamped(range);
+      case INT64:
+        return longRange(range);
+      default:
+        throw new IllegalStateException("Unexpected value: " + lrType);
+    }
   }
 
   /**

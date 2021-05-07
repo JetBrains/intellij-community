@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.memory.EqClass;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -717,12 +718,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaValue leftRight = binOp.getRight();
     LongRangeSet leftRange = extractRange(getDfType(leftLeft));
     LongRangeSet rightRange = extractRange(getDfType(leftRight));
-    boolean isLong = binOp.getDfType() instanceof DfLongType;
-    LongRangeSet rightNegated = rightRange.negate(isLong);
+    LongRangeType lrType = binOp.getDfType().getLongRangeType();
+    LongRangeSet rightNegated = rightRange.negate(lrType);
     LongRangeSet rightCorrected = op == LongRangeBinOp.MINUS ? rightNegated : rightRange;
 
     LongRangeSet resultRange = extractRange(getDfType(right));
-    RelationType correctedRelation = correctRelation(type, leftRange, rightCorrected, resultRange, isLong);
+    RelationType correctedRelation = correctRelation(type, leftRange, rightCorrected, resultRange, lrType);
     if (op == LongRangeBinOp.MINUS) {
       long min = resultRange.min();
       long max = resultRange.max();
@@ -731,11 +732,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         if (!applyCondition(leftLeft.cond(correctedRelation, leftRight))) return false;
       }
       else if (min == 0 && type == RelationType.GT || min >= 1 && RelationType.GE.isSubRelation(type)) {
-        RelationType correctedGt = correctRelation(RelationType.GT, leftRange, rightCorrected, resultRange, isLong);
+        RelationType correctedGt = correctRelation(RelationType.GT, leftRange, rightCorrected, resultRange, lrType);
         if (!applyCondition(leftLeft.cond(correctedGt, leftRight))) return false;
       }
       else if (max == 0 && type == RelationType.LT || max <= -1 && RelationType.LE.isSubRelation(type)) {
-        RelationType correctedLt = correctRelation(RelationType.LT, leftRange, rightCorrected, resultRange, isLong);
+        RelationType correctedLt = correctRelation(RelationType.LT, leftRange, rightCorrected, resultRange, lrType);
         if (!applyCondition(leftLeft.cond(correctedLt, leftRight))) return false;
       }
       if (RelationType.EQ.equals(type) && !resultRange.contains(0)) {
@@ -744,7 +745,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     if (op == LongRangeBinOp.PLUS && RelationType.EQ == type &&
-        !resultRange.intersects(LongRangeSet.all().mul(LongRangeSet.point(2), true))) {
+        !resultRange.intersects(lrType.fullRange().mul(LongRangeSet.point(2), lrType))) {
       // a+b == odd => a != b
       if (!applyRelation(leftLeft, leftRight, true)) return false;
     }
@@ -760,9 +761,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         if (!applyCondition(leftLeft.cond(correctedRelation, binOp.getDfType().meetRange(LongRangeSet.point(0))))) return false;
       }
 
-      if (!applyRelationOnAddition(type, leftLeft, leftRange, rightCorrected, right, isLong)) return false;
+      if (!applyRelationOnAddition(type, leftLeft, leftRange, rightCorrected, right, lrType)) return false;
       if (op == LongRangeBinOp.PLUS && leftRight instanceof DfaVariableValue) {
-        if (!applyRelationOnAddition(type, (DfaVariableValue)leftRight, rightRange, leftRange, right, isLong)) return false;
+        if (!applyRelationOnAddition(type, (DfaVariableValue)leftRight, rightRange, leftRange, right, lrType)) return false;
       }
     }
     return true;
@@ -773,8 +774,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
                                           @NotNull LongRangeSet leftRange,
                                           @NotNull LongRangeSet rightRange,
                                           @NotNull DfaValue sum,
-                                          boolean isLong) {
-    if (!leftRange.additionMayOverflow(rightRange, isLong)) {
+                                          @NotNull LongRangeType lrType) {
+    if (!leftRange.additionMayOverflow(rightRange, lrType)) {
       // a-positiveNumber >= b => a > b
       if (rightRange.max() < 0 && RelationType.GE.isSubRelation(type)) {
         if (!applyLessThanRelation(sum, left)) return false;
@@ -792,26 +793,28 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private static RelationType correctRelation(RelationType relation, LongRangeSet summand1, LongRangeSet summand2,
-                                              LongRangeSet resultRange, boolean isLong) {
+                                              LongRangeSet resultRange, LongRangeType lrType) {
     if (relation != RelationType.LT && relation != RelationType.GT) return relation;
     boolean overflowPossible = true;
-    if (!isLong) {
-      LongRangeSet overflowRange = getIntegerSumOverflowValues(summand1, summand2);
+    if (lrType.bytes() < 8) {
+      LongRangeSet overflowRange = getSumOverflowValues(summand1, summand2, lrType);
       overflowPossible = !overflowRange.isEmpty() && (resultRange == null || resultRange.fromRelation(relation).intersects(overflowRange));
     }
     return overflowPossible ? RelationType.NE : relation;
   }
 
-  private static @NotNull LongRangeSet getIntegerSumOverflowValues(LongRangeSet left, LongRangeSet right) {
+  private static @NotNull LongRangeSet getSumOverflowValues(LongRangeSet left,
+                                                            LongRangeSet right,
+                                                            LongRangeType lrType) {
     if (left.isEmpty() || right.isEmpty()) return LongRangeSet.empty();
     long sumMin = left.min() + right.min();
     long sumMax = left.max() + right.max();
     LongRangeSet result = LongRangeSet.empty();
-    if (sumMin < Integer.MIN_VALUE) {
-      result = result.unite(LongRangeSet.range((int)sumMin, Integer.MAX_VALUE));
+    if (sumMin < lrType.min()) {
+      result = result.unite(LongRangeSet.range(lrType.cast(sumMin), lrType.max()));
     }
-    if (sumMax > Integer.MAX_VALUE) {
-      result = result.unite(LongRangeSet.range(Integer.MIN_VALUE, (int)sumMax));
+    if (sumMax > lrType.max()) {
+      result = result.unite(LongRangeSet.range(lrType.min(), lrType.cast(sumMax)));
     }
     return result;
   }
@@ -992,13 +995,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (result == null) {
       result = binOp.getDfType();
     }
-    boolean isLong = result instanceof DfLongType;
     if (op == LongRangeBinOp.MINUS) {
       RelationType rel = getRelation(binOp.getLeft(), binOp.getRight());
       if (rel == RelationType.NE) {
         return result.meetRange(LongRangeSet.all().without(0));
       }
-      if (!left.subtractionMayOverflow(right, isLong)) {
+      if (!left.subtractionMayOverflow(right, result.getLongRangeType())) {
         if (rel == RelationType.GT) {
           return result.meetRange(LongRangeSet.range(1, Long.MAX_VALUE));
         }

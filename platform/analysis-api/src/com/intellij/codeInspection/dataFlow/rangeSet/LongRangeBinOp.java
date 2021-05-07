@@ -21,33 +21,33 @@ public enum LongRangeBinOp {
    *
    * @param left a left-hand operand
    * @param right  a right-hand operand
-   * @param isLong true if operation should be performed on long types (otherwise int is assumed)
+   * @param lrType type to use for computation
    * @return the resulting LongRangeSet which covers possible results of the operation (probably including some more elements).
    */
-  public @NotNull LongRangeSet eval(@NotNull LongRangeSet left, @NotNull LongRangeSet right, boolean isLong) {
+  public @NotNull LongRangeSet eval(@NotNull LongRangeSet left, @NotNull LongRangeSet right, LongRangeType lrType) {
     switch (this) {
       case PLUS:
-        return left.plus(right, isLong);
+        return left.plus(right, lrType);
       case MINUS:
-        return left.minus(right, isLong);
+        return left.minus(right, lrType);
       case AND:
         return left.bitwiseAnd(right);
       case OR:
-        return left.bitwiseOr(right, isLong);
+        return left.bitwiseOr(right, lrType);
       case XOR:
-        return left.bitwiseXor(right, isLong);
+        return left.bitwiseXor(right, lrType);
       case MUL:
-        return left.mul(right, isLong);
+        return left.mul(right, lrType);
       case MOD:
         return left.mod(right);
       case DIV:
-        return left.div(right, isLong);
+        return left.div(right, lrType);
       case SHL:
-        return left.shiftLeft(right, isLong);
+        return left.shiftLeft(right, lrType);
       case SHR:
-        return left.shiftRight(right, isLong);
+        return left.shiftRight(right, lrType);
       case USHR:
-        return left.unsignedShiftRight(right, isLong);
+        return left.unsignedShiftRight(right, lrType);
       default:
         throw new IllegalStateException("Unexpected value: " + this);
     }
@@ -59,23 +59,23 @@ public enum LongRangeBinOp {
    *
    * @param left a left-hand operand
    * @param right  a right-hand operand
-   * @param isLong true if operation should be performed on long types (otherwise int is assumed)
+   * @param lrType type to use for computation
    * @return the resulting LongRangeSet which covers possible results of the operation (probably including some more elements).
    */
-  public @NotNull LongRangeSet evalWide(@NotNull LongRangeSet left, @NotNull LongRangeSet right, boolean isLong) {
+  public @NotNull LongRangeSet evalWide(@NotNull LongRangeSet left, @NotNull LongRangeSet right, LongRangeType lrType) {
     switch (this) {
       case PLUS:
-        return left.plusWiden(right, isLong);
+        return left.plusWiden(right, lrType);
       case MINUS:
         if (Long.valueOf(0).equals(left.getConstantValue())) {
           // Unary minus
-          return left.minus(right, isLong);
+          return left.minus(right, lrType);
         }
-        return left.plusWiden(right.negate(isLong), isLong);
+        return left.plusWiden(right.negate(lrType), lrType);
       case MUL:
-        return left.mulWiden(right, isLong);
+        return left.mulWiden(right, lrType);
       default:
-        return eval(left, right, isLong);
+        return eval(left, right, lrType);
     }
   }
 

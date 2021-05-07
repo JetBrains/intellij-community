@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.inst.JvmPushInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -1453,7 +1454,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       }
       if (PsiType.LONG.equals(type) || PsiType.INT.equals(type)) {
         if (expression instanceof PsiBinaryExpression) {
-          boolean isLong = PsiType.LONG.equals(type);
+          LongRangeType lrType = PsiType.LONG.equals(type) ? LongRangeType.INT64 : LongRangeType.INT32;
           PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
           PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
           PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
@@ -1469,7 +1470,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
             LongRangeSet rightRange = rightSet.myFact.intersect(fromType);
             LongRangeBinOp op = JvmPsiRangeSetUtil.binOpFromToken(binOp.getOperationTokenType());
             if (op != null) {
-              LongRangeSet result = op.eval(leftRange, rightRange, isLong);
+              LongRangeSet result = op.eval(leftRange, rightRange, lrType);
               if (range.equals(result)) {
                 String sign = binOp.getOperationSign().getText();
                 CauseItem cause = new CauseItem(new RangeDfaProblemType(

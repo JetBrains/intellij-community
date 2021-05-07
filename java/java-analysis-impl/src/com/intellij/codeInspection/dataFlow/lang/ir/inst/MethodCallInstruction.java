@@ -449,7 +449,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       if (myTargetMethod != null) {
         range = range.intersect(JvmPsiRangeSetUtil.fromPsiElement(myTargetMethod));
       }
-      return factory.fromDfType(rangeClamped(range, PsiType.LONG.equals(type)));
+      return factory.fromDfType(PsiType.LONG.equals(type) ? longRange(range) : intRangeClamped(range));
     }
     return PsiType.VOID.equals(type) ? factory.getUnknown() : factory.fromDfType(typedObject(type, Nullability.UNKNOWN));
   }

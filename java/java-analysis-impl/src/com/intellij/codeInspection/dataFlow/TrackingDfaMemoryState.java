@@ -358,12 +358,13 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         return new FactDefinition<>(null, extractor.extract(((DfaVariableValue)value).getInherentType()));
       }
       if (value instanceof DfaBinOpValue) {
-        FactDefinition<T> left = findFact(((DfaBinOpValue)value).getLeft(), extractor);
-        FactDefinition<T> right = findFact(((DfaBinOpValue)value).getRight(), extractor);
+        DfaBinOpValue binOp = (DfaBinOpValue)value;
+        FactDefinition<T> left = findFact(binOp.getLeft(), extractor);
+        FactDefinition<T> right = findFact(binOp.getRight(), extractor);
         if (left.myFact instanceof LongRangeSet && right.myFact instanceof LongRangeSet) {
-          LongRangeBinOp op = ((DfaBinOpValue)value).getOperation();
+          LongRangeBinOp op = binOp.getOperation();
           @SuppressWarnings("unchecked")
-          T result = (T)op.eval((LongRangeSet)left.myFact, (LongRangeSet)right.myFact, value.getDfType() instanceof DfLongType);
+          T result = (T)op.eval((LongRangeSet)left.myFact, (LongRangeSet)right.myFact, binOp.getDfType().getLongRangeType());
           return new FactDefinition<>(null, Objects.requireNonNull(result));
         }
       }

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
@@ -32,8 +33,8 @@ public interface DfIntType extends DfJvmIntegralType {
   @Override
   default @NotNull DfType eval(@NotNull DfType other, @NotNull LongRangeBinOp op) {
     if (!(other instanceof DfIntType || other instanceof DfLongType && op.isShift())) return DfTypes.INT;
-    LongRangeSet result = op.eval(getRange(), ((DfIntegralType)other).getRange(), false);
-    LongRangeSet wideResult = op.evalWide(getWideRange(), ((DfIntegralType)other).getWideRange(), false);
+    LongRangeSet result = op.eval(getRange(), ((DfIntegralType)other).getRange(), getLongRangeType());
+    LongRangeSet wideResult = op.evalWide(getWideRange(), ((DfIntegralType)other).getWideRange(), getLongRangeType());
     return DfTypes.intRange(result, wideResult);
   }
 
@@ -93,5 +94,10 @@ public interface DfIntType extends DfJvmIntegralType {
   static LongRangeSet extractRange(@NotNull DfType type) {
     return type instanceof DfIntegralType ? ((DfIntegralType)type).getRange().intersect(DfIntRangeType.FULL_RANGE) :
            DfIntRangeType.FULL_RANGE;
+  }
+
+  @Override
+  default @NotNull LongRangeType getLongRangeType() {
+    return LongRangeType.INT32;
   }
 }

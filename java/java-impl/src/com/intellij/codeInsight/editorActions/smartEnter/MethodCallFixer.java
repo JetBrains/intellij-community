@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
@@ -127,7 +128,8 @@ public class MethodCallFixer implements Fixer {
           LongRangeSet outerCounts = getPossibleParameterCounts(outerCall);
           if (!outerCounts.isEmpty()) {
             LongRangeSet allowedByOuter =
-              LongRangeSet.point(args.length).minus(outerCounts.minus(LongRangeSet.point(outerArgs.length), false), false);
+              LongRangeSet.point(args.length).minus(
+                outerCounts.minus(LongRangeSet.point(outerArgs.length), LongRangeType.INT32), LongRangeType.INT32);
             LongRangeSet innerCountsFiltered = innerCounts.intersect(allowedByOuter);
             if (!innerCountsFiltered.isEmpty()) {
               return innerCountsFiltered;

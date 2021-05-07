@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -382,7 +383,7 @@ public final class CustomMethodHandlers {
     if (arg == null) return DfType.TOP;
     DfType type = memState.getDfType(arg);
     LongRangeSet range = isLong ? DfLongType.extractRange(type) : DfIntType.extractRange(type);
-    return isLong ? longRange(range.abs(true)) : intRange(range.abs(false));
+    return isLong ? longRange(range.abs(LongRangeType.INT64)) : intRange(range.abs(LongRangeType.INT32));
   }
 
   private static @NotNull DfType calendarGet(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory) {

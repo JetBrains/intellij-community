@@ -682,7 +682,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         LongRangeSet rangeSet = start >= maxValue
                                 ? LongRangeSet.all().subtract(LongRangeSet.range(maxValue + 1, start))
                                 : LongRangeSet.range(start + 1L, maxValue);
-        DfType range = DfTypes.rangeClamped(rangeSet, counterType.equals(PsiType.LONG));
+        DfType range = DfTypes.rangeClamped(rangeSet, JvmPsiRangeSetUtil.getLongRangeType(counterType));
         new CFGBuilder(this).assignAndPop(loopVar, range);
       }
     } else {
