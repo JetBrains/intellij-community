@@ -170,7 +170,7 @@ data class PluginInfo(val type: PluginType, val id: String?, val version: String
    */
   fun isSafeToReport() = type.isSafeToReport()
 
-  fun isAllowedToInjectIntoFUS(): Boolean = isDevelopedByJetBrains() && id == tbePluginId
+  fun isAllowedToInjectIntoFUS(): Boolean = isDevelopedByJetBrains() && id == tbePluginId || type == PluginType.PLATFORM
 }
 
 val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null, null)
