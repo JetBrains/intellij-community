@@ -238,7 +238,9 @@ public class WSLDistribution {
     boolean executeCommandInShell = wslExe == null || options.isExecuteCommandInShell();
     List<String> linuxCommand = buildLinuxCommand(commandLine, executeCommandInShell);
 
-    if (options.isSudo()) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
+    final boolean isElevated = options.isSudo();
+    // use old approach in case of wsl.exe is not available
+    if (isElevated && wslExe == null) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
       prependCommand(linuxCommand, "sudo", "-S", "-p", "''");
       //TODO[traff]: ask password only if it is needed. When user is logged as root, password isn't asked.
 
@@ -291,6 +293,9 @@ public class WSLDistribution {
     String linuxCommandStr = StringUtil.join(linuxCommand, " ");
     if (wslExe != null) {
       commandLine.setExePath(wslExe.toString());
+      if (isElevated) {
+        commandLine.addParameters("-u", "root");
+      }
       commandLine.addParameters("--distribution", getMsId());
       if (options.isExecuteCommandInShell()) {
         // workaround WSL1 problem: https://github.com/microsoft/WSL/issues/4082
