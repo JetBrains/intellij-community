@@ -13,17 +13,16 @@ package com.intellij.openapi.options.advanced
  import com.intellij.ui.layout.*
  import com.intellij.util.Alarm
  import com.intellij.util.ui.UIUtil
- import javax.swing.AbstractButton
- import javax.swing.JComponent
- import javax.swing.JLabel
- import javax.swing.SwingConstants
+ import javax.swing.*
  import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfigurable {
-  private class SettingsRow(val row: Row, val component: JComponent, val id: String, val text: String, val groupRow: Row)
+  private class SettingsRow(val row: Row, val component: JComponent, val id: String, val text: String) {
+    lateinit var groupPanel: JPanel
+  }
 
   private val settingsRows = mutableListOf<SettingsRow>()
-  private val groupRows = mutableListOf<Row>()
+  private val groupPanels = mutableListOf<JPanel>()
   private lateinit var nothingFoundRow: Row
 
   private val searchAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
@@ -49,18 +48,24 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
     }.toSortedMap()
 
     for ((group, extensions) in groupedExtensions) {
-      titledRow(group) {
-        val groupRow = this
-        groupRows.add(groupRow)
-
-        for (extension in extensions) {
-          row {
-            val (label, component) = control(extension)
-            extension.description()?.let { description -> component.comment(description) }
-            val textComponent = label?.component ?: component.component
-            settingsRows.add(SettingsRow(this, textComponent, extension.id, label?.component?.text ?: extension.title(), groupRow))
+      val settingsRowsInGroup = mutableListOf<SettingsRow>()
+      val groupPanel = nestedPanel {
+        titledRow(group) {
+          for (extension in extensions) {
+            row {
+              val (label, component) = control(extension)
+              extension.description()?.let { description -> component.comment(description) }
+              val textComponent = label?.component ?: component.component
+              val row = SettingsRow(this, textComponent, extension.id, label?.component?.text ?: extension.title())
+              settingsRows.add(row)
+              settingsRowsInGroup.add(row)
+            }
           }
         }
+      }.component
+      groupPanels.add(groupPanel)
+      for (settingsRow in settingsRowsInGroup) {
+        settingsRow.groupPanel = groupPanel
       }
     }
 
@@ -91,7 +96,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
           { AdvancedSettings.setInt(extension.id, it) },
           columns = 10
         ).also {
-          extension.trailingLabel()?.let { label(it) }
+          label(extension.trailingLabel() ?: "").constraints(pushX)
         }
       }
 
@@ -101,7 +106,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
           { AdvancedSettings.setString(extension.id, it) },
           columns = 20
         ).also {
-          extension.trailingLabel()?.let { label(it) }
+          label(extension.trailingLabel() ?: "").constraints(pushX)
         }
       }
 
@@ -121,9 +126,8 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
   private fun applyFilter(searchText: String?) {
     if (searchText.isNullOrBlank()) {
-      for (groupRow in groupRows) {
-        groupRow.visible = true
-        groupRow.subRowsVisible = true
+      for (groupPanel in groupPanels) {
+        groupPanel.isVisible = true
       }
       for (settingsRow in settingsRows) {
         settingsRow.row.visible = true
@@ -136,26 +140,24 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
     val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     val filterWords = searchableOptionsRegistrar.getProcessedWords(searchText)
-    val visibleGroupRows = mutableSetOf<Row>()
+    val visibleGroupPanels = mutableSetOf<JPanel>()
     for (settingsRow in settingsRows) {
       val textWords = searchableOptionsRegistrar.getProcessedWords(settingsRow.text)
       val matches = textWords.containsAll(filterWords) || searchText in settingsRow.id
       settingsRow.row.visible = matches
       settingsRow.row.subRowsVisible = matches
       if (matches) {
-        settingsRow.groupRow.visible = true
-        settingsRow.groupRow.subRowsVisible = true
-        visibleGroupRows.add(settingsRow.groupRow)
+        settingsRow.groupPanel.isVisible = true
+        visibleGroupPanels.add(settingsRow.groupPanel)
         updateMatchText(settingsRow.component, settingsRow.text, searchText)
       }
     }
-    for (groupRow in groupRows) {
-      if (groupRow !in visibleGroupRows) {
-        groupRow.visible = false
-        groupRow.subRowsVisible = false
+    for (groupPanel in groupPanels) {
+      if (groupPanel !in visibleGroupPanels) {
+        groupPanel.isVisible = false
       }
     }
-    nothingFoundRow.visible = visibleGroupRows.isEmpty()
+    nothingFoundRow.visible = visibleGroupPanels.isEmpty()
   }
 
   private fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
