@@ -920,6 +920,14 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             return compilerArguments
         }
 
+        private fun KotlinModule.fullName(simpleName: String = name) = when (this) {
+            is KotlinCompilation -> compilationFullName(simpleName, disambiguationClassifier)
+            else -> simpleName
+        }
+
+        private fun getKotlinModuleId(gradleModule: IdeaModule, kotlinModule: KotlinModule, resolverCtx: ProjectResolverContext) =
+            getGradleModuleQualifiedName(resolverCtx, gradleModule, kotlinModule.fullName())
+
         internal fun getGradleModuleQualifiedName(
             resolverCtx: ProjectResolverContext,
             gradleModule: IdeaModule,
@@ -967,3 +975,4 @@ fun ProjectResolverContext.getMppModel(gradleModule: IdeaModule): KotlinMPPGradl
         mppModel
     }
 }
+
