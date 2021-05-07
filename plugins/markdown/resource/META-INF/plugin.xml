@@ -145,6 +145,9 @@ Includes the following features:</p>
     <registryKey key="markdown.structure.view.list.visibility"
                  defaultValue="false"
                  description="Determines whether lists are visible in the document structure view"/>
+    <registryKey key="markdown.use.platform.editor.with.preview"
+                 defaultValue="false"
+                 description="Use platform TextEditorWithPreview instead of SplitEditor"/>
   </extensions>
 
   <applicationListeners>

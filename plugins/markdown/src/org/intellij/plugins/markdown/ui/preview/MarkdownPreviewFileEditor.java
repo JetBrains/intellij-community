@@ -322,8 +322,8 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       return true;
     }
 
-    return SplitFileEditor.SplitEditorLayout.valueOf(((SplitFileEditor.MyFileEditorState)state).getSplitLayout()) !=
-           SplitFileEditor.SplitEditorLayout.FIRST;
+    String layout = ((SplitFileEditor.MyFileEditorState)state).getSplitLayout();
+    return layout == null || SplitFileEditor.SplitEditorLayout.valueOf(layout) != SplitFileEditor.SplitEditorLayout.FIRST;
   }
 
   private class MyUpdatePanelOnSettingsChangedListener implements MarkdownApplicationSettings.SettingsChangedListener {
