@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.idea.caches
 
 import com.intellij.ide.highlighter.JavaClassFileType
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -48,11 +47,10 @@ class IDEKotlinBinaryClassCache {
             return false
         }
 
-        val cached = getKotlinBinaryFromCache(file)
-        if (cached != null) {
-            return cached.isKotlinBinary
+        getKotlinBinaryFromCache(file)?.let {
+            return it.isKotlinBinary
         }
-        return getKotlinBinaryClass(file, fileContent) != null
+        return kotlinJvmBinaryClass(file, fileContent) != null
     }
 
     fun getKotlinBinaryClass(file: VirtualFile, fileContent: ByteArray? = null): KotlinJvmBinaryClass? {
@@ -61,6 +59,13 @@ class IDEKotlinBinaryClassCache {
             return null
         }
 
+        return kotlinJvmBinaryClass(file, fileContent)
+    }
+
+    private fun kotlinJvmBinaryClass(
+        file: VirtualFile,
+        fileContent: ByteArray?
+    ): KotlinJvmBinaryClass? {
         val kotlinBinaryClass = KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, fileContent)?.toKotlinJvmBinaryClass()
 
         val isKotlinBinaryClass = kotlinBinaryClass != null
@@ -69,7 +74,7 @@ class IDEKotlinBinaryClassCache {
         }
 
         if (isKotlinBinaryClass) {
-            val headerInfo = createHeaderInfo(kotlinBinaryClass)
+            val headerInfo = createHeaderInfo(kotlinBinaryClass!!)
             file.putUserData(KOTLIN_BINARY_DATA_KEY, SoftReference(KotlinBinaryData(isKotlinBinaryClass, file.timeStamp, headerInfo)))
         }
 
@@ -77,8 +82,7 @@ class IDEKotlinBinaryClassCache {
     }
 
     fun getKotlinBinaryClassHeaderData(file: VirtualFile, fileContent: ByteArray? = null): KotlinBinaryClassHeaderData? {
-        val cached = getKotlinBinaryFromCache(file)
-        if (cached != null) {
+        getKotlinBinaryFromCache(file)?.let { cached ->
             if (!cached.isKotlinBinary) {
                 return null
             }
@@ -87,14 +91,14 @@ class IDEKotlinBinaryClassCache {
             }
         }
 
-        val kotlinBinaryClass = getKotlinBinaryClass(file, fileContent)
+        val kotlinBinaryClass = kotlinJvmBinaryClass(file, fileContent) ?: return null
         return createHeaderInfo(kotlinBinaryClass)
     }
 
-    private val attributeService = ServiceManager.getService(FileAttributeService::class.java)
+    private val attributeService = service<FileAttributeService>()
 
-    private fun createHeaderInfo(kotlinBinaryClass: KotlinJvmBinaryClass?): KotlinBinaryClassHeaderData? {
-        val classId = kotlinBinaryClass?.classId ?: return null
+    private fun createHeaderInfo(kotlinBinaryClass: KotlinJvmBinaryClass): KotlinBinaryClassHeaderData {
+        val classId = kotlinBinaryClass.classId
 
         return kotlinBinaryClass.classHeader.toLightHeader(classId)
     }
@@ -105,7 +109,7 @@ class IDEKotlinBinaryClassCache {
         )
 
     private val KOTLIN_IS_COMPILED_FILE_ATTRIBUTE: String = "kotlin-is-binary-compiled".apply {
-        ServiceManager.getService(FileAttributeService::class.java)?.register(this, 1)
+        service<FileAttributeService>().register(this, 1)
     }
 
     private val KOTLIN_BINARY_DATA_KEY = Key.create<SoftReference<KotlinBinaryData>>(KOTLIN_IS_COMPILED_FILE_ATTRIBUTE)
@@ -116,10 +120,11 @@ class IDEKotlinBinaryClassCache {
             return userData
         }
 
-        val isKotlinBinaryAttribute = if (file is VirtualFileWithId)
+        val isKotlinBinaryAttribute = if (file is VirtualFileWithId) {
             attributeService.readBooleanAttribute(KOTLIN_IS_COMPILED_FILE_ATTRIBUTE, file)
-        else
+        } else {
             null
+        }
 
         if (isKotlinBinaryAttribute != null) {
             val isKotlinBinary = isKotlinBinaryAttribute.value
