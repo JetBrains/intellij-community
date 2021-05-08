@@ -7,7 +7,10 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -44,11 +47,11 @@ public final class CommonDataflow {
     void addValue(DfaMemoryState memState, DfaValue value) {
       if (myPossibleValues == null) return;
       DfType dfType = memState.getDfType(value);
-      if (!(dfType instanceof DfConstantType)) {
+      Object newValue = dfType.getConstantOfType(Object.class);
+      if (newValue == null && !dfType.equals(DfTypes.NULL)) {
         myPossibleValues = null;
         return;
       }
-      Object newValue = ((DfConstantType<?>)dfType).getValue();
       if (myPossibleValues.contains(newValue)) return;
       if (myPossibleValues.isEmpty()) {
         myPossibleValues = Collections.singleton(newValue);

@@ -542,11 +542,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     if (constantExpressionValue != null && constantExpressionValue.equals(expectedValue)) {
       return new CauseItem[]{new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.compile.time.constant", value), expression)};
     }
-    if (value.getDfType() instanceof DfConstantType) {
-      Object constValue = ((DfConstantType<?>)value.getDfType()).getValue();
-      if (Objects.equals(constValue, expectedValue) && constValue instanceof Boolean) {
-        return findBooleanResultCauses(expression, history, ((Boolean)constValue).booleanValue());
-      }
+    Boolean boolConst = value.getDfType().getConstantOfType(Boolean.class);
+    if (boolConst != null && boolConst.equals(expectedValue)) {
+      return findBooleanResultCauses(expression, history, boolConst);
     }
     if (value instanceof DfaVariableValue) {
       MemoryStateChange change = history.findRelation(
