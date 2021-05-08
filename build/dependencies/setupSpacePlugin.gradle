@@ -7,7 +7,7 @@ task setupSpaceAutomationDefinitions {
   outputs.file(artifact)
   doLast {
     download {
-      src "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/space/com/jetbrains/space-idea-script-definition/$version/space-idea-script-definition-${version}.jar"
+      src "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/space/maven/com/jetbrains/space-idea-script-definition/$version/space-idea-script-definition-${version}.jar"
       tempAndMove true
       dest artifact
       connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
