@@ -18,7 +18,6 @@ enum KotlinPluginKind {
      "kotlin-ultimate.mobile-native",
      "mobile-ide/mobile-native/resources",
      [
-       Couple.of("artifacts/kotlin-android-extensions", "kotlin-android-extensions"),
        Couple.of("artifacts/kotlin-ocswift", "kotlin-ocswift"),
        Couple.of("artifacts/MobilePlugin", "Mobile")
      ]),
