@@ -3,7 +3,7 @@ package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
@@ -157,17 +157,9 @@ public final class WSLUtil {
     return FileUtil.toSystemDependentName(Character.toUpperCase(wslPath.charAt(driveLetterIndex)) + ":" + wslPath.substring(slashIndex));
   }
 
-  @NotNull
-  public static ThreeState isWsl1(@NotNull WSLDistribution distribution) {
-    try {
-      ProcessOutput output = distribution.executeOnWsl(10_000, "uname", "-v");
-      if (output.getExitCode() != 0) return ThreeState.UNSURE;
-      return ThreeState.fromBoolean(output.getStdout().contains("Microsoft"));
-    }
-    catch (ExecutionException e) {
-      LOG.warn(e);
-      return ThreeState.UNSURE;
-    }
+  public static @NotNull ThreeState isWsl1(@NotNull WSLDistribution distribution) {
+    int version = getWslVersion(distribution);
+    return version < 0 ? ThreeState.UNSURE : ThreeState.fromBoolean(version == 1);
   }
 
   /**
@@ -175,6 +167,14 @@ public final class WSLUtil {
    * @return version if it can be determined or -1 instead
    */
   public static int getWslVersion(@NotNull WSLDistribution distribution) {
+    int version = getVersionFromWslCli(distribution);
+    if (version < 0) {
+      version = getVersionByUname(distribution);
+    }
+    return version;
+  }
+
+  private static int getVersionFromWslCli(@NotNull WSLDistribution distribution) {
     Path wslExe = WSLDistribution.findWslExe();
     if (wslExe == null) {
       LOG.warn("wsl.exe is not found");
@@ -185,7 +185,7 @@ public final class WSLUtil {
 
     ProcessOutput output;
     try {
-      output = ExecUtil.execAndGetOutput(commandLine, 10_000);
+      output = ExecUtil.execAndGetOutput(commandLine, WSLDistribution.DEFAULT_TIMEOUT);
     }
     catch (ExecutionException e) {
       LOG.warn("Failed to run " + commandLine.getCommandLineString(), e);
@@ -212,6 +212,20 @@ public final class WSLUtil {
       }
       return -1;
     }).filter(v -> v != -1).findFirst().orElse(-1);
+  }
+
+  // To be removed when old WSL installations (without wsl.exe) are gone.
+  private static int getVersionByUname(@NotNull WSLDistribution distribution) {
+    try {
+      ProcessOutput output = distribution.executeOnWsl(WSLDistribution.DEFAULT_TIMEOUT, "uname", "-v");
+      if (output.checkSuccess(LOG)) {
+        return output.getStdout().contains("Microsoft") ? 1 : 2;
+      }
+    }
+    catch (ExecutionException e) {
+      LOG.warn(e);
+    }
+    return -1;
   }
 
   public static @NotNull @NlsSafe String getMsId(@NotNull @NlsSafe String msOrInternalId) {

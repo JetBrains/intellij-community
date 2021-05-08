@@ -54,7 +54,7 @@ public class WSLDistribution {
   private static final String RUN_PARAMETER = "run";
   public static final String UNC_PREFIX = "\\\\wsl$\\";
   private static final String WSLENV = "WSLENV";
-  private static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
+  static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
