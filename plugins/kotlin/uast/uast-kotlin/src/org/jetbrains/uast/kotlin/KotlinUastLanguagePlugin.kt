@@ -586,7 +586,7 @@ object KotlinConverter {
                 is KtParameter -> convertParameter(element, givenParent, this).firstOrNull()
 
                 is KtFile -> convertKtFile(element, givenParent, this).firstOrNull()
-                is FakeFileForLightClass -> el<UFile> { KotlinUFile(element.navigationElement) }
+                is FakeFileForLightClass -> el<UFile> { KotlinUFile(element.navigationElement, kotlinUastPlugin) }
                 is KtAnnotationEntry -> el<UAnnotation>(build(::KotlinUAnnotation))
                 is KtCallExpression ->
                     if (expectedTypes.isAssignableFrom(KotlinUNestedAnnotation::class.java) && !expectedTypes.isAssignableFrom(
@@ -694,7 +694,7 @@ object KotlinConverter {
         givenParent: UElement?,
         requiredTypes: Array<out Class<out UElement>>
     ): Sequence<UElement> = requiredTypes.accommodate(
-        alternative { KotlinUFile(element) },
+        alternative { KotlinUFile(element, kotlinUastPlugin) },
         alternative { element.findFacadeClass()?.let { KotlinUClass.create(it, givenParent) } }
     )
 
