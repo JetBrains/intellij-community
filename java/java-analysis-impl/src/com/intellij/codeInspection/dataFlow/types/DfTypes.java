@@ -95,7 +95,7 @@ public final class DfTypes {
    * @return resulting type. Might be {@link DfType#BOTTOM} if range is empty or all its values are out of the int domain.
    */
   public static @NotNull DfType intRangeClamped(LongRangeSet range) {
-    return intRange(range.intersect(DfIntRangeType.FULL_RANGE));
+    return intRange(range.meet(DfIntRangeType.FULL_RANGE));
   }
 
   /**

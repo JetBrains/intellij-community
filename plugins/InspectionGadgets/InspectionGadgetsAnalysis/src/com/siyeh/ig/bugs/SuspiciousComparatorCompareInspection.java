@@ -172,7 +172,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                                     @NotNull DfaMemoryState state) {
         if (owner != myOwner || expression == null) return;
         myContexts.add(expression);
-        myRange = myRange.unite(DfIntType.extractRange(state.getDfType(value)));
+        myRange = myRange.join(DfIntType.extractRange(state.getDfType(value)));
       }
     }
 

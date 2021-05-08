@@ -49,7 +49,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
         for (List<RangeConstraint> run : StreamEx.of(expression.getOperands()).map(ExcessiveRangeCheckInspection::extractConstraint)
           .groupRuns(RangeConstraint::sameExpression)) {
           if (run.size() <= 1) continue;
-          BinaryOperator<LongRangeSet> reductionOp = andChain ? LongRangeSet::intersect : LongRangeSet::unite;
+          BinaryOperator<LongRangeSet> reductionOp = andChain ? LongRangeSet::meet : LongRangeSet::join;
           LongRangeSet set = run.stream().map(c -> c.myConstraint).reduce(reductionOp).orElse(LongRangeSet.empty());
           if (set.isEmpty()) continue;
           RangeConstraint constraint = run.get(0);
@@ -133,7 +133,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
       myRange = range;
       myExpression = expression;
       myField = field;
-      myConstraint = constraint.intersect(getFullRange());
+      myConstraint = constraint.meet(getFullRange());
     }
 
     RangeConstraint negate(TextRange newTextRange) {

@@ -470,7 +470,7 @@ public final class CustomMethodHandlers {
       fromLowerBound = DfIntType.extractRange(state.getDfType(values[0])).fromRelation(RelationType.GE);
       fromUpperBound = DfIntType.extractRange(state.getDfType(values[1])).fromRelation(RelationType.LT);
     } else return DfType.TOP;
-    LongRangeSet intersection = fromLowerBound.intersect(fromUpperBound);
+    LongRangeSet intersection = fromLowerBound.meet(fromUpperBound);
     return intRangeClamped(intersection);
   }
 
@@ -553,10 +553,10 @@ public final class CustomMethodHandlers {
       DfaValue arrayLength = ARRAY_LENGTH.createValue(factory, array);
       if (!state.areEqual(arrayLength, collectionSize)) {
         LongRangeSet arraySizeRange = DfIntType.extractRange(state.getDfType(arrayLength));
-        LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GT).intersect(arraySizeRange);
-        LongRangeSet biggerCollections = arraySizeRange.fromRelation(RelationType.GE).intersect(collectionSizeRange);
+        LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GT).meet(arraySizeRange);
+        LongRangeSet biggerCollections = arraySizeRange.fromRelation(RelationType.GE).meet(collectionSizeRange);
         if (!biggerArrays.isEmpty()) {
-          finalSize = factory.fromDfType(intRange(biggerArrays.unite(biggerCollections)));
+          finalSize = factory.fromDfType(intRange(biggerArrays.join(biggerCollections)));
         }
       }
     }

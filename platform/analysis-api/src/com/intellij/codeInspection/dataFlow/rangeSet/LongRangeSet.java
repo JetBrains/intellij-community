@@ -57,7 +57,7 @@ public abstract class LongRangeSet {
    * @return a new set
    */
   @NotNull
-  public abstract LongRangeSet intersect(@NotNull LongRangeSet other);
+  public abstract LongRangeSet meet(@NotNull LongRangeSet other);
 
   /**
    * Merge current set with other. May return bigger set if exact representation is impossible.
@@ -66,7 +66,7 @@ public abstract class LongRangeSet {
    * @return a new set
    */
   @NotNull
-  public abstract LongRangeSet unite(@NotNull LongRangeSet other);
+  public abstract LongRangeSet join(@NotNull LongRangeSet other);
 
   /**
    * @return a minimal value contained in the set
@@ -271,7 +271,7 @@ public abstract class LongRangeSet {
   public LongRangeSet bitwiseOr(LongRangeSet other, LongRangeType lrType) {
     if (this.isEmpty() || other.isEmpty()) return empty();
     LongRangeSet result = fromBits(getBitwiseMask().or(other.getBitwiseMask()));
-    return result.intersect(lrType.fullRange());
+    return result.meet(lrType.fullRange());
   }
 
   /**
@@ -286,7 +286,7 @@ public abstract class LongRangeSet {
   public LongRangeSet bitwiseXor(LongRangeSet other, LongRangeType lrType) {
     if (this.isEmpty() || other.isEmpty()) return empty();
     LongRangeSet result = fromBits(getBitwiseMask().xor(other.getBitwiseMask()));
-    return result.intersect(lrType.fullRange());
+    return result.meet(lrType.fullRange());
   }
 
   /**
@@ -314,7 +314,7 @@ public abstract class LongRangeSet {
     LongRangeSet result = empty();
     for (int i = 0; i < left.length; i += 2) {
       for (int j = 0; j < right.length; j += 2) {
-        result = result.unite(bitwiseAnd(left[i], left[i + 1], right[j], right[j + 1], globalMask));
+        result = result.join(bitwiseAnd(left[i], left[i + 1], right[j], right[j + 1], globalMask));
       }
     }
     return result;
@@ -351,14 +351,14 @@ public abstract class LongRangeSet {
   @NotNull
   public LongRangeSet div(LongRangeSet divisor, LongRangeType lrType) {
     if (divisor.isEmpty() || divisor.equals(Point.ZERO)) return empty();
-    divisor = divisor.intersect(lrType.fullRange());
-    LongRangeSet dividend = this.intersect(lrType.fullRange());
+    divisor = divisor.meet(lrType.fullRange());
+    LongRangeSet dividend = this.meet(lrType.fullRange());
     long[] left = splitAtZero(dividend.asRangeArray());
     long[] right = splitAtZero(new long[]{divisor.min(), divisor.max()});
     LongRangeSet result = empty();
     for (int i = 0; i < left.length; i += 2) {
       for (int j = 0; j < right.length; j += 2) {
-        result = result.unite(divide(left[i], left[i + 1], right[j], right[j + 1], lrType));
+        result = result.join(divide(left[i], left[i + 1], right[j], right[j + 1], lrType));
       }
     }
     return result;
@@ -406,8 +406,8 @@ public abstract class LongRangeSet {
     if (dividendMin == minValue && divisorMax == -1) {
       // MIN_VALUE/-1 = MIN_VALUE
       return point(minValue)
-        .unite(divisorMin == -1 ? empty() : range(dividendMin / divisorMin, dividendMin / (divisorMax - 1)))
-        .unite(dividendMax == minValue ? empty() : range(dividendMax / divisorMin, (dividendMin + 1) / divisorMax));
+        .join(divisorMin == -1 ? empty() : range(dividendMin / divisorMin, dividendMin / (divisorMax - 1)))
+        .join(dividendMax == minValue ? empty() : range(dividendMax / divisorMin, (dividendMin + 1) / divisorMax));
     }
     return range(dividendMax / divisorMin, dividendMin / divisorMax);
   }
@@ -467,14 +467,14 @@ public abstract class LongRangeSet {
     }
     long min = shiftSize.min();
     long max = shiftSize.max();
-    LongRangeSet negative = intersect(range(lrType.min(), -1));
-    LongRangeSet positive = intersect(range(0, lrType.max()));
+    LongRangeSet negative = meet(range(lrType.min(), -1));
+    LongRangeSet positive = meet(range(0, lrType.max()));
     LongRangeSet positiveResult = positive.shrPositive(min, max, lrType);
     LongRangeSet negativeResult;
     LongRangeSet negativeComplement = point(-1).minus(negative, lrType); // -1-negative
     if (unsigned) {
       if (min == 0) {
-        positiveResult = positiveResult.unite(negative);
+        positiveResult = positiveResult.join(negative);
         if (max == 0) return positiveResult;
         min++;
       }
@@ -484,14 +484,14 @@ public abstract class LongRangeSet {
     } else {
       negativeResult = point(-1).minus(negativeComplement.shrPositive(min, max, lrType), lrType);
     }
-    return positiveResult.unite(negativeResult);
+    return positiveResult.join(negativeResult);
   }
 
   private LongRangeSet shrPositive(long min, long max, LongRangeType lrType) {
     if (isEmpty()) return empty();
     int maxShift = lrType.bits() - 1;
     if (max == maxShift) {
-      return min == max ? Point.ZERO : Point.ZERO.unite(div(range(1L << min, 1L << (max - 1)), lrType));
+      return min == max ? Point.ZERO : Point.ZERO.join(div(range(1L << min, 1L << (max - 1)), lrType));
     }
     return div(range(1L << min, 1L << max), lrType);
   }
@@ -579,7 +579,7 @@ public abstract class LongRangeSet {
       j++;
     }
     if(i == j) {
-      return point(from).unite(point(to));
+      return point(from).join(point(to));
     }
     long modBits = -1;
     for (int rem = 0; rem < Long.SIZE; rem++) {
@@ -786,13 +786,13 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet intersect(@NotNull LongRangeSet other) {
+    public LongRangeSet meet(@NotNull LongRangeSet other) {
       return this;
     }
 
     @NotNull
     @Override
-    public LongRangeSet unite(@NotNull LongRangeSet other) {
+    public LongRangeSet join(@NotNull LongRangeSet other) {
       return other;
     }
 
@@ -919,7 +919,7 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet intersect(@NotNull LongRangeSet other) {
+    public LongRangeSet meet(@NotNull LongRangeSet other) {
       return other.contains(myValue) ? this : Empty.EMPTY;
     }
 
@@ -940,7 +940,7 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet unite(@NotNull LongRangeSet other) {
+    public LongRangeSet join(@NotNull LongRangeSet other) {
       if (other.isEmpty() || other == this) return this;
       if (other.contains(myValue)) return other;
       if (other instanceof Point) {
@@ -951,7 +951,7 @@ public abstract class LongRangeSet {
                : new RangeSet(new long[]{value1, value1, value2, value2});
       }
       if (other instanceof ModRange) {
-        return other.unite(this);
+        return other.join(this);
       }
       if (other instanceof Range) {
         if (myValue < other.min()) {
@@ -1113,10 +1113,10 @@ public abstract class LongRangeSet {
       }
       long max = Math.max(0, Math.max(Math.abs(divisor.min()), Math.abs(divisor.max())) - 1);
       if (myValue < 0) {
-        return LongRangeSet.range(Math.max(myValue, -max), 0).unite(addend);
+        return LongRangeSet.range(Math.max(myValue, -max), 0).join(addend);
       } else {
         // 10 % [-4..7] is [0..6], but 10 % [-30..30] is [0..10]
-        return LongRangeSet.range(0, Math.min(myValue, max)).unite(addend);
+        return LongRangeSet.range(0, Math.min(myValue, max)).join(addend);
       }
     }
 
@@ -1217,13 +1217,13 @@ public abstract class LongRangeSet {
         }
         if (from <= myFrom && to >= myTo) return toJoin;
         if (from > myFrom && to < myTo) {
-          return new RangeSet(new long[]{myFrom, from - 1, to + 1, myTo}).unite(toJoin);
+          return new RangeSet(new long[]{myFrom, from - 1, to + 1, myTo}).join(toJoin);
         }
         if (from <= myFrom) {
-          return range(to + 1, myTo).unite(toJoin);
+          return range(to + 1, myTo).join(toJoin);
         }
         assert to >= myTo;
-        return range(myFrom, from - 1).unite(toJoin);
+        return range(myFrom, from - 1).join(toJoin);
       }
       long[] ranges = ((RangeSet)other).myRanges;
       LongRangeSet result = this;
@@ -1236,11 +1236,11 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet intersect(@NotNull LongRangeSet other) {
+    public LongRangeSet meet(@NotNull LongRangeSet other) {
       if (other == this) return this;
       if (other.isEmpty()) return other;
       if ((other instanceof ModRange && !(this instanceof ModRange)) || other instanceof Point) {
-        return other.intersect(this);
+        return other.meet(this);
       }
       if (other instanceof Range) {
         long from = ((Range)other).myFrom;
@@ -1259,7 +1259,7 @@ public abstract class LongRangeSet {
       long[] result = new long[ranges.length];
       int index = 0;
       for (int i = 0; i < ranges.length; i += 2) {
-        long[] res = intersect(range(ranges[i], ranges[i + 1])).asRangeArray();
+        long[] res = meet(range(ranges[i], ranges[i + 1])).asRangeArray();
         System.arraycopy(res, 0, result, index, res.length);
         index += res.length;
       }
@@ -1268,10 +1268,10 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet unite(@NotNull LongRangeSet other) {
+    public LongRangeSet join(@NotNull LongRangeSet other) {
       if (other.isEmpty() || other == this) return this;
       if (other instanceof Point) {
-        return other.unite(this);
+        return other.join(this);
       }
       if (other instanceof Range) {
         if (other.min() <= max() && min() <= other.max() ||
@@ -1403,7 +1403,7 @@ public abstract class LongRangeSet {
       long[] ranges = other.asRangeArray();
       LongRangeSet result = empty();
       for (int i = 0; i < ranges.length; i += 2) {
-        result = result.unite(plus(myFrom, myTo, ranges[i], ranges[i + 1], lrType));
+        result = result.join(plus(myFrom, myTo, ranges[i], ranges[i + 1], lrType));
       }
       return result;
     }
@@ -1439,7 +1439,7 @@ public abstract class LongRangeSet {
     public LongRangeSet mod(LongRangeSet divisor) {
       if (divisor.isEmpty() || divisor.equals(Point.ZERO)) return empty();
       if (divisor instanceof Point && ((Point)divisor).myValue == Long.MIN_VALUE) {
-        return this.contains(Long.MIN_VALUE) ? this.subtract(divisor).unite(Point.ZERO) : this;
+        return this.contains(Long.MIN_VALUE) ? this.subtract(divisor).join(Point.ZERO) : this;
       }
       if (divisor.contains(Long.MIN_VALUE)) {
         return possibleMod();
@@ -1452,7 +1452,7 @@ public abstract class LongRangeSet {
           !intersects(LongRangeSet.range(minDivisor, Long.MAX_VALUE))) {
         return this;
       }
-      return possibleMod().intersect(range(-maxDivisor + 1, maxDivisor - 1));
+      return possibleMod().meet(range(-maxDivisor + 1, maxDivisor - 1));
     }
 
     private LongRangeSet possibleMod() {
@@ -1575,8 +1575,8 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet intersect(@NotNull LongRangeSet other) {
-      LongRangeSet intersection = super.intersect(other);
+    public LongRangeSet meet(@NotNull LongRangeSet other) {
+      LongRangeSet intersection = super.meet(other);
       if (intersection instanceof RangeSet) {
         long min = intersection.min();
         long max = intersection.max();
@@ -1649,7 +1649,7 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet unite(@NotNull LongRangeSet other) {
+    public LongRangeSet join(@NotNull LongRangeSet other) {
       if (other instanceof ModRange) {
         ModRange modRange = (ModRange)other;
         int lcm = lcm(modRange.myMod);
@@ -1671,9 +1671,9 @@ public abstract class LongRangeSet {
             return modRange(Math.min(myFrom, val), Math.max(myTo, val), myMod, myBits);
           }
         }
-        return other.unite(range(myFrom, myTo));
+        return other.join(range(myFrom, myTo));
       }
-      return super.unite(other);
+      return super.join(other);
     }
 
     @Override
@@ -1724,7 +1724,7 @@ public abstract class LongRangeSet {
           else {
             plus = range(ranges[i], ranges[i + 1]);
           }
-          result = result.unite(plus);
+          result = result.join(plus);
         }
         return result;
       }
@@ -1891,27 +1891,27 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet intersect(@NotNull LongRangeSet other) {
+    public LongRangeSet meet(@NotNull LongRangeSet other) {
       if (other == this) return this;
       if (other.isEmpty()) return other;
       if (other instanceof Point || other instanceof Range) {
-        return other.intersect(this);
+        return other.meet(this);
       }
       return subtract(all().subtract(other));
     }
 
     @NotNull
     @Override
-    public LongRangeSet unite(@NotNull LongRangeSet other) {
+    public LongRangeSet join(@NotNull LongRangeSet other) {
       if (!(other instanceof RangeSet)) {
-        return other.unite(this);
+        return other.join(this);
       }
       if(other == this) return this;
       if(other.contains(this)) return other;
       if(this.contains(other)) return this;
       LongRangeSet result = other;
       for(int i=0; i<myRanges.length; i+=2) {
-        result = range(myRanges[i], myRanges[i+1]).unite(result);
+        result = range(myRanges[i], myRanges[i+1]).join(result);
       }
       return result;
     }
@@ -2013,7 +2013,7 @@ public abstract class LongRangeSet {
     public LongRangeSet abs(LongRangeType lrType) {
       LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.unite(range(myRanges[i], myRanges[i + 1]).abs(lrType));
+        result = result.join(range(myRanges[i], myRanges[i + 1]).abs(lrType));
       }
       return result;
     }
@@ -2023,7 +2023,7 @@ public abstract class LongRangeSet {
     public LongRangeSet negate(LongRangeType lrType) {
       LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.unite(range(myRanges[i], myRanges[i + 1]).negate(lrType));
+        result = result.join(range(myRanges[i], myRanges[i + 1]).negate(lrType));
       }
       return result;
     }
@@ -2036,7 +2036,7 @@ public abstract class LongRangeSet {
       }
       LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.unite(range(myRanges[i], myRanges[i + 1]).plus(other, lrType));
+        result = result.join(range(myRanges[i], myRanges[i + 1]).plus(other, lrType));
       }
       return result;
     }
@@ -2047,7 +2047,7 @@ public abstract class LongRangeSet {
       if(divisor.isEmpty()) return empty();
       LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.unite(range(myRanges[i], myRanges[i + 1]).mod(divisor));
+        result = result.join(range(myRanges[i], myRanges[i + 1]).mod(divisor));
       }
       return result;
     }

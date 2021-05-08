@@ -447,7 +447,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     LongRangeSet range = JvmPsiRangeSetUtil.typeRange(type);
     if (range != null) {
       if (myTargetMethod != null) {
-        range = range.intersect(JvmPsiRangeSetUtil.fromPsiElement(myTargetMethod));
+        range = range.meet(JvmPsiRangeSetUtil.fromPsiElement(myTargetMethod));
       }
       return factory.fromDfType(PsiType.LONG.equals(type) ? longRange(range) : intRangeClamped(range));
     }

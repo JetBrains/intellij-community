@@ -128,7 +128,7 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
     DfType targetType = TypeConstraint.fromDfType(arrayType).getArrayComponentType();
     PsiExpression[] elements = ExpressionUtils.getConstantArrayElements(arrayPsiVar);
     if (elements == null || elements.length == 0) return factory.getUnknown();
-    indexSet = indexSet.intersect(LongRangeSet.range(0, elements.length - 1));
+    indexSet = indexSet.meet(LongRangeSet.range(0, elements.length - 1));
     if (indexSet.isEmpty() || indexSet.isCardinalityBigger(100)) return factory.getUnknown();
     return LongStreamEx.of(indexSet.stream())
       .mapToObj(idx -> getAdvancedExpressionDfaValue(factory, elements[(int)idx], targetType))

@@ -217,7 +217,7 @@ class AnalysisStartingPoint {
           PsiType.SHORT.equals(anchorType) ||
           PsiType.BYTE.equals(anchorType) ||
           PsiType.CHAR.equals(anchorType)) {
-        set = set.intersect(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(anchorType)));
+        set = set.meet(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(anchorType)));
         return new AnalysisStartingPoint(DfTypes.intRangeClamped(set), anchor);
       }
     }

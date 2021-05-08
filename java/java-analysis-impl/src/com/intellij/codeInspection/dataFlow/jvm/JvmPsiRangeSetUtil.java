@@ -55,7 +55,7 @@ public class JvmPsiRangeSetUtil {
     return StreamEx.of(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE), owner.getAnnotation(JETBRAINS_RANGE))
                    .nonNull()
                    .append(AnnotationUtil.findAnnotations(owner, ANNOTATIONS))
-                   .map(JvmPsiRangeSetUtil::fromAnnotation).foldLeft(LongRangeSet.all(), LongRangeSet::intersect);
+                   .map(JvmPsiRangeSetUtil::fromAnnotation).foldLeft(LongRangeSet.all(), LongRangeSet::meet);
   }
 
   private static LongRangeSet fromAnnotation(PsiAnnotation annotation) {
@@ -127,7 +127,7 @@ public class JvmPsiRangeSetUtil {
     }
     LongRangeSet result = LongRangeSet.empty();
     for (LongRangeSet subRange : range.asRanges()) {
-      result = result.unite(castContinuousRange(subRange, type));
+      result = result.join(castContinuousRange(subRange, type));
     }
     return result;
   }

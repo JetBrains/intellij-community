@@ -111,7 +111,7 @@ class SideEffectHandlers {
             // Adding non-empty collection to the set will produce non-empty set
             totalRange = totalRange.without(0);
           }
-          LongRangeSet addedForSet = argSizeRange.fromRelation(RelationType.LE).intersect(JvmPsiRangeSetUtil.indexRange());
+          LongRangeSet addedForSet = argSizeRange.fromRelation(RelationType.LE).meet(JvmPsiRangeSetUtil.indexRange());
           argSizeType = argSizeType.join(DfTypes.intRange(addedForSet));
         }
         resultSize = sizeType.eval(argSizeType, LongRangeBinOp.PLUS).meet(DfTypes.intRange(totalRange));
@@ -130,7 +130,7 @@ class SideEffectHandlers {
       DfIntType sizeType = tryCast(state.getDfType(size), DfIntType.class);
       DfType resultSize = COLLECTION_SIZE.getDefaultValue(false);
       if (sizeType != null) {
-        LongRangeSet newSize = sizeType.getRange().fromRelation(RelationType.LE).intersect(JvmPsiRangeSetUtil.indexRange());
+        LongRangeSet newSize = sizeType.getRange().fromRelation(RelationType.LE).meet(JvmPsiRangeSetUtil.indexRange());
         resultSize = sizeType.join(DfTypes.intRange(newSize));
       }
       updateSize(state, size, resultSize);

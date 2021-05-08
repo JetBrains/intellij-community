@@ -491,7 +491,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       if (other instanceof RangeDfaProblemType) {
         RangeDfaProblemType rangeProblem = (RangeDfaProblemType)other;
         if (myTemplate.equals(rangeProblem.myTemplate) && Objects.equals(myType, rangeProblem.myType)) {
-          return new RangeDfaProblemType(myTemplate, myRangeSet.unite(((RangeDfaProblemType)other).myRangeSet), myType);
+          return new RangeDfaProblemType(myTemplate, myRangeSet.join(((RangeDfaProblemType)other).myRangeSet), myType);
         }
       }
       return super.tryMerge(other);
@@ -1466,8 +1466,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
             DfaValue rightVal = rightPush.myTopOfStack;
             FactDefinition<LongRangeSet> rightSet = rightPush.findFact(rightVal, FactExtractor.range());
             LongRangeSet fromType = Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(type));
-            LongRangeSet leftRange = leftSet.myFact.intersect(fromType);
-            LongRangeSet rightRange = rightSet.myFact.intersect(fromType);
+            LongRangeSet leftRange = leftSet.myFact.meet(fromType);
+            LongRangeSet rightRange = rightSet.myFact.meet(fromType);
             LongRangeBinOp op = JvmPsiRangeSetUtil.binOpFromToken(binOp.getOperationTokenType());
             if (op != null) {
               LongRangeSet result = op.eval(leftRange, rightRange, lrType);

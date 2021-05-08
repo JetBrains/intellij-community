@@ -49,8 +49,8 @@ public interface DfLongType extends DfJvmIntegralType {
   default DfType join(@NotNull DfType other) {
     if (other == DfType.BOTTOM) return this;
     if (!(other instanceof DfLongType)) return DfType.TOP;
-    LongRangeSet range = ((DfLongType)other).getRange().unite(getRange());
-    LongRangeSet wideRange = ((DfLongType)other).getWideRange().unite(getWideRange());
+    LongRangeSet range = ((DfLongType)other).getRange().join(getRange());
+    LongRangeSet wideRange = ((DfLongType)other).getWideRange().join(getWideRange());
     return DfTypes.longRange(range, wideRange);
   }
 
@@ -59,8 +59,8 @@ public interface DfLongType extends DfJvmIntegralType {
   default DfType meet(@NotNull DfType other) {
     if (other == DfType.TOP) return this;
     if (!(other instanceof DfLongType)) return DfType.BOTTOM;
-    LongRangeSet range = ((DfLongType)other).getRange().intersect(getRange());
-    LongRangeSet wideRange = ((DfLongType)other).getWideRange().intersect(getWideRange());
+    LongRangeSet range = ((DfLongType)other).getRange().meet(getRange());
+    LongRangeSet wideRange = ((DfLongType)other).getWideRange().meet(getWideRange());
     return DfTypes.longRange(range, wideRange);
   }
 

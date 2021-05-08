@@ -811,10 +811,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     long sumMax = left.max() + right.max();
     LongRangeSet result = LongRangeSet.empty();
     if (sumMin < lrType.min()) {
-      result = result.unite(LongRangeSet.range(lrType.cast(sumMin), lrType.max()));
+      result = result.join(LongRangeSet.range(lrType.cast(sumMin), lrType.max()));
     }
     if (sumMax > lrType.max()) {
-      result = result.unite(LongRangeSet.range(lrType.min(), lrType.cast(sumMax)));
+      result = result.join(LongRangeSet.range(lrType.min(), lrType.cast(sumMax)));
     }
     return result;
   }

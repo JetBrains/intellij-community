@@ -193,69 +193,69 @@ public class LongRangeSetTest {
 
   @Test
   public void testIntersect() {
-    assertEquals("{0..100}", range(0, 100).intersect(range(0, 100)).toString());
-    assertEquals("{100}", range(0, 100).intersect(range(100, 200)).toString());
-    assertTrue(range(0, 100).intersect(range(101, 200)).isEmpty());
-    assertTrue(point(100).intersect(point(200)).isEmpty());
-    assertFalse(point(100).intersect(range(99, 101)).isEmpty());
+    assertEquals("{0..100}", range(0, 100).meet(range(0, 100)).toString());
+    assertEquals("{100}", range(0, 100).meet(range(100, 200)).toString());
+    assertTrue(range(0, 100).meet(range(101, 200)).isEmpty());
+    assertTrue(point(100).meet(point(200)).isEmpty());
+    assertFalse(point(100).meet(range(99, 101)).isEmpty());
 
     LongRangeSet rangeSet = range(-1000, 1000).subtract(range(100, 500)).subtract(range(-500, -100));
     assertEquals("{-1000..-501, -99..99, 501..1000}", rangeSet.toString());
-    assertEquals(point(99), rangeSet.intersect(point(99)));
-    assertTrue(rangeSet.intersect(point(100)).isEmpty());
-    assertEquals("{0..99, 501..1000}", rangeSet.intersect(JvmPsiRangeSetUtil.indexRange()).toString());
+    assertEquals(point(99), rangeSet.meet(point(99)));
+    assertTrue(rangeSet.meet(point(100)).isEmpty());
+    assertEquals("{0..99, 501..1000}", rangeSet.meet(JvmPsiRangeSetUtil.indexRange()).toString());
   }
 
   @Test
   public void testUnite() {
-    assertEquals("{1}", point(1).unite(empty()).toString());
-    assertEquals("{1}", empty().unite(point(1)).toString());
-    assertEquals("{1}", point(1).unite(point(1)).toString());
-    assertEquals("{1, 2}", point(2).unite(point(1)).toString());
-    assertEquals("{1, 2}", point(1).unite(point(2)).toString());
-    assertEquals("{1, 3}", point(1).unite(point(3)).toString());
-    assertEquals("{1, 3}", point(3).unite(point(1)).toString());
+    assertEquals("{1}", point(1).join(empty()).toString());
+    assertEquals("{1}", empty().join(point(1)).toString());
+    assertEquals("{1}", point(1).join(point(1)).toString());
+    assertEquals("{1, 2}", point(2).join(point(1)).toString());
+    assertEquals("{1, 2}", point(1).join(point(2)).toString());
+    assertEquals("{1, 3}", point(1).join(point(3)).toString());
+    assertEquals("{1, 3}", point(3).join(point(1)).toString());
     LongRangeSet twoTen = range(2, 10);
-    assertEquals("{0, 2..10}", point(0).unite(twoTen).toString());
-    assertEquals("{1..10}", point(1).unite(twoTen).toString());
-    assertEquals("{2..10}", point(2).unite(twoTen).toString());
-    assertEquals("{2..11}", point(11).unite(twoTen).toString());
-    assertEquals("{2..10, 12}", point(12).unite(twoTen).toString());
-    assertEquals("{2..10, 12}", point(12).unite(twoTen).toString());
-    LongRangeSet set = range(10, 20).unite(range(30, 40)).unite(range(42, 50));
+    assertEquals("{0, 2..10}", point(0).join(twoTen).toString());
+    assertEquals("{1..10}", point(1).join(twoTen).toString());
+    assertEquals("{2..10}", point(2).join(twoTen).toString());
+    assertEquals("{2..11}", point(11).join(twoTen).toString());
+    assertEquals("{2..10, 12}", point(12).join(twoTen).toString());
+    assertEquals("{2..10, 12}", point(12).join(twoTen).toString());
+    LongRangeSet set = range(10, 20).join(range(30, 40)).join(range(42, 50));
     assertEquals("{10..20, 30..40, 42..50}", set.toString());
-    assertEquals("{8, 10..20, 30..40, 42..50}", set.unite(point(8)).toString());
-    assertEquals("{9..20, 30..40, 42..50}", set.unite(point(9)).toString());
-    assertEquals("{10..21, 30..40, 42..50}", set.unite(point(21)).toString());
-    assertEquals("{10..20, 22, 30..40, 42..50}", set.unite(point(22)).toString());
-    assertEquals("{10..20, 29..40, 42..50}", set.unite(point(29)).toString());
-    assertEquals("{10..20, 30..50}", set.unite(point(41)).toString());
-    assertEquals("{10..20, 30..40, 42..51}", set.unite(point(51)).toString());
-    assertEquals("{10..20, 30..40, 42..50, 52}", set.unite(point(52)).toString());
-    assertEquals("{10..40}", range(20, 30).unite(range(10, 40)).toString());
-    assertEquals("{10..40}", range(10, 40).unite(range(20, 30)).toString());
-    assertEquals("{10..30}", range(10, 20).unite(range(20, 30)).toString());
-    assertEquals("{10..30}", range(20, 30).unite(range(10, 20)).toString());
-    assertEquals("{10..30}", range(10, 19).unite(range(20, 30)).toString());
-    assertEquals("{10..30}", range(20, 30).unite(range(10, 19)).toString());
-    assertEquals("{10..18, 20..30}", range(20, 30).unite(range(10, 18)).toString());
-    assertEquals("{10..18, 20..30}", range(10, 18).unite(range(20, 30)).toString());
+    assertEquals("{8, 10..20, 30..40, 42..50}", set.join(point(8)).toString());
+    assertEquals("{9..20, 30..40, 42..50}", set.join(point(9)).toString());
+    assertEquals("{10..21, 30..40, 42..50}", set.join(point(21)).toString());
+    assertEquals("{10..20, 22, 30..40, 42..50}", set.join(point(22)).toString());
+    assertEquals("{10..20, 29..40, 42..50}", set.join(point(29)).toString());
+    assertEquals("{10..20, 30..50}", set.join(point(41)).toString());
+    assertEquals("{10..20, 30..40, 42..51}", set.join(point(51)).toString());
+    assertEquals("{10..20, 30..40, 42..50, 52}", set.join(point(52)).toString());
+    assertEquals("{10..40}", range(20, 30).join(range(10, 40)).toString());
+    assertEquals("{10..40}", range(10, 40).join(range(20, 30)).toString());
+    assertEquals("{10..30}", range(10, 20).join(range(20, 30)).toString());
+    assertEquals("{10..30}", range(20, 30).join(range(10, 20)).toString());
+    assertEquals("{10..30}", range(10, 19).join(range(20, 30)).toString());
+    assertEquals("{10..30}", range(20, 30).join(range(10, 19)).toString());
+    assertEquals("{10..18, 20..30}", range(20, 30).join(range(10, 18)).toString());
+    assertEquals("{10..18, 20..30}", range(10, 18).join(range(20, 30)).toString());
 
-    assertEquals("{-4..8, 10..20, 30..40, 42..50}", range(-4, 8).unite(set).toString());
-    assertEquals("{-4..20, 30..40, 42..50}", range(-4, 9).unite(set).toString());
-    assertEquals("{-4..50}", range(-4, 41).unite(set).toString());
-    assertEquals("{-4..51}", range(-4, 51).unite(set).toString());
-    assertEquals("{10..20, 30..40, 42..60}", range(51, 60).unite(set).toString());
-    assertEquals("{10..20, 30..40, 42..50, 52..60}", range(52, 60).unite(set).toString());
-    assertEquals("{10..20, 30..40, 42..50}", range(12, 14).unite(set).toString());
-    assertEquals("{10..40, 42..50}", range(12, 34).unite(set).toString());
-    assertEquals("{10..50}", range(10, 41).unite(set).toString());
-    assertEquals("{10..50}", range(12, 41).unite(set).toString());
-    assertEquals("{10..50}", range(20, 41).unite(set).toString());
-    assertEquals("{10..50}", range(21, 41).unite(set).toString());
-    assertEquals("{10..20, 22..50}", range(22, 41).unite(set).toString());
-    assertEquals("{10..50}", range(12, 42).unite(set).toString());
-    assertEquals("{10..50}", range(10, 50).unite(set).toString());
+    assertEquals("{-4..8, 10..20, 30..40, 42..50}", range(-4, 8).join(set).toString());
+    assertEquals("{-4..20, 30..40, 42..50}", range(-4, 9).join(set).toString());
+    assertEquals("{-4..50}", range(-4, 41).join(set).toString());
+    assertEquals("{-4..51}", range(-4, 51).join(set).toString());
+    assertEquals("{10..20, 30..40, 42..60}", range(51, 60).join(set).toString());
+    assertEquals("{10..20, 30..40, 42..50, 52..60}", range(52, 60).join(set).toString());
+    assertEquals("{10..20, 30..40, 42..50}", range(12, 14).join(set).toString());
+    assertEquals("{10..40, 42..50}", range(12, 34).join(set).toString());
+    assertEquals("{10..50}", range(10, 41).join(set).toString());
+    assertEquals("{10..50}", range(12, 41).join(set).toString());
+    assertEquals("{10..50}", range(20, 41).join(set).toString());
+    assertEquals("{10..50}", range(21, 41).join(set).toString());
+    assertEquals("{10..20, 22..50}", range(22, 41).join(set).toString());
+    assertEquals("{10..50}", range(12, 42).join(set).toString());
+    assertEquals("{10..50}", range(10, 50).join(set).toString());
   }
 
   @Test
@@ -271,12 +271,12 @@ public class LongRangeSetTest {
       String start = "i=" + i + ":" + intervals;
       LongRangeSet union = empty();
       for (LongRangeSet interval : intervals) {
-        union = union.unite(interval);
+        union = union.join(interval);
       }
       while (intervals.size() > 1) {
         LongRangeSet set1 = intervals.remove(r.nextInt(intervals.size()));
         LongRangeSet set2 = intervals.remove(r.nextInt(intervals.size()));
-        LongRangeSet result = set1.unite(set2);
+        LongRangeSet result = set1.join(set2);
         intervals.add(result);
       }
       assertEquals(start, union, intervals.get(0));
@@ -298,7 +298,7 @@ public class LongRangeSetTest {
     assertEquals("{0..48}: <0, 2> mod 3", set.subtract(range(50, 200)).toString());
     assertEquals("{0..98}: <0, 2> mod 3", set.subtract(range(99, 200)).toString());
     assertEquals("{0..99}: <0, 2> mod 3", set.subtract(range(110, 200)).toString());
-    assertEquals("{11..89}: <0, 2> mod 3", set.subtract(range(-200, -100).unite(range(-50, 10)).unite(range(90, 150))).toString());
+    assertEquals("{11..89}: <0, 2> mod 3", set.subtract(range(-200, -100).join(range(-50, 10)).join(range(90, 150))).toString());
   }
 
   @Test
@@ -312,9 +312,9 @@ public class LongRangeSetTest {
       LongRangeSet right = data[r.nextInt(data.length)];
       LongRangeSet lDiff = left.subtract(right);
       LongRangeSet rDiff = right.subtract(left);
-      LongRangeSet intersection = left.intersect(right);
+      LongRangeSet intersection = left.meet(right);
       String message = left + " & " + right + " = " + intersection;
-      assertEquals(message, intersection, right.intersect(left));
+      assertEquals(message, intersection, right.meet(left));
       if (!intersection.isEmpty()) {
         assertTrue(message, intersection.min() >= Math.max(left.min(), right.min()));
         assertTrue(message, intersection.max() <= Math.min(left.max(), right.max()));
@@ -380,8 +380,8 @@ public class LongRangeSetTest {
     assertEquals(range(0, 200), range(-1, 200).abs(INT64));
     assertEquals(range(0, 200), range(-200, 200).abs(INT32));
     assertEquals(range(0, 201), range(-201, 200).abs(INT32));
-    assertEquals(range(0, Long.MAX_VALUE).unite(point(Long.MIN_VALUE)), all().abs(INT64));
-    assertEquals(range(100, Integer.MAX_VALUE).unite(point(Integer.MIN_VALUE)), range(Integer.MIN_VALUE, -100).abs(INT32));
+    assertEquals(range(0, Long.MAX_VALUE).join(point(Long.MIN_VALUE)), all().abs(INT64));
+    assertEquals(range(100, Integer.MAX_VALUE).join(point(Integer.MIN_VALUE)), range(Integer.MIN_VALUE, -100).abs(INT32));
     assertEquals(range(100, Integer.MAX_VALUE + 1L), range(Integer.MIN_VALUE, -100).abs(INT64));
     LongRangeSet set = range(-900, 1000).subtract(range(-800, -600)).subtract(range(-300, 100)).subtract(range(500, 700));
     assertEquals("{-900..-801, -599..-301, 101..499, 701..1000}", set.toString());
@@ -400,8 +400,8 @@ public class LongRangeSetTest {
     assertEquals(range(-200, 200), range(-200, 200).negate(INT32));
     assertEquals(range(-200, 201), range(-201, 200).negate(INT32));
     assertEquals(all(), all().negate(INT64));
-    assertEquals(range(100, Integer.MAX_VALUE).unite(point(Integer.MIN_VALUE)), range(Integer.MIN_VALUE, -100).negate(INT32));
-    assertEquals(point(Long.MAX_VALUE).unite(point(Long.MIN_VALUE)), range(Long.MIN_VALUE, Long.MIN_VALUE + 1).negate(INT64));
+    assertEquals(range(100, Integer.MAX_VALUE).join(point(Integer.MIN_VALUE)), range(Integer.MIN_VALUE, -100).negate(INT32));
+    assertEquals(point(Long.MAX_VALUE).join(point(Long.MIN_VALUE)), range(Long.MIN_VALUE, Long.MIN_VALUE + 1).negate(INT64));
     assertEquals(range(100, Integer.MAX_VALUE + 1L), range(Integer.MIN_VALUE, -100).negate(INT64));
     LongRangeSet set = range(-900, 1000).subtract(range(-800, -600)).subtract(range(-300, 100)).subtract(range(500, 700));
     assertEquals("{-900..-801, -599..-301, 101..499, 701..1000}", set.toString());
@@ -432,7 +432,7 @@ public class LongRangeSetTest {
       assertNotNull(set);
       assertEquals(set, JvmPsiRangeSetUtil.castTo(set, type));
       assertEquals(set, JvmPsiRangeSetUtil.castTo(longSet, type));
-      assertEquals(type.equals(PsiType.CHAR) ? range(0, 127).unite(range(0xFF80, 0xFFFF)) : byteSet, JvmPsiRangeSetUtil
+      assertEquals(type.equals(PsiType.CHAR) ? range(0, 127).join(range(0xFF80, 0xFFFF)) : byteSet, JvmPsiRangeSetUtil
         .castTo(byteSet, type));
     }
     checkCast(range(-10, 1000), "{-128..127}", PsiType.BYTE);
@@ -463,9 +463,9 @@ public class LongRangeSetTest {
     checkBitwiseAnd(range(0, 3), range(4, 7), "{0..3}");
     checkBitwiseAnd(range(3, 4), range(3, 4), "{0..7}"); // 0,3,4,7 actually
     checkBitwiseAnd(range(-20, 20), point(8), "{0, 8}");
-    checkBitwiseAnd(point(3).unite(point(5)), point(3).unite(point(5)), "{1, 3, 5}");
+    checkBitwiseAnd(point(3).join(point(5)), point(3).join(point(5)), "{1, 3, 5}");
     checkBitwiseAnd(range(-10, 10), range(-20, 5), "{-32..15}");
-    checkBitwiseAnd(range(-30, -20).unite(range(20, 33)), point(-10).unite(point(10)), "{-32..-26, 0..54}");
+    checkBitwiseAnd(range(-30, -20).join(range(20, 33)), point(-10).join(point(10)), "{-32..-26, 0..54}");
     checkBitwiseAnd(range(0, 100).mul(point(6), INT64), point(~4), "{0..1018}: <0, 2> mod 8");
     checkBitwiseAnd(range(0, 50).mul(point(6), INT64), range(0, 50).mul(point(20), INT64).plus(point(1), INT64), "{0..508}: divisible by 4");
   }
@@ -508,22 +508,22 @@ public class LongRangeSetTest {
     assertEquals(empty(), empty().mod(all()));
     assertEquals(empty(), all().mod(empty()));
     assertEquals(empty(), point(1).mod(empty()));
-    assertEquals(empty(), point(1).unite(point(3)).mod(empty()));
+    assertEquals(empty(), point(1).join(point(3)).mod(empty()));
 
     assertEquals(point(10), point(110).mod(point(100)));
     checkMod(range(10, 20), range(30, 40), "{10..20}");
     checkMod(range(-10, 10), range(20, 30), "{-10..10}");
-    checkMod(point(0), range(-100, -50).unite(range(20, 80)), "{0}");
+    checkMod(point(0), range(-100, -50).join(range(20, 80)), "{0}");
     checkMod(point(30), range(10, 40), "{0..30}");
     checkMod(point(-30), range(-10, 40), "{-30..0}");
     checkMod(point(Long.MIN_VALUE), range(-10, 40), "{-39..0}");
     checkMod(range(-10, 40), point(Long.MIN_VALUE), "{-10..40}");
     checkMod(range(-30, -20), point(23), "{-22..0}");
     checkMod(point(10), range(30, 40), "{10}");
-    checkMod(range(-10, 40), point(Long.MIN_VALUE).unite(point(70)), "{-10..40}");
-    checkMod(range(-10, 40), point(Long.MIN_VALUE).unite(point(0)), "{-10..40}");
-    checkMod(point(10), point(Long.MIN_VALUE).unite(point(0)), "{0, 10}");
-    checkMod(range(0, 10).unite(range(30, 50)), range(-20, -10).unite(range(15, 25)), "{0..24}");
+    checkMod(range(-10, 40), point(Long.MIN_VALUE).join(point(70)), "{-10..40}");
+    checkMod(range(-10, 40), point(Long.MIN_VALUE).join(point(0)), "{-10..40}");
+    checkMod(point(10), point(Long.MIN_VALUE).join(point(0)), "{0, 10}");
+    checkMod(range(0, 10).join(range(30, 50)), range(-20, -10).join(range(15, 25)), "{0..24}");
     checkMod(point(10), point(0), "{}");
     checkMod(range(0, 10), point(0), "{}");
     checkMod(range(Long.MIN_VALUE, Long.MIN_VALUE + 3), point(Long.MIN_VALUE), "{Long.MIN_VALUE+1..-9223372036854775805, 0}");
@@ -611,11 +611,11 @@ public class LongRangeSetTest {
   @Test
   public void testContains() {
     assertTrue(range(0, 10).contains(5));
-    assertTrue(range(0, 10).unite(range(13, 20)).contains(point(5)));
-    assertTrue(range(0, 10).unite(range(13, 20)).contains(empty()));
-    assertFalse(range(0, 10).unite(range(13, 20)).contains(point(12)));
-    assertFalse(range(0, 10).unite(range(13, 20)).contains(range(9, 15)));
-    assertTrue(range(0, 10).unite(range(13, 20)).contains(range(2, 8).unite(range(15, 17))));
+    assertTrue(range(0, 10).join(range(13, 20)).contains(point(5)));
+    assertTrue(range(0, 10).join(range(13, 20)).contains(empty()));
+    assertFalse(range(0, 10).join(range(13, 20)).contains(point(12)));
+    assertFalse(range(0, 10).join(range(13, 20)).contains(range(9, 15)));
+    assertTrue(range(0, 10).join(range(13, 20)).contains(range(2, 8).join(range(15, 17))));
   }
 
   @Test
@@ -623,7 +623,7 @@ public class LongRangeSetTest {
     checkAdd(empty(), empty(), INT64, "{}");
     checkAdd(empty(), point(0), INT64, "{}");
     checkAdd(empty(), range(0, 10), INT64, "{}");
-    checkAdd(empty(), range(0, 10).unite(range(15, 20)), INT64, "{}");
+    checkAdd(empty(), range(0, 10).join(range(15, 20)), INT64, "{}");
 
     checkAdd(point(5), point(10), INT32, "{15}");
     checkAdd(point(Integer.MAX_VALUE), point(Integer.MAX_VALUE), INT32, "{-2}");
@@ -638,7 +638,7 @@ public class LongRangeSetTest {
     checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), range(0, 10), INT64, "{2147483637..2147483657}");
     checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), range(0, 10), INT32, "{Integer.MIN_VALUE..-2147483639, 2147483637..Integer.MAX_VALUE}");
 
-    checkAdd(range(10, 20).unite(range(40, 50)), range(0, 3).unite(range(5, 7)), INT64, "{10..27, 40..57}");
+    checkAdd(range(10, 20).join(range(40, 50)), range(0, 3).join(range(5, 7)), INT64, "{10..27, 40..57}");
 
     checkAdd(range(-1, 10).mul(point(2), INT32), point(3), INT32, "{1..23}: odd");
     checkAdd(range(-1, 10).mul(point(2), INT32), point(-10), INT32, "{-12..10}: even");
@@ -652,7 +652,7 @@ public class LongRangeSetTest {
     assertEquals(intDomain, intDomain.plus(point(20), INT32));
     assertEquals(intDomain.without(20), intDomain.without(0).plus(point(20), INT32));
     assertEquals(all().without(20), all().without(0).plus(point(20), INT64));
-    assertEquals(intDomain, range(20, 30).unite(range(40, 50)).plus(intDomain, INT32));
+    assertEquals(intDomain, range(20, 30).join(range(40, 50)).plus(intDomain, INT32));
     assertEquals(intDomain, range(Integer.MIN_VALUE, 2).plus(range(-2, Integer.MAX_VALUE), INT32));
     assertEquals(all(), range(Long.MIN_VALUE, 2).plus(range(-2, Long.MAX_VALUE), INT64));
     assertEquals(all(), range(-100, Long.MAX_VALUE).plus(all(), INT64));
@@ -665,7 +665,7 @@ public class LongRangeSetTest {
     checkMul(empty(), empty(), INT64, "{}");
     checkMul(empty(), point(0), INT64, "{}");
     checkMul(empty(), range(0, 10), INT64, "{}");
-    checkMul(empty(), range(0, 10).unite(range(15, 20)), INT64, "{}");
+    checkMul(empty(), range(0, 10).join(range(15, 20)), INT64, "{}");
 
     checkMul(point(5), point(10), INT32, "{50}");
     checkMul(point(2_000_000_000), point(2), INT32, "{-294967296}");
@@ -676,9 +676,9 @@ public class LongRangeSetTest {
     checkMul(point(0), point(10), INT32, "{0}");
     checkMul(point(-1), point(10), INT32, "{-10}");
 
-    checkMul(point(1), range(10, 20).unite(range(30, 40)), INT32, "{10..20, 30..40}");
-    checkMul(point(0), range(10, 20).unite(range(30, 40)), INT32, "{0}");
-    checkMul(point(-1), range(10, 20).unite(range(30, 40)), INT32, "{-40..-30, -20..-10}");
+    checkMul(point(1), range(10, 20).join(range(30, 40)), INT32, "{10..20, 30..40}");
+    checkMul(point(0), range(10, 20).join(range(30, 40)), INT32, "{0}");
+    checkMul(point(-1), range(10, 20).join(range(30, 40)), INT32, "{-40..-30, -20..-10}");
     checkMul(point(-1), range(Integer.MIN_VALUE, Integer.MIN_VALUE+30), INT32, "{Integer.MIN_VALUE, 2147483618..Integer.MAX_VALUE}");
     checkMul(point(-1), range(Integer.MIN_VALUE, Integer.MIN_VALUE+30), INT64, "{2147483618..2147483648}");
 
@@ -700,9 +700,9 @@ public class LongRangeSetTest {
     assertEquals("{0..150}: divisible by 15", mul15.toString());
     assertEquals("{0..1200}", mul15.mul(point(8), INT64).toString());
 
-    assertEquals("{Long.MIN_VALUE..Long.MAX_VALUE-1}: even", point(2).unite(point(10)).unite(point(100)).mul(all(), INT64).toString());
+    assertEquals("{Long.MIN_VALUE..Long.MAX_VALUE-1}: even", point(2).join(point(10)).join(point(100)).mul(all(), INT64).toString());
     LongRangeSet even = modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 2, 1L);
-    assertEquals("{Integer.MIN_VALUE..2147483640}: divisible by 8", point(4).unite(point(100)).unite(point(1000)).mul(
+    assertEquals("{Integer.MIN_VALUE..2147483640}: divisible by 8", point(4).join(point(100)).join(point(1000)).mul(
       even, INT32).toString());
   }
 
@@ -759,8 +759,8 @@ public class LongRangeSetTest {
     assertFalse(set.intersects(range(25, 27)));
     assertTrue(set.intersects(range(10, 12)));
     assertFalse(set.intersects(range(6, 9)));
-    assertFalse(set.intersects(range(6, 9).unite(range(16, 19))));
-    assertTrue(set.intersects(range(6, 9).unite(range(15, 19))));
+    assertFalse(set.intersects(range(6, 9).join(range(16, 19))));
+    assertTrue(set.intersects(range(6, 9).join(range(15, 19))));
     assertTrue(set.intersects(modRange(10, 13, 10, 0b1000)));
     assertFalse(set.intersects(modRange(0, 24, 10, 0b1111000011)));
     LongRangeSet byFour = modRange(0, 100, 4, 0b0111);
@@ -771,50 +771,50 @@ public class LongRangeSetTest {
   @Test
   public void testModRangeIntersect() {
     LongRangeSet set = modRange(0, 24, 10, 0b111100);
-    assertEquals("{2}", set.intersect(range(0, 2)).toString());
-    assertEquals("{}", set.intersect(range(0, 1)).toString());
-    assertEquals("{24}", set.intersect(range(24, 27)).toString());
-    assertEquals("{}", set.intersect(range(25, 27)).toString());
-    assertEquals("{12}", set.intersect(range(10, 12)).toString());
-    assertEquals("{12, 13}", set.intersect(range(10, 13)).toString());
-    assertEquals("{12..15}", set.intersect(range(6, 15)).toString());
-    assertEquals("{}", set.intersect(range(6, 9)).toString());
-    assertEquals("{5..15}: <2, 3, 4, 5> mod 10", set.intersect(range(5, 15)).toString());
-    assertEquals("{13}", set.intersect(modRange(10, 13, 10, 0b1000)).toString());
-    assertEquals("{12, 13}", set.intersect(modRange(10, 13, 10, 0b1100)).toString());
-    assertEquals("{2..23}: <2, 3> mod 10", set.intersect(modRange(-20, 100, 10, 0b1111)).toString());
-    assertEquals("{}", set.intersect(modRange(0, 24, 10, 0b1111000011)).toString());
-    assertEquals("{5..15}: <5> mod 10", set.intersect(modRange(0, 24, 5, 0b1)).toString());
-    assertEquals("{3..24}: <3, 4, 12, 13, 15, 22, 24, 25> mod 30", set.intersect(modRange(0, 24, 3, 0b11)).toString());
-    assertEquals("{3..15}: <0, 3, 4, 12, 13> mod 15", set.intersect(modRange(0, 16, 3, 0b11)).toString());
-    assertEquals("{1..99}: odd", range(0, 100).without(10).intersect(modRange(-200, 200, 2, 0b10)).toString());
+    assertEquals("{2}", set.meet(range(0, 2)).toString());
+    assertEquals("{}", set.meet(range(0, 1)).toString());
+    assertEquals("{24}", set.meet(range(24, 27)).toString());
+    assertEquals("{}", set.meet(range(25, 27)).toString());
+    assertEquals("{12}", set.meet(range(10, 12)).toString());
+    assertEquals("{12, 13}", set.meet(range(10, 13)).toString());
+    assertEquals("{12..15}", set.meet(range(6, 15)).toString());
+    assertEquals("{}", set.meet(range(6, 9)).toString());
+    assertEquals("{5..15}: <2, 3, 4, 5> mod 10", set.meet(range(5, 15)).toString());
+    assertEquals("{13}", set.meet(modRange(10, 13, 10, 0b1000)).toString());
+    assertEquals("{12, 13}", set.meet(modRange(10, 13, 10, 0b1100)).toString());
+    assertEquals("{2..23}: <2, 3> mod 10", set.meet(modRange(-20, 100, 10, 0b1111)).toString());
+    assertEquals("{}", set.meet(modRange(0, 24, 10, 0b1111000011)).toString());
+    assertEquals("{5..15}: <5> mod 10", set.meet(modRange(0, 24, 5, 0b1)).toString());
+    assertEquals("{3..24}: <3, 4, 12, 13, 15, 22, 24, 25> mod 30", set.meet(modRange(0, 24, 3, 0b11)).toString());
+    assertEquals("{3..15}: <0, 3, 4, 12, 13> mod 15", set.meet(modRange(0, 16, 3, 0b11)).toString());
+    assertEquals("{1..99}: odd", range(0, 100).without(10).meet(modRange(-200, 200, 2, 0b10)).toString());
 
     LongRangeSet even = modRange(0, 15, 2, 0b1);
-    even = even.intersect(point(10).fromRelation(RelationType.NE));
+    even = even.meet(point(10).fromRelation(RelationType.NE));
     assertEquals("{0..14}: <0, 2, 4, 6, 8, 12, 14> mod 16", even.toString());
-    even = even.intersect(point(9).fromRelation(RelationType.NE));
+    even = even.meet(point(9).fromRelation(RelationType.NE));
     assertEquals("{0..14}: <0, 2, 4, 6, 8, 12, 14> mod 16", even.toString());
-    even = even.intersect(point(2).fromRelation(RelationType.NE));
+    even = even.meet(point(2).fromRelation(RelationType.NE));
     assertEquals("{0..14}: <0, 4, 6> mod 8", even.toString());
-    even = even.intersect(point(4).fromRelation(RelationType.NE));
+    even = even.meet(point(4).fromRelation(RelationType.NE));
     assertEquals("{0..14}: <0, 6, 8, 12, 14> mod 16", even.toString());
-    even = even.intersect(point(6).fromRelation(RelationType.NE));
+    even = even.meet(point(6).fromRelation(RelationType.NE));
     assertEquals("{0..14}: <0, 8, 12, 14> mod 16", even.toString());
   }
 
   @Test
   public void testModRangeUnite() {
-    assertEquals("{0..20}: divisible by 5", modRange(0, 10, 5, 0b1).unite(modRange(15, 20, 5, 0b1)).toString());
-    assertEquals("{0..10, 20}", modRange(0, 10, 5, 0b1).unite(modRange(16, 20, 5, 0b1)).toString());
-    assertEquals("{0..10, 16}", modRange(0, 11, 5, 0b1).unite(modRange(15, 20, 5, 0b10)).toString());
-    assertEquals("{0..16}: <0, 1> mod 5", modRange(0, 11, 5, 0b1).unite(modRange(11, 20, 5, 0b10)).toString());
-    assertEquals("{0..19}: <0, 1, 3, 5, 7, 9> mod 10", modRange(0, 11, 5, 0b1).unite(modRange(11, 20, 2, 0b10)).toString());
-    assertEquals("{0..100}", modRange(0, 100, 2, 0b1).unite(point(1)).toString());
-    assertEquals("{0..102}: even", modRange(0, 100, 2, 0b1).unite(point(102)).toString());
-    assertEquals("{-2..100}: even", modRange(0, 100, 2, 0b1).unite(point(-2)).toString());
-    assertEquals("{-3, 0..100}", modRange(0, 100, 2, 0b1).unite(point(-3)).toString());
-    assertEquals("{-4, 0..100}", modRange(0, 100, 2, 0b1).unite(point(-4)).toString());
-    assertEquals("{Long.MIN_VALUE..9223372036854775744}", range(1, 63).unite(modRange(Long.MIN_VALUE, Long.MAX_VALUE, 64, 0b1)).toString());
+    assertEquals("{0..20}: divisible by 5", modRange(0, 10, 5, 0b1).join(modRange(15, 20, 5, 0b1)).toString());
+    assertEquals("{0..10, 20}", modRange(0, 10, 5, 0b1).join(modRange(16, 20, 5, 0b1)).toString());
+    assertEquals("{0..10, 16}", modRange(0, 11, 5, 0b1).join(modRange(15, 20, 5, 0b10)).toString());
+    assertEquals("{0..16}: <0, 1> mod 5", modRange(0, 11, 5, 0b1).join(modRange(11, 20, 5, 0b10)).toString());
+    assertEquals("{0..19}: <0, 1, 3, 5, 7, 9> mod 10", modRange(0, 11, 5, 0b1).join(modRange(11, 20, 2, 0b10)).toString());
+    assertEquals("{0..100}", modRange(0, 100, 2, 0b1).join(point(1)).toString());
+    assertEquals("{0..102}: even", modRange(0, 100, 2, 0b1).join(point(102)).toString());
+    assertEquals("{-2..100}: even", modRange(0, 100, 2, 0b1).join(point(-2)).toString());
+    assertEquals("{-3, 0..100}", modRange(0, 100, 2, 0b1).join(point(-3)).toString());
+    assertEquals("{-4, 0..100}", modRange(0, 100, 2, 0b1).join(point(-4)).toString());
+    assertEquals("{Long.MIN_VALUE..9223372036854775744}", range(1, 63).join(modRange(Long.MIN_VALUE, Long.MAX_VALUE, 64, 0b1)).toString());
   }
 
   @Test
@@ -823,7 +823,7 @@ public class LongRangeSetTest {
     assertEquals("{1..Long.MAX_VALUE-1}: <1> mod 5", fromRemainder(5, point(1)).toString());
     assertEquals("{1..Long.MAX_VALUE}: <1, 2, 3, 4> mod 5", fromRemainder(5, range(1, 4)).toString());
     assertEquals("{Long.MIN_VALUE..-3}: <2> mod 5", fromRemainder(5, point(-3)).toString());
-    assertEquals("{Long.MIN_VALUE..Long.MAX_VALUE}: <1, 2, 3, 4> mod 5", fromRemainder(5, range(1, 4).unite(range(-4, -1))).toString());
+    assertEquals("{Long.MIN_VALUE..Long.MAX_VALUE}: <1, 2, 3, 4> mod 5", fromRemainder(5, range(1, 4).join(range(-4, -1))).toString());
   }
 
   @Test
@@ -872,7 +872,7 @@ public class LongRangeSetTest {
     assertTrue(range(0, Long.MAX_VALUE).isCardinalityBigger(Long.MAX_VALUE));
     assertFalse(range(1, Long.MAX_VALUE).isCardinalityBigger(Long.MAX_VALUE));
 
-    assertTrue(range(1, Long.MAX_VALUE).unite(point(-10)).isCardinalityBigger(Long.MAX_VALUE));
+    assertTrue(range(1, Long.MAX_VALUE).join(point(-10)).isCardinalityBigger(Long.MAX_VALUE));
 
     assertTrue(modRange(0, 10, 2, 0b01).isCardinalityBigger(5));
     assertFalse(modRange(0, 10, 2, 0b01).isCardinalityBigger(6));
