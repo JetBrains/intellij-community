@@ -32,6 +32,9 @@ public interface DfType {
     }
 
     @Override
+    public @NotNull DfType tryJoinExactly(@NotNull DfType other) { return this; }
+
+    @Override
     public @NotNull DfType meet(@NotNull DfType other) {
       return other;
     }
@@ -71,6 +74,9 @@ public interface DfType {
     }
 
     @Override
+    public @NotNull DfType tryJoinExactly(@NotNull DfType other) { return other; }
+
+    @Override
     public @NotNull DfType meet(@NotNull DfType other) {
       return this;
     }
@@ -104,6 +110,9 @@ public interface DfType {
     public @NotNull DfType join(@NotNull DfType other) {
       return other == this ? this : TOP;
     }
+
+    @Override
+    public @NotNull DfType tryJoinExactly(@NotNull DfType other) { return join(other); }
 
     @Override
     public @NotNull DfType meet(@NotNull DfType other) {
@@ -140,6 +149,9 @@ public interface DfType {
     public @NotNull DfType join(@NotNull DfType other) {
       return other == FAIL ? TOP : this;
     }
+
+    @Override
+    public @Nullable DfType tryJoinExactly(@NotNull DfType other) { return join(other); }
 
     @Override
     public @NotNull DfType meet(@NotNull DfType other) {
@@ -185,6 +197,13 @@ public interface DfType {
    */
   @NotNull
   DfType join(@NotNull DfType other);
+
+  /**
+   * Return the type that contains all values from this type and from other type and no other values.
+   * @param other type to join
+   * @return the result of the join operation; null if exact join cannot be represented
+   */
+  @Nullable DfType tryJoinExactly(@NotNull DfType other);
 
   /**
    * Returns the least specific type that contains all values that belong both to this type and to other type.
@@ -304,7 +323,7 @@ public interface DfType {
    * @return value for derived variable, if known
    */
   default @NotNull DfType getDerivedValue(@NotNull DerivedVariableDescriptor derivedDescriptor) {
-    return DfType.TOP;
+    return TOP;
   }
 
   /**

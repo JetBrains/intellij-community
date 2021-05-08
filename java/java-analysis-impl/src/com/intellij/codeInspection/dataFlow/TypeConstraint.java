@@ -44,6 +44,8 @@ public interface TypeConstraint {
   @NotNull
   TypeConstraint join(@NotNull TypeConstraint other);
 
+  @Nullable TypeConstraint tryJoinExactly(TypeConstraint other);
+
   /**
    * @param other other constraint to meet with
    * @return intersection constraint. If some type satisfies the resulting constraint, it also satisfies both this and other constraints.
@@ -211,6 +213,13 @@ public interface TypeConstraint {
     }
 
     @Override
+    default @Nullable TypeConstraint tryJoinExactly(TypeConstraint other) {
+      if (other == TypeConstraints.BOTTOM || this.equals(other)) return this;
+      if (other == TypeConstraints.TOP) return other;
+      return new Constrained(Collections.singleton(this), Collections.emptySet()).tryJoinExactly(other);
+    }
+
+    @Override
     default @NotNull TypeConstraint meet(@NotNull TypeConstraint other) {
       if (this.equals(other) || other.isSuperConstraintOf(this)) return this;
       return TypeConstraints.BOTTOM;
@@ -363,8 +372,8 @@ public interface TypeConstraint {
 
     @Override
     public @NotNull TypeConstraint join(@NotNull TypeConstraint other) {
-      if(isSuperConstraintOf(other)) return this;
-      if(other.isSuperConstraintOf(this)) return other;
+      if (isSuperConstraintOf(other)) return this;
+      if (other.isSuperConstraintOf(this)) return other;
       if (other instanceof Constrained) {
         return joinWithConstrained((Constrained)other);
       }
@@ -372,6 +381,37 @@ public interface TypeConstraint {
         return joinWithConstrained(new Constrained(Collections.singleton((Exact)other), Collections.emptySet()));
       }
       return TypeConstraints.TOP;
+    }
+
+    @Override
+    public @Nullable TypeConstraint tryJoinExactly(TypeConstraint other) {
+      if (isSuperConstraintOf(other)) return this;
+      if (other.isSuperConstraintOf(this)) return other;
+      if (other instanceof Constrained) {
+        Constrained constrained = (Constrained)other;
+        if (myInstanceOf.equals(constrained.myInstanceOf)) {
+          return joinWithConstrained(constrained);
+        }
+        if (myNotInstanceOf.isEmpty() && myInstanceOf.containsAll(constrained.myInstanceOf) &&
+            myInstanceOf.containsAll(constrained.myNotInstanceOf) &&
+            myInstanceOf.size() == constrained.myInstanceOf.size() + constrained.myNotInstanceOf.size()) {
+          Set<Exact> newInstanceOf = new HashSet<>(myInstanceOf);
+          newInstanceOf.removeAll(constrained.myNotInstanceOf);
+          return newInstanceOf.isEmpty() ? TypeConstraints.TOP : new Constrained(newInstanceOf, Set.of());
+        }
+        if (constrained.myNotInstanceOf.isEmpty() && constrained.myInstanceOf.containsAll(myInstanceOf) &&
+            constrained.myInstanceOf.containsAll(myNotInstanceOf) &&
+            constrained.myInstanceOf.size() == myInstanceOf.size() + myNotInstanceOf.size()) {
+          Set<Exact> newInstanceOf = new HashSet<>(constrained.myInstanceOf);
+          newInstanceOf.removeAll(myNotInstanceOf);
+          return newInstanceOf.isEmpty() ? TypeConstraints.TOP : new Constrained(newInstanceOf, Set.of());
+        }
+      }
+      if (other instanceof Exact && ((Exact)other).isFinal() && ((Exact)other).canBeInstantiated() &&
+          myInstanceOf.isEmpty() && myNotInstanceOf.equals(Set.of(other))) {
+        return TypeConstraints.TOP;
+      }
+      return null;
     }
 
     private @NotNull TypeConstraint joinWithConstrained(@NotNull Constrained other) {

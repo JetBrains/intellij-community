@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -74,6 +75,21 @@ public class DfEphemeralReferenceType implements DfEphemeralType, DfReferenceTyp
   }
 
   @Override
+  public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+    if (other == DfType.BOTTOM) return this;
+    if (other == DfType.TOP) return other;
+    if (other instanceof DfEphemeralReferenceType) {
+      TypeConstraint otherConstraint = ((DfEphemeralReferenceType)other).getConstraint();
+      TypeConstraint constraint = myTypeConstraint.tryJoinExactly(otherConstraint);
+      return constraint == null ? null :
+             constraint == myTypeConstraint ? this :
+             constraint == otherConstraint ? other :
+             new DfEphemeralReferenceType(constraint);
+    }
+    return null;
+  }
+
+  @Override
   public @NotNull DfType meet(@NotNull DfType other) {
     if (other == DfType.TOP) return this;
     if (other == DfType.BOTTOM) return other;
@@ -101,6 +117,6 @@ public class DfEphemeralReferenceType implements DfEphemeralType, DfReferenceTyp
 
   @Override
   public @NotNull String toString() {
-    return "ephemeral " + getConstraint().toString();
+    return "ephemeral " + getConstraint();
   }
 }

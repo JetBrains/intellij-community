@@ -26,6 +26,7 @@ public final class TypeConstraints {
    */
   public static final TypeConstraint TOP = new TypeConstraint() {
     @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return this;}
+    @NotNull @Override public TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return this;}
     @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return other; }
     @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return true; }
     @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
@@ -38,6 +39,7 @@ public final class TypeConstraints {
    */
   public static final TypeConstraint BOTTOM = new TypeConstraint() {
     @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return other;}
+    @NotNull @Override public TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return other;}
     @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return this;}
     @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return other == this; }
     @Override public boolean isSubtypeOf(@NotNull String className) { return false;}

@@ -37,8 +37,12 @@ public final class DfTypes {
 
     @Override
     public @NotNull DfType join(@NotNull DfType other) {
-      if (other instanceof DfBooleanType) return this;
-      return TOP;
+      return other instanceof DfBooleanType ? this : TOP;
+    }
+
+    @Override
+    public @NotNull DfType tryJoinExactly(@NotNull DfType other) {
+      return join(other);
     }
 
     @Override
@@ -188,6 +192,17 @@ public final class DfTypes {
         return intRangeClamped(range);
       case INT64:
         return longRange(range);
+      default:
+        throw new IllegalStateException("Unexpected value: " + lrType);
+    }
+  }
+
+  static @NotNull DfType range(@NotNull LongRangeSet range, @Nullable LongRangeSet wideRange, @NotNull LongRangeType lrType) {
+    switch (lrType) {
+      case INT32:
+        return intRange(range, wideRange);
+      case INT64:
+        return longRange(range, wideRange);
       default:
         throw new IllegalStateException("Unexpected value: " + lrType);
     }

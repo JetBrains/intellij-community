@@ -69,6 +69,15 @@ public abstract class LongRangeSet {
   public abstract LongRangeSet join(@NotNull LongRangeSet other);
 
   /**
+   * Try to merge current set with other so that the resulting set contains only values
+   * from the input sets. Return null if it's impossible.
+   * 
+   * @param other other set to join with
+   * @return a new set; null if exact join is not possible
+   */
+  public abstract @Nullable LongRangeSet tryJoinExactly(@NotNull LongRangeSet other);
+
+  /**
    * @return a minimal value contained in the set
    * @throws NoSuchElementException if set is empty
    */
@@ -797,6 +806,11 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public @NotNull LongRangeSet tryJoinExactly(@NotNull LongRangeSet other) {
+      return other;
+    }
+
+    @Override
     public long min() {
       throw new NoSuchElementException();
     }
@@ -996,6 +1010,14 @@ public abstract class LongRangeSet {
         }
       }
       return fromRanges(result, result.length);
+    }
+
+    @Override
+    public @Nullable LongRangeSet tryJoinExactly(@NotNull LongRangeSet other) {
+      if (other instanceof ModRange) {
+        return other.tryJoinExactly(this);
+      }
+      return join(other);
     }
 
     @Override
@@ -1316,6 +1338,14 @@ public abstract class LongRangeSet {
       }
       System.arraycopy(longs, maxIndex, result, pos, longs.length - maxIndex);
       return fromRanges(result, longs.length + pos - maxIndex);
+    }
+
+    @Override
+    public @Nullable LongRangeSet tryJoinExactly(@NotNull LongRangeSet other) {
+      if (other instanceof ModRange) {
+        return other.tryJoinExactly(this);
+      }
+      return join(other);
     }
 
     @Override
@@ -1677,6 +1707,14 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public @Nullable LongRangeSet tryJoinExactly(@NotNull LongRangeSet other) {
+      if (contains(other)) return this;
+      if (other.contains(this)) return other;
+      // TODO: support some cases
+      return null;
+    }
+
+    @Override
     public boolean contains(@NotNull LongRangeSet other) {
       if (other instanceof ModRange) {
         ModRange modRange = (ModRange)other;
@@ -1914,6 +1952,14 @@ public abstract class LongRangeSet {
         result = range(myRanges[i], myRanges[i+1]).join(result);
       }
       return result;
+    }
+
+    @Override
+    public @Nullable LongRangeSet tryJoinExactly(@NotNull LongRangeSet other) {
+      if (other instanceof ModRange) {
+        return other.tryJoinExactly(this);
+      }
+      return join(other);
     }
 
     @Override

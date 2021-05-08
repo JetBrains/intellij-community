@@ -4,11 +4,9 @@ package com.intellij.codeInspection.dataFlow.types;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
-import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface DfLongType extends DfJvmIntegralType {
   @Override
@@ -16,24 +14,9 @@ public interface DfLongType extends DfJvmIntegralType {
   LongRangeSet getRange();
 
   @Override
-  default boolean isSuperType(@NotNull DfType other) {
-    if (other == DfType.BOTTOM) return true;
-    if (!(other instanceof DfLongType)) return false;
-    DfLongType longType = (DfLongType)other;
-    return getRange().contains(longType.getRange()) &&
-           getWideRange().contains(longType.getWideRange());
-  }
-
-  @Override
   default boolean containsConstant(@NotNull DfConstantType<?> constant) {
     Long value = constant.getConstantOfType(Long.class);
     return value != null && getRange().contains(value);
-  }
-
-  @Override
-  @NotNull
-  default DfType fromRelation(@NotNull RelationType relationType) {
-    return DfTypes.longRange(getRange().fromRelation(relationType));
   }
 
   @Override
@@ -46,48 +29,8 @@ public interface DfLongType extends DfJvmIntegralType {
 
   @NotNull
   @Override
-  default DfType join(@NotNull DfType other) {
-    if (other == DfType.BOTTOM) return this;
-    if (!(other instanceof DfLongType)) return DfType.TOP;
-    LongRangeSet range = ((DfLongType)other).getRange().join(getRange());
-    LongRangeSet wideRange = ((DfLongType)other).getWideRange().join(getWideRange());
-    return DfTypes.longRange(range, wideRange);
-  }
-
-  @NotNull
-  @Override
-  default DfType meet(@NotNull DfType other) {
-    if (other == DfType.TOP) return this;
-    if (!(other instanceof DfLongType)) return DfType.BOTTOM;
-    LongRangeSet range = ((DfLongType)other).getRange().meet(getRange());
-    LongRangeSet wideRange = ((DfLongType)other).getWideRange().meet(getWideRange());
-    return DfTypes.longRange(range, wideRange);
-  }
-
-  @Override
-  default DfType widen() {
-    LongRangeSet wideRange = getWideRange();
-    return wideRange.equals(getRange()) ? this : DfTypes.longRange(wideRange);
-  }
-
-  @NotNull
-  @Override
-  default DfType meetRange(@NotNull LongRangeSet range) {
-    return meet(DfTypes.longRange(range));
-  }
-
-  @NotNull
-  @Override
   default PsiPrimitiveType getPsiType() {
     return PsiType.LONG;
-  }
-
-  @Override
-  @Nullable
-  default DfType tryNegate() {
-    LongRangeSet range = getRange();
-    LongRangeSet res = LongRangeSet.all().subtract(range);
-    return res.intersects(range) ? null : DfTypes.longRange(res);
   }
 
   @NotNull

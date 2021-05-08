@@ -114,6 +114,16 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   }
 
   @Override
+  public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+    if (isSuperType(other)) return this;
+    if (other.isSuperType(this)) return other;
+    if (other instanceof DfGenericObjectType) {
+      other.tryJoinExactly(this);
+    }
+    return null;
+  }
+
+  @Override
   public @NotNull String toString() {
     return DfaPsiUtil.renderValue(getValue());
   }

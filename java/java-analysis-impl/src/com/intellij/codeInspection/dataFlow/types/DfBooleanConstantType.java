@@ -17,6 +17,11 @@ final class DfBooleanConstantType extends DfConstantType<Boolean> implements DfB
     return DfType.TOP;
   }
 
+  @Override
+  public @NotNull DfType tryJoinExactly(@NotNull DfType other) {
+    return join(other);
+  }
+
   @NotNull
   @Override
   public PsiPrimitiveType getPsiType() {
