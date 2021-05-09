@@ -702,4 +702,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testGetterNullityAfterCheck() { doTest(); }
   public void testInferenceNullityMismatch() { doTestWith(insp -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false); }
   public void testFieldInInstanceInitializer() { doTest(); }
+  public void testNullableCallWithPrecalculatedValueAndSpecialField() { doTest(); }
 }

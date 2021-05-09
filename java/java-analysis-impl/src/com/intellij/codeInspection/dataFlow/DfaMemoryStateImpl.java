@@ -1129,8 +1129,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       doFlush(value, true);
     }
     myStack.replaceAll(val -> {
-      DfType type = val.getDfType();
-      if (ContainerUtil.or(type.getDerivedVariables(), dv -> !dv.isStable() && qualifierStatusMap.shouldFlush(val, dv.isCall()))) {
+      DfType type = getDfType(val);
+      if (ContainerUtil.or(type.getDerivedVariables(), dv -> type.getDerivedValue(dv) != DfType.TOP && 
+                                                             !dv.isStable() && qualifierStatusMap.shouldFlush(val, dv.isCall()))) {
         return myFactory.fromDfType(type.getBasicType());
       }
       return val;
