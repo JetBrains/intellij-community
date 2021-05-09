@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.Key
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nullable
@@ -23,22 +24,16 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project == null) return
-    var maximizeEditor = null as Boolean?
     val splittersToMaximize = getSplittersToMaximize(e)
     if (splittersToMaximize.isNotEmpty()) {
-      maximizeEditor = true
       splittersToMaximize.forEach { it.first.proportion = if (it.second) it.first.maximumProportion else it.first.minimumProportion }
     }
     else {
-      if (maximizeEditor == null) {
-        val splittersToNormalize = getSplittersToNormalize(e)
-        if (splittersToNormalize.isNotEmpty()) {
-          maximizeEditor = false
-          splittersToNormalize.forEach { it.proportion = .5f }
-        }
+      val splittersToNormalize = getSplittersToNormalize(e)
+      if (splittersToNormalize.isNotEmpty()) {
+        splittersToNormalize.forEach { it.proportion = .5f }
       }
     }
-
   }
 
   override fun update(event: AnActionEvent) {
@@ -49,12 +44,14 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
     val splittersToMaximize = getSplittersToMaximize(event)
     if (splittersToMaximize.isNotEmpty()) {
       presentation.text = IdeBundle.message("action.maximize.editor")
+      presentation.putClientProperty(MAXIMIZED_KEY, false)
       return
     }
 
     val splittersToNormalize = getSplittersToNormalize(event)
     if (splittersToNormalize.isNotEmpty()) {
       presentation.text = IdeBundle.message("action.normalize.splits")
+      presentation.putClientProperty(MAXIMIZED_KEY, true)
       return
     }
     presentation.isEnabled = false
@@ -70,6 +67,7 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
   }
 
   companion object {
+    val MAXIMIZED_KEY = Key.create<Boolean>("MAXIMIZED")
     fun getSplittersToMaximize(project: @Nullable Project, editor: @Nullable Editor): Set<Pair<Splitter, Boolean>> {
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return emptySet()
       val set = HashSet<Pair<Splitter, Boolean>>()
