@@ -124,7 +124,7 @@ class DfFloatRangeType implements DfFloatType {
       float fromCmp = Float.compare(myFrom, from);
       float toCmp = Float.compare(to, myTo);
       if (fromCmp >= 0 && toCmp >= 0 || fromCmp < 0 && toCmp < 0) {
-        return (DfFloatRangeType)create(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, false, myNaN);
+        return exact ? null : (DfFloatRangeType)create(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, false, myNaN);
       }
       if (fromCmp >= 0 && toCmp < 0) {
         return (DfFloatRangeType)create(nextUp(to), myTo, true, myNaN);
@@ -134,7 +134,12 @@ class DfFloatRangeType implements DfFloatType {
       }
       throw new AssertionError("Impossible!");
     } else {
-      if (exact && (Float.compare(myTo, nextDown(from)) < 0 || Float.compare(to, nextDown(myFrom)) < 0)) return null;
+      if (Float.compare(myTo, nextDown(from)) < 0 || Float.compare(to, nextDown(myFrom)) < 0) {
+        if (myFrom == Float.NEGATIVE_INFINITY && to == Float.POSITIVE_INFINITY) {
+          return (DfFloatRangeType)create(nextUp(myTo), nextDown(from), true, myNaN);
+        }
+        if (exact) return null;
+      }
       return (DfFloatRangeType)create(Math.min(myFrom, from), Math.max(myTo, to), false, myNaN);
     }
   }

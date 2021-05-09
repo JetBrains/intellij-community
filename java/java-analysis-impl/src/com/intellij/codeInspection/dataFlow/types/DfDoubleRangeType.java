@@ -124,7 +124,7 @@ class DfDoubleRangeType implements DfDoubleType {
       double fromCmp = Double.compare(myFrom, from);
       double toCmp = Double.compare(to, myTo);
       if (fromCmp >= 0 && toCmp >= 0 || fromCmp < 0 && toCmp < 0) {
-        return (DfDoubleRangeType)create(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, myNaN);
+        return exact ? null : (DfDoubleRangeType)create(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, myNaN);
       }
       if (fromCmp >= 0 && toCmp < 0) {
         return (DfDoubleRangeType)create(nextUp(to), myTo, true, myNaN);
@@ -134,7 +134,12 @@ class DfDoubleRangeType implements DfDoubleType {
       }
       throw new AssertionError("Impossible!");
     } else {
-      if (exact && (Double.compare(myTo, nextDown(from)) < 0 || Double.compare(to, nextDown(myFrom)) < 0)) return null;
+      if (Double.compare(myTo, nextDown(from)) < 0 || Double.compare(to, nextDown(myFrom)) < 0) {
+        if (myFrom == Double.NEGATIVE_INFINITY && to == Double.POSITIVE_INFINITY) {
+          return (DfDoubleRangeType)create(nextUp(myTo), nextDown(from), true, myNaN);
+        }
+        if (exact) return null;
+      }
       return (DfDoubleRangeType)create(Math.min(myFrom, from), Math.max(myTo, to), false, myNaN);
     }
   }
