@@ -173,8 +173,10 @@ public class ResizeableMappedFile implements Forceable {
 
   private long readLength() throws IOException {
     Path lengthFile = getLengthFile();
-    if (!Files.exists(lengthFile) && (!Files.exists(myStorage.getFile()) || Files.size(myStorage.getFile()) == 0L)) {
-      return 0L;
+    long zero = 0L;
+    if (!Files.exists(lengthFile) && (!Files.exists(myStorage.getFile()) || Files.size(myStorage.getFile()) == zero)) {
+      writeLength(zero);
+      return zero;
     }
 
     try (DataInputStream stream = new DataInputStream(Files.newInputStream(lengthFile, StandardOpenOption.READ))) {
