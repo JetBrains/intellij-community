@@ -185,8 +185,15 @@ public final class CustomMethodHandlers {
               toValue((arguments, state, factory, method) -> floatRange(0.0f, Math.nextDown(1.0f))))
     .register(staticCall(JAVA_LANG_DOUBLE, "isNaN").parameterTypes("double"),
               toValue((arguments, state, factory, method) -> isNaN(arguments, state, DOUBLE_NAN)))
-    .register(staticCall(JAVA_LANG_FLOAT, "isNaN").parameterTypes("float"), 
-              toValue((arguments, state, factory, method) -> isNaN(arguments, state, FLOAT_NAN)));
+    .register(staticCall(JAVA_LANG_FLOAT, "isNaN").parameterTypes("float"),
+              toValue((arguments, state, factory, method) -> isNaN(arguments, state, FLOAT_NAN)))
+    .register(anyOf(
+                staticCall("com.google.common.collect.Lists", "newArrayList", "newLinkedList", "newCopyOnWriteArrayList").parameterCount(0),
+                staticCall("com.google.common.collect.Sets", "newHashSet", "newLinkedHashSet", "newIdentityHashSet",
+                           "newCopyOnWriteArraySet", "newConcurrentHashSet", "newTreeSet").parameterCount(0),
+                staticCall("com.google.common.collect.Maps", "newHashMap", "newLinkedHashMap", "newIdentityHashMap",
+                           "newConcurrentHashMap", "newTreeMap").parameterCount(0)),
+              toValue((arguments, state, factory, method) -> COLLECTION_SIZE.asDfType(intValue(0)).meet(LOCAL_OBJECT)));
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
