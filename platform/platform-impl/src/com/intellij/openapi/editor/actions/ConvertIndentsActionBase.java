@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -23,7 +24,7 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
 
   private class Handler extends EditorWriteActionHandler {
     @Override
-    public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void executeWriteAction(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final SelectionModel selectionModel = editor.getSelectionModel();
       int changedLines = 0;
       if (selectionModel.hasSelection()) {

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +31,7 @@ public class CutHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void executeWriteAction(final Editor editor, Caret caret, DataContext dataContext) {
+  public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
     assert caret == null : "Invocation of 'cut' operation for specific caret is not supported";
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
     if (project == null) {

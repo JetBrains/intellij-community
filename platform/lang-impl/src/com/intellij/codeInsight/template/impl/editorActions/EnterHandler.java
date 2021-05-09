@@ -39,7 +39,7 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, Caret caret, DataContext dataContext) {
     final Project project = editor.getProject();
     if (project != null && TemplateManager.getInstance(project).startTemplate(editor, TemplateSettings.ENTER_CHAR)) {
       return;

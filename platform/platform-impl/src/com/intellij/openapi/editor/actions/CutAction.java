@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CutAction extends TextComponentEditorAction {
@@ -16,7 +17,7 @@ public class CutAction extends TextComponentEditorAction {
 
   public static class Handler extends EditorWriteActionHandler {
     @Override
-    public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void executeWriteAction(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if(!editor.getSelectionModel().hasSelection(true)) {
         if (CopyAction.isSkipCopyPasteForEmptySelection()) {
           return;

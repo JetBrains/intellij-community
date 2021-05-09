@@ -19,7 +19,7 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (caret == null) caret = editor.getCaretModel().getPrimaryCaret();
     Document document = editor.getDocument();
     Couple<Integer> lineRange = getTargetLineRange(caret);
