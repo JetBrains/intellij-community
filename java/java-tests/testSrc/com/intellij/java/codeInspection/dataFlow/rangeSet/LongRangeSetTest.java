@@ -491,6 +491,9 @@ public class LongRangeSetTest {
     checkBitwiseOr(range(-50, 50).bitwiseAnd(point(~0xF)), range(-50, 50).bitwiseAnd(point(~0xF0)), INT64, "{Long.MIN_VALUE..Long.MAX_VALUE}");
     checkBitwiseOr(range(-50, 50).bitwiseAnd(point(~0xF)), range(-50, 50).bitwiseAnd(point(~0xF1)), INT64, "{Long.MIN_VALUE..Long.MAX_VALUE}");
     checkBitwiseOr(all().bitwiseAnd(point(4)), all().bitwiseAnd(point(8)), INT64, "{0..12}: divisible by 4");
+    checkBitwiseOr(range(0, 7), point(8), INT32, "{8..15}");
+    LongRangeSet set = point(0).bitwiseOr(point(1), INT32).join(point(0));
+    assertEquals("{0..3}", set.bitwiseOr(point(2), INT32).join(set).toString());
   }
 
   @Test
