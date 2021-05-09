@@ -22136,6 +22136,11 @@ public abstract class DiagnosisCompilerTestFE10TestdataTestGenerated extends Abs
                 public void testStabilityOfSmartcastsAgainstGenericFunctions() throws Exception {
                     runTest(compilerTestData("compiler/testData/diagnostics/tests/smartCasts/inference/stabilityOfSmartcastsAgainstGenericFunctions.kt"));
                 }
+
+                @TestMetadata("unneededUnstableSmartcast.kt")
+                public void testUnneededUnstableSmartcast() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/inference/unneededUnstableSmartcast.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
