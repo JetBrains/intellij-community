@@ -9,13 +9,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import java.io.File;
 
 import static com.intellij.testFramework.RunAll.runAll;
-import static org.jetbrains.kotlin.test.KotlinTestUtils.getTestDataFileName;
-import static org.jetbrains.kotlin.test.KotlinTestUtils.getTestsRoot;
+import static org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName;
+import static org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot;
 
 abstract public class KotlinCompletionTestCase extends JavaCompletionTestCase {
     private Ref<Disposable> vfsDisposable;

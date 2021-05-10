@@ -7,7 +7,7 @@ import com.intellij.ide.navigationToolbar.NavBarPresentation
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.ex.EditorEx
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 
 abstract class AbstractKotlinNavBarTest : KotlinLightCodeInsightFixtureTestCase() {

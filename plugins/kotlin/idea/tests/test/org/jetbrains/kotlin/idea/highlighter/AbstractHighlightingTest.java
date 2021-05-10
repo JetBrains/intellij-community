@@ -9,8 +9,8 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.test.TagsTestDataUtil;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil;
 
 import java.io.File;
 import java.util.List;

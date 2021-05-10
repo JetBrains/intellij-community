@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.findUsages.doTestWithFIRFlagsByPath
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkByJavaFile
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
 abstract class AbstractFirLightFacadeClassTest : AbstractUltraLightFacadeClassTest() {
 

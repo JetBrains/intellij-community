@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor.Companion.ANNOTATION_OPTION
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor.Companion.PLUGIN_ID
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.junit.Assert.assertNotEquals
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

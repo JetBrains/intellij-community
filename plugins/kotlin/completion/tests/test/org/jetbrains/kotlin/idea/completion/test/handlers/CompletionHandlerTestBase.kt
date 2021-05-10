@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.completion.KotlinCompletionContributor
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase() {
     protected val fixture: JavaCodeInsightTestFixture

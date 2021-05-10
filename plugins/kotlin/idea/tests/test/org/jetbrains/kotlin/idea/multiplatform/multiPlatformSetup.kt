@@ -32,8 +32,8 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.projectModel.*
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.TestJdkKind
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.TestJdkKind
 import org.jetbrains.kotlin.types.typeUtil.closure
 import java.io.File
 

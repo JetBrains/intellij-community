@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractReturnExpressionTargetTest : KotlinLightCodeInsightFixtureTestCase() {

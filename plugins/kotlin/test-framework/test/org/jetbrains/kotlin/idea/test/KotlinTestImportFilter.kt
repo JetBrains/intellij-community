@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.codeInsight.ImportFilter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 object KotlinTestImportFilter : ImportFilter() {
     override fun shouldUseFullyQualifiedName(targetFile: PsiFile, classQualifiedName: String): Boolean {

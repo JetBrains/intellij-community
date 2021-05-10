@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.test.framework.TestStructureExpectedDataBlock
 import org.jetbrains.kotlin.idea.test.framework.TestStructureRenderer
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
 abstract class AbstractHLExpressionTypeTest : AbstractKtIdeaTest() {
     override fun doTestByFileStructure(fileStructure: TestFileStructure) {

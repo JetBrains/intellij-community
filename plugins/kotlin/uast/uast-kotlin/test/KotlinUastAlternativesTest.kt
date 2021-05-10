@@ -6,7 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase.assertInstanceOf
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase.assertInstanceOf
 import org.jetbrains.uast.*
 import org.junit.Test
 

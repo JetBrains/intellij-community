@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
 import org.jetbrains.kotlin.idea.codeInsight.ReviewAddedImports
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScriptConfigurationTest() {

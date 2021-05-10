@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.refactoring.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
 abstract class AbstractExpressionSelectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTestExpressionSelection(path: String) {

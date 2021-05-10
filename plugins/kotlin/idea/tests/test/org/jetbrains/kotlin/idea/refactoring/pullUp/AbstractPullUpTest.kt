@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.refactoring.AbstractMemberPullPushTest
 import org.jetbrains.kotlin.idea.refactoring.chooseMembers
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractPullUpTest : AbstractMemberPullPushTest() {
     private fun getTargetClassName(file: PsiFile) = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// TARGET_CLASS: ")

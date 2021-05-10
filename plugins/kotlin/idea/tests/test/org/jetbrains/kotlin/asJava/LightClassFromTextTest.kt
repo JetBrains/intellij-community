@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestMetadata
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

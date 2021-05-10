@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

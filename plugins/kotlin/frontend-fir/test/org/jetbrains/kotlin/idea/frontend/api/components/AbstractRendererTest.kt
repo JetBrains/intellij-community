@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.frontend.api.analyse
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractRendererTest : KotlinLightCodeInsightFixtureTestCase() {

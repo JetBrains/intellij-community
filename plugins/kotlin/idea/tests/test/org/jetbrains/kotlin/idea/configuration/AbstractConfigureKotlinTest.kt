@@ -8,7 +8,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.configuration.KotlinWithLibraryConfigurator.FileState
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
 

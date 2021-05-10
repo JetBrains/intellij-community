@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind;
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType;
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone;
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone;
 
 import java.io.File;
 import java.util.Collections;
