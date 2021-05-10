@@ -72,6 +72,7 @@ public final class ActionPanel extends NonOpaquePanel {
   }
 
   public boolean update() {
+    if (getRootPane() == null) return false;
     boolean changed = false;
     boolean anyVisible = false;
     for (ActionButton each : myButtons) {
