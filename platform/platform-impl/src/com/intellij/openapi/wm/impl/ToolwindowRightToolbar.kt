@@ -10,11 +10,9 @@ import javax.swing.JPanel
 
 class ToolwindowRightToolbar : ToolwindowToolbar() {
   private val topPane = JPanel(VerticalFlowLayout(0, 0))
-  private val topToolbar = ToolwindowActionToolbar(topPane)
 
   init {
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 1, 0, 0)
-    topToolbar.addNotify()
     add(topPane)
   }
 
