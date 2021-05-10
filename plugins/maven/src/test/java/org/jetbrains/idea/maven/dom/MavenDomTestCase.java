@@ -40,7 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public abstract class MavenDomTestCase extends MavenImportingTestCase {
+public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCase {
   protected CodeInsightTestFixture myFixture;
   private final Map<VirtualFile, Long> myConfigTimestamps = new HashMap<>();
   private boolean myOriginalAutoCompletion;

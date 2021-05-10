@@ -17,12 +17,13 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.roots.ModuleRootManager
 import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import org.junit.Test
 
 /**
  * @author Sergey Evdokimov
  */
 class MavenIdeaPluginTest extends MavenDomTestCase {
-
+  @Test
   void testConfigureJdk() {
     importProject("""
 <groupId>test</groupId>

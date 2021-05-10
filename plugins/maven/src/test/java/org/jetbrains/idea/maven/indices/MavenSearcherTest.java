@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     }
   }
 
+  @Test
   public void testClassSearch() {
 
     assertClassSearchResults("TestCas",
@@ -94,6 +96,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     assertClassSearchResults("!@][#$%)(^&*()_"); // shouldn't throw
   }
 
+  @Test 
   public void testArtifactSearch() {
     if(ignore()) return;
     assertArtifactSearchResults("",

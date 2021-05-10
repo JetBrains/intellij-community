@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.junit.Test;
 
 import java.util.List;
 
@@ -30,6 +31,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                   "<version>1</version>");
   }
 
+  @Test
   public void testFindModelPropertyFromReference() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -43,6 +45,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                         findTag("project.description"));
   }
 
+  @Test 
   public void testFindModelPropertyFromReferenceWithDifferentQualifiers() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -56,6 +59,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                         findTag("project.description"));
   }
 
+  @Test 
   public void testFindUsagesFromTag() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -69,6 +73,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                         findTag("project.description"));
   }
 
+  @Test 
   public void testFindUsagesFromTagValue() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -79,6 +84,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
     assertSearchResults(myProjectPom, findTag("project.name"));
   }
 
+  @Test 
   public void testFindUsagesFromProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -91,6 +97,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
     assertSearchResultsInclude(myProjectPom, findTag("project.name"));
   }
 
+  @Test 
   public void testFindUsagesForEnvProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -101,6 +108,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
     assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"));
   }
 
+  @Test 
   public void testFindUsagesForSystemProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -111,6 +119,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
     assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"));
   }
 
+  @Test 
   public void testFindUsagesForSystemPropertyInFilteredResources() throws Exception {
     createProjectSubDir("res");
 
@@ -135,6 +144,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
     assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(myProject, f, "foo"));
   }
 
+  @Test 
   public void testHighlightingFromTag() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +

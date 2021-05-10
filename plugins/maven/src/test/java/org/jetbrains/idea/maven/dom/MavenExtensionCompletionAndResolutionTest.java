@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
+import org.junit.Test;
 
 public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
 
@@ -36,6 +37,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                   "<version>1</version>");
   }
 
+  @Test
   public void testGroupIdCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -53,6 +55,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                              "org.apache.maven.plugins", "org.codehaus.plexus", "test", "intellij.test", "org.codehaus.mojo");
   }
 
+  @Test 
   public void testArtifactIdCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -73,6 +76,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                              "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
   }
 
+  @Test 
   public void testArtifactWithoutGroupCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -101,6 +105,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                              "project");
   }
 
+  @Test 
   public void testCompletionInsideTag() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -127,6 +132,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                                     "test:project:1");
   }
 
+  @Test 
   public void testResolving() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -146,6 +152,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     assertResolved(myProjectPom, findPsiFile(f));
   }
 
+  @Test 
   public void testResolvingAbsentPlugins() {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
 
@@ -166,6 +173,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     ref.resolve(); // shouldn't throw;
   }
 
+  @Test 
   public void testDoNotHighlightAbsentGroupIdAndVersion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -181,6 +189,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     checkHighlighting();
   }
 
+  @Test 
   public void testHighlightingAbsentArtifactId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

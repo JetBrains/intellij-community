@@ -5,12 +5,13 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ProjectRootManager
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
+import org.junit.Test
 
-class InvalidEnvironmentImportingTest : MavenImportingTestCase() {
+class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myTestSyncViewManager: SyncViewManager
   private val myEvents: MutableList<BuildEvent> = ArrayList()
 
@@ -24,6 +25,7 @@ class InvalidEnvironmentImportingTest : MavenImportingTestCase() {
     myProjectsManager.setProgressListener(myTestSyncViewManager);
   }
 
+  @Test
   fun testShouldShowWarningIfBadJDK() {
     val projectSdk = ProjectRootManager.getInstance(myProject).projectSdk
     val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
@@ -40,7 +42,7 @@ class InvalidEnvironmentImportingTest : MavenImportingTestCase() {
     }
   }
 
-  fun testShouldShowLogsOfMavenServerIfNotStarted() {
+  @Test fun testShouldShowLogsOfMavenServerIfNotStarted() {
     try {
       MavenServerCMDState.setThrowExceptionOnNextServerStart()
       createAndImportProject()
