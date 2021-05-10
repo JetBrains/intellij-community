@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Comparing;
@@ -60,6 +61,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import one.util.streamex.StreamEx;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -340,11 +342,24 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        int i = counter.incrementAndGet();
-        reportConverter.projectData(project, rootLogDir.resolve("state" + i));
-        LOG.info("Project structure update written. Change number " + i);
+        updateProjectStructure(counter, reportConverter, project, rootLogDir);
       }
     });
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
+                         new AdditionalLibraryRootsListener() {
+                           @Override
+                           public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
+                                                           @NotNull Collection<VirtualFile> newRoots,
+                                                           @NotNull Collection<VirtualFile> oldRoots) {
+                             updateProjectStructure(counter, reportConverter, project, rootLogDir);
+                           }
+                         });
+  }
+
+  private static void updateProjectStructure(AtomicInteger counter, InspectionsReportConverter reportConverter, Project project, Path rootLogDir) {
+    int i = counter.incrementAndGet();
+    reportConverter.projectData(project, rootLogDir.resolve("state" + i));
+    LOG.info("Project structure update written. Change number " + i);
   }
 
   private List<VirtualFile> getChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {

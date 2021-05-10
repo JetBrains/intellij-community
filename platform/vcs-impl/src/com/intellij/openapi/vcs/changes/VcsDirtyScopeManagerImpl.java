@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.ActionCallback;
@@ -58,6 +59,9 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
         ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
       }
     });
+    busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, newRoots, oldRoots) -> {
+      ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
+    }));
   }
 
   private static ProjectLevelVcsManager getVcsManager(@NotNull Project project) {

@@ -57,6 +57,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
@@ -229,6 +230,9 @@ public final class DaemonListeners implements Disposable {
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
       }
+    });
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, newRoots, oldRoots) -> {
+      stopDaemonAndRestartAllFiles("Additional libraries changed");
     });
 
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {

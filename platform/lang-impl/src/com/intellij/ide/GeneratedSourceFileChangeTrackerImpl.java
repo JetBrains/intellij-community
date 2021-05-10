@@ -15,15 +15,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.GeneratedSourcesFilter;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -60,6 +58,12 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
   @Override
   public boolean isEditedGeneratedFile(@NotNull VirtualFile file) {
     return myEditedGeneratedFiles.contains(file);
+  }
+
+  private void libraryRootsChanged(@NotNull @Nls String presentableLibraryName,
+                                   @NotNull Collection<VirtualFile> newRoots,
+                                   @NotNull Collection<VirtualFile> oldRoots) {
+    resetOnRootsSchanged();
   }
 
   static final class MyDocumentListener implements DocumentListener {
@@ -130,11 +134,16 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        myFilesToCheck.addAll(myEditedGeneratedFiles);
-        myEditedGeneratedFiles.clear();
-        myCheckingQueue.cancelAndRequest();
+        resetOnRootsSchanged();
       }
     });
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, this::libraryRootsChanged);
+  }
+
+  private void resetOnRootsSchanged() {
+    myFilesToCheck.addAll(myEditedGeneratedFiles);
+    myEditedGeneratedFiles.clear();
+    myCheckingQueue.cancelAndRequest();
   }
 
   private void checkFiles() {

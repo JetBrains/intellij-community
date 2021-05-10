@@ -24,6 +24,7 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupManager
@@ -215,6 +216,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
       }
     })
+    messageBusConnection.subscribe(AdditionalLibraryRootsListener.TOPIC,
+                                   AdditionalLibraryRootsListener { _, _, _ ->
+                                     clearSelectedConfigurationIcon()
+                                     deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+                                   })
 
     messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {

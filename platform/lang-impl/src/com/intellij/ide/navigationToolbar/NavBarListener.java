@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -37,6 +38,7 @@ import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,6 +46,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -52,7 +55,7 @@ import java.util.List;
 public final class NavBarListener
   implements ProblemListener, FocusListener, FileStatusListener, AnActionListener, FileEditorManagerListener,
              PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener, WindowFocusListener,
-             LafManagerListener, DynamicPluginListener, VirtualFileAppearanceListener {
+             LafManagerListener, DynamicPluginListener, VirtualFileAppearanceListener, AdditionalLibraryRootsListener {
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
   private final NavBarPanel myPanel;
@@ -73,6 +76,7 @@ public final class NavBarListener
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(AnActionListener.TOPIC, listener);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, listener);
     connection.subscribe(NavBarModelListener.NAV_BAR, listener);
     connection.subscribe(ProblemListener.TOPIC, listener);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
@@ -248,6 +252,13 @@ public final class NavBarListener
 
   @Override
   public void rootsChanged(@NotNull ModuleRootEvent event) {
+    updateModel();
+  }
+
+  @Override
+  public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
+                                  @NotNull Collection<VirtualFile> newRoots,
+                                  @NotNull Collection<VirtualFile> oldRoots) {
     updateModel();
   }
 

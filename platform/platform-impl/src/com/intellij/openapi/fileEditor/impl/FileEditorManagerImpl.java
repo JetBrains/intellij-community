@@ -43,6 +43,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
@@ -83,6 +84,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -1584,6 +1586,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootsListener());
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, new MyRootsListener());
 
     // updates tabs names
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new MyVirtualFileListener());
@@ -1948,10 +1951,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
   }
 
-  private class MyRootsListener implements ModuleRootListener {
+  private class MyRootsListener implements ModuleRootListener, AdditionalLibraryRootsListener {
 
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
+      changeHappened();
+    }
+
+    private void changeHappened() {
       AppUIExecutor
         .onUiThread(ModalityState.any())
         .expireWith(myProject)
@@ -2015,6 +2022,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           closeFile(file, eachWindow);
         }
       }
+    }
+
+    @Override
+    public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
+                                    @NotNull Collection<VirtualFile> newRoots,
+                                    @NotNull Collection<VirtualFile> oldRoots) {
+      changeHappened();
     }
   }
 
