@@ -5,9 +5,9 @@ package com.intellij.codeInspection.dataFlow.jvm
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
+import com.intellij.codeInspection.dataFlow.java.inst.ControlTransferInstruction
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.ControlTransferInstruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.TransferTarget
