@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.test
 
+import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.TestJdkKind
 import com.google.common.collect.ImmutableList
 import org.jetbrains.kotlin.test.KotlinRoot
