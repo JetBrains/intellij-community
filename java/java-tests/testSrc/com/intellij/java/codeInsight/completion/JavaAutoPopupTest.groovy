@@ -37,7 +37,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
@@ -1249,6 +1248,17 @@ public class Test {
     myFixture.configureByText 'a.java', '<caret>'
     type 'import jav'
     assert lookup
+    type '.'
+    assert lookup
+  }
+  
+  void testPopupInShebang() {
+    myFixture.configureByText 'app', '''#! /usr/bin/java --source 16
+record App() {
+    public  static void main(String[] args) {
+      args<caret>
+    }
+}'''
     type '.'
     assert lookup
   }
