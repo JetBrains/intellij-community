@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
+/** Internal API. Do not use directly. */
+@ApiStatus.Internal
 public final class InjectedDataKeys {
   private InjectedDataKeys() { }
 
