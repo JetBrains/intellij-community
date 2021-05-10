@@ -72,7 +72,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myPackageCode;
   private boolean myShowLicensee = true;
   private String myCustomizeIDEWizardStepsProvider;
-  private String myCustomizeIDEWizardDialog;
+  private String myWelcomeScreenDialog;
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
   private String mySupportUrl;
@@ -217,9 +217,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         }
         break;
 
-        case "customize-ide-wizard": {
-          myCustomizeIDEWizardStepsProvider = child.getAttributeValue("provider");
-          myCustomizeIDEWizardDialog = getAttributeValue(child, "dialog");
+        case "welcome-wizard": {
+          myWelcomeScreenDialog = getAttributeValue(child, "dialog");
         }
         break;
 
@@ -598,12 +597,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public @Nullable String getCustomizeIDEWizardDialog() { return myCustomizeIDEWizardDialog; }
-
-  @Override
-  public @Nullable String getCustomizeIDEWizardStepsProvider() {
-    return myCustomizeIDEWizardStepsProvider;
-  }
+  public @Nullable String getWelcomeWizardDialog() { return myWelcomeScreenDialog; }
 
   @Override
   public String getPackageCode() {
