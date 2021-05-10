@@ -1140,8 +1140,8 @@ private single_tuple_assignment ::= single_tuple mb_nl tuple_initializer // don'
 private multi_tuple_assignment ::= tuple  mb_nl !'->' tuple_initializer { // pin only if it's not a part of "(foo, bar) -> baz"
   pin = 3
 }
-single_tuple ::= '(' unqualified_reference_expression ')' { elementType = tuple }
-tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expression)+ ')'
+single_tuple ::= '(' mb_nl unqualified_reference_expression mb_nl ')' { elementType = tuple }
+tuple ::= '(' mb_nl unqualified_reference_expression (mb_nl ',' mb_nl unqualified_reference_expression)+ mb_nl ')'
 {
   consumeTokenMethod = 'consumeTokenFast'
 }
