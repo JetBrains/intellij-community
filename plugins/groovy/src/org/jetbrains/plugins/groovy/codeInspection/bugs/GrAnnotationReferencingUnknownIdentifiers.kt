@@ -4,7 +4,9 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiArrayInitializerMemberValue
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLiteral
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
@@ -59,7 +61,7 @@ class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
     override fun visitAnnotation(annotation: GrAnnotation) {
       super.visitAnnotation(annotation)
       if (!constructorGeneratingAnnotations.contains(annotation.qualifiedName)) return
-      val owner = annotation.owner as? GrTypeDefinition ?: return
+      val owner = (annotation.owner as? PsiElement)?.parentOfType<GrTypeDefinition>() ?: return
       val cache = getAffectedMembersCache(annotation, owner)
       val affectedMembers = cache.getAllAffectedMembers().mapNotNullTo(mutableSetOf(), AffectedMembersCache.Companion::getExternalName)
       processAttribute(affectedMembers, annotation, "includes")
