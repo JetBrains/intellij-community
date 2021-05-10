@@ -26,7 +26,6 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
@@ -45,7 +44,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
@@ -332,12 +330,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
     val precomputedExtensionModel = precomputeExtensionModel(plugins)
 
-    val toRefresh = ArrayList<VirtualFileUrl>(loadedEntities.size)
     val tasks = loadedEntities.map { moduleEntity ->
       val fileUrl = getModuleVirtualFileUrl(moduleEntity)
-      if (fileUrl != null) {
-        toRefresh.add(fileUrl)
-      }
       ForkJoinTask.adapt(Callable {
         runCatching {
           val module = createModuleInstance(plugins = plugins,
@@ -351,13 +345,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           moduleEntity to module
         }.getOrLogException(LOG)
       })
-    }
-
-    if (!toRefresh.isEmpty()) {
-      val fileSystem = LocalFileSystem.getInstance()
-      for (fileUrl in toRefresh) {
-        fileSystem.refreshAndFindFileByPath(JpsPathUtil.urlToPath(fileUrl.url))
-      }
     }
 
     ForkJoinTask.invokeAll(tasks)
