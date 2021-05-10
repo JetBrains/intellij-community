@@ -21,6 +21,7 @@ public class VcsHistoryCache {
   private final Object myLock;
   private final SLRUMap<HistoryCacheBaseKey, CachedHistory> myHistoryCache;
   private final SLRUMap<HistoryCacheWithRevisionKey, Object> myAnnotationCache;
+  private final SLRUMap<HistoryCacheWithRevisionKey, VcsRevisionNumber> myLastRevisionCache;
 
   public VcsHistoryCache() {
     myLock = new Object();
@@ -32,6 +33,7 @@ public class VcsHistoryCache {
     myAnnotationCache = new SLRUMap<>(
       preloadEnabled ? 50 : 10,
       preloadEnabled ? 50 : 5);
+    myLastRevisionCache = new SLRUMap<>(50, 50);
   }
 
   public <C extends Serializable, T extends VcsAbstractHistorySession> void put(
@@ -97,6 +99,7 @@ public class VcsHistoryCache {
   public void clearAll() {
     clearHistory();
     clearAnnotations();
+    clearLastRevisions();
   }
 
   public void clearHistory() {
@@ -128,6 +131,26 @@ public class VcsHistoryCache {
   public void clearAnnotations() {
     synchronized (myLock) {
       myAnnotationCache.clear();
+    }
+  }
+
+  public void putLastRevision(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber currentRevision,
+                              @NotNull VcsRevisionNumber lastRevision) {
+    synchronized (myLock) {
+      myLastRevisionCache.put(new HistoryCacheWithRevisionKey(filePath, vcsKey, currentRevision), lastRevision);
+    }
+  }
+
+  @Nullable
+  public VcsRevisionNumber getLastRevision(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber currentRevision) {
+    synchronized (myLock) {
+      return myLastRevisionCache.get(new HistoryCacheWithRevisionKey(filePath, vcsKey, currentRevision));
+    }
+  }
+
+  public void clearLastRevisions() {
+    synchronized (myLock) {
+      myLastRevisionCache.clear();
     }
   }
 

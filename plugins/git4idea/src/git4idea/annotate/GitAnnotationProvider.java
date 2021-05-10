@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
@@ -44,7 +45,10 @@ import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsApplicationSettings.AnnotateDetectMovementsOption;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryProvider;
+import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +92,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     }
 
     if (revision == null) {
-      Pair<FilePath, VcsRevisionNumber> pair = getPathAndRevision(myProject, file);
+      Pair<FilePath, VcsRevisionNumber> pair = getPathAndRevision(file);
       return annotate(pair.first, pair.second, file);
     }
     else {
@@ -371,7 +375,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
   @Override
   public void populateCache(@NotNull VirtualFile file) throws VcsException {
-    Pair<FilePath, VcsRevisionNumber> pair = getPathAndRevision(myProject, file);
+    Pair<FilePath, VcsRevisionNumber> pair = getPathAndRevision(file);
     FilePath filePath = pair.first;
     VcsRevisionNumber revision = pair.second;
     if (revision == null) return;
@@ -392,10 +396,51 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     return new GitFileAnnotation(myProject, file, revisionNumber, data.lines);
   }
 
-  private static Pair<FilePath, VcsRevisionNumber> getPathAndRevision(@NotNull Project project, @NotNull VirtualFile file) {
-    FilePath filePath = VcsUtil.getLastCommitPath(project, VcsUtil.getFilePath(file));
-    VcsRevisionNumber revisionNumber = GitVcs.getInstance(project).getDiffProvider().getCurrentRevision(file);
+  @NotNull
+  private Pair<FilePath, VcsRevisionNumber> getPathAndRevision(@NotNull VirtualFile file) {
+    FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file));
+    VcsRevisionNumber currentRevision = getCurrentRevision(file);
+    VcsRevisionNumber revisionNumber = getLastRevision(filePath, currentRevision);
     return Pair.create(filePath, revisionNumber);
+  }
+
+  /**
+   * @return Last revision file was modified in
+   */
+  @Nullable
+  private VcsRevisionNumber getLastRevision(@NotNull FilePath filePath, @Nullable VcsRevisionNumber currentRevision) {
+    VcsKey gitKey = GitVcs.getKey();
+    if (currentRevision != null) {
+      VcsRevisionNumber cachedRevisionNumber = myCache.getLastRevision(filePath, gitKey, currentRevision);
+      if (cachedRevisionNumber != null) {
+        return cachedRevisionNumber;
+      }
+    }
+
+    try {
+      VcsRevisionNumber revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, filePath, GitUtil.HEAD);
+      if (currentRevision != null && revisionNumber != null) {
+        myCache.putLastRevision(filePath, gitKey, currentRevision, revisionNumber);
+      }
+      return revisionNumber;
+    }
+    catch (VcsException ignore) {
+      return null;
+    }
+  }
+
+  /**
+   * @return HEAD revision number
+   */
+  @Nullable
+  private VcsRevisionNumber getCurrentRevision(@NotNull VirtualFile file) {
+    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
+    if (repository == null) return null;
+
+    String revision = repository.getCurrentRevision();
+    if (revision == null) return null;
+
+    return new GitRevisionNumber(revision);
   }
 
   @NotNull
