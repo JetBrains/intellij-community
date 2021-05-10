@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.psi.impl.DebugUtil
@@ -27,11 +28,8 @@ class KotlinDecompiledFileViewProvider(
         val psiFile = createFile(manager.project, file, KotlinFileType.INSTANCE)
         val text = psiFile?.text ?: ""
 
-        DebugUtil.startPsiModification("Invalidating throw-away copy of file that was used for getting text")
-        try {
+        DebugUtil.performPsiModification<PsiInvalidElementAccessException>("Invalidating throw-away copy of file that was used for getting text") {
             (psiFile as? PsiFileImpl)?.markInvalidated()
-        } finally {
-            DebugUtil.finishPsiModification()
         }
 
         text
