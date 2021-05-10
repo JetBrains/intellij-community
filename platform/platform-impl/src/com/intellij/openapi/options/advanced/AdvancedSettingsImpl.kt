@@ -140,35 +140,53 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   override fun getStateModificationCount() = state.modificationCount
 
   override fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
-    val (oldValue, type) = getSetting(id)
-    if (type != expectType) {
-      throw IllegalArgumentException("Setting type $type does not match parameter type $expectType")
+    val option = getOption(id)
+    if (option.type() != expectType) {
+      throw IllegalArgumentException("Setting type ${option.type()} does not match parameter type $expectType")
     }
-    state.settings.put(id, if (expectType == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString())
-    ApplicationManager.getApplication().messageBus.syncPublisher(AdvancedSettingsChangeListener.TOPIC).advancedSettingChanged(id, oldValue, value)
+
+    val newValueAsString = if (expectType == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString()
+    val oldValue = getSettingByOption(option)
+    if (option.defaultValue == newValueAsString) {
+      state.settings.remove(id)
+    }
+    else {
+      state.settings.put(id, newValueAsString)
+    }
+
+    ApplicationManager.getApplication().messageBus.syncPublisher(AdvancedSettingsChangeListener.TOPIC)
+      .advancedSettingChanged(id, oldValue, value)
   }
 
   override fun getSettingString(id: String): String {
-    val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException(
-      "Can't find advanced setting $id")
-    return state.settings[id] ?: option.defaultValue
+    return state.settings.get(id) ?: getOption(id).defaultValue
+  }
+
+  private fun getOption(id: String): AdvancedSettingBean {
+    return AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id }
+           ?: throw IllegalArgumentException("Can't find advanced setting $id")
   }
 
   override fun getSetting(id: String): Pair<Any, AdvancedSettingType> {
-    val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException("Can't find advanced setting $id")
-    val valueString = getSettingString(id)
-    val value = when (option.type()) {
+    val option = getOption(id)
+    return getSettingByOption(option) to option.type()
+  }
+
+  private fun getSettingByOption(option: AdvancedSettingBean): Any {
+    val valueString = state.settings.get(option.id) ?: option.defaultValue
+    return when (option.type()) {
       AdvancedSettingType.Int -> valueString.toInt()
       AdvancedSettingType.Bool -> valueString.toBoolean()
       AdvancedSettingType.String -> valueString
-      AdvancedSettingType.Enum -> try {
-        java.lang.Enum.valueOf(option.enumKlass!!, valueString)
-      }
-      catch(e: IllegalArgumentException) {
-        java.lang.Enum.valueOf(option.enumKlass!!, option.defaultValue)
+      AdvancedSettingType.Enum -> {
+        try {
+          java.lang.Enum.valueOf(option.enumKlass!!, valueString)
+        }
+        catch (e: IllegalArgumentException) {
+          java.lang.Enum.valueOf(option.enumKlass!!, option.defaultValue)
+        }
       }
     }
-    return value to option.type()
   }
 
   fun isNonDefault(id: String): Boolean {
