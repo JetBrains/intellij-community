@@ -48,10 +48,10 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import org.jetbrains.kotlin.test.Directives
-import org.jetbrains.kotlin.test.KotlinBaseTest
-import org.jetbrains.kotlin.test.KotlinBaseTest.TestFile
-import org.jetbrains.kotlin.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinBaseTest
+import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.test.TargetBackend
 import org.junit.ComparisonFailure
 import java.io.File
@@ -261,10 +261,10 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     }
 
     private fun createTestFiles(wholeFile: File, wholeFileContents: String): TestFiles {
-        val testFiles = org.jetbrains.kotlin.test.TestFiles.createTestFiles(
+        val testFiles = org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles(
             wholeFile.name,
             wholeFileContents,
-            object : org.jetbrains.kotlin.test.TestFiles.TestFileFactory<DebuggerTestModule, TestFileWithModule> {
+            object : org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory<DebuggerTestModule, TestFileWithModule> {
                 override fun createFile(
                     module: DebuggerTestModule?,
                     fileName: String,

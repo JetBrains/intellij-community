@@ -6,8 +6,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import java.io.File
 
 abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
     protected fun doTestConfigureModulesWithNonDefaultSetup(configurator: KotlinWithLibraryConfigurator<*>) {
