@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.load.kotlin.PackagePartProvider;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.idea.test.ConfigurationKind;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
-import org.jetbrains.kotlin.idea.test.TestJdkKind;
+import org.jetbrains.kotlin.test.TestJdkKind;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
 import java.io.File;
