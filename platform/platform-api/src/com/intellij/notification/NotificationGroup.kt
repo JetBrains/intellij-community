@@ -23,7 +23,7 @@ class NotificationGroup private constructor(val displayId: String,
                                             val isLogByDefault: Boolean = true,
                                             val toolWindowId: String? = null,
                                             val icon: Icon? = null,
-                                            @NotificationTitle var title: String? = null,
+                                            @NotificationTitle private var title: String? = null,
                                             pluginId: PluginId? = null,
                                             registerGroup: Boolean = false) {
   //<editor-fold desc="Deprecated stuff.">
@@ -77,6 +77,7 @@ class NotificationGroup private constructor(val displayId: String,
     private val registeredGroups: MutableMap<String, NotificationGroup> = ConcurrentHashMap()
     private val registeredTitles: MutableMap<String, @NotificationTitle String> = ConcurrentHashMap()
 
+    @ApiStatus.Internal
     @JvmStatic
     fun create(displayId: String,
                displayType: NotificationDisplayType,
