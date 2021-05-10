@@ -490,7 +490,9 @@ public class ForCanBeForeachInspection extends BaseInspection {
                                   PsiVariable iterator, PsiType contentType, PsiElement childToSkip,
                                   CommentTracker commentTracker, StringBuilder out) {
     if (isIteratorNext(element, iterator, contentType)) {
-      out.append(contentVariableName);
+      if (!(element.getParent() instanceof PsiExpressionStatement)) {
+        out.append(contentVariableName);
+      }
     }
     else {
       final PsiElement[] children = element.getChildren();
