@@ -138,6 +138,14 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return myComponent;
   }
 
+  public boolean isVerticalSplit() {
+    return myIsVerticalSplit;
+  }
+
+  public void setVerticalSplit(boolean verticalSplit) {
+    myIsVerticalSplit = verticalSplit;
+  }
+
   @NotNull
   private SplitEditorToolbar createMarkdownToolbarWrapper(@NotNull JComponent targetComponentForActions) {
     final ActionToolbar leftToolbar = createToolbar();
@@ -254,6 +262,11 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @NotNull
   public TextEditor getTextEditor() {
     return myEditor;
+  }
+
+  @NotNull
+  public FileEditor getPreview() {
+    return myPreview;
   }
 
   public Layout getLayout() {

@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.ui.preview;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
-import com.intellij.openapi.util.registry.Registry;
 import org.intellij.plugins.markdown.ui.split.SplitTextEditorProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,10 +16,6 @@ public class MarkdownSplitEditorProvider extends SplitTextEditorProvider {
     if (!(firstEditor instanceof TextEditor) || !(secondEditor instanceof MarkdownPreviewFileEditor)) {
       throw new IllegalArgumentException("Main editor should be TextEditor");
     }
-    if (Registry.is("markdown.use.platform.editor.with.preview", false)) {
-      return new MarkdownEditorWithPreview(((TextEditor)firstEditor), ((MarkdownPreviewFileEditor)secondEditor));
-    } else {
-      return new MarkdownSplitEditor(((TextEditor)firstEditor), ((MarkdownPreviewFileEditor)secondEditor));
-    }
+    return new MarkdownEditorWithPreview(((TextEditor)firstEditor), ((MarkdownPreviewFileEditor)secondEditor));
   }
 }
