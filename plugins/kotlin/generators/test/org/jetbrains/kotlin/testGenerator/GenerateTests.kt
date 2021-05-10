@@ -1237,7 +1237,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("idea/idea-fir-fe10-binding/tests", "idea") {
         testClass<AbstractFe10BindingIntentionTest> {
             val pattern = "^([\\w\\-_]+)\\.(kt|kts)$"
-            model("testData/intentions/conventionNameCalls/replaceContains", pattern = pattern)
+            model("testData/intentions/conventionNameCalls", pattern = pattern)
         }
     }
 
