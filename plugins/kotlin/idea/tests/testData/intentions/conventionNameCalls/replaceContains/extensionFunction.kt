@@ -1,4 +1,3 @@
-// IGNORE_FE10_BINDING_BY_FIR
 // AFTER-WARNING: Parameter 'a' is never used
 fun test() {
     class Test()

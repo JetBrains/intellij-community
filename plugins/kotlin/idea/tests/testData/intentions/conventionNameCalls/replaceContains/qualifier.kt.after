@@ -1,4 +1,3 @@
-// IGNORE_FE10_BINDING_BY_FIR
 // AFTER-WARNING: Parameter 's' is never used
 class C {
     companion object {
