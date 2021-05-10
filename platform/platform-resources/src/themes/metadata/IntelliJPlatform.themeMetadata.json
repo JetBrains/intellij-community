@@ -1204,6 +1204,11 @@
       "key": "StateWidget.activeBackground",
       "description": "Background of the state widget when at least one of the registered processes is active",
       "since": "2021.1"
+    },
+    {
+      "key": "DragAndDrop.borderColor",
+      "description": "Drop position highlighting (line/rectangle) for drag-n-drop in trees and lists",
+      "since": "2021.2"
     }
   ]
 }
