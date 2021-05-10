@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.storage.LockBasedStorageManager;
 import org.jetbrains.kotlin.idea.test.util.JetTestUtils;
+import org.jetbrains.kotlin.test.TestJdkKind;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 import org.junit.Assert;
 

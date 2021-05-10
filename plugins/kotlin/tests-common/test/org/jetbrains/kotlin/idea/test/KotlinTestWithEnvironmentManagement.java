@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.test;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase;
+import org.jetbrains.kotlin.test.TestJdkKind;
 
 public abstract class KotlinTestWithEnvironmentManagement extends KtUsefulTestCase {
     static {
