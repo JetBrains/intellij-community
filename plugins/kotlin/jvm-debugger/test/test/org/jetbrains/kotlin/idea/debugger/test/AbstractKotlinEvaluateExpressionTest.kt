@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
+import org.jetbrains.kotlin.test.TargetBackend
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.tree.TreeNode
