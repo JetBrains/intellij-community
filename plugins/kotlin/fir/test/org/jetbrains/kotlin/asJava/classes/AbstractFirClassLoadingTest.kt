@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.getJavaFileForTest
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.renderLightClasses
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractFirClassLoadingTest : AbstractUltraLightClassLoadingTest() {

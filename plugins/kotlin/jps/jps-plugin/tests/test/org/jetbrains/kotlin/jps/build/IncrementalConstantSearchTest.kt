@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.jps.build
 
 import org.jetbrains.kotlin.test.KotlinRoot
-import org.jetbrains.kotlin.test.util.slashedPath
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 
 class IncrementalConstantSearchTest : AbstractIncrementalJpsTest() {
     fun testJavaConstantChangedUsedInKotlin() {

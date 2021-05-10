@@ -20,7 +20,7 @@ import com.intellij.testFramework.MapDataContext
 import junit.framework.TestCase
 import org.jdom.Element
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.checkers.languageVersionSettingsFromText
+import org.jetbrains.kotlin.idea.checkers.languageVersionSettingsFromText
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.MainFunctionDetector

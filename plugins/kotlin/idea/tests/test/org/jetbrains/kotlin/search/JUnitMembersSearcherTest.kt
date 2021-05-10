@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.search
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.utils.PathUtil.getResourcePathForClass
-import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.idea.test.TestMetadata
 import java.io.IOException
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import com.intellij.psi.search.searches.AnnotatedMembersSearch

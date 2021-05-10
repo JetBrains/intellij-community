@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.perf.TestData
 import org.jetbrains.kotlin.idea.perf.performanceTest
 import org.jetbrains.kotlin.idea.perf.util.removeInfoMarkers
 import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractFirHighlightingPerformanceTest : AbstractHighlightingTest() {

@@ -13,7 +13,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.cli.jvm.compiler.MockExternalAnnotationsManager
-import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
+import org.jetbrains.kotlin.idea.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo

@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.trackers.AbstractProjectWideO
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
