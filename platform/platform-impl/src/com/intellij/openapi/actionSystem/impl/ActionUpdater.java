@@ -364,7 +364,7 @@ final class ActionUpdater {
       () -> expandGroupChild(child, hideDisabled, strategy),
       1000, ms -> LOG.warn(ms + " ms to expand group child " + ActionManager.getInstance().getId(child))));
     myForceAsync = prevForceAsync;
-    return group.afterExpandGroup(result, asUpdateSession(strategy));
+    return group.postProcessVisibleChildren(result, asUpdateSession(strategy));
   }
 
   private List<AnAction> getGroupChildren(ActionGroup group, UpdateStrategy strategy) {

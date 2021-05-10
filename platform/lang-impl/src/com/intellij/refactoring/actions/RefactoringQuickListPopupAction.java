@@ -122,13 +122,13 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     }
 
     @Override
-    public @NotNull List<AnAction> afterExpandGroup(@NotNull List<AnAction> result,
-                                                    @NotNull UpdateSession updater) {
+    public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<AnAction> visibleChildren,
+                                                              @NotNull UpdateSession updateSession) {
       boolean isRootGroup = getClass() == MyGroup.class;
-      return ContainerUtil.filter(result, o ->
+      return ContainerUtil.filter(visibleChildren, o ->
         o instanceof Separator && (isRootGroup || ((Separator)o).getText() != null) ||
         isRefactoringAction(o, (ActionManagerImpl)actionManager) &&
-        updater.presentation(o).isEnabledAndVisible());
+        updateSession.presentation(o).isEnabledAndVisible());
     }
   }
 }
