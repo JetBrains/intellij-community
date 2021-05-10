@@ -96,7 +96,7 @@ public final class JUnit4TestRunnerUtil {
                   final Class<?> testClass = description.getTestClass();
                   if (testClass != null) {
                     final RunWith classAnnotation = testClass.getAnnotation(RunWith.class);
-                    if (classAnnotation != null && Parameterized.class.isAssignableFrom(classAnnotation.value())) {
+                    if (isParameterizedRunner(classAnnotation.value())) {
                       final int idx = methodName.indexOf("[");
                       if (idx > -1) {
                         return methods.contains(methodName.substring(0, idx));
@@ -229,12 +229,16 @@ public final class JUnit4TestRunnerUtil {
     if (clazzAnnotation == null) return null;
 
     final Class<? extends Runner> runnerClass = clazzAnnotation.value();
-    if (Parameterized.class.isAssignableFrom(runnerClass)) {
+    if (isParameterizedRunner(runnerClass)) {
       try {
         if (methodName != null) {
-          final Method method = clazz.getMethod(methodName);
-          if (method != null && !method.isAnnotationPresent(Test.class) && TestCase.class.isAssignableFrom(clazz)) {
-            return Request.runner(JUnit45ClassesRequestBuilder.createIgnoreAnnotationAndJUnit4ClassRunner(clazz));
+          try {
+            final Method method = clazz.getMethod(methodName);
+            if (!method.isAnnotationPresent(Test.class) && TestCase.class.isAssignableFrom(clazz)) {
+              return Request.runner(JUnit45ClassesRequestBuilder.createIgnoreAnnotationAndJUnit4ClassRunner(clazz));
+            }
+          } catch (NoSuchMethodException e) {
+            // Method not found -- can be a parameterized test taking parameter arguments.
           }
         }
         Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore for junit4.4 and <
@@ -274,6 +278,12 @@ public final class JUnit4TestRunnerUtil {
       }
     }
     return null;
+  }
+
+  private static boolean isParameterizedRunner(Class<? extends Runner> runnerClass) {
+    return Parameterized.class.isAssignableFrom(runnerClass) ||
+           // Compare by canonical name to avoid loading our own version of TestParameterInjector class.
+           runnerClass.getCanonicalName().equals("com.google.testing.junit.testparameterinjector.TestParameterInjector");
   }
 
   private static Request getClassRequestsUsing44API(String suiteName, Class<?>[] classes) {
