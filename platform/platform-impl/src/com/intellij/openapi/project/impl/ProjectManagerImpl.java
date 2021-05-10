@@ -577,15 +577,15 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     public UnableToSaveProjectNotification(@NotNull Project project, @NotNull List<VirtualFile> readOnlyFiles) {
       super(NotificationGroup.createIdWithTitle("Project Settings", IdeBundle.message("notification.group.project.settings")),
             IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
-            IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR,
-            (notification, event) -> {
-              UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
-              Project _project = unableToSaveProjectNotification.myProject;
-              notification.expire();
-              if (_project != null && !_project.isDisposed()) {
-                _project.save();
-              }
-            });
+            IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR);
+      setListener((notification, event) -> {
+        UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
+        Project _project = unableToSaveProjectNotification.myProject;
+        notification.expire();
+        if (_project != null && !_project.isDisposed()) {
+          _project.save();
+        }
+      });
 
       myProject = project;
       myFiles = readOnlyFiles;

@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationInfo
@@ -30,11 +31,7 @@ internal class LanguagePluginDetectionStartupActivity : StartupActivity.Backgrou
 
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup(GROUP_ID)
-      .createNotification(
-        ApplicationBundle.message("notification.title.language.plugin.enable", ApplicationInfo.getInstance().fullApplicationName),
-        null,
-        null,
-      )
+      .createNotification(ApplicationBundle.message("notification.title.language.plugin.enable", ApplicationInfo.getInstance().fullApplicationName), NotificationType.INFORMATION)
 
     val action = createSwitchAndRestartAction { _, _ ->
       installAndEnable(project, setOf(pluginId)) {

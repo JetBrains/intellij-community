@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
@@ -157,15 +158,9 @@ open class PluginAdvertiserService {
         return@invokeLater
       }
 
-      val notification = notificationGroup.createNotification(
-        "",
-        notificationMessage,
-        NotificationType.INFORMATION,
-        null,
-      )
-
-      notification.addActions(notificationActions)
-      notification.notify(project)
+      notificationGroup.createNotification(notificationMessage, NotificationType.INFORMATION)
+        .addActions(notificationActions as Collection<AnAction>)
+        .notify(project)
     }
   }
 

@@ -178,7 +178,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       }
       catch (UnsupportedPythonSdkTypeException e) {
         NOTIFICATION_GROUP
-          .createNotification(PyBundle.message("sdk.gen.failed.notification.title"), null,
+          .createNotification(PyBundle.message("sdk.gen.failed.notification.title"),
                               PyBundle.message("remote.interpreter.support.is.not.available", sdk.getName()),
                               NotificationType.WARNING)
           .notify(myProject);

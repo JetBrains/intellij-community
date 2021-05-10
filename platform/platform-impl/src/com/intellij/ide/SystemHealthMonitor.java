@@ -297,7 +297,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
                 }
                 else {
                   NotificationGroupManager.getInstance().getNotificationGroup(DISPLAY_ID)
-                    .createNotification(message, file.getPath(), NotificationType.ERROR, null)
+                    .createNotification(message, file.getPath(), NotificationType.ERROR)
                     .whenExpired(() -> {
                       reported.compareAndSet(true, false);
                       restart(timeout);

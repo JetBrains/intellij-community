@@ -1030,13 +1030,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private class InactiveRangesDamagedNotification(project: Project, val virtualFiles: Set<VirtualFile>)
     : Notification(VcsNotifier.STANDARD_NOTIFICATION.displayId,
-                   AllIcons.Toolwindows.ToolWindowChanges,
-                   null,
-                   null,
                    VcsBundle.message("lst.inactive.ranges.damaged.notification"),
-                   NotificationType.INFORMATION,
-                   null) {
+                   NotificationType.INFORMATION) {
     init {
+      icon = AllIcons.Toolwindows.ToolWindowChanges
       addAction(NotificationAction.createSimple(
         Supplier { VcsBundle.message("action.NotificationAction.InactiveRangesDamagedNotification.text.view.changes") },
         Runnable {

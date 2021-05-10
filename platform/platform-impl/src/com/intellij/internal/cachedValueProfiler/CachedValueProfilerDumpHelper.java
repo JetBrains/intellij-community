@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.cachedValueProfiler;
 
 import com.google.gson.stream.JsonReader;
@@ -153,10 +153,10 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
                                           "<a href=\"{1}\">{2}</a>",
                                           file.getPath(), url, RevealFileAction.getActionName());
     NotificationGroupManager.getInstance().getNotificationGroup("Cached value profiling")
-      .createNotification("", message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
+      .createNotification(message, NotificationType.INFORMATION)
+      .setListener(new NotificationListener.Adapter() {
         @Override
-        protected void hyperlinkActivated(@NotNull Notification notification,
-                                          @NotNull HyperlinkEvent e) {
+        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
           if (e.getDescription().startsWith("editor:")) {
             VirtualFile virtualFile = project.isDisposed() ? null : LocalFileSystem.getInstance().findFileByPath(
               VfsUtilCore.urlToPath(VfsUtilCore.fixURLforIDEA(URLUtil.unescapePercentSequences(e.getDescription().substring(7)))));
@@ -168,12 +168,14 @@ public final class CachedValueProfilerDumpHelper implements CachedValueProfiler.
             RevealFileAction.FILE_SELECTING_LISTENER.hyperlinkUpdate(notification, e);
           }
         }
-      }).notify(project);
+      })
+      .notify(project);
   }
 
   private static void notifyFailure(@NotNull Project project, @NotNull Throwable exception) {
     NotificationGroupManager.getInstance().getNotificationGroup("Cached value profiling")
-      .createNotification("Failed to capture snapshot: " + exception.getMessage(), NotificationType.ERROR).notify(project);
+      .createNotification("Failed to capture snapshot: " + exception.getMessage(), NotificationType.ERROR)
+      .notify(project);
   }
 
   static class MyQueue extends ConcurrentLinkedQueue<Runnable> implements Runnable, Closeable {

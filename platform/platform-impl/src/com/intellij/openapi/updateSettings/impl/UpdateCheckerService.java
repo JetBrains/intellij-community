@@ -99,7 +99,10 @@ final class UpdateCheckerService {
       if (!ConfigImportHelper.isFirstSession()) {
         String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
         String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
-        UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, null, "ide.update.channel.switched").notify(null);
+        UpdateChecker.getNotificationGroup()
+          .createNotification(title, message, NotificationType.INFORMATION)
+          .setDisplayId("ide.update.channel.switched")
+          .notify(null);
       }
     }
 
@@ -231,7 +234,9 @@ final class UpdateCheckerService {
     String message = blogPost == null ? IdeBundle.message("update.snap.message")
                                       : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost));
     UpdateChecker.getNotificationGroup()
-      .createNotification(title, message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER, "ide.updated.by.snap")
+      .createNotification(title, message, NotificationType.INFORMATION)
+      .setListener(NotificationListener.URL_OPENING_LISTENER)
+      .setDisplayId("ide.updated.by.snap")
       .notify(project);
   }
 
@@ -278,9 +283,10 @@ final class UpdateCheckerService {
 
     String title = IdeBundle.message("update.installed.notification.title");
     String text = new HtmlBuilder().appendWithSeparators(HtmlChunk.text(", "), links).wrapWith("html").toString();
-    NotificationListener listener = (__, e) -> showPluginConfigurable(e, project);  // benign leak - notifications are disposed on close
     UpdateChecker.getNotificationGroupForUpdateResults()
-      .createNotification(title, text, NotificationType.INFORMATION, listener, "plugins.updated.after.restart")
+      .createNotification(title, text, NotificationType.INFORMATION)
+      .setListener((__, e) -> showPluginConfigurable(e, project))  // benign leak - notifications are disposed on project close
+      .setDisplayId("plugins.updated.after.restart")
       .notify(project);
   }
 

@@ -204,7 +204,7 @@ public final class OldDirectoryCleaner {
             if (!errors.isEmpty()) {
               @NlsSafe String content = String.join("<br>", errors);
               UpdateChecker.getNotificationGroup()
-                .createNotification(message("old.dirs.delete.error"), content, NotificationType.WARNING, null)
+                .createNotification(message("old.dirs.delete.error"), content, NotificationType.WARNING)
                 .addAction(ShowLogAction.notificationAction())
                 .notify(project);
             }

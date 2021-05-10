@@ -61,8 +61,7 @@ class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And E
 
       // some errors are not thrown but logged
       val message = (if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged") + ". Check also that no logged errors."
-      Notification("Error Report", null, "", message, NotificationType.INFORMATION, null)
-        .notify(null)
+      Notification("Error Report", "", message, NotificationType.INFORMATION).notify(null)
     }
   }
 

@@ -655,8 +655,9 @@ object UpdateChecker {
                                @NlsContexts.NotificationContent message: String,
                                vararg actions: NotificationAction) {
     val type = if (kind == NotificationKind.PLATFORM) NotificationType.IDE_UPDATE else NotificationType.INFORMATION
-    val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), type, null, displayId)
-    notification.collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
+    val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), type)
+      .setDisplayId(displayId)
+      .setCollapseDirection(Notification.CollapseActionsDirection.KEEP_LEFTMOST)
     notification.whenExpired { ourShownNotifications.remove(kind, notification) }
     actions.forEach { notification.addAction(it) }
     notification.notify(project)

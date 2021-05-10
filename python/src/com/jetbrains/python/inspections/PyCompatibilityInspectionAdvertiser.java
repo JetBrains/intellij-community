@@ -125,7 +125,6 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
       project,
       PyBundle.message("python.compatibility.inspection.advertiser.notifications.title"),
       message,
-      NotificationType.INFORMATION,
       (notification, event) -> {
         final boolean enabled = "#yes".equals(event.getDescription());
         if (enabled) {
@@ -167,7 +166,6 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
       project,
       PyBundle.message("python.compatibility.inspection.advertiser.notifications.title"),
       msg,
-      NotificationType.INFORMATION,
       (notification, event) -> {
         final boolean enabled = "#yes".equals(event.getDescription());
         if (enabled) {
@@ -182,17 +180,18 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   private static void showSingletonNotification(@NotNull Project project,
                                                 @NotNull @NotificationTitle String title,
                                                 @NotNull @NotificationContent String htmlContent,
-                                                @NotNull NotificationType type,
                                                 @NotNull NotificationListener listener) {
     project.putUserData(DONT_SHOW_BALLOON, true);
-    BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, type, (notification, event) -> {
-      try {
-        listener.hyperlinkUpdate(notification, event);
-      }
-      finally {
-        notification.expire();
-      }
-    }).notify(project);
+    BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, NotificationType.INFORMATION)
+      .setListener((notification, event) -> {
+        try {
+          listener.hyperlinkUpdate(notification, event);
+        }
+        finally {
+          notification.expire();
+        }
+      })
+      .notify(project);
   }
 
   private static boolean containsFutureImports(@NotNull PyFile file) {

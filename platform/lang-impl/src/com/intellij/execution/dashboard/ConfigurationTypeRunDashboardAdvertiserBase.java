@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
@@ -82,30 +83,25 @@ public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements Run
     if (myNotification != null && !myNotification.isExpired()) return;
 
     String toolWindowName = UIBundle.message("tool.window.name.services");
-    myNotification = NotificationGroupManager.getInstance().getNotificationGroup(DASHBOARD_NOTIFICATION_GROUP_ID).createNotification(
-      "",
-      ExecutionBundle.message("run.dashboard.multiple.run.config.notification", type.getDisplayName(), toolWindowName),
-      NotificationType.INFORMATION,
-      null,
-      DASHBOARD_MULTIPLE_RUN_CONFIGURATIONS_NOTIFICATION_ID);
-    myNotification.setIcon(AllIcons.Nodes.Services);
     String typeId = type.getId();
-    myNotification.addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.use.services.action", toolWindowName)) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e,
-                                  @NotNull Notification notification) {
-        notification.hideBalloon();
-        showInRunDashboard(typeId);
-      }
-    });
-    myNotification.addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.hide.multiple.run.config.notification.action")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e,
-                                  @NotNull Notification notification) {
-        PropertiesComponent.getInstance(myProject).setValue(SHOW_RUN_DASHBOARD_NOTIFICATION, false, true);
-        notification.expire();
-      }
-    });
+    myNotification = NotificationGroupManager.getInstance().getNotificationGroup(DASHBOARD_NOTIFICATION_GROUP_ID)
+      .createNotification(ExecutionBundle.message("run.dashboard.multiple.run.config.notification", type.getDisplayName(), toolWindowName), NotificationType.INFORMATION)
+      .setDisplayId(DASHBOARD_MULTIPLE_RUN_CONFIGURATIONS_NOTIFICATION_ID)
+      .setIcon(AllIcons.Nodes.Services)
+      .addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.use.services.action", toolWindowName)) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          notification.hideBalloon();
+          showInRunDashboard(typeId);
+        }
+      })
+      .addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.hide.multiple.run.config.notification.action")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          PropertiesComponent.getInstance(myProject).setValue(SHOW_RUN_DASHBOARD_NOTIFICATION, false, true);
+          notification.expire();
+        }
+      });
     myNotification.notify(myProject);
   }
 

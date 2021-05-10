@@ -60,7 +60,7 @@ public final class NotificationCollector {
                               @NotNull NotificationDisplayType displayType,
                               @NotNull Notification notification,
                               boolean isExpandable) {
-    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(DISPLAY_TYPE.with(displayType));
     NotificationSeverity severity = getType(notification);
     if (severity != null) {
@@ -72,7 +72,7 @@ public final class NotificationCollector {
 
   public void logToolWindowNotificationShown(@Nullable Project project,
                                              @NotNull Notification notification) {
-    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(DISPLAY_TYPE.with(NotificationDisplayType.TOOL_WINDOW));
     NotificationSeverity severity = getType(notification);
     if (severity != null) {
@@ -82,7 +82,7 @@ public final class NotificationCollector {
   }
 
   public void logNotificationLoggedInEventLog(@NotNull Project project, @NotNull Notification notification) {
-    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     NotificationSeverity severity = getType(notification);
     if (severity != null) {
       data.add(SEVERITY.with(severity));
@@ -116,7 +116,7 @@ public final class NotificationCollector {
                                            @NotNull Notification notification,
                                            @NotNull AnAction action,
                                            @NotNull NotificationPlace notificationPlace) {
-    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(NOTIFICATION_PLACE.with(notificationPlace));
     if (action instanceof NotificationAction.Simple) {
       Object actionInstance = ((NotificationAction.Simple)action).getActionInstance();
@@ -131,11 +131,11 @@ public final class NotificationCollector {
   }
 
   public void logHyperlinkClicked(@NotNull Notification notification) {
-    HYPERLINK_CLICKED.log(createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
+    HYPERLINK_CLICKED.log(createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId()));
   }
 
   public void logBalloonShownFromEventLog(@Nullable Project project, @NotNull Notification notification) {
-    EVENT_LOG_BALLOON_SHOWN.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
+    EVENT_LOG_BALLOON_SHOWN.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId()));
   }
 
   public void logNotificationSettingsClicked(@NotNull String notificationId,
@@ -145,11 +145,11 @@ public final class NotificationCollector {
   }
 
   public void logNotificationBalloonExpanded(@Nullable Project project, @NotNull Notification notification) {
-    BALLOON_EXPANDED.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
+    BALLOON_EXPANDED.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId()));
   }
 
   public void logNotificationBalloonCollapsed(@Nullable Project project, @NotNull Notification notification) {
-    BALLOON_COLLAPSED.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
+    BALLOON_COLLAPSED.log(project, createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId()));
   }
 
   private static @NotNull List<EventPair<?>> createNotificationData(@Nullable String groupId,

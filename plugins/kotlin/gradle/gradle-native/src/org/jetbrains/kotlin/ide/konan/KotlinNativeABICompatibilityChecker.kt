@@ -189,8 +189,7 @@ class KotlinNativeABICompatibilityCheckerService(private val project: Project): 
                 NOTIFICATION_GROUP_ID,
                 NOTIFICATION_TITLE,
                 StringUtilRt.convertLineSeparators(message, "<br/>"),
-                NotificationType.ERROR,
-                null
+                NotificationType.ERROR
             )
         }
     }

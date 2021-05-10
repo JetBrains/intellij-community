@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.remote
 
 import com.google.gson.JsonElement
@@ -17,11 +18,9 @@ import com.intellij.ide.starters.remote.wizard.WebStarterInitialStep
 import com.intellij.ide.starters.remote.wizard.WebStarterLibrariesStep
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.*
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -307,16 +306,12 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
 
     if (toInstallOrEnable.isEmpty()) return
 
-    notificationGroup.createNotification(
-      IdeBundle.message("plugins.advertiser.plugins.suggestions.title"),
-      IdeBundle.message("plugins.advertiser.plugins.suggestions.text"),
-      NotificationType.INFORMATION,
-      null,
-    ).addAction(object : NotificationAction(IdeBundle.message("plugins.advertiser.action.enable.plugins")) {
-      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+    notificationGroup
+      .createNotification(IdeBundle.message("plugins.advertiser.plugins.suggestions.title"), IdeBundle.message("plugins.advertiser.plugins.suggestions.text"), NotificationType.INFORMATION)
+      .addAction(NotificationAction.create(IdeBundle.message("plugins.advertiser.action.enable.plugins")) { _, notification ->
         installAndEnable(toInstallOrEnable) { notification.expire() }
-      }
-    }).notify(project)
+      })
+      .notify(project)
   }
 
   private fun fixExecutableFlag(containingDir: File, relativePath: String) {

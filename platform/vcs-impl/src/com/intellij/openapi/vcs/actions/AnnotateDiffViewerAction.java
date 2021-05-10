@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffContext;
@@ -163,7 +163,8 @@ public class AnnotateDiffViewerAction {
           VcsException exception = loader.getException();
           if (exception != null) {
             Notification notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
-              .createNotification(VcsBundle.message("notification.title.cant.load.annotations"), exception.getMessage(), NotificationType.ERROR, null, "vcs.cannot.load.annotations");
+              .createNotification(VcsBundle.message("notification.title.cant.load.annotations"), exception.getMessage(), NotificationType.ERROR)
+              .setDisplayId("vcs.cannot.load.annotations");
             showNotification(viewer, notification);
             LOG.warn(exception);
             return;

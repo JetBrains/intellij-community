@@ -823,13 +823,13 @@ public final class ExternalSystemUtil {
     if (group == null) {
       notification = new Notification(externalSystemId.getReadableName() + " build", notificationData.getTitle(),
                                       notificationData.getMessage(),
-                                      notificationData.getNotificationCategory().getNotificationType(),
-                                      notificationData.getListener());
+                                      notificationData.getNotificationCategory().getNotificationType())
+        .setListener(notificationData.getListener());
     }
     else {
-      notification = group.createNotification(
-        notificationData.getTitle(), notificationData.getMessage(),
-        notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+      notification = group
+        .createNotification(notificationData.getTitle(), notificationData.getMessage(), notificationData.getNotificationCategory().getNotificationType())
+        .setListener(notificationData.getListener());
     }
     FailureImpl failure;
     if (exception instanceof BuildIssueException) {

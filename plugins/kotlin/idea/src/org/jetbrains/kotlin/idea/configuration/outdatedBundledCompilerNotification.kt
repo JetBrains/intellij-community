@@ -44,36 +44,29 @@ fun notifyOutdatedBundledCompilerIfNecessary(project: Project) {
         return
     }
 
-    Notifications.Bus.notify(
-        Notification(
-            OUTDATED_BUNDLED_COMPILER_GROUP_DISPLAY_ID,
-            KotlinBundle.message("configuration.title.outdated.bundled.kotlin.compiler"),
-            message,
-            NotificationType.WARNING,
-            NotificationListener { notification, event ->
-                if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-                    when (event.description) {
-                        "update" -> {
-                            val action = ActionManager.getInstance().getAction(ConfigurePluginUpdatesAction.ACTION_ID)
-                            val dataContext = DataManager.getInstance().dataContextFromFocus.result
-                            val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.ACTION_SEARCH, dataContext)
-                            action.actionPerformed(actionEvent)
-                        }
-                        "ignore" -> {
-                            if (!project.isDisposed) {
-                                PropertiesComponent.getInstance(project).setValue(SUPPRESSED_OUTDATED_COMPILER_PROPERTY_NAME, pluginVersion)
-                            }
-                        }
-                        else -> {
-                            throw AssertionError()
+    Notification(OUTDATED_BUNDLED_COMPILER_GROUP_DISPLAY_ID, KotlinBundle.message("configuration.title.outdated.bundled.kotlin.compiler"), message, NotificationType.WARNING)
+        .setListener(NotificationListener { notification, event ->
+            if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+                when (event.description) {
+                    "update" -> {
+                        val action = ActionManager.getInstance().getAction(ConfigurePluginUpdatesAction.ACTION_ID)
+                        val dataContext = DataManager.getInstance().dataContextFromFocus.result
+                        val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.ACTION_SEARCH, dataContext)
+                        action.actionPerformed(actionEvent)
+                    }
+                    "ignore" -> {
+                        if (!project.isDisposed) {
+                            PropertiesComponent.getInstance(project).setValue(SUPPRESSED_OUTDATED_COMPILER_PROPERTY_NAME, pluginVersion)
                         }
                     }
-                    notification.expire()
+                    else -> {
+                        throw AssertionError()
+                    }
                 }
+                notification.expire()
             }
-        ),
-        project
-    )
+            })
+        .notify(project)
 }
 
 private var alreadyNotified = ConcurrentHashMap<String, String>()

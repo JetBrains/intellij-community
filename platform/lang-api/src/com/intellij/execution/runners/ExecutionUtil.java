@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -10,8 +10,8 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -150,13 +150,16 @@ public final class ExecutionUtil {
         Messages.showErrorDialog(project, UIUtil.toHtml(_description), title);
       }
 
-      NotificationListener notificationListener = _listener == null ? null : (notification, event) -> {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          notification.expire();
-          _listener.hyperlinkUpdate(event);
-        }
-      };
-      ourNotificationGroup.createNotification(title, _description, NotificationType.ERROR, notificationListener).notify(project);
+      Notification notification = ourNotificationGroup.createNotification(title, _description, NotificationType.ERROR);
+      if (_listener != null) {
+        notification.setListener((_notification, event) -> {
+          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            _notification.expire();
+            _listener.hyperlinkUpdate(event);
+          }
+        });
+      }
+      notification.notify(project);
     });
   }
 

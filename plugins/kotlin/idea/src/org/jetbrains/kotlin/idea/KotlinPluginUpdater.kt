@@ -9,8 +9,10 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
 import com.intellij.ide.actions.RevealFileAction
+import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.LoggerFactory
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationListener
@@ -246,18 +248,15 @@ class KotlinPluginUpdater : Disposable {
     }
 
     private fun notifyPluginUpdateAvailable(update: PluginUpdateStatus.Update) {
-        val notification = notificationGroup.createNotification(
-            KotlinBundle.message("plugin.updater.notification.title"),
-            KotlinBundle.message("plugin.updater.notification.message", update.pluginDescriptor.version),
-            NotificationType.INFORMATION,
-            NotificationListener { notification, _ ->
+        notificationGroup
+            .createNotification(KotlinBundle.message("plugin.updater.notification.title"), KotlinBundle.message("plugin.updater.notification.message", update.pluginDescriptor.version), NotificationType.INFORMATION)
+            .setListener(NotificationListener { notification, _ ->
                 notification.expire()
                 installPluginUpdate(update) {
                     notifyPluginUpdateAvailable(update)
                 }
             })
-
-        notification.notify(null)
+            .notify(null)
     }
 
     fun installPluginUpdate(
@@ -306,22 +305,17 @@ class KotlinPluginUpdater : Disposable {
     }
 
     private fun notifyNotInstalled(message: String?) {
-        val notification = notificationGroup.createNotification(
-            KotlinBundle.message("plugin.updater.notification.title"),
-            when (message) {
-                null -> KotlinBundle.message("plugin.updater.not.installed")
-                else -> KotlinBundle.message("plugin.updater.not.installed.misc", message)
-            },
-            NotificationType.INFORMATION,
-            NotificationListener { notification, _ ->
-                val logFile = File(PathManager.getLogPath(), "idea.log")
-                RevealFileAction.openFile(logFile)
-
+        val content = when (message) {
+            null -> KotlinBundle.message("plugin.updater.not.installed")
+            else -> KotlinBundle.message("plugin.updater.not.installed.misc", message)
+        }
+        notificationGroup
+            .createNotification(KotlinBundle.message("plugin.updater.notification.title"), content, NotificationType.INFORMATION)
+            .setListener(NotificationListener { notification, _ ->
+                ShowLogAction.showLog()
                 notification.expire()
-            }
-        )
-
-        notification.notify(null)
+            })
+            .notify(null)
     }
 
     override fun dispose() {

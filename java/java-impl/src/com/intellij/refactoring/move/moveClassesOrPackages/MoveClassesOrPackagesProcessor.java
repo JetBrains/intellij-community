@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -8,7 +8,10 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.model.BranchableUsageInfo;
 import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -61,7 +64,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 
 /**
@@ -690,24 +692,21 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    NotificationGroupManager.getInstance().getNotificationGroup("Remove redundant exports/opens").createNotification(
-      JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.notification.title", lastDeletionUsageInfos.size()),
-      null,
-      createNotificationContent(projectPath, lastDeletionUsageInfos.keySet()),
-      NotificationType.INFORMATION,
-      new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          PsiJavaModule moduleDescriptor = findModuleByPath(project, event.getDescription());
-          if (moduleDescriptor != null) {
-            moduleDescriptor.navigate(true);
-          }
+    NotificationGroupManager.getInstance()
+      .getNotificationGroup("Remove redundant exports/opens")
+      .createNotification(
+        JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.notification.title", lastDeletionUsageInfos.size()),
+        createNotificationContent(projectPath, lastDeletionUsageInfos.keySet()),
+        NotificationType.INFORMATION)
+      .setListener((notification, event) -> {
+        PsiJavaModule moduleDescriptor = findModuleByPath(project, event.getDescription());
+        if (moduleDescriptor != null) {
+          moduleDescriptor.navigate(true);
         }
       })
       .addAction(new NotificationAction(JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.action.name")) {
         @Override
-        public void actionPerformed(@NotNull AnActionEvent e,
-                                    @NotNull Notification notification) {
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
           WriteCommandAction.writeCommandAction(project)
             .withName(JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.command.name"))
             .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)

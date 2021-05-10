@@ -109,7 +109,7 @@ public final class JBCefApp {
             if (proc.waitFor() == 0 && missingLibs.length() > 0) {
               String msg = IdeBundle.message("notification.content.jcef.missingLibs", missingLibs);
               Notification notification = NOTIFICATION_GROUP.getValue().
-                createNotification(IdeBundle.message("notification.title.jcef.startFailure"), msg, NotificationType.ERROR, null);
+                createNotification(IdeBundle.message("notification.title.jcef.startFailure"), msg, NotificationType.ERROR);
               //noinspection DialogTitleCapitalization
               notification.addAction(new AnAction(IdeBundle.message("action.jcef.followInstructions")) {
                 @Override

@@ -31,16 +31,19 @@ class ConfigureKotlinNotification(
     KotlinConfigurationCheckerService.CONFIGURE_NOTIFICATION_GROUP_ID,
     KotlinJvmBundle.message("configure.kotlin"),
     notificationState.notificationString,
-    NotificationType.WARNING,
-    NotificationListener { notification, event ->
-        if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-            val configurator = getConfiguratorByName(event.description) ?: throw AssertionError("Missed action: " + event.description)
-            notification.expire()
-
-            configurator.configure(project, excludeModules)
-        }
-    }
+    NotificationType.WARNING
 ) {
+    init {
+        setListener(NotificationListener { notification, event ->
+            if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+                val configurator = getConfiguratorByName(event.description) ?: throw AssertionError("Missed action: " + event.description)
+                notification.expire()
+
+                configurator.configure(project, excludeModules)
+            }
+        })
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ConfigureKotlinNotification) return false

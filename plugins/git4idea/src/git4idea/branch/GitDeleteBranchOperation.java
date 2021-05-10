@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.google.common.collect.Maps;
@@ -136,8 +136,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       message.br().append(GitBundle.message("delete.branch.operation.unmerged.commits.were.discarded"));
     }
 
-    Notification notification = STANDARD_NOTIFICATION.createNotification("", message.toString(), NotificationType.INFORMATION, null,
-                                                                         "git.branch.deleted");
+    Notification notification = STANDARD_NOTIFICATION.createNotification(message.toString(), NotificationType.INFORMATION);
+    notification.setDisplayId("git.branch.deleted");
     notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> {
       notification.expire();
       restoreInBackground(notification);

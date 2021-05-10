@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl
 
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.notification.*
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
@@ -137,9 +138,10 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
     }
 
     val content = XmlStringUtil.wrapInHtml(messages.joinToString("<br>"))
-    val notification = NOTIFICATION_GROUP.createNotification(ProjectBundle.message("modules.added.notification.title"), content, NotificationType.INFORMATION, null)
-    notification.addActions(actions)
-    notification.notify(project)
+    NOTIFICATION_GROUP
+      .createNotification(ProjectBundle.message("modules.added.notification.title"), content, NotificationType.INFORMATION)
+      .addActions(actions as Collection<AnAction>)
+      .notify(project)
   }
 
   fun createAction(@NlsContexts.NotificationContent text: String, action: (MutableList<String>) -> Unit): NotificationAction = object : NotificationAction(text) {

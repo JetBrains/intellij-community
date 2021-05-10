@@ -53,19 +53,14 @@ internal fun showMigrationNotification(project: Project, migrationInfo: Migratio
         .createNotification(
             KotlinBundle.message("configuration.migration.title.kotlin.migration"),
             "${KotlinBundle.message("configuration.migration.text.migrations.for.kotlin.code.are.available")}<br/><br/>$detectedChangeMessage",
-            NotificationType.WARNING,
-            null
+            NotificationType.WARNING
         )
-        .also { notification ->
-            notification.addAction(NotificationAction.createSimple(KotlinBundle.message("configuration.migration.text.run.migrations")) {
-                val projectContext = SimpleDataContext.getProjectContext(project)
-                val action = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)
-                Notification.fire(notification, action, projectContext)
-                KotlinMigrationProjectFUSCollector.logRun()
-
-                notification.expire()
-            })
-        }
+        .addAction(NotificationAction.createExpiring(KotlinBundle.message("configuration.migration.text.run.migrations")) { _, notification ->
+            val projectContext = SimpleDataContext.getProjectContext(project)
+            val action = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)
+            Notification.fire(notification, action, projectContext)
+            KotlinMigrationProjectFUSCollector.logRun()
+        })
         .notify(project)
 }
 

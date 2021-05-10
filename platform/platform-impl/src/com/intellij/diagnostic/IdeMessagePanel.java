@@ -206,14 +206,15 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     String title = DiagnosticBundle.message("error.new.notification.title");
     String linkText = DiagnosticBundle.message("error.new.notification.link");
     //noinspection UnresolvedPluginConfigReference
-    Notification notification = new Notification("", AllIcons.Ide.FatalError, title, null, null, NotificationType.ERROR, null);
-    notification.addAction(new NotificationAction(linkText) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        notification.expire();
-        openErrorsDialog(null);
-      }
-    });
+    Notification notification = new Notification("", title, NotificationType.ERROR)
+      .setIcon(AllIcons.Ide.FatalError)
+      .addAction(new NotificationAction(linkText) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          notification.expire();
+          openErrorsDialog(null);
+        }
+      });
 
     BalloonLayout layout = myFrame.getBalloonLayout();
     assert layout != null : myFrame;

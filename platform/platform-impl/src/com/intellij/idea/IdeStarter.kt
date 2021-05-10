@@ -293,9 +293,11 @@ private fun reportPluginErrors() {
   ApplicationManager.getApplication().invokeLater({
     val title = IdeBundle.message("title.plugin.error")
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
-    Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, content, NotificationType.ERROR) { notification, event ->
-      notification.expire()
-      PluginManagerMain.onEvent(event.description)
-    }.notify(null)
+    Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, content, NotificationType.ERROR)
+      .setListener { notification, event ->
+        notification.expire()
+        PluginManagerMain.onEvent(event.description)
+      }
+      .notify(null)
   }, ModalityState.NON_MODAL)
 }

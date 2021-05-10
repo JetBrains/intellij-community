@@ -45,10 +45,10 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
           String lombokVersion = Version.parseLombokVersion(findLombokEntry(ModuleRootManager.getInstance(module)));
 
           if (Version.isLessThan(lombokVersion, Version.LAST_LOMBOK_VERSION)) {
-            return getNotificationGroup().createNotification(LombokBundle.message("config.warn.dependency.outdated.title"),
-              LombokBundle.message("config.warn.dependency.outdated.message", project.getName(),
-                module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
-              NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
+            return getNotificationGroup().createNotification(
+              LombokBundle.message("config.warn.dependency.outdated.title"),
+              LombokBundle.message("config.warn.dependency.outdated.message", project.getName(), module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
+              NotificationType.WARNING);
           }
         }
       }
@@ -56,7 +56,7 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
     }).expireWith(LombokPluginDisposable.getInstance(project))
       .finishOnUiThread(ModalityState.NON_MODAL, notification -> {
         if (notification != null) {
-          Notifications.Bus.notify(notification, project);
+          notification.setListener(NotificationListener.URL_OPENING_LISTENER).notify(project);
           Disposer.register(LombokPluginDisposable.getInstance(project), notification::expire);
         }
       }).submit(AppExecutorUtil.getAppExecutorService());

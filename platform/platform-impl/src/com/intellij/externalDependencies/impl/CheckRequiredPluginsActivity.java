@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -143,18 +143,12 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       errorMessages.add(HtmlChunk.link(target, text).toString());
     }
 
-    NotificationListener listener = notInstalled.isEmpty() ?
-                                    createEnableNotificationListener(project, disabled) :
-                                    createInstallNotificationListener(notInstalled, disabled);
-
-    NotificationGroupManager.getInstance()
-      .getNotificationGroup(NOTIFICATION_GROUP_ID)
-      .createNotification(
-        IdeBundle.message("notification.title.required.plugins.not.loaded"),
-        join(errorMessages, "<br>"),
-        NotificationType.ERROR,
-        listener
-      ).notify(project);
+    NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
+      .createNotification(IdeBundle.message("notification.title.required.plugins.not.loaded"), join(errorMessages, "<br>"), NotificationType.ERROR)
+      .setListener(notInstalled.isEmpty() ?
+                   createEnableNotificationListener(project, disabled) :
+                   createInstallNotificationListener(notInstalled, disabled))
+      .notify(project);
   }
 
   private static void enablePlugins(@NotNull Project project,

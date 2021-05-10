@@ -27,7 +27,8 @@ public class NotificationAllowlistEP implements PluginAware {
 
   /**
    * Semicolon-separated list of notificationIds.
-   * @see Notification#displayId
+   *
+   * @see Notification#getDisplayId
    */
   @Attribute("notificationIds")
   public String notificationIds;

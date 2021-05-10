@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.idea.reporter
 
+import com.intellij.diagnostic.DiagnosticBundle
 import com.intellij.diagnostic.ReportMessages
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
@@ -244,12 +245,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         val project: Project? = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
         if (KotlinPluginUtil.isPatched()) {
             ReportMessages.GROUP
-                .createNotification(
-                    ReportMessages.ERROR_REPORT,
-                    KotlinBundle.message("reporter.text.can.t.report.exception.from.patched.plugin"),
-                    NotificationType.INFORMATION,
-                    null
-                )
+                .createNotification(KotlinBundle.message("reporter.text.can.t.report.exception.from.patched.plugin"), NotificationType.INFORMATION)
                 .setImportant(false)
                 .notify(project)
             return true

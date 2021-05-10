@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -75,26 +74,26 @@ public class VcsBalloonProblemNotifier implements Runnable {
         final String name = runnable.toString();
         sb.append("<br/><a href=\"").append(name).append("\">").append(name).append("</a>"); // NON-NLS
       }
-      NotificationListener listener = (currentNotification, event) -> {
-        if (HyperlinkEvent.EventType.ACTIVATED.equals(event.getEventType())) {
-          if (myNotificationListener.length == 1) {
-            myNotificationListener[0].run();
-          }
-          else {
-            final String description = event.getDescription();
-            if (description != null) {
-              for (NamedRunnable runnable : myNotificationListener) {
-                if (description.equals(runnable.toString())) {
-                  runnable.run();
-                  break;
+      notification = NOTIFICATION_GROUP.createNotification(sb.toString(), myMessageType.toNotificationType())
+        .setListener((currentNotification, event) -> {
+          if (HyperlinkEvent.EventType.ACTIVATED.equals(event.getEventType())) {
+            if (myNotificationListener.length == 1) {
+              myNotificationListener[0].run();
+            }
+            else {
+              final String description = event.getDescription();
+              if (description != null) {
+                for (NamedRunnable runnable : myNotificationListener) {
+                  if (description.equals(runnable.toString())) {
+                    runnable.run();
+                    break;
+                  }
                 }
               }
             }
+            currentNotification.expire();
           }
-          currentNotification.expire();
-        }
-      };
-      notification = NOTIFICATION_GROUP.createNotification("", sb.toString(), myMessageType.toNotificationType(), listener);
+        });
     }
     else {
       notification = NOTIFICATION_GROUP.createNotification(myMessage, myMessageType);

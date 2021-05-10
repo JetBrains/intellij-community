@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.startup.StartupActivity
 import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
-import org.jetbrains.plugins.gradle.service.project.GradleNotification
+import org.jetbrains.plugins.gradle.service.project.GradleNotification.NOTIFICATION_GROUP
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
@@ -62,9 +62,7 @@ fun GradleProjectSettings.validateGradleSdk(project: Project, jdkHomePath: Strin
     }
 
     message?.let {
-        val title = KotlinIdeaGradleBundle.message("notification.invalid.gradle.jvm.configuration.title")
-
-        GradleNotification.getInstance(project).showBalloon(title, message, NotificationType.ERROR, null)
+        NOTIFICATION_GROUP.createNotification(KotlinIdeaGradleBundle.message("notification.invalid.gradle.jvm.configuration.title"), message, NotificationType.ERROR).notify(project)
     }
 
 }

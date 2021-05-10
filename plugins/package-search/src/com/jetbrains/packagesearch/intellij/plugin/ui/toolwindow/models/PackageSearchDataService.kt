@@ -689,10 +689,10 @@ internal class PackageSearchDataService(
         NotificationGroupManagerImpl().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
             .createNotification(
                 PackageSearchBundle.message("packagesearch.title"),
-                subtitle,
                 message,
                 NotificationType.ERROR
             )
+            .setSubtitle(subtitle)
             .notify(project)
     }
 

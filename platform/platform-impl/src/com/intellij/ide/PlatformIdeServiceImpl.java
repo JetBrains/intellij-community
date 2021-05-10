@@ -14,7 +14,7 @@ public final class PlatformIdeServiceImpl extends PlatformIdeService {
                            @Nullable String subtitle,
                            @NotNull String content,
                            @Nullable Project project) {
-    new Notification(groupId, "", content, com.intellij.notification.NotificationType.valueOf(type.name()))
+    new Notification(groupId, content, com.intellij.notification.NotificationType.valueOf(type.name()))
       .setTitle(title, subtitle)
       .notify(project);
   }

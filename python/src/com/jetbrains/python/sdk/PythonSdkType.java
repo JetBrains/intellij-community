@@ -8,7 +8,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -407,14 +406,10 @@ public final class PythonSdkType extends SdkType {
       notificationMessage = e.getMessage();
     }
 
-    Notifications.Bus.notify(
-      new Notification(
-        SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"),
-        notificationMessage,
-        NotificationType.WARNING,
-        notificationListener
-      )
-    );
+    Notification notification =
+      new Notification(SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"), notificationMessage, NotificationType.WARNING);
+    if (notificationListener != null) notification.setListener(notificationListener);
+    notification.notify(null);
   }
 
   @NotNull

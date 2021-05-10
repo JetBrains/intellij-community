@@ -80,7 +80,8 @@ public class WhatsNewAction extends AnAction implements DumbAware {
       }
 
       UpdateChecker.getNotificationGroup()
-        .createNotification(notificationTitle, content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
+        .createNotification(notificationTitle, content, NotificationType.INFORMATION)
+        .setListener(NotificationListener.URL_OPENING_LISTENER)
         .notify(project);
     }
     else if (url != null) {
