@@ -25,7 +25,7 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
   };
 
   @Override
-  public @NotNull Iterable<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element) {
+  public @NotNull Collection<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element) {
     return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result.create(
       Collections.unmodifiableList(getReferences(element, EMPTY_HINTS)), PsiModificationTracker.MODIFICATION_COUNT)
     );
