@@ -10,10 +10,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -48,8 +46,6 @@ final class WslDistributionDescriptor {
 
   private final NotNullLazyValue<String> myMntRootProvider =
     NotNullLazyValue.atomicLazy(() -> executeOrRunTask(pi -> computeMntRoot(pi)));
-  private final NullableLazyValue<String> myUserHomeProvider =
-    AtomicNullableLazyValue.createValue(() -> executeOrRunTask(pi -> computeUserHome(pi)));
 
   /**
    * Necessary for serializer
@@ -130,10 +126,6 @@ final class WslDistributionDescriptor {
     return myMntRootProvider.getValue();
   }
 
-  public final @Nullable @NlsSafe String getUserHome() {
-    return myUserHomeProvider.getValue();
-  }
-
   /**
    * @see #getMntRoot()
    */
@@ -157,14 +149,6 @@ final class WslDistributionDescriptor {
              "[pwd=" + wslCurrentDirectory + "; " +
              "suffix=" + currentPathSuffix + "]");
     return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
-  }
-
-  private @Nullable String computeUserHome(@Nullable ProgressIndicator pi) {
-    return readWslOutputLine(new WSLCommandLineOptions()
-                               .setExecuteCommandInInteractiveShell(true)
-                               .setExecuteCommandInLoginShell(true),
-                             List.of("printenv", "HOME"), pi);
-
   }
 
   private @Nullable String readWslOutputLine(WSLCommandLineOptions options, List<String> command, @Nullable ProgressIndicator pi) {
