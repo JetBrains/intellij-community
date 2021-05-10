@@ -56,7 +56,9 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       LOG.info(e);
     }
     finally {
-      ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown, this);
+      if (unmodifiable) {
+        ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown, this);
+      }
     }
 
     StubElementTypeHolderEP.EP_NAME.addChangeListener(this::dropSerializerData, this);
@@ -149,10 +151,14 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       return; // already shut down
     }
     String name = myFile != null ? myFile.toString() : "in-memory storage";
-    LOG.info("Start shutting down " + name);
+    if (!myUnmodifiable) {
+      LOG.info("Start shutting down " + name);
+    }
     try {
       mySerializerEnumerator.close();
-      LOG.info("Finished shutting down " + name);
+      if (!myUnmodifiable) {
+        LOG.info("Finished shutting down " + name);
+      }
     }
     catch (IOException e) {
       LOG.error(e);
