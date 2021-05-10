@@ -236,6 +236,9 @@ public final class ActionUtil {
     if (component != null && !component.isShowing() &&
         !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
         !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
+      LOG.warn("Action is not performed because target component is not showing: " +
+               "action=" + id + ", component=" + component.getClass().getName());
       return;
     }
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
