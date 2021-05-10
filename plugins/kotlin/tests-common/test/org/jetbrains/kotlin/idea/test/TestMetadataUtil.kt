@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.test
 
 import java.io.File
 import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.test.TestMetadata
 
 object TestMetadataUtil {
     @JvmStatic
