@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea
 
-import org.jetbrains.kotlin.idea.test.TargetBackend
+import org.jetbrains.kotlin.test.TargetBackend
 
 // Add the directive `// WITH_COROUTINES` to use these helpers in codegen tests (see TestFiles.java).
 fun createTextForCoroutineHelpers(checkStateMachine: Boolean, checkTailCallOptimization: Boolean): String {
