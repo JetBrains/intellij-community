@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.memory.EqClass;
@@ -995,7 +994,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         if (!applyRelation(dfaLeft, dfaRight, isNegated)) return false;
       }
     }
-    return applyUnboxedRelation(dfaLeft, dfaRight, isNegated);
+    if (isNegated) {
+      return applyDerivedInequality(dfaLeft, dfaRight);
+    }
+    return true;
   }
 
   private void checkEphemeral(DfaValue left, DfaValue right) {
@@ -1053,35 +1055,29 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         DfaValue leftValue = field.createValue(myFactory, left);
         DfaValue rightValue = field.createValue(myFactory, right);
         DfType result = getDfType(leftValue).meet(getDfType(rightValue));
+        if (!result.hasNonStandardEquivalence() && !applyRelation(leftValue, rightValue, false)) {
+          return false;
+        }
         return meetDfType(leftValue, result) && meetDfType(rightValue, result);
       });
   }
 
-  private boolean applyUnboxedRelation(@NotNull DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
-    TypeConstraint leftConstraint = TypeConstraint.fromDfType(dfaLeft.getDfType());
-    TypeConstraint rightConstraint = TypeConstraint.fromDfType(dfaRight.getDfType());
-    if (dfaLeft instanceof DfaVariableValue && !leftConstraint.isPrimitiveWrapper() ||
-        dfaRight instanceof DfaVariableValue && !rightConstraint.isPrimitiveWrapper()) {
-      return true;
-    }
-    if (leftConstraint.isPrimitiveWrapper() &&
-        rightConstraint.isPrimitiveWrapper() && leftConstraint.meet(rightConstraint) == TypeConstraints.BOTTOM) {
-      // Boxes of different type (e.g. Long and Integer), cannot be equal even if unboxed values are equal
-      return negated;
-    }
-
-    DfaValue unboxedLeft = SpecialField.UNBOX.createValue(myFactory, dfaLeft);
-    DfaValue unboxedRight = SpecialField.UNBOX.createValue(myFactory, dfaRight);
-    DfType leftDfType = getDfType(unboxedLeft);
-    DfType rightDfType = getDfType(unboxedRight);
-    if (leftDfType instanceof DfConstantType && rightDfType instanceof DfConstantType) {
-      return leftDfType.equals(rightDfType) != negated;
-    }
-    if (negated && leftDfType instanceof DfFloatingPointType) {
-      // If floating point wrappers are not equal, unboxed versions could still be equal if they are 0.0 and -0.0
-      return true;
-    }
-    return applyRelation(unboxedLeft, unboxedRight, negated);
+  private boolean applyDerivedInequality(@NotNull DfaValue dfaLeft, DfaValue dfaRight) {
+    if (getDfType(dfaLeft).meet(getDfType(dfaRight)) == DfType.BOTTOM) return true;
+    List<DerivedVariableDescriptor> variables = new ArrayList<>(dfaLeft.getDfType().getDerivedVariables());
+    variables.retainAll(dfaRight.getDfType().getDerivedVariables());
+    return StreamEx.of(variables)
+      .filter(dv -> dv.equalityImpliesQualifierEquality())
+      .allMatch(dv -> {
+        DfaValue derivedLeft = dv.createValue(myFactory, dfaLeft);
+        DfaValue derivedRight = dv.createValue(myFactory, dfaRight);
+        DfType leftType = getDfType(derivedLeft);
+        DfType rightType = getDfType(derivedRight);
+        if (leftType instanceof DfConstantType && leftType.equals(rightType)) return false;
+        return derivedLeft.getDfType().hasNonStandardEquivalence() ||
+               derivedRight.getDfType().hasNonStandardEquivalence() ||
+               applyRelation(derivedLeft, derivedRight, true);
+      });
   }
 
   private boolean applyRelation(@NotNull DfaValue dfaLeft, @NotNull DfaValue dfaRight, boolean isNegated) {

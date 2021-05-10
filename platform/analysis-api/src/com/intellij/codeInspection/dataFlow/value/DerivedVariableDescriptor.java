@@ -33,4 +33,12 @@ public interface DerivedVariableDescriptor extends VariableDescriptor {
   default DfType getFromQualifier(@NotNull DfType dfType) {
     return dfType.getDerivedValue(this);
   }
+
+  /**
+   * @return true if the equality of this derived variable implies the equality of qualifiers.
+   * Could be useful for boxed values processing.
+   */
+  default boolean equalityImpliesQualifierEquality() {
+    return false;
+  }
 }

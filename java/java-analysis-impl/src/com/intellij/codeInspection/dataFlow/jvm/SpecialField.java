@@ -162,6 +162,11 @@ public enum SpecialField implements DerivedVariableDescriptor {
     boolean isMyAccessor(PsiMember accessor) {
       return accessor instanceof PsiMethod && UNBOXING_CALL.methodMatches((PsiMethod)accessor);
     }
+
+    @Override
+    public boolean equalityImpliesQualifierEquality() {
+      return true;
+    }
   },
   OPTIONAL_VALUE("value", "special.field.optional.value", true) {
     @Override

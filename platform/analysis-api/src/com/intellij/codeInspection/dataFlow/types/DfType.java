@@ -219,6 +219,14 @@ public interface DfType {
   }
 
   /**
+   * @return true if equivalence relation on this type is not standard. That is,
+   * for constant values belonging to this type, {@code a.meetRelation(EQ, b) != a.equals(b)}
+   */
+  default boolean hasNonStandardEquivalence() {
+    return false;
+  }
+  
+  /**
    * Narrows this value to the set of values that satisfies given relation
    * 
    * @param relationType relation applied
