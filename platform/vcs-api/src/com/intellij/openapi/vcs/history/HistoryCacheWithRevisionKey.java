@@ -22,11 +22,12 @@ import org.jetbrains.annotations.NotNull;
 public class HistoryCacheWithRevisionKey extends HistoryCacheBaseKey {
   private final VcsRevisionNumber myRevisionNumber;
 
-  public HistoryCacheWithRevisionKey(FilePath filePath, VcsKey vcsKey, @NotNull VcsRevisionNumber revisionNumber) {
+  public HistoryCacheWithRevisionKey(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber revisionNumber) {
     super(filePath, vcsKey);
     myRevisionNumber = revisionNumber;
   }
 
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
