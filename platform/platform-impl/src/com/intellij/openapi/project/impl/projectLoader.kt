@@ -22,7 +22,10 @@ import org.jetbrains.annotations.ApiStatus
 internal fun registerComponents(project: ProjectImpl) {
   var activity = createActivity(project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
   //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-  project.registerComponents(PluginManagerCore.getLoadedPlugins(null), ApplicationManager.getApplication(), null)
+  project.registerComponents(plugins = PluginManagerCore.getLoadedPlugins(null),
+                             app = ApplicationManager.getApplication(),
+                             precomputedExtensionModel = null,
+                             listenerCallbacks = null)
 
   activity = activity?.endAndStart("projectComponentRegistered")
   runOnlyCorePluginExtensions(

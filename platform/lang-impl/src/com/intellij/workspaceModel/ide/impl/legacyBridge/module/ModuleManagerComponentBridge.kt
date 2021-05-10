@@ -5,12 +5,16 @@ import com.intellij.ProjectTopics
 import com.intellij.configurationStore.saveComponentManager
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.ModuleStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -24,6 +28,9 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.PrecomputedExtensionModel
+import com.intellij.serviceContainer.precomputeExtensionModel
 import com.intellij.util.graph.*
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
@@ -320,6 +327,11 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     val (unloadedEntities, loadedEntities) = entities.partition { it.name in unloadedModuleNames }
     LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
 
+    val plugins = PluginManagerCore.getLoadedPlugins(null)
+    val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
+
+    val precomputedExtensionModel = precomputeExtensionModel(plugins)
+
     val toRefresh = ArrayList<VirtualFileUrl>(loadedEntities.size)
     val tasks = loadedEntities.map { moduleEntity ->
       val fileUrl = getModuleVirtualFileUrl(moduleEntity)
@@ -328,8 +340,14 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       }
       ForkJoinTask.adapt(Callable {
         runCatching {
-          val module = createModuleInstance(moduleEntity = moduleEntity, moduleFileUrl = fileUrl,
-                                            versionedStorage = entityStore, diff = null, isNew = false)
+          val module = createModuleInstance(plugins = plugins,
+                                            corePlugin = corePlugin,
+                                            precomputedExtensionModel = precomputedExtensionModel,
+                                            moduleEntity = moduleEntity,
+                                            moduleFileUrl = fileUrl,
+                                            versionedStorage = entityStore,
+                                            diff = null,
+                                            isNew = false)
           moduleEntity to module
         }.getOrLogException(LOG)
       })
@@ -541,10 +559,21 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
                                       versionedStorage: VersionedEntityStorage,
                                       diff: WorkspaceEntityStorageDiffBuilder?,
                                       isNew: Boolean): ModuleBridge {
-    return createModuleInstance(moduleEntity, getModuleVirtualFileUrl(moduleEntity), versionedStorage, diff, isNew)
+    val plugins = PluginManagerCore.getLoadedPlugins(null)
+    return createModuleInstance(plugins = plugins,
+                                corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID },
+                                precomputedExtensionModel = null,
+                                moduleEntity = moduleEntity,
+                                moduleFileUrl = getModuleVirtualFileUrl(moduleEntity),
+                                versionedStorage = versionedStorage,
+                                diff = diff,
+                                isNew = isNew)
   }
 
-  private fun createModuleInstance(moduleEntity: ModuleEntity,
+  private fun createModuleInstance(plugins: List<IdeaPluginDescriptorImpl>,
+                                   corePlugin: IdeaPluginDescriptor?,
+                                   precomputedExtensionModel: PrecomputedExtensionModel?,
+                                   moduleEntity: ModuleEntity,
                                    moduleFileUrl: VirtualFileUrl?,
                                    versionedStorage: VersionedEntityStorage,
                                    diff: WorkspaceEntityStorageDiffBuilder?,
@@ -558,17 +587,25 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       diff = diff
     )
 
-    module.init {
-      if (moduleFileUrl != null) {
-        try {
-          val moduleStore = module.stateStore as ModuleStore
-          moduleStore.setPath(moduleFileUrl.toPath(), null, isNew)
-        }
-        catch (t: Throwable) {
-          LOG.error(t)
-        }
-      }
+    module.registerComponents(corePlugin = corePlugin,
+                              plugins = plugins,
+                              app = ApplicationManager.getApplication(),
+                              precomputedExtensionModel = precomputedExtensionModel,
+                              listenerCallbacks = null)
+
+    if (moduleFileUrl == null) {
+      module.registerService(serviceInterface = IComponentStore::class.java,
+                             implementation = NonPersistentModuleStore::class.java,
+                             pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
+                             override = true,
+                             preloadMode = ServiceDescriptor.PreloadMode.FALSE)
     }
+    else {
+      val moduleStore = module.getService(IComponentStore::class.java) as ModuleStore
+      moduleStore.setPath(moduleFileUrl.toPath(), null, isNew)
+    }
+
+    module.callCreateComponents()
 
     return module
   }

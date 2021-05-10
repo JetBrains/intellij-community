@@ -23,7 +23,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
-class ModuleBridgeLoaderService(private val project: Project) {
+internal class ModuleBridgeLoaderService(private val project: Project) {
   private var storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>? = null
   private var activity: Activity? = null
 

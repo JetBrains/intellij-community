@@ -307,6 +307,10 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     context.result.addIncompletePlugin(this, pluginError)
   }
 
+  fun collectExtensionPoints() {
+
+  }
+
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>,
                          containerDescriptor: ContainerDescriptor,

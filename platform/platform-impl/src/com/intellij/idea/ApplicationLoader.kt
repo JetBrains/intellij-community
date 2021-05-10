@@ -62,8 +62,7 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
 
   prepareUiFuture.thenComposeAsync({
     val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
-    val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread()
-                                                                                          ?: throw IllegalStateException("Init UI first"))
+    val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
     (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
      ApplicationImpl.preventAwtAutoShutdown(app)
      if (isInternal) {
@@ -73,7 +72,7 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
     loadAndInitPluginFuture
       .thenAccept { plugins ->
         runActivity("app component registration") {
-          app.registerComponents(plugins, app, null)
+          app.registerComponents(plugins, app, null, null)
         }
 
         if (args.isEmpty()) {

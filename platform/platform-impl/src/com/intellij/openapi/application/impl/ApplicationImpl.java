@@ -108,9 +108,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                          boolean isCommandLine) {
     super(null);
 
-    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.getFakeCorePluginDescriptor());
-    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.getFakeCorePluginDescriptor());
-    registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
 
     if (isUnitTestMode || isInternal) {
       BundleBase.assertOnMissedKeys(true);
@@ -175,9 +175,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                          @NotNull Thread edtThread) {
     super(null);
 
-    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.getFakeCorePluginDescriptor());
-    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.getFakeCorePluginDescriptor());
-    registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
 
     Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
 
@@ -393,7 +393,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @Override
   public final void load() {
     List<IdeaPluginDescriptorImpl> plugins = PluginManagerCore.getLoadedPlugins(null);
-    registerComponents(plugins, this, null);
+    registerComponents(plugins, this, null, null);
     ApplicationLoader.initConfigurationStore(this);
     preloadServices(plugins, "", false).getSecond().join();
     loadComponents(null);

@@ -1150,11 +1150,14 @@ private fun loadPluginDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl,
   updateDependenciesStatus(pluginDescriptor, pluginStateChecker)
 
   val list = listOf(pluginDescriptor)
-  app.registerComponents(list, ApplicationManager.getApplication(), listenerCallbacks)
+  app.registerComponents(plugins = list,
+                         app = ApplicationManager.getApplication(),
+                         precomputedExtensionModel = null,
+                         listenerCallbacks = listenerCallbacks)
   for (openProject in ProjectUtil.getOpenProjects()) {
-    (openProject as ComponentManagerImpl).registerComponents(list, ApplicationManager.getApplication(), listenerCallbacks)
+    (openProject as ComponentManagerImpl).registerComponents(list, ApplicationManager.getApplication(), null, listenerCallbacks)
     for (module in ModuleManager.getInstance(openProject).modules) {
-      (module as ComponentManagerImpl).registerComponents(list, ApplicationManager.getApplication(), listenerCallbacks)
+      (module as ComponentManagerImpl).registerComponents(list, ApplicationManager.getApplication(), null, listenerCallbacks)
     }
   }
 
