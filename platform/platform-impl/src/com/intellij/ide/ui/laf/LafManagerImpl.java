@@ -992,7 +992,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static void patchRowHeight(UIDefaults defaults, String key, float prevScale) {
     Object value = defaults.get(key);
     int rowHeight = value instanceof Integer ? (Integer)value : 0;
-    if (!SystemInfoRt.isMac && !SystemInfoRt.isWindows && Registry.is("linux.row.height.disabled", true)) {
+    if (!SystemInfoRt.isMac && !SystemInfoRt.isWindows &&
+        (!LoadingState.APP_STARTED.isOccurred() || Registry.is("linux.row.height.disabled", true))) {
       rowHeight = 0;
     }
     else if (rowHeight <= 0) {
