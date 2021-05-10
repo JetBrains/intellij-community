@@ -31,7 +31,7 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
         @Override
         public void settingsChanged(@NotNull MarkdownApplicationSettings settings) {
           setAutoScrollPreview(settings.getMarkdownPreviewSettings().isAutoScrollPreview());
-          handleLayoutChange(settings.getMarkdownPreviewSettings().isVerticalSplit());
+          handleLayoutChange(!settings.getMarkdownPreviewSettings().isVerticalSplit());
         }
       };
 

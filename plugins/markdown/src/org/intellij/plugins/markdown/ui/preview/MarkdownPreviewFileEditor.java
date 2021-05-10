@@ -323,14 +323,14 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     }
 
     String layout = ((SplitFileEditor.MyFileEditorState)state).getSplitLayout();
-    return layout == null || SplitFileEditor.SplitEditorLayout.valueOf(layout) != SplitFileEditor.SplitEditorLayout.FIRST;
+    return layout == null || TextEditorWithPreview.Layout.valueOf(layout) != TextEditorWithPreview.Layout.SHOW_EDITOR;
   }
 
   private class MyUpdatePanelOnSettingsChangedListener implements MarkdownApplicationSettings.SettingsChangedListener {
     @Override
     public void settingsChanged(@NotNull MarkdownApplicationSettings settings) {
       mySwingAlarm.addRequest(() -> {
-        if (settings.getMarkdownPreviewSettings().getSplitEditorLayout() != SplitFileEditor.SplitEditorLayout.FIRST) {
+        if (settings.getMarkdownPreviewSettings().getSplitEditorLayout() != TextEditorWithPreview.Layout.SHOW_EDITOR) {
           if (myPanel == null) {
             attachHtmlPanel();
           }

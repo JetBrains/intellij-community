@@ -45,7 +45,7 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
   @NotNull
   private final JComponent myComponent;
   @NotNull
-  private SplitEditorLayout mySplitEditorLayout =
+  private TextEditorWithPreview.Layout mySplitEditorLayout =
     MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().getSplitEditorLayout();
 
   private boolean myVerticalSplitOption = MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().isVerticalSplit();
@@ -73,7 +73,7 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
       new MarkdownApplicationSettings.SettingsChangedListener() {
         @Override
         public void beforeSettingsChanged(@NotNull MarkdownApplicationSettings newSettings) {
-          SplitEditorLayout oldSplitEditorLayout =
+          TextEditorWithPreview.Layout oldSplitEditorLayout =
             MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().getSplitEditorLayout();
 
           boolean oldVerticalSplitOption =
@@ -96,20 +96,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
   }
 
   private void adjustDefaultLayout(E1 editor) {
-    TextEditorWithPreview.Layout layout = getAndResetPredefinedLayoutForEditor(editor);
-    if (layout != null) {
-      switch (layout) {
-        case SHOW_EDITOR:
-          mySplitEditorLayout = SplitEditorLayout.FIRST;
-          break;
-        case SHOW_PREVIEW:
-          mySplitEditorLayout = SplitEditorLayout.SECOND;
-          break;
-        case SHOW_EDITOR_AND_PREVIEW:
-          mySplitEditorLayout = SplitEditorLayout.SPLIT;
-          break;
-      }
-    }
   }
 
   //todo: Refactor Markdown editor and make it a subclass of TextEditorWithPreview.
@@ -187,26 +173,13 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
     return editorToolbar;
   }
 
-  public void triggerLayoutChange() {
-    final int oldValue = mySplitEditorLayout.ordinal();
-    final int N = SplitEditorLayout.values().length;
-    final int newValue = (oldValue + N - 1) % N;
-
-    triggerLayoutChange(SplitEditorLayout.values()[newValue], true);
-  }
-
-  public void triggerLayoutChange(@NotNull SplitEditorLayout newLayout, boolean requestFocus) {
+  public void triggerLayoutChange(@NotNull TextEditorWithPreview.Layout newLayout, boolean requestFocus) {
     if (mySplitEditorLayout == newLayout) {
       return;
     }
 
     mySplitEditorLayout = newLayout;
     invalidateLayout(requestFocus);
-  }
-
-  @NotNull
-  public SplitEditorLayout getCurrentEditorLayout() {
-    return mySplitEditorLayout;
   }
 
   private void invalidateLayout(boolean requestFocus) {
@@ -223,8 +196,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
   }
 
   private void adjustEditorsVisibility() {
-    myMainEditor.getComponent().setVisible(mySplitEditorLayout.showFirst);
-    mySecondEditor.getComponent().setVisible(mySplitEditorLayout.showSecond);
   }
 
   @NotNull
@@ -246,8 +217,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    if (mySplitEditorLayout.showFirst) return myMainEditor.getPreferredFocusedComponent();
-    if (mySplitEditorLayout.showSecond) return mySecondEditor.getPreferredFocusedComponent();
     return null;
   }
 
@@ -259,19 +228,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof MyFileEditorState) {
-      final MyFileEditorState compositeState = (MyFileEditorState)state;
-      if (compositeState.getFirstState() != null) {
-        myMainEditor.setState(compositeState.getFirstState());
-      }
-      if (compositeState.getSecondState() != null) {
-        mySecondEditor.setState(compositeState.getSecondState());
-      }
-      if (compositeState.getSplitLayout() != null) {
-        mySplitEditorLayout = SplitEditorLayout.valueOf(compositeState.getSplitLayout());
-        invalidateLayout(true);
-      }
-    }
   }
 
   @Override

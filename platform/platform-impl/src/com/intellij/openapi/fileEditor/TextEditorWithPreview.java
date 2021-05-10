@@ -515,7 +515,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myIsVerticalSplit = isVerticalSplit;
 
     myToolbarWrapper.refresh();
-    mySplitter.setOrientation(!myIsVerticalSplit);
+    mySplitter.setOrientation(myIsVerticalSplit);
     myComponent.repaint();
   }
 }
