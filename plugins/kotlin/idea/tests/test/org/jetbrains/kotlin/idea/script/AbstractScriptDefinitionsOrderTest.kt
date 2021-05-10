@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.junit.ComparisonFailure
 
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting

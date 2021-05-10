@@ -8,7 +8,7 @@ import kotlin.Unit;
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightTestCase;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
 

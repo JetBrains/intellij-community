@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStep
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockSourcePosition
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase() {
     private val fixture: JavaCodeInsightTestFixture

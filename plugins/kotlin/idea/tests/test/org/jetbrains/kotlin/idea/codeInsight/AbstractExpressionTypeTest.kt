@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractExpressionTypeTest : KotlinLightCodeInsightFixtureTestCase() {
 

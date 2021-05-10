@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard.cli
 
 import com.intellij.testFramework.UsefulTestCase
 import org.hamcrest.core.Is
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.tools.projectWizard.core.ExceptionError
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.div

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.test.util
 
 import com.intellij.openapi.util.io.FileUtil
 import org.junit.Assert
-import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

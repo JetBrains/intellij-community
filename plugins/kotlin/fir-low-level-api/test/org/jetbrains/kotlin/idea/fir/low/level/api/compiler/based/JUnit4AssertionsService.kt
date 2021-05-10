@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.idea.fir.low.level.api.compiler.based
 
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import org.jetbrains.kotlin.test.services.AssertionsService
-import org.jetbrains.kotlin.test.util.JUnit4Assertions
+import org.jetbrains.kotlin.idea.test.util.JUnit4Assertions
 import org.opentest4j.MultipleFailuresError
 import java.io.File
 import java.util.function.Consumer

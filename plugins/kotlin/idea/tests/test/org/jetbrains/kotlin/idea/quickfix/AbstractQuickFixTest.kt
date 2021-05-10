@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchTh
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinRoot
 import org.junit.Assert
 import org.junit.ComparisonFailure

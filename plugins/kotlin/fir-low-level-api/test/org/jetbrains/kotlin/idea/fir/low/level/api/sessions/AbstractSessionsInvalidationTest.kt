@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.incModificationTracker
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.test.KotlinRoot
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths

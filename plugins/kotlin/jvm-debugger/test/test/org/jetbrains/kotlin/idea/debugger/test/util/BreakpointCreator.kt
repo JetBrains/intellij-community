@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.test.util
 
-import org.jetbrains.kotlin.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import com.intellij.debugger.DebuggerInvocationUtil
 import com.intellij.openapi.application.ModalityState
 import com.intellij.psi.PsiDocumentManager

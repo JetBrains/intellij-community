@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractGenerateTestSupportMethodActionTest : AbstractCodeInsightActionTest() {
     override fun createAction(fileText: String) = (super.createAction(fileText) as KotlinGenerateTestSupportActionBase).apply {

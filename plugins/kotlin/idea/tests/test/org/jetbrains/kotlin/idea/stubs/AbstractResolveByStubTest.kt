@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.load.java.descriptors.PossiblyExternalAnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.util.DescriptorValidator.ValidationVisitor.errorTypesForbidden
-import org.jetbrains.kotlin.test.util.RecursiveDescriptorComparator
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.util.DescriptorValidator.ValidationVisitor.errorTypesForbidden
+import org.jetbrains.kotlin.idea.test.util.RecursiveDescriptorComparator
 import org.junit.Assert
 import java.io.File
 

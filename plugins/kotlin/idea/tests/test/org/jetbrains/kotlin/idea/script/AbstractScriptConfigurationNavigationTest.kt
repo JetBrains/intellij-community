@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.script
 
 import org.jetbrains.kotlin.idea.navigation.GotoCheck
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.junit.Assert
 

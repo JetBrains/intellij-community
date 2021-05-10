@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.frontend.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.idea.test.framework.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
 abstract class AbstractSymbolTest : AbstractKtIdeaTest() {
     abstract fun KtAnalysisSession.collectSymbols(fileStructure: TestFileStructure): List<KtSymbol>

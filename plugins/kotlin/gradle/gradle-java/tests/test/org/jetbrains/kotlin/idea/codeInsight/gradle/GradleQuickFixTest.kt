@@ -15,7 +15,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.groovy.inspections.GradleKotlinxCoroutinesDeprecationInspection
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File

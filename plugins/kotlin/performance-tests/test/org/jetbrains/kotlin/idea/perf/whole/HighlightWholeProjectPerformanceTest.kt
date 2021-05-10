@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.testFramework.relativePath
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 import java.io.File
 import java.nio.file.Files

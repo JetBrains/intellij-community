@@ -6,8 +6,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.cli
 
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.reflect.KClass

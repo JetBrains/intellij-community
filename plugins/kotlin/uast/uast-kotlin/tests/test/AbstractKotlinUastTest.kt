@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.io.URLUtil
-import org.jetbrains.kotlin.checkers.CompilerTestLanguageVersionSettings
+import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
@@ -23,11 +23,11 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
-import org.jetbrains.kotlin.test.ConfigurationKind
+import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.test.KotlinRoot
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.test.testFramework.resetApplicationToNull
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.TestJdkKind
+import org.jetbrains.kotlin.idea.test.testFramework.resetApplicationToNull
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.evaluation.UEvaluatorExtension
 import org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin

@@ -6,7 +6,7 @@ import com.intellij.ide.util.FileStructurePopup
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractKotlinFileStructureTest : KotlinFileStructureTestBase() {

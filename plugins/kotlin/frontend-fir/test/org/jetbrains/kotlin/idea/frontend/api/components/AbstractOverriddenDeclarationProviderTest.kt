@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.test.framework.TestFileStructure
 import org.jetbrains.kotlin.idea.test.framework.TestStructureExpectedDataBlock
 import org.jetbrains.kotlin.idea.test.framework.TestStructureRenderer
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
 abstract class AbstractOverriddenDeclarationProviderTest : AbstractKtIdeaTest() {
     override fun doTestByFileStructure(fileStructure: TestFileStructure) {
