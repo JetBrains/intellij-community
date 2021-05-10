@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.test.Directives;
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.test.ConfigurationKind;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
-import org.jetbrains.kotlin.idea.test.TargetBackend;
+import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestJdkKind;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.test.*;
