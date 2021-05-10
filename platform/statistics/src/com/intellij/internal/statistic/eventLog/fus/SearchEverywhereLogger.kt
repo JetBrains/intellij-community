@@ -21,11 +21,6 @@ object SearchEverywhereLogger {
   }
 
   @JvmStatic
-  fun newData(): FeatureUsageData {
-    return FeatureUsageData(recorderId)
-  }
-
-  @JvmStatic
   fun getBucket(): Int {
     return EventLogConfiguration.getInstance().getOrCreate(recorderId).bucket
   }

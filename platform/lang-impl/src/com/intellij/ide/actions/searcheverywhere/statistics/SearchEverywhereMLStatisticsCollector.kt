@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
-import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger
 import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger.log
 import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereSessionService
 import com.intellij.internal.statistic.local.ActionSummary
@@ -37,7 +36,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
       val percentage = Registry.get("statistics.mlse.report.percentage").asInteger() / 100.0
       return percentage >= 1 || Math.random() < percentage // only report a part of cases
     }
-    return false;
+    return false
   }
 
   private fun isActionOrAllTab(tabId: String): Boolean = ActionSearchEverywhereContributor::class.java.simpleName == tabId ||
@@ -63,48 +62,44 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              symbolsInQuery: Int,
                              elements: List<SearchEverywhereFoundElementInfo>,
                              tabId: String) {
-    val logData = SearchEverywhereLogger.newData()
-    logData.addData(SESSION_ID_LOG_DATA_KEY, mySessionId)
+    val data = hashMapOf<String, Any>()
+    data[SESSION_ID_LOG_DATA_KEY] = mySessionId
     if (indexes.isNotEmpty()) {
-      logData.addData(SELECTED_INDEXES_DATA_KEY, indexes.map { it.toString() })
+      data[SELECTED_INDEXES_DATA_KEY] = indexes.map { it.toString() }
     }
-    logData.addData(CLOSE_POPUP_KEY, closePopup)
-    logData.addData(TOTAL_NUMBER_OF_ITEMS_DATA_KEY, elements.size)
-    logData.addData(TYPED_SYMBOL_KEYS, symbolsTyped)
-    logData.addData(TYPED_BACKSPACES_DATA_KEY, backspacesTyped)
-    logData.addData(TOTAL_SYMBOLS_AMOUNT_DATA_KEY, symbolsInQuery)
-    logData.addData(SE_TAB_ID_KEY, tabId)
+    data[CLOSE_POPUP_KEY] = closePopup
+    data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
+    data[TYPED_SYMBOL_KEYS] = symbolsTyped
+    data[TYPED_BACKSPACES_DATA_KEY] = backspacesTyped
+    data[TOTAL_SYMBOLS_AMOUNT_DATA_KEY] = symbolsInQuery
+    data[SE_TAB_ID_KEY] = tabId
 
     val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
     val globalTotalStats = globalSummary.totalSummary
     val localSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
     val localActionsStats = localSummary.getActionsStats()
     val localTotalStats = localSummary.getTotalStats()
-    logData.addData(LOCAL_MAX_USAGE_COUNT_KEY, localTotalStats.maxUsageCount)
-    logData.addData(LOCAL_MIN_USAGE_COUNT_KEY, localTotalStats.minUsageCount)
-    logData.addData(GLOBAL_MAX_USAGE_COUNT_KEY, globalTotalStats.maxUsageCount)
-    logData.addData(GLOBAL_MIN_USAGE_COUNT_KEY, globalTotalStats.minUsageCount)
+    data[LOCAL_MAX_USAGE_COUNT_KEY] = localTotalStats.maxUsageCount
+    data[LOCAL_MIN_USAGE_COUNT_KEY] = localTotalStats.minUsageCount
+    data[GLOBAL_MAX_USAGE_COUNT_KEY] = globalTotalStats.maxUsageCount
+    data[GLOBAL_MIN_USAGE_COUNT_KEY] = globalTotalStats.minUsageCount
 
     myProject?.let {
       // report tool windows' ids
       val twm = ToolWindowManager.getInstance(it)
       ApplicationManager.getApplication().invokeAndWait {
-        twm.lastActiveToolWindowId?.let { id -> logData.addData(LAST_ACTIVE_TOOL_WINDOW_KEY, id) }
+        twm.lastActiveToolWindowId?.let { id -> data[LAST_ACTIVE_TOOL_WINDOW_KEY] = id }
       }
 
       // report types of open files in editor: fileType -> amount
       val fem = FileEditorManager.getInstance(it)
-      logData.addData(OPEN_FILE_TYPES_KEY, fem.openFiles.map { file -> file.fileType.name }.distinct())
+      data[OPEN_FILE_TYPES_KEY] = fem.openFiles.map { file -> file.fileType.name }.distinct()
     }
 
     val currentTime = System.currentTimeMillis()
-    val data = logData.build()
-    (data as? MutableMap)?.put(
-      COLLECTED_RESULTS_DATA_KEY,
-      elements.take(REPORTED_ITEMS_LIMIT).map {
-        getListItemsNames(it, currentTime, globalSummary, localActionsStats).toMap()
-      }
-    )
+    data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
+      getListItemsNames(it, currentTime, globalSummary, localActionsStats).toMap()
+    }
 
     log(SESSION_FINISHED, data)
   }
