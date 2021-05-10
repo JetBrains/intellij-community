@@ -6334,14 +6334,16 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' unqualified_reference_expression ')'
+  // '(' mb_nl unqualified_reference_expression mb_nl ')'
   public static boolean single_tuple(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "single_tuple")) return false;
     if (!nextTokenIs(b, T_LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, T_LPAREN);
+    r = r && mb_nl(b, l + 1);
     r = r && unqualified_reference_expression(b, l + 1);
+    r = r && mb_nl(b, l + 1);
     r = r && consumeToken(b, T_RPAREN);
     exit_section_(b, m, TUPLE, r);
     return r;
@@ -7100,41 +7102,45 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' unqualified_reference_expression (',' unqualified_reference_expression)+ ')'
+  // '(' mb_nl unqualified_reference_expression (mb_nl ',' mb_nl unqualified_reference_expression)+ mb_nl ')'
   public static boolean tuple(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tuple")) return false;
     if (!nextTokenIsFast(b, T_LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenFast(b, T_LPAREN);
+    r = r && mb_nl(b, l + 1);
     r = r && unqualified_reference_expression(b, l + 1);
-    r = r && tuple_2(b, l + 1);
+    r = r && tuple_3(b, l + 1);
+    r = r && mb_nl(b, l + 1);
     r = r && consumeToken(b, T_RPAREN);
     exit_section_(b, m, TUPLE, r);
     return r;
   }
 
-  // (',' unqualified_reference_expression)+
-  private static boolean tuple_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tuple_2")) return false;
+  // (mb_nl ',' mb_nl unqualified_reference_expression)+
+  private static boolean tuple_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tuple_3")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = tuple_2_0(b, l + 1);
+    r = tuple_3_0(b, l + 1);
     while (r) {
       int c = current_position_(b);
-      if (!tuple_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "tuple_2", c)) break;
+      if (!tuple_3_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "tuple_3", c)) break;
     }
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // ',' unqualified_reference_expression
-  private static boolean tuple_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "tuple_2_0")) return false;
+  // mb_nl ',' mb_nl unqualified_reference_expression
+  private static boolean tuple_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tuple_3_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenFast(b, T_COMMA);
+    r = mb_nl(b, l + 1);
+    r = r && consumeToken(b, T_COMMA);
+    r = r && mb_nl(b, l + 1);
     r = r && unqualified_reference_expression(b, l + 1);
     exit_section_(b, m, null, r);
     return r;

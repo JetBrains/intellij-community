@@ -74,7 +74,7 @@ Groovy script
           PsiElement(()('(')
           Reference expression
             PsiElement(identifier)('String')
-          PsiErrorElement:')' expected, got 'home'
+          PsiErrorElement:')' or ',' expected, got 'home'
             <empty list>
         PsiWhiteSpace(' ')
         Command arguments
