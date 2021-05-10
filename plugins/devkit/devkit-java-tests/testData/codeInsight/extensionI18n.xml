@@ -31,6 +31,9 @@
 
     <extensionPoint name="notificationGroup"
                     beanClass="com.intellij.notification.impl.NotificationGroupEP"/>
+    
+    <extensionPoint name="advancedSetting"
+                    beanClass="com.intellij.openapi.options.advanced.AdvancedSettingBean"/>
 
     <extensionPoint name="schemeImporter"
                     beanClass="com.intellij.openapi.options.SchemeImporterEP">
@@ -83,6 +86,20 @@
                        key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                        bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
+    <advancedSetting id="myAdvancedSetting"
+                     bundle="MyBundle"
+                     groupKey="my.key"
+                     titleKey="my.key"
+                     descriptionKey="my.key"/>
+    <advancedSetting id="myAdvancedSettingDefaultBundle"
+                     groupKey="my.key"
+                     titleKey="my.key"
+                     descriptionKey="my.key"/>
+    <advancedSetting id="myAdvancedSettingInvalid"
+                     bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
+                     groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                     titleKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                     descriptionKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
 
     <schemeImporter nameKey="my.key" nameBundle="MyBundle"/>
     <schemeImporter nameKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
