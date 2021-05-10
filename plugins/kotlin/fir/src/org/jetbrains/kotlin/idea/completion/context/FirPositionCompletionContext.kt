@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.context
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.frontend.api.analyse
 import org.jetbrains.kotlin.idea.frontend.api.analyseInFakeAnalysisSession
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -57,7 +58,7 @@ internal object FirPositionCompletionContextDetector {
                 action
             )
             is FirUnknownPositionContext -> {
-                // TODO
+                analyse(basicContext.originalKtFile, action)
             }
         }
     }
