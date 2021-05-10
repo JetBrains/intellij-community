@@ -86,7 +86,7 @@ internal class RenameDialog(
   private fun LayoutBuilder.newName() {
     row {
       val labelBuilder = label(RefactoringBundle.message("rename.dialog.new.name.label"))
-      val nameSuggestionsField = NameSuggestionsField(arrayOf(myTargetName, myTargetName), project)
+      val nameSuggestionsField = NameSuggestionsField(arrayOf(myTargetName), project)
       nameSuggestionsField.addDataChangedListener {
         myTargetName = nameSuggestionsField.enteredName
       }
