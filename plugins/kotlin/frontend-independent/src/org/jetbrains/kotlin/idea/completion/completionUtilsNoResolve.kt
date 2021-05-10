@@ -2,10 +2,8 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.lookup.LookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
@@ -61,11 +59,7 @@ fun createKeywordElementWithSpace(
 ): LookupElement {
     val element = createKeywordElement(keyword, tail, lookupObject)
     return if (addSpaceAfter) {
-        object : LookupElementDecorator<LookupElement>(element) {
-            override fun handleInsert(context: InsertionContext) {
-                WithTailInsertHandler.SPACE.handleInsert(context, delegate)
-            }
-        }
+        element.withInsertHandler(WithTailInsertHandler.SPACE.asPostInsertHandler)
     } else {
         element
     }
