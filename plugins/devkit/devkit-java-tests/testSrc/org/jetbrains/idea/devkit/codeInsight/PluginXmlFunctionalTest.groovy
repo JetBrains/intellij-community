@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
@@ -421,6 +422,25 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   void testIconAttribute() {
     myFixture.addClass("package foo; public class FooAction extends com.intellij.openapi.actionSystem.AnAction { }")
 
+    addIconClasses()
+    doHighlightingTest("iconAttribute.xml",
+                       "MyIconAttributeEPBean.java")
+  }
+
+  void testIconAttributeCompletion() {
+    addIconClasses()
+    myFixture.configureByFile("iconAttributeCompletion.xml")
+    Registry.get("ide.completion.variant.limit").setValue("5000", getTestRootDisposable());
+    myFixture.completeBasic()
+
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings()
+    assertContainsElements(lookupElementStrings,
+                           "AllIcons.Providers.Mysql",
+                           "MyIcons.MyCustomIcon",
+                           "my.FqnIcons.MyFqnIcon", "my.FqnIcons.Inner.MyInnerFqnIcon")
+  }
+
+  private void addIconClasses() {
     myFixture.addClass("package icons; " +
                        "public class MyIcons {" +
                        "  public static final javax.swing.Icon MyCustomIcon = null; " +
@@ -433,8 +453,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "    public static final javax.swing.Icon MyInnerFqnIcon = null; " +
                        "  }" +
                        "}")
-    doHighlightingTest("iconAttribute.xml",
-                       "MyIconAttributeEPBean.java")
   }
 
   void testPluginWithModules() {

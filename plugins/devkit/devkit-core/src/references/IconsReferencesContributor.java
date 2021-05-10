@@ -2,9 +2,14 @@
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -13,6 +18,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +33,10 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PackageScope;
+import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -40,9 +49,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.UastUtils;
 
+import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -67,6 +82,8 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   private static final String ICONS_PACKAGE_PREFIX = "icons.";
   @NonNls
   private static final String COM_INTELLIJ_ICONS_PREFIX = "com.intellij.icons.";
+  @NonNls
+  private static final String ICONS_CLASSNAME_SUFFIX = "Icons";
 
   @Override
   public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters,
@@ -345,10 +362,13 @@ public class IconsReferencesContributor extends PsiReferenceContributor
     @NonNls List<String> pathElements = StringUtil.split(path, ".");
     if (pathElements.size() < 2) return null;
 
-    final int iconsClassNameIdx = ContainerUtil.lastIndexOf(pathElements, s -> s.endsWith("Icons"));
+    final int iconsClassNameIdx = ContainerUtil.lastIndexOf(pathElements, s -> s.endsWith(ICONS_CLASSNAME_SUFFIX));
     if (iconsClassNameIdx == -1) return null;
 
-    PsiClass iconClass = findIconClass(element.getProject(),
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module == null) return null;
+
+    PsiClass iconClass = findIconClass(module,
                                        StringUtil.join(ContainerUtil.getFirstItems(pathElements, iconsClassNameIdx + 1), "."),
                                        iconsClassNameIdx != 0);
     if (iconClass == null) return null;
@@ -362,7 +382,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   @Nullable
-  private static PsiClass findIconClass(Project project, @NonNls @NotNull String iconClass, boolean isQualifiedFqn) {
+  private static PsiClass findIconClass(Module module, @NonNls @NotNull String iconClass, boolean isQualifiedFqn) {
     final String adjustedIconClassFqn;
     if (isQualifiedFqn) {
       adjustedIconClassFqn = iconClass;
@@ -371,8 +391,11 @@ public class IconsReferencesContributor extends PsiReferenceContributor
       adjustedIconClassFqn = ALL_ICONS_NAME.equals(iconClass) ? ALL_ICONS_FQN : ICONS_PACKAGE_PREFIX + iconClass;
     }
 
-    return JavaPsiFacade.getInstance(project).findClass(adjustedIconClassFqn, GlobalSearchScope.allScope(project));
+    GlobalSearchScope iconSearchScope = isQualifiedFqn ? GlobalSearchScope.moduleRuntimeScope(module, false) :
+                                        GlobalSearchScope.allScope(module.getProject());
+    return JavaPsiFacade.getInstance(module.getProject()).findClass(adjustedIconClassFqn, iconSearchScope);
   }
+
 
   private static abstract class IconPsiReferenceBase extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
 
@@ -380,11 +403,129 @@ public class IconsReferencesContributor extends PsiReferenceContributor
       super(element, true);
     }
 
+    @Override
+    public Object @NotNull [] getVariants() {
+      Module module = ModuleUtilCore.findModuleForPsiElement(myElement);
+      if (module == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+      final Project project = module.getProject();
+      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+
+      GlobalSearchScope productionScope = GlobalSearchScope.moduleRuntimeScope(module, false);
+
+      List<LookupElement> variants = new ArrayList<>();
+
+      // AllIcons
+      addIconVariants(variants, javaPsiFacade.findClass(ALL_ICONS_FQN, productionScope), false, Collections.emptyList());
+
+      // icons.*Icons
+      final PsiPackage iconsPackage = javaPsiFacade.findPackage("icons");
+      if (iconsPackage != null) {
+        for (PsiClass psiClass : iconsPackage.getClasses(productionScope)) {
+          final String className = psiClass.getName();
+          if (className == null || !StringUtil.endsWith(className, ICONS_CLASSNAME_SUFFIX)) continue;
+
+          addIconVariants(variants, psiClass, false, Collections.emptyList());
+        }
+      }
+
+      // FQN *Icons
+      GlobalSearchScope notIconsPackageScope =
+        iconsPackage != null ? PackageScope.packageScope(iconsPackage, false) : GlobalSearchScope.EMPTY_SCOPE;
+      final Query<PsiClass> allIconsSearch =
+        AllClassesSearch.search(productionScope.intersectWith(GlobalSearchScope.notScope(notIconsPackageScope)),
+                                project, s -> StringUtil.endsWith(s, ICONS_CLASSNAME_SUFFIX) && !s.equals(ICONS_CLASSNAME_SUFFIX));
+      allIconsSearch.forEach(psiClass -> {
+        if (ALL_ICONS_FQN.equals(psiClass.getQualifiedName()) ||
+            psiClass.isInterface() ||
+            psiClass.getContainingClass() != null ||
+            !psiClass.hasModifier(JvmModifier.PUBLIC)) {
+          return;
+        }
+
+        addIconVariants(variants, psiClass, true, Collections.emptyList());
+      });
+      return variants.toArray();
+    }
+
+    private static void addIconVariants(List<LookupElement> variants,
+                                        @Nullable PsiClass iconClass,
+                                        boolean useFqn,
+                                        List<PsiClass> containingClasses) {
+      if (iconClass == null) return;
+
+      String classNamePrefix;
+      if (useFqn) {
+        classNamePrefix = containingClasses.isEmpty() ? iconClass.getQualifiedName() :
+                          ContainerUtil.getLastItem(containingClasses).getQualifiedName() + "." + iconClass.getName();
+      }
+      else {
+        classNamePrefix = containingClasses.isEmpty() ? iconClass.getName() :
+                          StringUtil.join(containingClasses, aClass -> aClass.getName(), ".") + "." + iconClass.getName();
+      }
+
+      for (PsiField field : iconClass.getFields()) {
+        if (!ProjectIconsAccessor.isIconClassType(field.getType())) continue;
+
+        String iconPath = classNamePrefix + "." + field.getName();
+        LookupElementBuilder builder = LookupElementBuilder.create(field, iconPath)
+          .withRenderer(IconPathLookupElementRenderer.INSTANCE);
+        variants.add(builder);
+      }
+
+      final List<PsiClass> parents = new SmartList<>(containingClasses);
+      parents.add(iconClass);
+      for (PsiClass innerClass : iconClass.getInnerClasses()) {
+        addIconVariants(variants, innerClass, useFqn, parents);
+      }
+    }
+
+
     @SuppressWarnings("UnresolvedPropertyKey")
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
       return DevKitBundle.message("inspections.presentation.cannot.resolve.icon");
+    }
+
+    
+    private static class IconPathLookupElementRenderer extends LookupElementRenderer<LookupElement> {
+
+      private static final IconPathLookupElementRenderer INSTANCE = new IconPathLookupElementRenderer();
+
+      @Override
+      public void renderElement(LookupElement element, LookupElementPresentation presentation) {
+        final PsiField field = ObjectUtils.tryCast(element.getPsiElement(), PsiField.class);
+        assert field != null;
+
+        final String iconPath = element.getLookupString();
+        presentation.setItemText(iconPath);
+
+        presentation.setStrikeout(field.isDeprecated());
+
+        final Icon resolveIcon = resolveIcon(field, iconPath);
+        if (resolveIcon != null) {
+          if (ProjectIconsAccessor.hasProperSize(resolveIcon)) {
+            presentation.setIcon(resolveIcon);
+          }
+          else {
+            presentation.setTailText(" (" + resolveIcon.getIconWidth() + "x" + resolveIcon.getIconHeight() + ")", true);
+          }
+        }
+      }
+
+      @Nullable
+      private static Icon resolveIcon(PsiField field, @NotNull String iconPath) {
+        UField uField = UastContextKt.toUElement(field, UField.class);
+        assert uField != null;
+        UExpression expression = uField.getUastInitializer();
+        if (expression == null) {
+          return IconLoader.findIcon(iconPath, IconPsiReferenceBase.class, false, false);
+        }
+
+        ProjectIconsAccessor iconsAccessor = ProjectIconsAccessor.getInstance(field.getProject());
+        VirtualFile iconFile = iconsAccessor.resolveIconFile(expression);
+        return iconFile == null ? null : iconsAccessor.getIcon(iconFile);
+      }
     }
   }
 }

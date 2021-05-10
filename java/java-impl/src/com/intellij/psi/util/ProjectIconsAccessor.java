@@ -129,7 +129,7 @@ public class ProjectIconsAccessor {
     return extension != null && ICON_EXTENSIONS.contains(StringUtil.toLowerCase(extension));
   }
 
-  private static boolean hasProperSize(Icon icon) {
+  public static boolean hasProperSize(Icon icon) {
     return icon.getIconHeight() <= JBUIScale.scale(ICON_MAX_HEIGHT) &&
            icon.getIconWidth() <= JBUIScale.scale(ICON_MAX_WEIGHT);
   }
