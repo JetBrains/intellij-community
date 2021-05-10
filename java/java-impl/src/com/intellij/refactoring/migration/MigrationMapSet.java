@@ -29,9 +29,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class MigrationMapSet {
   private static final Logger LOG = Logger.getInstance(MigrationMapSet.class);
@@ -53,7 +50,6 @@ public class MigrationMapSet {
   @NonNls private static final String[] DEFAULT_MAPS = new  String[] {
     "/com/intellij/refactoring/migration/res/" + SWING_MAP_FILE_NAME,
   };
-  private final Set<String> myDeletedMaps = new TreeSet<>();
 
   public MigrationMapSet() {
   }
@@ -92,13 +88,9 @@ public class MigrationMapSet {
       loadMaps();
     }
     myMaps.remove(map);
-    String name = map.getFileName();
-    if (isPredefined(name)) {
-      myDeletedMaps.add(name);
-    }
   }
 
-  private static boolean isPredefined(String name) {
+  public static boolean isPredefined(String name) {
     for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
       URL migrationMap = provider.getMigrationMap();
       String fileName = FileUtilRt.getNameWithoutExtension(new File(migrationMap.getFile()).getName());
@@ -137,21 +129,10 @@ public class MigrationMapSet {
     return dir.toFile();
   }
 
-  private void copyPredefinedMaps(File dir) {
-    File deletedFiles = new File(dir, "deleted.txt");
-    if (deletedFiles.isFile()) {
-      try {
-        myDeletedMaps.addAll(Arrays.asList(FileUtil.loadFile(deletedFiles, true).split("\n")));
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-
+  private static void copyPredefinedMaps(File dir) {
     for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
       URL migrationMap = provider.getMigrationMap();
       String fileName = new File(migrationMap.getFile()).getName();
-      if (myDeletedMaps.contains(FileUtilRt.getNameWithoutExtension(fileName))) continue;
       copyMap(dir, migrationMap, fileName);
     }
 
@@ -159,7 +140,6 @@ public class MigrationMapSet {
       URL url = MigrationMapSet.class.getResource(defaultTemplate);
       LOG.assertTrue(url != null);
       String fileName = defaultTemplate.substring(defaultTemplate.lastIndexOf("/") + 1);
-      if (myDeletedMaps.contains(FileUtilRt.getNameWithoutExtension(fileName))) continue;
       copyMap(dir, url, fileName);
     }
   }
@@ -302,10 +282,6 @@ public class MigrationMapSet {
     }
 
     JDOMUtil.updateFileSet(files, filePaths, documents, CodeStyle.getDefaultSettings().getLineSeparator());
-
-    if (!myDeletedMaps.isEmpty()) {
-      FileUtil.writeToFile(new File(dir, "deleted.txt"), StringUtil.join(myDeletedMaps, "\n"));
-    }
   }
 
   private static Document saveMap(MigrationMap map) {
