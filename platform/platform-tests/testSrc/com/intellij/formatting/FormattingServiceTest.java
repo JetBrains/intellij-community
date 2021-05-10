@@ -57,7 +57,7 @@ public class FormattingServiceTest extends FormatterTestCase {
     }
 
     @Override
-    public Set<Feature> getFeatures() {
+    public @NotNull Set<Feature> getFeatures() {
       return FEATURES;
     }
 

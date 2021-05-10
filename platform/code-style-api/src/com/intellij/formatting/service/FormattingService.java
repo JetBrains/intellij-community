@@ -31,6 +31,7 @@ public interface FormattingService {
     FORMAT_FRAGMENTS
   }
 
+  @NotNull
   Set<Feature> getFeatures();
 
   boolean canFormat(@NotNull PsiFile file);

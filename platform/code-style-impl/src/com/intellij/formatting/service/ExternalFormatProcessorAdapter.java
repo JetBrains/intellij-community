@@ -30,7 +30,7 @@ public final class ExternalFormatProcessorAdapter implements FormattingService {
   }
 
   @Override
-  public Set<Feature> getFeatures() {
+  public @NotNull Set<Feature> getFeatures() {
     return FEATURES;
   }
 
