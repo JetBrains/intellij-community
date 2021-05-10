@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeExtension;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -24,10 +25,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.util.BitUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
@@ -50,6 +48,8 @@ import java.util.function.Consumer;
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
   private static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
+  private static final boolean DEBUG_PREBUILT_INDICES = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false);
+
   public static final boolean USE_SNAPSHOT_MAPPINGS = false; //TODO
 
   private static final int VERSION = 45 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
@@ -159,6 +159,21 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       @Override
       @Nullable
       protected SerializedStubTree computeValue(@NotNull final FileContent inputData, @NotNull StubBuilderType type) {
+        try {
+          SerializedStubTree prebuiltTree = findPrebuiltSerializedStubTree(inputData);
+          if (prebuiltTree != null) {
+            prebuiltTree = prebuiltTree.reSerialize(mySerializationManager, myStubIndexesExternalizer);
+            if (DEBUG_PREBUILT_INDICES) {
+              assertPrebuiltStubTreeMatchesActualTree(prebuiltTree, inputData, type);
+            }
+            return prebuiltTree;
+          }
+        } catch (ProcessCanceledException pce) {
+          throw pce;
+        } catch (Exception e) {
+          LOG.error("Error while indexing: " + inputData.getFileName() + " using prebuilt stub index", e);
+        }
+
         Stub stub;
         try {
           stub = StubTreeBuilder.buildStubTree(inputData, type);
@@ -191,6 +206,18 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
         return serializedStubTree;
       }
     };
+  }
+
+  private static final FileTypeExtension<PrebuiltStubsProvider> PREBUILT_STUBS_PROVIDER_EP =
+    new FileTypeExtension<>("com.intellij.filetype.prebuiltStubsProvider");
+
+  @Nullable
+  private static SerializedStubTree findPrebuiltSerializedStubTree(@NotNull FileContent fileContent) {
+    PrebuiltStubsProvider prebuiltStubsProvider = PREBUILT_STUBS_PROVIDER_EP.forFileType(fileContent.getFileType());
+    if (prebuiltStubsProvider == null) {
+      return null;
+    }
+    return prebuiltStubsProvider.findStub(fileContent);
   }
 
   private static void assertDeserializedStubMatchesOriginalStub(@NotNull SerializedStubTree stubTree,
@@ -227,6 +254,28 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
 
     return true;
+  }
+
+  private void assertPrebuiltStubTreeMatchesActualTree(@NotNull SerializedStubTree prebuiltStubTree,
+                                                       @NotNull FileContent fileContent,
+                                                       @NotNull StubBuilderType type) {
+    try {
+      Stub stub = StubTreeBuilder.buildStubTree(fileContent, type);
+      if (stub == null) {
+        return;
+      }
+      SerializedStubTree actualTree = SerializedStubTree.serializeStub(stub, mySerializationManager, myStubIndexesExternalizer);
+      if (!IndexDataComparer.INSTANCE.areStubTreesTheSame(actualTree, prebuiltStubTree)) {
+        throw new RuntimeExceptionWithAttachments(
+          "Prebuilt stub tree does not match actual stub tree",
+          new Attachment("actual-stub-tree.txt", IndexDataPresenter.INSTANCE.getPresentableSerializedStubTree(actualTree)),
+          new Attachment("prebuilt-stub-tree.txt", IndexDataPresenter.INSTANCE.getPresentableSerializedStubTree(prebuiltStubTree))
+        );
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static final byte IS_BINARY_MASK = 1;
