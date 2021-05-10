@@ -5,6 +5,7 @@ import com.intellij.DynamicBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
+import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -116,38 +118,33 @@ class AdvancedSettingBean : PluginAware {
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<AdvancedSettingBean>("com.intellij.advancedSetting")
+    val EP_NAME = ExtensionPointName<AdvancedSettingBean>("com.intellij.advancedSetting")
   }
 }
 
-@State(name = "AdvancedSettings", storages = [Storage(value = "other.xml")])
+@State(name = "AdvancedSettings", storages = [Storage(value = "ide.general.xml")])
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState> {
-  class AdvancedSettingsState {
-    var settings = mutableMapOf<String, String>()
+  class AdvancedSettingsState : BaseState() {
+    @get:XMap
+    val settings by map<String, String>()
   }
 
-  private var state: AdvancedSettingsState = AdvancedSettingsState()
-  private var modificationCount = 0L
+  private var state = AdvancedSettingsState()
 
-  override fun getState(): AdvancedSettingsState {
-    return state
-  }
+  override fun getState() = state
 
   override fun loadState(state: AdvancedSettingsState) {
     this.state = state
   }
 
-  override fun getStateModificationCount(): Long {
-    return modificationCount
-  }
+  override fun getStateModificationCount() = state.modificationCount
 
   override fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
     val (oldValue, type) = getSetting(id)
     if (type != expectType) {
       throw IllegalArgumentException("Setting type $type does not match parameter type $expectType")
     }
-    state.settings[id] = if (expectType == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString()
-    modificationCount++
+    state.settings.put(id, if (expectType == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString())
     ApplicationManager.getApplication().messageBus.syncPublisher(AdvancedSettingsChangeListener.TOPIC).advancedSettingChanged(id, oldValue, value)
   }
 
