@@ -124,7 +124,12 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
   public void dispose() {
     if (myIsDisposed) return;
     myPool.flushPages(this);
-    ourCache.closeChannel(myFile);
+    try {
+      ourCache.closeChannel(myFile);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
     myIsDisposed = true;
   }

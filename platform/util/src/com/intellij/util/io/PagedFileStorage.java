@@ -136,7 +136,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public void putInt(long addr, int value) {
+  public void putInt(long addr, int value) throws IOException {
     if (myValuesAreBufferAligned) {
       long page = addr / myPageSize;
       int page_offset = (int)(addr % myPageSize);
@@ -147,7 +147,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public int getInt(long addr) {
+  public int getInt(long addr) throws IOException {
     if (myValuesAreBufferAligned) {
       long page = addr / myPageSize;
       int page_offset = (int) (addr % myPageSize);
@@ -162,13 +162,13 @@ public class PagedFileStorage implements Forceable {
     return (int)(addr % myPageSize);
   }
 
-  public DirectBufferWrapper getByteBuffer(long address, boolean modify) {
+  public DirectBufferWrapper getByteBuffer(long address, boolean modify) throws IOException {
     long page = address / myPageSize;
     assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT: address + " in " + myFile;
     return getBufferWrapper(page, modify);
   }
 
-  public void putLong(long addr, long value) {
+  public void putLong(long addr, long value) throws IOException {
     if (myValuesAreBufferAligned) {
       long page = addr / myPageSize;
       int page_offset = (int)(addr % myPageSize);
@@ -179,7 +179,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public long getLong(long addr) {
+  public long getLong(long addr) throws IOException {
     if (myValuesAreBufferAligned) {
       long page = addr / myPageSize;
       int page_offset = (int)(addr % myPageSize);
@@ -190,21 +190,21 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public byte get(long index) {
+  public byte get(long index) throws IOException {
     long page = index / myPageSize;
     int offset = (int)(index % myPageSize);
 
     return getReadOnlyBuffer(page).get(offset);
   }
 
-  public void put(long index, byte value) {
+  public void put(long index, byte value) throws IOException {
     long page = index / myPageSize;
     int offset = (int)(index % myPageSize);
 
     getBuffer(page).put(offset, value);
   }
 
-  public void get(long index, byte[] dst, int offset, int length) {
+  public void get(long index, byte[] dst, int offset, int length) throws IOException {
     long i = index;
     int o = offset;
     int l = length;
@@ -223,7 +223,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public void put(long index, byte[] src, int offset, int length) {
+  public void put(long index, byte[] src, int offset, int length) throws IOException {
     long i = index;
     int o = offset;
     int l = length;
@@ -295,7 +295,7 @@ public class PagedFileStorage implements Forceable {
 
   private static final int MAX_FILLER_SIZE = 8192;
 
-  private void fillWithZeros(long from, long length) {
+  private void fillWithZeros(long from, long length) throws IOException {
     byte[] buff = new byte[MAX_FILLER_SIZE];
     Arrays.fill(buff, (byte)0);
 
@@ -324,46 +324,41 @@ public class PagedFileStorage implements Forceable {
     return size;
   }
 
-  private DirectBufferWrapper getBuffer(long page) {
+  private DirectBufferWrapper getBuffer(long page) throws IOException {
     return getBufferWrapper(page, true);
   }
 
-  private DirectBufferWrapper getReadOnlyBuffer(long page) {
+  private DirectBufferWrapper getReadOnlyBuffer(long page) throws IOException {
     return getBufferWrapper(page, false);
   }
 
-  private DirectBufferWrapper getBufferWrapper(long page, boolean modify) {
+  private DirectBufferWrapper getBufferWrapper(long page, boolean modify) throws IOException {
     DirectBufferWrapper pageFromCache =
       myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getBufferCache().getMappingChangeCount());
 
     if (myReadOnly && modify) {
-      throw new IllegalArgumentException("Read-only storage can't be modified");
+      throw new IOException("Read-only storage can't be modified");
     }
 
-    try {
-      if (pageFromCache != null) {
-        if (modify) markDirty();
-        return pageFromCache;
-      }
-
-      assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT : page;
-
-      if (myStorageIndex == -1) {
-        throw new MappingFailedException("storage is already closed; path " + myFile);
-      }
-      DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferCache().get(myStorageIndex | (int)page, !modify, myReadOnly); // TODO: long page
+    if (pageFromCache != null) {
       if (modify) markDirty();
-      if (myNativeBytesOrder) {
-        byteBufferWrapper.useNativeByteOrder();
-      }
-
-      myLastAccessedBufferCache.updateCache(page, byteBufferWrapper, myStorageLockContext.getBufferCache().getMappingChangeCount());
-
-      return byteBufferWrapper;
+      return pageFromCache;
     }
-    catch (IOException e) {
-      throw new MappingFailedException("Cannot map buffer", e);
+
+    assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT : page;
+
+    if (myStorageIndex == -1) {
+      throw new MappingFailedException("storage is already closed; path " + myFile);
     }
+    DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferCache().get(myStorageIndex | (int)page, !modify, myReadOnly); // TODO: long page
+    if (modify) markDirty();
+    if (myNativeBytesOrder) {
+      byteBufferWrapper.useNativeByteOrder();
+    }
+
+    myLastAccessedBufferCache.updateCache(page, byteBufferWrapper, myStorageLockContext.getBufferCache().getMappingChangeCount());
+
+    return byteBufferWrapper;
   }
 
   void markDirty() {

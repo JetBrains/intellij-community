@@ -35,7 +35,7 @@ final class PersistentFSRecordAccessor {
     myNewFreeRecords = new IntArrayList();
   }
 
-  void addToFreeRecordsList(int id, @NotNull PersistentFSConnection connection) {
+  void addToFreeRecordsList(int id, @NotNull PersistentFSConnection connection) throws IOException {
     connection.markDirty();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {

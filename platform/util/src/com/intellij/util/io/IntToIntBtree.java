@@ -99,14 +99,14 @@ public final class IntToIntBtree {
     }
   }
 
-  private void doAllocateRoot() {
+  private void doAllocateRoot() throws IOException {
     nextPage(); // allocate root
     root.setAddress(0);
     root.getNodeView().setIndexLeaf(true);
   }
 
   // return total number of bytes needed for storing information
-  public int persistVars(@NotNull BtreeDataStorage storage, boolean toDisk) {
+  public int persistVars(@NotNull BtreeDataStorage storage, boolean toDisk) throws IOException {
     int i = storage.persistInt(0, height | (hasZeroKey ? HAS_ZERO_KEY_MASK :0), toDisk);
     hasZeroKey = (i & HAS_ZERO_KEY_MASK) != 0;
     height = i & ~HAS_ZERO_KEY_MASK;
@@ -124,7 +124,7 @@ public final class IntToIntBtree {
   }
 
   public interface BtreeDataStorage {
-    int persistInt(int offset, int value, boolean toDisk);
+    int persistInt(int offset, int value, boolean toDisk) throws IOException;
   }
 
   final static class BtreeRootNode {
@@ -141,12 +141,12 @@ public final class IntToIntBtree {
       initialized = false;
     }
 
-    private void syncWithStore() {
+    private void syncWithStore() throws IOException {
       nodeView.setAddress(address);
       initialized = true;
     }
 
-    public BtreeIndexNodeView getNodeView() {
+    public BtreeIndexNodeView getNodeView() throws IOException {
       if (!initialized) syncWithStore();
       return nodeView;
     }
@@ -161,7 +161,7 @@ public final class IntToIntBtree {
     return true;
   }
 
-  private int nextPage() {
+  private int nextPage() throws IOException {
     int pageStart = (int)storage.length();
     storage.putInt(pageStart + pageSize - 4, 0);
     ++pagesCount;
@@ -173,7 +173,7 @@ public final class IntToIntBtree {
   private int myOptimizedInserts;
   private boolean myCanUseLastKey;
 
-  public boolean get(int key, int @NotNull [] result) {
+  public boolean get(int key, int @NotNull [] result) throws IOException {
     if (key == 0) {
       if (hasZeroKey) {
         result[0] = zeroKeyValue;
@@ -205,7 +205,7 @@ public final class IntToIntBtree {
     return true;
   }
 
-  public void put(int key, int value) {
+  public void put(int key, int value) throws IOException {
     if (key == 0) {
       hasZeroKey = true;
       zeroKeyValue = value;
@@ -231,7 +231,7 @@ public final class IntToIntBtree {
     }
   }
 
-  private void doPut(int key, int value) {
+  private void doPut(int key, int value) throws IOException {
     if (root.address == UNDEFINED_ADDRESS) doAllocateRoot();
     if (myAccessNodeView == null) myAccessNodeView = new BtreeIndexNodeView(this);
     myAccessNodeView.initTraversal(root.address);
@@ -245,7 +245,7 @@ public final class IntToIntBtree {
     }
   }
 
-  void dumpStatistics() {
+  void dumpStatistics() throws IOException {
     int leafPages = height == 3 ? pagesCount - (1 + root.getNodeView().getChildrenCount() + 1) : height == 2 ? pagesCount - 1 : 1;
     long leafNodesCapacity = (long) hashedPagesCount * maxLeafNodesInHash + (long) (leafPages - hashedPagesCount)* maxLeafNodes;
     long leafNodesCapacity2 = (long) leafPages * maxLeafNodes;
@@ -263,7 +263,7 @@ public final class IntToIntBtree {
     );
   }
 
-  private void flushCachedMappings() {
+  private void flushCachedMappings() throws IOException {
     if (hasCachedMappings) {
       int[] keys = myCachedMappings.keySet().toIntArray();
       Arrays.sort(keys);
@@ -310,9 +310,8 @@ public final class IntToIntBtree {
       myChildrenCount = -1;
     }
 
-    void setAddress(int _address) {
+    void setAddress(int _address) throws IOException {
       setAddressInternal(_address);
-
       syncWithStore();
     }
 
@@ -321,7 +320,7 @@ public final class IntToIntBtree {
       address = _address;
     }
 
-    protected void syncWithStore() {
+    protected void syncWithStore() throws IOException {
       PagedFileStorage pagedFileStorage = btree.storage.getPagedFileStorage();
       myAddressInBuffer = pagedFileStorage.getOffsetInPage(address);
       myBufferWrapper = pagedFileStorage.getByteBuffer(address, false);
@@ -332,7 +331,7 @@ public final class IntToIntBtree {
       myChildrenCount = (short)((anInt >>> LENGTH_SHIFT) & LENGTH_MASK);
     }
 
-    protected final void setFlag(int mask, boolean flag) {
+    protected final void setFlag(int mask, boolean flag) throws IOException {
       mask <<= FLAGS_SHIFT;
       int anInt = myBufferWrapper.getInt(myAddressInBuffer);
 
@@ -345,7 +344,7 @@ public final class IntToIntBtree {
       return myChildrenCount;
     }
 
-    protected final void setChildrenCount(short value) {
+    protected final void setChildrenCount(short value) throws IOException {
       myChildrenCount = value;
       int myValue = myBufferWrapper.getInt(myAddressInBuffer);
       myValue &= ~LENGTH_MASK  <<  LENGTH_SHIFT;
@@ -353,7 +352,7 @@ public final class IntToIntBtree {
       myBufferWrapper.putInt(myAddressInBuffer, myValue);
     }
 
-    protected final void setNextPage(int nextPage) {
+    protected final void setNextPage(int nextPage) throws IOException {
       putInt(4, nextPage);
     }
 
@@ -365,7 +364,7 @@ public final class IntToIntBtree {
       return myBufferWrapper.getInt(myAddressInBuffer + address);
     }
 
-    protected final void putInt(int offset, int value) {
+    protected final void putInt(int offset, int value) throws IOException {
       myBufferWrapper.putInt(myAddressInBuffer + offset, value);
     }
 
@@ -378,7 +377,7 @@ public final class IntToIntBtree {
       return duplicate;
     }
 
-    protected final void putBytes(int address, ByteBuffer buffer) {
+    protected final void putBytes(int address, ByteBuffer buffer) throws IOException {
       myBufferWrapper.position(address + myAddressInBuffer);
       myBufferWrapper.put(buffer);
     }
@@ -419,7 +418,7 @@ public final class IntToIntBtree {
       return getInt(indexToOffset(i));
     }
 
-    private void setAddressAt(int i, int value) {
+    private void setAddressAt(int i, int value) throws IOException {
       int offset = indexToOffset(i);
       if (doSanityCheck) {
         short childrenCount = getChildrenCount();
@@ -451,7 +450,7 @@ public final class IntToIntBtree {
       return getInt(indexToOffset(i) + KEY_OFFSET);
     }
 
-    private void setKeyAt(int i, int value) {
+    private void setKeyAt(int i, int value) throws IOException {
       final int offset = indexToOffset(i) + KEY_OFFSET;
       if (doSanityCheck) {
         final int metaPageLen;
@@ -484,7 +483,7 @@ public final class IntToIntBtree {
       isIndexLeaf = BitUtil.isSet(flags, INDEX_LEAF_MASK);
     }
 
-    void setIndexLeaf(boolean value) {
+    void setIndexLeaf(boolean value) throws IOException {
       isIndexLeaf = value;
       setFlag(INDEX_LEAF_MASK, value);
     }
@@ -493,7 +492,7 @@ public final class IntToIntBtree {
       return isHashedLeaf;
     }
 
-    void setHashedLeaf() {
+    void setHashedLeaf() throws IOException {
       isHashedLeaf = true;
       setFlag(HASHED_LEAF_MASK, true);
     }
@@ -532,7 +531,7 @@ public final class IntToIntBtree {
       return true;
     }
 
-    public void initTraversal(int address) {
+    public void initTraversal(int address) throws IOException {
       myHasFullPagesAlongPath = false;
       setAddress(address);
     }
@@ -572,7 +571,7 @@ public final class IntToIntBtree {
         Arrays.sort(keys);
       }
 
-      private void clean() {
+      private void clean() throws IOException {
         final IntToIntBtree btree = nodeView.btree;
         for(int i = 0; i < btree.hashPageCapacity; ++i) {
           nodeView.setKeyAt(i, HASH_FREE);
@@ -580,7 +579,7 @@ public final class IntToIntBtree {
       }
     }
 
-    private int splitNode(int parentAddress) {
+    private int splitNode(int parentAddress) throws IOException {
       final boolean indexLeaf = isIndexLeaf();
 
       if (doSanityCheck) {
@@ -720,7 +719,7 @@ public final class IntToIntBtree {
       return parentAddress;
     }
 
-    private boolean doOffloadToSiblingsWhenHashed(BtreeIndexNodeView parent, final HashLeafData hashLeafData) {
+    private boolean doOffloadToSiblingsWhenHashed(BtreeIndexNodeView parent, final HashLeafData hashLeafData) throws IOException {
       int indexInParent = parent.search(hashLeafData.keys[0]);
 
       if (indexInParent >= 0) {
@@ -779,7 +778,7 @@ public final class IntToIntBtree {
     private void insertToRightSiblingWhenHashed(BtreeIndexNodeView parent,
                                                 HashLeafData hashLeafData,
                                                 int indexInParent,
-                                                BtreeIndexNodeView sibling) {
+                                                BtreeIndexNodeView sibling) throws IOException {
       sibling.setAddress(-parent.addressAt(indexInParent + 1));
       int numberOfKeysToMove = (sibling.getMaxChildrenCount() - sibling.getChildrenCount()) / 2;
 
@@ -815,7 +814,7 @@ public final class IntToIntBtree {
       }
     }
 
-    private boolean doOffloadToSiblingsSorted(BtreeIndexNodeView parent) {
+    private boolean doOffloadToSiblingsSorted(BtreeIndexNodeView parent) throws IOException {
       if (!isIndexLeaf()) return false; // TODO
 
       int indexInParent = parent.search(keyAt(0));
@@ -877,7 +876,8 @@ public final class IntToIntBtree {
       return false;
     }
 
-    private void insertToRightSiblingWhenSorted(BtreeIndexNodeView parent, int indexInParent, BtreeIndexNodeView sibling) {
+    private void insertToRightSiblingWhenSorted(BtreeIndexNodeView parent, int indexInParent, BtreeIndexNodeView sibling)
+      throws IOException {
       sibling.setAddress(-parent.addressAt(indexInParent + 1));
       int toMove = (sibling.getMaxChildrenCount() - sibling.getChildrenCount()) / 2;
 
@@ -919,7 +919,7 @@ public final class IntToIntBtree {
       }
     }
 
-    private int locate(int valueHC, boolean split) {
+    private int locate(int valueHC, boolean split) throws IOException {
       int searched = 0;
       int parentAddress = 0;
       final int maxHeight = btree.height + 1;
@@ -951,7 +951,7 @@ public final class IntToIntBtree {
       }
     }
 
-    private void insert(int valueHC, int newValueId) {
+    private void insert(int valueHC, int newValueId) throws IOException {
       if (doSanityCheck) myAssert(!isFull());
       short recordCount = getChildrenCount();
       if (doSanityCheck) myAssert(recordCount < getMaxChildrenCount());

@@ -68,23 +68,18 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
     }
   }
 
-  void closeChannel(Path path) {
+  void closeChannel(Path path) throws IOException {
     synchronized (myLock) {
       final ChannelDescriptor descriptor = myCache.remove(path);
 
       if (descriptor != null) {
         assert !descriptor.isLocked();
-        try {
-          descriptor.close();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        descriptor.close();
       }
     }
   }
 
-  private void releaseOverCachedChannels() {
+  private void releaseOverCachedChannels() throws IOException {
     int dropCount = myCache.size() - myCacheSizeLimit;
 
     if (dropCount >= 0) {

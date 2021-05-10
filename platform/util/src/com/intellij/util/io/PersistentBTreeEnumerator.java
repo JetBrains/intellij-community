@@ -128,7 +128,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     myBTree = new IntToIntBtree(BTREE_PAGE_SIZE, indexFile(myFile), myStorage.getStorageLockContext(), initial);
   }
 
-  private void storeVars(boolean toDisk) {
+  private void storeVars(boolean toDisk) throws IOException {
     myLogicalFileLength = store(DATA_START, myLogicalFileLength, toDisk);
     myDataPageStart = store(DATA_START + 4, myDataPageStart, toDisk);
     myDataPageOffset = store(DATA_START + 8, myDataPageOffset, toDisk);
@@ -141,20 +141,20 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     storeBTreeVars(toDisk);
   }
 
-  private void storeBTreeVars(boolean toDisk) {
+  private void storeBTreeVars(boolean toDisk) throws IOException {
     final IntToIntBtree tree = myBTree;
     if (tree != null) {
       final int BTREE_DATA_START = DATA_START + 36;
       tree.persistVars(new IntToIntBtree.BtreeDataStorage() {
         @Override
-        public int persistInt(int offset, int value, boolean toDisk) {
+        public int persistInt(int offset, int value, boolean toDisk) throws IOException {
           return store(BTREE_DATA_START + offset, value, toDisk);
         }
       }, toDisk);
     }
   }
 
-  private int store(int offset, int value, boolean toDisk) {
+  private int store(int offset, int value, boolean toDisk) throws IOException {
     assert offset + 4 < MAX_DATA_SEGMENT_LENGTH;
 
     if (toDisk) {
@@ -201,7 +201,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     if (myInlineKeysNoMapping) {
       return traverseAllRecords(new RecordsProcessor() {
         @Override
-        public boolean process(final int record) {
+        public boolean process(final int record) throws IOException {
           if (filter == null || filter.accept(record)) {
             Data data = ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(getCurrentKey());
             return processor.process(data);
@@ -257,7 +257,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  protected int indexToAddr(int idx) {
+  protected int indexToAddr(int idx) throws IOException {
     if (myExternalKeysNoMapping) {
       IntToIntBtree.myAssert(idx > 0);
       return idx - KEY_SHIFT;
@@ -271,7 +271,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  protected int setupValueId(int hashCode, int dataOff) {
+  protected int setupValueId(int hashCode, int dataOff) throws IOException {
     if (myExternalKeysNoMapping) return addrToIndex(dataOff);
     final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = getRecordHandler();
     final byte[] buf = recordHandler.getRecordBuffer(this);
@@ -327,7 +327,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     }
   }
 
-  long keyIdToNonNegativeOffset(int value) {
+  long keyIdToNonNegativeOffset(int value) throws IOException {
     if (value >= 0) return value;
     return myStorage.getLong(-value);
   }
@@ -562,7 +562,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     private ThreadLocal<byte[]> myBuffer;
 
     @Override
-    int recordWriteOffset(@NotNull PersistentBTreeEnumerator<?> enumerator, byte @NotNull [] buf) {
+    int recordWriteOffset(@NotNull PersistentBTreeEnumerator<?> enumerator, byte @NotNull [] buf) throws IOException {
       if (enumerator.myFirstPageStart == -1) {
         enumerator.myFirstPageStart = enumerator.myDataPageStart = enumerator.allocPage();
         int existingOffset = enumerator.myDataPageStart % INTERNAL_PAGE_SIZE;

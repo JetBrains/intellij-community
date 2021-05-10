@@ -171,7 +171,7 @@ public final class FSRecords {
     });
   }
 
-  private static void markAsDeletedRecursively(final int id) {
+  private static void markAsDeletedRecursively(final int id) throws IOException {
     for (int subRecord : listIds(id)) {
       markAsDeletedRecursively(subRecord);
     }
@@ -395,7 +395,7 @@ public final class FSRecords {
     return readAndHandleErrors(ourConnection::getPersistentModCount);
   }
 
-  private static void incModCount(int id) {
+  private static void incModCount(int id) throws IOException {
     ourConnection.incModCount(id);
   }
 
@@ -418,7 +418,7 @@ public final class FSRecords {
       private VirtualFileSystemEntry foundParent;
 
       @Override
-      public Void compute() {
+      public Void compute() throws Exception {
         int currentId = id;
         while (true) {
           int parentId = ourConnection.getRecords().getParent(currentId);

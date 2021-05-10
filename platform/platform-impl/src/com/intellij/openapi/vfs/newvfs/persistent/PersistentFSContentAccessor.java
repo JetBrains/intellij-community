@@ -30,7 +30,7 @@ public final class PersistentFSContentAccessor {
   }
 
   @Nullable
-  ThrowableComputable<DataInputStream, IOException> readContent(int fileId, @NotNull PersistentFSConnection connection) {
+  ThrowableComputable<DataInputStream, IOException> readContent(int fileId, @NotNull PersistentFSConnection connection) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     int page = connection.getRecords().getContentRecordId(fileId);
     if (page == 0) return null;
@@ -171,13 +171,13 @@ public final class PersistentFSContentAccessor {
     }
   }
 
-  int acquireContentRecord(int fileId, @NotNull PersistentFSConnection connection) {
+  int acquireContentRecord(int fileId, @NotNull PersistentFSConnection connection) throws IOException {
     int record = connection.getRecords().getContentRecordId(fileId);
     if (record > 0) connection.getContents().acquireRecord(record);
     return record;
   }
 
-  void checkContentsStorageSanity(int id, PersistentFSConnection connection) {
+  void checkContentsStorageSanity(int id, PersistentFSConnection connection) throws IOException {
     int recordId = connection.getRecords().getContentRecordId(id);
     assert recordId >= 0;
     if (recordId > 0) {

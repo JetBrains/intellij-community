@@ -500,7 +500,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       flushAppendCache();
       return myEnumerator.processAllDataObject(processor, new PersistentEnumeratorBase.DataFilter() {
         @Override
-        public boolean accept(final int id) {
+        public boolean accept(final int id) throws IOException {
           return readValueId(id) != NULL_ADDR;
         }
       });
@@ -912,7 +912,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
     myEnumerator.traverseAllRecords(new PersistentEnumeratorBase.RecordsProcessor() {
       @Override
-      public boolean process(final int keyId) {
+      public boolean process(final int keyId) throws IOException {
         final long record = readValueId(keyId);
         if (record != NULL_ADDR) {
           infos.add(new CompactionRecordInfo(getCurrentKey(), record, keyId));
@@ -954,7 +954,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     LOG.info("Updated mappings:" + (System.currentTimeMillis() - started) + " ms");
   }
 
-  private long readValueId(final int keyId) {
+  private long readValueId(final int keyId) throws IOException {
     if (myDirectlyStoreLongFileOffsetMode) {
       return ((PersistentBTreeEnumerator<Key>)myEnumerator).keyIdToNonNegativeOffset(keyId);
     }
@@ -1068,7 +1068,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     }
 
     @Override
-    int recordWriteOffset(PersistentEnumeratorBase<?> enumerator, byte[] buf) {
+    int recordWriteOffset(PersistentEnumeratorBase<?> enumerator, byte[] buf) throws IOException {
       return myRecordHandler.recordWriteOffset(enumerator, buf);
     }
 

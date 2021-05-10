@@ -190,33 +190,33 @@ public class ResizeableMappedFile implements Forceable {
     }
   }
 
-  public int getInt(long index) {
+  public int getInt(long index) throws IOException {
     return myStorage.getInt(index);
   }
 
-  public void putInt(long index, int value) {
+  public void putInt(long index, int value) throws IOException {
     ensureSize(index + 4);
     myStorage.putInt(index, value);
   }
 
-  public long getLong(long index) {
+  public long getLong(long index) throws IOException {
     return myStorage.getLong(index);
   }
 
-  public void putLong(long index, long value) {
+  public void putLong(long index, long value) throws IOException {
     ensureSize(index + 8);
     myStorage.putLong(index, value);
   }
 
-  public byte get(long index) {
+  public byte get(long index) throws IOException {
     return myStorage.get(index);
   }
 
-  public void get(long index, byte[] dst, int offset, int length) {
+  public void get(long index, byte[] dst, int offset, int length) throws IOException {
     myStorage.get(index, dst, offset, length);
   }
 
-  public void put(long index, byte[] src, int offset, int length) {
+  public void put(long index, byte[] src, int offset, int length) throws IOException {
     ensureSize(index + length);
     myStorage.put(index, src, offset, length);
   }

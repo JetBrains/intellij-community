@@ -30,9 +30,9 @@ public final class DirectBufferWrapper {
     myBuffer = DirectByteBufferAllocator.allocate(() -> create());
   }
 
-  private void markDirty() {
+  private void markDirty() throws IOException {
     if (myReadOnly) {
-      throw new IllegalStateException("Read-only byte buffer can't be modified. File: " + myFile);
+      throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
     }
     if (!myDirty) {
       myDirty = true;
@@ -66,7 +66,7 @@ public final class DirectBufferWrapper {
     return myBuffer.getLong(index);
   }
 
-  public ByteBuffer putLong(int index, long value) {
+  public ByteBuffer putLong(int index, long value) throws IOException {
     markDirty();
     return myBuffer.putLong(index, value);
   }
@@ -75,7 +75,7 @@ public final class DirectBufferWrapper {
     return myBuffer.getInt(index);
   }
 
-  public ByteBuffer putInt(int index, int value) {
+  public ByteBuffer putInt(int index, int value) throws IOException {
     markDirty();
     return myBuffer.putInt(index, value);
   }
@@ -88,12 +88,12 @@ public final class DirectBufferWrapper {
     return myBuffer.position();
   }
 
-  public void put(ByteBuffer src) {
+  public void put(ByteBuffer src) throws IOException {
     markDirty();
     myBuffer.put(src);
   }
 
-  public void put(int index, byte b) {
+  public void put(int index, byte b) throws IOException {
     markDirty();
     myBuffer.put(index, b);
   }
@@ -107,7 +107,7 @@ public final class DirectBufferWrapper {
     }
   }
 
-  public void putFromArray(byte[] src, int o, int page_offset, int page_len) throws IllegalArgumentException {
+  public void putFromArray(byte[] src, int o, int page_offset, int page_len) throws IOException, IllegalArgumentException {
     markDirty();
     // TODO do a proper synchronization
     //noinspection SynchronizeOnNonFinalField

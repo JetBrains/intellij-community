@@ -88,7 +88,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase<?>> {
-    abstract int recordWriteOffset(T enumerator, byte[] buf);
+    abstract int recordWriteOffset(T enumerator, byte[] buf) throws IOException;
     abstract byte @NotNull [] getRecordBuffer(T enumerator);
     abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
   }
@@ -291,10 +291,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public interface DataFilter {
-    boolean accept(int id);
+    boolean accept(int id) throws IOException;
   }
 
-  protected void putMetaData(long data) {
+  protected void putMetaData(long data) throws IOException {
     lockStorageWrite();
     try {
       if (myStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) myStorage.putLong(META_DATA_OFFSET, data);
@@ -304,7 +304,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  protected long getMetaData() {
+  protected long getMetaData() throws IOException {
     lockStorageRead();
     try {
       return myStorage.getLong(META_DATA_OFFSET);
@@ -314,7 +314,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  void putMetaData2(long data) {
+  void putMetaData2(long data) throws IOException {
     lockStorageWrite();
     try {
       if (myStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) myStorage.putLong(META_DATA_OFFSET + 8, data);
@@ -324,7 +324,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  long getMetaData2() {
+  long getMetaData2() throws IOException {
     lockStorageRead();
     try {
       return myStorage.getLong(META_DATA_OFFSET + 8);
@@ -405,7 +405,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return myKeyStorage.append(value);
   }
 
-  protected int setupValueId(int hashCode, int dataOff) {
+  protected int setupValueId(int hashCode, int dataOff) throws IOException {
     final byte[] buf = myRecordHandler.getRecordBuffer(this);
     myRecordHandler.setupRecord(this, hashCode, dataOff, buf);
     final int pos = myRecordHandler.recordWriteOffset(this, buf);
@@ -471,7 +471,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return false;
   }
 
-  protected abstract int indexToAddr(int idx);
+  protected abstract int indexToAddr(int idx) throws IOException;
 
   @Override
   public void close() throws IOException {
