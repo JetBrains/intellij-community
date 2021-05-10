@@ -20,17 +20,17 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.*;
 
-public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
+final class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("platform.registry", 4);
   private static final StringEventField REGISTRY_KEY = EventFields.StringValidatedByCustomRule("id", "registry_key");
 
@@ -110,10 +110,9 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
       return pluginId != null ? getPluginInfoById(PluginId.getId(pluginId)) : getPlatformPlugin();
     }
 
-    @Nullable
-    private static ExperimentalFeature findFeatureById(@NotNull String featureId) {
-      for (ExperimentalFeature feature : Experiments.EP_NAME.getExtensions()) {
-        if (StringUtil.equals(feature.id, featureId)) {
+    private static @Nullable ExperimentalFeature findFeatureById(@NotNull String featureId) {
+      for (ExperimentalFeature feature : Experiments.EP_NAME.getExtensionList()) {
+        if (Objects.equals(feature.id, featureId)) {
           return feature;
         }
       }

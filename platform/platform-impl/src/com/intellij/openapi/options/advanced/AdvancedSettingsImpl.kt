@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -30,6 +31,7 @@ class AdvancedSettingBean : PluginAware {
       null
   }
 
+  @Transient
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
     this.pluginDescriptor = pluginDescriptor
   }
