@@ -212,8 +212,8 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
 
   @Override
   public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
-    if (isSuperType(other)) return this;
-    if (other.isSuperType(this)) return other;
+    if (isMergeable(other)) return this;
+    if (other.isMergeable(this)) return other;
     if (!(other instanceof DfReferenceType)) return null;
     if (other instanceof DfNullConstantType) {
       if (mySpecialField != null) return null;
@@ -226,8 +226,9 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
       if (mySpecialField != null) return null;
       Set<Object> notValues = new HashSet<>(myNotValues);
       notValues.remove(otherValue);
-      return new DfGenericObjectType(notValues, getConstraint(), getNullability(),
-                                     getMutability(), null, BOTTOM, isLocal());
+      TypeConstraint constraint = getConstraint().tryJoinExactly(((DfReferenceConstantType)other).getConstraint());
+      return constraint == null ? null : new DfGenericObjectType(notValues, constraint, getNullability(),
+                                                                 getMutability(), null, BOTTOM, isLocal());
     }
     if (other instanceof DfGenericObjectType) {
       DfGenericObjectType objectType = (DfGenericObjectType)other;
@@ -238,40 +239,47 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
       SpecialField otherSpecialField = objectType.getSpecialField();
       DfType otherSfType = objectType.getSpecialFieldType();
       boolean otherLocal = objectType.isLocal();
-      int numberOfDifferences = 0;
-      if (otherMutability != myMutability) numberOfDifferences++;
-      if (otherNullability != myNullability) numberOfDifferences++;
-      if (!otherNotValues.equals(myNotValues)) numberOfDifferences++;
-      if (!otherConstraint.equals(myConstraint)) numberOfDifferences++;
-      if (otherSpecialField != mySpecialField) numberOfDifferences++;
-      if (!otherSfType.equals(mySpecialFieldType)) numberOfDifferences++;
-      if (otherLocal != myLocal) numberOfDifferences++;
-      if (numberOfDifferences != 1) return null;
-      if (otherMutability != myMutability) {
-        return new DfGenericObjectType(myNotValues, myConstraint, myNullability, myMutability.unite(otherMutability),
-                                       mySpecialField, mySpecialFieldType, myLocal);
-      }
-      if (otherNullability != myNullability) {
-        return new DfGenericObjectType(myNotValues, myConstraint, myNullability.unite(otherNullability), myMutability,
-                                       mySpecialField, mySpecialFieldType, myLocal);
-      }
-      if (!otherNotValues.equals(myNotValues)) {
-        Set<Object> notValues = new HashSet<>(myNotValues);
-        notValues.retainAll(otherNotValues);
-        return new DfGenericObjectType(notValues, myConstraint, myNullability, myMutability,
-                                       mySpecialField, mySpecialFieldType, myLocal);
-      }
-      if (!otherConstraint.equals(myConstraint)) {
-        TypeConstraint constraint = otherConstraint.tryJoinExactly(myConstraint);
-        return constraint == null ? null :
-               new DfGenericObjectType(myNotValues, constraint, myNullability, myMutability,
-                                       mySpecialField, mySpecialFieldType, myLocal);
-      }
-      if (!otherSfType.equals(mySpecialFieldType)) {
-        DfType sfType = otherSfType.tryJoinExactly(mySpecialFieldType);
-        return sfType == null ? null :
-               new DfGenericObjectType(myNotValues, myConstraint, myNullability, myMutability,
-                                       mySpecialField, sfType, myLocal);
+      final int MUTABILITY = 0x01;
+      final int NULLABILITY = 0x02;
+      final int NOT_VALUES = 0x04;
+      final int CONSTRAINT = 0x08;
+      final int SPECIAL_FIELD = 0x10;
+      final int SF_TYPE = 0x20;
+      final int LOCAL = 0x40;
+      int bits = 0;
+      if (otherMutability != myMutability) bits |= MUTABILITY;
+      if (otherNullability != myNullability) bits |= NULLABILITY;
+      if (!otherNotValues.equals(myNotValues)) bits |= NOT_VALUES;
+      if (!otherConstraint.equals(myConstraint)) bits |= CONSTRAINT;
+      if (otherSpecialField != mySpecialField) bits |= SPECIAL_FIELD;
+      if (!otherSfType.equals(mySpecialFieldType)) bits |= SF_TYPE;
+      if (otherLocal != myLocal) bits |= LOCAL;
+      switch (bits) {
+        case CONSTRAINT:
+        case NULLABILITY | CONSTRAINT: {
+          TypeConstraint constraint = otherConstraint.tryJoinExactly(myConstraint);
+          return constraint == null ? null :
+                 new DfGenericObjectType(myNotValues, constraint, myNullability.unite(otherNullability), myMutability,
+                                         mySpecialField, mySpecialFieldType, myLocal);
+        }
+        case MUTABILITY:
+          return new DfGenericObjectType(myNotValues, myConstraint, myNullability, myMutability.unite(otherMutability),
+                                         mySpecialField, mySpecialFieldType, myLocal);
+        case NULLABILITY:
+          return new DfGenericObjectType(myNotValues, myConstraint, myNullability.unite(otherNullability), myMutability,
+                                         mySpecialField, mySpecialFieldType, myLocal);
+        case NOT_VALUES: {
+          Set<Object> notValues = new HashSet<>(myNotValues);
+          notValues.retainAll(otherNotValues);
+          return new DfGenericObjectType(notValues, myConstraint, myNullability, myMutability,
+                                         mySpecialField, mySpecialFieldType, myLocal);
+        }
+        case SF_TYPE: {
+          DfType sfType = otherSfType.tryJoinExactly(mySpecialFieldType);
+          return sfType == null ? null :
+                 new DfGenericObjectType(myNotValues, myConstraint, myNullability, myMutability,
+                                         mySpecialField, sfType, myLocal);
+        }
       }
     }
     return null;

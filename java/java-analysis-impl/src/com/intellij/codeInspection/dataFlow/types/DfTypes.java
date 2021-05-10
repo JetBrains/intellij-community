@@ -41,8 +41,8 @@ public final class DfTypes {
     }
 
     @Override
-    public @NotNull DfType tryJoinExactly(@NotNull DfType other) {
-      return join(other);
+    public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+      return other instanceof DfBooleanType ? this : null;
     }
 
     @Override

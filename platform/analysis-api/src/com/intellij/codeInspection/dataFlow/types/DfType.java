@@ -112,7 +112,7 @@ public interface DfType {
     }
 
     @Override
-    public @NotNull DfType tryJoinExactly(@NotNull DfType other) { return join(other); }
+    public @Nullable DfType tryJoinExactly(@NotNull DfType other) { return other == this ? this : other == NOT_FAIL ? TOP : null; }
 
     @Override
     public @NotNull DfType meet(@NotNull DfType other) {
@@ -151,7 +151,7 @@ public interface DfType {
     }
 
     @Override
-    public @Nullable DfType tryJoinExactly(@NotNull DfType other) { return join(other); }
+    public @NotNull DfType tryJoinExactly(@NotNull DfType other) { return join(other); }
 
     @Override
     public @NotNull DfType meet(@NotNull DfType other) {

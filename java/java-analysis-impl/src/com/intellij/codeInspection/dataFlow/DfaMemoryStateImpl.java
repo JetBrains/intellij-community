@@ -14,7 +14,6 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Invariant: qualifiers of the variables used in myEqClasses or myVariableTypes must be canonical variables
@@ -104,10 +105,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
            getNonTrivialEqClasses().equals(that.getNonTrivialEqClasses()) &&
            getDistinctClassPairs().equals(that.getDistinctClassPairs()) &&
            myVariableTypes.equals(that.myVariableTypes);
-  }
-
-  Object getSuperficialKey() {
-    return Pair.create(myEphemeral, myStack);
   }
 
   DistinctPairSet getDistinctClassPairs() {
@@ -273,6 +270,151 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     eqClass.forValues(id -> myIdToEqClassesIndices.put(id, resultIndex));
     return resultIndex;
+  }
+
+  public @Nullable DfaMemoryStateImpl tryJoinExactly(DfaMemoryStateImpl that) {
+    StateMerger merger = new StateMerger();
+    if (!merger.update(that.myEphemeral || !myEphemeral, myEphemeral || !that.myEphemeral)) return null;
+    if (myStack.size() != that.myStack.size()) return null;
+    for (int i = 0; i < myStack.size(); i++) {
+      DfaValue thisValue = myStack.get(i);
+      DfaValue thatValue = that.myStack.get(i);
+      int finalI = i;
+      if (!merger.update(isSuperValue(thisValue, thatValue),
+                           isSuperValue(thatValue, thisValue),
+                           () -> {
+                             if (thisValue instanceof DfaTypeValue && thatValue instanceof DfaTypeValue) {
+                               DfType type = thisValue.getDfType().tryJoinExactly(thatValue.getDfType());
+                               if (type != null) {
+                                 return new MergePatch(false, ms -> ms.myStack.set(finalI, myFactory.fromDfType(type)));
+                               }
+                             }
+                             return null;
+                           })) {
+        return null;
+      }
+    }
+    int[] thisToThat = getClassesMap(that);
+    if (!merger.update(thisToThat != null, true)) return null;
+    int[] thatToThis = that.getClassesMap(this);
+    if (!merger.update(true, thatToThis != null)) return null;
+    if (merger.myMaybeThisSuper && thisToThat != null) {
+      for (DistinctPairSet.DistinctPair pair : myDistinctClasses) {
+        int firstIndex = thisToThat[pair.getFirstIndex()];
+        int secondIndex = thisToThat[pair.getSecondIndex()];
+        if (!merger.updateEquivalence(pair, firstIndex, secondIndex, false)) return null;
+        RelationType relation = that.myDistinctClasses.getRelation(firstIndex, secondIndex);
+        if (!merger.updateOrdering(pair, relation, false)) return null;
+      }
+    }
+    if (merger.myMaybeThatSuper && thatToThis != null) {
+      for (DistinctPairSet.DistinctPair pair : that.myDistinctClasses) {
+        int firstIndex = thatToThis[pair.getFirstIndex()];
+        int secondIndex = thatToThis[pair.getSecondIndex()];
+        if (!merger.updateEquivalence(pair, firstIndex, secondIndex, true)) return null;
+        RelationType relation = myDistinctClasses.getRelation(firstIndex, secondIndex);
+        if (!merger.updateOrdering(pair, relation, true)) return null;
+      }
+    }
+    for (Map.Entry<DfaVariableValue, DfType> entry : this.myVariableTypes.entrySet()) {
+      DfaVariableValue value = entry.getKey();
+      DfType thisType = entry.getValue();
+      // the inherent variable type is not always a superstate for any non-inherent type
+      // (e.g. inherent can be nullable, but current type can be notnull)
+      // so we cannot limit checking to myVariableTypes map only
+      DfType thatType = that.getDfType(value);
+      if (!merger.updateVariable(value, thisType, thatType)) return null;
+    }
+    for (Map.Entry<DfaVariableValue, DfType> entry : that.myVariableTypes.entrySet()) {
+      DfaVariableValue value = entry.getKey();
+      if (this.myVariableTypes.containsKey(value)) continue; // already processed in the previous loop
+      DfType thisType = this.getDfType(value);
+      DfType thatType = entry.getValue();
+      if (!merger.updateVariable(value, thisType, thatType)) return null;
+    }
+    return merger.merge(this, that);
+  }
+
+  private static class MergePatch {
+    final boolean myApplyToRight;
+    final Consumer<DfaMemoryStateImpl> myPatcher;
+
+    private MergePatch(boolean right, Consumer<DfaMemoryStateImpl> patcher) {
+      myApplyToRight = right;
+      myPatcher = patcher;
+    }
+
+    DfaMemoryStateImpl apply(DfaMemoryStateImpl left, DfaMemoryStateImpl right) {
+      DfaMemoryStateImpl result = (myApplyToRight ? right : left).createCopy();
+      myPatcher.accept(result);
+      return result;
+    }
+  }
+
+  // Two memory states can be merged exactly if a.isSuperState(b) (then return a), b.isSuperState(a) (then return b),
+  // or they have mergeable difference in exactly one variable. This class tracks which of these cases are possible.
+  private static class StateMerger {
+    private boolean myMaybeThisSuper = true, myMaybeThatSuper = true;
+    private @Nullable MergePatch mySingleDiff = null;
+
+    boolean update(boolean thisSuper, boolean thatSuper, Supplier<MergePatch> singleDiff) {
+      if (thisSuper && thatSuper) return true;
+      MergePatch diff = null;
+      if (myMaybeThatSuper && myMaybeThisSuper) {
+        assert mySingleDiff == null;
+        diff = singleDiff.get();
+      }
+      myMaybeThisSuper &= thisSuper;
+      myMaybeThatSuper &= thatSuper;
+      if (!myMaybeThisSuper && !myMaybeThatSuper && diff == null) return false;
+      mySingleDiff = diff;
+      return true;
+    }
+
+    boolean update(boolean thisSuper, boolean thatSuper) {
+      return update(thisSuper, thatSuper, () -> null);
+    }
+
+    boolean updateVariable(DfaVariableValue value, DfType thisType, DfType thatType) {
+      return update(thisType.isMergeable(thatType), thatType.isMergeable(thisType),
+                    () -> {
+                      DfType type = thisType.tryJoinExactly(thatType);
+                      if (type != null) {
+                        return new MergePatch(false, s -> s.recordVariableType(value, type));
+                      }
+                      return null;
+                    });
+    }
+
+    boolean updateEquivalence(DistinctPairSet.DistinctPair pair, int firstIndex, int secondIndex, boolean rightDistinct) {
+      if (firstIndex != -1 && secondIndex != -1 && firstIndex != secondIndex) return true;
+      return update(rightDistinct, !rightDistinct, () -> {
+        if (firstIndex == secondIndex && !pair.isOrdered()) {
+          DfaVariableValue canonicalVariable = pair.getFirst().getCanonicalVariable();
+          if (canonicalVariable != null) {
+            return new MergePatch(!rightDistinct, ms -> ms.removeEquivalence(canonicalVariable));
+          }
+        }
+        return null;
+      });
+    }
+
+    boolean updateOrdering(DistinctPairSet.DistinctPair pair, RelationType relation, boolean rightDistinct) {
+      if (relation != null && (!pair.isOrdered() || relation == RelationType.LT)) return true;
+      return update(rightDistinct, !rightDistinct, () -> {
+        if (pair.isOrdered() && relation == RelationType.GT) {
+          return new MergePatch(rightDistinct, ms -> ms.myDistinctClasses.dropOrder(pair));
+        }
+        return null;
+      });
+    }
+
+    DfaMemoryStateImpl merge(DfaMemoryStateImpl left, DfaMemoryStateImpl right) {
+      if (myMaybeThisSuper) return left;
+      if (myMaybeThatSuper) return right;
+      assert mySingleDiff != null;
+      return mySingleDiff.apply(left, right);
+    }
   }
 
   /**

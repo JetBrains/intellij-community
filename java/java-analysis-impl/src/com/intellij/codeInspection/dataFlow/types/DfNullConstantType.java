@@ -51,8 +51,8 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
 
   @Override
   public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
-    if (isSuperType(other)) return this;
-    if (other.isSuperType(this)) return other;
+    if (isMergeable(other)) return this;
+    if (other.isMergeable(this)) return other;
     if (other instanceof DfGenericObjectType) return other.tryJoinExactly(this);
     return null;
   }

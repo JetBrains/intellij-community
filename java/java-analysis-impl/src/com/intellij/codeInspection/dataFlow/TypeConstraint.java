@@ -392,24 +392,27 @@ public interface TypeConstraint {
         if (myInstanceOf.equals(constrained.myInstanceOf)) {
           return joinWithConstrained(constrained);
         }
-        if (myNotInstanceOf.isEmpty() && myInstanceOf.containsAll(constrained.myInstanceOf) &&
-            myInstanceOf.containsAll(constrained.myNotInstanceOf) &&
-            myInstanceOf.size() == constrained.myInstanceOf.size() + constrained.myNotInstanceOf.size()) {
-          Set<Exact> newInstanceOf = new HashSet<>(myInstanceOf);
-          newInstanceOf.removeAll(constrained.myNotInstanceOf);
-          return newInstanceOf.isEmpty() ? TypeConstraints.TOP : new Constrained(newInstanceOf, Set.of());
+        int size1 = myInstanceOf.size() + myNotInstanceOf.size();
+        int size2 = constrained.myInstanceOf.size() + constrained.myNotInstanceOf.size();
+        // size1 >= 3 check allows to avoid merging too eagerly and preserves 'possible CCE' warnings
+        if (size1 == size2 && size1 >= 3) {
+          if (myInstanceOf.containsAll(constrained.myInstanceOf) &&
+              constrained.myNotInstanceOf.containsAll(myNotInstanceOf)) {
+            Set<Exact> diff = new HashSet<>(myInstanceOf);
+            diff.removeAll(constrained.myInstanceOf);
+            if (diff.size() == 1 && constrained.myNotInstanceOf.containsAll(diff)) {
+              return new Constrained(constrained.myInstanceOf, myNotInstanceOf);
+            }
+          }
+          if (constrained.myInstanceOf.containsAll(myInstanceOf) &&
+              myNotInstanceOf.containsAll(constrained.myNotInstanceOf)) {
+            Set<Exact> diff = new HashSet<>(constrained.myInstanceOf);
+            diff.removeAll(myInstanceOf);
+            if (diff.size() == 1 && myNotInstanceOf.containsAll(diff)) {
+              return new Constrained(myInstanceOf, constrained.myNotInstanceOf);
+            }
+          }
         }
-        if (constrained.myNotInstanceOf.isEmpty() && constrained.myInstanceOf.containsAll(myInstanceOf) &&
-            constrained.myInstanceOf.containsAll(myNotInstanceOf) &&
-            constrained.myInstanceOf.size() == myInstanceOf.size() + myNotInstanceOf.size()) {
-          Set<Exact> newInstanceOf = new HashSet<>(constrained.myInstanceOf);
-          newInstanceOf.removeAll(myNotInstanceOf);
-          return newInstanceOf.isEmpty() ? TypeConstraints.TOP : new Constrained(newInstanceOf, Set.of());
-        }
-      }
-      if (other instanceof Exact && ((Exact)other).isFinal() && ((Exact)other).canBeInstantiated() &&
-          myInstanceOf.isEmpty() && myNotInstanceOf.equals(Set.of(other))) {
-        return TypeConstraints.TOP;
       }
       return null;
     }

@@ -36,13 +36,14 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testFloatRangeHint2() {
-    // TODO: merging order affects the result; we merge x == 0.5 and x == 1.8 first
-    // resulting in [0.5..1.8], then we add <0.5 and >1.8 resulting in full range
     doTest("void test(double x) {" +
            "if (!(x > 0.5 && x < 1.8)) {" +
            "<selection>x</selection>" +
            "}}", "double",
-           "double");
+           "<table>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>double</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Range:</td><td>&lt;= 0.5 || &gt;= 1.8 (or NaN)</td></tr>" +
+           "</table>");
   }
   
   public void testFloatConstantHint() {

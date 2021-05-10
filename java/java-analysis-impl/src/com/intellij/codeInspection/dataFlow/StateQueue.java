@@ -4,9 +4,9 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,54 +57,39 @@ class StateQueue {
       memoryStates.add((DfaMemoryStateImpl)anotherState);
     }
 
+    memoryStates = forceMerge(memoryStates);
     if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
       squash(memoryStates);
     }
-
-    if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
-      while (true) {
-        int beforeSize = memoryStates.size();
-        MultiMap<Object, DfaMemoryStateImpl> groups = MultiMap.create();
-        for (DfaMemoryStateImpl memoryState : memoryStates) {
-          groups.putValue(memoryState.getSuperficialKey(), memoryState);
-        }
-
-        memoryStates = new ArrayList<>();
-        for (Map.Entry<Object, Collection<DfaMemoryStateImpl>> entry : groups.entrySet()) {
-          memoryStates.addAll(mergeGroup((List<DfaMemoryStateImpl>)entry.getValue()));
-        }
-        if (memoryStates.size() == beforeSize) break;
-        beforeSize = memoryStates.size();
-        if (beforeSize == 1) break;
-        // If some states were merged it's possible that they could be further squashed
-        squash(memoryStates);
-        if (memoryStates.size() == beforeSize || memoryStates.size() == 1) break;
-      }
-    }
-
-    memoryStates = forceMerge(memoryStates);
 
     return ContainerUtil.map(memoryStates, state1 -> new DfaInstructionState(instruction, state1));
   }
 
   @NotNull
-  private static List<DfaMemoryStateImpl> squash(List<DfaMemoryStateImpl> states) {
-    return DfaUtil.upwardsAntichain(states, (l, r) -> r.isSuperStateOf(l));
-  }
-
-  static List<DfaMemoryStateImpl> mergeGroup(List<DfaMemoryStateImpl> group) {
-    if (group.size() < 2) {
-      return group;
+  static List<DfaMemoryStateImpl> squash(List<DfaMemoryStateImpl> states) {
+    for (int i = 1; i < states.size(); i++) {
+      DfaMemoryStateImpl left = states.get(i);
+      if (left == null) continue;
+      for (int j = 0; j < i; j++) {
+        ProgressManager.checkCanceled();
+        DfaMemoryStateImpl right = states.get(j);
+        if (right == null) continue;
+        DfaMemoryStateImpl result = left.tryJoinExactly(right);
+        if (result == left) {
+          states.set(j, null);
+        } else if (result == right) {
+          states.set(i, null);
+          break;
+        } else if (result != null) {
+          states.set(i, null);
+          states.set(j, null);
+          states.add(result);
+          break;
+        }
+      }
     }
-
-    StateMerger merger = new StateMerger();
-    while (group.size() > 1) {
-      List<DfaMemoryStateImpl> nextStates = merger.mergeByRanges(group);
-      if (nextStates == null) nextStates = merger.mergeByFacts(group);
-      if (nextStates == null) break;
-      group = nextStates;
-    }
-    return group;
+    states.removeIf(Objects::isNull);
+    return states;
   }
 
   private List<DfaMemoryStateImpl> forceMerge(List<DfaMemoryStateImpl> states) {

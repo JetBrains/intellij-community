@@ -208,6 +208,9 @@ public final class DfaUtil {
           else if (nullability == DfaNullability.NULL) {
             hasNulls = true;
           }
+          else if (nullability == DfaNullability.NULLABLE) {
+            hasNulls = hasNotNulls = true;
+          }
           else {
             hasUnknowns = true;
           }

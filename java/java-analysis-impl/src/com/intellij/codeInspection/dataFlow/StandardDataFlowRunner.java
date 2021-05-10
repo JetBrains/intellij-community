@@ -280,7 +280,7 @@ public class StandardDataFlowRunner {
         List<DfaMemoryStateImpl> stateList = StreamEx.of(states)
           .peek(state -> unusedVars.forEach(state::flushVariable))
           .map(state -> (DfaMemoryStateImpl)state).distinct().toList();
-        states = StateQueue.mergeGroup(stateList);
+        states = StateQueue.squash(stateList);
       }
       consumer.accept(closure, states);
     }
