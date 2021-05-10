@@ -3,6 +3,7 @@ package com.intellij.openapi.options.advanced
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.messages.Topic
+import com.intellij.util.messages.Topic.BroadcastDirection
 
 enum class AdvancedSettingType { Int, Bool, String, Enum }
 
@@ -13,7 +14,7 @@ abstract class AdvancedSettings  {
   abstract fun setSetting(id: String, value: Any, expectType: AdvancedSettingType)
 
   companion object {
-     @JvmStatic
+    @JvmStatic
     fun getInstance(): AdvancedSettings = ApplicationManager.getApplication().getService(AdvancedSettings::class.java)
 
     @JvmStatic
@@ -56,6 +57,7 @@ interface AdvancedSettingsChangeListener {
 
   companion object {
     @JvmField
-    val TOPIC = Topic(AdvancedSettingsChangeListener::class.java)
+    @Topic.AppLevel
+    val TOPIC = Topic(AdvancedSettingsChangeListener::class.java, BroadcastDirection.NONE)
   }
 }
