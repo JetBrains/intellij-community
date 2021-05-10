@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.caches.resolve
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClass
 import junit.framework.TestCase
-import org.jetbrains.kotlin.asJava.PsiClassRenderer.renderClass
+import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer.renderClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 import java.util.regex.Pattern
 

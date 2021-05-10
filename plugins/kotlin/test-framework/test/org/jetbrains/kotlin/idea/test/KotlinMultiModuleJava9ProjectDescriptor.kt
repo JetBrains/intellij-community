@@ -15,7 +15,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.kotlin.test.TestJdkKind
+import org.jetbrains.kotlin.idea.test.TestJdkKind
 
 /**
  * Dependencies: 'main' -> 'm2', 'main' -> 'm4', 'main' -> 'm5', 'main' -> 'm6' => 'm7'

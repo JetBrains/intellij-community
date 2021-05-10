@@ -6,7 +6,7 @@ import junit.framework.TestCase;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.kotlin.build.JvmSourceRoot;
 import org.jetbrains.kotlin.idea.test.TestUtilsKt;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import java.io.File;
 import java.util.Arrays;

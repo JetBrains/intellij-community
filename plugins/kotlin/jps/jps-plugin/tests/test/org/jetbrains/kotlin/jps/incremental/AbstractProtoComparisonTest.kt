@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.jps.incremental
 import org.jetbrains.kotlin.TestWithWorkingDir
 import org.jetbrains.kotlin.incremental.*
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.Printer
 import java.io.File
 

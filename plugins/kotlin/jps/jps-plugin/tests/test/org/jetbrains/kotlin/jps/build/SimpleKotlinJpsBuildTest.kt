@@ -7,7 +7,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.kotlin.cli.common.CompilerSystemProperties
 import org.jetbrains.kotlin.compilerRunner.JpsKotlinCompilerRunner
 import org.jetbrains.kotlin.daemon.common.OSKind
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 class SimpleKotlinJpsBuildTest : AbstractKotlinJpsBuildTestCase() {

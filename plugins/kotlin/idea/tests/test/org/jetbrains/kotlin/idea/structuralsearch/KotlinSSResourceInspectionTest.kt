@@ -19,7 +19,7 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.test.util.slashedPath
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 
 abstract class KotlinSSResourceInspectionTest : BasePlatformTestCase() {
     private var myInspection: SSBasedInspection? = null
