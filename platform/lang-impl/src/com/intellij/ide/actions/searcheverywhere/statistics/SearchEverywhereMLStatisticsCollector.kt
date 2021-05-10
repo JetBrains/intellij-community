@@ -50,8 +50,9 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                              tabId: String) {
     if (myIsReporting && isActionOrAllTab(tabId)) {
+      val foundElements = elementsProvider.invoke()
       NonUrgentExecutor.getInstance().execute {
-        reportElements(indexes, closePopup, keysTyped, backspacesTyped, symbolsInQuery, elementsProvider.invoke(), tabId)
+        reportElements(indexes, closePopup, keysTyped, backspacesTyped, symbolsInQuery, foundElements, tabId)
       }
     }
   }
