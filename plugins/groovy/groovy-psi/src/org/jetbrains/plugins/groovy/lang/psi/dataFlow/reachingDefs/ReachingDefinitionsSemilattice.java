@@ -29,9 +29,4 @@ public class ReachingDefinitionsSemilattice implements Semilattice<DefinitionMap
 
     return result;
   }
-
-  @Override
-  public boolean eq(@NotNull final DefinitionMap m1, @NotNull final DefinitionMap m2) {
-    return m1.eq(m2);
-  }
 }
