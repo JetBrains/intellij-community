@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -382,7 +383,10 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
         moduleValues = null;
       }
 
+      ProgressManager.checkCanceled(); // give a chance to suspend indexing
       ContentIterator collectingIterator = fileOrDir -> {
+
+        ProgressManager.checkCanceled(); // give a chance to suspend indexing
         if (subTaskIndicator.isCanceled()) {
           return false;
         }

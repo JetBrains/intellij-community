@@ -228,6 +228,8 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   public void performDelayedPushTasks() {
     boolean hadTasks = false;
     while (true) {
+      ProgressManager.checkCanceled(); // give a chance to suspend indexing
+
       Runnable task = myTasks.poll();
       if (task == null) {
         break;
