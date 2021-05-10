@@ -9,10 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
@@ -94,6 +91,14 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
           }
         }
       }
+    });
+
+    myConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, newRoots, oldRoots) -> {
+      if (new HashSet<>(oldRoots).equals(new HashSet<>(newRoots))) {
+        throw new IllegalStateException("AdditionalLibraryRootsListener.libraryRootsChanged with unchanged roots. " +
+                                        "Consider using com.intellij.openapi.roots.AdditionalLibraryRootsListener.fireAdditionalLibraryChanged");
+      }
+      myRootIndex = null;
     });
   }
 
