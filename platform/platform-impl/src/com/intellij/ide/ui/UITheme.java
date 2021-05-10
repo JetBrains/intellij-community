@@ -13,6 +13,8 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
@@ -142,6 +144,8 @@ public final class UITheme {
       return theme;
     }
 
+    initializeNamedColors(theme);
+
     theme.patcher = new IconPathPatcher() {
       @Nullable
       @Override
@@ -227,6 +231,19 @@ public final class UITheme {
     };
 
     return theme;
+  }
+
+  private static void initializeNamedColors(UITheme theme) {
+    Map<String, Object> map = theme.colors;
+    if (map == null) return;
+
+    Set<String> namedColors = map.keySet();
+    for (String key : namedColors) {
+      Object value = map.get(key);
+      if (value instanceof String && !((String)value).startsWith("#")) {
+        map.put(key, ObjectUtils.notNull(map.get(map.get(key)), Gray.TRANSPARENT));
+      }
+    }
   }
 
   private static String toColorString(@NotNull String key, boolean darkTheme) {
