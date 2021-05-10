@@ -22,8 +22,7 @@ public class AbstractPyCodeCompletion  {
                                      lookingFor==LOOKING_FOR_ASSIGN;
         String trimmed = argsReceived.trim();
         if(trimmed.length() > 0) {
-            FastStringBuffer buffer = new FastStringBuffer("(", 128);
-
+            StringBuilder buffer = new StringBuilder("(");
 
             char c = trimmed.charAt(0);
             if (c == '(') {
