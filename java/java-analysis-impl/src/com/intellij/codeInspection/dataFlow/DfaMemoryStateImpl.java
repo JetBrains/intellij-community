@@ -650,10 +650,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
-  public boolean isNull(DfaValue value) {
-    return getDfType(value) == DfTypes.NULL;
-  }
-
   @Override
   public void markEphemeral() {
     myEphemeral = true;
@@ -676,7 +672,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (Iterator<DistinctPairSet.DistinctPair> iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
       DistinctPairSet.DistinctPair pair = iterator.next();
       EqClass otherClass = pair.getOtherClass(index);
-      if (otherClass != null && !isNull(otherClass.getVariable(0))) {
+      if (otherClass != null && getDfType(otherClass.getVariable(0)) != DfTypes.NULL) {
         iterator.remove();
       }
     }
@@ -1314,7 +1310,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   void doFlush(@NotNull DfaVariableValue var, boolean markFlushed) {
     DfType typeBefore = getDfType(var);
-    if(isNull(var)) {
+    if (getDfType(var) == DfTypes.NULL) {
       myStack.replaceAll(val -> val == var ? myFactory.fromDfType(DfTypes.NULL) : val);
     }
 
