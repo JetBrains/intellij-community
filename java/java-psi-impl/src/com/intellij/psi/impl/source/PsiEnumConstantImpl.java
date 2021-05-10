@@ -29,6 +29,7 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -196,7 +197,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   }
 
   @Override
-  public @NotNull Iterable<? extends @NotNull PsiSymbolReference> getOwnReferences() {
+  public @NotNull Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
     return Collections.singletonList(PsiSymbolService.getInstance().asSymbolReference(myReference));
   }
 
