@@ -165,7 +165,7 @@ public class PagedFileStorage implements Forceable {
   public DirectBufferWrapper getByteBuffer(long address, boolean modify) {
     long page = address / myPageSize;
     assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT: address + " in " + myFile;
-    return getBufferWrapper(page, modify, myReadOnly);
+    return getBufferWrapper(page, modify);
   }
 
   public void putLong(long addr, long value) {
@@ -325,16 +325,20 @@ public class PagedFileStorage implements Forceable {
   }
 
   private DirectBufferWrapper getBuffer(long page) {
-    return getBufferWrapper(page, true, myReadOnly);
+    return getBufferWrapper(page, true);
   }
 
   private DirectBufferWrapper getReadOnlyBuffer(long page) {
-    return getBufferWrapper(page, false, myReadOnly);
+    return getBufferWrapper(page, false);
   }
 
-  private DirectBufferWrapper getBufferWrapper(long page, boolean modify, boolean readOnly) {
+  private DirectBufferWrapper getBufferWrapper(long page, boolean modify) {
     DirectBufferWrapper pageFromCache =
       myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getBufferCache().getMappingChangeCount());
+
+    if (myReadOnly && modify) {
+      throw new IllegalArgumentException("Read-only storage can't be modified");
+    }
 
     try {
       if (pageFromCache != null) {
@@ -347,7 +351,7 @@ public class PagedFileStorage implements Forceable {
       if (myStorageIndex == -1) {
         throw new MappingFailedException("storage is already closed; path " + myFile);
       }
-      DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferCache().get(myStorageIndex | (int)page, !modify, readOnly); // TODO: long page
+      DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferCache().get(myStorageIndex | (int)page, !modify, myReadOnly); // TODO: long page
       if (modify) markDirty();
       if (myNativeBytesOrder) {
         byteBufferWrapper.useNativeByteOrder();
