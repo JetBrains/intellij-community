@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
 import com.intellij.openapi.util.TextRange
@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache
 import org.jetbrains.plugins.groovy.lang.resolve.ast.constructorGeneratingAnnotations
@@ -16,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.getAffectedMembersCache
 
 class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
 
-  override fun buildErrorString(vararg args: Any?): String? {
+  override fun buildErrorString(vararg args: Any?): String {
     return GroovyBundle.message("inspection.message.couldnt.find.property.field.with.this.name")
   }
 
@@ -58,7 +59,8 @@ class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
     override fun visitAnnotation(annotation: GrAnnotation) {
       super.visitAnnotation(annotation)
       if (!constructorGeneratingAnnotations.contains(annotation.qualifiedName)) return
-      val cache = getAffectedMembersCache(annotation)
+      val owner = annotation.owner as? GrTypeDefinition ?: return
+      val cache = getAffectedMembersCache(annotation, owner)
       val affectedMembers = cache.getAllAffectedMembers().mapNotNullTo(mutableSetOf(), AffectedMembersCache.Companion::getExternalName)
       processAttribute(affectedMembers, annotation, "includes")
       processAttribute(affectedMembers, annotation, "excludes")

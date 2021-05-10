@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -166,7 +166,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       boolean optional = !immutable && PsiUtil.getAnnoAttributeValue(tupleConstructor, TupleConstructorAttributes.DEFAULTS, true);
       Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
       fieldsConstructor.addModifier(visibility.toString());
-      AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(tupleConstructor);
+      AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(tupleConstructor, typeDefinition);
 
       checkContainingClass(context, fieldsConstructor);
 
