@@ -14,7 +14,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.PagePool;
-import com.intellij.util.io.RecordDataOutput;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
