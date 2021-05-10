@@ -48,7 +48,7 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     // schedule dumb mode start after the read action we're currently in
     if (fileBasedIndex instanceof FileBasedIndexImpl) {
       DumbService.getInstance(project)
-        .queueTask(new UnindexedFilesUpdater(project, IndexInfrastructure.isIndexesInitializationSuspended()));
+        .queueTask(new UnindexedFilesUpdater(project, IndexInfrastructure.isIndexesInitializationSuspended(), null));
     }
     fileBasedIndex.registerProjectFileSets(project);
 

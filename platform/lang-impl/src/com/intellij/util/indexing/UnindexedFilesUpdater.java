@@ -46,6 +46,7 @@ import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.time.Duration;
@@ -84,8 +85,11 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private final Project myProject;
   private final boolean myStartSuspended;
   private final PushedFilePropertiesUpdater myPusher;
+  private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
 
-  public UnindexedFilesUpdater(@NotNull Project project, boolean startSuspended) {
+  public UnindexedFilesUpdater(@NotNull Project project,
+                               boolean startSuspended,
+                               @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators) {
     super(project);
     myProject = project;
     myStartSuspended = startSuspended;
@@ -94,11 +98,20 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     synchronized (ourLastRunningTaskLock) {
       UnindexedFilesUpdater runningTask = myProject.getUserData(RUNNING_TASK);
-      if (runningTask != null) {
-        DumbService.getInstance(project).cancelTask(runningTask);
+      //two tasks with non-null myPredefinedIndexableFilesIterators should be just run one after other
+      if (runningTask == null || runningTask.myPredefinedIndexableFilesIterators == null || predefinedIndexableFilesIterators == null) {
+        myProject.putUserData(RUNNING_TASK, this);
+
+        if (runningTask != null) {
+          if (runningTask.myPredefinedIndexableFilesIterators == null && predefinedIndexableFilesIterators != null) {
+            //new task should be run for all changes to handle what wasn't handled by the previous one
+            predefinedIndexableFilesIterators = null;
+          }
+          DumbService.getInstance(project).cancelTask(runningTask);
+        }
       }
-      myProject.putUserData(RUNNING_TASK, this);
     }
+    myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
   }
 
   @Override
@@ -115,7 +128,11 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
     // file based index extensions for all project files until at least one of UnindexedFilesUpdater-s finishes without cancellation.
     // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
-    this(project, false);
+    this(project, false, null);
+  }
+
+  public UnindexedFilesUpdater(@NotNull Project project, @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators) {
+    this(project, false, predefinedIndexableFilesIterators);
   }
 
   private void updateUnindexedFiles(@NotNull ProjectIndexingHistory projectIndexingHistory, @NotNull ProgressIndicator indicator) {
@@ -158,7 +175,9 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     try {
       orderedProviders = getOrderedProviders();
       providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
-      myProject.putUserData(CONTENT_SCANNED, true);
+      if (myPredefinedIndexableFilesIterators == null) {
+        myProject.putUserData(CONTENT_SCANNED, true);
+      }
     } finally {
       projectIndexingHistory.getTimes().setScanFilesDuration(Duration.between(scanFilesStart, Instant.now()));
     }
@@ -319,6 +338,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
    */
   @NotNull
   private List<IndexableFilesIterator> getOrderedProviders() {
+    if (myPredefinedIndexableFilesIterators != null) return myPredefinedIndexableFilesIterators;
+
     List<IndexableFilesIterator> originalOrderedProviders = myIndex.getOrderedIndexableFilesProviders(myProject);
 
     List<IndexableFilesIterator> orderedProviders = new ArrayList<>();

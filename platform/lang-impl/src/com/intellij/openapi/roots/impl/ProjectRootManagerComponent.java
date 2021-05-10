@@ -41,15 +41,15 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
+import com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor;
+import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -151,10 +151,31 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
     OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
 
+
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, newRoots, oldRoots) -> {
-      if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-        DumbService.getInstance(myProject).queueTask(new UnindexedFilesUpdater(myProject));
+      if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) {
+        return;
       }
+      List<VirtualFile> rootsToIndex = new ArrayList<>(newRoots.size());
+      for (VirtualFile root : newRoots) {
+        boolean shouldIndex = true;
+        for (VirtualFile oldRoot : oldRoots) {
+          if (VfsUtilCore.isAncestor(oldRoot, root, false)) {
+            shouldIndex = false;
+            break;
+          }
+        }
+        if (shouldIndex) {
+          rootsToIndex.add(root);
+        }
+      }
+
+      if (rootsToIndex.isEmpty()) return;
+
+      List<IndexableFilesIterator> indexableFilesIterators =
+        Collections.singletonList(AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex));
+
+      DumbService.getInstance(myProject).queueTask(new UnindexedFilesUpdater(myProject, indexableFilesIterators));
     });
   }
 
