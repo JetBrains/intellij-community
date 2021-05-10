@@ -39,6 +39,17 @@ public class DeprecatedIsStillUsedInspectionTest extends LightJava9ModulesCodeIn
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
+  public void testOverloadedAndStaticImport() {
+    myFixture.addClass("package bar;\n" +
+                       "import static foo.OverloadedAndStaticImport.bar;\n" +
+                       "class Bar {\n" +
+                       "  {\n" +
+                       "    bar();\n" +
+                       "  }\n" +
+                       "}");
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
   public void testDeprecatedWithManyOccurrences() {
     for (int i = 0; i < 20; i++) {
       myFixture.addClass("class MyTest" + i + "{ DeprecatedWithManyOccurrences d;}");

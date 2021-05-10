@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,8 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
     return ThreeState.fromBoolean(ReferencesSearch.search(element, searchScope, false)
       .anyMatch(reference -> {
         PsiElement referenceElement = reference.getElement();
-        return !DeprecationInspectionBase.isElementInsideDeprecated(referenceElement) && 
+        return PsiTreeUtil.getParentOfType(referenceElement, PsiImportStatementBase.class) == null &&
+               !DeprecationInspectionBase.isElementInsideDeprecated(referenceElement) &&
                !PsiUtil.isInsideJavadocComment(referenceElement);
       }));
   }
