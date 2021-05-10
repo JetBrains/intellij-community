@@ -66,7 +66,7 @@ class IndexDiagnosticDumper : Disposable {
 
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
-    private val jacksonMapper: ObjectMapper by lazy {
+    val jacksonMapper: ObjectMapper by lazy {
       jacksonObjectMapper().registerKotlinModule()
     }
 
