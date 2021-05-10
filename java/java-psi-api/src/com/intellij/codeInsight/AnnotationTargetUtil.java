@@ -21,7 +21,7 @@ public final class AnnotationTargetUtil {
 
   public static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.immutableSet(
     TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE, TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
-    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE);
+    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE, TargetType.MODULE, TargetType.RECORD_COMPONENT);
 
   private static final TargetType[] PACKAGE_TARGETS = {TargetType.PACKAGE};
   private static final TargetType[] TYPE_USE_TARGETS = {TargetType.TYPE_USE};
