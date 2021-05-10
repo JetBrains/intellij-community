@@ -1092,6 +1092,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractInnerDeclarationsResolvePhaseTest> {
             model("innerDeclarationsResolve")
         }
+        testClass<AbstractPartialRawFirBuilderTestCase> {
+            model("partialRawBuilder", testMethod = "doRawFirTest")
+        }
     }
 
 
