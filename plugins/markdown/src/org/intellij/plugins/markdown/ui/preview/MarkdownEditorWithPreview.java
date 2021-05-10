@@ -29,19 +29,9 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
     MarkdownApplicationSettings.SettingsChangedListener settingsChangedListener =
       new MarkdownApplicationSettings.SettingsChangedListener() {
         @Override
-        public void beforeSettingsChanged(@NotNull MarkdownApplicationSettings newSettings) {
-          boolean oldAutoScrollPreview = MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().isAutoScrollPreview();
-          boolean oldVerticalSplit = MarkdownApplicationSettings.getInstance().getMarkdownPreviewSettings().isVerticalSplit();
-
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (oldAutoScrollPreview == myAutoScrollPreview) {
-              setAutoScrollPreview(newSettings.getMarkdownPreviewSettings().isAutoScrollPreview());
-            }
-
-            if (oldVerticalSplit == isVerticalSplit()) {
-              setVerticalSplit(newSettings.getMarkdownPreviewSettings().isVerticalSplit());
-            }
-          });
+        public void settingsChanged(@NotNull MarkdownApplicationSettings settings) {
+          setAutoScrollPreview(settings.getMarkdownPreviewSettings().isAutoScrollPreview());
+          handleLayoutChange(settings.getMarkdownPreviewSettings().isVerticalSplit());
         }
       };
 
