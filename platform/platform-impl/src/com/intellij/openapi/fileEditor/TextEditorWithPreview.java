@@ -265,7 +265,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   @NotNull
-  public FileEditor getPreview() {
+  public FileEditor getPreviewEditor() {
     return myPreview;
   }
 

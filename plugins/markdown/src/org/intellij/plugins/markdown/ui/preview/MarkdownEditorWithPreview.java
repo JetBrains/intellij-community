@@ -68,7 +68,7 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
         return;
       }
       previousLine = currentLine;
-      ((MarkdownPreviewFileEditor)getPreview()).scrollToSrcOffset(EditorUtil.getVisualLineEndOffset(editor, currentLine));
+      ((MarkdownPreviewFileEditor)getPreviewEditor()).scrollToSrcOffset(EditorUtil.getVisualLineEndOffset(editor, currentLine));
     }
   }
 }
