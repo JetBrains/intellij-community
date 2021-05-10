@@ -1120,20 +1120,24 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }*/
 
     testGroup(
-        "idea/idea-frontend-fir/idea-fir-low-level-api/tests",
-        "compiler/fir/analysis-tests/testData",
+        "fir-low-level-api",
+        testDataPath = "../idea/tests/testData/compiler/fir/analysis-tests",
     ) {
-        testClass<AbstractDiagnosisCompilerTestDataTest>(generatedClassName = "DiagnosisCompilerFirTestdataTestGenerated") {
+        testClass<AbstractDiagnosisCompilerTestDataTest>(
+            generatedClassName = "${AbstractDiagnosisCompilerTestDataTest::class.java.`package`.name}.DiagnosisCompilerFirTestdataTestGenerated"
+        ) {
             model("resolve", pattern = KT_WITHOUT_DOTS)
             model("resolveWithStdlib", pattern = KT_WITHOUT_DOTS)
         }
     }
 
     testGroup(
-        "idea/idea-frontend-fir/idea-fir-low-level-api/tests",
-        "compiler/testData",
+        "fir-low-level-api",
+        testDataPath = "../idea/tests/testData/compiler",
     ) {
-        testClass<AbstractDiagnosisCompilerTestDataTest>(generatedClassName = "DiagnosisCompilerTestFE10TestdataTestGenerated") {
+        testClass<AbstractDiagnosisCompilerTestDataTest>(
+            generatedClassName = "${AbstractDiagnosisCompilerTestDataTest::class.java.`package`.name}.DiagnosisCompilerFirTestdataTestGenerated"
+        ) {
             model("diagnostics/tests")
             model("diagnostics/testsWithStdLib")
         }
@@ -1518,27 +1522,27 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("plugins/uast-kotlin-fir/tests") {
+    testGroup("uast/uast-kotlin-fir") {
         testClass<AbstractFirUastDeclarationTest> {
             model("declaration")
             model("legacy")
         }
     }
 
-    testGroup("plugins/uast-kotlin-fir/tests", "plugins/uast-kotlin/testData") {
+    testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/testData") {
         testClass<AbstractFirLegacyUastDeclarationTest> {
             model("")
         }
     }
 
-    testGroup("plugins/uast-kotlin-fir/tests") {
+    testGroup("uast/uast-kotlin-fir") {
         testClass<AbstractFE1UastDeclarationTest> {
             model("declaration")
             model("legacy")
         }
     }
 
-    testGroup("plugins/uast-kotlin-fir/tests", "plugins/uast-kotlin/testData") {
+    testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/testData") {
         testClass<AbstractFE1LegacyUastDeclarationTest> {
             model("")
         }
