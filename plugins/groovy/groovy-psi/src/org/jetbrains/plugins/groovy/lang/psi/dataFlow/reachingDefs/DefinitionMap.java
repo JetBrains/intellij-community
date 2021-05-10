@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -42,20 +43,6 @@ public final class DefinitionMap {
     }
   }
 
-  public boolean eq(DefinitionMap other) {
-    if (myMap.size() != other.myMap.size()) {
-      return false;
-    }
-
-    for (Int2ObjectMap.Entry<IntSet> entry : myMap.int2ObjectEntrySet()) {
-      IntSet otherDefs = other.myMap.get(entry.getIntKey());
-      if (otherDefs == null || !otherDefs.equals(entry.getValue())) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   public int @Nullable [] getDefinitions(int varIndex) {
     IntSet defs = myMap.get(varIndex);
     return defs == null ? null : defs.toIntArray();
@@ -63,5 +50,18 @@ public final class DefinitionMap {
 
   public void forEachValue(Consumer<IntSet> procedure) {
     myMap.values().forEach(procedure);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    DefinitionMap map = (DefinitionMap)o;
+    return myMap.equals(map.myMap);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myMap);
   }
 }
