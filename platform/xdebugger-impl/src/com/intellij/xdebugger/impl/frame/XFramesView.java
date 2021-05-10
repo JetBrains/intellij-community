@@ -19,7 +19,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
@@ -45,8 +44,11 @@ import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 
 public final class XFramesView extends XDebugView {
   private static final Logger LOG = Logger.getInstance(XFramesView.class);
@@ -209,6 +211,19 @@ public final class XFramesView extends XDebugView {
     }
   }
 
+  public void onFrameSelectionKeyPressed(@NotNull Consumer<XStackFrame> handler) {
+    myFramesList.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        int key = e.getKeyCode();
+        if (key == KeyEvent.VK_ENTER || key == KeyEvent.VK_SPACE || key == KeyEvent.VK_RIGHT) {
+          handleFrameSelection();
+          ApplicationManager.getApplication().invokeLater(() -> handler.accept(myFramesList.getSelectedFrame()));
+        }
+      }
+    });
+  }
+
   private void handleFrameSelection() {
     myFrameSelectionHandler.onMouseClicked(myFramesList);
   }
@@ -311,7 +326,7 @@ public final class XFramesView extends XDebugView {
   private void withCurrentBuilder(Consumer<? super StackFramesListBuilder> consumer) {
     StackFramesListBuilder builder = myBuilders.get(mySelectedStack);
     if (builder != null) {
-      consumer.consume(builder);
+      consumer.accept(builder);
     }
   }
 

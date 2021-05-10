@@ -27,6 +27,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.xdebugger.XDebugSession;
@@ -101,6 +102,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected void init(XDebugSessionImpl session) {
     initDebuggerTab(session);
+    initFocusingVariablesFromFramesView();
 
     attachToSession(session);
 
@@ -110,6 +112,29 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     initListeners(myUi);
     rebuildViews();
+  }
+
+  private void initFocusingVariablesFromFramesView() {
+    XFramesView framesView = ObjectUtils.tryCast(myViews.get(DebuggerContentInfo.FRAME_CONTENT), XFramesView.class);
+    XVariablesViewBase variablesView = ObjectUtils.tryCast(myViews.get(DebuggerContentInfo.VARIABLES_CONTENT), XVariablesViewBase.class);
+    if (framesView == null || variablesView == null) return;
+
+    framesView.onFrameSelectionKeyPressed(frame -> {
+      Content content = findOrRestoreContentIfNeeded(DebuggerContentInfo.VARIABLES_CONTENT);
+      if (content == null) return;
+      getUi().selectAndFocus(content, true, true).doWhenDone(() -> {
+        // Don't ruin an old selection from the saved tree state (if any) while it's being restored.
+        // Most of the time restoring the selection is fast enough. But even if it's not,
+        // the variables view is focused instantly, so the user can still use the arrow keys
+        // for navigating through the variables loaded so far. The tree restorer, in turn,
+        // is careful enough to not reset the selection if the user happened to change it already.
+        variablesView.onReady().whenComplete((node, throwable) -> {
+          if (node != null && node.getTree().isSelectionEmpty()) {
+            node.getTree().setSelectionRow(0);
+          }
+        });
+      });
+    });
   }
 
   protected void initDebuggerTab(XDebugSessionImpl session) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -288,6 +289,11 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   public void addTreeListener(@NotNull XDebuggerTreeListener listener) {
     myListeners.add(listener);
+  }
+
+  public void addTreeListener(@NotNull XDebuggerTreeListener listener, @NotNull Disposable parentDisposable) {
+    addTreeListener(listener);
+    Disposer.register(parentDisposable, () -> removeTreeListener(listener));
   }
 
   public void removeTreeListener(@NotNull XDebuggerTreeListener listener) {

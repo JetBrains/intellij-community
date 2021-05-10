@@ -156,7 +156,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     return false;
   }
 
-  private @Nullable XStackFrame getSelectedFrame() {
+  public @Nullable XStackFrame getSelectedFrame() {
     Object value = getSelectedValue();
     return value instanceof XStackFrame ? (XStackFrame)value : null;
   }
