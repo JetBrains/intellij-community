@@ -111,6 +111,13 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
             "MyBundle.properties", "AnotherBundle.properties")
   }
 
+  void testMessageBundleViaIncluding() {
+    myFixture.copyFileToProject("messageBundleIncluding.xml", "META-INF/messageBundleIncluding.xml")
+    myFixture.copyFileToProject("messageBundleViaIncluding.xml", "META-INF/messageBundleViaIncluding.xml")
+    doHighlightingTest("META-INF/messageBundleViaIncluding.xml",
+                       "MyBundle.properties")
+  }
+
   void testExtensionsHighlighting() {
     final String root = "idea_core"
     addPluginXml(root, """
