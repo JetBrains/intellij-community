@@ -56,7 +56,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       LOG.info(e);
     }
     finally {
-      if (unmodifiable) {
+      if (!unmodifiable) {
         ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown, this);
       }
     }
