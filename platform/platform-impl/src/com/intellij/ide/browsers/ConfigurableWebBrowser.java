@@ -68,7 +68,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
       else if (checkNameAndPath("Canary")) {
         return AllIcons.Xml.Browsers.Canary;
       }
-      else if (checkNameAndPath("Opera")) {
+      else if (WebBrowserManager.isOpera(this)) {
         return AllIcons.Xml.Browsers.Opera;
       }
       else if (checkNameAndPath("node-webkit") || checkNameAndPath("nw") || checkNameAndPath("nwjs")) {

@@ -52,7 +52,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
       new ConfigurableWebBrowser(PREDEFINED_CHROME_ID, BrowserFamily.CHROME),
       new ConfigurableWebBrowser(PREDEFINED_FIREFOX_ID, BrowserFamily.FIREFOX),
       new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI),
-      new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.OPERA),
+      new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.CHROME, "Opera", SystemInfo.isMac ? "Opera" : "opera", true, null),
       new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex", SystemInfo.isWindows ? "browser" : (SystemInfo.isMac
                                                                                                                            ? "Yandex" : "yandex"), false, BrowserFamily.CHROME.createBrowserSpecificSettings()),
       new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER),
@@ -86,6 +86,10 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
            (browser.getId().equals(PREDEFINED_EDGE_ID) ||
             checkNameAndPath(EDGE_COMMAND, browser) ||
             checkNameAndPath("MicrosoftEdge", browser));
+  }
+
+  public static boolean isOpera(@NotNull WebBrowser browser) {
+    return checkNameAndPath("Opera", browser);
   }
 
   static boolean checkNameAndPath(@NotNull String what, @NotNull WebBrowser browser) {
@@ -196,9 +200,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
           break;
         case FIREFOX:
           id = PREDEFINED_FIREFOX_ID;
-          break;
-        case OPERA:
-          id = PREDEFINED_OPERA_ID;
           break;
         case SAFARI:
           id = PREDEFINED_SAFARI_ID;
