@@ -206,26 +206,7 @@ Includes the following features:</p>
       </action>
     </group>
 
-    <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.CyclicSplitLayoutChangeAction"
-            id="org.intellij.plugins.markdown.ui.actions.editorLayout.CyclicSplitLayoutChangeAction"
-            icon="AllIcons.Actions.PreviewDetails"
-            use-shortcut-of="ParameterInfo">
-    </action>
-
     <group id="Markdown.Toolbar.Right" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
-      <!--<action class="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorOnlyLayoutChangeAction"-->
-      <!--        id="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorOnlyLayoutChangeAction"-->
-      <!--        icon="AllIcons.General.LayoutEditorOnly">-->
-      <!--</action>-->
-      <!--<action class="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorAndPreviewLayoutChangeAction"-->
-      <!--        id="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorAndPreviewLayoutChangeAction"-->
-      <!--        icon="AllIcons.General.LayoutEditorPreview">-->
-      <!--</action>-->
-      <!--<action class="org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction"-->
-      <!--        id="org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction"-->
-      <!--        icon="AllIcons.General.LayoutPreviewOnly">-->
-      <!--</action>-->
-      <!--<separator/>-->
       <action class="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
               id="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
               icon="AllIcons.Actions.SynchronizeScrolling">

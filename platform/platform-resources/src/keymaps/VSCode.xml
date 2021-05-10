@@ -548,12 +548,6 @@
   <action id="XDebugger.SetValue" />
   <action id="hg4idea.QRefresh" />
   <action id="openAssertEqualsDiff" />
-  <action id="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorAndPreviewLayoutChangeAction">
-    <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="v" />
-  </action>
-  <action id="org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction">
-    <keyboard-shortcut first-keystroke="shift ctrl v" />
-  </action>
   <action id="EditorDecreaseFontSize">
     <keyboard-shortcut first-keystroke="ctrl minus" />
   </action>
