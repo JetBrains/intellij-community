@@ -17,4 +17,8 @@
   <depends>training</depends>
   <depends>Git4Idea</depends>
 
+  <extensions defaultExtensionNs="training">
+    <ift.learning.commonCourse key="Git" implementationClass="git4idea.ift.GitLearningCourse"/>
+  </extensions>
+
 </idea-plugin>
