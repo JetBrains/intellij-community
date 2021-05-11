@@ -210,7 +210,7 @@ object PathSettingType : SettingType<Path>() {
             if (isUnitTestMode) return@validate ValidationResult.OK
             if (!Files.exists(pathValue))
                 ValidationResult.ValidationError(
-                    KotlinNewProjectWizardBundle.message("validation.file.should.exists", title.capitalize())
+                    KotlinNewProjectWizardBundle.message("validation.file.should.exist", title.capitalize())
                 )
             else ValidationResult.OK
         }
