@@ -25,8 +25,19 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
+<<<<<<< HEAD
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler" level="project" />
+||||||| parent of a7cbbebe3f09c (Fix remaining compilation issues after commit cherry-picking)
+    <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" scope="TEST" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler" level="project" scope="TEST" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" scope="TEST" />
+=======
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
+>>>>>>> a7cbbebe3f09c (Fix remaining compilation issues after commit cherry-picking)
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />

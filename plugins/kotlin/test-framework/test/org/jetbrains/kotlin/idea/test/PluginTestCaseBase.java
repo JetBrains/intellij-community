@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,20 @@ public class PluginTestCaseBase {
                 return getSdk(jre9, "Full JDK 9");
             case FULL_JDK:
                 return fullJdk();
+            default:
+                throw new UnsupportedOperationException(kind.toString());
+        }
+    }
+
+    @NotNull
+    public static LanguageLevel getLanguageLevel(@NotNull TestJdkKind kind) {
+        switch (kind) {
+            case MOCK_JDK:
+                return LanguageLevel.JDK_1_8;
+            case FULL_JDK_9:
+                return LanguageLevel.JDK_1_9;
+            case FULL_JDK:
+                return LanguageLevel.JDK_1_8;
             default:
                 throw new UnsupportedOperationException(kind.toString());
         }
