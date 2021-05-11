@@ -86,6 +86,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.webp",
     "intellij.grazie",
     "intellij.featuresTrainer",
+    "intellij.vcs.git.featuresTrainer",
     "intellij.lombok"
   ]
 
