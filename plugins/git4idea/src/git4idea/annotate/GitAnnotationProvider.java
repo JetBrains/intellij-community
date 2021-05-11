@@ -400,29 +400,30 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   private Pair<FilePath, VcsRevisionNumber> getPathAndRevision(@NotNull VirtualFile file) {
     FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file));
     VcsRevisionNumber currentRevision = getCurrentRevision(file);
-    VcsRevisionNumber revisionNumber = getLastRevision(filePath, currentRevision);
-    return Pair.create(filePath, revisionNumber);
+    VcsRevisionNumber lastRevision = getLastRevision(filePath, currentRevision);
+    return Pair.create(filePath, lastRevision);
   }
 
   /**
-   * @return Last revision file was modified in
+   * @param currentRevision HEAD revision number
+   * @return last revision filePath was modified in
    */
   @Nullable
   private VcsRevisionNumber getLastRevision(@NotNull FilePath filePath, @Nullable VcsRevisionNumber currentRevision) {
     VcsKey gitKey = GitVcs.getKey();
     if (currentRevision != null) {
-      VcsRevisionNumber cachedRevisionNumber = myCache.getLastRevision(filePath, gitKey, currentRevision);
-      if (cachedRevisionNumber != null) {
-        return cachedRevisionNumber;
+      VcsRevisionNumber cachedLastRevision = myCache.getLastRevision(filePath, gitKey, currentRevision);
+      if (cachedLastRevision != null) {
+        return cachedLastRevision;
       }
     }
 
     try {
-      VcsRevisionNumber revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, filePath, GitUtil.HEAD);
-      if (currentRevision != null && revisionNumber != null) {
-        myCache.putLastRevision(filePath, gitKey, currentRevision, revisionNumber);
+      VcsRevisionNumber lastRevision = GitHistoryUtils.getCurrentRevision(myProject, filePath, GitUtil.HEAD);
+      if (currentRevision != null && lastRevision != null) {
+        myCache.putLastRevision(filePath, gitKey, currentRevision, lastRevision);
       }
-      return revisionNumber;
+      return lastRevision;
     }
     catch (VcsException ignore) {
       return null;
@@ -437,10 +438,10 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
     if (repository == null) return null;
 
-    String revision = repository.getCurrentRevision();
-    if (revision == null) return null;
+    String currentRevision = repository.getCurrentRevision();
+    if (currentRevision == null) return null;
 
-    return new GitRevisionNumber(revision);
+    return new GitRevisionNumber(currentRevision);
   }
 
   @NotNull
