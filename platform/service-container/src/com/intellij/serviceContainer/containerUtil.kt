@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:ApiStatus.Internal
 package com.intellij.serviceContainer
 
-import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.Modifier
 
 internal fun checkCanceledIfNotInClassInit() {
@@ -39,31 +40,26 @@ fun precomputeExtensionModel(plugins: List<IdeaPluginDescriptorImpl>): Precomput
   val extensionPointDescriptors = ArrayList<List<ExtensionPointDescriptor>>()
   val pluginDescriptors = ArrayList<IdeaPluginDescriptor>()
   var extensionPointTotalCount = 0
-  val containerSelector: (pluginDescriptor: IdeaPluginDescriptorImpl) -> ContainerDescriptor = { it.moduleContainerDescriptor }
   val nameToExtensions = HashMap<String, MutableList<Pair<IdeaPluginDescriptor, List<ExtensionDescriptor>>>>()
 
   // step 1 - collect container level extension points
-  for (plugin in plugins) {
-    executeRegisterTask(plugin, containerSelector(plugin), containerSelector) { pluginDescriptor, containerDescriptor ->
-      containerDescriptor.extensionPoints?.let {
-        extensionPointDescriptors.add(it)
-        pluginDescriptors.add(pluginDescriptor)
-        extensionPointTotalCount += it.size
+  executeRegisterTask(plugins) { pluginDescriptor ->
+    pluginDescriptor.moduleContainerDescriptor.extensionPoints?.let {
+      extensionPointDescriptors.add(it)
+      pluginDescriptors.add(pluginDescriptor)
+      extensionPointTotalCount += it.size
 
-        for (descriptor in it) {
-          nameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), mutableListOf())
-        }
+      for (descriptor in it) {
+        nameToExtensions.put(descriptor.getQualifiedName(pluginDescriptor), mutableListOf())
       }
     }
   }
 
   // step 2 - collect container level extensions
-  for (plugin in plugins) {
-    executeRegisterTask(plugin, containerSelector(plugin), containerSelector) { pluginDescriptor, _ ->
-      val unsortedMap = pluginDescriptor.epNameToExtensions ?: return@executeRegisterTask
-      for ((name, list) in unsortedMap.entries) {
-        nameToExtensions.get(name)?.add(pluginDescriptor to list)
-      }
+  executeRegisterTask(plugins) { pluginDescriptor ->
+    val unsortedMap = pluginDescriptor.epNameToExtensions ?: return@executeRegisterTask
+    for ((name, list) in unsortedMap.entries) {
+      nameToExtensions.get(name)?.add(pluginDescriptor to list)
     }
   }
 
@@ -76,29 +72,40 @@ fun precomputeExtensionModel(plugins: List<IdeaPluginDescriptorImpl>): Precomput
   )
 }
 
-internal inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl,
-                                        mainContainerDescriptor: ContainerDescriptor,
-                                        containerSelector: (pluginDescriptor: IdeaPluginDescriptorImpl) -> ContainerDescriptor,
-                                        crossinline task: (IdeaPluginDescriptorImpl, ContainerDescriptor) -> Unit) {
-  task(mainPluginDescriptor, mainContainerDescriptor)
+inline fun executeRegisterTask(plugins: List<IdeaPluginDescriptorImpl>, crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
+  for (plugin in plugins) {
+    task(plugin)
+    executeRegisterTaskForContent(mainPluginDescriptor = plugin, task = task)
+  }
+}
+
+@PublishedApi
+internal inline fun executeRegisterTaskForContent(mainPluginDescriptor: IdeaPluginDescriptorImpl,
+                                                  crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
   for (dep in mainPluginDescriptor.pluginDependencies) {
-    if (dep.isDisabledOrBroken) {
+    val subDescriptor = dep.subDescriptor
+    if (subDescriptor?.classLoader == null) {
       continue
     }
 
-    val subPluginDescriptor = dep.subDescriptor ?: continue
-    task(subPluginDescriptor, containerSelector(subPluginDescriptor))
+    task(subDescriptor)
 
-    for (subDep in subPluginDescriptor.pluginDependencies) {
-      if (!subDep.isDisabledOrBroken) {
-        val d = subDep.subDescriptor ?: continue
-        task(d, containerSelector(d))
+    for (subDep in subDescriptor.pluginDependencies) {
+      val d = subDep.subDescriptor
+      if (d?.classLoader != null) {
+        task(d)
         assert(d.pluginDependencies.isEmpty() || d.pluginDependencies.all { it.subDescriptor == null })
       }
     }
   }
-}
 
+  for (item in mainPluginDescriptor.content.modules) {
+    val module = item.requireDescriptor()
+    if (module.classLoader != null) {
+      task(module)
+    }
+  }
+}
 
 internal fun isGettingServiceAllowedDuringPluginUnloading(descriptor: PluginDescriptor): Boolean {
   return descriptor.isRequireRestart ||

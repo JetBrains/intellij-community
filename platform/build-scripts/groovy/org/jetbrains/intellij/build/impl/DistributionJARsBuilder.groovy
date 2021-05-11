@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
@@ -882,6 +883,7 @@ final class DistributionJARsBuilder {
               modulePatches(List.of(moduleName))
               module(moduleName) {
                 ant.exclude(name: "**/icon-robots.txt")
+                ant.exclude(name: ".unmodified")
 
                 for (String exclude in layout.moduleExcludes.get(moduleName)) {
                   //noinspection GrUnresolvedAccess
@@ -935,11 +937,11 @@ final class DistributionJARsBuilder {
       }
       if (layoutSpec.copyFiles) {
         for (ModuleResourceData resourceData in layout.resourcePaths) {
-          String path = FileUtil.toSystemIndependentName(new File(basePath(buildContext, resourceData.moduleName),
-                                                                  resourceData.resourcePath).absolutePath)
+          String path = FileUtilRt.toSystemIndependentName(new File(basePath(buildContext, resourceData.moduleName),
+                                                                    resourceData.resourcePath).absolutePath)
           if (resourceData.packToZip) {
             zip(resourceData.relativeOutputPath) {
-              if (Files.isRegularFile(Paths.get(path))) {
+              if (Files.isRegularFile(Path.of(path))) {
                 ant.fileset(file: path)
               }
               else {
@@ -949,7 +951,7 @@ final class DistributionJARsBuilder {
           }
           else {
             dir(resourceData.relativeOutputPath) {
-              if (Files.isRegularFile(Paths.get(path))) {
+              if (Files.isRegularFile(Path.of(path))) {
                 ant.fileset(file: path)
               }
               else {

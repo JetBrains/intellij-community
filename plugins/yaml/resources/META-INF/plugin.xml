@@ -7,7 +7,9 @@
   Adds support for the <a href="https://yaml.org/">YAML</a> language.
   ]]></description>
 
-  <depends>com.intellij.modules.lang</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- YAML -->

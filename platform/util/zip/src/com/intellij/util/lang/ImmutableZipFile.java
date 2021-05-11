@@ -89,12 +89,13 @@ public final class ImmutableZipFile implements Closeable {
    */
   @Override
   public void close() throws IOException {
-    if (mappedBuffer != null) {
+    ByteBuffer buffer = mappedBuffer;
+    if (buffer != null) {
+      mappedBuffer = null;
       // we need to unmap buffer immediately without waiting until GC does this job; otherwise further modifications of the created file
-      // will fail with Acce
-      unmapBuffer(mappedBuffer);
+      // will fail with AccessDeniedException
+      unmapBuffer(buffer);
     }
-    mappedBuffer = null;
   }
 
   /**
@@ -254,8 +255,10 @@ public final class ImmutableZipFile implements Closeable {
   /**
    * This method repeats logic from {@link com.intellij.util.io.ByteBufferUtil#cleanBuffer} which isn't accessible from this module
    */
-  private static void unmapBuffer(ByteBuffer buffer) throws IOException {
-    if (!buffer.isDirect()) return;
+  private static void unmapBuffer(@NotNull ByteBuffer buffer) throws IOException {
+    if (!buffer.isDirect()) {
+      return;
+    }
 
     try {
       Field unsafeField = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");

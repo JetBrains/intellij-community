@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.AbstractBundle
@@ -85,8 +85,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @JvmField val projectContainerDescriptor = raw.projectContainerDescriptor
   @JvmField val moduleContainerDescriptor = raw.moduleContainerDescriptor
 
-  @JvmField internal val contentDescriptor = raw.contentDescriptor
-  @JvmField internal val dependencyDescriptor = raw.dependencyDescriptor
+  @JvmField val content = raw.content
+  @JvmField val dependencies = raw.dependencies
   @JvmField val modules: List<PluginId> = raw.modules ?: Collections.emptyList()
 
   private val descriptionChildText = raw.description
@@ -120,7 +120,11 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getPluginPath() = path
 
-  fun createSub(raw: RawPluginDescriptor, descriptorPath: String): IdeaPluginDescriptorImpl {
+  private fun createSub(raw: RawPluginDescriptor,
+                        descriptorPath: String,
+                        pathResolver: PathResolver,
+                        context: DescriptorListLoadingContext,
+                        dataLoader: DataLoader): IdeaPluginDescriptorImpl {
     raw.name = name
     @Suppress("TestOnlyProblems")
     val result = IdeaPluginDescriptorImpl(raw, path = path, isBundled = isBundled, id = id)
@@ -128,6 +132,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     result.vendor = vendor
     result.version = version
     result.resourceBundleBaseName = resourceBundleBaseName
+
+    result.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = true, dataLoader = dataLoader)
     return result
   }
 
@@ -139,21 +145,17 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     // include module file descriptor if not specified as `depends` (old way - xi:include)
     // must be first because merged into raw descriptor
     if (!isSub) {
-      moduleLoop@ for (module in contentDescriptor.modules) {
-        val descriptorFile = module.configFile ?: "${module.name}.xml"
-        val oldDepends = raw.depends
-        if (oldDepends != null) {
-          for (dependency in oldDepends) {
-            if (descriptorFile == dependency.configFile) {
-              // ok, it is specified in old way as depends tag - skip it
-              continue@moduleLoop
-            }
-          }
-        }
-
-        pathResolver.resolvePath(context, dataLoader, descriptorFile, raw)
-        ?: throw RuntimeException("Plugin $this misses optional descriptor $descriptorFile")
-        module.isInjected = true
+      for (module in content.modules) {
+        val subDescriptorFile = module.configFile ?: "${module.name}.xml"
+        val subDescriptor = createSub(raw = pathResolver.resolveModuleFile(readContext = context,
+                                                                           dataLoader = dataLoader,
+                                                                           path = subDescriptorFile,
+                                                                           readInto = null),
+                                      descriptorPath = subDescriptorFile,
+                                      pathResolver = pathResolver,
+                                      context = context,
+                                      dataLoader = dataLoader)
+        module.descriptor = subDescriptor
       }
     }
 
@@ -179,7 +181,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       markAsIncomplete(context, null, null)
     }
     else {
-      for (pluginDependency in dependencyDescriptor.plugins) {
+      for (pluginDependency in dependencies.plugins) {
         if (context.isPluginDisabled(pluginDependency.id)) {
           markAsIncomplete(context, pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
         }
@@ -213,7 +215,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
         if (!dependency.isOptional && !isIncomplete) {
           markAsIncomplete(context, dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
         }
-        dependency.isDisabledOrBroken = true
       }
       else if (context.result.isBroken(dependency.pluginId)) {
         if (!dependency.isOptional && !isIncomplete) {
@@ -222,7 +223,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                            shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
                            pluginId = dependency.pluginId)
         }
-        dependency.isDisabledOrBroken = true
       }
 
       // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
@@ -260,10 +260,12 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
       checkCycle(descriptor, configFile, visitedFiles)
 
-      val subDescriptor = descriptor.createSub(raw, configFile)
       visitedFiles.add(configFile)
-
-      subDescriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = true, dataLoader = dataLoader)
+      val subDescriptor = descriptor.createSub(raw = raw,
+                                               descriptorPath = configFile,
+                                               pathResolver = pathResolver,
+                                               context = context,
+                                               dataLoader = dataLoader)
       dependency.subDescriptor = subDescriptor
       visitedFiles.clear()
     }

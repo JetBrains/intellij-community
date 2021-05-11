@@ -2,6 +2,9 @@
 skinparam monochrome true
 skinparam shadowing true
 
+' https://plantuml.com/component-diagram "Use rectangle notation (remove UML notation)"
+skinparam componentStyle rectangle
+
 skinparam DefaultFontName Roboto
 skinparam DefaultMonospacedFontName "Roboto Mono"
 

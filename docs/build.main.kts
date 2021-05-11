@@ -1,6 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Repository("https://repo1.maven.org/maven2/")
-@file:DependsOn("net.sourceforge.plantuml:plantuml:1.2020.17")
+@file:DependsOn("net.sourceforge.plantuml:plantuml:1.2021.6")
 
 import net.sourceforge.plantuml.FileFormat
 import net.sourceforge.plantuml.FileFormatOption
@@ -9,44 +9,45 @@ import net.sourceforge.plantuml.error.PSystemError
 import org.w3c.dom.*
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.OutputKeys
+import javax.xml.transform.Transformer
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 import javax.xml.xpath.XPathConstants
+import javax.xml.xpath.XPathExpression
 import javax.xml.xpath.XPathFactory
 
 val defaultFontSize = "14"
-val noteBackgroundColor = "#ECECEC"
+val noteBackgroundColor = "#EBEBEB"
 
 var start = System.currentTimeMillis()
 
-val outDir = Paths.get("out").toAbsolutePath()
+val outDir: Path = Path.of("out").toAbsolutePath()
 Files.createDirectories(outDir)
 
 val svgFileFormat = FileFormatOption(FileFormat.SVG, /* withMetadata = */ false)
-Files.newDirectoryStream(Paths.get(".").toAbsolutePath(), "*.puml").use { inFiles ->
+Files.newDirectoryStream(Path.of(".").toAbsolutePath(), "*.puml").use { inFiles ->
   for (inFile in inFiles) {
     if (inFile.fileName.toString().contains("-theme.")) {
       continue
     }
 
     val sourceFileReader = SourceFileReader(inFile.toFile(), outDir.toFile(), svgFileFormat)
-    val result = sourceFileReader.getGeneratedImages()
+    val result = sourceFileReader.generatedImages
     if (result.size == 0) {
       System.err.println("warning: no image in $inFile")
       continue
     }
 
-    for (s in sourceFileReader.getBlocks()) {
-      val diagram = s.getDiagram()
+    for (s in sourceFileReader.blocks) {
+      val diagram = s.diagram
       if (diagram is PSystemError) {
         System.err.println("status=ERROR")
-        System.err.println("lineNumber=" + diagram.getLineLocation().getPosition())
-        for (error in diagram.getErrorsUml()) {
-          System.err.println("label=" + error.getError())
+        System.err.println("lineNumber=" + diagram.lineLocation.position)
+        for (error in diagram.errorsUml) {
+          System.err.println("label=" + error.error)
         }
       }
     }
@@ -56,16 +57,12 @@ Files.newDirectoryStream(Paths.get(".").toAbsolutePath(), "*.puml").use { inFile
 println("Generate SVG in: ${System.currentTimeMillis() - start} ms")
 start = System.currentTimeMillis()
 
-// re-format SVG
-val transformer = TransformerFactory.newInstance().newTransformer()
-transformer.setOutputProperty(OutputKeys.INDENT, "yes")
-transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
-
-val dbFactory = DocumentBuilderFactory.newDefaultInstance()
-val xPathFactory = XPathFactory.newInstance()
-val textFillXPath = xPathFactory.newXPath().compile("/svg/g/text")
-val rectFillXPath = xPathFactory.newXPath().compile("/svg/g/rect")
-val pathFillXPath = xPathFactory.newXPath().compile("/svg/g/path")
+val dbFactory: DocumentBuilderFactory = DocumentBuilderFactory.newDefaultInstance()
+val xPathFactory: XPathFactory = XPathFactory.newInstance()
+val textFillXPath: XPathExpression = xPathFactory.newXPath().compile("/svg/g/text")
+val rectFillXPath: XPathExpression = xPathFactory.newXPath().compile("/svg/g/rect")
+val lineStyleXPath: XPathExpression = xPathFactory.newXPath().compile("/svg/g/line")
+val pathFillXPath: XPathExpression = xPathFactory.newXPath().compile("/svg/g/path")
 
 Files.newDirectoryStream(outDir, "*.svg").use { svgFiles ->
   for (svgFile in svgFiles) {
@@ -75,11 +72,13 @@ Files.newDirectoryStream(outDir, "*.svg").use { svgFiles ->
 
 println("Transform SVG in: ${System.currentTimeMillis() - start} ms")
 
-fun transformSvg(svgFile: Path?) {
+fun transformSvg(svgFile: Path) {
   val dBuilder = dbFactory.newDocumentBuilder()
-  val document = Files.newInputStream(svgFile).buffered().use { dBuilder.parse(it) }
-
-  //document.documentElement.removeAttribute("xmlns:xlink")
+  val content = Files.readString(svgFile)
+  val document = dBuilder.parse(content.byteInputStream())
+  if (!content.contains("xlink:")) {
+    document.documentElement.removeAttribute("xmlns:xlink")
+  }
 
   val classNameToBuilder = linkedMapOf<String, String>()
 
@@ -88,8 +87,9 @@ fun transformSvg(svgFile: Path?) {
     val element = textNodes.item(i) as Element
     val fill = element.getAttributeNode("fill") ?: continue
 
-    // not required - better to not modify glyph to ensure that font looks as expected
-    //element.removeAttribute("lengthAdjust")
+    if (element.getAttribute("lengthAdjust") == "spacing") {
+      element.removeAttribute("lengthAdjust")
+    }
 
     if (fill.value == "#000000") {
       element.removeAttributeNode(fill)
@@ -104,8 +104,26 @@ fun transformSvg(svgFile: Path?) {
     val element = rectNodes.item(i) as Element
     val style = element.getAttributeNode("style") ?: continue
     val fill = element.getAttributeNode("fill") ?: continue
-    if (style.value == "stroke: #383838; stroke-width: 1.0;") {
+    if (style.value == "stroke:#383838;stroke-width:1.0;") {
       applyBackgroundAndBorder("process", element, style, fill, classNameToBuilder)
+    }
+    else if (style.value == "stroke:#FEFECE;stroke-width:1.5;") {
+      applyBackgroundAndBorder("node", element, style, fill, classNameToBuilder)
+    }
+  }
+
+  val lineNodes = lineStyleXPath.evaluate(document, XPathConstants.NODESET) as NodeList
+  for (i in 0 until lineNodes.length) {
+    val element = lineNodes.item(i) as Element
+    val style = element.getAttributeNode("style") ?: continue
+    if (style.value == "stroke:#A80036;stroke-width:1.0;") {
+      classNameToBuilder.computeIfAbsent("arrow") {
+        """
+        ${style.value}
+        """.trimIndent()
+      }
+      element.removeAttributeNode(style)
+      element.setAttribute("class", "arrow")
     }
   }
 
@@ -121,8 +139,16 @@ fun transformSvg(svgFile: Path?) {
 
   appendStyleElement(document, classNameToBuilder)
 
+  // re-format SVG
+  val transformer: Transformer = TransformerFactory.newDefaultInstance().newTransformer()
+  transformer.setOutputProperty(OutputKeys.INDENT, "yes")
+  @Suppress("HttpUrlsUsage")
+  transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
+  // so, first node of insertAdjacentHTML result will be svg and not comment
+  transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
+
   Files.newOutputStream(svgFile).buffered().use { fileOut ->
-    transformer.transform(DOMSource(document), StreamResult(fileOut))
+    transformer.transform(DOMSource(document.documentElement), StreamResult(fileOut))
   }
 }
 
@@ -139,6 +165,7 @@ fun hasOnlyAttributes(list: NamedNodeMap, prefix: String, names: List<String>): 
   return nameSet.isEmpty()
 }
 
+@Suppress("JavaMapForEach")
 fun appendStyleElement(document: Document, classNameToBuilder: Map<String, String>) {
   val styleElement = document.createElement("style")
   val builder = StringBuilder()
@@ -146,7 +173,7 @@ fun appendStyleElement(document: Document, classNameToBuilder: Map<String, Strin
   builder.append("""  @import url('https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono&display=swap');""")
   classNameToBuilder.forEach { name, content ->
     builder.append("\n  .").append(name).append(" {")
-    content.lineSequence().iterator().forEach { builder.append("\n    ").append(it) }
+    content.lineSequence().iterator().forEach { builder.append("\n    ").append(it.trim()) }
     builder.append("\n  }")
   }
   builder.append('\n')
@@ -177,7 +204,7 @@ fun extractFontStyle(element: Element, classNameToBuilder: MutableMap<String, St
     throw UnsupportedOperationException("font combination is unknown (fontFamily=$fontFamily, lastUsedMonoFont=$lastUsedMonoFont)")
   }
 
-  classNameToBuilder.getOrPut(className) {
+  classNameToBuilder.computeIfAbsent(className) {
     """
     font-family: $fontFamily;
     font-size: ${size.value}px;
@@ -191,11 +218,11 @@ fun extractFontStyle(element: Element, classNameToBuilder: MutableMap<String, St
 }
 
 fun applyBackgroundAndBorder(className: String, element: Element, style: Attr, fill: Attr, classNameToBuilder: MutableMap<String, String>) {
-  classNameToBuilder.getOrPut(className) {
+  classNameToBuilder.computeIfAbsent(className) {
     """
-          ${style.value}
-          fill: ${fill.value};
-          """.trimIndent()
+    ${style.value.removeSuffix(";").replace(";", ";\n")};
+    fill: ${fill.value};
+    """.trimIndent()
   }
   element.removeAttributeNode(style)
   element.removeAttributeNode(fill)

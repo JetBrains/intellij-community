@@ -325,7 +325,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
 
     val plugins = PluginManagerCore.getLoadedPlugins(null)
-    val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
+    val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
 
     val precomputedExtensionModel = precomputeExtensionModel(plugins)
 

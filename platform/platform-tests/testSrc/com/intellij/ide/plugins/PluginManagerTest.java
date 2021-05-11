@@ -195,7 +195,7 @@ public class PluginManagerTest {
     PluginManagerCore.getAndClearPluginLoadingErrors();
     PluginManagerState loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
     StringBuilder text = new StringBuilder();
-    for (IdeaPluginDescriptorImpl descriptor : loadPluginResult.sortedPlugins) {
+    for (IdeaPluginDescriptorImpl descriptor : loadPluginResult.pluginSet.loadedPlugins) {
       text.append(descriptor.isEnabled() ? "+ " : "  ").append(descriptor.getPluginId().getIdString()).append('\n');
     }
     text.append("\n\n");
@@ -269,6 +269,15 @@ public class PluginManagerTest {
           }
         }
         throw new AssertionError("Unexpected: " + relativePath);
+      }
+
+      @NotNull
+      @Override
+      public RawPluginDescriptor resolveModuleFile(@NotNull ReadModuleContext readContext,
+                                                   @NotNull DataLoader dataLoader,
+                                                   @NotNull String path,
+                                                   @Nullable RawPluginDescriptor readInto) {
+        return resolvePath(readContext, dataLoader, path, readInto);
       }
     };
 

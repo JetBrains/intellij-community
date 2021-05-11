@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import java.util.concurrent.Callable
 
-class PluginStartupActivity : StartupActivity.Background {
+internal class PluginStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
         val startupService = PluginStartupService.getInstance(project)
 

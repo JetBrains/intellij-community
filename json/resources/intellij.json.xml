@@ -1,5 +1,4 @@
 <idea-plugin>
-
   <module value="com.intellij.modules.json"/>
 
   <actions>
@@ -191,5 +190,4 @@
     <extensionPoint qualifiedName="com.intellij.json.catalog.exclusion" interface="com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.customStructureViewFactory" interface="com.intellij.json.structureView.JsonCustomStructureViewFactory" dynamic="true"/>
   </extensionPoints>
-
 </idea-plugin>

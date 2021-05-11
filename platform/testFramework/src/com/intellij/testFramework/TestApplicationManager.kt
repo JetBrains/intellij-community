@@ -17,6 +17,7 @@ import com.intellij.ide.impl.HeadlessDataManager
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.structureView.StructureViewFactory
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl
+import com.intellij.idea.StartupUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.Application
@@ -49,6 +50,7 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
+import com.intellij.util.lang.Java11Shim
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.ui.UIUtil
@@ -68,6 +70,10 @@ import javax.swing.Timer
 
 class TestApplicationManager private constructor() {
   companion object {
+    init {
+      Java11Shim.INSTANCE = StartupUtil.Java11ShimImpl()
+    }
+
     @Volatile
     private var ourInstance: TestApplicationManager? = null
     @Volatile
@@ -174,7 +180,10 @@ private var testCounter = 0
 // Kotlin allows to easily debug code and to get clear and short stack traces
 @ApiStatus.Internal
 fun tearDownProjectAndApp(project: Project) {
-  if (project.isDisposed) return;
+  if (project.isDisposed) {
+    return
+  }
+
   val isLightProject = ProjectManagerImpl.isLight(project)
   val l = mutableListOf<Throwable>()
   val app = ApplicationManager.getApplication()

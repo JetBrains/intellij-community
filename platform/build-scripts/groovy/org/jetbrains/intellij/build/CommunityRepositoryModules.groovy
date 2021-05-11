@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
@@ -19,7 +19,7 @@ final class CommunityRepositoryModules {
   static List<PluginLayout> COMMUNITY_REPOSITORY_PLUGINS = [
     plugin("intellij.ant") {
       mainJarName = "antIntegration.jar"
-      withModule("intellij.ant.jps")
+      withModule("intellij.ant.jps", "ant-jps.jar")
     },
     plugin("intellij.laf.macos") {
       bundlingRestrictions.supportedOs = [OsFamily.MACOS]
@@ -72,12 +72,12 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
-      withModule("intellij.maven.server")
-      withModule("intellij.maven.server.m2.impl")
-      withModule("intellij.maven.server.m3.common")
-      withModule("intellij.maven.server.m30.impl")
-      withModule("intellij.maven.server.m3.impl")
-      withModule("intellij.maven.server.m36.impl")
+      withModule("intellij.maven.server", "maven-server-api.jar")
+      withModule("intellij.maven.server.m2.impl", "maven2-server.jar")
+      withModule("intellij.maven.server.m3.common", "maven3-server-common.jar")
+      withModule("intellij.maven.server.m30.impl", "maven30-server.jar")
+      withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
+      withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       withModule("intellij.maven.errorProne.compiler")
       withModule("intellij.maven.artifactResolver.m2", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m2.jar")
@@ -103,8 +103,8 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.gradle") {
       withModule("intellij.gradle.common")
-      withModule("intellij.gradle.toolingExtension")
-      withModule("intellij.gradle.toolingExtension.impl")
+      withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
+      withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       withModule("intellij.gradle.toolingProxy")
       withProjectLibrary("Gradle")
     },
@@ -205,10 +205,10 @@ final class CommunityRepositoryModules {
       withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
     },
     plugin("intellij.cucumber.java") {
-      withModule("intellij.cucumber.jvmFormatter")
-      withModule("intellij.cucumber.jvmFormatter3")
-      withModule("intellij.cucumber.jvmFormatter4")
-      withModule("intellij.cucumber.jvmFormatter5")
+      withModule("intellij.cucumber.jvmFormatter", "cucumber-jvmFormatter.jar")
+      withModule("intellij.cucumber.jvmFormatter3", "cucumber-jvmFormatter3.jar")
+      withModule("intellij.cucumber.jvmFormatter4", "cucumber-jvmFormatter4.jar")
+      withModule("intellij.cucumber.jvmFormatter5", "cucumber-jvmFormatter5.jar")
     },
     plugin("intellij.cucumber.groovy") {
     },
@@ -407,9 +407,9 @@ final class CommunityRepositoryModules {
       withModule("intellij.groovy.psi", mainJarName)
       withModule("intellij.groovy.structuralSearch", mainJarName)
       excludeFromModule("intellij.groovy.psi", "standardDsls/**")
-      withModule("intellij.groovy.jps")
-      withModule("intellij.groovy.rt")
-      withModule("intellij.groovy.constants.rt")
+      withModule("intellij.groovy.jps", "groovy-jps.jar")
+      withModule("intellij.groovy.rt", "groovy-rt.jar")
+      withModule("intellij.groovy.constants.rt", "groovy-constants-rt.jar")
       withResource("groovy-psi/resources/standardDsls", "lib/standardDsls")
       withResource("hotswap/gragent.jar", "lib/agent")
       withResource("groovy-psi/resources/conf", "lib")

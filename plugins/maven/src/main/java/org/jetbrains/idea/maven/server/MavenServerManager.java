@@ -71,7 +71,7 @@ public final class MavenServerManager implements Disposable {
 
   public void cleanUp(MavenServerConnector connector) {
     synchronized (myMultimoduleDirToConnectorMap){
-      myMultimoduleDirToConnectorMap.entrySet().removeIf(e ->e.getValue() == connector);
+      myMultimoduleDirToConnectorMap.entrySet().removeIf(e -> e.getValue() == connector);
     }
   }
 
@@ -364,7 +364,7 @@ public final class MavenServerManager implements Disposable {
     classpath.add(new File(root, "maven-server-api.jar"));
 
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
-      classpath.add(new File(root, "maven2-server-impl.jar"));
+      classpath.add(new File(root, "maven2-server.jar"));
       addDir(classpath, new File(root, "maven2-server-lib"), f -> true);
     }
     else {
@@ -372,12 +372,12 @@ public final class MavenServerManager implements Disposable {
       addDir(classpath, new File(root, "maven3-server-lib"), f -> true);
 
       if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-        classpath.add(new File(root, "maven30-server-impl.jar"));
+        classpath.add(new File(root, "maven30-server.jar"));
       }
       else {
-        classpath.add(new File(root, "maven3-server-impl.jar"));
+        classpath.add(new File(root, "maven3-server.jar"));
         if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-          classpath.add(new File(root, "maven36-server-impl.jar"));
+          classpath.add(new File(root, "maven36-server.jar"));
         }
       }
     }
@@ -406,7 +406,6 @@ public final class MavenServerManager implements Disposable {
       }
     }
   }
-
 
   private static void addMavenLibs(List<File> classpath, File mavenHome) {
     addDir(classpath, new File(mavenHome, "lib"), f -> !f.getName().contains("maven-slf4j-provider"));

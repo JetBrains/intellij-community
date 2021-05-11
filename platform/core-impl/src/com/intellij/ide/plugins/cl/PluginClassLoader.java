@@ -86,6 +86,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     String debugFilePath = System.getProperty("plugin.classloader.debug", "");
     if (!debugFilePath.isEmpty()) {
       try {
+        if (debugFilePath.startsWith("~/") || debugFilePath.startsWith("~\\")) {
+          debugFilePath = System.getProperty("user.home") + debugFilePath.substring(1);
+        }
+
         logStreamCandidate = Files.newBufferedWriter(Paths.get(debugFilePath));
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
           @Override

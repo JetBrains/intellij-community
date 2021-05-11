@@ -10,10 +10,7 @@ import com.intellij.ide.AssertiveRepaintManager;
 import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog;
-import com.intellij.ide.customize.CustomizeIDEWizardDialog;
-import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.gdpr.Agreements;
 import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.EndUserAgreement;
@@ -41,6 +38,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -207,6 +205,7 @@ public final class StartupUtil {
       ZipFilePool.POOL = new ZipFilePoolImpl();
       PluginManagerCore.scheduleDescriptorLoading();
     }
+    Java11Shim.INSTANCE = new Java11ShimImpl();
 
     forkJoinPool.execute(() -> {
       setupSystemLibraries();
@@ -972,6 +971,23 @@ public final class StartupUtil {
       catch (IOError ignored) {
         return file.normalize();
       }
+    }
+  }
+
+  public static final class Java11ShimImpl extends Java11Shim {
+    @Override
+    public <K, V> Map<K, V> copyOf(Map<? extends K, ? extends V> map) {
+      return Map.copyOf(map);
+    }
+
+    @Override
+    public <E> Set<E> copyOf(Set<? extends E> collection) {
+      return Set.copyOf(collection);
+    }
+
+    @Override
+    public <E> List<E> copyOf(List<? extends E> collection) {
+      return List.copyOf(collection);
     }
   }
 }

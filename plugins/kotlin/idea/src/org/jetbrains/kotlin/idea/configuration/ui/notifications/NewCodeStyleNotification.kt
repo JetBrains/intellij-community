@@ -11,11 +11,10 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
-import org.jetbrains.kotlin.idea.search.containsKotlinFile
 
 private const val KOTLIN_UPDATE_CODE_STYLE_GROUP_ID = "Update Kotlin code style"
 
-fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
+internal fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
     if (CodeStyle.getSettings(project).kotlinCodeStyleDefaults() == KotlinStyleGuideCodeStyle.CODE_STYLE_ID) return
     if (SuppressKotlinCodeStyleComponent.getInstance(project).state.disableForAll) {
         return
@@ -58,8 +57,8 @@ class SuppressKotlinCodeStyleState : BaseState() {
     var disableForAll by property(false)
 }
 
-@Service
-@State(name = "SuppressKotlinCodeStyleNotification")
+@Service(Service.Level.PROJECT)
+@State(name = "SuppressKotlinCodeStyleNotification", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 class SuppressKotlinCodeStyleComponent : SimplePersistentStateComponent<SuppressKotlinCodeStyleState>(SuppressKotlinCodeStyleState()) {
     companion object {
         fun getInstance(project: Project): SuppressKotlinCodeStyleComponent = project.service()
