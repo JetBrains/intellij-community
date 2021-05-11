@@ -64,6 +64,7 @@ public class ResizeableMappedFile implements Forceable {
                               boolean valuesAreBufferAligned,
                               boolean nativeBytesOrder) throws IOException {
     myStorage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned, nativeBytesOrder);
+    ensureParentDirectoryExists();
     myInitialSize = initialSize;
     myLastWrittenLogicalSize = myLogicalSize = readLength();
   }
@@ -136,10 +137,7 @@ public class ResizeableMappedFile implements Forceable {
         return new DataOutputStream(Files.newOutputStream(lengthFile));
       }
       catch (NoSuchFileException ex) {
-        Path parent = lengthFile.getParent();
-        if (!Files.exists(parent)) {
-          Files.createDirectories(parent);
-        }
+        ensureParentDirectoryExists();
         if (!lastAttempt) return null;
         throw ex;
       }
@@ -168,6 +166,13 @@ public class ResizeableMappedFile implements Forceable {
     if (myLastWrittenLogicalSize != myLogicalSize) {
       writeLength(myLogicalSize);
       myLastWrittenLogicalSize = myLogicalSize;
+    }
+  }
+
+  private void ensureParentDirectoryExists() throws IOException {
+    Path parent = getLengthFile().getParent();
+    if (!Files.exists(parent)) {
+      Files.createDirectories(parent);
     }
   }
 
