@@ -1,0 +1,210 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package training.learn.lesson.general.git
+
+import com.intellij.dvcs.push.ui.PushLog
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.status.TextPanel
+import com.intellij.ui.EngravedLabel
+import com.intellij.ui.components.BasicOptionButtonUI
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
+import git4idea.index.actions.runProcess
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.TaskRuntimeContext
+import training.learn.course.KLesson
+import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
+import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
+import training.learn.lesson.general.git.GitLessonsUtil.triggerOnNotification
+import training.project.ProjectUtils
+import java.io.File
+import javax.swing.JDialog
+
+class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature branch workflow") {
+  override val existedFile = "src/git/simple_cat.yml"
+  private lateinit var repository: GitRepository
+  private val remoteProjectName = "RemoteLearningProject"
+
+  override val lessonContent: LessonContext.() -> Unit = {
+    prepareRuntimeTask {
+      val remoteProjectRoot = reCreateRemoteProjectDir()
+      ProjectUtils.copyGitProject(File(remoteProjectRoot.path))
+      runProcess(project, "", false) {
+        val git = Git.getInstance()
+        repository = GitRepositoryManager.getInstance(project).repositories.first()
+        git.addRemote(repository, "origin", remoteProjectRoot.path).throwOnError()
+        repository.update()
+        git.fetch(repository, repository.remotes.first(), emptyList())
+        git.checkout(repository, "feature", null, false, false).throwOnError()
+        git.setUpstream(repository, "origin/main", "main")
+        repository.update()
+      }
+      modifyRemoteProject(remoteProjectRoot)
+    }
+
+    task("ActivateVersionControlToolWindow") {
+      text("Press ${action(it)} to open Git tool window and overview the project history.")
+      stateCheck {
+        val toolWindowManager = ToolWindowManager.getInstance(project)
+        toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
+      }
+    }
+
+    resetGitLogWindow()
+
+    task {
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows -> ui.text == "feature" }
+    }
+
+    task("Git.Branches") {
+      text("Suppose you have finished the work on your feature branch and pushed the changes to remote hoping to merge it with the main branch later. But when you were worked on it some of your colleagues may also push their changes to the main branch. So we should check that possible changes from main will not conflict with our changes. At first, we need to checkout the main branch. Please press ${action(it)} or click the highlighted current branch to open the branches list.")
+      text("Your active branch is displayed here.", LearningBalloonConfig(Balloon.Position.above, 200))
+      triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
+        ui.text.contains("Git Branches")
+      }
+    }
+
+    task("main") {
+      text("Select the ${code(it)} branch and choose ${strong("Checkout")}.")
+      triggerByListItemAndHighlight { item -> item.toString() == it }
+      stateCheck { repository.currentBranchName == it }
+    }
+
+    prepareRuntimeTask {
+      val showSettingsOption = ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE)
+      showSettingsOption.value = true  // needed to show update project dialog
+    }
+
+    task("Vcs.UpdateProject") {
+      text("Second, we should update the main branch to be aware of the possible changes from remote. Press ${action(it)} to open update project dialog.")
+      triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
+        ui.title == "Update Project"
+      }
+    }
+
+    task {
+      text("Click ${strong("OK")} button to confirm update.")
+      triggerOnNotification { notification ->
+        notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
+      }
+    }
+
+    task("Git.Branches") {
+      text("There really were some changes in the main branch.")
+      highlightSubsequentCommitsInGitLog(startRowIncl = 0, endRowExcl = 2, highlightInside = false, usePulsation = true)
+      proceedLink()
+    }
+
+    task("Git.Branches") {
+      text("So we should rebase our feature branch on main. Press ${action(it)} or click the highlighted current branch to open the branches list again.")
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows ->
+        ui.text == "main"
+      }
+      triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
+        ui.text.contains("Git Branches")
+      }
+    }
+
+    task("feature") {
+      text("Select the ${code(it)} branch and choose ${strong("Checkout and Rebase onto Current")}.")
+      triggerByListItemAndHighlight { item -> item.toString() == it }
+      triggerByListItemAndHighlight { item -> item.toString() == "Checkout and Rebase onto Current" }
+      triggerOnNotification { notification -> notification.title == "Rebase successful" }
+    }
+
+    task("Vcs.Push") {
+      text("When feature branch become updated we should update it in the remote repository too. Press ${action(it)} to open push dialog.")
+      triggerByUiComponentAndHighlight(false, false) { _: PushLog -> true }
+    }
+
+    task("Force Push") {
+      text("We can't just push the changes, because our remote feature branch conflicts with updated local branch. We should use ${strong(it)}. Press highlighted arrow near ${strong("Push")} button to open drop-down menu and select ${strong(it)}.")
+      triggerByUiComponentAndHighlight(usePulsation = true) { _: BasicOptionButtonUI.ArrowButton -> true }
+      triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
+        ui.title == it
+      }
+    }
+
+    task("Force Push") {
+      text("Press ${strong(it)} button again to confirm action.")
+      triggerOnNotification { notification ->
+        notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
+      }
+    }
+  }
+
+  private fun TaskRuntimeContext.reCreateRemoteProjectDir(): File {
+    val learnProjectPath = ProjectRootManager.getInstance(project).contentRoots[0].toNioPath()
+    val learnProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(learnProjectPath)
+                           ?: error("Learning project not found")
+    val projectsRoot = learnProjectRoot.parent.toNioPath().toFile()
+    val remoteProjectRoot = projectsRoot.listFiles()?.find { it.name == remoteProjectName }.let {
+      if (it != null) {
+        it.deleteRecursively()
+        it
+      }
+      else File(projectsRoot.absolutePath + File.separator + remoteProjectName)
+    }
+    remoteProjectRoot.mkdir()
+    return remoteProjectRoot
+  }
+
+  private fun modifyRemoteProject(remoteProjectRoot: File) {
+    val files = mutableListOf<File>()
+    FileUtil.processFilesRecursively(remoteProjectRoot, files::add)
+    val firstFile = files.find { it.name == "sphinx_cat.yml" }
+    val secondFile = files.find { it.name == "puss_in_boots.yml" }
+    if(firstFile != null && secondFile != null) {
+      gitChange(remoteProjectRoot, "user.name", "JonnyCatsville")
+      gitChange(remoteProjectRoot, "user.email", "jonny.catsville@meow.com")
+      createOneFileCommit(remoteProjectRoot, firstFile, "Add new fact about sphinx's behaviour") {
+        it.appendText("""
+    - steal:
+        condition: food was left unattended
+        action:
+          - steal a piece of food and hide""")
+      }
+      createOneFileCommit(remoteProjectRoot, secondFile, "Add fact about Puss in boots") {
+        it.appendText("""
+    - care_for_weapon:
+        condition: favourite sword become blunt
+        actions:
+          - sharpen the sword using the stone""")
+      }
+    }
+    else error("Failed to find files to modify in $remoteProjectRoot")
+  }
+
+  private fun gitChange(root: File, param: String, value: String) {
+    val handler = GitLineHandler(null, root, GitCommand.CONFIG)
+    handler.addParameters(param, value)
+    runGitCommandSynchronously(handler)
+  }
+
+  private fun createOneFileCommit(root: File, editingFile: File, commitMessage: String, editFileContent: (File) -> Unit) {
+    editFileContent(editingFile)
+    val handler = GitLineHandler(null, root, GitCommand.COMMIT)
+    handler.addParameters("-a")
+    handler.addParameters("-m", commitMessage)
+    handler.endOptions()
+    runGitCommandSynchronously(handler)
+  }
+
+  private fun runGitCommandSynchronously(handler: GitLineHandler) {
+    val task = { Git.getInstance().runCommand(handler).throwOnError() }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(task, "", false, null)
+  }
+}

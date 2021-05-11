@@ -144,6 +144,10 @@ internal object OpenLessonActivities {
     val lessons = CourseManager.instance.lessonsForModules.filter { it.lessonType == LessonType.PROJECT }
     runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = project) {
       LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
+      // todo: find more convenient way
+      if (lessonToOpen.module.name == "Git") {
+        ProjectUtils.restoreGitLessonsFiles(project)
+      }
 
       for (lesson in lessons) {
         lesson.cleanup(project)

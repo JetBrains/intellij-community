@@ -28,6 +28,7 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
+import git4idea.actions.GitInit
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.LearnBundle
@@ -241,6 +242,8 @@ object ProjectUtils {
       VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Void>() {
         override fun visitFile(file: VirtualFile): Boolean {
           if(file.name == ".idea" ||
+             file.name == "git" ||
+             file.name == ".git" ||
              file.name == "venv" ||
              file.name == FEATURE_TRAINER_VERSION ||
              file.name.endsWith(".iml")) return false
@@ -278,5 +281,33 @@ object ProjectUtils {
       VfsUtil.markDirtyAndRefresh(false, true, true, root)
       PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
     }
+  }
+
+  fun restoreGitLessonsFiles(project: Project) {
+    val learningProjectPath = ProjectRootManager.getInstance(project).contentRoots[0].toNioPath()
+    val learningProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(learningProjectPath)
+                              ?: error("Learning project not found")
+    invokeAndWaitIfNeeded {
+      runWriteAction {
+        for (file in learningProjectRoot.children) {
+          if (file.name == "git" || file.name == ".git") {
+            file.delete(this)
+          }
+        }
+      }
+    }
+
+    copyGitProject(learningProjectPath.toFile()).also {
+      if (it) {
+        GitInit.refreshAndConfigureVcsMappings(project, learningProjectRoot, learningProjectRoot.path)
+      }
+      else error("Failed to copy git project")
+    }
+  }
+
+  fun copyGitProject(destination: File): Boolean {
+    // Classloader of core IFT plugin is required here
+    val gitProjectURL = this.javaClass.classLoader.getResource("learnProjects/GitProject") ?: error("GitProject not found")
+    return FileUtils.copyResourcesRecursively(gitProjectURL, destination)
   }
 }
