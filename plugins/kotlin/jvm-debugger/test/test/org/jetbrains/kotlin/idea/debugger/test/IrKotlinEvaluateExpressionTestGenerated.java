@@ -91,6 +91,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
             runTest("testData/evaluation/singleBreakpoint/collections.kt");
         }
 
+        @TestMetadata("color.kt")
+        public void testColor() throws Exception {
+            runTest("testData/evaluation/singleBreakpoint/color.kt");
+        }
+
         @TestMetadata("dataClassCopy.kt")
         public void testDataClassCopy() throws Exception {
             runTest("testData/evaluation/singleBreakpoint/dataClassCopy.kt");
