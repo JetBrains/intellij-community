@@ -19,6 +19,6 @@ public abstract class ZipFilePool {
   public abstract @NotNull Object loadZipFile(@NotNull Path file) throws IOException;
 
   public interface EntryResolver {
-    @Nullable byte[] loadZipEntry(@NotNull String path) throws IOException;
+    byte @Nullable [] loadZipEntry(@NotNull String path) throws IOException;
   }
 }

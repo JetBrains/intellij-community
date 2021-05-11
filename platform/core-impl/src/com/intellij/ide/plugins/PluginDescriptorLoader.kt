@@ -21,6 +21,7 @@ import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.io.Closeable
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -114,40 +115,26 @@ private fun loadDescriptorFromJar(file: Path,
                                   isBundled: Boolean,
                                   isEssential: Boolean,
                                   pluginPath: Path?): IdeaPluginDescriptorImpl? {
+  var closeable: Closeable? = null
   try {
-    val raw: RawPluginDescriptor
     val dataLoader: DataLoader
-    try {
-      val pool = ZipFilePool.POOL
-      if (pool == null) {
-        val zipFile = ZipFile(file.toFile(), StandardCharsets.UTF_8)
-        zipFile.use {
-          dataLoader = JavaZipFileDataLoader(zipFile)
-          raw = readModuleDescriptor(input = dataLoader.load("META-INF/$fileName") ?: return null,
-                                     readContext = parentContext,
-                                     pathResolver = pathResolver,
-                                     dataLoader = dataLoader,
-                                     includeBase = null,
-                                     readInto = null,
-                                     locationSource = file.toString())
-        }
-      }
-      else {
-        val resolver = pool.load(file)
-        val data = resolver.loadZipEntry("META-INF/$fileName") ?: return null
-        dataLoader = ImmutableZipFileDataLoader(resolver, file, pool)
-        raw = readModuleDescriptor(input = data,
+    val pool = ZipFilePool.POOL
+    if (pool == null) {
+      val zipFile = ZipFile(file.toFile(), StandardCharsets.UTF_8)
+      closeable = zipFile
+      dataLoader = JavaZipFileDataLoader(zipFile)
+    }
+    else {
+      dataLoader = ImmutableZipFileDataLoader(pool.load(file), file, pool)
+    }
+
+    val raw = readModuleDescriptor(input = dataLoader.load("META-INF/$fileName") ?: return null,
                                    readContext = parentContext,
                                    pathResolver = pathResolver,
                                    dataLoader = dataLoader,
                                    includeBase = null,
                                    readInto = null,
                                    locationSource = file.toString())
-      }
-    }
-    catch (ignore: NoSuchFileException) {
-      return null
-    }
 
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginPath ?: file, isBundled = isBundled, id = null)
     descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = parentContext, isSub = false, dataLoader = dataLoader)
@@ -159,6 +146,9 @@ private fun loadDescriptorFromJar(file: Path,
       throw if (e is XMLStreamException) RuntimeException("Cannot read $file", e) else e
     }
     parentContext.result.reportCannotLoad(file, e)
+  }
+  finally {
+    closeable?.close()
   }
   return null
 }
