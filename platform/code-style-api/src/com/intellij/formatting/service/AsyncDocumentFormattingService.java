@@ -86,7 +86,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
    * @return {@link FormattingTask} if successful and formatting can proceed, {@code null} otherwise. The latter may be a result, for
    * example, of misconfiguration.
    */
-  protected abstract FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest formattingRequest);
+  protected abstract @Nullable FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest formattingRequest);
 
   /**
    * Merge changes if the document has changed since {@code asyncFormat()} was called. The default implementation does nothing and

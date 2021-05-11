@@ -28,6 +28,7 @@ import com.intellij.sh.settings.ShSettings;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -61,7 +62,7 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
   }
 
   @Override
-  protected FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest request) {
+  protected @Nullable FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest request) {
     FormattingContext formattingContext = request.getContext();
     Project project = formattingContext.getProject();
     String shFmtExecutable = ShSettings.getShfmtPath();
