@@ -11,7 +11,6 @@ import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificati
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.ApiStatus
@@ -65,7 +64,7 @@ internal object PluginSignatureChecker {
     val jbCert = jetbrainsCertificate ?: return processSignatureWarning(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))
     val isRevoked = isCertificatesRevoked(jbCert)
     if (isRevoked) {
-      return processRevokedCertificate(pluginName)
+      return processRevokedCertificate(descriptor)
     }
     return isSignedBy(descriptor, pluginFile, jbCert)
   }
@@ -131,17 +130,17 @@ internal object PluginSignatureChecker {
     }
   }
 
-  private fun processRevokedCertificate(pluginName: String): Boolean {
-    val message = IdeBundle.message("plugin.signature.checker.revoked.cert", pluginName)
-    return processSignatureCheckerVerdict(pluginName, message)
+  private fun processRevokedCertificate(descriptor: IdeaPluginDescriptor): Boolean {
+    val message = IdeBundle.message("plugin.signature.checker.revoked.cert", descriptor.name)
+    return processSignatureCheckerVerdict(descriptor, message)
   }
 
-  private fun processSignatureWarning(pluginName: String, errorMessage: String): Boolean {
-    val message = IdeBundle.message("plugin.signature.checker.untrusted.message", pluginName, errorMessage)
-    return processSignatureCheckerVerdict(pluginName, message)
+  private fun processSignatureWarning(descriptor: IdeaPluginDescriptor, errorMessage: String): Boolean {
+    val message = IdeBundle.message("plugin.signature.checker.untrusted.message", descriptor.name, errorMessage)
+    return processSignatureCheckerVerdict(descriptor, message)
   }
 
-  private fun processSignatureCheckerVerdict(pluginName: String, @Nls message: String): Boolean {
+  private fun processSignatureCheckerVerdict(descriptor: IdeaPluginDescriptor, @Nls message: String): Boolean {
     val title = IdeBundle.message("plugin.signature.checker.title")
     val yesText = IdeBundle.message("plugin.signature.checker.yes")
     val noText = IdeBundle.message("plugin.signature.checker.no")
