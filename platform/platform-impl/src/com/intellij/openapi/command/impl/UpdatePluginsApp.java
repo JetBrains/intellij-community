@@ -58,7 +58,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
     log("Plugins to update:");
     availableUpdates.forEach(d -> log("\t" + d.getPluginName()));
 
-    if (UpdateInstaller.installPluginUpdates(availableUpdates, new EmptyProgressIndicator())) {
+    if (!UpdateInstaller.downloadPluginUpdates(availableUpdates, new EmptyProgressIndicator()).isEmpty()) {
       System.exit(0);
     }
     else {
