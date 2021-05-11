@@ -4,10 +4,7 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class GenerateMainAction extends AnAction {
+public class GenerateMainAction extends AnAction implements UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(GenerateMainAction.class);
 
   @Override
