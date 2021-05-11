@@ -80,12 +80,12 @@ public class FormattingServiceUtil {
     FormattingService mainService = findService(file, true, isFullRange);
     if (isFullRange) {
       for (FormattingService service : getChainedServices(mainService)) {
-        service.formatRanges(file, ranges, canChangeWhiteSpaceOnly);
+        service.formatRanges(file, ranges, canChangeWhiteSpaceOnly, false);
       }
     }
     else {
       // Range formatting can use only one service since the ranges become invalid after reformat.
-      mainService.formatRanges(file, ranges, canChangeWhiteSpaceOnly);
+      mainService.formatRanges(file, ranges, canChangeWhiteSpaceOnly, false);
     }
   }
 }

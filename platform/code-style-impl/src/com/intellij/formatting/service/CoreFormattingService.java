@@ -57,7 +57,7 @@ public final class CoreFormattingService implements FormattingService {
   }
 
   @Override
-  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly) {
+  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly, boolean quickFormat) {
     List<CoreCodeStyleUtil.RangeFormatInfo> infos =
       canChangeWhiteSpaceOnly ? null : CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());

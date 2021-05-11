@@ -32,6 +32,13 @@ public interface AsyncFormattingRequest {
   boolean canChangeWhitespaceOnly();
 
   /**
+   * @return True if the service must provide a quick ad-hoc formatting rather than a long-lasting document processing.
+   *
+   * @see FormattingService.Feature#AD_HOC_FORMATTING
+   */
+  boolean isQuickFormat();
+
+  /**
    * @return The current {@link FormattingContext}. Note: use {@link #getFormattingRanges()} instead of
    * {@link FormattingContext#getFormattingRange()} to get proper ranges which can be modified if formatting service supports range
    * formatting.

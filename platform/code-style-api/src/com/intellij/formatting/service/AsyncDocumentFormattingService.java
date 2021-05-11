@@ -40,7 +40,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   public final synchronized void formatDocument(@NotNull Document document,
                                                 @NotNull List<TextRange> formattingRanges,
                                                 @NotNull FormattingContext formattingContext,
-                                                boolean canChangeWhiteSpaceOnly) {
+                                                boolean canChangeWhiteSpaceOnly,
+                                                boolean quickFormat) {
     AsyncFormattingRequest currRequest = findPendingRequest(document);
     if (currRequest != null) {
       if (!((FormattingRequestImpl)currRequest).cancel()) {
@@ -49,7 +50,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       }
     }
     FormattingRequestImpl formattingRequest = new FormattingRequestImpl(formattingContext, document, formattingRanges,
-                                                                         canChangeWhiteSpaceOnly);
+                                                                         canChangeWhiteSpaceOnly, quickFormat);
     FormattingTask formattingTask = createFormattingTask(formattingRequest);
     if (formattingTask != null) {
       formattingRequest.setTask(formattingTask);
@@ -109,18 +110,21 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     private final long              myInitialModificationStamp;
     private final FormattingContext myContext;
     private final boolean           myCanChangeWhitespaceOnly;
+    private final boolean           myQuickFormat;
 
     private volatile @Nullable FormattingTask myTask;
 
     private FormattingRequestImpl(@NotNull FormattingContext formattingContext,
                                   @NotNull Document document,
                                   @NotNull List<TextRange> ranges,
-                                  boolean canChangeWhitespaceOnly) {
+                                  boolean canChangeWhitespaceOnly,
+                                  boolean quickFormat) {
       myContext = formattingContext;
       myDocument = document;
       myRanges = ranges;
       myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
       myInitialModificationStamp = document.getModificationStamp();
+      myQuickFormat = quickFormat;
     }
 
     @Override
@@ -161,6 +165,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
     private void runTask() {
       ObjectUtils.consumeIfNotNull(myTask, Runnable::run);
+    }
+
+    @Override
+    public boolean isQuickFormat() {
+      return myQuickFormat;
     }
 
     @Override
