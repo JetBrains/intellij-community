@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
@@ -15,6 +16,7 @@ import training.learn.lesson.LessonManager
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.awt.font.GlyphVector
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
@@ -29,9 +31,12 @@ import kotlin.math.roundToInt
 class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
+  data class MessageProperties(val state: MessageState = MessageState.NORMAL, val visualIndex: Int? = null)
+
   private data class LessonMessage(
     val messageParts: List<MessagePart>,
     var state: MessageState,
+    val visualIndex: Int?,
     var start: Int = 0,
     var end: Int = 0
   )
@@ -42,7 +47,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
   private val restoreMessages = mutableListOf<LessonMessage>()
   private val inactiveMessages = mutableListOf<LessonMessage>()
 
-  private val fontFamily: String = UIUtil.getLabelFont().fontName
+  private val fontFamily: String get() = UIUtil.getLabelFont().fontName
 
   private val ranges = mutableSetOf<RangeData>()
 
@@ -201,9 +206,9 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     insertOffset += text.length
   }
 
-  fun addMessage(messageParts: List<MessagePart>, state: MessageState = MessageState.NORMAL): () -> Rectangle? {
-    val lessonMessage = LessonMessage(messageParts, state)
-    when (state) {
+  fun addMessage(messageParts: List<MessagePart>, properties: MessageProperties = MessageProperties()): () -> Rectangle? {
+    val lessonMessage = LessonMessage(messageParts, properties.state, properties.visualIndex)
+    when (properties.state) {
       MessageState.INACTIVE -> inactiveMessages
       MessageState.RESTORE -> restoreMessages
       else -> activeMessages
@@ -226,6 +231,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
   }
 
   fun redrawMessages() {
+    initStyleConstants()
     ranges.clear()
     text = ""
     insertOffset = 0
@@ -330,31 +336,110 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
 
     super.paintComponent(g)
     paintLessonCheckmarks(g)
+    drawTaskNumbers(g)
   }
 
   private fun paintLessonCheckmarks(g: Graphics) {
+    val plainFont = UISettings.instance.plainFont
+    val fontMetrics = g.getFontMetrics(plainFont)
+    val height = if (g is Graphics2D) letterHeight(plainFont, g, "A") else fontMetrics.height
+    val baseLineOffset = fontMetrics.ascent + fontMetrics.leading
+
     for (lessonMessage in allLessonMessages()) {
       var startOffset = lessonMessage.start
       if (startOffset != 0) startOffset++
       val rectangle = modelToView2D(startOffset).toRectangle()
-      if (lessonMessage.state == MessageState.PASSED) {
-        try {
-          val checkmark = FeaturesTrainerIcons.Img.GreenCheckmark
-          if (SystemInfo.isMac) {
-            checkmark.paintIcon(this, g, rectangle.x - UISettings.instance.checkIndent, rectangle.y + JBUI.scale(1))
-          }
-          else {
-            checkmark.paintIcon(this, g, rectangle.x - UISettings.instance.checkIndent, rectangle.y + JBUI.scale(1))
-          }
-        }
-        catch (e: BadLocationException) {
-          LOG.warn(e)
-        }
+      val icon = if (lessonMessage.state == MessageState.PASSED) {
+        FeaturesTrainerIcons.Img.GreenCheckmark
       }
       else if (!LessonManager.instance.lessonIsRunning()) {
-        AllIcons.General.Information.paintIcon(this, g, rectangle.x - UISettings.instance.checkIndent, rectangle.y + JBUI.scale(1))
+        AllIcons.General.Information
       }
+      else continue
+      val xShift = icon.iconWidth + UISettings.instance.numberTaskIndent
+      val y = rectangle.y + baseLineOffset - (height + icon.iconHeight + 1) / 2
+      icon.paintIcon(this, g, rectangle.x - xShift, y)
     }
+  }
+
+  private data class FontSearchResult(val numberFont: Font, val numberHeight: Int, val textLetterHeight: Int)
+
+  private fun drawTaskNumbers(g: Graphics) {
+    val oldFont = g.font
+    val labelFont = UISettings.instance.plainFont
+    val (numberFont, numberHeight, textLetterHeight) = getNumbersFont(labelFont, g)
+    val textFontMetrics = g.getFontMetrics(labelFont)
+    val baseLineOffset = textFontMetrics.ascent + textFontMetrics.leading
+    g.font = numberFont
+
+    fun paintNumber(lessonMessage: LessonMessage, color: Color) {
+      var startOffset = lessonMessage.start
+      if (startOffset != 0) startOffset++
+
+      val s = lessonMessage.visualIndex?.toString()?.padStart(2, '0') ?: return
+      val width = textFontMetrics.stringWidth(s)
+
+      val modelToView2D = modelToView2D(startOffset)
+      val rectangle = modelToView2D.toRectangle()
+      val xOffset = rectangle.x - (width + UISettings.instance.numberTaskIndent)
+      val baseLineY = rectangle.y + baseLineOffset
+      val yOffset = baseLineY + (numberHeight - textLetterHeight)
+      val backupColor = g.color
+      g.color = color
+      g.drawString(s, xOffset, yOffset)
+      g.color = backupColor
+    }
+    for (lessonMessage in inactiveMessages) {
+      paintNumber(lessonMessage, UISettings.instance.futureTaskNumberColor)
+    }
+    if (activeMessages.lastOrNull()?.state != MessageState.PASSED) { // lesson can be opened as passed
+      val firstActiveMessage = firstActiveMessage()
+      if (firstActiveMessage != null) paintNumber(firstActiveMessage, UISettings.instance.activeTaskNumberColor)
+    }
+    g.font = oldFont
+  }
+
+  private fun getNumbersFont(textFont: Font, g: Graphics): FontSearchResult {
+    val style = Font.PLAIN
+    val monoFontName = FontPreferences.DEFAULT_FONT_NAME
+
+    if (g is Graphics2D) {
+      val textHeight = letterHeight(textFont, g, "A")
+
+      var size = textFont.size
+      var numberHeight = 0
+      lateinit var numberFont: Font
+
+      fun calculateHeight(): Int {
+        numberFont = Font(monoFontName, style, size)
+        numberHeight = letterHeight(numberFont, g, "0")
+        return numberHeight
+      }
+
+      calculateHeight()
+      if (numberHeight > textHeight) {
+        size--
+        while(calculateHeight() >= textHeight) {
+          size--
+        }
+        size++
+        calculateHeight()
+      }
+      else if (numberHeight < textHeight) {
+        size++
+        while (calculateHeight() < textHeight) {
+          size++
+        }
+      }
+      return FontSearchResult(numberFont, numberHeight, textHeight)
+    }
+
+    return FontSearchResult(Font(monoFontName, style, textFont.size), 0, 0)
+  }
+
+  private fun letterHeight(font: Font, g: Graphics2D, str: String): Int {
+    val gv: GlyphVector = font.createGlyphVector(g.fontRenderContext, str)
+    return gv.getGlyphMetrics(0).bounds2D.height.roundToInt()
   }
 
   @Throws(BadLocationException::class)
@@ -385,17 +470,19 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
         }
       }
     }
-    val lastActiveMessage: LessonMessage? = activeMessages.lastOrNull()
-    val lastPassedMessage: LessonMessage? = activeMessages.indexOfLast { it.state == MessageState.PASSED }
-      .takeIf { it != -1 && it < activeMessages.size - 1 }
-      ?.let { activeMessages[it + 1] }
+    val lastActiveMessage = activeMessages.lastOrNull()
+    val firstActiveMessage = firstActiveMessage()
     if (panelMode && lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
       val c = UISettings.instance.activeTaskBorder
       val a = if (totalAnimation == 0) 255 else 255*currentAnimation/totalAnimation
       val needColor = Color(c.red, c.green, c.blue, a)
-      drawRectangleAroundMessage(lastPassedMessage, lastActiveMessage, g2d, needColor)
+      drawRectangleAroundMessage(firstActiveMessage, lastActiveMessage, g2d, needColor)
     }
   }
+
+  private fun firstActiveMessage(): LessonMessage? = activeMessages.indexOfLast { it.state == MessageState.PASSED }
+                                       .takeIf { it != -1 && it < activeMessages.size - 1 }
+                                       ?.let { activeMessages[it + 1] } ?: activeMessages.firstOrNull()
 
   private fun drawRectangleAroundText(myMessage: MessagePart,
                                       g2d: Graphics2D,
@@ -422,10 +509,9 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
                                          lastActiveMessage: LessonMessage,
                                          g2d: Graphics2D,
                                          needColor: Color) {
-    val startOffset = lastPassedMessage?.let { it.start + 1 } ?: 0
+    val startOffset = lastPassedMessage?.let { if (it.start == 0) 0 else it.start + 1 } ?: 0
     val endOffset = lastActiveMessage.end
 
-    val topLineX = modelToView2D(startOffset).x
     val topLineY = modelToView2D(startOffset).y
     val bottomLineY = modelToView2D(endOffset - 1).let { it.y + it.height }
     val textHeight = bottomLineY - topLineY
@@ -434,7 +520,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     g2d.color = needColor
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-    val xOffset = topLineX - activeTaskInset
+    val xOffset = JBUI.scale(2).toDouble()
     val yOffset = topLineY - activeTaskInset
     val width = this.bounds.width - activeTaskInset - xOffset - JBUIScale.scale(2) // 1 + 1 line width
     val height = textHeight + 2 * activeTaskInset - JBUIScale.scale(2)

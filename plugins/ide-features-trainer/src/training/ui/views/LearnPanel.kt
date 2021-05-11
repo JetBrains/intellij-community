@@ -178,16 +178,16 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     this.repaint()
   }
 
-  fun addMessage(@Language("HTML") text: String, state: LessonMessagePane.MessageState = LessonMessagePane.MessageState.NORMAL) {
+  fun addMessage(@Language("HTML") text: String, properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
     val messages = MessageFactory.convert(text)
     MessageFactory.setLinksHandlers(learnToolWindow.project, messages)
-    addMessages(messages, state)
+    addMessages(messages, properties)
   }
 
-  fun addMessages(messageParts: List<MessagePart>, state: LessonMessagePane.MessageState = LessonMessagePane.MessageState.NORMAL) {
-    val needToShow = lessonMessagePane.addMessage(messageParts, state)
+  fun addMessages(messageParts: List<MessagePart>, properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
+    val needToShow = lessonMessagePane.addMessage(messageParts, properties)
     adjustMessagesArea()
-    if (state != LessonMessagePane.MessageState.INACTIVE) {
+    if (properties.state != LessonMessagePane.MessageState.INACTIVE) {
       scrollToMessage(needToShow())
     }
   }

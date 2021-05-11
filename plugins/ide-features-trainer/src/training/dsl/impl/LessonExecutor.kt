@@ -31,6 +31,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
                               var restoreIndex: Int,
                               var taskProperties: TaskProperties?,
                               val taskContent: (TaskContext.() -> Unit)?,
+                              val taskVisualIndex: Int?,
                               var messagesNumberBeforeStart: Int = 0,
                               var rehighlightComponent: (() -> Component)? = null,
                               var userVisibleInfo: PreviousTaskInfo? = null,
@@ -66,6 +67,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
   private var currentRestoreRecorder: ActionsRecorder? = null
   internal var currentTaskIndex = 0
     private set
+  private var currentVisualIndex = 1
 
   private val parentDisposable: Disposable = LearnToolWindowFactory.learnWindowPerProject[project]?.parentDisposable ?: project
 
@@ -80,7 +82,13 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
 
   private fun addTaskAction(taskProperties: TaskProperties? = null, taskContent: (TaskContext.() -> Unit)? = null, content: () -> Unit) {
     val previousIndex = max(taskActions.size - 1, 0)
-    taskActions.add(TaskInfo(content, previousIndex, taskProperties, taskContent))
+
+
+    val taskVisualIndex = if (taskProperties != null && taskProperties.hasDetection && taskProperties.messagesNumber > 0) {
+      currentVisualIndex++
+    }
+    else null
+    taskActions.add(TaskInfo(content, previousIndex, taskProperties, taskContent, taskVisualIndex))
   }
 
   fun getUserVisibleInfo(index: Int): PreviousTaskInfo {
@@ -345,12 +353,20 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
         break
       }
     }
-    LessonManager.instance.addMessage(text, !hasDetection)
+    // A little bit hacky here: visual index should be shown only for the first paragraph.
+    // But is is passed here for all paragraphs.
+    // But... LessonMessagePane will draw number only for the first active paragraph :)
+    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex)
   }
 
   private fun addAllInactiveMessages() {
-    val tasksWithContent = taskActions.mapNotNull { it.taskContent }
-    val messages = tasksWithContent.map { LessonExecutorUtil.textMessages(it, project) }.flatten()
-    LessonManager.instance.addInactiveMessages(messages)
+    for (taskInfo in taskActions) {
+      if (taskInfo.taskContent != null) {
+        val textMessages = LessonExecutorUtil.textMessages(taskInfo.taskContent, project)
+        for ((index, message) in textMessages.withIndex()) {
+          LessonManager.instance.addInactiveMessage(message, taskInfo.taskVisualIndex?.takeIf { index == 0 })
+        }
+      }
+    }
   }
 }

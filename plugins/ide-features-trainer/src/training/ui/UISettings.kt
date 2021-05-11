@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import icons.FeaturesTrainerIcons
 import java.awt.Color
 import java.awt.Font
 import javax.swing.border.Border
@@ -53,6 +52,9 @@ class UISettings {
   val completedColor = JBColor(0x368746, 0x50A661)
   val activeTaskBorder: Color = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR
 
+  val futureTaskNumberColor: Color = JBColor(0xDEDEDE, 0x777777)
+  val activeTaskNumberColor: Color = JBColor(0x808080, 0xFEFEFE)
+
   //BORDERS
   val emptyBorder: Border
     get() = EmptyBorder(northInset, westInset, southInset, eastInset)
@@ -60,8 +62,9 @@ class UISettings {
   val checkmarkShiftBorder: Border
     get() = EmptyBorder(0, checkIndent, 0, 0)
 
-  val checkIndent: Int
-    get() = JBUI.scale(FeaturesTrainerIcons.Img.Checkmark.iconWidth + 5)
+  val checkIndent: Int get() = JBUI.scale(40)
+
+  val numberTaskIndent: Int get() = JBUI.scale(11)
 
   companion object {
     val instance: UISettings
