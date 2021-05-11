@@ -416,9 +416,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
             if (result == null) {
                 val name = parameter.debugString
+                val frameProxy = variableFinder.context.frameProxy
 
                 fun isInsideDefaultInterfaceMethod(): Boolean {
-                    val method = variableFinder.context.frameProxy.safeLocation()?.safeMethod() ?: return false
+                    val method = frameProxy.safeLocation()?.safeMethod() ?: return false
                     val desc = method.signature()
                     return method.name().endsWith("\$default") && DEFAULT_METHOD_MARKERS.any { desc.contains("I${it.descriptor})") }
                 }
@@ -435,6 +436,9 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 } else if (parameter.kind == CodeFragmentParameter.Kind.ORDINARY && isInsideDefaultInterfaceMethod()) {
                     status.error(EvaluationError.InsideDefaultMethod)
                     evaluationException(KotlinDebuggerEvaluationBundle.message("error.parameter.evaluation.default.methods"))
+                } else if (parameter.kind == CodeFragmentParameter.Kind.ORDINARY && frameProxy is CoroutineStackFrameProxyImpl) {
+                    status.error(EvaluationError.OptimisedVariable)
+                    evaluationException(KotlinDebuggerEvaluationBundle.message("error.variable.was.optimised"))
                 } else {
                     status.error(EvaluationError.CannotFindVariable)
                     evaluationException(KotlinDebuggerEvaluationBundle.message("error.cant.find.variable", name, asmType.className))

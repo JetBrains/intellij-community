@@ -68,14 +68,14 @@ fun safeSkipCoroutineStackFrameProxy(frameProxy: StackFrameProxyImpl): StackFram
 
 fun safeCoroutineStackFrameProxy(
     location: Location?,
-    spilledVariables: List<JavaValue>?,
+    spilledVariables: List<JavaValue>,
     frameProxy: StackFrameProxyImpl
 ): StackFrameProxyImpl {
     val threadProxy = frameProxy.safeThreadProxy() ?: return frameProxy
     val stackFrame = frameProxy.safeStackFrame() ?: return frameProxy
     return CoroutineStackFrameProxyImpl(
         location,
-        spilledVariables ?: emptyList(),
+        spilledVariables,
         threadProxy,
         stackFrame,
         frameProxy.indexFromBottom

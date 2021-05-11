@@ -10,7 +10,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.isPreFlight
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.getSuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -40,7 +40,7 @@ abstract class AbstractAsyncStackTraceTest : KotlinDescriptorTestCaseWithSteppin
     }
 
     private fun SuspendContextImpl.printAsyncStackTrace(frameProxy: StackFrameProxyImpl) {
-        val sem = frameProxy.location().isPreFlight()
+        val sem = frameProxy.location().getSuspendExitMode()
         val coroutineInfoData =
             if (sem.isCoroutineFound())
                 CoroutineFrameBuilder.lookupContinuation(this, frameProxy, sem)?.coroutineInfoData

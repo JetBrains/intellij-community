@@ -36,7 +36,7 @@ fun Method.isSuspendLambda() =
 fun Method.hasContinuationParameter() =
     signature().contains("Lkotlin/coroutines/Continuation;)")
 
-fun Location.isPreFlight(): SuspendExitMode {
+fun Location.getSuspendExitMode(): SuspendExitMode {
     val method = safeMethod() ?: return SuspendExitMode.NONE
     if (method.isSuspendLambda())
         return SuspendExitMode.SUSPEND_LAMBDA

@@ -124,7 +124,7 @@ class CoroutineFrameBuilder {
             suspendContext: SuspendContextImpl
         ): CoroutinePreflightFrame? {
             return suspendContext.invokeInManagerThread {
-                val sem = frame.location().isPreFlight()
+                val sem = frame.location().getSuspendExitMode()
                 val preflightStackFrame = if (sem.isCoroutineFound()) {
                     lookupContinuation(suspendContext, frame, sem)
                 } else
@@ -174,7 +174,7 @@ class CoroutineFrameBuilder {
         private fun lookForTheFollowingFrame(theFollowingFrames: List<StackFrameProxyImpl>): StackFrameProxyImpl? {
             for (i in 0 until min(PRE_FETCH_FRAME_COUNT, theFollowingFrames.size)) { // pre-scan PRE_FETCH_FRAME_COUNT frames
                 val nextFrame = theFollowingFrames[i]
-                if (nextFrame.location().isPreFlight() == SuspendExitMode.SUSPEND_METHOD) {
+                if (nextFrame.location().getSuspendExitMode() != SuspendExitMode.NONE) {
                     return nextFrame
                 }
             }

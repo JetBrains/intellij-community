@@ -247,6 +247,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("continuation")
         }
 
+        testClass<AbstractKotlinVariablePrintingTest> {
+            model("variables")
+        }
+
         testClass<AbstractXCoroutinesStackTraceTest> {
             model("xcoroutines")
         }

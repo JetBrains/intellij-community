@@ -1288,6 +1288,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             runTest("testData/evaluation/multipleBreakpoints/nonCapturedVariables.kt");
         }
 
+        @TestMetadata("optimisedVariableEvaluation.kt")
+        public void testOptimisedVariableEvaluation() throws Exception {
+            runTest("testData/evaluation/multipleBreakpoints/optimisedVariableEvaluation.kt");
+        }
+
         @TestMetadata("privateMembersPriority.kt")
         public void testPrivateMembersPriority() throws Exception {
             runTest("testData/evaluation/multipleBreakpoints/privateMembersPriority.kt");

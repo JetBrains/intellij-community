@@ -10,8 +10,6 @@ import com.intellij.execution.process.ProcessOutputTypes
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinBaseTest
 
 abstract class AbstractCoroutineDumpTest : KotlinDescriptorTestCaseWithStackFrames() {
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
@@ -35,9 +33,6 @@ abstract class AbstractCoroutineDumpTest : KotlinDescriptorTestCaseWithStackFram
         val states = infoCache.cache
         print(stringDump(states), ProcessOutputTypes.SYSTEM)
     }
-
-    private fun countBreakpointsNumber(file: KotlinBaseTest.TestFile) =
-        InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.content, "//Breakpoint!").size
 
     private fun stringDump(infoData: List<CoroutineInfoData>) = buildString {
         infoData.forEach {

@@ -11,7 +11,7 @@ CoroutineInfo: 1 coroutine RUNNING
 	CoroutineStackFrame a:!LINE_NUMBER!, CoroutineSuspendFunKt (continuation)
 		(a)
 	CoroutineStackFrame invokeSuspend:!LINE_NUMBER!, CoroutineSuspendFunKt$main$1 (continuation)
-		()
+		($completion, c, paramB)
 	CoroutineStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
 		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$with, completion, current, param, result, this)
 	CoroutineStackFrame run:!LINE_NUMBER!, DispatchedTask (kotlinx.coroutines)
@@ -32,15 +32,15 @@ CoroutineInfo: 1 coroutine RUNNING
 		(main)
 Coroutine Creation Stack Trace
 	CreationCoroutineStackFrame createCoroutineUnintercepted:!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt (kotlin.coroutines.intrinsics)
-		()
+		($completion, c, paramB)
 	CreationCoroutineStackFrame startCoroutineCancellable:!LINE_NUMBER!, CancellableKt (kotlinx.coroutines.intrinsics)
-		()
+		($completion, c, paramB)
 	CreationCoroutineStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
-		()
+		($completion, c, paramB)
 	CreationCoroutineStackFrame main:!LINE_NUMBER!, CoroutineSuspendFunKt (continuation)
-		()
+		($completion, c, paramB)
 	CreationCoroutineStackFrame FRAME:main:-1, CoroutineSuspendFunKt (continuation)
-		()
+		($completion, c, paramB)
 Disconnected from the target VM
 
 Process finished with exit code 0

@@ -63,6 +63,7 @@ enum class EvaluationError {
     SpecialException,
     GenericException,
     CannotFindVariable,
+    OptimisedVariable,
 
     CoroutineContextUnavailable,
     ParameterNotCaptured,
