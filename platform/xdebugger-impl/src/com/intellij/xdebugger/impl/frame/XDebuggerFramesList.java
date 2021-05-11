@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -39,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class XDebuggerFramesList extends DebuggerFramesList {
+public class XDebuggerFramesList extends DebuggerFramesList implements DataProvider {
   private final Project myProject;
   private final Map<VirtualFile, Color> myFileColors = new HashMap<>();
   private static final DataKey<XDebuggerFramesList> FRAMES_LIST = DataKey.create("FRAMES_LIST");
@@ -83,9 +80,6 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     myProject = project;
 
     doInit();
-    setDataProvider(dataId -> {
-      return getData(dataId, getSelectedFrame());
-    });
 
     // This is a workaround for the performance issue IDEA-187063
     // default font generates too much garbage in deriveFont
@@ -95,7 +89,9 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     }
   }
 
-  private @Nullable Object getData(@NonNls String dataId, @Nullable XStackFrame frame) {
+  @Override
+  public @Nullable Object getData(@NonNls @NotNull String dataId) {
+    XStackFrame frame = getSelectedFrame();
     if (frame != null) {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         return getFile(frame);
@@ -107,7 +103,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
         }
       }
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        return getSelectedFrameNavigatable(true);
+        return getFrameNavigatable(frame, true);
       }
     }
     if (FRAMES_LIST.is(dataId)) {
