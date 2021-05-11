@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public interface GroupEndpointSubstitutor {
-   ExtensionPointName<GroupEndpointSubstitutor> EP_NAME = ExtensionPointName.create("com.intellij.statistic.eventLog.groupEndpointSubstitutor");
+public interface EventLogEndpointSubstitutor {
+   ExtensionPointName<EventLogEndpointSubstitutor> EP_NAME = ExtensionPointName.create("com.intellij.statistic.eventLog.eventLogEndpointSubstitutor");
 
   /**
    * Provides a custom endpoint for fetching configuration of a recorder specified by the recorderId
