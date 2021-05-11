@@ -758,8 +758,7 @@ public final class AnnotationsHighlightUtil {
       return info;
     }
 
-    PsiElement leftNeighbour = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parameter);
-    if (leftNeighbour != null && !PsiUtil.isJavaToken(leftNeighbour, JavaTokenType.LPARENTH)) {
+    if (!PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesAndCommentsBackward(parameter), JavaTokenType.LPARENTH)) {
       String text = JavaErrorBundle.message("receiver.wrong.position");
       HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
