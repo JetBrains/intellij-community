@@ -80,9 +80,6 @@
   </applicationListeners>
 
   <projectListeners>
-    <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder$RemovalListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager$AccountTokenListener"
               topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
