@@ -422,6 +422,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   void testIconAttribute() {
     myFixture.addClass("package foo; public class FooAction extends com.intellij.openapi.actionSystem.AnAction { }")
 
+    myFixture.enableInspections(DeprecatedClassUsageInspection.class)
     addIconClasses()
     doHighlightingTest("iconAttribute.xml",
                        "MyIconAttributeEPBean.java")

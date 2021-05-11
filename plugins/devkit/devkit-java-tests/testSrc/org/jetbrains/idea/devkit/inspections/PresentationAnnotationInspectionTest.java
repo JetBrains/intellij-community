@@ -65,6 +65,10 @@ public class PresentationAnnotationInspectionTest extends JavaCodeInsightFixture
     myFixture.testHighlighting("InvalidIcon.java");
   }
 
+  public void testDeprecatedIcon() {
+    myFixture.testHighlighting("DeprecatedIcon.java");
+  }
+
   public void testForAbsentIconParam() {
     myFixture.testHighlighting("AbsentIconParam.java");
   }
