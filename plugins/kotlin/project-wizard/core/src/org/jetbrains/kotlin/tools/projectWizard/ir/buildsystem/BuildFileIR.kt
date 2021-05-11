@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.BuildFilePrinter
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.MavenPrinter
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import java.nio.file.Path
 
@@ -183,16 +182,16 @@ fun MultiplatformModulesStructureIR.updateSourceSets(
 }
 
 data class SingleplatformModulesStructureWithSingleModuleIR(
-    val module: SingleplatformModuleIR,
+    val module: ModuleIR,
     override val irs: PersistentList<BuildSystemIR>
 ) : ModulesStructureIR() {
-    override val modules: List<SingleplatformModuleIR> = listOf(module)
+    override val modules: List<ModuleIR> = listOf(module)
     override fun withReplacedIrs(irs: PersistentList<BuildSystemIR>): SingleplatformModulesStructureWithSingleModuleIR =
         copy(irs = irs)
 
     @Suppress("UNCHECKED_CAST")
     override fun withModules(modules: List<ModuleIR>) =
-        copy(module = modules.single() as SingleplatformModuleIR)
+        copy(module = modules.single())
 
     override fun BuildFilePrinter.render() {
         nl()

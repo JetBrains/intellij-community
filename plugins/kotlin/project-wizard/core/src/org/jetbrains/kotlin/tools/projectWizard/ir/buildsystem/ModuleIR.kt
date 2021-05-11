@@ -12,14 +12,14 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
 import org.jetbrains.kotlin.tools.projectWizard.templates.Template
 import java.nio.file.Path
 
-sealed class ModuleIR : IrsOwner, BuildSystemIR {
-    abstract val name: String
-    abstract val path: Path
-    abstract val template: Template?
-    abstract val originalModule: Module
-    abstract val sourcesets: List<SourcesetIR>
+interface ModuleIR : IrsOwner, BuildSystemIR {
+    val name: String
+    val path: Path
+    val template: Template?
+    val originalModule: Module
+    val sourcesets: List<SourcesetIR>
 
-    abstract override fun withReplacedIrs(irs: PersistentList<BuildSystemIR>): ModuleIR
+    override fun withReplacedIrs(irs: PersistentList<BuildSystemIR>): ModuleIR
 }
 
 data class FakeMultiplatformModuleIR(
@@ -28,7 +28,7 @@ data class FakeMultiplatformModuleIR(
     override val template: Template?,
     val targets: List<MultiplatformModuleIR>,
     override val originalModule: Module
-) : ModuleIR() {
+) : ModuleIR {
     override val sourcesets: List<SourcesetIR> = emptyList()
     override val irs: PersistentList<BuildSystemIR> = persistentListOf()
 
@@ -39,14 +39,14 @@ data class FakeMultiplatformModuleIR(
     }
 }
 
-data class SingleplatformModuleIR(
+data class SingleplatformModuleIR   (
     override val name: String,
     override val path: Path,
     override val irs: PersistentList<BuildSystemIR>,
     override val template: Template?,
     override val originalModule: Module,
     override val sourcesets: List<SingleplatformSourcesetIR>
-) : ModuleIR() {
+) : ModuleIR {
     override fun withReplacedIrs(irs: PersistentList<BuildSystemIR>): SingleplatformModuleIR = copy(irs = irs)
 
     override fun BuildFilePrinter.render() = when (this) {
@@ -71,7 +71,7 @@ data class MultiplatformModuleIR(
     override val template: Template?,
     override val originalModule: Module,
     override val sourcesets: List<MultiplatformSourcesetIR>
-) : GradleIR, ModuleIR() {
+) : GradleIR, ModuleIR {
     override fun withReplacedIrs(irs: PersistentList<BuildSystemIR>): MultiplatformModuleIR = copy(irs = irs)
 
     override fun GradlePrinter.renderGradle() {

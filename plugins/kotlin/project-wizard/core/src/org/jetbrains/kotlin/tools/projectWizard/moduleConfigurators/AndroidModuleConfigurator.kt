@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.AndroidPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
 import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.TemplatesPlugin
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.JavaPackage
@@ -136,26 +136,64 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
     }
 }
 
-object AndroidTargetConfigurator : TargetConfigurator,
+object AndroidTargetConfigurator : AndroidTargetConfiguratorBase(),
+                                   ModuleConfiguratorWithTests {
+    override fun getNewAndroidManifestPath(module: Module): Path =
+        Defaults.SRC_DIR / "${module.name}Main" / "AndroidManifest.xml"
+
+    override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.JUNIT4
+
+    override fun skipResolutionStrategy(data: ModulesToIrConversionData) =
+        data.allModules.any { module ->
+            module.configurator == AndroidSinglePlatformModuleConfigurator ||
+                    module.configurator is MppModuleConfigurator &&
+                    module.subModules.any { subModule ->
+                        subModule.configurator is AndroidTargetConfiguratorBase &&
+                                subModule.configurator != this &&
+                                subModule.configurator.skipResolutionStrategy(data)
+                    }
+        }
+
+    override fun getConfiguratorSettings() = buildList<ModuleConfiguratorSetting<*, *>> {
+        +super<AndroidTargetConfiguratorBase>.getConfiguratorSettings()
+        +super<ModuleConfiguratorWithTests>.getConfiguratorSettings()
+    }
+
+    override fun createModuleIRs(reader: Reader, configurationData: ModulesToIrConversionData, module: Module): List<BuildSystemIR> =
+        buildList {
+            +super<ModuleConfiguratorWithTests>.createModuleIRs(reader, configurationData, module)
+            +super<AndroidTargetConfiguratorBase>.createModuleIRs(reader, configurationData, module)
+            +ArtifactBasedLibraryDependencyIR(
+                MavenArtifact(DefaultRepository.MAVEN_CENTRAL, "junit", "junit"),
+                version = Versions.JUNIT,
+                dependencyType = DependencyType.TEST
+            )
+        }
+
+    override fun createBuildFileIRs(reader: Reader, configurationData: ModulesToIrConversionData, module: Module): List<BuildSystemIR> =
+        buildList {
+            +super<AndroidTargetConfiguratorBase>.createBuildFileIRs(reader, configurationData, module)
+            +super<ModuleConfiguratorWithTests>.createBuildFileIRs(reader, configurationData, module)
+        }
+
+    override val androidPrintVersionAndBuildTypes = false
+}
+
+abstract class AndroidTargetConfiguratorBase : TargetConfigurator,
     SimpleTargetConfigurator,
     AndroidModuleConfigurator,
     SingleCoexistenceTargetConfigurator,
-    ModuleConfiguratorWithTests,
     ModuleConfiguratorSettings() {
     override val moduleSubType = ModuleSubType.android
     override val moduleType = ModuleType.android
 
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.android")
 
-    override fun getNewAndroidManifestPath(module: Module): Path? =
-        Defaults.SRC_DIR / "${module.name}Main" / "AndroidManifest.xml"
-
     override fun Reader.createAndroidPlugin(module: Module): AndroidGradlePlugin =
         inContextOfModuleConfigurator(module) { androidPlugin.reference.settingValue }
 
     override fun getConfiguratorSettings() = buildList<ModuleConfiguratorSetting<*, *>> {
-        +super<AndroidModuleConfigurator>.getConfiguratorSettings()
-        +super<ModuleConfiguratorWithTests>.getConfiguratorSettings()
+        +super.getConfiguratorSettings()
         +androidPlugin
     }
 
@@ -192,39 +230,28 @@ object AndroidTargetConfigurator : TargetConfigurator,
         data: ModulesToIrConversionData
     ): List<BuildSystemIR> = irsList {
         +super.createSettingsGradleIRs(reader, module, data)
-        val containsAndroidSingleplatformModule = data.allModules.any { it.configurator is AndroidSinglePlatformModuleConfigurator }
-        if (!containsAndroidSingleplatformModule) {
+        if (!skipResolutionStrategy(data)) {
             +AndroidResolutionStrategyIR(Versions.GRADLE_PLUGINS.ANDROID)
         }
     }
 
-    override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.JUNIT4
-
-    override fun createModuleIRs(reader: Reader, configurationData: ModulesToIrConversionData, module: Module): List<BuildSystemIR> =
-        buildList {
-            +super<ModuleConfiguratorWithTests>.createModuleIRs(reader, configurationData, module)
-            +super<AndroidModuleConfigurator>.createModuleIRs(reader, configurationData, module)
-            +ArtifactBasedLibraryDependencyIR(
-                MavenArtifact(DefaultRepository.MAVEN_CENTRAL, "junit", "junit"),
-                version = Versions.JUNIT,
-                dependencyType = DependencyType.TEST
-            )
-        }
+    open fun skipResolutionStrategy(data: ModulesToIrConversionData) = true
 
     override fun createBuildFileIRs(reader: Reader, configurationData: ModulesToIrConversionData, module: Module): List<BuildSystemIR> =
         buildList {
             +super<AndroidModuleConfigurator>.createBuildFileIRs(reader, configurationData, module)
-            +super<ModuleConfiguratorWithTests>.createBuildFileIRs(reader, configurationData, module)
             +AndroidConfigIR(
                 javaPackage = when (reader.createAndroidPlugin(module)) {
                     AndroidGradlePlugin.APPLICATION -> module.javaPackage(configurationData.pomIr)
                     AndroidGradlePlugin.LIBRARY -> null
                 },
                 newManifestPath = getNewAndroidManifestPath(module),
-                printVersionCode = false,
-                printBuildTypes = false,
+                printVersionCode = androidPrintVersionAndBuildTypes,
+                printBuildTypes = androidPrintVersionAndBuildTypes,
             )
         }
+
+    protected abstract val androidPrintVersionAndBuildTypes: Boolean
 
     val androidPlugin by enumSetting<AndroidGradlePlugin>(
         KotlinNewProjectWizardBundle.message("module.configurator.android.setting.android.plugin"),

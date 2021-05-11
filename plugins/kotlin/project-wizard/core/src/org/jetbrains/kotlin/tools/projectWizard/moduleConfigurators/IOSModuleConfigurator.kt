@@ -13,7 +13,26 @@ import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptor
 import java.nio.file.Path
 
-object IOSSinglePlatformModuleConfigurator : SinglePlatformModuleConfigurator,
+object IOSSinglePlatformModuleConfigurator : IOSSinglePlatformModuleConfiguratorBase() {
+    override fun Writer.runArbitraryTask(
+        configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path
+    ): TaskResult<Unit> =
+        GradlePlugin.gradleProperties.addValues("xcodeproj" to "./${module.name}")
+
+    override fun ListBuilder<FileTemplate>.additionalTemplates(fileTemplate: (Path) -> FileTemplate) {
+        +fileTemplate("$DEFAULT_APP_NAME.xcodeproj" / "project.pbxproj")
+
+        +fileTemplate(DEFAULT_APP_NAME / "Info.plist")
+        +fileTemplate("${DEFAULT_APP_NAME}Tests" / "Info.plist")
+
+        +fileTemplate("${DEFAULT_APP_NAME}UITests" / "Info.plist")
+        +fileTemplate("${DEFAULT_APP_NAME}UITests" / "${DEFAULT_APP_NAME}UITests.swift")
+    }
+}
+
+abstract class IOSSinglePlatformModuleConfiguratorBase : SinglePlatformModuleConfigurator,
     ModuleConfiguratorSettings(),
     ModuleConfiguratorProperties,
     ModuleConfiguratorWithProperties {
@@ -32,13 +51,6 @@ object IOSSinglePlatformModuleConfigurator : SinglePlatformModuleConfigurator,
     override val needCreateBuildFile: Boolean = false
     override val requiresRootBuildFile: Boolean = true
 
-    override fun Writer.runArbitraryTask(
-        configurationData: ModulesToIrConversionData,
-        module: Module,
-        modulePath: Path
-    ): TaskResult<Unit> =
-        GradlePlugin.gradleProperties.addValues("xcodeproj" to "./${module.name}")
-
     override fun Reader.createTemplates(
         configurationData: ModulesToIrConversionData,
         module: Module,
@@ -49,12 +61,9 @@ object IOSSinglePlatformModuleConfigurator : SinglePlatformModuleConfigurator,
         fun fileTemplate(path: Path) = FileTemplate(descriptor(path, module.name), modulePath, settings)
 
         return buildList {
-            +fileTemplate("$DEFAULT_APP_NAME.xcodeproj" / "project.pbxproj")
-
             +fileTemplate(DEFAULT_APP_NAME / "AppDelegate.swift")
             +fileTemplate(DEFAULT_APP_NAME / "ContentView.swift.vm")
             +fileTemplate(DEFAULT_APP_NAME / "SceneDelegate.swift")
-            +fileTemplate(DEFAULT_APP_NAME / "Info.plist")
 
             +fileTemplate(DEFAULT_APP_NAME / "Base.lproj" / "LaunchScreen.storyboard")
 
@@ -62,13 +71,13 @@ object IOSSinglePlatformModuleConfigurator : SinglePlatformModuleConfigurator,
             +fileTemplate(DEFAULT_APP_NAME / "Assets.xcassets" / "AppIcon.appiconset" / "Contents.json")
             +fileTemplate(DEFAULT_APP_NAME / "Preview_Content" / "Preview_Assets.xcassets" / "Contents.json")
 
-            +fileTemplate("${DEFAULT_APP_NAME}Tests" / "Info.plist")
             +fileTemplate("${DEFAULT_APP_NAME}Tests" / "${DEFAULT_APP_NAME}Tests.swift.vm")
 
-            +fileTemplate("${DEFAULT_APP_NAME}UITests" / "Info.plist")
-            +fileTemplate("${DEFAULT_APP_NAME}UITests" / "${DEFAULT_APP_NAME}UITests.swift")
+            additionalTemplates(::fileTemplate)
         }
     }
+
+    open fun ListBuilder<FileTemplate>.additionalTemplates(fileTemplate: (Path) -> FileTemplate) { }
 
     private fun Reader.createTemplatesSettingValues(module: Module): Map<String, Any?> {
         val dependentModule = inContextOfModuleConfigurator(module) {
@@ -81,7 +90,7 @@ object IOSSinglePlatformModuleConfigurator : SinglePlatformModuleConfigurator,
         )
     }
 
-    private fun descriptor(path: Path, moduleName: String) =
+    protected open fun descriptor(path: Path, moduleName: String) =
         FileTemplateDescriptor(
             "ios/singleplatformProject/$path",
             path.toString()
@@ -91,9 +100,12 @@ object IOSSinglePlatformModuleConfigurator : SinglePlatformModuleConfigurator,
                 .asPath()
         )
 
-    @NonNls
-    private const val DEFAULT_APP_NAME = "appName"
+    companion object {
+        @NonNls
+        const val DEFAULT_APP_NAME = "appName"
+    }
 
+    @Suppress("LeakingThis")
     val dependentModule by property(DependentModuleReference.EMPTY)
 
     override fun getConfiguratorProperties(): List<ModuleConfiguratorProperty<*>> =

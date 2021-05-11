@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.*
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
+import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
@@ -15,15 +17,12 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmSinglePlatformModuleConfigurator
-import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
-import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeAndroidTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeJvmDesktopTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.compose.ComposeMppModuleTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.mpp.MobileMppTemplate
 
-sealed class ProjectTemplate : DisplayableSettingItem {
+abstract class ProjectTemplate : DisplayableSettingItem {
     abstract val title: String
     override val text: String get() = title
     abstract val description: String
@@ -333,10 +332,31 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
         )
 }
 
-object MultiplatformMobileApplicationProjectTemplate : ProjectTemplate() {
+object MultiplatformMobileApplicationProjectTemplate : MultiplatformMobileApplicationProjectTemplateBase() {
+    override val id = "multiplatformMobileApplication"
+
+    override fun androidAppModule(shared: Module) = Module(
+        "androidApp",
+        AndroidSinglePlatformModuleConfigurator,
+        template = null,
+        sourcesets = createDefaultSourcesets(),
+        subModules = emptyList(),
+        dependencies = mutableListOf(ModuleReference.ByModule(shared))
+    )
+
+    override fun iosAppModule(shared: Module) = Module(
+        "iosApp",
+        IOSSinglePlatformModuleConfigurator,
+        template = null,
+        sourcesets = createDefaultSourcesets(),
+        subModules = emptyList(),
+        dependencies = mutableListOf(ModuleReference.ByModule(shared))
+    )
+}
+
+abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.description")
-    override val id = "multiplatformMobileApplication"
 
     @NonNls
     override val suggestedProjectName = "myIOSApplication"
@@ -366,24 +386,13 @@ object MultiplatformMobileApplicationProjectTemplate : ProjectTemplate() {
                 )
             )
         )
-        +Module(
-            "iosApp",
-            IOSSinglePlatformModuleConfigurator,
-            template = null,
-            sourcesets = createDefaultSourcesets(),
-            subModules = emptyList(),
-            dependencies = mutableListOf(ModuleReference.ByModule(shared))
-        )
-        +Module(
-            "androidApp",
-            AndroidSinglePlatformModuleConfigurator,
-            template = null,
-            sourcesets = createDefaultSourcesets(),
-            subModules = emptyList(),
-            dependencies = mutableListOf(ModuleReference.ByModule(shared))
-        )
+        +iosAppModule(shared)
+        +androidAppModule(shared)
         +shared // shared module must be the last so dependent modules could create actual files
     }
+
+    protected abstract fun iosAppModule(shared: Module): Module
+    protected abstract fun androidAppModule(shared: Module): Module
 }
 
 object MultiplatformMobileLibraryProjectTemplate : ProjectTemplate() {
