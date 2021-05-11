@@ -26,6 +26,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.Alarm
@@ -180,10 +181,10 @@ internal object OpenLessonActivities {
       hideOtherViews(project)
     }
     // We need to ensure that the learning panel is initialized
-    learningToolWindow(project)?.let {
-      it.show()
+    if (showLearnPanel(project)) {
       openLessonWhenLearnPanelIsReady(project, lesson, vf)
-    } ?: waitLearningToolwindow(project, lesson, vf)
+    }
+    else waitLearningToolwindow(project, lesson, vf)
   }
 
   private fun openLessonWhenLearnPanelIsReady(project: Project, lesson: Lesson, vf: VirtualFile?) {
@@ -251,6 +252,9 @@ internal object OpenLessonActivities {
           if (toolWindow != null) {
             connect.disconnect()
             invokeLater {
+              if (toolWindow.anchor != ToolWindowAnchor.LEFT) {
+                toolWindow.setAnchor(ToolWindowAnchor.LEFT, null)
+              }
               toolWindow.show()
               openLessonWhenLearnPanelIsReady(project, lesson, vf)
             }
@@ -336,8 +340,13 @@ internal object OpenLessonActivities {
     }
   }
 
-  private fun showLearnPanel(project: Project) {
-    learningToolWindow(project)?.show()
+  private fun showLearnPanel(project: Project): Boolean {
+    val learn = learningToolWindow(project) ?: return false
+    if (learn.anchor != ToolWindowAnchor.LEFT) {
+      learn.setAnchor(ToolWindowAnchor.LEFT, null)
+    }
+    learn.show()
+    return true
   }
 
   @RequiresEdt
