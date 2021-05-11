@@ -102,7 +102,9 @@ public final class XFramesView extends XDebugView {
 
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
 
-    myThreadComboBox = new XDebuggerEmbeddedComboBox<>();
+    myThreadComboBox = Registry.is("debugger.new.tool.window.layout", false)
+                       ? new XDebuggerEmbeddedComboBox<>()
+                       : new ComboBox<>();
     myThreadComboBox.setSwingPopup(false);
     myThreadComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
       if (value != null) {
