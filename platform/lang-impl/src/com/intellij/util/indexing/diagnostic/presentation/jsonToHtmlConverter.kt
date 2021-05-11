@@ -31,14 +31,12 @@ fun createAggregateHtml(
         h1("Project name")
         text(projectName)
 
-        printAppInfo(appInfo)
-        printRuntimeInfo(runtimeInfo)
-
         div {
           h1("Indexing history")
           table {
             thead {
               tr {
+                th("IDE")
                 th("Started")
                 th("Total time")
                 th("Scanning time")
@@ -56,6 +54,10 @@ fun createAggregateHtml(
             tbody {
               for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
                 tr {
+                  td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build + ", " +
+                     StringUtil.formatFileSize(runtimeInfo.maxMemory) + ", " +
+                     runtimeInfo.maxNumberOfIndexingThreads + " CPU"
+                  )
                   td(diagnostic.indexingTimes.updatingStart.presentableDateTime())
                   td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
                   td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
