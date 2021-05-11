@@ -3,6 +3,6 @@ import java.util.*;
 
 class Test {
   List<String> getList() {
-    new ArrayList<>()<caret>
+      return new ArrayList<>();
   }
 }
