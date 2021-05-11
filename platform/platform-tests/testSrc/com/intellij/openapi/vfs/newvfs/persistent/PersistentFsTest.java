@@ -282,6 +282,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testModCountIncreases() throws IOException {
     VirtualFile vFile = tempDirectory.newVirtualFile("file.txt");
+    HeavyPlatformTestCase.setBinaryContent(vFile, "x".getBytes(StandardCharsets.UTF_8)); // make various listeners update their VFS views
     ManagingFS managingFS = ManagingFS.getInstance();
     int inSessionModCount = managingFS.getModificationCount();
     int globalModCount = managingFS.getFilesystemModificationCount();
