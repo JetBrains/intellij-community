@@ -73,7 +73,7 @@ public class FileStructureTestGenerated extends AbstractFileStructureTest {
 
     @TestMetadata("memberTypeAlias.kt")
     public void testMemberTypeAlias() throws Exception {
-        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/fileStructure/memberTypeAlias.kt");
+        runTest("testdata/fileStructure/memberTypeAlias.kt");
     }
 
     @TestMetadata("nestedClasses.kt")
