@@ -9,14 +9,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @author Dmitry Avdeev
+ * Registers icon and type name for element.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target(ElementType.TYPE)
 public @interface Presentation {
 
   /**
-   * @return Path to image resource ({@code /foo/bar/MyIcon.png}) or FQN (w/o "icons" package) to icon field ({@code MyIcons.CustomIcon}).
+   * @return Path to image resource ({@code /foo/bar/MyIcon.png}) or classname (w/o "icons" package)/FQN with icon field ({@code MyIcons.CustomIcon}).
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/work-with-icons-and-images.html">Working with Icons and Images</a>
    */
   String icon() default "";
 
