@@ -3,7 +3,6 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -15,7 +14,6 @@ import com.intellij.ide.*;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
@@ -25,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -853,52 +850,55 @@ public class SingleInspectionProfilePanel extends JPanel {
             descriptor.loadConfig();
           }
         }
-        scopesAndScopesAndSeveritiesTable =
-          new ScopesAndSeveritiesTable(new ScopesAndSeveritiesTable.TableSettings(nodes, myProfile, project) {
-            @Override
-            protected void onScopeChosen(@NotNull final ScopeToolState state) {
-              setConfigPanel(configPanelAnchor, state);
-              configPanelAnchor.revalidate();
-              configPanelAnchor.repaint();
-            }
+        final var tableSettings = new ScopesAndSeveritiesTable.TableSettings(nodes, myProfile, project) {
+          @Override
+          protected void onScopeChosen(@NotNull final ScopeToolState state) {
+            setConfigPanel(configPanelAnchor, state);
+            configPanelAnchor.revalidate();
+            configPanelAnchor.repaint();
+          }
 
-            @Override
-            protected void onSettingsChanged() {
-              updateRecursively(nodes, false);
-            }
+          @Override
+          protected void onSettingsChanged() {
+            updateRecursively(nodes, false);
+          }
 
-            @Override
-            protected void onScopeAdded() {
-              updateRecursively(nodes, false);
-            }
+          @Override
+          protected void onScopeAdded() {
+            updateRecursively(nodes, false);
+          }
 
-            @Override
-            protected void onScopesOrderChanged() {
-              updateRecursively(nodes, true);
-            }
+          @Override
+          protected void onScopesOrderChanged() {
+            updateRecursively(nodes, true);
+          }
 
-            @Override
-            protected void onScopeRemoved(final int scopesCount) {
-              updateRecursively(nodes, scopesCount == 1);
-            }
-          });
+          @Override
+          protected void onScopeRemoved(final int scopesCount) {
+            updateRecursively(nodes, scopesCount == 1);
+          }
+        };
+        scopesAndScopesAndSeveritiesTable = new ScopesAndSeveritiesTable(tableSettings);
 
         final ToolbarDecorator wrappedTable = ToolbarDecorator
-            .createDecorator(scopesAndScopesAndSeveritiesTable)
-            .disableUpDownActions()
-            .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
-            .setRemoveActionUpdater(
-          __ -> {
-            final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
-            final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
-            return rowCount - 1 != selectedRow;
-          })
-            .addExtraAction(new AnActionButton(CodeInsightBundle.message("action.AnActionButton.text.edit.scopes"), AllIcons.General.GearPlain) {
-              @Override
-              public void actionPerformed(@NotNull AnActionEvent e) {
-                ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));
+          .createDecorator(scopesAndScopesAndSeveritiesTable)
+          .disableUpDownActions()
+          .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
+          .setRemoveActionUpdater(
+            __ -> {
+              final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
+              final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
+              return rowCount - 1 != selectedRow;
+            })
+          .addExtraAction(new AnActionButton(IdeBundle.messagePointer("action.Anonymous.text.edit.scopes.order"), AllIcons.General.GearPlain) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+              final ScopesOrderDialog dlg = new ScopesOrderDialog(scopesAndScopesAndSeveritiesTable, myProfile, project);
+              if (dlg.showAndGet()) {
+                tableSettings.onScopesOrderChanged();
               }
-            });
+            }
+          });
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
         severityPanel.add(new JBLabel(InspectionsBundle.message("inspection.scopes.and.severities")),
