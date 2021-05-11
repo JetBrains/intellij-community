@@ -187,7 +187,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       msg.append(" Parent: '").append(parent).append("'; \n");
     }
     if (parent != null) {
-      msg.append(DebugUtil.treeToString(parent, false));
+      msg.append(DebugUtil.treeToString(parent, true));
     }
     LOG.error(msg.toString());
   }

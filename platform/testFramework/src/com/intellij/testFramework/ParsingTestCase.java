@@ -511,7 +511,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected static String toParseTreeText(@NotNull PsiElement file,  boolean skipSpaces, boolean printRanges) {
-    return DebugUtil.psiToString(file, skipSpaces, printRanges);
+    return DebugUtil.psiToString(file, !skipSpaces, printRanges);
   }
 
   protected String loadFile(@NotNull @TestDataFile String name) throws IOException {
@@ -532,7 +532,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   public static void ensureCorrectReparse(@NotNull final PsiFile file) {
-    final String psiToStringDefault = DebugUtil.psiToString(file, false, false);
+    final String psiToStringDefault = DebugUtil.psiToString(file, true, false);
 
     DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
                                        final String fileText = file.getText();
@@ -541,7 +541,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
                                        diffLog.performActualPsiChange(file);
                                      });
 
-    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, false, false));
+    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
   }
 
   public void registerMockInjectedLanguageManager() {

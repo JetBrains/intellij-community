@@ -59,9 +59,9 @@ public abstract class AbstractReparseTestCase extends LightJavaCodeInsightFixtur
 
   private void doReparseAndCheck(final String s, final String expectedNewText, final int length) throws IncorrectOperationException {
     doReparse(s, length);
-    String foundStructure = DebugUtil.treeToString(myDummyFile.getNode(), false);
+    String foundStructure = DebugUtil.treeToString(myDummyFile.getNode(), true);
     final PsiFile psiFile = createDummyFile(getName() + "." + myFileType.getDefaultExtension(), expectedNewText);
-    String expectedStructure = DebugUtil.treeToString(psiFile.getNode(), false);
+    String expectedStructure = DebugUtil.treeToString(psiFile.getNode(), true);
     assertEquals(expectedStructure, foundStructure);
 
     assertEquals("Reparse tree should be equal to the document", expectedNewText, myDummyFile.getText());

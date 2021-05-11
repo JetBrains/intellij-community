@@ -173,7 +173,7 @@ public class JqlCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), true));
+    LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), false));
     super.fillCompletionVariants(parameters, result);
   }
 

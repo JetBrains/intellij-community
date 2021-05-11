@@ -79,8 +79,8 @@ class ReplaceExplicitInvokeWithImplicitTest : KotlinLightCodeInsightFixtureTestC
         val actualExpressionToCheck = expressionAfterTransformation.parentsWithSelf.takeWhile { it !is KtProperty }.last()
         assertEquals(
             "Text for: '${expressionAfter.text}' ('$before' -> '$after')",
-            DebugUtil.psiTreeToString(expressionAfter, true),
-            DebugUtil.psiTreeToString(actualExpressionToCheck, true),
+            DebugUtil.psiTreeToString(expressionAfter, false),
+            DebugUtil.psiTreeToString(actualExpressionToCheck, false),
         )
     }
 }

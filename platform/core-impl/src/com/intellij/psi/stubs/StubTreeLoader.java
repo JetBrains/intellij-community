@@ -81,7 +81,7 @@ public abstract class StubTreeLoader {
         String text = psiFile.getText();
         PsiFile fromText = PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(psiFile.getName(), psiFile.getFileType(), text);
         if (fromText.getLanguage().equals(psiFile.getLanguage())) {
-          boolean consistent = DebugUtil.psiToString(psiFile, true).equals(DebugUtil.psiToString(fromText, true));
+          boolean consistent = DebugUtil.psiToString(psiFile, false).equals(DebugUtil.psiToString(fromText, false));
           if (consistent) {
             msg += "\n tree consistent";
           } else {

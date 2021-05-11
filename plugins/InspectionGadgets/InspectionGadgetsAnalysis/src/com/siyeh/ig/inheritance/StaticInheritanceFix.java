@@ -107,7 +107,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
                 elementFactory.createExpressionFromText("xxx." + referenceExpression.getText(), referenceExpression);
               final PsiReferenceExpression newReference = (PsiReferenceExpression)referenceExpression.replace(qualified);
               final PsiReferenceExpression qualifier = (PsiReferenceExpression)newReference.getQualifierExpression();
-              assert qualifier != null : DebugUtil.psiToString(newReference, false);
+              assert qualifier != null : DebugUtil.psiToString(newReference, true);
               final PsiClass containingClass = field.getContainingClass();
               qualifier.bindToElement(containingClass);
             };
