@@ -16,9 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
-import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
-import com.intellij.util.indexing.diagnostic.dto.JsonProjectIndexingFileCount
-import com.intellij.util.indexing.diagnostic.dto.JsonProjectIndexingHistoryTimes
+import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
 import com.intellij.util.io.createDirectories
@@ -201,6 +199,12 @@ class IndexDiagnosticDumper : Disposable {
   private fun fastReadFileCount(jsonFile: Path): JsonProjectIndexingFileCount? =
     fastReadJsonField(jsonFile, "fileCount", JsonProjectIndexingFileCount::class.java)
 
+  private fun fastReadAppInfo(jsonFile: Path): JsonIndexDiagnosticAppInfo? =
+    fastReadJsonField(jsonFile, "appInfo", JsonIndexDiagnosticAppInfo::class.java)
+
+  private fun fastReadRuntimeInfo(jsonFile: Path): JsonRuntimeInfo? =
+    fastReadJsonField(jsonFile, "runtimeInfo", JsonRuntimeInfo::class.java)
+
   private fun deleteOutdatedDiagnostics(existingDiagnostics: List<ExistingDiagnostic>): List<ExistingDiagnostic> {
     val sortedDiagnostics = existingDiagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }
 
@@ -220,13 +224,15 @@ class IndexDiagnosticDumper : Disposable {
         .filter { file -> file.fileName.toString().startsWith(fileNamePrefix) && file.extension == "json" }
         .mapNotNull { jsonFile ->
           val times = fastReadIndexingHistoryTimes(jsonFile) ?: return@mapNotNull null
+          val appInfo = fastReadAppInfo(jsonFile) ?: return@mapNotNull null
+          val runtimeInfo = fastReadRuntimeInfo(jsonFile) ?: return@mapNotNull null
           val fileCount = fastReadFileCount(jsonFile)
 
           val htmlFile = jsonFile.resolveSibling(jsonFile.nameWithoutExtension + ".html")
           if (!htmlFile.exists()) {
             return@mapNotNull null
           }
-          ExistingDiagnostic(jsonFile, htmlFile, times, fileCount)
+          ExistingDiagnostic(jsonFile, htmlFile, times, appInfo, runtimeInfo, fileCount)
         }
         .toList()
     }
@@ -235,6 +241,8 @@ class IndexDiagnosticDumper : Disposable {
     val jsonFile: Path,
     val htmlFile: Path,
     val indexingTimes: JsonProjectIndexingHistoryTimes,
+    val appInfo: JsonIndexDiagnosticAppInfo,
+    val runtimeInfo: JsonRuntimeInfo,
     // May be not available in existing local reports. After some time
     // (when all local reports are likely to expire) this field can be made non-null.
     val fileCount: JsonProjectIndexingFileCount?
