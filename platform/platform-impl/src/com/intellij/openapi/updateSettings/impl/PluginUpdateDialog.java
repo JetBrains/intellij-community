@@ -201,7 +201,9 @@ public class PluginUpdateDialog extends DialogWrapper {
         List<PluginDownloader> downloaders = downloadPluginUpdates(toDownloads, indicator);
         if (!downloaders.isEmpty()) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, ownerComponent, true);
+            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders,
+                                                                                       downloader -> !downloader.tryInstallWithoutRestart(
+                                                                                         ownerComponent));
             if (result.getPluginsInstalled().size() > 0) {
               if (!result.getRestartRequired()) {
                 String message;
