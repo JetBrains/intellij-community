@@ -323,7 +323,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     }
 
     String layout = ((SplitFileEditor.MyFileEditorState)state).getSplitLayout();
-    return layout == null || TextEditorWithPreview.Layout.valueOf(layout) != TextEditorWithPreview.Layout.SHOW_EDITOR;
+    return layout == null || !layout.equals("FIRST"); //todo[kb] remove after migration to the new state model
   }
 
   private class MyUpdatePanelOnSettingsChangedListener implements MarkdownApplicationSettings.SettingsChangedListener {
