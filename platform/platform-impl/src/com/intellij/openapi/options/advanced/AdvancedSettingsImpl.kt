@@ -9,15 +9,11 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.PluginAware
-import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
-import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -108,6 +104,28 @@ class AdvancedSettingBean : PluginAware {
     return findBundle()?.takeIf { it.containsKey(trailingLabelKey) }?.getString(trailingLabelKey)
   }
 
+  fun valueFromString(valueString: String): Any {
+    return when (type()) {
+      AdvancedSettingType.Int -> valueString.toInt()
+      AdvancedSettingType.Bool -> valueString.toBoolean()
+      AdvancedSettingType.String -> valueString
+      AdvancedSettingType.Enum -> {
+        try {
+          java.lang.Enum.valueOf(enumKlass!!, valueString)
+        }
+        catch (e: IllegalArgumentException) {
+          java.lang.Enum.valueOf(enumKlass!!, defaultValue)
+        }
+      }
+    }
+  }
+
+  fun valueToString(value: Any): String {
+    return if (type() == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString()
+  }
+
+  val defaultValueObject by lazy { valueFromString(defaultValue) }
+
   private fun findBundle(): ResourceBundle? {
     val bundleName = bundle.nullize() ?: pluginDescriptor?.resourceBundleBaseName
                      ?: pluginDescriptor?.takeIf { it.pluginId.idString == "com.intellij" } ?.let { ApplicationBundle.BUNDLE }
@@ -123,21 +141,36 @@ class AdvancedSettingBean : PluginAware {
 }
 
 @State(name = "AdvancedSettings", storages = [Storage(value = "ide.general.xml")])
-class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState> {
+class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
   class AdvancedSettingsState : BaseState() {
-    @get:XMap
-    val settings by map<String, String>()
+    var settings = mutableMapOf<String, String>()
   }
 
-  private var state = AdvancedSettingsState()
+  private var state = mutableMapOf<String, Any>()
+  private var defaultValueCache = mutableMapOf<String, Any>()
+  private var modificationCount = 0L
 
-  override fun getState() = state
+  init {
+    AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean?> {
+      override fun extensionRemoved(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
+        defaultValueCache.remove(extension.id)
+      }
+    }, this)
+  }
+
+  override fun dispose() {
+  }
+
+  override fun getState(): AdvancedSettingsState {
+    return AdvancedSettingsState().also { state.map { (k, v) -> k to getOption(k).valueToString(v) }.toMap(it.settings) }
+  }
 
   override fun loadState(state: AdvancedSettingsState) {
-    this.state = state
+    this.state.clear()
+    state.settings.mapNotNull { (k, v) -> getOptionOrNull(k)?.let { option -> k to option.valueFromString(v) } }.toMap(this.state)
   }
 
-  override fun getStateModificationCount() = state.modificationCount
+  override fun getStateModificationCount() = modificationCount
 
   override fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
     val option = getOption(id)
@@ -145,57 +178,41 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
       throw IllegalArgumentException("Setting type ${option.type()} does not match parameter type $expectType")
     }
 
-    val newValueAsString = if (expectType == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString()
-    val oldValue = getSettingByOption(option)
-    if (option.defaultValue == newValueAsString) {
-      state.settings.remove(id)
+    val oldValue = getSetting(id)
+    if (option.defaultValueObject == value) {
+      state.remove(id)
     }
     else {
-      state.settings.put(id, newValueAsString)
+      state.put(id, value)
     }
+    modificationCount++
 
     ApplicationManager.getApplication().messageBus.syncPublisher(AdvancedSettingsChangeListener.TOPIC)
       .advancedSettingChanged(id, oldValue, value)
   }
 
-  override fun getSettingString(id: String): String {
-    return state.settings.get(id) ?: getOption(id).defaultValue
+  override fun getSetting(id: String): Any {
+    return state.get(id) ?: defaultValueCache.getOrPut(id) { getOption(id).defaultValueObject }
   }
 
   private fun getOption(id: String): AdvancedSettingBean {
-    return AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id }
-           ?: throw IllegalArgumentException("Can't find advanced setting $id")
+    return getOptionOrNull(id) ?: throw IllegalArgumentException("Can't find advanced setting $id")
   }
 
-  override fun getSetting(id: String): Pair<Any, AdvancedSettingType> {
+  private fun getOptionOrNull(id: String) = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id }
+
+  private fun getSettingAndType(id: String): Pair<Any, AdvancedSettingType> {
     val option = getOption(id)
-    return getSettingByOption(option) to option.type()
-  }
-
-  private fun getSettingByOption(option: AdvancedSettingBean): Any {
-    val valueString = state.settings.get(option.id) ?: option.defaultValue
-    return when (option.type()) {
-      AdvancedSettingType.Int -> valueString.toInt()
-      AdvancedSettingType.Bool -> valueString.toBoolean()
-      AdvancedSettingType.String -> valueString
-      AdvancedSettingType.Enum -> {
-        try {
-          java.lang.Enum.valueOf(option.enumKlass!!, valueString)
-        }
-        catch (e: IllegalArgumentException) {
-          java.lang.Enum.valueOf(option.enumKlass!!, option.defaultValue)
-        }
-      }
-    }
+    return getSetting(id) to option.type()
   }
 
   fun isNonDefault(id: String): Boolean {
-    return id in state.settings
+    return id in state
   }
 
   @TestOnly
   fun setSetting(id: String, value: Any, revertOnDispose: Disposable) {
-    val (oldValue, type) = getSetting(id)
+    val (oldValue, type) = getSettingAndType(id)
     setSetting(id, value, type)
     Disposer.register(revertOnDispose, Disposable { setSetting(id, oldValue, type )})
   }
