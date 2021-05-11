@@ -16,10 +16,9 @@
 
 package org.jetbrains.kotlin.jps.incremental.storages
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
-import gnu.trove.THashSet
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor
 import org.jetbrains.kotlin.incremental.storage.CollectionExternalizer
 import java.io.DataInput
@@ -42,4 +41,4 @@ object PathFunctionPairKeyDescriptor : KeyDescriptor<PathFunctionPair> {
     override fun isEqual(val1: PathFunctionPair, val2: PathFunctionPair): Boolean = val1 == val2
 }
 
-object PathCollectionExternalizer : CollectionExternalizer<String>(PathStringDescriptor(), { THashSet(FileUtil.PATH_HASHING_STRATEGY) })
+object PathCollectionExternalizer : CollectionExternalizer<String>(PathStringDescriptor(), { CollectionFactory.createFilePathSet() })

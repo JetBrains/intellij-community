@@ -27,7 +27,6 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.exists
-import gnu.trove.TIntArrayList
 import org.jetbrains.kotlin.checkers.diagnostics.DebugInfoDiagnostic
 import org.jetbrains.kotlin.checkers.diagnostics.SyntaxErrorDiagnostic
 import org.jetbrains.kotlin.checkers.diagnostics.factories.DebugInfoDiagnosticFactory0
@@ -96,7 +95,7 @@ class CodeMetaInfoTestCase(
         if ("!CHECK_HIGHLIGHTING" in file.text)
             return emptyList()
 
-        CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, TIntArrayList().toNativeArray(), false)
+        CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, intArrayOf(), false)
         val lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), project)
         return getCodeMetaInfo(lineMarkers, configuration)
     }
@@ -105,7 +104,7 @@ class CodeMetaInfoTestCase(
         if ("!CHECK_HIGHLIGHTING" in file.text)
             return emptyList()
 
-        val highlightingInfos = CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, TIntArrayList().toNativeArray(), false)
+        val highlightingInfos = CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, intArrayOf(), false)
             .filterNot { it.severity < configuration.severityLevel }
 
         if (configuration.checkNoError) {
