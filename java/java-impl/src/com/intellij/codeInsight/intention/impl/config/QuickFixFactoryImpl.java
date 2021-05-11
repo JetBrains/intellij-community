@@ -622,6 +622,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createMakeReceiverParameterFirstFix(@NotNull PsiReceiverParameter parameter) {
+    return new MakeReceiverParameterFirstFix(parameter);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createMoveBoundClassToFrontFix(@NotNull PsiClass aClass, @NotNull PsiClassType type) {
     return new MoveBoundClassToFrontFix(aClass, type);
   }
