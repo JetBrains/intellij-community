@@ -3,6 +3,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -20,6 +21,7 @@ public interface AdditionalLibraryRootsListener {
                            @NotNull Collection<VirtualFile> newRoots,
                            @NotNull Collection<VirtualFile> oldRoots);
 
+  @RequiresWriteLock
   static void fireAdditionalLibraryChanged(@NotNull Project project,
                                            @NotNull @Nls String presentableLibraryName,
                                            @NotNull Collection<VirtualFile> newRoots,
