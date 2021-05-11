@@ -30,6 +30,10 @@ import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @deprecated Use {@link TextEditorWithPreview}
+ */
+@Deprecated
 public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEditor> extends UserDataHolderBase implements FileEditor {
   public static final Key<SplitFileEditor> PARENT_SPLIT_KEY = Key.create("parentSplit");
 
@@ -363,6 +367,10 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
     }
   }
 
+  /**
+   * @deprecated Use {@link TextEditorWithPreview.Layout}
+   */
+  @Deprecated
   public enum SplitEditorLayout {
     FIRST(true, false, MarkdownBundle.message("markdown.layout.editor.only")),
     SECOND(false, true, MarkdownBundle.message("markdown.layout.preview.only")),
