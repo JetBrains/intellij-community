@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.learn.lesson.general.git
+package git4idea.ift.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
 import com.intellij.openapi.wm.ToolWindowId
@@ -18,11 +18,11 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
-import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
-import training.learn.lesson.general.git.GitLessonsUtil.findVcsLogData
-import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
-import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.checkoutBranch
+import git4idea.ift.GitLessonsUtil.findVcsLogData
+import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import git4idea.ift.GitLessonsUtil.proceedLink
+import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D

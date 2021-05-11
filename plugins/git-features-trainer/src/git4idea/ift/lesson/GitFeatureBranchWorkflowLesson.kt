@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.learn.lesson.general.git
+package git4idea.ift.lesson
 
 import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.notification.NotificationType
@@ -26,11 +26,12 @@ import git4idea.repo.GitRepositoryManager
 import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
 import training.dsl.TaskRuntimeContext
-import training.learn.lesson.general.git.GitLessonsUtil.findVcsLogData
-import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
-import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
-import training.learn.lesson.general.git.GitLessonsUtil.triggerOnNotification
+import git4idea.ift.GitLessonsUtil.findVcsLogData
+import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import git4idea.ift.GitLessonsUtil.proceedLink
+import git4idea.ift.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.triggerOnNotification
+import git4idea.ift.GitProjectUtil
 import java.io.File
 import javax.swing.JDialog
 

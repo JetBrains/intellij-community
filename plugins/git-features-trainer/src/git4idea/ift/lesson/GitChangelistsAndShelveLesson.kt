@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.learn.lesson.general.git
+package git4idea.ift.lesson
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.hint.HintManager
@@ -23,9 +23,9 @@ import com.intellij.util.DocumentUtil
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
 import training.dsl.dropMnemonic
-import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
-import training.learn.lesson.general.git.GitLessonsUtil.moveLearnToolWindowRight
-import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
+import git4idea.ift.GitLessonsUtil.checkoutBranch
+import git4idea.ift.GitLessonsUtil.moveLearnToolWindowRight
+import git4idea.ift.GitLessonsUtil.proceedLink
 import java.awt.Rectangle
 import javax.swing.JButton
 

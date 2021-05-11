@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.learn.lesson.general.git
+package git4idea.ift.lesson
 
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.KeyboardShortcut
@@ -19,12 +19,12 @@ import git4idea.i18n.GitBundle
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
 import training.dsl.TaskContext
-import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
-import training.learn.lesson.general.git.GitLessonsUtil.findVcsLogData
-import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
-import training.learn.lesson.general.git.GitLessonsUtil.triggerOnNotification
-import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.checkoutBranch
+import git4idea.ift.GitLessonsUtil.findVcsLogData
+import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import git4idea.ift.GitLessonsUtil.proceedLink
+import git4idea.ift.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.JButton

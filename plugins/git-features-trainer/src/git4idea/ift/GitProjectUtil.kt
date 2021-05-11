@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.learn.lesson.general.git
+package git4idea.ift
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
@@ -27,7 +27,7 @@ object GitProjectUtil {
   }
 
   fun copyGitProject(destination: File): Boolean {
-    // Classloader of core IFT plugin is required here
+    // Classloader of Git IFT plugin is required here
     val gitProjectURL = this.javaClass.classLoader.getResource("learnProjects/GitProject") ?: error("GitProject not found")
     return FileUtils.copyResourcesRecursively(gitProjectURL, destination)
   }

@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.learn.lesson.general.git
+package git4idea.ift.lesson
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
@@ -26,11 +26,11 @@ import com.intellij.util.DocumentUtil
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import training.dsl.*
-import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
-import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import training.learn.lesson.general.git.GitLessonsUtil.moveLearnToolWindowRight
-import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
-import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.checkoutBranch
+import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import git4idea.ift.GitLessonsUtil.moveLearnToolWindowRight
+import git4idea.ift.GitLessonsUtil.proceedLink
+import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import training.ui.LearningUiHighlightingManager
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
