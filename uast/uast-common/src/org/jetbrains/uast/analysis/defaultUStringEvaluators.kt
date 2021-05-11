@@ -26,21 +26,27 @@ object UStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator
     return qualifiedChain.firstOrNull() is USimpleNameReferenceExpression && qualifiedChain.drop(1).all { callPattern.accepts(it) }
   }
 
-  override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration) -> PartiallyKnownString?>
+  override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration, Boolean) -> PartiallyKnownString?>
     get() = mapOf(
-      PsiJavaPatterns.psiMethod().withName("append").definedInClass("java.lang.StringBuilder") to { call, currentResult, stringEvaluator, config ->
-        val entries = currentResult?.segments?.toMutableList() ?: mutableListOf<StringEntry>(
-          StringEntry.Unknown(call.sourcePsi!!, TextRange(0, 1)))
-        val argument = call.getArgumentForParameter(0)?.let { argument ->
-          stringEvaluator.calculateValue(argument, config)
-        }
+      PsiJavaPatterns.psiMethod().withName("append").definedInClass("java.lang.StringBuilder") to { call, currentResult, stringEvaluator, config, isStrict ->
+        val entries = currentResult?.segments?.toMutableList()
+                      ?: mutableListOf<StringEntry>(StringEntry.Unknown(call.sourcePsi!!, TextRange(0, 1)))
+        val argument = call.getArgumentForParameter(0)?.let { argument -> stringEvaluator.calculateValue(argument, config) }
         if (argument != null) {
-          entries.addAll(argument.segments)
+          if (isStrict) {
+            entries.addAll(argument.segments)
+          } else {
+            entries.add(StringEntry.Unknown(
+              call.sourcePsi!!,
+              TextRange(0, call.sourcePsi!!.textLength),
+              possibleValues = listOf(PartiallyKnownString(argument.segments), PartiallyKnownString(""))
+            ))
+          }
         }
 
         PartiallyKnownString(entries)
       },
-      PsiJavaPatterns.psiMethod().definedInClass("java.lang.StringBuilder").constructor(true) to { call, _, stringEvaluator, config ->
+      PsiJavaPatterns.psiMethod().definedInClass("java.lang.StringBuilder").constructor(true) to { call, _, stringEvaluator, config, _ ->
         call.getArgumentForParameter(0)?.let { argument ->
           stringEvaluator.calculateValue(argument, config)
         }

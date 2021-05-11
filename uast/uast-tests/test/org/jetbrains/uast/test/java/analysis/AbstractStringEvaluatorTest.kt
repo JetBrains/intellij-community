@@ -8,7 +8,7 @@ import org.jetbrains.uast.analysis.UStringEvaluator
 import org.jetbrains.uast.test.java.AbstractJavaUastLightTest
 import org.jetbrains.uast.toUElement
 
-open class AbstractStringEvaluatorTest : AbstractJavaUastLightTest() {
+abstract class AbstractStringEvaluatorTest : AbstractJavaUastLightTest() {
   protected val PartiallyKnownString.debugConcatenation: String
     get() = buildString {
       for (segment in segments) {

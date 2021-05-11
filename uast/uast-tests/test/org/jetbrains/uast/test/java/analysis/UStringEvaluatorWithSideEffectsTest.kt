@@ -101,8 +101,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
-  @Suppress("unused")
-  fun `ignore test StringBuilder change through possible reference`() {
+  fun `test StringBuilder change through possible reference`() {
     doTest(
       """
       class MyFile {
@@ -112,11 +111,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           StringBuilder sb2 = param ? sb : sb1; // ignore sb1 because sb1 != sb
           
-          s1.append("-");
+          sb1.append("-");
           
           StringBuilder sb3 = sb2;
           
           sb3.append("c");  // add because of equality (strict = true)
+          
+          sb.append("\\m/");
           
           sb1.append("d"); // ignore (strict = false, witness incorrect)
           
@@ -128,7 +129,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
         }
       }
     """.trimIndent(),
-      """'a'{''|'c'}""",
+      """'a'{''|'c'}'\m/'{''|'e'}""",
       configuration = {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
@@ -391,10 +392,60 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     }
   )
 
+  fun `test StringBuilder reassignment to new value`() = doTest(
+    """
+      class MyFile {
+        String falseEvidenceInIf() {
+          StringBuilder sb = new StringBuilder("a");
+          sb.toString();
+          
+          sb = new StringBuilder("b");
+          sb.append("c");
+   
+          return sb.toSt<caret>ring();
+        }
+      }
+    """.trimIndent(),
+    "'b''c'",
+    retrieveElement = UElement?::getUCallExpression,
+    configuration = {
+      UStringEvaluator.Configuration(
+        builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
+      )
+    }
+  )
+
+  fun `test strange one line change`() = doTest(
+    """
+      class MyFile {
+        String a() {
+          StringBuilder sb = new StringBuilder("0");
+          sb.append("aaa")
+            .append("bbb")
+            .clone()
+            .append("ccc")
+            .clone()
+            .append("ddd");
+            
+            sb.append("d");
+   
+          return sb.toSt<caret>ring();
+        }
+      }
+    """.trimIndent(),
+    "'0''aaa''bbb''d'",
+    retrieveElement = UElement?::getUCallExpression,
+    configuration = {
+      UStringEvaluator.Configuration(
+        builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
+      )
+    }
+  )
+
   private class CloneAwareStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator<PartiallyKnownString?> by UStringBuilderEvaluator {
-    override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration) -> PartiallyKnownString?>
+    override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration, Boolean) -> PartiallyKnownString?>
       get() = UStringBuilderEvaluator.methodDescriptions + mapOf(
-        PsiJavaPatterns.psiMethod().withName("clone") to { _, partiallyKnownString, _, _ ->
+        PsiJavaPatterns.psiMethod().withName("clone") to { _, partiallyKnownString, _, _, _ ->
           partiallyKnownString
         }
       )

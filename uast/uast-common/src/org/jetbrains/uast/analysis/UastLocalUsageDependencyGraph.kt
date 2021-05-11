@@ -199,6 +199,11 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
   for ((dependency, depIndex) in dependencyToID) {
     append("object ")
     append(dependency.javaClass.simpleName).append("_").append(depIndex)
+    if (dependency is DependencyOfReference) {
+      append(" {\n")
+      indent().append("values = ").append(dependency.referenceInfo?.possibleReferencedValues).append("\n")
+      append("}")
+    }
     append("\n")
   }
 
@@ -228,8 +233,15 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
       indent().indent().append("type = ").append(node.javaClass.simpleName).append("\n")
       if (node is Dependency.PotentialSideEffectDependency.CandidatesTree.Node.CandidateNode) {
         val candidate = node.candidate
+        indent().indent().append("witness = ").append(candidate.dependencyWitnessValues).append("\n")
         indent().indent().append("evidence = ").append(candidate.dependencyEvidence.evidenceElement?.asRenderString()?.escape()).append("\n")
-        indent().indent().append("strict = ").append(candidate.dependencyEvidence.strict).append("\n")
+
+        generateSequence(candidate.dependencyEvidence.requires) { reqs -> reqs.flatMap { req -> req.requires }.takeUnless { it.isEmpty() } }
+          .flatten()
+          .map { it.evidenceElement?.asRenderString()?.escape() }
+          .toSet()
+          .takeUnless { it.isEmpty() }
+          ?.joinTo(this, prefix = "$INDENT${INDENT}require = ", postfix = "\n", separator = " && ")
       }
       indent().append("}\n")
       if (node is Dependency.PotentialSideEffectDependency.CandidatesTree.Node.CandidateNode) {
@@ -283,8 +295,10 @@ private fun StringBuilder.edge(begin: String, type: String, end: String) {
   append(begin).append(" ").append(type).append(" ").append(end).append("\n")
 }
 
+private const val INDENT = "  "
+
 private fun StringBuilder.indent(): StringBuilder {
-  return append("  ")
+  return append(INDENT)
 }
 
 private fun String.escape() =

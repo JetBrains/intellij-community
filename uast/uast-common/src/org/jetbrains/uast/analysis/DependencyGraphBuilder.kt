@@ -17,7 +17,7 @@ internal class DependencyGraphBuilder private constructor(
   val dependencies: MutableMap<UElement, MutableSet<Dependency>> = mutableMapOf(),
 ) : AbstractUastVisitor() {
 
-  constructor(): this(currentDepth = 0)
+  constructor() : this(currentDepth = 0)
 
   private val elementsProcessedAsReceiver: MutableSet<UExpression> = HashSet()
 
@@ -128,13 +128,21 @@ internal class DependencyGraphBuilder private constructor(
     if (node.uastParent is UReferenceExpression && (node.uastParent as? UQualifiedReferenceExpression)?.receiver != node)
       return@checkedDepthCall true
 
+    val referenceInfo = DependencyOfReference.ReferenceInfo(node.identifier, currentScope.getReferencedValues(node.identifier))
+
     currentScope[node.identifier]?.let {
-      registerDependency(Dependent.CommonDependent(node), Dependency.BranchingDependency(it).unwrapIfSingle())
+      registerDependency(
+        Dependent.CommonDependent(node),
+        Dependency.BranchingDependency(
+          it,
+          referenceInfo
+        ).unwrapIfSingle()
+      )
     }
 
     val potentialDependenciesCandidates = currentScope.getLastPotentialUpdate(node.identifier)
     if (potentialDependenciesCandidates != null) {
-      registerDependency(Dependent.CommonDependent(node), Dependency.PotentialSideEffectDependency(potentialDependenciesCandidates))
+      registerDependency(Dependent.CommonDependent(node), Dependency.PotentialSideEffectDependency(node, potentialDependenciesCandidates, referenceInfo))
     }
     return@checkedDepthCall super.visitSimpleNameReferenceExpression(node)
   }
@@ -309,7 +317,7 @@ internal class DependencyGraphBuilder private constructor(
   override fun visitField(node: UField): Boolean = true
 
   private fun updatePotentialEqualReferences(name: String, initElements: Set<UElement>) {
-    currentScope.clearPotentialReferences(name)
+    currentScope.clearPotentialReferences(TEMP_VAR_NAME)
     val potentialEqualReferences = initElements
       .mapNotNull {
         when (it) {
@@ -319,9 +327,11 @@ internal class DependencyGraphBuilder private constructor(
         }
       }
     for ((potentialEqualReference, evidence) in potentialEqualReferences) {
-      currentScope.setPotentialEquality(name, potentialEqualReference,
-                                        DependencyEvidence(potentialEqualReferences.size == 1, evidence, potentialEqualReference))
+      currentScope.setPotentialEquality(TEMP_VAR_NAME, potentialEqualReference, DependencyEvidence(evidence))
     }
+    currentScope.clearPotentialReferences(name)
+    currentScope.setPotentialEquality(name, TEMP_VAR_NAME, DependencyEvidence())
+    currentScope.clearPotentialReferences(TEMP_VAR_NAME)
   }
 
   private fun registerDependency(dependent: Dependent, dependency: Dependency) {
@@ -344,7 +354,7 @@ private typealias SideEffectChangeCandidate = Dependency.PotentialSideEffectDepe
 private typealias DependencyEvidence = Dependency.PotentialSideEffectDependency.DependencyEvidence
 private typealias CandidatesTree = Dependency.PotentialSideEffectDependency.CandidatesTree
 
-private class LocalScopeContext(private val parent: LocalScopeContext?) {
+class LocalScopeContext(private val parent: LocalScopeContext?) {
   private val definedInScopeVariables = HashSet<UElement>()
   private val definedInScopeVariablesNames = HashSet<String>()
 
@@ -371,6 +381,7 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
     definedInScopeVariables.add(variable)
     variable.name?.let {
       definedInScopeVariablesNames.add(it)
+      referencesModel.assignValueIfNotAssigned(it)
       lastDeclarationOf[it] = variable
     }
   }
@@ -387,9 +398,13 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
   fun createChild() = LocalScopeContext(this)
 
   fun setLastPotentialUpdate(variable: String, updateElement: UElement) {
-    lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(SideEffectChangeCandidate(updateElement, DependencyEvidence(true)))
-    for ((reference, evidence) in getAllPotentialEqualReferences(variable)) {
-      val newCandidate = SideEffectChangeCandidate(updateElement, evidence)
+    lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(
+      SideEffectChangeCandidate(updateElement, DependencyEvidence(),
+                                dependencyWitnessValues = referencesModel.getAllTargetsForReference(variable))
+    )
+    for ((reference, evidenceAndWitness) in referencesModel.getAllPossiblyEqualReferences(variable)) {
+      val (evidence, witness) = evidenceAndWitness
+      val newCandidate = SideEffectChangeCandidate(updateElement, evidence, witness)
       val candidatesForReference = lastPotentialUpdatesOf[reference]
       lastPotentialUpdatesOf[reference] = candidatesForReference?.addToBegin(newCandidate) ?: CandidatesTree.fromCandidate(newCandidate)
     }
@@ -398,12 +413,17 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
   fun setLastPotentialUpdateAsAssignment(variable: String, updateElements: Collection<UElement>) {
     if (updateElements.size == 1) {
       lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(
-        SideEffectChangeCandidate(updateElements.first(), DependencyEvidence(true))
+        SideEffectChangeCandidate(
+          updateElements.first(),
+                                  DependencyEvidence(),
+                                  dependencyWitnessValues = referencesModel.getAllTargetsForReference(variable))
       )
     }
     else {
       lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidates(
-        updateElements.mapTo(mutableSetOf()) { SideEffectChangeCandidate(it, DependencyEvidence(true)) }
+        updateElements.mapTo(mutableSetOf()) {
+          SideEffectChangeCandidate(it, DependencyEvidence(), dependencyWitnessValues = referencesModel.getAllTargetsForReference(variable))
+        }
       )
     }
   }
@@ -417,10 +437,6 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
 
   fun clearPotentialReferences(reference: String) {
     referencesModel.clearReference(reference)
-  }
-
-  fun getAllPotentialEqualReferences(reference: String): Map<String, DependencyEvidence> {
-    return referencesModel.getAllPossiblyEqualReferences(reference)
   }
 
   val variables: Iterable<UElement>
@@ -451,7 +467,7 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
           }
         }
       }.takeUnless { it.isEmpty() }?.let { candidates ->
-          lastPotentialUpdatesOf[variableName] = CandidatesTree.merge(candidates)
+        lastPotentialUpdatesOf[variableName] = CandidatesTree.merge(candidates)
       }
     }
   }
@@ -466,35 +482,50 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
     }
   }
 
+  fun getReferencedValues(identifier: String): Collection<UValueMark> {
+    return referencesModel.getAllTargetsForReference(identifier)
+  }
+
   private class ReferencesModel(private val parent: ReferencesModel?) {
-    private class Target
+    private val referencesTargets = mutableMapOf<String, MutableMap<UValueMark, DependencyEvidence>>()
+    private val targetsReferences = mutableMapOf<UValueMark, MutableMap<String, DependencyEvidence>>()
 
-    private val referencesTargets = mutableMapOf<String, MutableMap<Target, DependencyEvidence>>()
-    private val targetsReferences = mutableMapOf<Target, MutableSet<String>>()
+    private fun getAllReferences(referencedValue: UValueMark): Map<String, DependencyEvidence> =
+      parent?.getAllReferences(referencedValue).orEmpty() + targetsReferences[referencedValue].orEmpty()
 
-    private fun getAllReferences(target: Target): Set<String> =
-      parent?.getAllReferences(target).orEmpty() + targetsReferences[target].orEmpty()
-
-    private fun getAllTargets(reference: String): Map<Target, DependencyEvidence> =
+    private fun getAllTargets(reference: String): Map<UValueMark, DependencyEvidence> =
       listOfNotNull(referencesTargets[reference], parent?.getAllTargets(reference)).fold(emptyMap()) { result, current ->
         (result.keys + current.keys).associateWith { (result[it] ?: current[it])!! }
       }
 
+    fun assignValueIfNotAssigned(reference: String) {
+      if (getAllTargets(reference).isNotEmpty()) return
+
+      val evidence = DependencyEvidence()
+      val newTarget = UValueMark()
+      referencesTargets[reference] = mutableMapOf(newTarget to evidence)
+      targetsReferences[newTarget] = mutableMapOf(reference to evidence)
+    }
+
     fun setPossibleEquality(assigneeReference: String, targetReference: String, evidence: DependencyEvidence) {
       val targets = getAllTargets(targetReference).toMutableMap()
       if (targets.isEmpty()) {
-        val newTarget = Target()
-        referencesTargets[targetReference] = mutableMapOf(newTarget to DependencyEvidence(true)) // equal by default
+        val newTarget = UValueMark()
+        val targetEvidence = DependencyEvidence()
+        referencesTargets[targetReference] = mutableMapOf(newTarget to targetEvidence) // equal by default
         referencesTargets.getOrPut(assigneeReference) { mutableMapOf() }[newTarget] = evidence
 
-        targetsReferences[newTarget] = mutableSetOf(assigneeReference, targetReference)
+        targetsReferences[newTarget] = mutableMapOf(
+          assigneeReference to evidence,
+          targetReference to targetEvidence
+        )
         return
       }
       referencesTargets.getOrPut(assigneeReference) { mutableMapOf() }
-        .putAll(targets.mapValues { (_, evidenceForTarget) -> evidence.copy(requires = evidenceForTarget) })
+        .putAll(targets.mapValues { (_, evidenceForTarget) -> evidence.copy(requires = listOf(evidenceForTarget)) })
 
       for (target in targets.keys) {
-        targetsReferences.getOrPut(target) { mutableSetOf() }.add(assigneeReference)
+        targetsReferences.getOrPut(target) { mutableMapOf() }[assigneeReference] = evidence
       }
     }
 
@@ -512,14 +543,29 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
       }
     }
 
-    fun getAllPossiblyEqualReferences(reference: String): Map<String, DependencyEvidence> =
-      getAllTargets(reference)
-        .map { (target, evidence) -> getAllReferences(target).map { it to evidence } }
+    fun getAllPossiblyEqualReferences(reference: String): Map<String, Pair<DependencyEvidence, Collection<UValueMark>>> {
+      val allTargets = getAllTargets(reference)
+      return allTargets
+        .map { (target, evidence) ->
+          getAllReferences(target).map { (currentReference, referenceEvidence) ->
+            currentReference to (combineEvidences(evidence, referenceEvidence) to allTargets.keys)
+          }
+        }
         .flatten()
         .filter { it.first != reference }
         .toMap()
+    }
 
+    fun getAllTargetsForReference(reference: String): Collection<UValueMark> {
+      return getAllTargets(reference).keys
+    }
   }
+
 }
 
+private fun combineEvidences(ownEvidence: DependencyEvidence, otherEvidence: DependencyEvidence): DependencyEvidence =
+  ownEvidence.copy(requires = ownEvidence.requires + otherEvidence)
+
 private const val UAST_KT_ELVIS_NAME = "elvis"
+
+private const val TEMP_VAR_NAME = "@$,()"
