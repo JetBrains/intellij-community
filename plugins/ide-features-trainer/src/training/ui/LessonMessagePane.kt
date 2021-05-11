@@ -2,6 +2,7 @@
 package training.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.SystemInfo
@@ -92,6 +93,20 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
       }
     }
     return null
+  }
+
+  override fun addNotify() {
+    super.addNotify()
+    initStyleConstants()
+    redrawMessages()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      initStyleConstants()
+      redrawMessages()
+    })
   }
 
   private fun initStyleConstants() {
