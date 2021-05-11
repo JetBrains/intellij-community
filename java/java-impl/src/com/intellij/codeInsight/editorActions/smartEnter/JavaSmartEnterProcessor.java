@@ -19,6 +19,10 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +41,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,7 +170,13 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
       for (PsiElement psiElement : queue) {
         for (Fixer fixer : ourFixers) {
+          Document document = editor.getDocument();
+          int offset = myFirstErrorOffset;
+          long stamp = document.getModificationStamp();
           fixer.apply(editor, this, psiElement);
+          if (document.getModificationStamp() != stamp || offset != myFirstErrorOffset) {
+            FixerUsageCollector.log(fixer);
+          }
           if (LookupManager.getInstance(file.getProject()).getActiveLookup() != null) {
             return;
           }
@@ -370,4 +381,19 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     return editor.getDocument().getModificationStamp() != timestamp.longValue();
   }
 
+  private static final class FixerUsageCollector extends CounterUsagesCollector {
+    private static final EventLogGroup GROUP = new EventLogGroup("java.smart.enter.fixer", 1);
+    private static final EventId1<String> USED = GROUP.registerEvent("fixer.used", new StringEventField.ValidatedByAllowedValues(
+      "fixer.used",
+      ContainerUtil.map(ourFixers, f -> f.getClass().getSimpleName())));
+
+    @Override
+    public EventLogGroup getGroup() {
+      return GROUP;
+    }
+    
+    static void log(Fixer fixer) {
+      USED.log(fixer.getClass().getSimpleName());
+    }
+  }
 }
