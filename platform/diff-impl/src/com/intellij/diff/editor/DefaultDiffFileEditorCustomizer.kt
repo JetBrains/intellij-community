@@ -14,7 +14,7 @@ import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 
-class DiffFileEditorEscapeHandlerCustomizer : DiffRequestProcessorEditorCustomizer {
+class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
 
   override fun customize(file: VirtualFile, editor: FileEditor, processor: DiffRequestProcessor) {
     if (editor !is FileEditorBase) return
