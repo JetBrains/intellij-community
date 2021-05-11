@@ -370,14 +370,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
           val persistentId = matchedEntityData.persistentId(this)
           if (persistentId != null) {
-            val existingEntity = this.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.firstOrNull()
-            if (existingEntity != null) {
+            val existingEntityId = this.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.firstOrNull()
+            if (existingEntityId != null) {
               // Bad news, we have this persistent id already. CPP-22547
               // This may happened if local entity has entity source and remote entity has a different entity source
               // Technically we should throw an exception, but now we just remove local entity
               // Entity exists in local store, but has changes. Generate replace operation
 
-              val localNode = this.entityDataByIdOrDie(existingEntity)
+              val localNode = this.entityDataByIdOrDie(existingEntityId)
 
               val dataDiffersByProperties = !localNode.equalsIgnoringEntitySource(matchedEntityData)
               val dataDiffersByEntitySource = localNode.entitySource != matchedEntityData.entitySource
@@ -385,7 +385,11 @@ internal class WorkspaceEntityStorageBuilderImpl(
               replaceOperation(matchedEntityData, replaceWith, localNode, matchedEntityId, dataDiffersByProperties,
                                dataDiffersByEntitySource)
 
-              replaceMap[existingEntity] = matchedEntityId
+              // To make a store consistent in such case, we will clean up all refer to this entity
+              this.refs.getChildrenRefsOfParentBy(existingEntityId).flatMapTo(mutableSetOf()) { it.value }
+                .forEach { childId -> removeEntity(childId) }
+
+              replaceMap[existingEntityId] = matchedEntityId
               continue
             }
           }

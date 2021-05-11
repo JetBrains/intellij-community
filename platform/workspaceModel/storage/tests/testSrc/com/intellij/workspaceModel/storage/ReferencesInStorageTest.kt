@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
@@ -397,6 +397,54 @@ class ReferencesInStorageTest {
     builder.addOoChildEntity(parentEntity)
 
     builder.assertConsistency()
+  }
+
+  @Test
+  fun `test replace by source for entities with same persistent Id but different entity source`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithPidEntity("parent")
+    builder.addOoChildForParentWithPidEntity(parentEntity, "child")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildForParentWithPidEntity(parentEntity, "child", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+
+    val listOfParents = builder.entities(OoParentWithPidEntity::class.java).toList()
+    val listOfChildren = builder.entities(OoChildForParentWithPidEntity::class.java).toList()
+    assertEquals(1, listOfParents.size)
+    assertEquals(1, listOfChildren.size)
+    parentEntity = listOfParents[0]
+    val child = listOfChildren[0]
+    assertEquals(AnotherSource, parentEntity.entitySource)
+    assertEquals(AnotherSource, child.entitySource)
+    assertEquals(child, parentEntity.child)
+  }
+
+  @Test
+  fun `test replace by source for entities with same persistent Id but different entity source without child`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithPidEntity("parent")
+    builder.addOoChildForParentWithPidEntity(parentEntity, "child")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+    val listOfParents = builder.entities(OoParentWithPidEntity::class.java).toList()
+    val listOfChildren = builder.entities(OoChildForParentWithPidEntity::class.java).toList()
+    assertEquals(1, listOfParents.size)
+    assertTrue(listOfChildren.isEmpty())
+    parentEntity = listOfParents[0]
+    assertEquals(AnotherSource, parentEntity.entitySource)
+    assertNull(parentEntity.child)
   }
 
   @Test
