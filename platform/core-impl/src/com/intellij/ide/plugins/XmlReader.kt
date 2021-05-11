@@ -74,7 +74,12 @@ private fun readModuleDescriptor(reader: XMLStreamReader2,
     }
 
     val descriptor = readInto ?: RawPluginDescriptor()
-    if (reader.nextTag() == XMLStreamConstants.END_ELEMENT || !reader.hasNext()) {
+
+    @Suppress("ControlFlowWithEmptyBody")
+    while (reader.next() != XMLStreamConstants.START_ELEMENT) {
+    }
+
+    if (!reader.isStartElement) {
       return descriptor
     }
 
