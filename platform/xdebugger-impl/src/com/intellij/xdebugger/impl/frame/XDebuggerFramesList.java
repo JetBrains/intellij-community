@@ -79,8 +79,6 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     }
   }
 
-  private XStackFrame mySelectedFrame;
-
   public XDebuggerFramesList(@NotNull Project project) {
     myProject = project;
 
@@ -194,19 +192,6 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   @Override
   protected ListCellRenderer createListRenderer() {
     return new XDebuggerGroupedFrameListRenderer();
-  }
-
-  @Override
-  protected void onFrameChanged(final Object selectedValue) {
-    if (mySelectedFrame != selectedValue) {
-      SwingUtilities.invokeLater(this::repaint);
-      if (selectedValue instanceof XStackFrame) {
-        mySelectedFrame = (XStackFrame)selectedValue;
-      }
-      else {
-        mySelectedFrame = null;
-      }
-    }
   }
 
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {

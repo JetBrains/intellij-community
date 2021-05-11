@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.text.Position;
 import java.awt.*;
 
@@ -23,15 +21,6 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
   protected void doInit() {
     getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setCellRenderer(createListRenderer());
-    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(final ListSelectionEvent e) {
-        if (!e.getValueIsAdjusting()) {
-          onFrameChanged(getSelectedValue());
-        }
-      }
-    });
-
     getEmptyText().setText(XDebuggerBundle.message("debugger.frames.not.available"));
   }
 
@@ -92,8 +81,6 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
   }
 
   protected abstract ListCellRenderer createListRenderer();
-
-  protected abstract void onFrameChanged(final Object selectedValue);
 
   @Override
   public int getNextMatch(String prefix, int startIndex, Position.Bias bias) {
