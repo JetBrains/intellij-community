@@ -2,6 +2,7 @@
 package org.jetbrains.jps.incremental.messages;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectLongHashMap;
@@ -15,8 +16,10 @@ import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
 /**
@@ -48,7 +51,11 @@ public class BuildProgress {
   private final TObjectIntHashMap<BuildTargetType<?>> myTotalTargets = new TObjectIntHashMap<>();
   private final TObjectLongHashMap<BuildTargetType<?>> myTotalBuildTimeForFullyRebuiltTargets = new TObjectLongHashMap<>();
   private final TObjectIntHashMap<BuildTargetType<?>> myNumberOfFullyRebuiltTargets = new TObjectIntHashMap<>();
+  private final AtomicLong myTickCounter = new AtomicLong(0L);
+  private volatile boolean myIsFinished = false;
+  private final TObjectLongHashMap<BuildTarget<?>> myCompilationStartStamp = new TObjectLongHashMap<>();
 
+  private static final boolean ourTickCounterEnabled = Boolean.parseBoolean(System.getProperty("compiler.process.tick.timer.enabled", "false"));  // todo: temporary switch
 
   public BuildProgress(BuildDataManager dataManager, BuildTargetIndex targetIndex, List<BuildTargetChunk> allChunks, Predicate<? super BuildTargetChunk> isAffected) {
     myDataManager = dataManager;
@@ -81,6 +88,20 @@ public class BuildProgress {
       expectedTotalTime += myExpectedBuildTimeForTarget.get(targetType) * totalAffectedTargets.get(targetType);
     }
     myExpectedTotalTime = Math.max(expectedTotalTime, 1);
+
+    if (ourTickCounterEnabled) {
+      SharedThreadPool.getInstance().execute(() -> {
+        while (!myIsFinished) {
+          myTickCounter.incrementAndGet();
+          try {
+            Thread.sleep(500L);
+          }
+          catch (InterruptedException e) {
+          }
+        }
+      });
+    }
+    
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected total time is " + myExpectedTotalTime);
       for (BuildTargetType<?> type : targetTypes) {
@@ -122,6 +143,17 @@ public class BuildProgress {
     notifyAboutTotalProgress(context);
   }
 
+  public synchronized void onTargetChunkStart(BuildTargetChunk chunk, CompileContext context) {
+    if (ourTickCounterEnabled) {
+      final long start = myTickCounter.get();
+      synchronized (myCompilationStartStamp) {
+        for (BuildTarget<?> target : chunk.getTargets()) {
+          myCompilationStartStamp.put(target, start);
+        }
+      }
+    }
+  }
+
   public synchronized void onTargetChunkFinished(BuildTargetChunk chunk, CompileContext context) {
     boolean successful = !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled();
     int nonDummyTargetsCount = ContainerUtil.count(chunk.getTargets(), it -> !myTargetIndex.isDummy(it));
@@ -132,7 +164,7 @@ public class BuildProgress {
         increment(myNumberOfFinishedTargets, targetType);
         myExpectedTimeForFinishedTargets += myExpectedBuildTimeForTarget.get(targetType);
 
-        long elapsedTime = System.currentTimeMillis() - context.getCompilationStartStamp(target);
+        long elapsedTime = ourTickCounterEnabled? Math.max(0L, myTickCounter.get() - getCompilationStartTick(target)) : System.currentTimeMillis() - context.getCompilationStartStamp(target);
         myAbsoluteBuildTime += elapsedTime;
         
         if (successful && FSOperations.isMarkedDirty(context, target)) {
@@ -147,7 +179,14 @@ public class BuildProgress {
     notifyAboutTotalProgress(context);
   }
 
+  private long getCompilationStartTick(BuildTarget<?> target) {
+    synchronized (myCompilationStartStamp) {
+      return myCompilationStartStamp.get(target);
+    }
+  }
+
   public void updateExpectedAverageTime() {
+    myIsFinished = true;
     if (LOG.isDebugEnabled()) {
       LOG.debug("update expected build time for " + myTotalBuildTimeForFullyRebuiltTargets.size() + " target types");
     }
@@ -179,5 +218,9 @@ public class BuildProgress {
     if (!map.increment(key)) {
       map.put(key, 1);
     }
+  }
+
+  public static String formatDuration(long duration) {
+    return ourTickCounterEnabled? duration + " ticks" : StringUtil.formatDuration(duration);
   }
 }
