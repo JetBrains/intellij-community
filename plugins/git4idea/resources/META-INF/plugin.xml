@@ -455,8 +455,6 @@
                  description="Show dedicated toolwindow for git merge conflicts"/>
     <registryKey key="git.update.project.info.as.log" defaultValue="true"
                  description="If enabled, Update Project for Git is followed by the list of commits, instead of the list of updated files."/>
-    <registryKey key="git.enable.stage" defaultValue="false"
-                 description="Obsolete property, replaced by Settings | Version Control | Git | Enable staging area"/>
     <registryKey key="git.enable.stage.line.status.tracker" defaultValue="true"
                  description="Show staged and unstaged changes in gutter markers." restartRequired="true"/>
     <registryKey key="git.shelve.load.base.in.batches" defaultValue="1000"
