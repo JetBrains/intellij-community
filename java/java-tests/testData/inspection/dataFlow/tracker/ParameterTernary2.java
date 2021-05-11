@@ -2,8 +2,8 @@
 Value is always false (trim(b ? s : s2) == ""; line#17)
   According to inferred contract, method 'trim' returns 'null' value when parameter != null (trim; line#17)
     One of the following happens:
-      's' is known to be 'non-null' from line #15 (s == null; line#15)
-      or 's2' is known to be 'non-null' from line #16 (s2 == null; line#16)
+      's2' is known to be 'non-null' from line #16 (s2 == null; line#16)
+      or 's' is known to be 'non-null' from line #15 (s == null; line#15)
   and expression cannot be null as it's literal (""; line#17)
  */
 class X {

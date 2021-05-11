@@ -346,6 +346,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaMemoryStateImpl apply(DfaMemoryStateImpl left, DfaMemoryStateImpl right) {
       DfaMemoryStateImpl result = (myApplyToRight ? right : left).createCopy();
       myPatcher.accept(result);
+      result.afterMerge(myApplyToRight ? left : right);
       return result;
     }
   }
