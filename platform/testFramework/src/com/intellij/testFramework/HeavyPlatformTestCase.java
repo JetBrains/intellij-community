@@ -743,7 +743,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   public @interface WrapInCommand {
   }
 
-  protected static @NotNull VirtualFile createChildData(@NotNull VirtualFile dir, @NotNull String name) {
+  public static @NotNull VirtualFile createChildData(@NotNull VirtualFile dir, @NotNull String name) {
     try {
       // requestor must be notnull (for GlobalUndoTest)
       return WriteAction.computeAndWait(() -> dir.createChildData(dir, name));
