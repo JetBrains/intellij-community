@@ -6,6 +6,7 @@
 package org.jetbrains.uast.test.kotlin
 
 import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.common.kotlin.FirUastRenderLogTestBase
 import java.io.File
 
@@ -24,7 +25,7 @@ abstract class AbstractFE1UastDeclarationTest : AbstractKotlinUastTest(), FirUas
         val virtualFile = getVirtualFile(testName)
 
         val psiFile = psiManager.findFile(virtualFile) ?: error("Can't get psi file for $testName")
-        val uFile = uastContext.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
+        val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
         check(filePath, uFile as UFile)
     }
 }

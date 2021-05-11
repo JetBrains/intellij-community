@@ -77,7 +77,7 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
 
                 if (
                     PsiManager.getInstance(file.project).areElementsEquivalent(classForFacade.files.singleOrNull(), file) &&
-                    classForFacade.fqName.shortName().asString().removeSuffix("Kt") == file.virtualFile.nameWithoutExtension
+                    classForFacade.facadeClassFqName.shortName().asString().removeSuffix("Kt") == file.virtualFile.nameWithoutExtension
                 ) {
                     if (SearchEverywhereFoundElementInfo.COMPARATOR.compare(newItem, alreadyFoundItem) > 0) Replace(alreadyFoundItem)
                     else Skip
