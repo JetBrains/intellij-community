@@ -10,7 +10,9 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.project.PackagingModifiableModel;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.module.impl.ModulePathKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -32,16 +34,12 @@ import com.intellij.packaging.impl.artifacts.ArtifactModelImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
 import org.jetbrains.idea.maven.importing.worktree.IdeModifiableModelsProviderBridge;
-import org.jetbrains.idea.maven.importing.worktree.MavenExternalSource;
-import org.jetbrains.idea.maven.importing.worktree.WorkspaceModuleImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
@@ -69,7 +67,7 @@ public class MavenProjectImporter {
   private final IdeModifiableModelsProvider myModelsProvider;
   private final MavenImportingSettings myImportingSettings;
 
-  private final ModifiableModuleModel myModuleModel;
+  private final ModuleModelProxy myModuleModel;
   private final Module myDummyModule;
 
   private final List<Module> myCreatedModules = new ArrayList<>();
@@ -94,14 +92,18 @@ public class MavenProjectImporter {
     myModelsProvider = modelsProvider;
     myImportingSettings = importingSettings;
 
-    myModuleModel = modelsProvider.getModifiableModuleModel();
+    WorkspaceEntityStorageBuilder diff = ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder();
+
+    myModuleModel = new ModuleModelProxy(diff, myProject);
+    modelsProvider.getModifiableModuleModel(); // call this so that modifiable
     myDummyModule = dummyModule;
   }
 
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
     if (MavenUtil.newModelEnabled(myProject)) {
-      return importProjectAsWorkspaceModel();
+      //return importProjectAsWorkspaceModel();
+      return Collections.emptyList();
     }
     else {
       return importProjectOldWay();
@@ -119,7 +121,7 @@ public class MavenProjectImporter {
     return null;
   }
 
-  private List<MavenProjectsProcessorTask> importProjectAsWorkspaceModel() {
+  /*private List<MavenProjectsProcessorTask> importProjectAsWorkspaceModel() {
     //todo need to rewrite MavenModuleImporter and remove duplicated code in this method
     Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges = myProjectsToImportWithChanges;
 
@@ -193,7 +195,7 @@ public class MavenProjectImporter {
     // legacy importerss
 
     return postTasks;
-  }
+  }*/
 
   private void saveFacets(IdeModifiableModelsProviderBridge providerForFacets, ModuleManager moduleManager) {
     WriteAction.runAndWait(() -> {
