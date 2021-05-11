@@ -7,6 +7,7 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -103,6 +104,11 @@ fun validateJavaVersion(sdkProperty: GraphProperty<Sdk?>, javaVersion: String?):
 }
 
 fun setupNewModuleJdk(modifiableRootModel: ModifiableRootModel, selectedJdk: Sdk?, isCreatingNewProject: Boolean): Sdk? {
+  if (ApplicationManager.getApplication().isUnitTestMode && selectedJdk == modifiableRootModel.sdk) {
+    // do not change SDK in tests
+    return selectedJdk
+  }
+
   val sdk = selectedJdk ?: getProjectJdk(modifiableRootModel.project)
   if (sdk != null) {
     if (isCreatingNewProject || (!isCreatingNewProject && sdk == getProjectJdk(modifiableRootModel.project))) {

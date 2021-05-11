@@ -1,5 +1,6 @@
 package com.intellij.ide.starters.local
 
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.vfs.VirtualFile
 
 internal class GeneratorContext(
@@ -9,6 +10,8 @@ internal class GeneratorContext(
   val artifact: String,
   val version: String,
   val testRunnerId: String?,
+  val rootPackage: String,
+  val sdkVersion: JavaSdkVersion?,
   private val languageId: String,
   private val libraryIds: Set<String>,
   private val dependencyConfig: DependencyConfig,
@@ -47,7 +50,22 @@ internal class GeneratorContext(
   /**
    * Renders propertyId as ${propertyId}.
    */
-  fun asPlaceholder(propertyId: String) : String {
+  fun asPlaceholder(propertyId: String): String {
     return "\${$propertyId}"
   }
+
+  fun isSdkAtLeast(version: String): Boolean {
+    val desiredSdkVersion = JavaSdkVersion.fromVersionString(version)
+    return desiredSdkVersion != null && sdkVersion != null && sdkVersion.isAtLeast(desiredSdkVersion)
+  }
+
+  val rootPackagePath: String
+    get() {
+      return rootPackage.replace(".", "/").removeSuffix("/")
+    }
+
+  val sdkFeatureVersion: Int
+    get() {
+      return sdkVersion?.maxLanguageLevel?.toJavaVersion()?.feature ?: 0
+    }
 }

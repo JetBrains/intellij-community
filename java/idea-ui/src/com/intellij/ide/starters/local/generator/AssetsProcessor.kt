@@ -22,7 +22,7 @@ internal class AssetsProcessor {
       else
         ""
 
-      val outputDirectory = VfsUtil.createDirectoryIfMissing(context.outputDirectory.path)
+      val outputDirectory = VfsUtil.createDirectoryIfMissing(context.outputDirectory.fileSystem, context.outputDirectory.path)
                             ?: throw IllegalStateException("Unable to create directory ${context.outputDirectory.path}")
 
       if (asset is GeneratorEmptyDirectory) {

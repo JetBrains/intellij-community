@@ -25,9 +25,13 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.setupNewModuleJdk
 import com.intellij.openapi.startup.StartupManager
@@ -37,6 +41,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.ui.GuiUtils
 import com.intellij.util.lang.JavaVersion
+import org.jetbrains.annotations.Nullable
 import java.io.IOException
 import java.net.URL
 import javax.swing.Icon
@@ -46,6 +51,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   companion object {
     @JvmStatic
     private val VALID_PACKAGE_NAME_PATTERN: Regex = Regex("[^a-zA-Z0-9_.]")
+
     @JvmStatic
     private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> =
       ExtensionPointName.create("com.intellij.starter.moduleImporter")
@@ -106,13 +112,13 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   abstract override fun getPresentableName(): String
   abstract override fun getDescription(): String
 
-  protected abstract fun getProjectTypes() : List<StarterProjectType>
+  protected abstract fun getProjectTypes(): List<StarterProjectType>
   protected abstract fun getLanguages(): List<StarterLanguage>
   protected abstract fun getStarterPack(): StarterPack
   protected abstract fun getTestFrameworks(): List<StarterTestRunner>
   protected abstract fun getAssets(starter: Starter): List<GeneratorAsset>
   protected open fun isExampleCodeProvided(): Boolean = false
-  protected open fun getMinJavaVersion() : JavaVersion? = LanguageLevel.JDK_1_8.toJavaVersion()
+  protected open fun getMinJavaVersion(): JavaVersion? = LanguageLevel.JDK_1_8.toJavaVersion()
 
   protected open fun getCustomizedMessages(): CustomizedMessages? = null
 
@@ -148,7 +154,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     startGenerator(module)
   }
 
-  private fun createSettings() : StarterWizardSettings {
+  private fun createSettings(): StarterWizardSettings {
     return StarterWizardSettings(
       getProjectTypes(),
       getLanguages(),
@@ -174,7 +180,9 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   }
 
   override fun createWizardSteps(context: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> {
-    return arrayOf(createLibrariesStep(StarterContextProvider(this, context.disposable, starterContext, context, starterSettings, ::getStarterPack)))
+    return arrayOf(createLibrariesStep(
+      StarterContextProvider(this, context.disposable, starterContext, context, starterSettings, ::getStarterPack)
+    ))
   }
 
   protected open fun createOptionsStep(contextProvider: StarterContextProvider): StarterInitialStep {
@@ -189,7 +197,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     return listOf(ProjectSettingsStep::class.java)
   }
 
-  internal fun getMinJavaVersionInternal() : JavaVersion? = getMinJavaVersion()
+  internal fun getMinJavaVersionInternal(): JavaVersion? = getMinJavaVersion()
 
   override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
     setupNewModuleJdk(modifiableRootModel, moduleJdk, starterContext.isCreatingNewProject)
@@ -197,10 +205,22 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   }
 
   private fun startGenerator(module: Module) {
-    val moduleContentRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath!!.replace("\\", "/"))
-                            ?: throw IllegalStateException("Module root not found")
+    val moduleContentRoot =
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath!!.replace("\\", "/"))
+        ?: throw IllegalStateException("Module root not found")
+      }
+      else {
+        val contentEntries = ModuleRootManager.getInstance(module).contentEntries
+        contentEntries.first { it.sourceFolders.isNotEmpty() }.file!!
+      }
 
     val starter = starterContext.starter ?: throw IllegalStateException("Starter is not set")
+    val dependencyConfig = starterContext.starterDependencyConfig ?: error("Starter dependency config is not set")
+    val sdk = ModuleRootManager.getInstance(module).sdk
+
+    val rootPackage = getPackageName(starterContext.group, starterContext.artifact)
+
     val generatorContext = GeneratorContext(
       starter.id,
       module.name,
@@ -208,47 +228,65 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       starterContext.artifact,
       starterContext.version,
       starterContext.testFramework!!.id,
+      rootPackage,
+      sdk?.let { JavaSdk.getInstance().getVersion(it) },
       starterContext.language.id,
       starterContext.libraryIds,
-      starterContext.starterDependencyConfig ?: error("Starter dependency config is not set"),
-      getGeneratorContextProperties(),
+      dependencyConfig,
+      getGeneratorContextProperties(sdk, dependencyConfig),
       getAssets(starter),
       moduleContentRoot
     )
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
-        WriteAction.runAndWait<Throwable> {
-          try {
-            AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
-          }
-          catch (e: IOException) {
-            logger<StarterModuleBuilder>().error("Unable to create module by template", e)
-
-            ApplicationManager.getApplication().invokeLater {
-              Messages.showErrorDialog(
-                JavaStartersBundle.message("starter.generation.error", e.message ?: ""),
-                presentableName)
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        {
+          WriteAction.runAndWait<Throwable> {
+            try {
+              AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
             }
+            catch (e: IOException) {
+              logger<StarterModuleBuilder>().error("Unable to create module by template", e)
+
+              ApplicationManager.getApplication().invokeLater {
+                Messages.showErrorDialog(
+                  JavaStartersBundle.message("starter.generation.error", e.message ?: ""),
+                  presentableName)
+              }
+            }
+
+            applyAdditionalChanges(module)
           }
+        },
+        JavaStartersBundle.message("starter.generation.progress", presentableName),
+        true, module.project)
 
-          applyAdditionalChanges(module)
-        }
-      },
-      JavaStartersBundle.message("starter.generation.progress", presentableName),
-      true, module.project)
+      StartupManager.getInstance(module.project).runAfterOpened {  // IDEA-244863
+        GuiUtils.invokeLaterIfNeeded(Runnable {
+          if (module.isDisposed) return@Runnable
 
-    StartupManager.getInstance(module.project).runAfterOpened {  // IDEA-244863
-      GuiUtils.invokeLaterIfNeeded(Runnable {
-        if (module.isDisposed) return@Runnable
+          ReformatCodeProcessor(module.project, module, false).run()
+          // import of module may dispose it and create another, open files first
+          openSampleFiles(module, getFilePathsToOpen())
 
-        ReformatCodeProcessor(module.project, module, false).run()
-        // import of module may dispose it and create another, open files first
-        openSampleFiles(module, getFilePathsToOpen())
-
-        importModule(module)
-      }, ModalityState.NON_MODAL, module.disposed)
+          importModule(module)
+        }, ModalityState.NON_MODAL, module.disposed)
+      }
     }
+    else {
+      // test mode, open files immediately, do not import module
+      AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
+      ReformatCodeProcessor(module.project, module, false).run()
+      openSampleFiles(module, getFilePathsToOpen())
+    }
+  }
+
+  override fun doAddContentEntry(modifiableRootModel: ModifiableRootModel): ContentEntry? {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      // do not create new content entry
+      return modifiableRootModel.contentEntries.first { it.sourceFolders.isNotEmpty() }
+    }
+    return super.doAddContentEntry(modifiableRootModel)
   }
 
   open fun getTemplateProperties(): Map<String, Any> = emptyMap()
@@ -261,9 +299,8 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     return javaClass.getResource(resourcePath) ?: error("Failed to get resource: $resourcePath")
   }
 
-  protected open fun getGeneratorContextProperties(): Map<String, String> {
-    val packageName = getPackageName(starterContext.group, starterContext.artifact)
-    return mapOf("rootPackage" to packageName)
+  protected open fun getGeneratorContextProperties(sdk: @Nullable Sdk?, dependencyConfig: DependencyConfig): Map<String, String> {
+    return emptyMap()
   }
 
   protected fun getSamplesExt(language: StarterLanguage): String {
@@ -273,5 +310,10 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       "kotlin" -> "kt"
       else -> throw UnsupportedOperationException()
     }
+  }
+
+  protected fun getPackagePath(group: String, artifact: String): String {
+    val packageName = getPackageName(group, artifact)
+    return packageName.replace(".", "/").removeSuffix("/")
   }
 }
