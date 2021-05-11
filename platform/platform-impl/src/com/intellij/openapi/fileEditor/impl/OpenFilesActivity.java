@@ -55,8 +55,7 @@ final class OpenFilesActivity implements StartupActivity {
     if (dir != null) {
       VirtualFile readme = dir.findChild("README.md");
       if (readme != null && !readme.isDirectory()) {
-        readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW);
-        ApplicationManager.getApplication().invokeLater(() -> manager.openFile(readme, true), project.getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> TextEditorWithPreview.openPreviewForFile(project, readme), project.getDisposed());
       }
     }
   }
