@@ -125,7 +125,7 @@ public class ClsStubBuilderTestGenerated extends AbstractClsStubBuilderTest {
 
     @TestMetadata("InnerClassEnumEntry")
     public void testInnerClassEnumEntry() throws Exception {
-        runTest("idea/testData/decompiler/stubBuilder/InnerClassEnumEntry/");
+        runTest("testData/decompiler/stubBuilder/InnerClassEnumEntry/");
     }
 
     @TestMetadata("InnerTypes")

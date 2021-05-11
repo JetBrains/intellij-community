@@ -398,6 +398,11 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
                 runTest("testData/compiler/loadJava/compiledKotlin/annotations/types/ClassLiteralArgument.kt");
             }
 
+            @TestMetadata("DefinitelyNotNull.kt")
+            public void testDefinitelyNotNull() throws Exception {
+                runTest("testData/compiler/loadJava/compiledKotlin/annotations/types/DefinitelyNotNull.kt");
+            }
+
             @TestMetadata("ReceiverParameter.kt")
             public void testReceiverParameter() throws Exception {
                 runTest("testData/compiler/loadJava/compiledKotlin/annotations/types/ReceiverParameter.kt");
