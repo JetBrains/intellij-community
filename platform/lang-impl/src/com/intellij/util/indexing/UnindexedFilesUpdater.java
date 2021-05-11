@@ -220,6 +220,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
           biggestProviderFiles = providerFiles.size();
           biggestProvider = provider;
         }
+        takenFiles += providerFiles.size();
       }
       if (fileSets.isEmpty() || biggestProvider == null) {
         break;
