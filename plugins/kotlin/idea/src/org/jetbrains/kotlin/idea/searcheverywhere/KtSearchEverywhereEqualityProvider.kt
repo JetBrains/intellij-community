@@ -84,7 +84,7 @@ private fun getGroupLeader(element: PsiElement): KtFile? {
     }
 
     if (element is KtLightClassForFacade &&
-        element.fqName.shortName().asString().removeSuffix("Kt") == element.containingFile.virtualFile.nameWithoutExtension
+        element.facadeClassFqName.shortName().asString().removeSuffix("Kt") == element.containingFile.virtualFile.nameWithoutExtension
     ) {
         return element.containingFile.ktFile
     }

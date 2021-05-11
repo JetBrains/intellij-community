@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
 import org.jetbrains.kotlin.resolve.scopes.MemberScope;
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.idea.test.TestMetadata;
+import org.jetbrains.kotlin.test.TestMetadata;
 import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
