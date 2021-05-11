@@ -9,12 +9,13 @@ import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.fir.low.level.api.compiler.based.AbstractCompilerBasedTest
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.runners.baseFirDiagnosticTestConfiguration
-import org.jetbrains.kotlin.idea.fir.low.level.api.compiler.based.IdeTestIgnoreHandler
 import org.jetbrains.kotlin.idea.fir.low.level.api.compiler.based.addIdeTestIgnoreHandler
+import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE
 
 abstract class AbstractDiagnosisCompilerTestDataTest : AbstractCompilerBasedTest() {
     override fun TestConfigurationBuilder.configureTest() {
         baseFirDiagnosticTestConfiguration(baseDir = AdditionalKotlinArtifacts.compilerTestDataDir.canonicalPath)
+        FirLazyTransformerForIDE.enableDeepEnsure = true
         addIdeTestIgnoreHandler()
     }
 }
