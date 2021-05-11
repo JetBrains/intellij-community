@@ -20,6 +20,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -71,6 +72,7 @@ public class RunExternalSystemTaskAction extends ExternalSystemNodeAction<TaskDa
       result = context.getConfiguration();
       if (result != null) {
         context.getRunManager().setTemporaryConfiguration(result);
+        RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), result.getType().getId(), context.getPlace());
       }
     }
     return result;

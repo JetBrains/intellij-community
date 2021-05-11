@@ -40,6 +40,7 @@ public abstract class ActionPlaces {
   public static final String TOOLWINDOW_CONTENT = "ToolwindowContent";
   public static final String EDITOR_INSPECTIONS_TOOLBAR = "EditorInspectionsToolbar";
   public static final String LEARN_TOOLWINDOW = "LearnToolwindow";
+  public static final String TOOLWINDOW_GRADLE = "Gradle tool window";
 
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
@@ -188,7 +189,7 @@ public abstract class ActionPlaces {
     TEXT_EDITOR_WITH_PREVIEW, NOTIFICATION, FILE_STRUCTURE_POPUP,
     RIDER_UNIT_TESTS_LEFT_TOOLBAR, RIDER_UNIT_TESTS_TOP_TOOLBAR, RIDER_UNIT_TESTS_SESSION_POPUP, RIDER_UNIT_TESTS_EXPLORER_POPUP,
     RIDER_UNIT_TESTS_PROGRESSBAR_POPUP, RIDER_UNIT_TESTS_QUICKLIST,
-    QUICK_SWITCH_SCHEME_POPUP, RUN_CONFIGURATION_EDITOR
+    QUICK_SWITCH_SCHEME_POPUP, RUN_CONFIGURATION_EDITOR, TOOLWINDOW_GRADLE
   );
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
