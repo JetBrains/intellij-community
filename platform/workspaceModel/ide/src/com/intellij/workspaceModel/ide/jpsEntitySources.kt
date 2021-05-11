@@ -26,19 +26,14 @@ sealed class JpsProjectConfigLocation {
     get() = baseDirectoryUrl.url
 
   abstract val baseDirectoryUrl: VirtualFileUrl
-  abstract fun exists(): Boolean
 
   data class DirectoryBased(val projectDir: VirtualFileUrl) : JpsProjectConfigLocation() {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = projectDir
-
-    override fun exists() = JpsPathUtil.urlToFile(projectDir.url).exists()
   }
   data class FileBased(val iprFile: VirtualFileUrl, val iprFileParent: VirtualFileUrl) : JpsProjectConfigLocation() {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = iprFileParent
-
-    override fun exists() = JpsPathUtil.urlToFile(iprFile.url).exists()
   }
 }
 
