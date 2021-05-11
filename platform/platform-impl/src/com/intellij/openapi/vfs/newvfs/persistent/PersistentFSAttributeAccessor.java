@@ -24,16 +24,17 @@ final class PersistentFSAttributeAccessor {
 
   private final boolean myBulkAttrReadSupport;
   private final boolean myInlineAttributes;
+  private final PersistentFSConnection myFSConnection;
 
-  PersistentFSAttributeAccessor(boolean bulkAttrReadSupport, boolean inlineAttributes) {
+  PersistentFSAttributeAccessor(boolean bulkAttrReadSupport, boolean inlineAttributes, @NotNull PersistentFSConnection connection) {
     myBulkAttrReadSupport = bulkAttrReadSupport;
     myInlineAttributes = inlineAttributes;
+    myFSConnection = connection;
   }
 
   @Nullable
-  DataInputStream readAttribute(int fileId,
-                                @NotNull FileAttribute attribute,
-                                @NotNull PersistentFSConnection connection) throws IOException {
+  DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
+    PersistentFSConnection connection = myFSConnection;
     PersistentFSConnection.ensureIdIsValid(fileId);
 
     int recordId = connection.getRecords().getAttributeRecordId(fileId);
@@ -76,16 +77,14 @@ final class PersistentFSAttributeAccessor {
     return stream;
   }
 
-  boolean hasAttributePage(int fileId,
-                           @NotNull FileAttribute attr,
-                           @NotNull PersistentFSConnection connection) throws IOException {
-    return findAttributePage(fileId, attr, false, connection) != 0;
+  boolean hasAttributePage(int fileId, @NotNull FileAttribute attr) throws IOException {
+    return findAttributePage(fileId, attr, false) != 0;
   }
 
   private int findAttributePage(int fileId,
                                 @NotNull FileAttribute attr,
-                                boolean toWrite,
-                                @NotNull PersistentFSConnection connection) throws IOException {
+                                boolean toWrite) throws IOException {
+    PersistentFSConnection connection = myFSConnection;
     PersistentFSConnection.ensureIdIsValid(fileId);
 
     int recordId = connection.getRecords().getAttributeRecordId(fileId);
@@ -150,8 +149,8 @@ final class PersistentFSAttributeAccessor {
   }
 
   @NotNull
-  DataOutputStream writeAttribute(int fileId, @NotNull FileAttribute attribute, @NotNull PersistentFSConnection connection) {
-    DataOutputStream stream = new AttributeOutputStream(fileId, attribute, connection);
+  DataOutputStream writeAttribute(int fileId, @NotNull FileAttribute attribute) {
+    DataOutputStream stream = new AttributeOutputStream(fileId, attribute);
     if (attribute.isVersioned()) {
       try {
         DataInputOutputUtil.writeINT(stream, attribute.getVersion());
@@ -163,7 +162,8 @@ final class PersistentFSAttributeAccessor {
     return stream;
   }
 
-  void deleteAttributes(int id, @NotNull PersistentFSConnection connection) throws IOException {
+  void deleteAttributes(int id) throws IOException {
+    PersistentFSConnection connection = myFSConnection;
     int attPage = connection.getRecords().getAttributeRecordId(id);
     if (attPage != 0) {
       try (final DataInputStream attStream = connection.getAttributes().readStream(attPage)) {
@@ -190,17 +190,12 @@ final class PersistentFSAttributeAccessor {
   private final class AttributeOutputStream extends DataOutputStream {
     @NotNull
     private final FileAttribute myAttribute;
-    @NotNull
-    private final PersistentFSConnection myConnection;
     private final int myFileId;
 
-    private AttributeOutputStream(final int fileId,
-                                  @NotNull FileAttribute attribute,
-                                  @NotNull PersistentFSConnection connection) {
+    private AttributeOutputStream(final int fileId, @NotNull FileAttribute attribute) {
       super(new BufferExposingByteArrayOutputStream());
       myFileId = fileId;
       myAttribute = attribute;
-      myConnection = connection;
     }
 
     @Override
@@ -210,42 +205,42 @@ final class PersistentFSAttributeAccessor {
 
       if (myInlineAttributes && _out.size() < MAX_SMALL_ATTR_SIZE) {
         rewriteDirectoryRecordWithAttrContent(_out);
-        myConnection.incLocalModCount();
+        myFSConnection.incLocalModCount();
       }
       else {
-        myConnection.incLocalModCount();
-        int page = findAttributePage(myFileId, myAttribute, true, myConnection);
+        myFSConnection.incLocalModCount();
+        int page = findAttributePage(myFileId, myAttribute, true);
         if (myInlineAttributes && page < 0) {
           rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());
-          page = findAttributePage(myFileId, myAttribute, true, myConnection);
+          page = findAttributePage(myFileId, myAttribute, true);
         }
 
         if (myBulkAttrReadSupport) {
           BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
           out = stream;
-          writeRecordHeader(myConnection.getAttributeId(myAttribute.getId()), myFileId, this);
+          writeRecordHeader(myFSConnection.getAttributeId(myAttribute.getId()), myFileId, this);
           write(_out.getInternalBuffer(), 0, _out.size());
-          myConnection.getAttributes().writeBytes(page, stream.toByteArraySequence(), myAttribute.isFixedSize());
+          myFSConnection.getAttributes().writeBytes(page, stream.toByteArraySequence(), myAttribute.isFixedSize());
         }
         else {
-          myConnection.getAttributes().writeBytes(page, _out.toByteArraySequence(), myAttribute.isFixedSize());
+          myFSConnection.getAttributes().writeBytes(page, _out.toByteArraySequence(), myAttribute.isFixedSize());
         }
       }
     }
 
     void rewriteDirectoryRecordWithAttrContent(@NotNull BufferExposingByteArrayOutputStream _out) throws IOException {
-      int recordId = myConnection.getRecords().getAttributeRecordId(myFileId);
+      int recordId = myFSConnection.getRecords().getAttributeRecordId(myFileId);
       assert myInlineAttributes;
-      int encodedAttrId = myConnection.getAttributeId(myAttribute.getId());
+      int encodedAttrId = myFSConnection.getAttributeId(myAttribute.getId());
 
-      Storage storage = myConnection.getAttributes();
+      Storage storage = myFSConnection.getAttributes();
       BufferExposingByteArrayOutputStream unchangedPreviousDirectoryStream = null;
       boolean directoryRecord = false;
 
 
       if (recordId == 0) {
         recordId = storage.createNewRecord();
-        myConnection.getRecords().setAttributeRecordId(myFileId, recordId);
+        myFSConnection.getRecords().setAttributeRecordId(myFileId, recordId);
         directoryRecord = true;
       }
       else {
@@ -334,24 +329,22 @@ final class PersistentFSAttributeAccessor {
 
   void checkAttributesStorageSanity(int id,
                                     @NotNull IntList usedAttributeRecordIds,
-                                    @NotNull IntList validAttributeIds,
-                                    @NotNull PersistentFSConnection connection) throws IOException {
-    int attributeRecordId = connection.getRecords().getAttributeRecordId(id);
+                                    @NotNull IntList validAttributeIds) throws IOException {
+    int attributeRecordId = myFSConnection.getRecords().getAttributeRecordId(id);
 
     assert attributeRecordId >= 0;
     if (attributeRecordId > 0) {
-      checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds, connection);
+      checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
     }
   }
 
   private void checkAttributesSanity(int attributeRecordId,
-                                            @NotNull IntList usedAttributeRecordIds,
-                                            @NotNull IntList validAttributeIds,
-                                            @NotNull PersistentFSConnection connection) throws IOException {
+                                     @NotNull IntList usedAttributeRecordIds,
+                                     @NotNull IntList validAttributeIds) throws IOException {
     assert !usedAttributeRecordIds.contains(attributeRecordId);
     usedAttributeRecordIds.add(attributeRecordId);
 
-    try (DataInputStream dataInputStream = connection.getAttributes().readStream(attributeRecordId)) {
+    try (DataInputStream dataInputStream = myFSConnection.getAttributes().readStream(attributeRecordId)) {
       if (myBulkAttrReadSupport) skipRecordHeader(dataInputStream, 0, 0);
 
       while (dataInputStream.available() > 0) {
@@ -376,7 +369,7 @@ final class PersistentFSAttributeAccessor {
         assert !usedAttributeRecordIds.contains(attDataRecordIdOrSize);
         usedAttributeRecordIds.add(attDataRecordIdOrSize);
 
-        connection.getAttributes().checkSanity(attDataRecordIdOrSize);
+        myFSConnection.getAttributes().checkSanity(attDataRecordIdOrSize);
       }
     }
   }

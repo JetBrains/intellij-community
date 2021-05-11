@@ -41,7 +41,6 @@ import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class FSRecords {
-
   static final Logger LOG = Logger.getInstance(FSRecords.class);
 
   public static final boolean useContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
@@ -52,11 +51,11 @@ public final class FSRecords {
   static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  static volatile PersistentFSConnection ourConnection;
-  static volatile PersistentFSContentAccessor ourContentAccessor;
-  static volatile PersistentFSAttributeAccessor ourAttributeAccessor;
-  static volatile PersistentFSTreeAccessor ourTreeAccessor;
-  static volatile PersistentFSRecordAccessor ourRecordAccessor;
+  private static volatile PersistentFSConnection ourConnection;
+  private static volatile PersistentFSContentAccessor ourContentAccessor;
+  private static volatile PersistentFSAttributeAccessor ourAttributeAccessor;
+  private static volatile PersistentFSTreeAccessor ourTreeAccessor;
+  private static volatile PersistentFSRecordAccessor ourRecordAccessor;
 
   private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1<<bits) && value >= 0 : value;
@@ -67,10 +66,8 @@ public final class FSRecords {
   private static int nextMask(boolean value, int prevMask) {
     return nextMask(value ? 1 : 0, 1, prevMask);
   }
-  private static int nextMask(@SuppressWarnings("SameParameterValue") int versionValue, int prevMask) {
-    return nextMask(versionValue, 8, prevMask);
-  }
   static final int VERSION = nextMask(59,  // acceptable range is [0..255]
+                             8,
                              nextMask(useContentHashes,
                              nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
                              nextMask(bulkAttrReadSupport,
@@ -138,12 +135,12 @@ public final class FSRecords {
 
   static void connect() {
     ourConnection = PersistentFSConnector.connect(getCachesDir(), getVersion(), useContentHashes);
-    ourContentAccessor = new PersistentFSContentAccessor(useContentHashes);
-    ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes);
-    ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourStoreRootsSeparately);
-    ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor);
+    ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
+    ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes, ourConnection);
+    ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourStoreRootsSeparately, ourConnection);
+    ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor, ourConnection);
     try {
-      ourTreeAccessor.ensureLoaded(ourConnection);
+      ourTreeAccessor.ensureLoaded();
     }
     catch (IOException e) {
       handleError(e);
@@ -161,7 +158,7 @@ public final class FSRecords {
 
   // todo: Address  / capacity store in records table, size store with payload
   public static int createRecord() {
-    return writeAndHandleErrors(() -> ourRecordAccessor.createRecord(ourConnection));
+    return writeAndHandleErrors(() -> ourRecordAccessor.createRecord());
   }
 
   static void deleteRecordRecursively(int id) {
@@ -176,12 +173,12 @@ public final class FSRecords {
       markAsDeletedRecursively(subRecord);
     }
 
-    ourRecordAccessor.addToFreeRecordsList(id, ourConnection);
+    ourRecordAccessor.addToFreeRecordsList(id);
   }
 
   @TestOnly
   static int @NotNull [] listRoots() {
-    return readAndHandleErrors(() -> ourTreeAccessor.listRoots(ourConnection));
+    return readAndHandleErrors(() -> ourTreeAccessor.listRoots());
   }
 
   @TestOnly
@@ -200,25 +197,25 @@ public final class FSRecords {
   }
 
   static int findRootRecord(@NotNull String rootUrl) {
-    return writeAndHandleErrors(() -> ourTreeAccessor.findOrCreateRootRecord(rootUrl, ourConnection, () -> createRecord()));
+    return writeAndHandleErrors(() -> ourTreeAccessor.findOrCreateRootRecord(rootUrl, () -> createRecord()));
   }
 
   static void deleteRootRecord(int fileId) {
-    writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(fileId, ourConnection));
+    writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(fileId));
   }
 
   static int @NotNull [] listIds(int fileId) {
-    return readAndHandleErrors(() -> ourTreeAccessor.listIds(fileId, ourConnection));
+    return readAndHandleErrors(() -> ourTreeAccessor.listIds(fileId));
   }
 
   static boolean mayHaveChildren(int fileId) {
-    return readAndHandleErrors(() -> ourTreeAccessor.mayHaveChildren(fileId, ourConnection));
+    return readAndHandleErrors(() -> ourTreeAccessor.mayHaveChildren(fileId));
   }
 
   // returns child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
   @NotNull
   static ListResult list(int parentId) {
-    return readAndHandleErrors(() -> ourTreeAccessor.doLoadChildren(parentId, ourConnection));
+    return readAndHandleErrors(() -> ourTreeAccessor.doLoadChildren(parentId));
   }
 
   @NotNull
@@ -227,7 +224,7 @@ public final class FSRecords {
   }
 
   static boolean wereChildrenAccessed(int id) {
-    return readAndHandleErrors(() -> ourTreeAccessor.wereChildrenAccessed(id, ourConnection));
+    return readAndHandleErrors(() -> ourTreeAccessor.wereChildrenAccessed(id));
   }
 
   static <T> T readAndHandleErrors(@NotNull ThrowableComputable<T, ? extends Exception> action) {
@@ -243,16 +240,14 @@ public final class FSRecords {
 
     r.lock();
     try {
-      try {
-        return action.compute();
-      }
-      finally {
-        r.unlock();
-      }
+      return action.compute();
     }
     catch (Throwable e) {
       handleError(e);
       throw new RuntimeException(e);
+    }
+    finally {
+      r.unlock();
     }
   }
 
@@ -270,7 +265,7 @@ public final class FSRecords {
     }
   }
 
-  static void writeAndHandleErrors(@NotNull ThrowableRunnable<?> action) {
+  private static void writeAndHandleErrors(@NotNull ThrowableRunnable<?> action) {
     w.lock();
     try {
       action.run();
@@ -322,7 +317,7 @@ public final class FSRecords {
           LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
         }
         updateSymlinksForNewChildren(parent, children, toSave);
-        ourTreeAccessor.doSaveChildren(parentId, toSave, ourConnection);
+        ourTreeAccessor.doSaveChildren(parentId, toSave);
       }
       return toSave;
     }
@@ -577,9 +572,7 @@ public final class FSRecords {
 
   @Nullable
   static DataInputStream readContent(int fileId) {
-    ThrowableComputable<DataInputStream, IOException> computable = readAndHandleErrors(() -> {
-      return ourContentAccessor.readContent(fileId, ourConnection);
-    });
+    ThrowableComputable<DataInputStream, IOException> computable = readAndHandleErrors(() -> ourContentAccessor.readContent(fileId));
     if (computable == null) return null;
     try {
       return computable.compute();
@@ -596,7 +589,7 @@ public final class FSRecords {
   @NotNull
   static DataInputStream readContentById(int contentId) {
     try {
-      return ourContentAccessor.readContentDirectly(contentId, ourConnection);
+      return ourContentAccessor.readContentDirectly(contentId);
     }
     catch (Throwable e) {
       handleError(e);
@@ -627,16 +620,15 @@ public final class FSRecords {
   // must be called under r or w lock
   @Nullable
   private static DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
-
-    return ourAttributeAccessor.readAttribute(fileId, attribute, ourConnection);
+    return ourAttributeAccessor.readAttribute(fileId, attribute);
   }
 
   static int acquireFileContent(int fileId) {
-    return writeAndHandleErrors(() -> ourContentAccessor.acquireContentRecord(fileId, ourConnection));
+    return writeAndHandleErrors(() -> ourContentAccessor.acquireContentRecord(fileId));
   }
 
   static void releaseContent(int contentId) {
-    writeAndHandleErrors(() -> ourContentAccessor.releaseContentRecord(contentId, ourConnection));
+    writeAndHandleErrors(() -> ourContentAccessor.releaseContentRecord(contentId));
   }
 
   static int getContentId(int fileId) {
@@ -645,12 +637,12 @@ public final class FSRecords {
 
   @TestOnly
   static byte[] getContentHash(int fileId) {
-    return readAndHandleErrors(() -> ourContentAccessor.getContentHash(fileId, ourConnection));
+    return readAndHandleErrors(() -> ourContentAccessor.getContentHash(fileId));
   }
 
   @NotNull
   static DataOutputStream writeContent(int fileId, boolean readOnly) {
-    return new DataOutputStream(ourContentAccessor.new ContentOutputStream(fileId, readOnly, ourConnection)) {
+    return new DataOutputStream(ourContentAccessor.new ContentOutputStream(fileId, readOnly)) {
       @Override
       public void close() {
         writeAndHandleErrors(() -> {
@@ -665,19 +657,19 @@ public final class FSRecords {
 
   static void writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean readOnly) {
     writeAndHandleErrors(() -> {
-      if (ourContentAccessor.writeContent(fileId, bytes, readOnly, ourConnection)) {
+      if (ourContentAccessor.writeContent(fileId, bytes, readOnly)) {
         incModCount(fileId);
       }
     });
   }
 
   static int storeUnlinkedContent(byte[] bytes) {
-    return writeAndHandleErrors(() -> ourContentAccessor.allocateContentRecordAndStore(bytes, ourConnection));
+    return writeAndHandleErrors(() -> ourContentAccessor.allocateContentRecordAndStore(bytes));
   }
 
   @NotNull
   public static DataOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
-    DataOutputStream dataOutputStream = ourAttributeAccessor.writeAttribute(fileId, att, ourConnection);
+    DataOutputStream dataOutputStream = ourAttributeAccessor.writeAttribute(fileId, att);
     return new DataOutputStream(dataOutputStream) {
       @Override
       public void close() {
@@ -686,7 +678,7 @@ public final class FSRecords {
     };
   }
 
-  public static PersistentFSPaths getPersistentFSPaths() {
+  public static @NotNull PersistentFSPaths getPersistentFSPaths() {
     return new PersistentFSPaths(getCachesDir());
   }
 
@@ -712,7 +704,7 @@ public final class FSRecords {
 
   static void checkSanity() {
     writeAndHandleErrors(() -> {
-      ourRecordAccessor.checkSanity(ourConnection);
+      ourRecordAccessor.checkSanity();
       return null;
     });
   }
