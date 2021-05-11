@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.perf;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
-import org.jetbrains.kotlin.idea.test.TestMetadata;
+import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
 import java.io.File;

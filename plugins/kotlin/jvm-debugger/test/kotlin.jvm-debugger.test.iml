@@ -16,6 +16,7 @@
     <orderEntry type="library" scope="TEST" name="jb-jdi" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />

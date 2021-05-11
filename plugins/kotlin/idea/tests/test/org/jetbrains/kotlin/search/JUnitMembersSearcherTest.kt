@@ -3,13 +3,13 @@ package org.jetbrains.kotlin.search
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.utils.PathUtil.getResourcePathForClass
-import org.jetbrains.kotlin.idea.test.TestMetadata
+import org.jetbrains.kotlin.test.TestMetadata
 import java.io.IOException
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import com.intellij.psi.search.searches.AnnotatedMembersSearch
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

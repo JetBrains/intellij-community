@@ -7,7 +7,7 @@ import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.*
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.internal.runners.JUnit38ClassRunner
-import org.jetbrains.kotlin.idea.test.TestMetadata
+import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.runner.RunWith
 

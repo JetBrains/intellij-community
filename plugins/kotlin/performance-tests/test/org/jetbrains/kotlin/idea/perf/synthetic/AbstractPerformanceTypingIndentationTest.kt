@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.perf.performanceTest
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.testFramework.dispatchAllInvocationEvents
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 
