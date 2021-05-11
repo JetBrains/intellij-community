@@ -313,7 +313,7 @@ public final class VfsData {
     /**
      * sorted by {@link VfsData#getNameByFileId(int)}
      * assigned under lock(this) only; never modified in-place
-     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence)
+     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
      */
     volatile int @NotNull [] myChildrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
     volatile boolean myAllChildrenLoaded;
