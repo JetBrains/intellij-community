@@ -1,3 +1,4 @@
+
 class Foo
 
 class C {
