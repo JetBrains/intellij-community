@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -36,6 +38,7 @@ public class MacWinTabsHandler {
   private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
 
   private final JFrame myFrame;
+  private final boolean myFrameAllowed;
   private boolean myShowFrame;
   private boolean myInitFrame;
 
@@ -64,8 +67,9 @@ public class MacWinTabsHandler {
 
   public MacWinTabsHandler(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     myFrame = frame;
+    myFrameAllowed = isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, () -> updateTabBars(null));
 
-    if (isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, () -> updateTabBars(null))) {
+    if (myFrameAllowed) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
 
       Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
@@ -79,6 +83,19 @@ public class MacWinTabsHandler {
 
   private static boolean isAllowedFrame(@Nullable JFrame frame) {
     return frame == null || frame instanceof IdeFrameImpl;
+  }
+
+  public void frameInit() {
+    if (!myFrameAllowed || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
+      return;
+    }
+
+    Foundation.executeOnMainThread(true, false, () -> {
+      ID window = MacUtil.getWindowFromJavaWindow(myFrame);
+      String windowId = ApplicationNamesInfo.getInstance().getProductName() +
+                        (PluginManagerCore.isRunningFromSources() ? "-Snapshot" : "") + "-AwtWindow-WithTabs";
+      Foundation.invoke(window, "setTabbingIdentifier:", Foundation.nsString(windowId));
+    });
   }
 
   public void frameShow() {
@@ -104,7 +121,7 @@ public class MacWinTabsHandler {
   }
 
   public void exitFullScreen() {
-    if (!isAllowedFrame(myFrame) || !JdkEx.isTabbingModeAvailable()) {
+    if (!myFrameAllowed) {
       return;
     }
 

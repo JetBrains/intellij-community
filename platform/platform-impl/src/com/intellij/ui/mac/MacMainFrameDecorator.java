@@ -196,6 +196,11 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   }
 
   @Override
+  public void frameInit() {
+    myTabsHandler.frameInit();
+  }
+
+  @Override
   public void frameShow() {
     myTabsHandler.frameShow();
   }
