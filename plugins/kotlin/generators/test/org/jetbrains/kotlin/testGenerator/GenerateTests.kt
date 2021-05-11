@@ -1207,6 +1207,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("handlers/basic", pattern = KT_WITHOUT_DOTS)
         }
 
+        testClass<AbstractFirKeywordCompletionHandlerTest> {
+            model("handlers/keywords", pattern = KT_WITHOUT_DOTS_IN_NAME)
+        }
+
         testClass<AbstractHighLevelWeigherTest> {
             model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS_IN_NAME)
         }
