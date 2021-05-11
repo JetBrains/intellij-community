@@ -29,17 +29,22 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
 
   public boolean addOrdered(int firstIndex, int secondIndex) {
     LongOpenHashSet toAdd = new LongOpenHashSet();
+    LongOpenHashSet toRemove = new LongOpenHashSet();
     toAdd.add(createPair(firstIndex, secondIndex, true));
+    toRemove.add(createPair(firstIndex, secondIndex, false));
     for(DistinctPair pair : this) {
       if (!pair.isOrdered()) continue;
       if (pair.myFirst == secondIndex) {
         if (pair.mySecond == firstIndex || myData.contains(createPair(pair.mySecond, firstIndex, true))) return false;
         toAdd.add(createPair(firstIndex, pair.mySecond, true));
+        toRemove.add(createPair(firstIndex, pair.mySecond, false));
       } else if (pair.mySecond == firstIndex) {
         if (myData.contains(createPair(secondIndex, pair.myFirst, true))) return false;
         toAdd.add(createPair(pair.myFirst, secondIndex, true));
+        toRemove.add(createPair(pair.myFirst, secondIndex, false));
       }
     }
+    myData.removeAll(toRemove);
     myData.addAll(toAdd);
     return true;
   }

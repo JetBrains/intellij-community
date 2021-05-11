@@ -272,7 +272,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public @Nullable DfaMemoryStateImpl tryJoinExactly(DfaMemoryStateImpl that) {
-    StateMerger merger = new StateMerger();
+    StateMerger merger = new StateMerger(this, that);
     if (!merger.update(that.myEphemeral || !myEphemeral, myEphemeral || !that.myEphemeral)) return null;
     if (myStack.size() != that.myStack.size()) return null;
     for (int i = 0; i < myStack.size(); i++) {
@@ -350,12 +350,43 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return result;
     }
   }
+  
+  private static class UpdateVariableMergePatch extends MergePatch {
+    private final DfaVariableValue myValue;
+    private final DfType myType;
+
+    private UpdateVariableMergePatch(DfaVariableValue value, DfType type) {
+      super(false, s -> s.recordVariableType(value, type));
+      myValue = value;
+      myType = type;
+    }
+  }
+  
+  private static class DropOrderingMergePatch extends MergePatch {
+    private final DistinctPairSet.DistinctPair myPair;
+
+    private DropOrderingMergePatch(boolean right, DistinctPairSet.DistinctPair pair) {
+      this(right, pair, ms -> ms.myDistinctClasses.dropOrder(pair));
+    }
+
+    private DropOrderingMergePatch(boolean right, DistinctPairSet.DistinctPair pair, Consumer<DfaMemoryStateImpl> diff) {
+      super(right, diff);
+      myPair = pair;
+    }
+  }
 
   // Two memory states can be merged exactly if a.isSuperState(b) (then return a), b.isSuperState(a) (then return b),
   // or they have mergeable difference in exactly one variable. This class tracks which of these cases are possible.
   private static class StateMerger {
+    private final DfaMemoryStateImpl myLeftState;
+    private final DfaMemoryStateImpl myRightState;
     private boolean myMaybeThisSuper = true, myMaybeThatSuper = true;
     private @Nullable MergePatch mySingleDiff = null;
+
+    private StateMerger(DfaMemoryStateImpl left, DfaMemoryStateImpl right) {
+      myLeftState = left;
+      myRightState = right;
+    }
 
     boolean update(boolean thisSuper, boolean thatSuper, Supplier<MergePatch> singleDiff) {
       if (thisSuper && thatSuper) return true;
@@ -364,11 +395,57 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         assert mySingleDiff == null;
         diff = singleDiff.get();
       }
+      else if (mySingleDiff != null) {
+        diff = tryMergeDiffs(singleDiff);
+      }
       myMaybeThisSuper &= thisSuper;
       myMaybeThatSuper &= thatSuper;
       if (!myMaybeThisSuper && !myMaybeThatSuper && diff == null) return false;
       mySingleDiff = diff;
       return true;
+    }
+
+    @Nullable
+    private MergePatch tryMergeDiffs(Supplier<MergePatch> singleDiff) {
+      if (!(mySingleDiff instanceof DropOrderingMergePatch)) return null;
+      MergePatch diff = singleDiff.get();
+      if (diff instanceof DropOrderingMergePatch && diff.myApplyToRight != mySingleDiff.myApplyToRight) {
+        DistinctPairSet.DistinctPair oldPair = ((DropOrderingMergePatch)mySingleDiff).myPair;
+        DistinctPairSet.DistinctPair newPair = ((DropOrderingMergePatch)diff).myPair;
+        if (oldPair.getFirst().equals(newPair.getSecond()) && newPair.getFirst().equals(oldPair.getSecond())) {
+          // The same pair but found starting from the other state
+          return mySingleDiff;
+        }
+      }
+      // ordering like a < b may affect types of the variables: in this case merge both types and ordering
+      if (diff instanceof UpdateVariableMergePatch) {
+        UpdateVariableMergePatch updateVar = (UpdateVariableMergePatch)diff;
+        DfaVariableValue var = updateVar.myValue;
+        DfaVariableValue otherVar;
+        DistinctPairSet.DistinctPair pair = ((DropOrderingMergePatch)mySingleDiff).myPair;
+        boolean left;
+        if (pair.getFirst().contains(var.getID())) {
+          left = true;
+          otherVar = pair.getSecond().getCanonicalVariable();
+        }
+        else if (pair.getSecond().contains(var.getID())) {
+          left = false;
+          otherVar = pair.getFirst().getCanonicalVariable();
+        } else {
+          return null;
+        }
+        if (otherVar == null) return null;
+        if (mySingleDiff.myApplyToRight) {
+          left = !left;
+        }
+        if (updateVar.myType.meetRelation(left ? RelationType.LT : RelationType.GT, myLeftState.getDfType(otherVar))
+              .equals(myLeftState.getDfType(var)) &&
+            updateVar.myType.meetRelation(left ? RelationType.GT : RelationType.LT, myRightState.getDfType(otherVar))
+              .equals(myRightState.getDfType(var))) {
+          return new DropOrderingMergePatch(mySingleDiff.myApplyToRight, pair, mySingleDiff.myPatcher.andThen(diff.myPatcher));
+        }
+      }
+      return null;
     }
 
     boolean update(boolean thisSuper, boolean thatSuper) {
@@ -380,7 +457,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
                     () -> {
                       DfType type = thisType.tryJoinExactly(thatType);
                       if (type != null) {
-                        return new MergePatch(false, s -> s.recordVariableType(value, type));
+                        return new UpdateVariableMergePatch(value, type);
                       }
                       return null;
                     });
@@ -403,7 +480,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (relation != null && (!pair.isOrdered() || relation == RelationType.LT)) return true;
       return update(rightDistinct, !rightDistinct, () -> {
         if (pair.isOrdered() && relation == RelationType.GT) {
-          return new MergePatch(rightDistinct, ms -> ms.myDistinctClasses.dropOrder(pair));
+          return new DropOrderingMergePatch(rightDistinct, pair);
         }
         return null;
       });
