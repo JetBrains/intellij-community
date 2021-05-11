@@ -7,10 +7,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -44,6 +41,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ForkJoinTask
 import kotlin.streams.toList
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
@@ -248,27 +246,21 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                        errorReporter: ErrorReporter,
                        project: Project?): List<EntitySource> {
     val consistencyCheckingMode = ConsistencyCheckingMode.defaultIde()
-    val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
-    try {
-      val serializers = synchronized(lock) { fileSerializersByUrl.values.toList() }
-      val tasks = serializers.map { serializer ->
-        Callable {
-          val myBuilder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
-          loadEntitiesAndReportExceptions(serializer, myBuilder, reader, errorReporter)
-          myBuilder
-        }
-      }
+    val serializers = synchronized(lock) { fileSerializersByUrl.values.toList() }
+    val tasks = serializers.map { serializer ->
+      ForkJoinTask.adapt(Callable {
+        val myBuilder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
+        loadEntitiesAndReportExceptions(serializer, myBuilder, reader, errorReporter)
+        myBuilder
+      })
+    }
 
-      val res = ConcurrencyUtil.invokeAll(tasks, service)
-      val builders = res.map { it.get() }
-      val sourcesToUpdate = removeDuplicatingEntities(builders, serializers, project)
-      val squashedBuilder = squash(builders, consistencyCheckingMode)
-      builder.addDiff(squashedBuilder)
-      return sourcesToUpdate
-    }
-    finally {
-      service.shutdown()
-    }
+    ForkJoinTask.invokeAll(tasks)
+    val builders = tasks.mapNotNull { it.rawResult }
+    val sourcesToUpdate = removeDuplicatingEntities(builders, serializers, project)
+    val squashedBuilder = squash(builders, consistencyCheckingMode)
+    builder.addDiff(squashedBuilder)
+    return sourcesToUpdate
   }
 
   private fun loadEntitiesAndReportExceptions(serializer: JpsFileEntitiesSerializer<*>,
