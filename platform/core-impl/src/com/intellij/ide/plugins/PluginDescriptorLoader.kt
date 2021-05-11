@@ -14,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.platform.util.plugins.LocalFsDataLoader
-import com.intellij.platform.util.plugins.ZipFsDataLoader
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.URLUtil
@@ -25,10 +24,12 @@ import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.IOException
 import java.net.URL
+import java.nio.charset.StandardCharsets
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.*
 import java.util.function.Supplier
+import java.util.zip.ZipFile
 import javax.xml.stream.XMLStreamException
 
 private val LOG: Logger
@@ -64,16 +65,13 @@ internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescr
                                  pathResolver = pathResolver)
   }
   else {
-    DescriptorLoadingContext().use { context ->
-      return loadDescriptorFromJar(file = pluginRoot,
-                                   fileName = fileName,
-                                   pathResolver = pathResolver,
-                                   context = context,
-                                   parentContext = parentContext,
-                                   isBundled = true,
-                                   isEssential = true,
-                                   pluginPath = null)
-    }
+    return loadDescriptorFromJar(file = pluginRoot,
+                                 fileName = fileName,
+                                 pathResolver = pathResolver,
+                                 parentContext = parentContext,
+                                 isBundled = true,
+                                 isEssential = true,
+                                 pluginPath = null)
   }
 }
 
@@ -112,7 +110,6 @@ private fun loadDescriptorFromDir(file: Path,
 private fun loadDescriptorFromJar(file: Path,
                                   fileName: String,
                                   pathResolver: PathResolver,
-                                  context: DescriptorLoadingContext,
                                   parentContext: DescriptorListLoadingContext,
                                   isBundled: Boolean,
                                   isEssential: Boolean,
@@ -123,16 +120,17 @@ private fun loadDescriptorFromJar(file: Path,
     try {
       val pool = ZipFilePool.POOL
       if (pool == null) {
-        val fs = context.open(file)
-        val pluginDescriptorFile = fs.getPath("/META-INF/$fileName")
-        dataLoader = ZipFsDataLoader(pluginDescriptorFile.root)
-        raw = readModuleDescriptor(input = Files.readAllBytes(pluginDescriptorFile),
-                                   readContext = parentContext,
-                                   pathResolver = pathResolver,
-                                   dataLoader = dataLoader,
-                                   includeBase = null,
-                                   readInto = null,
-                                   locationSource = file.toString())
+        val zipFile = ZipFile(file.toFile(), StandardCharsets.UTF_8)
+        zipFile.use {
+          dataLoader = JavaZipFileDataLoader(zipFile)
+          raw = readModuleDescriptor(input = dataLoader.load("META-INF/$fileName") ?: return null,
+                                     readContext = parentContext,
+                                     pathResolver = pathResolver,
+                                     dataLoader = dataLoader,
+                                     includeBase = null,
+                                     readInto = null,
+                                     locationSource = file.toString())
+        }
       }
       else {
         val resolver = pool.load(file)
@@ -165,6 +163,18 @@ private fun loadDescriptorFromJar(file: Path,
   return null
 }
 
+private class JavaZipFileDataLoader(private val file: ZipFile) : DataLoader {
+  override val pool: ZipFilePool?
+    get() = null
+
+  override fun load(path: String): ByteArray? {
+    val entry = file.getEntry(if (path[0] == '/') path.substring(1) else path) ?: return null
+    return file.getInputStream(entry).use { it.readBytes() }
+  }
+
+  override fun toString() = file.toString()
+}
+
 fun loadDescriptorFromFileOrDir(file: Path,
                                 pathName: String,
                                 context: DescriptorListLoadingContext,
@@ -180,16 +190,13 @@ fun loadDescriptorFromFileOrDir(file: Path,
                                                      isEssential = isEssential,
                                                      pathResolver = pathResolver)
     file.fileName.toString().endsWith(".jar", ignoreCase = true) -> {
-      DescriptorLoadingContext().use { loadingContext ->
-        loadDescriptorFromJar(file = file,
-                              fileName = pathName,
-                              pathResolver = pathResolver,
-                              context = loadingContext,
-                              parentContext = context,
-                              isBundled = isBundled,
-                              isEssential = isEssential,
-                              pluginPath = null)
-      }
+      loadDescriptorFromJar(file = file,
+                            fileName = pathName,
+                            pathResolver = pathResolver,
+                            parentContext = context,
+                            isBundled = isBundled,
+                            isEssential = isEssential,
+                            pluginPath = null)
     }
     else -> null
   }
@@ -220,19 +227,16 @@ private fun loadDescriptorFromDirAndNormalize(file: Path,
 
   if (!pluginJarFiles.isEmpty()) {
     val pluginPathResolver = PluginXmlPathResolver(pluginJarFiles)
-    DescriptorLoadingContext().use { loadingContext ->
-      for (jarFile in pluginJarFiles) {
-        loadDescriptorFromJar(file = jarFile,
-                              fileName = pathName,
-                              pathResolver = pluginPathResolver,
-                              context = loadingContext,
-                              parentContext = parentContext,
-                              isBundled = isBundled,
-                              isEssential = isEssential,
-                              pluginPath = file)?.let {
-          it.jarFiles = pluginJarFiles
-          return it
-        }
+    for (jarFile in pluginJarFiles) {
+      loadDescriptorFromJar(file = jarFile,
+                            fileName = pathName,
+                            pathResolver = pluginPathResolver,
+                            parentContext = parentContext,
+                            isBundled = isBundled,
+                            isEssential = isEssential,
+                            pluginPath = file)?.let {
+        it.jarFiles = pluginJarFiles
+        return it
       }
     }
   }
@@ -631,16 +635,13 @@ private class LoadDescriptorsFromDirAction(private val dir: Path,
                                                          pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER)
               }
               else if (file.fileName.toString().endsWith(".jar", ignoreCase = true)) {
-                DescriptorLoadingContext().use { loadingContext ->
-                  return loadDescriptorFromJar(file = file,
-                                               fileName = PluginManagerCore.PLUGIN_XML,
-                                               pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                               context = loadingContext,
-                                               parentContext = context,
-                                               isBundled = isBundled,
-                                               isEssential = false,
-                                               pluginPath = null)
-                }
+                return loadDescriptorFromJar(file = file,
+                                             fileName = PluginManagerCore.PLUGIN_XML,
+                                             pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                             parentContext = context,
+                                             isBundled = isBundled,
+                                             isEssential = false,
+                                             pluginPath = null)
               }
               else {
                 return null
@@ -716,34 +717,27 @@ private class LoadDescriptorsFromClassPathAction(private val urls: Map<URL, Stri
         val file = Paths.get(UrlClassLoader.urlToFilePath(resource.path))
         val parentFile = file.parent
         if (parentFile == null || !parentFile.endsWith("lib")) {
-          DescriptorLoadingContext().use { loadingContext ->
-            return loadDescriptorFromJar(file = file,
-                                         fileName = pathName,
-                                         pathResolver = pathResolver,
-                                         context = loadingContext,
-                                         parentContext = context,
-                                         isBundled = true,
-                                         isEssential = isEssential,
-                                         pluginPath = null)
-          }
+          return loadDescriptorFromJar(file = file,
+                                       fileName = pathName,
+                                       pathResolver = pathResolver,
+                                       parentContext = context,
+                                       isBundled = true,
+                                       isEssential = isEssential,
+                                       pluginPath = null)
         }
         else {
           // Support for unpacked plugins in classpath. E.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
-          DescriptorLoadingContext().use { loadingContext ->
-            val descriptor = loadDescriptorFromJar(file = file,
-                                                   fileName = pathName,
-                                                   pathResolver = pathResolver,
-                                                   context = loadingContext,
-                                                   parentContext = context,
-                                                   isBundled = true,
-                                                   isEssential = isEssential,
-                                                   pluginPath = file.parent.parent)
-
-            if (descriptor != null) {
-              descriptor.jarFiles = null
-            }
-            return descriptor
+          val descriptor = loadDescriptorFromJar(file = file,
+                                                 fileName = pathName,
+                                                 pathResolver = pathResolver,
+                                                 parentContext = context,
+                                                 isBundled = true,
+                                                 isEssential = isEssential,
+                                                 pluginPath = file.parent.parent)
+          if (descriptor != null) {
+            descriptor.jarFiles = null
           }
+          return descriptor
         }
       }
       else -> {

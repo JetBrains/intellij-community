@@ -21,24 +21,6 @@ interface DataLoader {
 }
 
 @ApiStatus.Internal
-class ZipFsDataLoader(private val rootPath: Path) : DataLoader {
-  override val pool: ZipFilePool?
-    get() = null
-
-  @Throws(IOException::class)
-  override fun load(path: String): ByteArray? {
-    return try {
-      Files.readAllBytes(rootPath.fileSystem.getPath(path))
-    }
-    catch (e: NoSuchFileException) {
-      null
-    }
-  }
-
-  override fun toString() = rootPath.toString()
-}
-
-@ApiStatus.Internal
 class LocalFsDataLoader(private val basePath: Path) : DataLoader {
   override val pool: ZipFilePool?
     get() = ZipFilePool.POOL
