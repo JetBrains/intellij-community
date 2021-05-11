@@ -164,7 +164,7 @@ public class BuildProgress {
         increment(myNumberOfFinishedTargets, targetType);
         myExpectedTimeForFinishedTargets += myExpectedBuildTimeForTarget.get(targetType);
 
-        long elapsedTime = ourTickCounterEnabled? Math.max(0L, myTickCounter.get() - getCompilationStartTick(target)) : System.currentTimeMillis() - context.getCompilationStartStamp(target);
+        long elapsedTime = ourTickCounterEnabled? Math.max(1L, myTickCounter.get() - getCompilationStartTick(target)) : System.currentTimeMillis() - context.getCompilationStartStamp(target);
         myAbsoluteBuildTime += elapsedTime;
         
         if (successful && FSOperations.isMarkedDirty(context, target)) {
