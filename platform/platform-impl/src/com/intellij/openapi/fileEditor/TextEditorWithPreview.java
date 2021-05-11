@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -517,5 +518,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myToolbarWrapper.refresh();
     mySplitter.setOrientation(myIsVerticalSplit);
     myComponent.repaint();
+  }
+
+  public static void openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {
+    file.putUserData(DEFAULT_LAYOUT_FOR_FILE, Layout.SHOW_PREVIEW);
+    FileEditorManager.getInstance(project).openFile(file, true);
   }
 }
