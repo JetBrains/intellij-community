@@ -6,13 +6,13 @@ import org.jetbrains.kotlin.lombok.LombokCommandLineProcessor
 import org.jetbrains.kotlin.lombok.LombokCommandLineProcessor.Companion.CONFIG_FILE_OPTION
 import org.jetbrains.kotlin.plugin.ide.AbstractMavenImportHandler
 import org.jetbrains.kotlin.plugin.ide.CompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.utils.PathUtil
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import java.io.File
 
 class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId: String = LombokCommandLineProcessor.PLUGIN_ID
     override val pluginName: String = MAVEN_SUBPLUGIN_NAME
-    override val pluginJarFileFromIdea: File = PathUtil.kotlinPathsForIdeaPlugin.lombokPluginJarPath
+    override val pluginJarFileFromIdea: File = KotlinArtifacts.instance.lombokCompilerPlugin
 
     override fun getOptions(
         enabledCompilerPlugins: List<String>,
