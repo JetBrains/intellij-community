@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.message
@@ -478,7 +479,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
       else {
         if (account != authenticationManager.getDefaultAccount(project)) {
-          accountActions += Action(GithubBundle.message("accounts.set.default"),
+          accountActions += Action(CollaborationToolsBundle.message("accounts.set.default"),
                                    { authenticationManager.setDefaultAccount(project, account) })
         }
         accountActions += Action(GithubBundle.message("open.on.github.action"), { BrowserUtil.browse(user.htmlUrl) },

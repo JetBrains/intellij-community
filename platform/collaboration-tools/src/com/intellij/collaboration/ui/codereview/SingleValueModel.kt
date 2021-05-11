@@ -5,4 +5,9 @@ interface SingleValueModel<T> {
   var value: T
 
   fun addListener(listener: (newValue: T) -> Unit)
+
+  fun addInvokeListener(listener: (newValue: T) -> Unit) {
+    addListener(listener)
+    listener(value)
+  }
 }

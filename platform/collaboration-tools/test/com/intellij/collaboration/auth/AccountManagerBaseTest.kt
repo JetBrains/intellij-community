@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth
 
+import com.intellij.collaboration.api.ServerPath
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.util.messages.MessageBusConnection
 import org.junit.Before
@@ -111,7 +112,12 @@ class AccountManagerBaseTest {
     manager.updateAccount(account, "test")
   }
 
-  private class MockAccount(override val id: String = generateId()) : Account()
+  private class MockAccount(override val id: String = generateId()) : Account() {
+    override val name: String = ""
+    override val server: ServerPath = object : ServerPath {
+      override fun toString() = "test_server"
+    }
+  }
 
   private class TestManager(private val persistentAccounts: AccountsPersistentStateComponent<MockAccount, *>,
                             override val passwordSafe: PasswordSafe,
