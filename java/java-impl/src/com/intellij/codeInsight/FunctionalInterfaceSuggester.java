@@ -2,6 +2,14 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ReadActionProcessor;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -9,7 +17,6 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,27 +147,43 @@ public final class FunctionalInterfaceSuggester {
   private static <T extends PsiElement> Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull T element, final Function<? super PsiClass, ? extends List<? extends PsiType>> acceptanceChecker) {
     final Project project = element.getProject();
     final Set<PsiType> types = new HashSet<>();
-    final Processor<PsiMember> consumer = member -> {
-      if (member instanceof PsiClass && Java15APIUsageInspection.getLastIncompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
-        if (!JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, element, null)) {
-          return true;
+    final ReadActionProcessor<PsiMember> consumer = new ReadActionProcessor<>() {
+      @Override
+      public boolean processInReadAction(PsiMember member) {
+        if (member instanceof PsiClass &&
+            Java15APIUsageInspection.getLastIncompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
+          if (!JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, element, null)) {
+            return true;
+          }
+          types.addAll(acceptanceChecker.apply((PsiClass)member));
         }
-        types.addAll(acceptanceChecker.apply((PsiClass)member));
+        return true;
       }
-      return true;
     };
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
-    final PsiClass functionalInterfaceClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, allScope);
-    if (functionalInterfaceClass != null) {
-      AnnotatedMembersSearch.search(functionalInterfaceClass, element.getResolveScope()).forEach(consumer);
-    }
+    Task.Modal task = new Task.Modal(project, JavaBundle.message("dialog.title.check.functional.interface.candidates"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+        final PsiClass functionalInterfaceClass =
+          ReadAction.compute(() -> psiFacade.findClass(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, allScope));
+        if (functionalInterfaceClass != null) {
+          AnnotatedMembersSearch.search(functionalInterfaceClass, ReadAction.compute(() -> element.getResolveScope())).forEach(consumer);
+        }
 
-    for (String functionalInterface : FUNCTIONAL_INTERFACES) {
-      final PsiClass aClass = psiFacade.findClass(functionalInterface, element.getResolveScope());
-      if (aClass != null) {
-        consumer.process(aClass);
+        for (String functionalInterface : FUNCTIONAL_INTERFACES) {
+          final PsiClass aClass = ReadAction.compute(() -> psiFacade.findClass(functionalInterface, element.getResolveScope()));
+          if (aClass != null) {
+            consumer.process(aClass);
+          }
+        }
       }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().run(task);
+    }
+    else {
+      task.run(new EmptyProgressIndicator());
     }
 
     final ArrayList<PsiType> typesToSuggest = new ArrayList<>(types);
