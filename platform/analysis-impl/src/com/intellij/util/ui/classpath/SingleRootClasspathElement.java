@@ -1,8 +1,9 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.classpath;
 
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +23,8 @@ public class SingleRootClasspathElement implements SimpleClasspathElement {
   @Override
   public String getPresentableName() {
     String url;
-    if (myUrl.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-      url = myUrl.substring(0, myUrl.length() - JarFileSystem.JAR_SEPARATOR.length());
+    if (myUrl.endsWith(URLUtil.JAR_SEPARATOR)) {
+      url = myUrl.substring(0, myUrl.length() - URLUtil.JAR_SEPARATOR.length());
     }
     else {
       url = myUrl;
