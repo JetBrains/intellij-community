@@ -19,7 +19,7 @@ import java.util.Set;
 
 public final class CoreFormattingService implements FormattingService {
 
-  private final static Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
+  private static final Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
                                                           Feature.FORMAT_FRAGMENTS);
 
   @Override

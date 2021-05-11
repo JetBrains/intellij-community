@@ -37,7 +37,7 @@ public class FormattingServiceTest extends FormatterTestCase {
   }
 
   private static class CustomFormattingService extends AbstractDocumentFormattingService {
-    private final static Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
+    private static final Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
                                                             Feature.FORMAT_FRAGMENTS);
 
 

@@ -44,7 +44,7 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
   private static final Logger LOG = Logger.getInstance(ShExternalFormatter.class);
   @NonNls private static final List<String> KNOWN_SHELLS = Arrays.asList("bash", "posix", "mksh");
 
-  private final static Set<Feature> FEATURES = EnumSet.noneOf(Feature.class);
+  private static final Set<Feature> FEATURES = EnumSet.noneOf(Feature.class);
 
   @Override
   public boolean canFormat(@NotNull PsiFile file) {
