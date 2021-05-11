@@ -52,7 +52,37 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance(JavaSmartEnterProcessor.class);
 
-  private static final Fixer[] ourFixers;
+  private static final List<Fixer> ourFixers =
+    List.of(new LiteralFixer(),
+            new MethodCallFixer(),
+            new IfConditionFixer(),
+            new ForStatementFixer(),
+            new TernaryColonFixer(),
+            new WhileConditionFixer(),
+            new CatchDeclarationFixer(),
+            new SwitchExpressionFixer(),
+            new SwitchLabelColonFixer(),
+            new DoWhileConditionFixer(),
+            new BlockBraceFixer(),
+            new MissingIfBranchesFixer(),
+            new MissingWhileBodyFixer(),
+            new MissingTryBodyFixer(),
+            new MissingSwitchBodyFixer(),
+            new MissingCatchBodyFixer(),
+            new MissingSynchronizedBodyFixer(),
+            new MissingForBodyFixer(),
+            new MissingForeachBodyFixer(),
+            new ParameterListFixer(),
+            new MissingCommaFixer(),
+            new MissingMethodBodyFixer(),
+            new MissingClassBodyFixer(),
+            new MissingReturnExpressionFixer(),
+            new MissingThrowExpressionFixer(),
+            new ParenthesizedFixer(),
+            new SemicolonFixer(),
+            new MissingArrayInitializerBraceFixer(),
+            new MissingArrayConstructorBracketFixer(),
+            new EnumFieldFixer());
   private static final EnterProcessor[] ourEnterProcessors = {
     new CommentBreakerEnterProcessor(),
     new AfterSemicolonEnterProcessor(),
@@ -68,41 +98,6 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
       }
     }
   };
-
-  static {
-    final List<Fixer> fixers = new ArrayList<>();
-    fixers.add(new LiteralFixer());
-    fixers.add(new MethodCallFixer());
-    fixers.add(new IfConditionFixer());
-    fixers.add(new ForStatementFixer());
-    fixers.add(new TernaryColonFixer());
-    fixers.add(new WhileConditionFixer());
-    fixers.add(new CatchDeclarationFixer());
-    fixers.add(new SwitchExpressionFixer());
-    fixers.add(new SwitchLabelColonFixer());
-    fixers.add(new DoWhileConditionFixer());
-    fixers.add(new BlockBraceFixer());
-    fixers.add(new MissingIfBranchesFixer());
-    fixers.add(new MissingWhileBodyFixer());
-    fixers.add(new MissingTryBodyFixer());
-    fixers.add(new MissingSwitchBodyFixer());
-    fixers.add(new MissingCatchBodyFixer());
-    fixers.add(new MissingSynchronizedBodyFixer());
-    fixers.add(new MissingForBodyFixer());
-    fixers.add(new MissingForeachBodyFixer());
-    fixers.add(new ParameterListFixer());
-    fixers.add(new MissingCommaFixer());
-    fixers.add(new MissingMethodBodyFixer());
-    fixers.add(new MissingClassBodyFixer());
-    fixers.add(new MissingReturnExpressionFixer());
-    fixers.add(new MissingThrowExpressionFixer());
-    fixers.add(new ParenthesizedFixer());
-    fixers.add(new SemicolonFixer());
-    fixers.add(new MissingArrayInitializerBraceFixer());
-    fixers.add(new MissingArrayConstructorBracketFixer());
-    fixers.add(new EnumFieldFixer());
-    ourFixers = fixers.toArray(new Fixer[0]);
-  }
 
   private int myFirstErrorOffset = Integer.MAX_VALUE;
   private boolean mySkipEnter;
