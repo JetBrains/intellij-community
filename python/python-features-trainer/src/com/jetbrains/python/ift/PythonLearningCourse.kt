@@ -19,7 +19,9 @@ import com.jetbrains.python.ift.lesson.refactorings.PythonRenameLesson
 import com.jetbrains.python.ift.lesson.run.PythonDebugLesson
 import com.jetbrains.python.ift.lesson.run.PythonRunConfigurationLesson
 import training.dsl.LessonUtil
+import training.learn.CourseManager
 import training.learn.LessonsBundle
+import training.learn.course.IftModule
 import training.learn.course.LearningCourseBase
 import training.learn.course.LearningModule
 import training.learn.course.LessonType
@@ -33,18 +35,23 @@ import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesso
 import training.util.switchOnExperimentalLessons
 
 class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
-  override fun modules() = (if (switchOnExperimentalLessons) experimentalModules() else emptyList()) + stableModules()
+  override fun modules(): Collection<IftModule> {
+    val gitModule = if (switchOnExperimentalLessons) {
+      CourseManager.instance.findCommonModules("Git")
+    }
+    else emptyList()
+    return onboardingTour() + stableModules() + gitModule
+  }
 
-  private fun experimentalModules() = listOf(
+  private fun onboardingTour() = if (switchOnExperimentalLessons) listOf(
     LearningModule(name = PythonLessonsBundle.message("python.onboarding.module.name"),
                    description = PythonLessonsBundle.message("python.onboarding.module.description", LessonUtil.productName),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
-      listOf(
-        PythonOnboardingTour(),
-      )
-    },
+      listOf(PythonOnboardingTour())
+    }
   )
+  else emptyList()
 
   private fun stableModules() = listOf(
     LearningModule(name = LessonsBundle.message("editor.basics.module.name"),

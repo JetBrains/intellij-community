@@ -6,6 +6,7 @@ intellij.cwm.plugin
 intellij.editorconfig
 intellij.emojipicker
 intellij.featuresTrainer
+intellij.vcs.git.featuresTrainer
 intellij.grazie
 intellij.markdown
 intellij.marketplace
