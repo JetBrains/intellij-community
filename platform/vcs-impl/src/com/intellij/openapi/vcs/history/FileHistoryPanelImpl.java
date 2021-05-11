@@ -37,6 +37,7 @@ import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
 import com.intellij.ui.dualView.TreeTableView;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
@@ -728,14 +729,6 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     @Override
     protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
       setToolTipText(myTooltipText);
-      if (selected || hasFocus) {
-        setBackground(table.getSelectionBackground());
-        setForeground(table.getSelectionForeground());
-      }
-      else {
-        setBackground(table.getBackground());
-        setForeground(table.getForeground());
-      }
       if (value != null)  {
         //noinspection HardCodedStringLiteral
         append(value.toString(), getDefaultAttributes());
