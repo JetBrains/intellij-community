@@ -13,6 +13,7 @@ import java.awt.event.ContainerEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@Suppress("LeakingThis")
 open class DiffRequestProcessorEditor(
   private val file: DiffVirtualFile,
   val processor: DiffRequestProcessor
@@ -27,6 +28,7 @@ open class DiffRequestProcessorEditor(
 
   init {
     putUserData(EditorWindow.HIDE_TABS, true)
+    DiffRequestProcessorEditorCustomizer.customize(file, this, processor)
   }
 
   override fun getComponent(): JComponent = panel
