@@ -15,6 +15,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -44,6 +45,9 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
 import java.util.Arrays;
+
+import static java.awt.event.InputEvent.CTRL_MASK;
+import static java.awt.event.InputEvent.META_MASK;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
   public static final int NEXT_STEP_AREA_WIDTH = 20;
@@ -697,9 +701,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
 
       boolean isClick = UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) || UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED);
-      if (!isClick || myList.locationToIndex(e.getPoint()) == myList.getSelectedIndex()) {
+      if (!isClick || myList.locationToIndex(e.getPoint()) == myList.getSelectedIndex() ||
+          isMultiSelectionEnabled() && hasMultiSelectionModifier(e)) {
         super.processMouseEvent(e);
       }
+    }
+
+    private boolean hasMultiSelectionModifier(@NotNull MouseEvent e) {
+      return (e.getModifiers() & (SystemInfo.isMac ? META_MASK : CTRL_MASK)) != 0;
     }
 
     @Override
