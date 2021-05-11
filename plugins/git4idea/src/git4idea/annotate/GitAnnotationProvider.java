@@ -59,7 +59,6 @@ import java.util.*;
 
 @Service
 public final class GitAnnotationProvider implements AnnotationProviderEx, CacheableAnnotationProvider {
-  private final Project myProject;
   @NonNls private static final String SUBJECT_KEY = "summary";
   @NonNls private static final String FILENAME_KEY = "filename";
   @NonNls private static final String PREVIOUS_KEY = "previous";
@@ -69,6 +68,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   @NonNls private static final String AUTHOR_TIME_KEY = "author-time";
   private static final Logger LOG = Logger.getInstance(GitAnnotationProvider.class);
 
+  private final Project myProject;
   @NotNull private final VcsHistoryCache myCache;
   @NotNull private final VcsUserRegistry myUserRegistry;
 
@@ -122,11 +122,6 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     return annotate(path, revision, file);
   }
 
-  private static void setProgressIndicatorText(@NlsContexts.ProgressText @Nullable String text) {
-    ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    if (progress != null) progress.setText(text);
-  }
-
   @NotNull
   private GitFileAnnotation annotate(@NotNull FilePath filePath,
                                      @Nullable VcsRevisionNumber revision,
@@ -145,7 +140,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
       }
     }
     else {
-      fileAnnotation = doAnnotate(root, filePath, revision, file);
+      fileAnnotation = doAnnotate(root, filePath, null, file);
     }
 
     loadFileHistoryInBackground(fileAnnotation);
@@ -199,7 +194,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     if (getter == null) return;
 
     Set<GitRevisionNumber> revisions = ContainerUtil.map2Set(annotation.getLines(), it -> it.getRevisionNumber());
-    for (GitRevisionNumber revision: revisions) {
+    for (GitRevisionNumber revision : revisions) {
       if (annotation.getCommitMessage(revision) == null) {
         int commitIndex = dataManager.getCommitIndex(HashImpl.build(revision.asString()), root);
         String commitMessage = getter.getFullMessage(commitIndex);
@@ -246,7 +241,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     }
   }
 
-  @Nullable
+  @NotNull
   private List<VcsFileRevision> loadFileHistory(@NotNull FilePath filePath) throws VcsException {
     GitVcs vcs = GitVcs.getInstance(myProject);
     GitHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
@@ -257,7 +252,6 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     }
     else {
       VcsAbstractHistorySession session = historyProvider.createSessionFor(filePath);
-      if (session == null) return null;
 
       myCache.put(filePath, null, vcs.getKeyInstanceMethod(), session, historyProvider, true);
 
@@ -336,7 +330,12 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
             }
           }
 
-          if (authorDate == null || committerDate == null || filePath == null || authorName == null || authorEmail == null || subject == null) {
+          if (authorDate == null ||
+              committerDate == null ||
+              filePath == null ||
+              authorName == null ||
+              authorEmail == null ||
+              subject == null) {
             throw new VcsException(GitBundle.message("annotate.output.lack.data", lineNum));
           }
 
@@ -349,7 +348,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
           if (previousFilePath != null) previousFilePath = pathInterner.intern(previousFilePath);
 
           commit = new CommitInfo(myProject, revisionNumber, filePath, committerDate, authorDate, author, subject,
-                                previousRevisionNumber, previousFilePath);
+                                  previousRevisionNumber, previousFilePath);
           commits.put(commitHash, commit);
         }
         s.nextLine();
@@ -359,6 +358,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
           throw new VcsException(GitBundle.message("annotate.line.mismatch.exception", lineNum, expectedLineNum));
         }
 
+        //noinspection ConstantConditions
         LineInfo lineInfo = new LineInfo(commit, lineNum, originalLineNum);
         lines.add(lineInfo);
       }
@@ -442,6 +442,11 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     if (currentRevision == null) return null;
 
     return new GitRevisionNumber(currentRevision);
+  }
+
+  private static void setProgressIndicatorText(@NlsContexts.ProgressText @Nullable String text) {
+    ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    if (progress != null) progress.setText(text);
   }
 
   @NotNull
