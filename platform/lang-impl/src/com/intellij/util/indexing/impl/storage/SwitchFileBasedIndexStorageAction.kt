@@ -55,7 +55,7 @@ private fun defaultIndexStorageDescriptor(): IndexStorageDescriptor {
 }
 
 private fun customIndexStorageDescriptors(): List<IndexStorageDescriptor> =
-  FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME.extensionList.map {
+  DefaultIndexStorageLayout.availableLayouts.map {
     IndexStorageDescriptor(it.localizedPresentableName, it.id, it.version, it)
   }
 

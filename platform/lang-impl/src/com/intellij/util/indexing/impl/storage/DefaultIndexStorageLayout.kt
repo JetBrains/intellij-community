@@ -7,7 +7,7 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.*
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings
-import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import com.intellij.util.io.PagedFileStorage
@@ -24,7 +24,7 @@ object DefaultIndexStorageLayout {
   @Throws(IOException::class)
   fun <Key, Value> getLayout(indexExtension: FileBasedIndexExtension<Key, Value>,
                              contentHashEnumeratorReopen: Boolean): VfsAwareIndexStorageLayout<Key, Value> {
-    val layoutEP = getIndexLayout()
+    val layoutEP = indexLayout
     if (layoutEP != null) {
       log.info("Layout '${layoutEP.id}' will be used to for '${indexExtension.name}' index")
       return layoutEP.layoutProvider.getLayout(indexExtension)
@@ -42,17 +42,21 @@ object DefaultIndexStorageLayout {
   }
 
   @JvmStatic
-  fun getUsedLayoutId(): String? {
-    return getIndexLayout()?.id
+  val usedLayoutId
+    get() = indexLayout?.id
+
+  val availableLayouts : List<FileBasedIndexLayoutProviderBean> get() {
+    return STORAGE_LAYOUT_EP_NAME.extensionList.filter { it.layoutProvider.isSupported }
   }
 
-  private fun getIndexLayout() = getForcedLayoutEP() ?: FileBasedIndexLayoutSettings.getUsedLayout()
+  private val indexLayout get() = forcedLayoutEP ?: FileBasedIndexLayoutSettings.getUsedLayout()
 
-  private fun getForcedLayoutEP(): FileBasedIndexLayoutProviderBean? {
-    val layout = forcedLayout ?: return null
-    return FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME.extensions.find { it.id == layout }
-           ?: throw IllegalStateException("Can't find index storage layout for id = $layout")
-  }
+  private val forcedLayoutEP: FileBasedIndexLayoutProviderBean?
+    get() {
+      val layout = forcedLayout ?: return null
+      return availableLayouts.find { it.id == layout }
+             ?: throw IllegalStateException("Can't find index storage layout for id = $layout")
+    }
 
   @ApiStatus.Internal
   private fun <Key, Value> getForwardIndexAccessor(indexExtension: IndexExtension<Key, Value, *>): AbstractMapForwardIndexAccessor<Key, Value, *> {
