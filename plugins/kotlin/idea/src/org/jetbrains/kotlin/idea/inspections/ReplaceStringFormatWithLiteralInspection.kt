@@ -56,7 +56,7 @@ class ReplaceStringFormatWithLiteralInspection : AbstractKotlinInspection() {
 
             holder.registerProblem(
                 qualifiedExpression ?: callExpression,
-                KotlinBundle.message("string.format.call.can.be.replaced.with.string.templates"),
+                KotlinBundle.message("inspection.replace.string.format.with.literal.display.name"),
                 ReplaceWithStringLiteralFix()
             )
         })
