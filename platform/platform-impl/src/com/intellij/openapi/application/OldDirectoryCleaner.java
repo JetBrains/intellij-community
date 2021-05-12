@@ -3,6 +3,10 @@ package com.intellij.openapi.application;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowLogAction;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ConfigImportHelper.ConfigDirsSearchResult;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.IoErrorText;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -43,10 +48,32 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.intellij.ide.IdeBundle.message;
+import static com.intellij.internal.statistic.eventLog.events.EventFields.Int;
+import static com.intellij.internal.statistic.eventLog.events.EventFields.Long;
 import static com.intellij.notification.NotificationAction.createSimpleExpiring;
 
 @SuppressWarnings("NonConstantLogger")
 public final class OldDirectoryCleaner {
+  @ApiStatus.Internal
+  public static final class Stats {
+    private static final EventLogGroup GROUP = new EventLogGroup("leftover.dirs", 1);
+    private static final EventId SCHEDULED = GROUP.registerEvent("scan.scheduled");
+    private static final EventId1<Integer> STARTED = GROUP.registerEvent("scan.started", Int("actual.delay"));
+    private static final EventId2<Integer, Long> COMPLETE = GROUP.registerEvent("cleanup.complete", Int("groups"), Long("total.mb"));
+
+    public static void scheduled() {
+      SCHEDULED.log();
+    }
+
+    public static void started(int actualDelay) {
+      STARTED.log(actualDelay);
+    }
+
+    public static void completed(int groups, long total) {
+      COMPLETE.log(groups, total / 1_000_000L);
+    }
+  }
+
   private final Logger myLogger = Logger.getInstance(OldDirectoryCleaner.class);
   private final long myBestBefore;
 
@@ -66,6 +93,7 @@ public final class OldDirectoryCleaner {
     if (!result.isEmpty()) {
       if (myBestBefore != 0) {
         deleteCowardly(groups);
+        Stats.completed(groups.size(), groups.stream().mapToLong(g -> g.size).sum());
       }
       else {
         UpdateChecker.getNotificationGroup()

@@ -323,10 +323,12 @@ final class UpdateCheckerService {
       long scheduledAt = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
       LOG.info("scheduling old directories scan after " + DateFormatUtil.formatDateTime(scheduledAt));
       PropertiesComponent.getInstance().setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));
+      OldDirectoryCleaner.Stats.scheduled();
     }
     else {
-      long scheduledAt = PropertiesComponent.getInstance().getLong(OLD_DIRECTORIES_SCAN_SCHEDULED, 0), now;
+      long scheduledAt = PropertiesComponent.getInstance().getLong(OLD_DIRECTORIES_SCAN_SCHEDULED, 0L), now;
       if (scheduledAt != 0 && (now = System.currentTimeMillis()) >= scheduledAt) {
+        OldDirectoryCleaner.Stats.started((int)TimeUnit.DAYS.toDays(now - scheduledAt) + OLD_DIRECTORIES_SCAN_DELAY_DAYS);
         LOG.info("starting old directories scan");
         long expireAfter = now - TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS);
         ProcessIOExecutorService.INSTANCE.execute(() -> new OldDirectoryCleaner(expireAfter).seekAndDestroy(null, null));
