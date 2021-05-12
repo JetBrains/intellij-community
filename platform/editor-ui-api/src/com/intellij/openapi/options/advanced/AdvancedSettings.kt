@@ -16,6 +16,9 @@ abstract class AdvancedSettings  {
     fun getInstance(): AdvancedSettings = ApplicationManager.getApplication().getService(AdvancedSettings::class.java)
 
     @JvmStatic
+    fun getInstanceIfCreated(): AdvancedSettings? = ApplicationManager.getApplication().getServiceIfCreated(AdvancedSettings::class.java)
+
+    @JvmStatic
     fun getBoolean(id: String): Boolean = getInstance().getSetting(id) as Boolean
 
     @JvmStatic
