@@ -13,8 +13,6 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnch
 import com.intellij.codeInspection.dataFlow.java.inliner.*;
 import com.intellij.codeInspection.dataFlow.java.inst.*;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmTrap;
-import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.*;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
@@ -22,9 +20,9 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.NegativeArraySizeProblem;
-import com.intellij.codeInspection.dataFlow.jvm.transfer.ExceptionTransfer;
-import com.intellij.codeInspection.dataFlow.jvm.transfer.ExitFinallyTransfer;
-import com.intellij.codeInspection.dataFlow.jvm.transfer.InstructionTransfer;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.EnterFinallyTrap.TryFinally;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.EnterFinallyTrap.TwrFinally;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.*;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.ControlFlowOffset;
@@ -33,6 +31,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -69,7 +68,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final Project myProject;
   private final DfaValueFactory myFactory;
   private ControlFlow myCurrentFlow;
-  private FList<DfaControlTransferValue.Trap> myTrapStack = FList.emptyList();
+  private FList<Trap> myTrapStack = FList.emptyList();
   private final Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> myCustomNullabilityProblems = new HashMap<>();
   private final Map<String, ExceptionTransfer> myExceptionCache;
   private ExpressionBlockContext myExpressionBlockContext;
@@ -423,11 +422,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void controlTransfer(@NotNull DfaControlTransferValue.TransferTarget target, FList<DfaControlTransferValue.Trap> traps) {
+  private void controlTransfer(@NotNull DfaControlTransferValue.TransferTarget target, FList<Trap> traps) {
     addInstruction(new ControlTransferInstruction(myFactory.controlTransfer(target, traps)));
   }
 
-  private @NotNull FList<DfaControlTransferValue.Trap> getTrapsInsideElement(PsiElement element) {
+  private @NotNull FList<Trap> getTrapsInsideElement(PsiElement element) {
     return FList.createFromReversed(ContainerUtil.reverse(
       ContainerUtil.findAll(myTrapStack, cd -> PsiTreeUtil.isAncestor(element, cd.getAnchor(), true))));
   }
@@ -1056,8 +1055,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private boolean shouldHandleException() {
-    for (DfaControlTransferValue.Trap trap : myTrapStack) {
-      if (trap instanceof TryCatch || trap instanceof TryFinally || trap instanceof TwrFinally || trap instanceof TryCatchAll) {
+    for (Trap trap : myTrapStack) {
+      if (trap instanceof TryCatchTrap || trap instanceof TryFinally || trap instanceof TwrFinally || trap instanceof TryCatchAllTrap) {
         return true;
       }
     }
@@ -1086,17 +1085,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           clauses.put(section, getStartOffset(catchBlock));
         }
       }
-      pushTrap(new TryCatch(statement, clauses));
+      pushTrap(new TryCatchTrap(statement, clauses));
     }
 
     processTryWithResources(resourceList, tryBlock);
 
     InstructionTransfer gotoEnd = createTransfer(statement, tryBlock);
-    FList<DfaControlTransferValue.Trap> singleFinally = FList.createFromReversed(ContainerUtil.createMaybeSingletonList(finallyDescriptor));
+    FList<Trap> singleFinally = FList.createFromReversed(ContainerUtil.createMaybeSingletonList(finallyDescriptor));
     controlTransfer(gotoEnd, singleFinally);
 
     if (sections.length > 0) {
-      popTrap(TryCatch.class);
+      popTrap(TryCatchTrap.class);
     }
 
     for (PsiCatchSection section : sections) {
@@ -1109,12 +1108,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (finallyBlock != null) {
       popTrap(TryFinally.class);
-      pushTrap(new InsideFinally(finallyBlock));
+      pushTrap(new InsideFinallyTrap(finallyBlock));
 
       finallyBlock.accept(this);
       controlTransfer(new ExitFinallyTransfer(finallyDescriptor), FList.emptyList());
 
-      popTrap(InsideFinally.class);
+      popTrap(InsideFinallyTrap.class);
     }
 
     finishElement(statement);
@@ -1127,11 +1126,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return new InstructionTransfer(getEndOffset(exitedStatement), varsToFlush);
   }
 
-  void pushTrap(JvmTrap elem) {
+  void pushTrap(Trap elem) {
     myTrapStack = myTrapStack.prepend(elem);
   }
 
-  void popTrap(Class<? extends JvmTrap> aClass) {
+  void popTrap(Class<? extends Trap> aClass) {
     if (!aClass.isInstance(myTrapStack.getHead())) {
       throw new IllegalStateException("Unexpected trap-stack head (wanted: "+aClass.getSimpleName()+"); stack: "+myTrapStack);
     }
@@ -1159,13 +1158,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       InstructionTransfer gotoEnd = createTransfer(resourceList, tryBlock);
       controlTransfer(gotoEnd, FList.createFromReversed(ContainerUtil.createMaybeSingletonList(twrFinallyDescriptor)));
       popTrap(TwrFinally.class);
-      pushTrap(new InsideFinally(resourceList));
+      pushTrap(new InsideFinallyTrap(resourceList));
       startElement(resourceList);
       addInstruction(new FlushFieldsInstruction());
       addThrows(closerExceptions);
       controlTransfer(new ExitFinallyTransfer(twrFinallyDescriptor), FList.emptyList()); // DfaControlTransferValue is on stack
       finishElement(resourceList);
-      popTrap(InsideFinally.class);
+      popTrap(InsideFinallyTrap.class);
     }
   }
 
@@ -2100,7 +2099,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                     @NotNull DfaVariableValue target,
                                     @Nullable PsiType type) {
     // Transfer value is pushed to avoid emptying stack beyond this point
-    pushTrap(new JvmTrap.InsideInlinedBlock(block));
+    pushTrap(new InsideInlinedBlockTrap(block));
     addInstruction(new JvmPushInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null));
     myExpressionBlockContext =
       new ExpressionBlockContext(myExpressionBlockContext, block, resultNullability == Nullability.NOT_NULL, target, type);
@@ -2110,7 +2109,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void exitExpressionBlock() {
     finishElement(myExpressionBlockContext.myCodeBlock);
     myExpressionBlockContext = myExpressionBlockContext.myPreviousBlock;
-    popTrap(JvmTrap.InsideInlinedBlock.class);
+    popTrap(InsideInlinedBlockTrap.class);
     // Pop transfer value
     addInstruction(new PopInstruction());
   }

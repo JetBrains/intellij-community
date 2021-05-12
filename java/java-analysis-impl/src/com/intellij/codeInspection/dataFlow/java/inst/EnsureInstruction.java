@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
-import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
@@ -103,7 +102,7 @@ public class EnsureInstruction extends Instruction {
       interpreter.getListener().onCondition(problem, tosValue, failed, stateBefore);
     }
     if (falseStatePossible && myTransferValue != null) {
-      List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, interpreter, myTransferValue);
+      List<DfaInstructionState> states = myTransferValue.dispatch(falseState, interpreter);
       if (myMakeEphemeral) {
         for (DfaInstructionState negState : states) {
           negState.getMemoryState().markEphemeral();

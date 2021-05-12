@@ -51,6 +51,24 @@ public final class DfaControlTransferValue extends DfaValue {
       .distinct().toArray();
   }
 
+  public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state, @NotNull DataFlowInterpreter interpreter) {
+    return dispatch(state, interpreter, target, traps);
+  }
+
+  public static @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
+                                                            @NotNull DataFlowInterpreter interpreter,
+                                                            @NotNull TransferTarget target,
+                                                            @NotNull FList<Trap> nextTraps) {
+    Trap head = nextTraps.getHead();
+    nextTraps = nextTraps.getTail() == null ? FList.emptyList() : nextTraps.getTail();
+    state.emptyStack();
+    if (head != null) {
+      return head.dispatch(state, interpreter, target, nextTraps);
+    }
+    return target.dispatch(state, interpreter);
+  }
+
+
   /**
    * Represents the target location.
    * TransferTarget should be reusable in another factory
@@ -91,6 +109,11 @@ public final class DfaControlTransferValue extends DfaValue {
     default @NotNull Collection<@NotNull Integer> getPossibleTargets() {
       return Collections.emptyList();
     }
+
+    @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
+                                                @NotNull DataFlowInterpreter interpreter,
+                                                @NotNull TransferTarget target,
+                                                @NotNull FList<Trap> nextTraps);
 
     /**
      * @return PSI anchor (e.g. catch section)

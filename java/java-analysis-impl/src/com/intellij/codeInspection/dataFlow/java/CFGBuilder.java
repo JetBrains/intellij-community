@@ -8,8 +8,8 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.java.inst.*;
-import com.intellij.codeInspection.dataFlow.jvm.JvmTrap;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchAllTrap;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -584,7 +584,7 @@ public class CFGBuilder {
    */
   public CFGBuilder doTry(@NotNull PsiElement anchor) {
     ControlFlow.DeferredOffset offset = new ControlFlow.DeferredOffset();
-    myAnalyzer.pushTrap(new JvmTrap.TryCatchAll(anchor, offset));
+    myAnalyzer.pushTrap(new TryCatchAllTrap(anchor, offset));
     myBranches.add(() -> offset.setOffset(myAnalyzer.getInstructionCount()));
     return this;
   }
@@ -595,7 +595,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder catchAll() {
-    myAnalyzer.popTrap(JvmTrap.TryCatchAll.class);
+    myAnalyzer.popTrap(TryCatchAllTrap.class);
     GotoInstruction gotoInstruction = new GotoInstruction(null);
     add(gotoInstruction).end();
     myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));

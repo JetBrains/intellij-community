@@ -2,8 +2,7 @@
 package com.intellij.codeInspection.dataFlow.java.inst
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
-import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler
-import com.intellij.codeInspection.dataFlow.jvm.JvmTrap
+import com.intellij.codeInspection.dataFlow.jvm.transfer.EnterFinallyTrap
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
@@ -21,7 +20,7 @@ open class ControlTransferInstruction : Instruction {
   constructor(transfer: DfaControlTransferValue, linkTraps: Boolean) : super() {
     this.transfer = transfer
     if (linkTraps) {
-      transfer.traps.forEach { trap -> (trap as? JvmTrap)?.link(this) }
+      transfer.traps.forEach { trap -> (trap as? EnterFinallyTrap)?.link(this) }
     }
   }
 
@@ -32,7 +31,7 @@ open class ControlTransferInstruction : Instruction {
   }
 
   override fun accept(interpreter: DataFlowInterpreter, state: DfaMemoryState): Array<out DfaInstructionState> {
-    return ControlTransferHandler.dispatch(state, interpreter, this.transfer).toTypedArray()
+    return this.transfer.dispatch(state, interpreter).toTypedArray()
   }
 
   /**

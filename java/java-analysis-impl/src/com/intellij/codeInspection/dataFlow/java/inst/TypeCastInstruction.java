@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
-import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ClassCastProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
@@ -93,7 +92,7 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
       DfaCondition notNullCondition = value.cond(RelationType.NE, NULL);
       DfaCondition notTypeCondition = value.cond(RelationType.IS_NOT, typedObject(myCastTo, Nullability.NOT_NULL));
       if (castFail.applyCondition(notNullCondition) && castFail.applyCondition(notTypeCondition)) {
-        List<DfaInstructionState> states = ControlTransferHandler.dispatch(castFail, interpreter, myTransferValue);
+        List<DfaInstructionState> states = myTransferValue.dispatch(castFail, interpreter);
         for (DfaInstructionState cceState : states) {
           cceState.getMemoryState().markEphemeral();
         }

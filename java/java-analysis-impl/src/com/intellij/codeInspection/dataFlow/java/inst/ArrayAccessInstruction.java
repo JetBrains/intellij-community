@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.java.inst;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
-import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
@@ -72,7 +71,7 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
     }
     if (alwaysOutOfBounds) {
       if (myTransferValue != null) {
-        List<DfaInstructionState> states = ControlTransferHandler.dispatch(stateBefore, interpreter, myTransferValue);
+        List<DfaInstructionState> states = myTransferValue.dispatch(stateBefore, interpreter);
         for (DfaInstructionState state : states) {
           state.getMemoryState().markEphemeral();
         }

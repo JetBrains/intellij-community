@@ -5,7 +5,6 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
-import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -68,7 +67,7 @@ public class CheckNotNullInstruction extends Instruction {
           result.add(nextState(interpreter, stateBefore));
         }
         if (nullState.applyCondition(value.eq(NULL))) {
-          List<DfaInstructionState> dispatched = ControlTransferHandler.dispatch(nullState, interpreter, myTransferValue);
+          List<DfaInstructionState> dispatched = myTransferValue.dispatch(nullState, interpreter);
           for (DfaInstructionState npeState : dispatched) {
             npeState.getMemoryState().markEphemeral();
           }

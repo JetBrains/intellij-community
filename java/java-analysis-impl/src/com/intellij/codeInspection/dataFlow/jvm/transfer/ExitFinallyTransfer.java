@@ -2,8 +2,6 @@
 package com.intellij.codeInspection.dataFlow.jvm.transfer;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
-import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
-import com.intellij.codeInspection.dataFlow.jvm.JvmTrap;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
@@ -17,22 +15,22 @@ import java.util.Objects;
 // ExitFinallyTransfer formally depends on enterFinally that has backLinks which are instructions bound to the DfaValueFactory
 // however, we actually use only instruction offsets from there, and binding to another factory does not change the offsets.
 public class ExitFinallyTransfer implements DfaControlTransferValue.TransferTarget {
-  private final JvmTrap.@NotNull EnterFinally myEnterFinally;
+  private final @NotNull EnterFinallyTrap myEnterFinally;
 
-  public ExitFinallyTransfer(JvmTrap.@NotNull EnterFinally enterFinally) { 
+  public ExitFinallyTransfer(@NotNull EnterFinallyTrap enterFinally) { 
     myEnterFinally = enterFinally; 
   }
 
   @Override
   public int @NotNull [] getPossibleTargets() {
     return StreamEx.of(myEnterFinally.backLinks()).flatMapToInt(link -> IntStreamEx.of(link.getSuccessorIndexes()))
-      .filter(index -> index != myEnterFinally.getJumpOffset().getInstructionOffset()).toArray();
+      .filter(index -> index != myEnterFinally.getJumpOffset()).toArray();
   }
 
   @Override
   public @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state,
                                                      DataFlowInterpreter interpreter) {
-    return ControlTransferHandler.dispatch(state, interpreter, (DfaControlTransferValue)state.pop());
+    return ((DfaControlTransferValue)state.pop()).dispatch(state, interpreter);
   }
 
   @Override
