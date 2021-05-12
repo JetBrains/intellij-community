@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ConfigImportHelper.ConfigDirsSearchResult;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,11 +56,16 @@ import static com.intellij.notification.NotificationAction.createSimpleExpiring;
 @SuppressWarnings("NonConstantLogger")
 public final class OldDirectoryCleaner {
   @ApiStatus.Internal
-  public static final class Stats {
+  public static final class Stats extends CounterUsagesCollector {
     private static final EventLogGroup GROUP = new EventLogGroup("leftover.dirs", 1);
     private static final EventId SCHEDULED = GROUP.registerEvent("scan.scheduled");
-    private static final EventId1<Integer> STARTED = GROUP.registerEvent("scan.started", Int("actual.delay"));
-    private static final EventId2<Integer, Long> COMPLETE = GROUP.registerEvent("cleanup.complete", Int("groups"), Long("total.mb"));
+    private static final EventId1<Integer> STARTED = GROUP.registerEvent("scan.started", Int("delay_days"));
+    private static final EventId2<Integer, Long> COMPLETE = GROUP.registerEvent("cleanup.complete", Int("groups"), Long("total_mb"));
+
+    @Override
+    public EventLogGroup getGroup() {
+      return GROUP;
+    }
 
     public static void scheduled() {
       SCHEDULED.log();
