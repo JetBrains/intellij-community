@@ -94,7 +94,7 @@ public class BuildProgress {
         while (!myIsFinished) {
           myTickCounter.incrementAndGet();
           try {
-            Thread.sleep(500L);
+            Thread.sleep(250L);
           }
           catch (InterruptedException e) {
           }
