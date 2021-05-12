@@ -4,6 +4,8 @@ package com.intellij.openapi.externalSystem.service.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.ui.completetion.SimpleTextCompletionContributor
+import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -220,7 +222,7 @@ class ExternalSystemProjectPathField(
   }
 
   init {
-    val completionVariants = { textToComplete: String ->
+    val textCompletionContributor = SimpleTextCompletionContributor.create { textToComplete ->
       when (mode) {
         Mode.NAME -> externalProjects.map { it.name }
         Mode.PATH -> {
@@ -232,13 +234,13 @@ class ExternalSystemProjectPathField(
         }
       }
     }
-    CompletionWidePopupProvider(project, this, completionVariants, parentDisposable).apply {
-      onVariantChosen {
-        mode = Mode.NAME
-      }
-      modeProperty.afterChange {
-        updatePopup()
-      }
+    val textCompletionPopup = TextCompletionPopup(project, this, textCompletionContributor, parentDisposable)
+    textCompletionPopup.onVariantChosen {
+      text = it.text
+      mode = Mode.NAME
+    }
+    modeProperty.afterChange {
+      textCompletionPopup.updatePopup()
     }
   }
 
