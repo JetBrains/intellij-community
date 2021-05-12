@@ -110,6 +110,9 @@ public final class DfaControlTransferValue extends DfaValue {
       return Collections.emptyList();
     }
 
+    default void link(DfaControlTransferValue value) {
+    }
+
     @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
                                                 @NotNull DataFlowInterpreter interpreter,
                                                 @NotNull TransferTarget target,

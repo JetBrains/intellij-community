@@ -23,7 +23,7 @@ public class ExitFinallyTransfer implements DfaControlTransferValue.TransferTarg
 
   @Override
   public int @NotNull [] getPossibleTargets() {
-    return StreamEx.of(myEnterFinally.backLinks()).flatMapToInt(link -> IntStreamEx.of(link.getSuccessorIndexes()))
+    return StreamEx.of(myEnterFinally.backLinks()).flatMapToInt(link -> IntStreamEx.of(link.getPossibleTargetIndices()))
       .filter(index -> index != myEnterFinally.getJumpOffset()).toArray();
   }
 

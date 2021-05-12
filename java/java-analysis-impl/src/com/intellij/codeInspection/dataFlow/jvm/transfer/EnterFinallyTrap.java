@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow.jvm.transfer;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
-import com.intellij.codeInspection.dataFlow.java.inst.ControlTransferInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -20,18 +19,18 @@ import java.util.List;
 public abstract class EnterFinallyTrap implements DfaControlTransferValue.Trap {
   private final PsiElement myAnchor;
   private final ControlFlow.@NotNull ControlFlowOffset myJumpOffset;
-  private final @NotNull List<@NotNull ControlTransferInstruction> myBackLinks = new ArrayList<>();
+  private final @NotNull List<@NotNull DfaControlTransferValue> myBackLinks = new ArrayList<>();
 
   protected EnterFinallyTrap(PsiElement anchor, ControlFlow.@NotNull ControlFlowOffset offset) {
     myAnchor = anchor;
     myJumpOffset = offset; 
   }
 
-  @NotNull List<@NotNull ControlTransferInstruction> backLinks() {
+  @NotNull List<@NotNull DfaControlTransferValue> backLinks() {
     return myBackLinks;
   }
 
-  public void link(ControlTransferInstruction instruction) {
+  public void link(DfaControlTransferValue instruction) {
     myBackLinks.add(instruction);
   }
 
