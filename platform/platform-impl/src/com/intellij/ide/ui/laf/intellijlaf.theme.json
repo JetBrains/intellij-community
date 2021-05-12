@@ -40,12 +40,7 @@
       "modifiedItemForeground": "#005ad9",
 
       "selectedForeground": "foreground",
-
-      "selectionBackground": {
-        "os.default": "#2675BF",
-        "os.windows": "#4A6EB7",
-        "os.linux": "#2F65CA"
-      },
+      "selectionBackground": "#2675BF",
       "selectionBackgroundInactive": "#D5D5D5",
       "selectionForeground": "#ffffff",
       "selectionForegroundInactive": "foreground",
