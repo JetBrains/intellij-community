@@ -1,6 +1,10 @@
 @file:Suppress("MagicNumber") // Swing dimension constants
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.UIManager
@@ -35,3 +39,8 @@ internal fun mouseListener(
         onExited(e)
     }
 }
+
+@Suppress("unused")
+internal val Dispatchers.AppUI
+    get() = AppUIExecutor.onUiThread().coroutineDispatchingContext() as? CoroutineDispatcher
+        ?: error("AppUIExecutor is not a CoroutineDispatcher")
