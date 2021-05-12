@@ -99,9 +99,7 @@ public class CheckNotNullInstruction extends Instruction {
       if (problem != null && problem.getKind() == NullabilityProblemKind.nullableFunctionReturn) {
         return value.getFactory().fromDfType(NOT_NULL_OBJECT);
       }
-      if (value instanceof DfaVariableValue) {
-        memState.setDfType(value, NOT_NULL_OBJECT);
-      }
+      memState.setDfType(value, NOT_NULL_OBJECT);
     }
     else if (value instanceof DfaVariableValue) {
       memState.meetDfType(value, NOT_NULL_OBJECT);

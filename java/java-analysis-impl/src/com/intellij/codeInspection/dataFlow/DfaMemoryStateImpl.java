@@ -746,12 +746,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public void setDfType(@NotNull DfaValue value, @NotNull DfType dfType) {
     if (value instanceof DfaVariableValue) {
-      DfaVariableValue var = (DfaVariableValue)value;
-      DfType type = getDfType(var);
-      if (DfaNullability.fromDfType(type) != DfaNullability.fromDfType(dfType)) {
-        removeEquivalence(var);
-      }
-      recordVariableType(var, dfType);
+      recordVariableType((DfaVariableValue)value, dfType);
     }
   }
 
