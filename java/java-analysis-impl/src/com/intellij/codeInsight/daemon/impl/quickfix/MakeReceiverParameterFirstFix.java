@@ -40,7 +40,7 @@ public class MakeReceiverParameterFirstFix extends LocalQuickFixAndIntentionActi
                              @NotNull PsiElement endElement) {
     if (!startElement.isValid() || !BaseIntentionAction.canModify(startElement)) return false;
     final PsiParameterList parameterList = ObjectUtils.tryCast(startElement.getParent(), PsiParameterList.class);
-    return parameterList != null && !parameterList.isEmpty();
+    return parameterList != null && PsiUtil.isJavaToken(parameterList.getFirstChild(), JavaTokenType.LPARENTH);
   }
 
   @Override
@@ -50,8 +50,10 @@ public class MakeReceiverParameterFirstFix extends LocalQuickFixAndIntentionActi
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiParameterList parameterList = ObjectUtils.tryCast(startElement.getParent(), PsiParameterList.class);
-    if (parameterList == null || parameterList.isEmpty()) return;
-    final PsiElement movedParameter = parameterList.addBefore(startElement, parameterList.getParameter(0));
+    if (parameterList == null) return;
+    final PsiElement firstChild = parameterList.getFirstChild();
+    if (!PsiUtil.isJavaToken(firstChild, JavaTokenType.LPARENTH)) return;
+    final PsiElement movedParameter = parameterList.addAfter(startElement, firstChild);
     moveComments(startElement, movedParameter, parameterList, true);
     moveComments(startElement, movedParameter, parameterList, false);
     startElement.delete();
