@@ -44,6 +44,8 @@ internal class WorkspaceEntityStorageImpl constructor(
   consistencyCheckingMode: ConsistencyCheckingMode
 ) : AbstractEntityStorage(consistencyCheckingMode) {
 
+  constructor() : this(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY, ConsistencyCheckingMode.default())
+
   // This cache should not be transferred to other versions of storage
   private val persistentIdCache = ConcurrentHashMap<PersistentEntityId<*>, WorkspaceEntity>()
 

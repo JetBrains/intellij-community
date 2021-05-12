@@ -11,6 +11,8 @@ internal class ImmutableEntityFamily<E : WorkspaceEntity>(
   private val emptySlotsSize: Int
 ) : EntityFamily<E>() {
 
+  constructor(): this(ArrayList(), 0)
+
   fun toMutable() = MutableEntityFamily(entities, true)
 
   override fun size(): Int = entities.size - emptySlotsSize
