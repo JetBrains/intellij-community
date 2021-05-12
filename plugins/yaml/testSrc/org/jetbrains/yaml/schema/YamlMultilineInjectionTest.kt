@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parents
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
+import com.intellij.testFramework.fixtures.injectionForHost
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.Predicate
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
@@ -46,6 +47,20 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
     myInjectionFixture.assertInjectedLangAtCaret("XML")
     assertInjectedAndLiteralValue("<html>\n<body>boo</body>\n</html>")
+  }
+  
+  fun testBashCommentInjection() {
+    myFixture.configureByText("test.yaml", """
+      # language=bash
+      commands:
+        - sudo rm -rf /
+        - df -h
+    """.trimIndent())
+
+    myInjectionFixture.assertInjected(
+      injectionForHost("sudo rm -rf /").hasLanguage("Shell Script"),
+      injectionForHost("df -h").hasLanguage("Shell Script"),
+    )
   }
 
 

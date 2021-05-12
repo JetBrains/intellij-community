@@ -83,9 +83,9 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     myPlaces = places;
   }
 
-  @Nullable
-  public Language getInjectedLanguage() {
-    return InjectedLanguage.findLanguageById(myInjectedLanguageId);
+  @Override
+  public @Nullable Language getInjectedLanguage() {
+    return InjectorUtils.getLanguage(this);
   }
 
   private InjectionPlace @NotNull [] myPlaces = InjectionPlace.EMPTY_ARRAY;

@@ -2,17 +2,13 @@
 package org.jetbrains.yaml
 
 import com.intellij.injected.editor.InjectionMeta
-import com.intellij.lang.Language
-import com.intellij.lang.injection.general.LanguageInjectionPerformer
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.lang.injection.general.Injection
-import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.yaml.psi.YAMLScalar
+import com.intellij.lang.injection.general.LanguageInjectionPerformer
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
-import com.intellij.util.text.escLBr
-import com.intellij.util.text.nullize
+import org.jetbrains.yaml.psi.YAMLScalar
 import org.jetbrains.yaml.psi.impl.YAMLBlockScalarImpl
 import org.jetbrains.yaml.psi.impl.YAMLScalarImpl
 
@@ -25,7 +21,7 @@ class YamlLanguageInjectionPerformer : LanguageInjectionPerformer {
                                 injection: Injection,
                                 context: PsiElement): Boolean {
     if (context !is YAMLScalar) return false
-    val language = Language.findLanguageByID(injection.injectedLanguageId) ?: return false
+    val language = injection.injectedLanguage ?: return false
     registrar.startInjecting(language)
     if (context is YAMLScalarImpl) {
 
