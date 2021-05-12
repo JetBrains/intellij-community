@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
+import com.intellij.ide.impl.dataRules.FileEditorRule;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
@@ -157,7 +158,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
         }
         boolean alreadyComputed = computed.get(i);
         Object data = !alreadyComputed || key == PlatformDataKeys.SLOW_DATA_PROVIDERS ?
-                      dataManager.getDataFromProvider(dataProvider, key.getName(), null, null) : null;
+                      dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key)) : null;
         if (data instanceof Editor) data = validateEditor((Editor)data, component);
         if (data == null) continue;
 
@@ -187,6 +188,12 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
     if (time > 200) {
       // nothing
     }
+  }
+
+  private static final GetDataRule ourFileEditorRule = new FileEditorRule();
+
+  private static @Nullable GetDataRule getFastDataRule(@NotNull DataKey<?> key) {
+    return key == PlatformDataKeys.FILE_EDITOR ? ourFileEditorRule : null;
   }
 
   @Override
