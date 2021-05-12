@@ -24,7 +24,7 @@ class MapConstructorAttributesFix : SetAnnotationAttributesFix() {
     val annotatedClass = GrMapConstructorPropertyReference.getConstructorReference(namedArgument)?.resolveClass()?.element as? GrTypeDefinition ?: return null
     val mapConstructorAnno = annotatedClass.getAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR) as? GrAnnotation ?: return null
     val affectedIdentifiers: Set<String> =
-      getAffectedMembersCache(mapConstructorAnno, annotatedClass).getAffectedMembers().mapNotNullTo(LinkedHashSet(), AffectedMembersCache.Companion::getExternalName)
+      getAffectedMembersCache(mapConstructorAnno).getAffectedMembers().mapNotNullTo(LinkedHashSet(), AffectedMembersCache.Companion::getExternalName)
     val collector = mutableMapOf<String, Any?>()
     val labels = run {
       val namedArgOwner = place.parentOfType<GrNamedArgumentsOwner>() ?: return null

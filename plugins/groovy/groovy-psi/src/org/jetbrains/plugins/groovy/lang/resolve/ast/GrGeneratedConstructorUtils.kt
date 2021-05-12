@@ -8,6 +8,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PropertyUtilBase
+import com.intellij.psi.util.parentOfType
 import groovy.transform.Undefined
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -88,14 +89,15 @@ data class AffectedMembersCache internal constructor(private val order: List<Psi
   fun arePropertiesHandledByUser(): Boolean = hasPropertyOptions
 }
 
-fun getAffectedMembersCache(annotation: PsiAnnotation, typeDefinition : PsiClass): AffectedMembersCache = CachedValuesManager.getCachedValue(annotation) {
-  val cache = computeAffectedMembersCache(annotation, typeDefinition)
+fun getAffectedMembersCache(annotation: PsiAnnotation): AffectedMembersCache = CachedValuesManager.getCachedValue(annotation) {
+  val cache = computeAffectedMembersCache(annotation)
   val affectedMembers = cache.getAllAffectedMembers()
-  CachedValueProvider.Result(cache, annotation, typeDefinition, *affectedMembers.toTypedArray())
+  CachedValueProvider.Result(cache, annotation, *affectedMembers.toTypedArray())
 }
 
-private fun computeAffectedMembersCache(annotation: PsiAnnotation, containingClass: PsiClass): AffectedMembersCache {
-  if (containingClass !is GrTypeDefinition) return EmptyAffectedMembersCache
+private fun computeAffectedMembersCache(annotation: PsiAnnotation): AffectedMembersCache {
+  val owner = annotation.owner as? PsiElement ?: return EmptyAffectedMembersCache
+  val containingClass = owner.parentOfType<GrTypeDefinition>()?.takeIf { it.modifierList === owner } ?: return EmptyAffectedMembersCache
   val (nameFilter: (String) -> Boolean, excludedIdentifiers: List<String>, orderFromIncludes: List<String>?) =
     collectNamesOrderInformation(annotation)
 

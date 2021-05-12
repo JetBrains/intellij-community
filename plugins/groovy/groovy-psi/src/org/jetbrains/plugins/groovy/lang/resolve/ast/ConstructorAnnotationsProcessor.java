@@ -166,7 +166,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       boolean optional = !immutable && PsiUtil.getAnnoAttributeValue(tupleConstructor, TupleConstructorAttributes.DEFAULTS, true);
       Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
       fieldsConstructor.addModifier(visibility.toString());
-      AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(tupleConstructor, typeDefinition);
+      AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(tupleConstructor);
 
       checkContainingClass(context, fieldsConstructor);
 

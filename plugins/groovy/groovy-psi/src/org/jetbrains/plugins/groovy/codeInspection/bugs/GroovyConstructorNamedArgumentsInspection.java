@@ -98,7 +98,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
                                               @NotNull PsiClass containingClass,
                                               @NotNull PsiAnnotation annotation) {
       Lazy<Set<String>> affectedMembers = LazyKt.lazy(LazyThreadSafetyMode.NONE, () ->
-        GrGeneratedConstructorUtils.getAffectedMembersCache(annotation, containingClass)
+        GrGeneratedConstructorUtils.getAffectedMembersCache(annotation)
         .getAffectedMembers().stream()
         .map(AffectedMembersCache::getExternalName)
         .filter(Objects::nonNull)

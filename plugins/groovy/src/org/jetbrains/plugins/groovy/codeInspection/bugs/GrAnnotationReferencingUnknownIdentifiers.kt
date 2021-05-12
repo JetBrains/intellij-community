@@ -61,8 +61,7 @@ class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
     override fun visitAnnotation(annotation: GrAnnotation) {
       super.visitAnnotation(annotation)
       if (!constructorGeneratingAnnotations.contains(annotation.qualifiedName)) return
-      val owner = (annotation.owner as? PsiElement)?.parentOfType<GrTypeDefinition>() ?: return
-      val cache = getAffectedMembersCache(annotation, owner)
+      val cache = getAffectedMembersCache(annotation)
       val affectedMembers = cache.getAllAffectedMembers().mapNotNullTo(mutableSetOf(), AffectedMembersCache.Companion::getExternalName)
       processAttribute(affectedMembers, annotation, "includes")
       processAttribute(affectedMembers, annotation, "excludes")

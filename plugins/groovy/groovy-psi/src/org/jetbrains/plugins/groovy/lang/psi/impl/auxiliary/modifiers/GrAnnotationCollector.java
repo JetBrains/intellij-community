@@ -79,7 +79,7 @@ public final class GrAnnotationCollector {
       final PsiClass resolved = JavaPsiFacade.getInstance(alias.getProject()).findClass(qname, alias.getResolveScope());
       if (resolved == null) continue;
 
-      final GrLightAnnotation annotation = new GrLightAnnotation(manager, alias.getLanguage(), qname, modifierList);
+      final GrLightAnnotation annotation = new GrLightAnnotation(manager, alias.getLanguage(), qname, (PsiModifierList)alias.getParent());
 
       Set<String> usedAttrs = new LinkedHashSet<>();
       for (GrAnnotationNameValuePair attr : attributes) {

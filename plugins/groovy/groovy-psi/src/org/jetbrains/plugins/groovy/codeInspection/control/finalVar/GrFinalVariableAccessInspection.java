@@ -370,7 +370,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     if (anno == null) {
       return false;
     }
-    AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(anno, containingClass);
+    AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(anno);
     return !cache.arePropertiesHandledByUser() && cache.getAffectedMembers().contains(field);
   }
 
