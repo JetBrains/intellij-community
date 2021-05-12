@@ -29,7 +29,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
@@ -186,9 +185,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testIgnoredFiles() throws IOException {
-    VirtualFile file = WriteAction.computeAndWait(() -> getTempDir().createVirtualDir().createChildData(FileTypesTest.class, ".svn"));
+    VirtualFile file = getVirtualFile(createTempFile(".svn", ""));
     assertTrue(myFileTypeManager.isFileIgnored(file));
-    assertFalse(myFileTypeManager.isFileIgnored(getTempDir().createVirtualFile("a.txt")));
+    assertFalse(myFileTypeManager.isFileIgnored(createTempVirtualFile("txt", null, "", StandardCharsets.UTF_8)));
   }
 
   private static void checkNotAssociated(@NotNull FileType fileType,
@@ -831,11 +830,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
   }
 
-  public void testChangeEncodingManuallyForAutoDetectedFileSticks() {
+  public void testChangeEncodingManuallyForAutoDetectedFileSticks() throws IOException {
     EncodingProjectManagerImpl manager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject());
     String oldProject = manager.getDefaultCharsetName();
     try {
-      VirtualFile file = getTempDir().createVirtualFile(null, "123456789");
+      VirtualFile file = createTempVirtualFile("sldkfjlskdfj", null, "123456789", StandardCharsets.UTF_8);
       manager.setEncoding(file, CharsetToolkit.WIN_1251_CHARSET);
       file.setCharset(CharsetToolkit.WIN_1251_CHARSET);
       UIUtil.dispatchAllInvocationEvents();
@@ -890,14 +889,15 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertSame(ModuleFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("iml"));
   }
 
-  public void testIsFileTypeRunsDetector() {
+  public void testIsFileTypeRunsDetector() throws IOException {
+    VirtualFile vFile = createTempVirtualFile("bbb", null, "#!archive!!!", StandardCharsets.UTF_8);
+
     AtomicInteger detectorCalls = new AtomicInteger();
-    ExtensionTestUtil
-      .maskExtensions(FileTypeRegistry.FileTypeDetector.EP_NAME, Collections.singletonList(new FileTypeRegistry.FileTypeDetector() {
+    ExtensionTestUtil.maskExtensions(FileTypeRegistry.FileTypeDetector.EP_NAME, Collections.singletonList(new FileTypeRegistry.FileTypeDetector() {
         @Nullable
         @Override
         public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
-          if (Strings.endsWith(file.getNameSequence(), ".bbb")) {
+          if (file.equals(vFile)) {
             detectorCalls.incrementAndGet();
           }
           if (firstCharsIfText != null && firstCharsIfText.toString().startsWith("#!archive")) {
@@ -912,9 +912,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         }
       }), getTestRootDisposable());
 
-    VirtualFile virtualFile = getTempDir().createVirtualFile("foo.bbb", "#!archive!!!");
-    assertEquals(ArchiveFileType.INSTANCE, virtualFile.getFileType());
-    assertEquals(ArchiveFileType.INSTANCE, virtualFile.getFileType());
+    assertEquals(ArchiveFileType.INSTANCE, vFile.getFileType());
+    assertEquals(ArchiveFileType.INSTANCE, vFile.getFileType());
     assertEquals(1, detectorCalls.get());
   }
 
@@ -946,7 +945,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
   }
 
-  public void testReplacePlainTextLikeFileTypesWithDetectedFileType() {
+  public void testReplacePlainTextLikeFileTypesWithDetectedFileType() throws IOException {
     String extension = "replaceable";
     FileType replaceableFileType = createFileTypeReplaceableByContentDetection();
     WriteAction.run(() -> myFileTypeManager.associatePattern(replaceableFileType, "*." + extension));
@@ -956,16 +955,16 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     HashBangFileTypeDetector detector = new HashBangFileTypeDetector(detectedFileType, hashBangSuffix);
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
 
-    VirtualFile file = getTempDir().createVirtualFile('.' + extension, "#!/" + hashBangSuffix + "\n");
+    VirtualFile file = createTempVirtualFile(extension, null, "#!/" + hashBangSuffix + "\n", StandardCharsets.UTF_8);
     assertEquals(detectedFileType, file.getFileType());
   }
 
-  public void testDoNotReplaceEmptyPlainTextLikeFileTypesWithDetectedFileType() {
+  public void testDoNotReplaceEmptyPlainTextLikeFileTypesWithDetectedFileType() throws IOException {
     String extension = "replaceable";
     FileType replaceableFileType = createFileTypeReplaceableByContentDetection();
     WriteAction.run(() -> myFileTypeManager.associatePattern(replaceableFileType, "*." + extension));
 
-    VirtualFile file = getTempDir().createVirtualFile('.' + extension);
+    VirtualFile file = createTempVirtualFile(extension, null, "", StandardCharsets.UTF_8);
     assertEquals(replaceableFileType, file.getFileType());
   }
 
@@ -1229,13 +1228,13 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
   }
 
-  public void testHashBangPatternsCanBeConfiguredDynamically() {
-    VirtualFile file0 = getTempDir().createVirtualFile(null, "#!/usr/bin/gogogo\na=b");
+  public void testHashBangPatternsCanBeConfiguredDynamically() throws IOException {
+    VirtualFile file0 = createTempVirtualFile("xxxx", null, "#!/usr/bin/gogogo\na=b", StandardCharsets.UTF_8);
     assertEquals(PlainTextFileType.INSTANCE, file0.getFileType());
     FileTypeManagerImpl.FileTypeWithDescriptor fileType = FileTypeManagerImpl.coreDescriptorFor(StdFileTypes.PROPERTIES);
     myFileTypeManager.getExtensionMap().addHashBangPattern("gogogo", fileType);
     try {
-      VirtualFile file = getTempDir().createVirtualFile(null, "#!/usr/bin/gogogo\na=b");
+      VirtualFile file = createTempVirtualFile("xxxx", null, "#!/usr/bin/gogogo\na=b", StandardCharsets.UTF_8);
       assertEquals(StdFileTypes.PROPERTIES, file.getFileType());
     }
     finally {

@@ -70,15 +70,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -727,6 +726,21 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       PathKt.write(file, text);
     }
     return file.toFile();
+  }
+
+  public @NotNull VirtualFile createTempVirtualFile(@NonNls @NotNull String ext,
+                                                    byte @Nullable [] bom,
+                                                    @NonNls @NotNull String content,
+                                                    @NotNull Charset charset) throws IOException {
+    File file = createTempFile("copy."+ ext, null);
+    FileOutputStream stream = new FileOutputStream(file);
+    if (bom != null) {
+      stream.write(bom);
+    }
+    try (OutputStreamWriter writer = new OutputStreamWriter(stream, charset)) {
+      writer.write(content);
+    }
+    return getVirtualFile(file);
   }
 
   protected final @Nullable PsiFile getPsiFile(@NotNull Document document) {
