@@ -747,9 +747,11 @@ public class MavenIndex implements MavenSearchIndex {
     public Set<String> read(@NotNull DataInput s) throws IOException {
       int count = s.readInt();
       Set<String> result = new HashSet<>(count);
-      while (count-- > 0) {
-        result.add(s.readUTF());
-      }
+      try {
+        while (count-- > 0) {
+          result.add(s.readUTF());
+        }
+      } catch (EOFException ignore){}
       return result;
     }
   }
