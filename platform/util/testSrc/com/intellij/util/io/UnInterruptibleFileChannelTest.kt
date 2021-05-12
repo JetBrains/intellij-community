@@ -13,7 +13,7 @@ import java.nio.file.StandardOpenOption
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class UnInterruptibleFileChannelHandleTest {
+class UnInterruptibleFileChannelTest {
   @Rule
   @JvmField
   val tempDirectory = TempDirectory()
@@ -28,15 +28,15 @@ class UnInterruptibleFileChannelHandleTest {
 
   @Test
   fun `test no interruption`() {
-    UnInterruptibleFileChannelHandle(newTempFile(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
-      it.executeOperation { ch -> ch.write(byteBuf1) }
-      it.executeOperation { ch -> ch.write(byteBuf2) }
+    UnInterruptibleFileChannel(newTempFile(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
+      it.write(byteBuf1)
+      it.write(byteBuf2)
 
       val readBuffer1 = ByteBuffer.allocate(4)
-      it.executeOperation { ch -> ch.read(readBuffer1, 0) }
+      it.read(readBuffer1, 0)
 
       val readBuffer2 = ByteBuffer.allocate(4)
-      it.executeOperation { ch -> ch.read(readBuffer2, 0) }
+      it.read(readBuffer2, 0)
 
       Assert.assertEquals(byteBuf1, readBuffer1)
       Assert.assertEquals(byteBuf2, readBuffer2)
@@ -45,35 +45,19 @@ class UnInterruptibleFileChannelHandleTest {
 
   @Test
   fun `test interrupted on last operation`() {
-    val channels = mutableSetOf<FileChannel>()
-
-    UnInterruptibleFileChannelHandle(newTempFile(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
-      it.executeOperation { ch ->
-        ch.write(byteBuf1)
-        channels.add(ch)
-      }
-      it.executeOperation { ch ->
-        ch.write(byteBuf2)
-        channels.add(ch)
-      }
+    UnInterruptibleFileChannel(newTempFile(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
+      it.write(byteBuf1)
+      it.write(byteBuf2)
 
       val readBuffer1 = ByteBuffer.allocate(4)
-      it.executeOperation { ch ->
-        ch.read(readBuffer1, 0)
-        channels.add(ch)
-      }
+      it.read(readBuffer1, 0)
 
-      Assert.assertEquals(1, channels.size)
       val currentThread = Thread.currentThread()
       currentThread.interrupt()
 
       val readBuffer2 = ByteBuffer.allocate(4)
-      it.executeOperation { ch ->
-        ch.read(readBuffer2, 0)
-        channels.add(ch)
-      }
+      it.read(readBuffer2, 0)
 
-      Assert.assertEquals(2, channels.size)
       Assert.assertEquals(byteBuf1, readBuffer1)
       Assert.assertEquals(byteBuf2, readBuffer2)
     }
@@ -81,37 +65,21 @@ class UnInterruptibleFileChannelHandleTest {
 
   @Test
   fun `test interrupted in the middle`() {
-    val channels = mutableSetOf<FileChannel>()
+    UnInterruptibleFileChannel(newTempFile(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
+      it.write(byteBuf1)
+      it.write(byteBuf2)
 
-    UnInterruptibleFileChannelHandle(newTempFile(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
-      it.executeOperation { ch ->
-        ch.write(byteBuf1)
-        channels.add(ch)
-      }
-      it.executeOperation { ch ->
-        ch.write(byteBuf2)
-        channels.add(ch)
-      }
-
-      Assert.assertEquals(1, channels.size)
       val currentThread = Thread.currentThread()
       currentThread.interrupt()
 
       val readBuffer1 = ByteBuffer.allocate(4)
-      it.executeOperation { ch ->
-        ch.read(readBuffer1, 0)
-        channels.add(ch)
-      }
+      it.read(readBuffer1, 0)
 
       Assert.assertTrue(Thread.currentThread().isInterrupted)
 
       val readBuffer2 = ByteBuffer.allocate(4)
-      it.executeOperation { ch ->
-        ch.read(readBuffer2, 0)
-        channels.add(ch)
-      }
+      it.read(readBuffer2, 0)
 
-      Assert.assertEquals(3, channels.size)
       Assert.assertEquals(byteBuf1, readBuffer1)
       Assert.assertEquals(byteBuf2, readBuffer2)
     }
@@ -120,9 +88,9 @@ class UnInterruptibleFileChannelHandleTest {
   @Test
   fun `test open existing file`() {
     val file = newTempFile()
-    UnInterruptibleFileChannelHandle(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
-      it.executeOperation { ch -> ch.write(byteBuf1) }
-      it.executeOperation { ch -> ch.write(byteBuf2) }
+    UnInterruptibleFileChannel(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
+      it.write(byteBuf1)
+      it.write(byteBuf2)
     }
 
     Thread.currentThread().interrupt()
@@ -130,9 +98,9 @@ class UnInterruptibleFileChannelHandleTest {
     val readBuffer1 = ByteBuffer.allocate(4)
     val readBuffer2 = ByteBuffer.allocate(4)
 
-    UnInterruptibleFileChannelHandle(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
-      it.executeOperation { ch -> ch.read(readBuffer1, 0) }
-      it.executeOperation { ch -> ch.read(readBuffer2, 0) }
+    UnInterruptibleFileChannel(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
+      it.read(readBuffer1, 0)
+      it.read(readBuffer2, 0)
     }
 
     Assert.assertEquals(byteBuf1, readBuffer1)
@@ -146,10 +114,10 @@ class UnInterruptibleFileChannelHandleTest {
     var exceptionHappened = false
 
     try {
-      UnInterruptibleFileChannelHandle(file, StandardOpenOption.READ).use {
-        it.executeOperation { ch -> ch.write(byteBuf1) }
+      UnInterruptibleFileChannel(file, StandardOpenOption.READ).use {
+        it.write(byteBuf1)
         secondOperationStarted = true
-        it.executeOperation { ch -> ch.write(byteBuf2) }
+        it.write(byteBuf2)
       }
       Assert.fail("Should not executed without exception")
     }
@@ -177,20 +145,18 @@ class UnInterruptibleFileChannelHandleTest {
     }
 
     try {
-      UnInterruptibleFileChannelHandle(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use { fileHandle ->
+      UnInterruptibleFileChannel(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE).use { fileHandle ->
         (0..100).map {
           threadPool.submit {
             val threadId = Thread.currentThread().id
             val data = byteArrayOf(threadId.toByte(), threadId.toByte(), threadId.toByte(), threadId.toByte())
 
-            fileHandle.executeOperation {
-              it.write(ByteBuffer.wrap(data), threadId * 4)
-            }
+            fileHandle.write(ByteBuffer.wrap(data), threadId * 4)
           }
         }.toList().forEach { it.get(1, TimeUnit.MINUTES) }
 
         Thread.currentThread().interrupt()
-        fileHandle.executeOperation { it.size() }
+        fileHandle.size()
         Assert.assertTrue(Thread.interrupted())
 
         (0..100).map {
@@ -199,9 +165,7 @@ class UnInterruptibleFileChannelHandleTest {
             val expectedData = ByteBuffer.wrap(byteArrayOf(threadId.toByte(), threadId.toByte(), threadId.toByte(), threadId.toByte()))
             val actualData = ByteBuffer.allocate(4)
 
-            fileHandle.executeOperation {
-              Assert.assertEquals(4, it.read(actualData, threadId * 4))
-            }
+            Assert.assertEquals(4, fileHandle.read(actualData, threadId * 4))
 
             Assert.assertEquals(expectedData, actualData.rewind())
           }

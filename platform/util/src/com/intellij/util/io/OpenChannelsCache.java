@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.util.*;
 
@@ -23,12 +24,17 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
     myCache = new LinkedHashMap<>(cacheSizeLimit, 0.5f, true);
   }
 
+  @FunctionalInterface
+  interface ChannelProcessor<T> {
+    T process(@NotNull FileChannel channel) throws IOException;
+  }
+
   /**
    * Parameter {@param processor} should be idempotent because sometimes calculation might be restarted
    * when file channel was closed by thread interruption
    */
   <T> T useChannel(@NotNull Path path,
-                   @NotNull UnInterruptibleFileChannelHandle.FileChannelIdempotentOperation<T> operation,
+                   @NotNull ChannelProcessor<T> processor,
                    boolean read) throws IOException {
     ChannelDescriptor descriptor;
     synchronized (myLock) {
@@ -53,7 +59,7 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
     }
 
     try {
-      return descriptor.getChannelHandle().executeOperation(operation);
+      return processor.process(descriptor.getChannel());
     } finally {
       synchronized (myLock) {
         descriptor.unlock();
@@ -93,7 +99,7 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
 
   static final class ChannelDescriptor implements Closeable {
     private int myLockCount = 0;
-    private final @NotNull UnInterruptibleFileChannelHandle myChannelHandle;
+    private final @NotNull UnInterruptibleFileChannel myChannel;
     private final boolean myReadOnly;
 
     private static final OpenOption[] MODIFIABLE_OPTS = {StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE};
@@ -101,9 +107,9 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
 
     ChannelDescriptor(@NotNull Path file, boolean readOnly) throws IOException {
       myReadOnly = readOnly;
-      myChannelHandle = Objects.requireNonNull(FileUtilRt.doIOOperation(lastAttempt -> {
+      myChannel = Objects.requireNonNull(FileUtilRt.doIOOperation(lastAttempt -> {
         try {
-          return new UnInterruptibleFileChannelHandle(file, readOnly ? READ_ONLY_OPTS : MODIFIABLE_OPTS);
+          return new UnInterruptibleFileChannel(file, readOnly ? READ_ONLY_OPTS : MODIFIABLE_OPTS);
         }
         catch (NoSuchFileException ex) {
           Path parent = file.getParent();
@@ -134,13 +140,13 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
       return myLockCount != 0;
     }
 
-    @NotNull UnInterruptibleFileChannelHandle getChannelHandle() {
-      return myChannelHandle;
+    @NotNull UnInterruptibleFileChannel getChannel() {
+      return myChannel;
     }
 
     @Override
     public void close() throws IOException {
-      myChannelHandle.close();
+      myChannel.close();
     }
   }
 }

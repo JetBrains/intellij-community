@@ -75,7 +75,7 @@ public final class RandomAccessDataFile implements Forceable, Closeable {
     }
   }
 
-  private <T> T useFileChannel(@NotNull UnInterruptibleFileChannelHandle.FileChannelIdempotentOperation<T> channelConsumer) throws IOException {
+  private <T> T useFileChannel(@NotNull OpenChannelsCache.ChannelProcessor<T> channelConsumer) throws IOException {
     return ourCache.useChannel(myFile, channelConsumer, false);
   }
 

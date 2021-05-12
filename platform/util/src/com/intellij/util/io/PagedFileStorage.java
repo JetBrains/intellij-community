@@ -121,13 +121,13 @@ public class PagedFileStorage implements Forceable {
   }
 
 
-  <R> R useChannel(@NotNull UnInterruptibleFileChannelHandle.FileChannelIdempotentOperation<R> operation, boolean read) throws IOException {
+  <R> R useChannel(@NotNull OpenChannelsCache.ChannelProcessor<R> processor, boolean read) throws IOException {
     if (myStorageLockContext.useChannelCache()) {
-      return CHANNELS_CACHE.useChannel(myFile, operation, read);
+      return CHANNELS_CACHE.useChannel(myFile, processor, read);
     }
     else {
       try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(myFile, read)) {
-        return desc.getChannelHandle().executeOperation(operation);
+        return processor.process(desc.getChannel());
       }
     }
   }

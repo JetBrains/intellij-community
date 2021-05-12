@@ -799,15 +799,15 @@ public final class PersistentHashMapValueStorage {
   }
 
   private static final class FileReader implements RAReader {
-    private final UnInterruptibleFileChannelHandle myFile;
+    private final UnInterruptibleFileChannel myFile;
 
     private FileReader(Path file) throws IOException {
-      myFile = new UnInterruptibleFileChannelHandle(file, StandardOpenOption.READ);
+      myFile = new UnInterruptibleFileChannel(file, StandardOpenOption.READ);
     }
 
     @Override
     public void get(final long addr, final byte[] dst, final int off, final int len) throws IOException {
-      myFile.executeOperation(ch -> ch.read(ByteBuffer.wrap(dst, off, len), addr));
+      myFile.read(ByteBuffer.wrap(dst, off, len), addr);
     }
 
     @Override

@@ -23,8 +23,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * If underlying {@link FileChannel} is observed in closed by interruption state,
  * in other words {@link ClosedByInterruptException} has been thrown we're trying to reopen it and apply operation again.
  */
-@ApiStatus.Experimental
-public final class UnInterruptibleFileChannelHandle implements Closeable {
+@ApiStatus.Internal
+final class UnInterruptibleFileChannelHandle {
   private static final Logger LOG = Logger.getInstance(UnInterruptibleFileChannelHandle.class);
 
   private final @NotNull Lock myOpenCloseLock = new ReentrantLock();
@@ -33,13 +33,13 @@ public final class UnInterruptibleFileChannelHandle implements Closeable {
 
   private volatile FileChannel myChannel; // null if handle has been closed
 
-  public UnInterruptibleFileChannelHandle(@NotNull Path path, OpenOption @NotNull ... openOptions) throws IOException {
+  UnInterruptibleFileChannelHandle(@NotNull Path path, OpenOption @NotNull ... openOptions) throws IOException {
     myPath = path;
     myOpenOptions = openOptions;
     reopenChannel();
   }
 
-  public <T> T executeOperation(@NotNull FileChannelIdempotentOperation<T> operation) throws IOException {
+  <T> T executeOperation(@NotNull FileChannelIdempotentOperation<T> operation) throws IOException {
     if (!isOpen()) {
       throw new ClosedChannelException();
     }
@@ -66,16 +66,15 @@ public final class UnInterruptibleFileChannelHandle implements Closeable {
     }
   }
 
-  public boolean isOpen() {
+  boolean isOpen() {
     return myChannel != null;
   }
 
-  @Override
-  public void close() throws IOException {
+  void close() throws IOException {
     ConcurrencyUtil.withLock(myOpenCloseLock, () -> tryClose());
   }
 
-  private void reopenChannel() throws IOException {
+  void reopenChannel() throws IOException {
     ConcurrencyUtil.withLock(myOpenCloseLock, () -> {
       FileChannel newFileChannel = FileChannel.open(myPath, myOpenOptions);
       try {
@@ -99,7 +98,7 @@ public final class UnInterruptibleFileChannelHandle implements Closeable {
     }
   }
 
-  public interface FileChannelIdempotentOperation<T> {
+  interface FileChannelIdempotentOperation<T> {
     T execute(@NotNull FileChannel fileChannel) throws IOException;
   }
 }
