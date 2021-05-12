@@ -101,12 +101,12 @@ public final class RepositoryHelper {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", url.getAuthority()));
     }
 
-    List<PluginNode> descriptors = MarketplaceRequests.getInstance()
-      .readOrUpdateFile(pluginListFile,
-                        url.toExternalForm(),
-                        indicator,
-                        IdeBundle.message("progress.downloading.list.of.plugins", url.getAuthority()),
-                        MarketplaceRequests::parsePluginList);
+    List<PluginNode> descriptors = MarketplaceRequests.readOrUpdateFile(pluginListFile,
+                                                                        url.toExternalForm(),
+                                                                        indicator,
+                                                                        IdeBundle.message("progress.downloading.list.of.plugins",
+                                                                                          url.getAuthority()),
+                                                                        MarketplaceRequests::parsePluginList);
     return process(descriptors,
                    build != null ? build : PluginManagerCore.getBuildNumber(),
                    repositoryUrl);

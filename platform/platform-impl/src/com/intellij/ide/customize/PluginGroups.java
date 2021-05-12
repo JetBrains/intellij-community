@@ -42,8 +42,7 @@ public class PluginGroups {
       @Override
       protected @NotNull List<PluginNode> doInBackground() {
         try {
-          MarketplaceRequests requests = MarketplaceRequests.getInstance();
-          List<PluginNode> featuredPlugins = requests.loadLastCompatiblePluginDescriptors(myFeaturedPlugins.keySet());
+          List<PluginNode> featuredPlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(myFeaturedPlugins.keySet());
 
           Set<PluginId> dependsIds = featuredPlugins.stream()
             .map(PluginNode::getDependencies)
@@ -53,7 +52,7 @@ public class PluginGroups {
             .collect(Collectors.toUnmodifiableSet());
 
           ArrayList<PluginNode> result = new ArrayList<>(featuredPlugins);
-          result.addAll(requests.loadLastCompatiblePluginDescriptors(dependsIds));
+          result.addAll(MarketplaceRequests.loadLastCompatiblePluginDescriptors(dependsIds));
           return result;
         }
         catch (Exception e) {

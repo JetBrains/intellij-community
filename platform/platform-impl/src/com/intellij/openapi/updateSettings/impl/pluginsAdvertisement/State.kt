@@ -83,7 +83,7 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
         return emptySet()
       }
 
-      val pluginIdsFromMarketplace = MarketplaceRequests.Instance
+      val pluginIdsFromMarketplace = MarketplaceRequests
         .getLastCompatiblePluginUpdate(dataSet.mapSmartSet { it.pluginId })
         .map { it.pluginId }
         .toSet()
