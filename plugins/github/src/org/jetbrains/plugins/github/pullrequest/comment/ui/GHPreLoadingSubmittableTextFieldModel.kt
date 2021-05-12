@@ -3,15 +3,18 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 
-class GHPreLoadingSubmittableTextFieldModel(initialText: String,
-                                            preLoader: CompletableFuture<String>,
-                                            submitter: (String) -> CompletableFuture<*>)
-  : GHSubmittableTextFieldModel(initialText, submitter) {
+class GHPreLoadingSubmittableTextFieldModel(
+  project: Project,
+  initialText: String,
+  preLoader: CompletableFuture<String>,
+  submitter: (String) -> CompletableFuture<*>
+) : GHSubmittableTextFieldModel(project, initialText, submitter) {
 
   init {
     document as DocumentImpl

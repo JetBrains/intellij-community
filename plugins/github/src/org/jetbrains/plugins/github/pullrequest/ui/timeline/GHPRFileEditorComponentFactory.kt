@@ -98,7 +98,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   fun create(): JComponent {
     val mainPanel = Wrapper()
 
-    val header = GHPRTitleComponent.create(detailsModel, editor.detailsData)
+    val header = GHPRTitleComponent.create(project, detailsModel, editor.detailsData)
 
     val timeline = GHPRTimelineComponent(detailsModel,
                                          timelineModel,
@@ -185,7 +185,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   private fun createCommentField(commentService: GHPRCommentsDataProvider,
                                  avatarIconsProvider: GHAvatarIconsProvider,
                                  currentUser: GHUser): JComponent {
-    val model = GHSubmittableTextFieldModel {
+    val model = GHSubmittableTextFieldModel(project) {
       commentService.addComment(EmptyProgressIndicator(), it)
     }
     return GHSubmittableTextFieldFactory(model).create(avatarIconsProvider, currentUser)
@@ -203,7 +203,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, detailsModel.value)
     val diffFactory = GHPRReviewThreadDiffComponentFactory(project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(detailsDataProvider, commentsDataProvider, reviewDataProvider,
+    return GHPRTimelineItemComponentFactory(project, detailsDataProvider, commentsDataProvider, reviewDataProvider,
                                             avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
                                             eventsFactory,
                                             selectInToolWindowHelper, currentUser)

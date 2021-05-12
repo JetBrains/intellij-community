@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -27,7 +28,7 @@ import javax.swing.JLabel
 
 internal object GHPRTitleComponent {
 
-  fun create(model: SingleValueModel<GHPullRequestShort>, detailsDataProvider: GHPRDetailsDataProvider): JComponent {
+  fun create(project: Project, model: SingleValueModel<GHPullRequestShort>, detailsDataProvider: GHPRDetailsDataProvider): JComponent {
     val icon = JLabel()
     val title = HtmlEditorPane().apply {
       font = font.deriveFont((font.size * 1.5).toFloat())
@@ -39,7 +40,8 @@ internal object GHPRTitleComponent {
     }
 
     if (model.value.viewerCanUpdate) {
-      val panelHandle = object : GHEditableHtmlPaneHandle(title,
+      val panelHandle = object : GHEditableHtmlPaneHandle(project,
+                                                          title,
                                                           { CompletableFuture.completedFuture(model.value.title) },
                                                           { newText ->
                                                             detailsDataProvider.updateDetails(EmptyProgressIndicator(),

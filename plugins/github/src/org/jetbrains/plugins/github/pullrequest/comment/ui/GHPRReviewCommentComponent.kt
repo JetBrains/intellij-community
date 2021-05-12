@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
@@ -27,7 +28,8 @@ import javax.swing.JPanel
 
 object GHPRReviewCommentComponent {
 
-  fun create(reviewDataProvider: GHPRReviewDataProvider,
+  fun create(project: Project,
+             reviewDataProvider: GHPRReviewDataProvider,
              comment: GHPRReviewCommentModel,
              avatarIconsProvider: GHAvatarIconsProvider,
              showResolvedMarker: Boolean = true): JComponent {
@@ -59,7 +61,8 @@ object GHPRReviewCommentComponent {
 
     Controller(comment, titlePane, pendingLabel, resolvedLabel, textPane, showResolvedMarker)
 
-    val editablePaneHandle = GHEditableHtmlPaneHandle(textPane,
+    val editablePaneHandle = GHEditableHtmlPaneHandle(project,
+                                                      textPane,
                                                       { reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
                                                       { reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it) })
 
@@ -127,11 +130,11 @@ object GHPRReviewCommentComponent {
     }
   }
 
-  fun factory(reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider,
+  fun factory(project: Project, reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider,
               showResolvedMarkerOnFirstComment: Boolean = true)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
-      create(reviewDataProvider, comment, avatarIconsProvider, showResolvedMarkerOnFirstComment)
+      create(project, reviewDataProvider, comment, avatarIconsProvider, showResolvedMarkerOnFirstComment)
     }
   }
 }

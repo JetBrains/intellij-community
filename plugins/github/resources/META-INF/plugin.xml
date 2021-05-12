@@ -19,6 +19,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>Git4Idea</depends>
+  <depends>org.intellij.plugins.markdown</depends>
   <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
