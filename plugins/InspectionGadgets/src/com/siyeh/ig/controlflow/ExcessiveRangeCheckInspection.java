@@ -149,7 +149,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     LongRangeSet getFullRange() {
       LongRangeSet result;
       if (myField != null) {
-        result = DfLongType.extractRange(myField.getDefaultValue(false));
+        result = DfLongType.extractRange(myField.getDefaultValue());
       }
       else {
         result = JvmPsiRangeSetUtil.typeRange(myExpression.getType());

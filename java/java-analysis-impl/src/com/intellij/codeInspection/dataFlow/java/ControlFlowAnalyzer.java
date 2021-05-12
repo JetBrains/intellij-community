@@ -1242,8 +1242,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (toPush == null) {
       toPush = myFactory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.UNKNOWN));
     }
-    DfaControlTransferValue transfer =
-      shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get("java.lang.ArrayIndexOutOfBoundsException"), myTrapStack) : null;
+    DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
     addInstruction(new ArrayAccessInstruction(toPush, expression, transfer));
     addNullCheck(expression);
     finishElement(expression);
@@ -1367,9 +1366,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void checkZeroDivisor(PsiType resType) {
-    DfaControlTransferValue transfer =
-      shouldHandleException() ?
-      myFactory.controlTransfer(myExceptionCache.get("java.lang.ArithmeticException"), myTrapStack) : null;
+    DfaControlTransferValue transfer = createTransfer("java.lang.ArithmeticException");
     addInstruction(new EnsureInstruction(null, RelationType.NE, PsiType.LONG.equals(resType) ? DfTypes.longValue(0) : DfTypes.intValue(0),
                                          transfer, true));
   }
@@ -1749,11 +1746,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void processFailResult(List<? extends MethodContract> contracts, PsiExpression anchor) {
     if (contracts.stream().anyMatch(c -> c.getReturnValue().isFail())) {
-      DfaControlTransferValue transfer = shouldHandleException() ?
-                                         myFactory.controlTransfer(myExceptionCache.get(JAVA_LANG_THROWABLE), myTrapStack) : null;
+      DfaControlTransferValue transfer = createTransfer(JAVA_LANG_THROWABLE);
       // if a contract resulted in 'fail', handle it
       addInstruction(new EnsureInstruction(new ContractFailureProblem(anchor), RelationType.NE, DfType.FAIL, transfer));
     }
+  }
+
+  @Nullable DfaControlTransferValue createTransfer(@NotNull String exception) {
+    return shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get(exception), myTrapStack) : null;
   }
 
   @Override
@@ -1783,9 +1783,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           dimension.accept(this);
           generateBoxingUnboxingInstructionFor(dimension, PsiType.INT);
         }
-        DfaControlTransferValue transfer =
-          shouldHandleException() ?
-          myFactory.controlTransfer(myExceptionCache.get("java.lang.NegativeArraySizeException"), myTrapStack) : null;
+        DfaControlTransferValue transfer = createTransfer("java.lang.NegativeArraySizeException");
         for (int i = dims - 1; i >= 0; i--) {
           addInstruction(new EnsureInstruction(new NegativeArraySizeProblem(dimensions[i]), 
                                                RelationType.GE, DfTypes.intValue(0), transfer, true));
@@ -2048,8 +2046,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     final PsiTypeElement typeElement = castExpression.getCastType();
     if (typeElement != null && operand != null && operand.getType() != null && !(typeElement.getType() instanceof PsiPrimitiveType)) {
-      DfaControlTransferValue transfer =
-        shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get("java.lang.ClassCastException"), myTrapStack) : null;
+      DfaControlTransferValue transfer = createTransfer("java.lang.ClassCastException");
       addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType(), transfer));
     }
     finishElement(castExpression);

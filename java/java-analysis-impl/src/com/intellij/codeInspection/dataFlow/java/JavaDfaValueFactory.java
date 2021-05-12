@@ -123,12 +123,7 @@ public class JavaDfaValueFactory {
     }
 
     DfaValue qualifier = getQualifierOrThisValue(factory, refExpr);
-    DfaValue result = var.createValue(factory, qualifier, true);
-    if (var instanceof SpecialField) {
-      PsiType wantedType = refExpr.getType();
-      result = DfaUtil.boxUnbox(result, wantedType);
-    }
-    return result;
+    return var.createValue(factory, qualifier);
   }
 
   /**

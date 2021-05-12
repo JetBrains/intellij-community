@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.java.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.java.inst.*;
 import com.intellij.codeInspection.dataFlow.jvm.JvmTrap;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -125,6 +126,21 @@ public class CFGBuilder {
    */
   public CFGBuilder unwrap(@NotNull DerivedVariableDescriptor descriptor) {
     return add(new UnwrapDerivedVariableInstruction(descriptor));
+  }
+
+  /**
+   * Generate instructions to wrap a special field value
+   * <p>
+   * Stack before: ... special_field_value
+   * <p>
+   * Stack after: ... wrapped_value
+   *
+   * @param targetType type of the qualifier
+   * @param descriptor a {@link DerivedVariableDescriptor} which describes a field to get
+   * @return this builder
+   */
+  public CFGBuilder wrap(@NotNull DfType targetType, @NotNull DerivedVariableDescriptor descriptor) {
+    return add(new WrapDerivedVariableInstruction(targetType, descriptor));
   }
 
   /**
@@ -540,6 +556,23 @@ public class CFGBuilder {
     } else {
       push(source);
     }
+    return this;
+  }
+
+  /**
+   * Ensure that given condition (applied to top-of-stack) is held. Stack is unchanged.
+   * 
+   * @param relation relation (e.g. GT for 'top-of-stack > 0' condition)
+   * @param operand operand (e.g. DfTypes.intValue(0) for 'top-of-stack > 0' condition)
+   * @param problem a problem associated with condition failure
+   * @param exceptionType exception to throw if condition is not satisfied. If null, then on unsatisfied condition,
+   *                      the execution will just terminate.
+   * @return this builder.
+   */
+  public CFGBuilder ensure(@NotNull RelationType relation, @NotNull DfType operand, @NotNull UnsatisfiedConditionProblem problem,
+                           @Nullable String exceptionType) {
+    DfaControlTransferValue transfer = exceptionType == null ? null : myAnalyzer.createTransfer(exceptionType);
+    add(new EnsureInstruction(problem, relation, operand, transfer));
     return this;
   }
 

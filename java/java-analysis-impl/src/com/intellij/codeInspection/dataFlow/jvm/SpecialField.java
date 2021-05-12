@@ -149,7 +149,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
 
     @NotNull
     @Override
-    public DfType getDefaultValue(boolean forAccessor) {
+    public DfType getDefaultValue() {
       return DfType.TOP;
     }
 
@@ -198,8 +198,8 @@ public enum SpecialField implements DerivedVariableDescriptor {
 
     @NotNull
     @Override
-    public DfType getDefaultValue(boolean forAccessor) {
-      return (forAccessor ? DfaNullability.NOT_NULL : DfaNullability.NULLABLE).asDfType();
+    public DfType getDefaultValue() {
+      return DfaNullability.NULLABLE.asDfType();
     }
 
     @Override
@@ -225,7 +225,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
 
     @Override
     boolean isMyAccessor(PsiMember accessor) {
-      return accessor instanceof PsiMethod && OptionalUtil.OPTIONAL_GET.methodMatches((PsiMethod)accessor);
+      return false;
     }
   };
 
@@ -256,7 +256,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
   abstract boolean isMyAccessor(PsiMember accessor);
 
   public @Nls String getPresentationText(@NotNull DfType dfType, @Nullable PsiType type) {
-    if (getDefaultValue(false).equals(dfType)) {
+    if (getDefaultValue().equals(dfType)) {
       return "";
     }
     return dfType.toString();
@@ -290,12 +290,6 @@ public enum SpecialField implements DerivedVariableDescriptor {
   @Override
   @NotNull
   public final DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
-    return createValue(factory, qualifier, false);
-  }
-
-  @NotNull
-  @Override
-  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
     if (qualifier instanceof DfaWrappedValue && ((DfaWrappedValue)qualifier).getSpecialField() == this) {
       return ((DfaWrappedValue)qualifier).getWrappedValue();
     }
@@ -303,7 +297,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
       return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
     }
     DfType dfType = qualifier == null ? DfType.TOP : getFromQualifier(qualifier.getDfType());
-    return factory.fromDfType(dfType.meet(getDefaultValue(forAccessor)));
+    return factory.fromDfType(dfType.meet(getDefaultValue()));
   }
 
   @NotNull
@@ -329,18 +323,16 @@ public enum SpecialField implements DerivedVariableDescriptor {
   /**
    * Returns a dfType that describes any possible value this special field may have
    *
-   * @param forAccessor if true, the default value for accessor result should be returned
-   *                    (may differ from internal representation of value)
    * @return a dfType for the default value
    */
   @NotNull
-  public DfType getDefaultValue(boolean forAccessor) {
+  public DfType getDefaultValue() {
     return DfTypes.intRange(JvmPsiRangeSetUtil.indexRange());
   }
 
   @Override
   public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
-    return getDefaultValue(false);
+    return getDefaultValue();
   }
 
   @NotNull
@@ -368,7 +360,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
   @Override
   @NotNull
   public DfType asDfType(@NotNull DfType fieldValue) {
-    DfType defaultType = this == OPTIONAL_VALUE ? DfTypes.OBJECT_OR_NULL : getDefaultValue(false);
+    DfType defaultType = this == OPTIONAL_VALUE ? DfTypes.OBJECT_OR_NULL : getDefaultValue();
     DfType clamped = fieldValue.meet(defaultType);
     if (clamped.equals(defaultType)) return DfTypes.NOT_NULL_OBJECT;
     if (clamped.equals(DfType.BOTTOM)) return DfType.BOTTOM;

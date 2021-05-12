@@ -63,7 +63,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
 
   @NotNull
   @Override
-  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (myVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
       PsiType type = getType(ObjectUtils.tryCast(qualifier, DfaVariableValue.class));
       return factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, myVariable)));
@@ -72,7 +72,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
         (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {
       return factory.getVarFactory().createVariableValue(this);
     }
-    return super.createValue(factory, qualifier, forAccessor);
+    return super.createValue(factory, qualifier);
   }
 
   @Override
