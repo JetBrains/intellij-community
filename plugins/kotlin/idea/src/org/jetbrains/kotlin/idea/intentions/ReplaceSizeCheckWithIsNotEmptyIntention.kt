@@ -14,7 +14,11 @@ import org.jetbrains.kotlin.psi.KtExpression
 @Suppress("DEPRECATION")
 class ReplaceSizeCheckWithIsNotEmptyInspection : IntentionBasedInspection<KtBinaryExpression>(
     ReplaceSizeCheckWithIsNotEmptyIntention::class
-)
+) {
+    override fun inspectionProblemText(element: KtBinaryExpression): String {
+        return KotlinBundle.message("inspection.replace.size.check.with.is.not.empty.display.name")
+    }
+}
 
 class ReplaceSizeCheckWithIsNotEmptyIntention : ReplaceSizeCheckIntention(KotlinBundle.lazyMessage("replace.size.check.with.isnotempty")) {
     override fun getGenerateMethodSymbol() = "isNotEmpty()"
