@@ -420,5 +420,8 @@
 
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="advancedSetting" beanClass="com.intellij.openapi.options.advanced.AdvancedSettingBean" dynamic="true"/>
+
+    <extensionPoint name="dependencyCollector" interface="com.intellij.ide.plugins.DependencyCollector" dynamic="true"/>
+    <extensionPoint name="dependencySupport" beanClass="com.intellij.ide.plugins.DependencySupportBean" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

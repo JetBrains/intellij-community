@@ -14,7 +14,7 @@ class PluginData @JvmOverloads constructor(
   @Attribute("fromCustomRepository") val isFromCustomRepository: Boolean = false,
 ) : Comparable<PluginData> {
 
-  val pluginId: PluginId = PluginId.getId(pluginIdString)
+  val pluginId: PluginId get() = PluginId.getId(pluginIdString)
 
   val pluginName = nullablePluginName ?: pluginIdString
 

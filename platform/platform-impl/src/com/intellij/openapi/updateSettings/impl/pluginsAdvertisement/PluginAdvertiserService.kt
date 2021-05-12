@@ -29,7 +29,7 @@ open class PluginAdvertiserService {
   fun run(
     project: Project,
     customPlugins: List<PluginNode>,
-    unknownFeatures: Set<UnknownFeature>,
+    unknownFeatures: Collection<UnknownFeature>,
   ) {
     val features = MultiMap.createSet<PluginId, UnknownFeature>()
     val disabledPlugins = HashMap<PluginData, IdeaPluginDescriptor>()

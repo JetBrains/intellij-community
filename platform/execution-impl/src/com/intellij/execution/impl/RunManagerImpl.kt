@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.util.PropertiesComponent
@@ -999,7 +1000,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
              if (checkUnknown && typeId != null) {
                UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(
                  CONFIGURATION_TYPE_FEATURE_ID,
-                 "Run Configuration",
+                 ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
                  typeId,
                  factoryId ?: typeId,
                )

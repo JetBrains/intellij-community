@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
+import com.intellij.ide.plugins.DependencyCollector
 import com.intellij.ide.plugins.advertiser.KnownExtensions
 import com.intellij.ide.plugins.advertiser.KnownExtensionsService
 import com.intellij.ide.plugins.advertiser.PluginData
@@ -9,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.ui.EditorNotifications
 
 internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
@@ -17,8 +19,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode ||
-        application.isHeadlessEnvironment ||
-        !UpdateSettings.getInstance().isPluginsCheckNeeded) {
+        application.isHeadlessEnvironment) {
       return
     }
 
@@ -29,7 +30,10 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
 
     val extensionsService = KnownExtensionsService.instance
     val extensions = extensionsService.extensions
-    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
+
+    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures.toMutableList()
+    unknownFeatures.addAll(collectDependencyUnknownFeatures(project))
+
     if (extensions != null && unknownFeatures.isEmpty()) {
       return
     }
@@ -51,6 +55,17 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
     }
     catch (e: Exception) {
       LOG.info(e)
+    }
+  }
+
+  private fun collectDependencyUnknownFeatures(project: Project): List<UnknownFeature> {
+    return DependencyCollector.EP_NAME.extensions.flatMap { dependencyCollector ->
+      dependencyCollector.collectDependencies(project).map { coordinate ->
+        UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
+                       IdeBundle.message("plugins.advertiser.feature.dependency"),
+                       dependencyCollector.dependencyKind + ":" + coordinate,
+                       coordinate)
+      }
     }
   }
 
