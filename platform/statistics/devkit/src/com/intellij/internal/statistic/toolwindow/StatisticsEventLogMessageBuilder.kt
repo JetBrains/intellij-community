@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.toolwindow
 
 import com.google.gson.Gson
@@ -41,8 +41,16 @@ class StatisticsEventLogMessageBuilder {
 
   private fun prepareValue(key: String, value: Any?, rawValue: Any?): Any? {
     return when (value) {
-      is Map<*, *> -> value.entries.associate { it.key to prepareValue(it.key as String, it.value, (rawValue as Map<*, *>)[it.key]) }
-      is List<*> -> value.mapIndexed { index, element -> prepareValue(key, element, (rawValue as List<*>)[index]) }
+      is Map<*, *> -> {
+        value.entries.associate {
+          val rawValuesMap = rawValue as? Map<*, *>
+          it.key to prepareValue(it.key as String, it.value, rawValuesMap?.get(it.key))
+        }
+      }
+      is List<*> -> value.mapIndexed { index, element ->
+        val rawValuesList = rawValue as? List<*>
+        prepareValue(key, element, rawValuesList?.get(index))
+      }
       is String -> formatValue(rawValue?.toString(), if (key == "project") shortenProjectId(value.toString()) else value)
       else -> value
     }

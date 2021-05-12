@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.intellij.execution.process.ProcessOutputType
@@ -94,10 +94,13 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val action = LogEventAction(eventId)
     action.addData("test", INCORRECT_RULE.description)
     action.addData("project", UNDEFINED_RULE.description)
+    action.addData("map", hashMapOf("foo" to "bar"))
+    action.addData("list", listOf("foo"))
 
     val filterModel = StatisticsLogFilterModel()
     val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), null, null)
-    val expectedLine = buildExpectedLine("{\"test\":\"validation.incorrect_rule\", \"project\":\"validation.undefined_rule\"}")
+    val expectedLine = buildExpectedLine(
+      "{\"test\":\"validation.incorrect_rule\", \"project\":\"validation.undefined_rule\", \"list\":[\"foo\"], \"map\":{\"foo\":\"bar\"}}")
     assertEquals(expectedLine, logMessage)
     val processingResult = filterModel.processLine(logMessage)
     assertEquals(processingResult.key, ProcessOutputType.STDERR)
