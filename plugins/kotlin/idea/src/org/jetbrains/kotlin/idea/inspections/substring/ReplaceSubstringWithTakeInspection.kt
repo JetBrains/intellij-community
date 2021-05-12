@@ -12,7 +12,8 @@ import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 
 class ReplaceSubstringWithTakeInspection : ReplaceSubstringInspection() {
-    override fun inspectionText(element: KtDotQualifiedExpression): String = KotlinBundle.message("replace.substring.call.with.take.call")
+    override fun inspectionText(element: KtDotQualifiedExpression): String =
+        KotlinBundle.message("inspection.replace.substring.with.take.display.name")
 
     override val defaultFixText: String get() = KotlinBundle.message("replace.substring.call.with.take.call")
 
