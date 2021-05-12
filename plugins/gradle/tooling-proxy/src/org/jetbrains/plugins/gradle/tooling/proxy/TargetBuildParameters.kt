@@ -11,16 +11,20 @@ sealed class TargetBuildParameters : Serializable {
   abstract val arguments: List<String>
   abstract val jvmArguments: List<String>
   abstract val progressListenerOperationTypes: Set<OperationType>
+  abstract val initScripts: Map<String, String>
 
   abstract class Builder {
+    private var initScriptNameDedupSuffix = 0
     protected val arguments = mutableListOf<String>()
     protected val jvmArguments = mutableListOf<String>()
     protected val progressListenerOperationTypes = mutableSetOf<OperationType>()
     protected var gradleHome: String? = null
     protected var gradleUserHome: String? = null
+    protected val initScripts = mutableMapOf<String, String>()
     fun useInstallation(gradleHome: String?) {
       this.gradleHome = gradleHome
     }
+
     fun useGradleUserHome(gradleUserHome: String?) {
       this.gradleUserHome = gradleUserHome
     }
@@ -30,6 +34,11 @@ sealed class TargetBuildParameters : Serializable {
     fun withJvmArguments(vararg args: String): Builder = apply { jvmArguments.addAll(args) }
     fun withJvmArguments(args: Iterable<String>) = apply { jvmArguments.addAll(args) }
     fun withSubscriptions(args: Iterable<OperationType>) = apply { progressListenerOperationTypes.addAll(args) }
+    fun withInitScript(filePrefix: String, initScript: String): Builder = apply {
+      val prefix = if (initScripts.containsKey(filePrefix)) "$filePrefix~${++initScriptNameDedupSuffix}" else filePrefix
+      initScripts.put(prefix, initScript)
+    }
+
     abstract fun build(): TargetBuildParameters
   }
 
@@ -43,13 +52,14 @@ sealed class TargetBuildParameters : Serializable {
     override fun withTasks(vararg args: String) = apply { tasks.addAll(args) }
     override fun withTasks(args: Iterable<String>) = apply { tasks.addAll(args) }
     override fun build(): BuildLauncherParameters {
-      return BuildLauncherParameters(tasks, gradleHome, gradleUserHome, arguments, jvmArguments, progressListenerOperationTypes)
+      return BuildLauncherParameters(tasks, gradleHome, gradleUserHome,
+                                     arguments, jvmArguments, progressListenerOperationTypes, initScripts)
     }
   }
 
   class TestLauncherParametersBuilder : Builder() {
     override fun build(): TestLauncherParameters {
-      return TestLauncherParameters(gradleHome, gradleUserHome, arguments, jvmArguments, progressListenerOperationTypes)
+      return TestLauncherParameters(gradleHome, gradleUserHome, arguments, jvmArguments, progressListenerOperationTypes, initScripts)
     }
   }
 
@@ -58,7 +68,8 @@ sealed class TargetBuildParameters : Serializable {
     override fun withTasks(vararg args: String) = apply { tasks.addAll(args) }
     override fun withTasks(args: Iterable<String>) = apply { tasks.addAll(args) }
     override fun build(): ModelBuilderParameters<T> {
-      return ModelBuilderParameters(modelType, tasks, gradleHome, gradleUserHome, arguments, jvmArguments, progressListenerOperationTypes)
+      return ModelBuilderParameters(modelType, tasks, gradleHome, gradleUserHome,
+                                    arguments, jvmArguments, progressListenerOperationTypes, initScripts)
     }
   }
 
@@ -67,7 +78,8 @@ sealed class TargetBuildParameters : Serializable {
     override fun withTasks(vararg args: String) = apply { tasks.addAll(args) }
     override fun withTasks(args: Iterable<String>) = apply { tasks.addAll(args) }
     override fun build(): BuildActionParameters<T?> {
-      return BuildActionParameters(action, tasks, gradleHome, gradleUserHome, arguments, jvmArguments, progressListenerOperationTypes)
+      return BuildActionParameters(action, tasks, gradleHome, gradleUserHome,
+                                   arguments, jvmArguments, progressListenerOperationTypes, initScripts)
     }
   }
 
@@ -79,7 +91,7 @@ sealed class TargetBuildParameters : Serializable {
     override fun withTasks(args: Iterable<String>) = apply { tasks.addAll(args) }
     override fun build(): PhasedBuildActionParameters<T> {
       return PhasedBuildActionParameters(projectsLoadedAction, buildFinishedAction, tasks, gradleHome, gradleUserHome,
-                                         arguments, jvmArguments, progressListenerOperationTypes)
+                                         arguments, jvmArguments, progressListenerOperationTypes, initScripts)
     }
   }
 }
@@ -89,13 +101,15 @@ data class BuildLauncherParameters(val tasks: List<String>,
                                    override val gradleUserHome: String?,
                                    override val arguments: List<String>,
                                    override val jvmArguments: List<String>,
-                                   override val progressListenerOperationTypes: Set<OperationType>) : TargetBuildParameters()
+                                   override val progressListenerOperationTypes: Set<OperationType>,
+                                   override val initScripts: Map<String, String>) : TargetBuildParameters()
 
 data class TestLauncherParameters(override val gradleHome: String?,
                                   override val gradleUserHome: String?,
                                   override val arguments: List<String>,
                                   override val jvmArguments: List<String>,
-                                  override val progressListenerOperationTypes: Set<OperationType>) : TargetBuildParameters()
+                                  override val progressListenerOperationTypes: Set<OperationType>,
+                                  override val initScripts: Map<String, String>) : TargetBuildParameters()
 
 data class ModelBuilderParameters<T>(val modelType: Class<T>,
                                      val tasks: List<String>,
@@ -103,7 +117,8 @@ data class ModelBuilderParameters<T>(val modelType: Class<T>,
                                      override val gradleUserHome: String?,
                                      override val arguments: List<String>,
                                      override val jvmArguments: List<String>,
-                                     override val progressListenerOperationTypes: Set<OperationType>) : TargetBuildParameters()
+                                     override val progressListenerOperationTypes: Set<OperationType>,
+                                     override val initScripts: Map<String, String>) : TargetBuildParameters()
 
 data class BuildActionParameters<T>(val buildAction: BuildAction<T>,
                                     val tasks: List<String>,
@@ -111,7 +126,8 @@ data class BuildActionParameters<T>(val buildAction: BuildAction<T>,
                                     override val gradleUserHome: String?,
                                     override val arguments: List<String>,
                                     override val jvmArguments: List<String>,
-                                    override val progressListenerOperationTypes: Set<OperationType>) : TargetBuildParameters()
+                                    override val progressListenerOperationTypes: Set<OperationType>,
+                                    override val initScripts: Map<String, String>) : TargetBuildParameters()
 
 data class PhasedBuildActionParameters<T>(val projectsLoadedAction: BuildAction<T>?,
                                           val buildFinishedAction: BuildAction<T>?,
@@ -120,4 +136,5 @@ data class PhasedBuildActionParameters<T>(val projectsLoadedAction: BuildAction<
                                           override val gradleUserHome: String?,
                                           override val arguments: List<String>,
                                           override val jvmArguments: List<String>,
-                                          override val progressListenerOperationTypes: Set<OperationType>) : TargetBuildParameters()
+                                          override val progressListenerOperationTypes: Set<OperationType>,
+                                          override val initScripts: Map<String, String>) : TargetBuildParameters()

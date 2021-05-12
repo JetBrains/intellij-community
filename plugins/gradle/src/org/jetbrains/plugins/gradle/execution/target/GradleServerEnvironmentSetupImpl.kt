@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup.Companion.targetJavaExecutablePathMappingKey
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.toGroovyString
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -71,7 +70,6 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
     val request = if (environmentConfiguration.typeId == "local") LocalTargetEnvironmentRequest()
     else environmentConfiguration.createEnvironmentRequest(project)
-    val uploadRequest = request.duplicate()
 
     environmentConfiguration.runtimes.findByType(GradleRuntimeTargetConfiguration::class.java)?.homePath?.nullize(true)?.also {
       targetBuildParametersBuilder.useInstallation(it)
@@ -101,15 +99,8 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
     progressIndicator.checkCanceled()
     targetEnvironmentProvider.provideEnvironment(remoteEnvironment, progressIndicator)
-    val pathMappingSettings = PathMappingSettings(targetEnvironmentProvider.pathMappingSettings.pathMappings)
-    for ((uploadRoot, uploadableVolume) in targetEnvironment.uploadVolumes) {
-      val localRootPath = uploadRoot.localRootPath
-      val relativePath = if (localRootPath.isDirectory()) "." else localRootPath.fileName.toString()
-      pathMappingSettings.addMapping(localRootPath.toString(), uploadableVolume.resolveTargetPath(relativePath))
-    }
-    val initScriptTargetPath = uploadPathMapperInitScript(uploadRequest, pathMappingSettings, targetPathMapper, environmentConfiguration,
-                                                          progressIndicator)
-    targetBuildParametersBuilder.withArguments(INIT_SCRIPT_CMD_OPTION, initScriptTargetPath)
+    val pathMapperInitScript = createTargetPathMapperInitScript(request, targetPathMapper, environmentConfiguration)
+    targetBuildParametersBuilder.withInitScript("ijtgtmapper", pathMapperInitScript)
     targetBuildParameters = targetBuildParametersBuilder.build(consumerOperationParameters, targetArguments)
     return targetedCommandLineBuilder.build()
   }
@@ -160,12 +151,15 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     return commonRoot!!.path
   }
 
-  private fun uploadPathMapperInitScript(request: TargetEnvironmentRequest,
-                                         pathMappingSettings: PathMappingSettings,
-                                         targetPathMapper: PathMapper?,
-                                         environmentConfiguration: TargetEnvironmentConfiguration,
-                                         progressIndicator: GradleServerRunner.GradleServerProgressIndicator): String {
-    val targetEnvironmentProvider = TargetEnvironmentProvider()
+  private fun createTargetPathMapperInitScript(request: TargetEnvironmentRequest,
+                                               targetPathMapper: PathMapper?,
+                                               environmentConfiguration: TargetEnvironmentConfiguration): String {
+    val pathMappingSettings = PathMappingSettings(targetEnvironmentProvider.pathMappingSettings.pathMappings)
+    for ((uploadRoot, uploadableVolume) in targetEnvironment.uploadVolumes) {
+      val localRootPath = uploadRoot.localRootPath
+      val relativePath = if (localRootPath.isDirectory()) "." else localRootPath.fileName.toString()
+      pathMappingSettings.addMapping(localRootPath.toString(), uploadableVolume.resolveTargetPath(relativePath))
+    }
     val mapperInitScript = StringBuilder("ext.pathMapper = [:]\n")
     for (localPath in localPathsToMap) {
       if (targetPathMapper != null && targetPathMapper.canReplaceLocal(localPath)) {
@@ -191,12 +185,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
       mapperInitScript.append("ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", \"${java}\")\n")
     }
     mapperInitScript.append("ext.mapPath = { path -> pathMapper.get(path) ?: path }")
-
-    val initScript = GradleExecutionHelper.writeToFileGradleInitScript(mapperInitScript.toString(), "ijtgtmapper")
-    val targetValue = targetEnvironmentProvider.requestUploadIntoTarget(initScript.path, request, environmentConfiguration)
-    val remoteEnvironment = request.prepareEnvironment(progressIndicator)
-    targetEnvironmentProvider.provideEnvironment(remoteEnvironment, progressIndicator)
-    return targetValue.targetValue.blockingGet(0)!!
+    return mapperInitScript.toString()
   }
 
   private fun prepareTargetEnvironmentRequest(request: TargetEnvironmentRequest,
@@ -347,7 +336,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
                uploadPathString: String,
                uploadRelativePath: String): TargetValue<String> {
       val result = DeferredTargetValue(uploadPathString)
-      dependingOnEnvironmentPromise += environmentPromise.then { (environment, progress) ->
+      doWhenEnvironmentPrepared { environment, progress ->
         val volume = environment.uploadVolumes.getValue(uploadRoot)
         val resolvedTargetPath = volume.resolveTargetPath(uploadRelativePath)
         volume.upload(uploadRelativePath, progress)
@@ -370,12 +359,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
                                                                                                                              TargetEnvironment.TargetPath.Temporary())
       request.uploadVolumes += uploadRoot
       val result = DeferredTargetValue(path)
-
-      dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
-        if (targetProgressIndicator.isCanceled || targetProgressIndicator.isStopped) {
-          result.stopProceeding()
-          return@then
-        }
+      doWhenEnvironmentPrepared(result::stopProceeding) { environment, targetProgressIndicator ->
         val volume = environment.uploadVolumes.getValue(uploadRoot)
         try {
           val relativePath = uploadPath.fileName.toString()
@@ -396,14 +380,22 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
       val binding = TargetEnvironment.TargetPortBinding(null, targetPort)
       request.targetPortBindings.add(binding)
       val result = DeferredLocalTargetValue(targetPort)
-      dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
-        if (targetProgressIndicator.isCanceled || targetProgressIndicator.isStopped) {
-          return@then
-        }
+      doWhenEnvironmentPrepared { environment, _ ->
         val localPort = environment.targetPortBindings[binding]
         result.resolve(localPort)
       }
       return result
+    }
+
+    private fun doWhenEnvironmentPrepared(onCancel: () -> Unit = {}, block: (TargetEnvironment, TargetProgressIndicator) -> Unit) {
+      dependingOnEnvironmentPromise += environmentPromise.then { (environment, progress) ->
+        if (progress.isCanceled || progress.isStopped) {
+          onCancel.invoke()
+        }
+        else {
+          block(environment, progress)
+        }
+      }
     }
   }
 
