@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
+import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
@@ -52,7 +53,6 @@ import org.jetbrains.plugins.github.api.data.request.Affiliation
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
@@ -74,7 +74,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private val accountInformationProvider: GithubAccountInformationProvider,
   private val avatarLoader: CachingGHUserAvatarLoader
 ) : VcsCloneDialogExtensionComponent(),
-    GHAccountsListener {
+    AccountsListener<GithubAccount> {
 
   private val LOG = GithubUtil.LOG
 

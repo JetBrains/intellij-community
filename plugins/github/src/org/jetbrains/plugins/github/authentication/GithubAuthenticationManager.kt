@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
+import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
@@ -8,8 +10,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
@@ -137,6 +139,9 @@ class GithubAuthenticationManager internal constructor() {
   fun getSingleOrDefaultAccount(project: Project): GithubAccount? =
     project.service<GithubProjectDefaultAccountHolder>().account
     ?: accountManager.accounts.singleOrNull()
+
+  @RequiresEdt
+  fun addListener(disposable: Disposable, listener: AccountsListener<GithubAccount>) = accountManager.addListener(disposable, listener)
 
   companion object {
     @JvmStatic

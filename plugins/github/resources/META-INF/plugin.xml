@@ -68,22 +68,7 @@
     <fileIconProvider implementation="org.jetbrains.plugins.github.extensions.GithubYamlIconProvider"/>
   </extensions>
 
-  <applicationListeners>
-    <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider$AccountTokenListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
-
-    <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"/>
-    <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"/>
-  </applicationListeners>
-
   <projectListeners>
-    <listener class="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager$AccountTokenListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
-
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"

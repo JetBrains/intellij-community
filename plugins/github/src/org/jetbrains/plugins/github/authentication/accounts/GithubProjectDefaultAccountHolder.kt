@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.accounts
 
-import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.runInEdt
@@ -11,7 +10,6 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.util.messages.Topic
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubNotifications
@@ -23,8 +21,7 @@ import org.jetbrains.plugins.github.util.GithubUtil
 @Suppress("UNCHECKED_CAST")
 @State(name = "GithubDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 internal class GithubProjectDefaultAccountHolder(project: Project)
-  : PersistentDefaultAccountHolder<GithubAccount>(project,
-                                                  GHAccountManager.TOPIC as Topic<AccountsListener<GithubAccount>>) {
+  : PersistentDefaultAccountHolder<GithubAccount>(project) {
 
   override fun accountManager() = service<GHAccountManager>()
 

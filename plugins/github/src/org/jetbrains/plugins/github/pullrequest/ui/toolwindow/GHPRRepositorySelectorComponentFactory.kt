@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -20,9 +20,7 @@ import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.ComboBoxWithActionsModel
 import org.jetbrains.plugins.github.ui.component.GHAccountSelectorComponentFactory
@@ -143,12 +141,11 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
 
     init {
       repositoryManager.addRepositoryListChangedListener(this, ::updateRepositories)
-      ApplicationManager.getApplication().messageBus.connect(this)
-        .subscribe(GHAccountManager.TOPIC, object : GHAccountsListener {
-          override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-            invokeAndWaitIfNeeded { updateAccounts() }
-          }
-        })
+      authManager.addListener(this, object : AccountsListener<GithubAccount> {
+        override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
+          invokeAndWaitIfNeeded { updateAccounts() }
+        }
+      })
 
       repositoriesModel.addSelectionChangeListener(::updateAccounts)
       repositoriesModel.addSelectionChangeListener(::updateActions)

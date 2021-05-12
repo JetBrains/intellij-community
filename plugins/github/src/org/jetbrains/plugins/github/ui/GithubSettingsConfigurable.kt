@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
+import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.collaboration.auth.ui.SimpleAccountsListCellRenderer
 import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.ide.DataManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.layout.*
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
-import org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
@@ -75,12 +74,11 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
             accountsModel.clearNewCredentials()
           }
 
-        ApplicationManager.getApplication().messageBus.connect(disposable!!)
-          .subscribe(GHAccountManager.TOPIC, object : GHAccountsListener {
-            override fun onAccountCredentialsChanged(account: GithubAccount) {
-              if (!isModified) reset()
-            }
-          })
+        accountManager.addListener(disposable!!, object : AccountsListener<GithubAccount> {
+          override fun onAccountCredentialsChanged(account: GithubAccount) {
+            if (!isModified) reset()
+          }
+        })
       }
       row {
         checkBox(GithubBundle.message("settings.clone.ssh"), settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)

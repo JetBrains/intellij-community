@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
+import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.hosting.GitHostingUrlUtil
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
@@ -11,7 +12,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -21,9 +21,8 @@ import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.accounts.GHAccountsListener
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
@@ -35,12 +34,20 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     .usePassThroughInUnitTestMode()
   private val eventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
+  private val accountManager: GHAccountManager
+    get() = service()
+
   var knownRepositories by observableField(emptySet<GHGitRepositoryMapping>(), eventDispatcher)
     private set
 
   private val serversFromDiscovery = HashSet<GithubServerPath>()
 
   init {
+    accountManager.addListener(this, object : AccountsListener<GithubAccount> {
+      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) = runInEdt {
+        updateRepositories()
+      }
+    })
     updateRepositories()
   }
 
@@ -73,7 +80,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     }
     LOG.debug("Found remotes: $remotes")
 
-    val authenticatedServers = service<GHAccountManager>().accounts.map { it.server }
+    val authenticatedServers = accountManager.accounts.map { it.server }
     val servers = mutableListOf<GithubServerPath>().apply {
       add(GithubServerPath.DEFAULT_SERVER)
       addAll(authenticatedServers)
@@ -141,16 +148,6 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
   class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
     override fun mappingChanged() = runInEdt(project) { updateRepositories(project) }
     override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRepositories(project) }
-  }
-
-  class AccountsListener : GHAccountsListener {
-    override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) = updateRemotes()
-
-    private fun updateRemotes() = runInEdt {
-      for (project in ProjectManager.getInstance().openProjects) {
-        updateRepositories(project)
-      }
-    }
   }
 
   companion object {

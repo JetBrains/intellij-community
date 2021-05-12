@@ -3,6 +3,7 @@ package com.intellij.collaboration.auth
 
 import com.intellij.collaboration.api.ServerPath
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.MessageBusConnection
 import org.junit.Before
 import org.junit.Test
@@ -18,7 +19,7 @@ class AccountManagerBaseTest {
 
   private lateinit var persistentAccounts: AccountsPersistentStateComponent<MockAccount, *>
   private lateinit var passwordSafe: PasswordSafe
-  private lateinit var notificationPublisher: AccountsListener<MockAccount>
+  private lateinit var accountsListener: AccountsListener<MockAccount>
   private lateinit var manager: TestManager
 
   @Before
@@ -26,8 +27,10 @@ class AccountManagerBaseTest {
     persistentAccounts = object : SimpleAccountsPersistentStateComponent<MockAccount>() {}
     passwordSafe = mock(PasswordSafe::class.java)
     @Suppress("UNCHECKED_CAST")
-    notificationPublisher = mock(AccountsListener::class.java) as AccountsListener<MockAccount>
-    manager = TestManager(persistentAccounts, passwordSafe, notificationPublisher, mock(MessageBusConnection::class.java))
+    accountsListener = mock(AccountsListener::class.java) as AccountsListener<MockAccount>
+    manager = TestManager(persistentAccounts, passwordSafe).apply {
+      addListener(Disposer.newDisposable(), accountsListener)
+    }
   }
 
   @Test
@@ -54,47 +57,47 @@ class AccountManagerBaseTest {
   @Test
   fun `test notification on add`() {
     manager.updateAccount(account, "test")
-    verify(notificationPublisher).onAccountListChanged(anyCollection(), anyCollection())
-    verify(notificationPublisher, never()).onAccountCredentialsChanged(account)
+    verify(accountsListener).onAccountListChanged(anyCollection(), anyCollection())
+    verify(accountsListener, never()).onAccountCredentialsChanged(account)
   }
 
   @Test
   fun `test notification on update`() {
     manager.updateAccount(account, "test")
     manager.updateAccount(account, "test")
-    verify(notificationPublisher, times(1)).onAccountListChanged(anyCollection(), anyCollection())
-    verify(notificationPublisher).onAccountCredentialsChanged(account)
+    verify(accountsListener, times(1)).onAccountListChanged(anyCollection(), anyCollection())
+    verify(accountsListener).onAccountCredentialsChanged(account)
   }
 
   @Test
   fun `test notification on remove`() {
     manager.updateAccount(account, "test")
     manager.removeAccount(account)
-    verify(notificationPublisher, times(2)).onAccountListChanged(anyCollection(), anyCollection())
-    verify(notificationPublisher, never()).onAccountCredentialsChanged(account)
+    verify(accountsListener, times(2)).onAccountListChanged(anyCollection(), anyCollection())
+    verify(accountsListener, never()).onAccountCredentialsChanged(account)
   }
 
   @Test
   fun `test notification on bulk add`() {
     manager.updateAccounts(mapOf(account to "test", account2 to "test"))
-    verify(notificationPublisher).onAccountListChanged(anyCollection(), anyCollection())
-    verify(notificationPublisher, never()).onAccountCredentialsChanged(account)
+    verify(accountsListener).onAccountListChanged(anyCollection(), anyCollection())
+    verify(accountsListener, never()).onAccountCredentialsChanged(account)
   }
 
   @Test
   fun `test notification on bulk update`() {
     manager.updateAccounts(mapOf(account to "test", account2 to "test"))
     manager.updateAccounts(mapOf(account to "test", account2 to "test"))
-    verify(notificationPublisher, times(1)).onAccountListChanged(anyCollection(), anyCollection())
-    verify(notificationPublisher, times(1)).onAccountCredentialsChanged(account)
+    verify(accountsListener, times(1)).onAccountListChanged(anyCollection(), anyCollection())
+    verify(accountsListener, times(1)).onAccountCredentialsChanged(account)
   }
 
   @Test
   fun `test notification on bulk remove`() {
     manager.updateAccounts(mapOf(account to "test", account2 to "test"))
     manager.updateAccounts(mapOf())
-    verify(notificationPublisher, times(2)).onAccountListChanged(anyCollection(), anyCollection())
-    verify(notificationPublisher, never()).onAccountCredentialsChanged(account)
+    verify(accountsListener, times(2)).onAccountListChanged(anyCollection(), anyCollection())
+    verify(accountsListener, never()).onAccountCredentialsChanged(account)
   }
 
   @Test
@@ -106,7 +109,7 @@ class AccountManagerBaseTest {
 
   @Test
   fun `test account usable after notified`() {
-    `when`(notificationPublisher.onAccountListChanged(anyCollection(), anyCollection())).then {
+    `when`(accountsListener.onAccountListChanged(anyCollection(), anyCollection())).then {
       verify(passwordSafe, atLeast(1)).set(any(), any())
     }
     manager.updateAccount(account, "test")
@@ -120,12 +123,10 @@ class AccountManagerBaseTest {
   }
 
   private class TestManager(private val persistentAccounts: AccountsPersistentStateComponent<MockAccount, *>,
-                            override val passwordSafe: PasswordSafe,
-                            private val notificationPublisher: AccountsListener<MockAccount>,
-                            busConnection: MessageBusConnection)
-    : AccountManagerBase<MockAccount, String>("test", busConnection) {
+                            override val passwordSafe: PasswordSafe)
+    : AccountManagerBase<MockAccount, String>("test") {
     override fun persistentAccounts() = persistentAccounts
-    override fun notificationPublisher() = notificationPublisher
+    override fun messageBusConnection(): MessageBusConnection = mock(MessageBusConnection::class.java)
     override fun serializeCredentials(credentials: String): String = credentials
     override fun deserializeCredentials(credentials: String): String = credentials
   }

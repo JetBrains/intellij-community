@@ -3,23 +3,23 @@ package com.intellij.collaboration.auth
 
 import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.messages.MessageBusConnection
+import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Base class for account management application service
  * Accounts are persistently stored in [persistentAccounts]
  * Credentials are serialized and stored in [passwordSafe]
- * Changes are broadcast via [notificationPublisher]
  *
  * @see [SimpleAccountsPersistentStateComponent]
  * @see [AccountsListener]
  */
-abstract class AccountManagerBase<A : Account, Cred>(
-  private val serviceName: String,
-  messageBusConnection: MessageBusConnection = ApplicationManager.getApplication().messageBus.connect())
-  : AccountManager<A, Cred> {
+abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: String)
+  : AccountManager<A, Cred>, Disposable {
 
   protected open val passwordSafe
     get() = PasswordSafe.instance
@@ -28,17 +28,22 @@ abstract class AccountManagerBase<A : Account, Cred>(
     get() = persistentAccounts()
 
   protected abstract fun persistentAccounts(): AccountsPersistentStateComponent<A, *>
-  private val notificationPublisher
-    get() = notificationPublisher()
 
-  protected abstract fun notificationPublisher(): AccountsListener<A>
+  private val listeners = CopyOnWriteArrayList<AccountsListener<A>>()
+
+  private val messageBusConnection by lazy { messageBusConnection() }
+
+  @VisibleForTesting
+  protected open fun messageBusConnection() = ApplicationManager.getApplication().messageBus.connect(this)
 
   override val accounts: Set<A>
     get() = persistentAccounts.accounts
 
   init {
     messageBusConnection.subscribe(PasswordSafeSettings.TOPIC, object : PasswordSafeSettingsListener {
-      override fun credentialStoreCleared() = persistentAccounts.accounts.forEach(notificationPublisher::onAccountCredentialsChanged)
+      override fun credentialStoreCleared() = persistentAccounts.accounts.forEach { account ->
+        listeners.forEach { it.onAccountCredentialsChanged(account) }
+      }
     })
   }
 
@@ -49,15 +54,15 @@ abstract class AccountManagerBase<A : Account, Cred>(
       passwordSafe.set(account.credentialAttributes(), null)
     }
     for ((account, credentials) in accountsWithCredentials) {
-      if(credentials != null) {
+      if (credentials != null) {
         passwordSafe.set(account.credentialAttributes(), account.credentials(credentials))
-        if (currentSet.contains(account)) notificationPublisher.onAccountCredentialsChanged(account)
+        if (currentSet.contains(account)) listeners.forEach { it.onAccountCredentialsChanged(account) }
       }
     }
     val added = accountsWithCredentials.keys - currentSet
     if (added.isNotEmpty() || removed.isNotEmpty()) {
       persistentAccounts.accounts = accountsWithCredentials.keys
-      notificationPublisher.onAccountListChanged(currentSet, accountsWithCredentials.keys)
+      listeners.forEach { it.onAccountListChanged(currentSet, accountsWithCredentials.keys) }
       LOG.debug("Account list changed to: ${persistentAccounts.accounts}")
     }
   }
@@ -76,10 +81,10 @@ abstract class AccountManagerBase<A : Account, Cred>(
     passwordSafe.set(account.credentialAttributes(), account.credentials(credentials))
     LOG.debug((if (credentials == null) "Cleared" else "Updated") + " credentials for account: $account")
     if (!newAccount) {
-      notificationPublisher.onAccountCredentialsChanged(account)
+      listeners.forEach { it.onAccountCredentialsChanged(account) }
     }
     else {
-      notificationPublisher.onAccountListChanged(currentSet, persistentAccounts.accounts)
+      listeners.forEach { it.onAccountListChanged(currentSet, persistentAccounts.accounts) }
     }
   }
 
@@ -90,7 +95,7 @@ abstract class AccountManagerBase<A : Account, Cred>(
       persistentAccounts.accounts = newSet
       passwordSafe.set(account.credentialAttributes(), null)
       LOG.debug("Removed account: $account")
-      notificationPublisher.onAccountListChanged(currentSet, newSet)
+      listeners.forEach { it.onAccountListChanged(currentSet, newSet) }
     }
   }
 
@@ -104,16 +109,17 @@ abstract class AccountManagerBase<A : Account, Cred>(
   protected abstract fun serializeCredentials(credentials: Cred): String
   protected abstract fun deserializeCredentials(credentials: String): Cred
 
+  override fun addListener(disposable: Disposable, listener: AccountsListener<A>) {
+    listeners.add(listener)
+    Disposer.register(disposable) {
+      listeners.remove(listener)
+    }
+  }
+
+  override fun dispose() {}
+
   companion object {
     private val LOG
       get() = thisLogger()
   }
-}
-
-/**
- * @param A - account type
- */
-interface AccountsListener<A> {
-  fun onAccountListChanged(old: Collection<A>, new: Collection<A>) {}
-  fun onAccountCredentialsChanged(account: A) {}
 }
