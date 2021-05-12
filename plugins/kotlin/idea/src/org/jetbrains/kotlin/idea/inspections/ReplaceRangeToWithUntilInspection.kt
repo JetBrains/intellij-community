@@ -31,7 +31,7 @@ class ReplaceRangeToWithUntilInspection : AbstractPrimitiveRangeToInspection() {
         if (!isApplicable(expression)) return
         holder.registerProblem(
             expression,
-            KotlinBundle.message("rangeto.or.the.call.should.be.replaced.with.until"),
+            KotlinBundle.message("inspection.replace.range.to.with.until.display.name"),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             ReplaceWithUntilQuickFix()
         )
