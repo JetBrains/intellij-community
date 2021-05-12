@@ -126,13 +126,10 @@ class DfDoubleRangeType implements DfDoubleType {
       if (fromCmp >= 0 && toCmp >= 0 || fromCmp < 0 && toCmp < 0) {
         return exact ? null : (DfDoubleRangeType)create(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, myNaN);
       }
-      if (fromCmp >= 0 && toCmp < 0) {
+      if (fromCmp >= 0) {
         return (DfDoubleRangeType)create(nextUp(to), myTo, true, myNaN);
       }
-      if (fromCmp < 0 && toCmp >= 0) {
-        return (DfDoubleRangeType)create(myFrom, nextDown(from), true, myNaN);
-      }
-      throw new AssertionError("Impossible!");
+      return (DfDoubleRangeType)create(myFrom, nextDown(from), true, myNaN);
     } else {
       if (Double.compare(myTo, nextDown(from)) < 0 || Double.compare(to, nextDown(myFrom)) < 0) {
         if (myFrom == Double.NEGATIVE_INFINITY && to == Double.POSITIVE_INFINITY) {

@@ -126,13 +126,10 @@ class DfFloatRangeType implements DfFloatType {
       if (fromCmp >= 0 && toCmp >= 0 || fromCmp < 0 && toCmp < 0) {
         return exact ? null : (DfFloatRangeType)create(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, false, myNaN);
       }
-      if (fromCmp >= 0 && toCmp < 0) {
+      if (fromCmp >= 0) {
         return (DfFloatRangeType)create(nextUp(to), myTo, true, myNaN);
       }
-      if (fromCmp < 0 && toCmp >= 0) {
-        return (DfFloatRangeType)create(myFrom, nextDown(from), true, myNaN);
-      }
-      throw new AssertionError("Impossible!");
+      return (DfFloatRangeType)create(myFrom, nextDown(from), true, myNaN);
     } else {
       if (Float.compare(myTo, nextDown(from)) < 0 || Float.compare(to, nextDown(myFrom)) < 0) {
         if (myFrom == Float.NEGATIVE_INFINITY && to == Float.POSITIVE_INFINITY) {
