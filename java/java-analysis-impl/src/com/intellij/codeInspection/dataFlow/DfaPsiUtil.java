@@ -10,13 +10,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.java.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
-import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.lang.ir.FinishElementInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
@@ -385,8 +381,7 @@ public final class DfaPsiUtil {
                 return variable instanceof PsiField && ((PsiField)variable).getContainingClass() == containingClass;
               });
             }
-            if ((isCallExposingNonInitializedFields(instruction) ||
-                 instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {
+            if ((isCallExposingNonInitializedFields(instruction) || instruction instanceof ReturnInstruction)) {
               for (PsiField field : containingClass.getFields()) {
                 DfaVariableValue value = PlainDescriptor.createVariableValue(getFactory(), field);
                 DfType dfType = instructionState.getMemoryState().getDfType(value);

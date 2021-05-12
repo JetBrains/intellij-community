@@ -13,7 +13,7 @@ import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.java.inst.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.ThrowInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
@@ -235,7 +235,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
 
     private boolean isSideEffect(Instruction instruction, DfaMemoryState memState) {
-      if (instruction instanceof FlushFieldsInstruction) {
+      if (instruction instanceof FlushFieldsInstruction || instruction instanceof ThrowInstruction) {
         return true;
       }
       if (instruction instanceof FlushVariableInstruction) {
@@ -245,8 +245,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         return !isModificationAllowed(memState.getStackValue(1));
       }
       if (instruction instanceof ReturnInstruction) {
-        return ((ReturnInstruction)instruction).getAnchor() != null ||
-               ((ReturnInstruction)instruction).isViaException();
+        return ((ReturnInstruction)instruction).getAnchor() != null;
       }
       if (instruction instanceof MethodCallInstruction) {
         return !((MethodCallInstruction)instruction).getMutationSignature().isPure();

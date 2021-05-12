@@ -6,13 +6,14 @@ import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstrai
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.java.inst.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.ThrowInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -120,13 +121,11 @@ final class ContractChecker {
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();
         DfaMemoryState memState = instructionState.getMemoryState();
-        if (instruction instanceof ReturnInstruction) {
-          if (((ReturnInstruction)instruction).isViaException()) {
-            ContainerUtil.addIfNotNull(interceptor.myFailures, ((ReturnInstruction)instruction).getAnchor());
-          }
-          else {
-            interceptor.myMayReturnNormally = true;
-          }
+        if (instruction instanceof ThrowInstruction) {
+          ContainerUtil.addIfNotNull(interceptor.myFailures, ((ThrowInstruction)instruction).getAnchor());
+        }
+        else if (instruction instanceof ReturnInstruction) {
+          interceptor.myMayReturnNormally = true;
         }
         else if (instruction instanceof MethodCallInstruction) {
           PsiCall call = ((MethodCallInstruction)instruction).getCallExpression();

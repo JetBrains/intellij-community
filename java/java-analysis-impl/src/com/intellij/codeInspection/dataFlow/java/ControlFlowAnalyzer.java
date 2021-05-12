@@ -141,7 +141,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return null;
     }
 
-    addInstruction(new ReturnInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null));
+    addInstruction(new ReturnInstruction(myFactory, FList.emptyList(), null));
     myCurrentFlow.finish();
     new LiveVariablesAnalyzer(myCurrentFlow).flushDeadVariablesOnStatementFinish();
     return myCurrentFlow;
@@ -843,7 +843,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new PopInstruction());
       }
 
-      addInstruction(new ReturnInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, myTrapStack), statement));
+      addInstruction(new ReturnInstruction(myFactory, myTrapStack, statement));
     }
     finishElement(statement);
   }
@@ -1646,7 +1646,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void throwException(ExceptionTransfer kind, @Nullable PsiElement anchor) {
-    addInstruction(new ReturnInstruction(myFactory.controlTransfer(kind, myTrapStack), anchor));
+    addInstruction(new ThrowInstruction(myFactory.controlTransfer(kind, myTrapStack), anchor));
   }
 
   @Override
