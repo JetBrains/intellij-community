@@ -131,7 +131,6 @@ public abstract class FileTypeRegistry {
   /**
    * Finds a file type with the specified name.
    */
-  @Nullable
   public abstract FileType findFileTypeByName(@NonNls @NotNull String fileTypeName);
 
   /**
