@@ -1,5 +1,20 @@
 <html>
 <body>
-This inspection reports calls like <b>s.substring(s.indexOf(x))</b> replaceable with <b>s.substringAfter(x)</b>.
+Reports calls like <code>s.substring(s.indexOf(x))</code> replaceable with <code>s.substringAfter(x)</code>.
+<p>Using a corresponding functions makes your code simpler.</p>
+<p>The quick-fix replaces a <code>substring</code> call with <code>substringAfter</code>.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun foo(s: String) {
+      s.substring(s.indexOf('x'))
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun foo(s: String) {
+      s.substringAfter('x')
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

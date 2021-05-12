@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 
 class ReplaceSubstringWithSubstringAfterInspection : ReplaceSubstringInspection() {
     override fun inspectionText(element: KtDotQualifiedExpression): String =
-        KotlinBundle.message("replace.substring.call.with.substringafter.call")
+        KotlinBundle.message("inspection.replace.substring.with.substring.after.display.name")
 
     override val defaultFixText: String get() = KotlinBundle.message("replace.substring.call.with.substringafter.call")
 
