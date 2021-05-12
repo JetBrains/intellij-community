@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -26,6 +27,11 @@ public class WslDistributionManagerTest extends BareTestFixtureTestCase {
         protected @NotNull List<String> loadInstalledDistributionMsIds() {
           return List.of(ubuntuName, debianName);
         }
+
+        @Override
+        public @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions() {
+          return ContainerUtil.map(loadInstalledDistributionMsIds(), s -> new WslDistributionAndVersion(s, 2));
+        }
       }, getTestRootDisposable());
     WslDistributionManager distributionManager = WslDistributionManager.getInstance();
     WSLDistribution lowerCaseUbuntu = distributionManager.getOrCreateDistributionByMsId(lowerCaseUbuntuName);
@@ -38,5 +44,17 @@ public class WslDistributionManagerTest extends BareTestFixtureTestCase {
 
     assertEquals(ubuntuName, distributionManager.getOrCreateDistributionByMsId(lowerCaseUbuntuName).getMsId());
     assertEquals(debianName, distributionManager.getOrCreateDistributionByMsId(debianName).getMsId());
+  }
+
+  @Test
+  public void parseWslVerboseListOutput() {
+    List<WslDistributionAndVersion> actual = WslDistributionManagerImpl.parseWslVerboseListOutput(List.of(
+        "  NAME                   STATE           VERSION",
+        "* Ubuntu-20.04           Stopped         2",
+        "  docker-desktop         Stopped         2",
+        "  docker-desktop-data    Stopped         2",
+        "  Ubuntu-18.04           Stopped         1"));
+    assertEquals(List.of(new WslDistributionAndVersion("Ubuntu-20.04", 2),
+                         new WslDistributionAndVersion("Ubuntu-18.04", 1)), actual);
   }
 }

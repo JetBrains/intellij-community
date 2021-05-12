@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -109,6 +110,8 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   protected abstract @NotNull List<String> loadInstalledDistributionMsIds();
+
+  public abstract @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions() throws IOException;
 
   private static class CachedDistributions {
     private final @NotNull List<WSLDistribution> myInstalledDistributions;
