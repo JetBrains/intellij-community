@@ -450,7 +450,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       if (maximizeEditorInSplit != null) {
         AnActionEvent event = new AnActionEvent(e, context, ActionPlaces.EDITOR_TAB, new Presentation(), actionManager, e.getModifiersEx());
         maximizeEditorInSplit.update(event);
-        isEditorMaximized = event.getPresentation().getClientProperty(MaximizeEditorInSplitAction.Companion.getMAXIMIZED_KEY());
+        isEditorMaximized = event.getPresentation().getClientProperty(MaximizeEditorInSplitAction.Companion.getCURRENT_STATE_IS_MAXIMIZED_KEY());
       }
     }
     if (AdvancedSettings.getBoolean("editor.maximize.on.double.click")) {
@@ -458,7 +458,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       if (hideAllToolWindows != null) {
         AnActionEvent event = new AnActionEvent(e, context, ActionPlaces.EDITOR_TAB, new Presentation(), actionManager, e.getModifiersEx());
         hideAllToolWindows.update(event);
-        areAllToolWindowsHidden = event.getPresentation().getClientProperty(MaximizeEditorInSplitAction.Companion.getMAXIMIZED_KEY());
+        areAllToolWindowsHidden = event.getPresentation().getClientProperty(MaximizeEditorInSplitAction.Companion.getCURRENT_STATE_IS_MAXIMIZED_KEY());
       }
     }
     Runnable runnable = AdvancedSettings.getBoolean("editor.position.mouse.cursor.on.doubleclicked.tab")
