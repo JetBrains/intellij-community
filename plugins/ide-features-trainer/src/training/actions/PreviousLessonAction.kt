@@ -10,7 +10,7 @@ import training.ui.LearnToolWindowFactory
 import training.util.getPreviousLessonForCurrent
 import training.util.lessonOpenedInProject
 
-class PreviousLessonAction : AnAction(AllIcons.Actions.Back) {
+private class PreviousLessonAction : AnAction(AllIcons.Actions.Back) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (LearnToolWindowFactory.learnWindowPerProject[project] == null) return

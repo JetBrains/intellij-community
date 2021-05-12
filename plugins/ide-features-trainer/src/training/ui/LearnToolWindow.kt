@@ -23,7 +23,7 @@ import training.ui.views.ModulesPanel
 import java.util.concurrent.TimeUnit
 import javax.swing.JLabel
 
-class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow)
+internal class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow)
   : SimpleToolWindowPanel(true, true), DataProvider {
   val parentDisposable: Disposable = wholeToolWindow.disposable
 

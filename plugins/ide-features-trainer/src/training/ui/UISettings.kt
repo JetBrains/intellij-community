@@ -11,7 +11,7 @@ import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
 @Suppress("MemberVisibilityCanBePrivate")
-class UISettings {
+internal class UISettings {
 
   //GENERAL UI SETTINGS
   val width: Int by lazy { JBUI.scale(500) }

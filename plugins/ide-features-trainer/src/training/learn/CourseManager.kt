@@ -19,7 +19,7 @@ import training.util.WeakReferenceDelegator
 import training.util.courseCanBeUsed
 import training.util.switchOnExperimentalLessons
 
-class CourseManager internal constructor() : Disposable {
+internal class CourseManager internal constructor() : Disposable {
   val mapModuleVirtualFile: MutableMap<IftModule, VirtualFile> = ContainerUtil.createWeakMap()
 
   var unfoldModuleOnInit by WeakReferenceDelegator<IftModule>()

@@ -26,12 +26,12 @@ import training.learn.ActionsRecorder
 import java.awt.Component
 
 @LearningDsl
-open class TaskRuntimeContext(private val lessonExecutor: LessonExecutor,
-                              internal val actionsRecorder: ActionsRecorder,
-                              val restorePreviousTaskCallback: () -> Unit,
-                              private val previousGetter: () -> PreviousTaskInfo
+open class TaskRuntimeContext internal constructor(private val lessonExecutor: LessonExecutor,
+                                                   internal val actionsRecorder: ActionsRecorder,
+                                                   val restorePreviousTaskCallback: () -> Unit,
+                                                   private val previousGetter: () -> PreviousTaskInfo
 ): LearningDslBase {
-  constructor(base: TaskRuntimeContext)
+  internal constructor(base: TaskRuntimeContext)
     : this(base.lessonExecutor, base.actionsRecorder, base.restorePreviousTaskCallback, base.previousGetter)
 
   val taskDisposable: Disposable = actionsRecorder

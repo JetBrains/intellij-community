@@ -29,7 +29,7 @@ import javax.swing.border.EmptyBorder
 import javax.swing.border.MatteBorder
 import kotlin.math.max
 
-class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
+internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private val lessonPanel = JPanel()
 
   private val moduleNameLabel: JLabel = LinkLabelWithBackArrow<Any> { _, _ ->

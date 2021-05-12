@@ -10,7 +10,7 @@ import java.io.*
 import java.net.URL
 import java.util.jar.JarFile
 
-object FileUtils {
+internal object FileUtils {
   private val LOG = Logger.getInstance(FileUtils::class.java)
 
   @Throws(IOException::class)

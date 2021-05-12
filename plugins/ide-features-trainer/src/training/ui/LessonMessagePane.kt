@@ -28,7 +28,7 @@ import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 import kotlin.math.roundToInt
 
-class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
+internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
   data class MessageProperties(val state: MessageState = MessageState.NORMAL, val visualIndex: Int? = null)

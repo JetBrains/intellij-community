@@ -11,7 +11,7 @@ import training.learn.course.KLesson
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
 import training.statistic.FeatureUsageStatisticConsts.TASK_ID
 
-class TaskIdRuleValidator : CustomValidationRule() {
+private class TaskIdRuleValidator : CustomValidationRule() {
   override fun acceptRuleId(ruleId: String?): Boolean = (TASK_ID == ruleId)
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {

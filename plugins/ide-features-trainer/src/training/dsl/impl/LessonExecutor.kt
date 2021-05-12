@@ -26,7 +26,7 @@ import training.util.WeakReferenceDelegator
 import java.awt.Component
 import kotlin.math.max
 
-class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?, val predefinedFile: VirtualFile?) : Disposable {
+internal class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?, val predefinedFile: VirtualFile?) : Disposable {
   private data class TaskInfo(val content: () -> Unit,
                               var restoreIndex: Int,
                               var taskProperties: TaskProperties?,

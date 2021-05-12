@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import training.learn.lesson.LessonStateManager
 import training.util.LearningLessonsAutoExecutor
 
-class AutorunAllLessons: AnAction() {
+private class AutorunAllLessons: AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     LessonStateManager.resetPassedStatus()

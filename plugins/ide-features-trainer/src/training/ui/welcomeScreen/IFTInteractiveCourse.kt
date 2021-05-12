@@ -30,7 +30,7 @@ class IFTInteractiveCourse : InteractiveCourseFactory {
   override fun getInteractiveCourseData(): InteractiveCourseData = IFTInteractiveCourseData()
 }
 
-class IFTInteractiveCourseData : InteractiveCourseData {
+private class IFTInteractiveCourseData : InteractiveCourseData {
 
   override fun getName(): String {
     return LearnBundle.message("welcome.tab.header.learn.ide.features")
