@@ -28,6 +28,7 @@
   <essential-plugin>com.intellij.java</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>
   <essential-plugin>org.jetbrains.android</essential-plugin>
+  <essential-plugin>com.android.tools.design</essential-plugin>
 
   <welcome-screen logo-url="/artwork/welcome.png"/>
 
