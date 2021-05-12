@@ -1833,7 +1833,7 @@ public class JavaDocInfoGenerator {
     LOG.assertTrue(refText != null, "refText appears to be null.");
     PsiElement target = null;
     try {
-      target = JavaDocUtil.findReferenceTarget(context.getManager(), refText, context);
+      target = JavaDocUtil.findReferenceTarget(context.getManager(), refText, context, false);
     }
     catch (IndexNotReadyException e) {
       LOG.debug(e);
