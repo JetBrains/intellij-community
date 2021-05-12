@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 class ReplaceSubstringWithDropLastInspection : ReplaceSubstringInspection() {
     override fun inspectionText(element: KtDotQualifiedExpression): String =
-        KotlinBundle.message("replace.substring.call.with.droplast.call")
+        KotlinBundle.message("inspection.replace.substring.with.drop.last.display.name")
 
     override val defaultFixText: String get() = KotlinBundle.message("replace.substring.call.with.droplast.call")
 
