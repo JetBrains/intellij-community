@@ -189,10 +189,7 @@
 
     "EditorTabs": {
       "tabInsets": "0,8,0,8",
-      "underlinedTabBackground": {
-        "os.default":"#ffffff",
-        "os.windows": "#fcfcfc"
-      }
+      "underlinedTabBackground": "#ffffff"
     },
 
     "FileView.fileIcon": "AllIcons.FileTypes.Unknown",
