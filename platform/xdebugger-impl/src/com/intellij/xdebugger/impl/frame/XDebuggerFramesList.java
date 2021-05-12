@@ -7,7 +7,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -263,7 +262,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
           setBackground(c);
         }
       }
-      else if (Registry.is("debugger.new.debug.tool.window.view")){
+      else {
         setBackground(UIUtil.getListSelectionBackground(hasFocus));
         setForeground(UIUtil.getListSelectionForeground(hasFocus));
         mySelectionForeground = getForeground();
