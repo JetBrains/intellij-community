@@ -187,7 +187,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   public void testIgnoredFiles() throws IOException {
     VirtualFile file = getVirtualFile(createTempFile(".svn", ""));
     assertTrue(myFileTypeManager.isFileIgnored(file));
-    assertFalse(myFileTypeManager.isFileIgnored(createTempVirtualFile("txt", null, "", StandardCharsets.UTF_8)));
+    assertFalse(myFileTypeManager.isFileIgnored(createTempVirtualFile("x.txt", null, "", StandardCharsets.UTF_8)));
   }
 
   private static void checkNotAssociated(@NotNull FileType fileType,
@@ -395,7 +395,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       DefaultLogger.disableStderrDumping(getTestRootDisposable());
       myFileTypeManager.getRegisteredFileTypes(); // ensure pending file types empty
 
-      assertNotSame(oldFileType, FileTypes.UNKNOWN);
+      assertNotSame(FileTypes.UNKNOWN, oldFileType);
       WriteAction.run(() -> myFileTypeManager.removeAssociatedExtension(fileType, newExtension));
       WriteAction.run(() -> myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher(newExtension), oldFileType.getName(), true));
       WriteAction.run(() -> myFileTypeManager.associateExtension(fileType, newExtension));
@@ -834,7 +834,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     EncodingProjectManagerImpl manager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject());
     String oldProject = manager.getDefaultCharsetName();
     try {
-      VirtualFile file = createTempVirtualFile("sldkfjlskdfj", null, "123456789", StandardCharsets.UTF_8);
+      VirtualFile file = createTempVirtualFile("x.sldkfjlskdfj", null, "123456789", StandardCharsets.UTF_8);
       manager.setEncoding(file, CharsetToolkit.WIN_1251_CHARSET);
       file.setCharset(CharsetToolkit.WIN_1251_CHARSET);
       UIUtil.dispatchAllInvocationEvents();
@@ -890,7 +890,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testIsFileTypeRunsDetector() throws IOException {
-    VirtualFile vFile = createTempVirtualFile("bbb", null, "#!archive!!!", StandardCharsets.UTF_8);
+    VirtualFile vFile = createTempVirtualFile("x.bbb", null, "#!archive!!!", StandardCharsets.UTF_8);
 
     AtomicInteger detectorCalls = new AtomicInteger();
     ExtensionTestUtil.maskExtensions(FileTypeRegistry.FileTypeDetector.EP_NAME, Collections.singletonList(new FileTypeRegistry.FileTypeDetector() {
@@ -1229,12 +1229,12 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testHashBangPatternsCanBeConfiguredDynamically() throws IOException {
-    VirtualFile file0 = createTempVirtualFile("xxxx", null, "#!/usr/bin/gogogo\na=b", StandardCharsets.UTF_8);
+    VirtualFile file0 = createTempVirtualFile("x.xxxx", null, "#!/usr/bin/gogogo\na=b", StandardCharsets.UTF_8);
     assertEquals(PlainTextFileType.INSTANCE, file0.getFileType());
     FileTypeManagerImpl.FileTypeWithDescriptor fileType = FileTypeManagerImpl.coreDescriptorFor(StdFileTypes.PROPERTIES);
     myFileTypeManager.getExtensionMap().addHashBangPattern("gogogo", fileType);
     try {
-      VirtualFile file = createTempVirtualFile("xxxx", null, "#!/usr/bin/gogogo\na=b", StandardCharsets.UTF_8);
+      VirtualFile file = createTempVirtualFile("x.xxxx", null, "#!/usr/bin/gogogo\na=b", StandardCharsets.UTF_8);
       assertEquals(StdFileTypes.PROPERTIES, file.getFileType());
     }
     finally {

@@ -114,7 +114,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testDocumentGced() throws IOException {
-    VirtualFile vFile = createTempVirtualFile("txt", null, "abc", StandardCharsets.UTF_8);
+    VirtualFile vFile = createTempVirtualFile("x.txt", null, "abc", StandardCharsets.UTF_8);
     PsiDocumentManagerImpl documentManager = getPsiDocumentManager();
     long id = System.identityHashCode(documentManager.getDocument(findFile(vFile)));
 
@@ -290,7 +290,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testDocumentCommittedInBackgroundEventuallyEvenDespiteTyping() throws IOException {
-    VirtualFile virtualFile = createTempVirtualFile("java", null, "", StandardCharsets.UTF_8);
+    VirtualFile virtualFile = createTempVirtualFile("x.java", null, "", StandardCharsets.UTF_8);
     PsiFile file = findFile(virtualFile);
     assertNotNull(file);
     assertTrue(file.isPhysical());
@@ -562,7 +562,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testReparseDoesNotModifyDocument() throws Exception {
-    VirtualFile file = createTempVirtualFile("txt", null, "1\n2\n3\n", StandardCharsets.UTF_8);
+    VirtualFile file = createTempVirtualFile("x.txt", null, "1\n2\n3\n", StandardCharsets.UTF_8);
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     String stripSpacesBefore = editorSettings.getStripTrailingSpaces();
     try {
