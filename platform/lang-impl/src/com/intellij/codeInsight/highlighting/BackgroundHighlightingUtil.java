@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorActivityManager;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
@@ -33,8 +32,8 @@ public class BackgroundHighlightingUtil {
    */
   static <T> void lookForInjectedFileInOtherThread(@NotNull Project project,
                                                    @NotNull Editor editor,
-                                                   @NotNull BiFunction<? super PsiFile, ? super EditorEx, ? extends T> backgroundProcessor,
-                                                   @NotNull TriConsumer<? super PsiFile, ? super EditorEx, ? super T> edtProcessor) {
+                                                   @NotNull BiFunction<? super PsiFile, ? super Editor, ? extends T> backgroundProcessor,
+                                                   @NotNull TriConsumer<? super PsiFile, ? super Editor, ? super T> edtProcessor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isValidEditor(editor)) return;
 
@@ -51,7 +50,7 @@ public class BackgroundHighlightingUtil {
           return null;
         }
         PsiFile newFile = getInjectedFileIfAny(offsetBefore, psiFile);
-        EditorEx newEditor = (EditorEx)InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, newFile);
+        Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, newFile);
         T result = backgroundProcessor.apply(newFile, newEditor);
         return Trinity.create(newFile, newEditor, result);
       })
@@ -61,7 +60,7 @@ public class BackgroundHighlightingUtil {
       .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), t -> {
         if (t == null) return;
         PsiFile foundFile = t.getFirst();
-        EditorEx newEditor = t.getSecond();
+        Editor newEditor = t.getSecond();
         T result = t.getThird();
         if (foundFile == null) return;
 
