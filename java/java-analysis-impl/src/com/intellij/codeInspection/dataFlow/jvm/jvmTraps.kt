@@ -3,44 +3,12 @@
 
 package com.intellij.codeInspection.dataFlow.jvm
 
-import com.intellij.codeInspection.dataFlow.TypeConstraint
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 import com.intellij.codeInspection.dataFlow.java.inst.ControlTransferInstruction
+import com.intellij.codeInspection.dataFlow.jvm.transfer.ExceptionTransfer
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
-import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
-import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.TransferTarget
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.psi.*
-import one.util.streamex.StreamEx
-
-data class ExceptionTransfer(val throwable: TypeConstraint) : TransferTarget {
-  override fun toString(): String = "Exception($throwable)"
-}
-data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val varsToFlush: List<VariableDescriptor>) : TransferTarget {
-  override fun dispatch(state: DfaMemoryState, interpreter: DataFlowInterpreter): List<DfaInstructionState> {
-    val varFactory = interpreter.factory.varFactory
-    varsToFlush.forEach { desc -> state.flushVariable(varFactory.createVariableValue(desc)) }
-    return listOf(DfaInstructionState(interpreter.getInstruction(offset.instructionOffset), state))
-  }
-
-  override fun getPossibleTargets(): List<Int> = listOf(offset.instructionOffset)
-  override fun toString(): String = "-> $offset"
-}
-// ExitFinallyTransfer formally depends on enterFinally that has backLinks which are instructions bound to the DfaValueFactory
-// however, we actually use only instruction offsets from there, and binding to another factory does not change the offsets.
-data class ExitFinallyTransfer(private val enterFinally: JvmTrap.EnterFinally) : TransferTarget {
-  override fun getPossibleTargets(): Set<Int> = StreamEx.of(enterFinally.backLinks).asIterable()
-    .flatMap { it.successorIndexes.asIterable() }
-    .filter { index -> index != enterFinally.jumpOffset.instructionOffset }.toSet()
-
-  override fun dispatch(state: DfaMemoryState, interpreter: DataFlowInterpreter): List<DfaInstructionState> {
-    return ControlTransferHandler.dispatch(state, interpreter, state.pop() as DfaControlTransferValue)
-  }
-
-  override fun toString(): String = "ExitFinally"
-}
 
 sealed class JvmTrap(private val anchor: PsiElement) : DfaControlTransferValue.Trap {
   open fun link(instruction: ControlTransferInstruction) {}
@@ -78,6 +46,8 @@ sealed class JvmTrap(private val anchor: PsiElement) : DfaControlTransferValue.T
     override fun link(instruction: ControlTransferInstruction) {
       backLinks.add(instruction)
     }
+    
+    fun backLinks() : List<ControlTransferInstruction> = backLinks
 
     override fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState> {
       handler.state.push(handler.runner.factory.controlTransfer(handler.target, handler.traps))

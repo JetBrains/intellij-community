@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.FList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,8 @@ public final class DfaControlTransferValue extends DfaValue {
   }
 
   public int @NotNull [] getPossibleTargetIndices() {
-    return StreamEx.of(traps).flatCollection(Trap::getPossibleTargets).append(target.getPossibleTargets()).mapToInt(x -> x).toArray();
+    return StreamEx.of(traps).flatCollection(Trap::getPossibleTargets).mapToInt(x -> x).append(target.getPossibleTargets())
+      .distinct().toArray();
   }
 
   /**
@@ -57,14 +59,14 @@ public final class DfaControlTransferValue extends DfaValue {
     /**
      * @return list of possible instruction offsets for given target
      */
-    default @NotNull Collection<@NotNull Integer> getPossibleTargets() {
-      return Collections.emptyList();
+    default int @NotNull [] getPossibleTargets() {
+      return ArrayUtil.EMPTY_INT_ARRAY;
     }
 
     /** 
      * @return next instruction states assuming no traps 
      */
-    default @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state, DataFlowInterpreter runner) {
+    default @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state, DataFlowInterpreter interpreter) {
       return Collections.emptyList();
     }
   }

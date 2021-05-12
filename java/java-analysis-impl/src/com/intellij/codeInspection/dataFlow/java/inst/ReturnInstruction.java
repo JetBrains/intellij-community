@@ -2,7 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow.java.inst;
 
-import com.intellij.codeInspection.dataFlow.jvm.ExceptionTransfer;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.ExceptionTransfer;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;

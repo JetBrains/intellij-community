@@ -12,14 +12,19 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
 import com.intellij.codeInspection.dataFlow.java.inliner.*;
 import com.intellij.codeInspection.dataFlow.java.inst.*;
-import com.intellij.codeInspection.dataFlow.jvm.*;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
+import com.intellij.codeInspection.dataFlow.jvm.JvmTrap;
 import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.*;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.NegativeArraySizeProblem;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.ExceptionTransfer;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.ExitFinallyTransfer;
+import com.intellij.codeInspection.dataFlow.jvm.transfer.InstructionTransfer;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.ControlFlowOffset;
@@ -1117,8 +1122,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @NotNull
   private InstructionTransfer createTransfer(PsiElement exitedStatement, PsiElement blockToFlush) {
-    List<PlainDescriptor> varsToFlush = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(blockToFlush, PsiVariable.class),
-                                                  variable -> new PlainDescriptor(variable));
+    List<VariableDescriptor> varsToFlush = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(blockToFlush, PsiVariable.class),
+                                                             variable -> new PlainDescriptor(variable));
     return new InstructionTransfer(getEndOffset(exitedStatement), varsToFlush);
   }
 
