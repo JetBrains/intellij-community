@@ -90,16 +90,6 @@ public class EnsureInstruction extends Instruction {
       }
       return nextStates(interpreter, stateBefore);
     }
-    if (myTransferValue == null) {
-      boolean satisfied = stateBefore.applyCondition(cond);
-      if (problem != null) {
-        interpreter.getListener().onCondition(problem, tosValue, satisfied ? ThreeState.UNSURE : ThreeState.YES, stateBefore);
-      }
-      if (!satisfied) {
-        return DfaInstructionState.EMPTY_ARRAY;
-      }
-      return nextStates(interpreter, stateBefore);
-    }
     DfaMemoryState falseState = stateBefore.createCopy();
     boolean trueStatePossible = stateBefore.applyCondition(cond);
     boolean falseStatePossible = falseState.applyCondition(cond.negate());
@@ -112,7 +102,7 @@ public class EnsureInstruction extends Instruction {
                           !falseStatePossible ? ThreeState.NO : ThreeState.UNSURE;
       interpreter.getListener().onCondition(problem, tosValue, failed, stateBefore);
     }
-    if (falseStatePossible) {
+    if (falseStatePossible && myTransferValue != null) {
       List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, interpreter, myTransferValue);
       if (myMakeEphemeral) {
         for (DfaInstructionState negState : states) {

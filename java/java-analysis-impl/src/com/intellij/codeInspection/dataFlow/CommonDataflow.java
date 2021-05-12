@@ -5,6 +5,8 @@ import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
@@ -345,6 +347,16 @@ public final class CommonDataflow {
                                      @NotNull PsiExpression expression,
                                      @NotNull DfaMemoryState state) {
       myResult.add(expression, state, value);
+    }
+
+    @Override
+    public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                            @NotNull DfaValue value,
+                            @NotNull ThreeState failed,
+                            @NotNull DfaMemoryState state) {
+      if (problem instanceof ContractFailureProblem && failed != ThreeState.NO) {
+        myResult.add(((ContractFailureProblem)problem).getAnchor(), state, value.getFactory().fromDfType(DfType.FAIL));
+      }
     }
   }
 }
