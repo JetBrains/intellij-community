@@ -1311,7 +1311,9 @@ public class SingleInspectionProfilePanel extends JPanel {
         ScopeToolState state = getSelectedState();
         if (state == null) return;
         Project project = getProject();
-        boolean canReset = !myProfile.isProperSetting(state.getTool().getTool().getShortName(), state.getScope(project), project);
+        NamedScope scope = state.getScope(project);
+        if (scope == null) return;
+        boolean canReset = !myProfile.isProperSetting(state.getTool().getTool().getShortName(), scope, project);
 
         myResetLink.setVisible(canReset);
         revalidate();
