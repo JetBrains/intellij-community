@@ -70,7 +70,7 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     val javaModuleName: String?
     val javaExePath: String
     try {
-      if (applicationConfiguration.defaultTargetName != null && applicationConfiguration.alternativeJrePath == null) {
+      if (applicationConfiguration.defaultTargetName != null) {
         javaModuleName = null
         javaExePath = GradleServerEnvironmentSetup.targetJavaExecutablePathMappingKey
       }
