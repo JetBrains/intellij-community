@@ -165,7 +165,7 @@ final class ActionUpdater {
     boolean shallAsync = myForceAsync || canAsync && action instanceof UpdateInBackground &&
                                          ((UpdateInBackground)action).isUpdateInBackground();
     boolean isEDT = EDT.isCurrentThreadEdt();
-    if (isEDT && canAsync && shallAsync) {
+    if (isEDT && canAsync && shallAsync && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
       LOG.error("Calling " + operation + " on EDT on `" + action.getClass().getName() + "` " +
                 (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
     }
