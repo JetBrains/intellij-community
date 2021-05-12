@@ -24,7 +24,7 @@ public final class ThisDescriptor extends PsiVarDescriptor {
   @NotNull
   private final PsiClass myQualifier;
 
-  public ThisDescriptor(@NotNull PsiClass qualifier) {
+  private ThisDescriptor(@NotNull PsiClass qualifier) {
     myQualifier = qualifier;
   }
 

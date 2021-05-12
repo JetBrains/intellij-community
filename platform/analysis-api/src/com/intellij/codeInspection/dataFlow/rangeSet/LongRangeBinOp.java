@@ -10,7 +10,7 @@ public enum LongRangeBinOp {
   PLUS("+"), MINUS("-"), AND("&"), OR("|"), XOR("^"), MUL("*"),
   MOD("%"), DIV("/"), SHL("<<"), SHR(">>"), USHR(">>>");
 
-  final String mySymbol;
+  private final String mySymbol;
 
   LongRangeBinOp(String symbol) {
     mySymbol = symbol;

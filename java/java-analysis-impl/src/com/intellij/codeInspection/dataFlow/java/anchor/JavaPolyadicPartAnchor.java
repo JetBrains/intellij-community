@@ -30,13 +30,6 @@ public class JavaPolyadicPartAnchor extends JavaDfaAnchor {
   }
 
   /**
-   * @return a last operand index that designates the evaluated part
-   */
-  public int getLastOperand() {
-    return myLastOperand;
-  }
-
-  /**
    * @return a text range inside the {@linkplain #getExpression() expression} that
    * designates the evaluated part
    */

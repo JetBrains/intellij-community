@@ -497,8 +497,6 @@ public class StreamChainInliner implements CallInliner {
               chain = buildChain((PsiMethodCallExpression)body, filteredNext);
               if (chain != filteredNext) {
                 streamSource = chain.myCall.getMethodExpression().getQualifierExpression();
-              } else {
-                streamSource = body;
               }
             }
           }
@@ -774,7 +772,7 @@ public class StreamChainInliner implements CallInliner {
     return true;
   }
 
-  static void buildStreamCFG(CFGBuilder builder, Step firstStep, PsiExpression originalQualifier) {
+  private static void buildStreamCFG(CFGBuilder builder, Step firstStep, PsiExpression originalQualifier) {
     PsiType inType = StreamApiUtil.getStreamElementType(originalQualifier.getType(), false);
     PsiMethodCallExpression sourceCall = tryCast(PsiUtil.skipParenthesizedExprDown(originalQualifier), PsiMethodCallExpression.class);
     if(STREAM_GENERATE.test(sourceCall)) {
@@ -861,7 +859,7 @@ public class StreamChainInliner implements CallInliner {
            .chain(firstStep::iteration).end();
   }
 
-  static Step buildChain(PsiMethodCallExpression qualifierCall, Step terminalStep) {
+  private static Step buildChain(PsiMethodCallExpression qualifierCall, Step terminalStep) {
     Step curStep = terminalStep;
     while (qualifierCall != null) {
       if (!SKIP_STEP.test(qualifierCall)) {

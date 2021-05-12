@@ -114,7 +114,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new FlushFieldsInstruction());
   }
 
-  @Nullable ControlFlow buildControlFlow() {
+  private @Nullable ControlFlow buildControlFlow() {
     myCurrentFlow = new ControlFlow(myFactory, myCodeFragment);
     addInstruction(new FinishElementInstruction(null)); // to initialize LVA
     try {
@@ -396,7 +396,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  void addNullCheck(@NotNull PsiExpression expression) {
+  private void addNullCheck(@NotNull PsiExpression expression) {
     addNullCheck(NullabilityProblemKind.fromContext(expression, myCustomNullabilityProblems));
   }
 
@@ -2242,7 +2242,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  static final CallInliner[] INLINERS = {
+  private static final CallInliner[] INLINERS = {
     new OptionalChainInliner(), new LambdaInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
     new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),

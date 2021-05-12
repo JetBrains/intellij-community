@@ -18,7 +18,7 @@ public class FieldChecker {
   private final boolean myCanInstantiateItself;
   private final PsiClass myClass;
 
-  FieldChecker(PsiElement context) {
+  private FieldChecker(PsiElement context) {
     PsiMethod method = context instanceof PsiClass ? null : PsiTreeUtil.getParentOfType(context, PsiMethod.class);
     PsiClass contextClass = method != null ? method.getContainingClass() : context instanceof PsiClass ? (PsiClass)context : null;
     myClass = contextClass;

@@ -68,7 +68,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   @Nullable
   @Override
   protected LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
-    return new FindDfaProblemCauseFix(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, IGNORE_ASSERT_STATEMENTS, anchor, problemType);
+    return new FindDfaProblemCauseFix(IGNORE_ASSERT_STATEMENTS, anchor, problemType);
   }
 
   @Nullable

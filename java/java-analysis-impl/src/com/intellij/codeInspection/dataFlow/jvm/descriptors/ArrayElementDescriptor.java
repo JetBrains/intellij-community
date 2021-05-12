@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public final class ArrayElementDescriptor extends JvmVariableDescriptor {
   private final int myIndex;
 
-  public ArrayElementDescriptor(int index) {
+  private ArrayElementDescriptor(int index) {
     myIndex = index;
   }
 
