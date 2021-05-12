@@ -36,7 +36,7 @@ public class DebuggerInlayListener implements EditorMouseMotionListener, EditorM
     if (lastHoveredInlay != null) {
       InlineDebugRenderer renderer = (InlineDebugRenderer)lastHoveredInlay.getRenderer();
       if (lastHoveredInlay != event.getInlay()) {
-        renderer.onMouseExit(lastHoveredInlay, event);
+        renderer.onMouseExit(lastHoveredInlay);
       }
       lastHoveredInlay = null;
     }
