@@ -186,6 +186,18 @@ public interface DfType {
     return isSuperType(constant);
   }
 
+  /**
+   * Checks whether processing the other type is not necessary to get the same analysis result if some value
+   * has either this or other state at the same code location. {@code a.isMergeable(b)} implies 
+   * {@code a.isSuperType(b)}. In most cases, these methods are equivalent but the difference may appear in
+   * processing non-strict properties like nullability. E.g. (nullability == unknown) is supertype of
+   * (nullability == null) but it's not mergeable, as skipping (nullability == null) processing will remove
+   * "Possible NPE" warning.
+   * 
+   * @param other other type
+   * @return true if processing the other type is not necessary to get the same analysis result if some value
+   * has either this or other state at the same code location.
+   */
   default boolean isMergeable(@NotNull DfType other) {
     return isSuperType(other);
   }

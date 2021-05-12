@@ -200,7 +200,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (var == value) return;
 
     value = handleStackValueOnVariableFlush(value, var, null);
-    flushVariable(var, DfaNullability.fromDfType(var.getInherentType()) != DfaNullability.UNKNOWN);
+    flushVariable(var, var.getDfType().isMergeable(var.getInherentType()));
     flushQualifiedMethods(var);
 
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
