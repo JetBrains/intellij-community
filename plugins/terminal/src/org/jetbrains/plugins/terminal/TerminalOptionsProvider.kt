@@ -7,6 +7,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.annotations.Nls
 
 @State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
@@ -68,6 +69,8 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
+    var blinkCursor: Boolean = true
+    var cursorShape: CursorShape = CursorShape.BLOCK
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {
@@ -121,6 +124,19 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     set(value) {
       myState.myShellPath = value
     }
+
+  var cursorShape: CursorShape
+    get() = myState.cursorShape
+    set(value) {
+      myState.cursorShape = value
+      TerminalUiSettingsManager.getInstance().fireCursorUpdate()
+    }
+
+  enum class CursorShape(val text: @Nls String) {
+    BLOCK(TerminalBundle.message("settings.cursor.shape.block.name")),
+    UNDERLINE(TerminalBundle.message("settings.cursor.shape.underline.name")),
+    VERTICAL(TerminalBundle.message("settings.cursor.shape.vertical.name"))
+  }
 
   companion object {
     val instance: TerminalOptionsProvider

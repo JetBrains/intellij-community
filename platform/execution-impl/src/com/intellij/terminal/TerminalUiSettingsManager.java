@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
+import com.intellij.application.options.editor.EditorOptionsListener;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service(Service.Level.APP)
-final class TerminalUiSettingsManager implements Disposable {
+public final class TerminalUiSettingsManager implements Disposable {
   private @NotNull EditorColorsScheme myColorsScheme;
   private int myFontSize;
   private JBTerminalSchemeColorPalette myColorPalette;
@@ -42,6 +43,9 @@ final class TerminalUiSettingsManager implements Disposable {
         fireFontChanged();
       }
     });
+    connection.subscribe(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC, () -> {
+      fireCursorUpdate(); // update on "Caret blinking" changes in "Editor | General | Appearance"
+    });
   }
 
   @NotNull Color getDefaultForeground() {
@@ -54,13 +58,21 @@ final class TerminalUiSettingsManager implements Disposable {
     return color != null ? color : myColorsScheme.getDefaultBackground();
   }
 
-  static @NotNull TerminalUiSettingsManager getInstance() {
+  public static @NotNull TerminalUiSettingsManager getInstance() {
     return ApplicationManager.getApplication().getService(TerminalUiSettingsManager.class);
   }
 
   void addListener(@NotNull JBTerminalPanel terminalPanel) {
     myTerminalPanels.add(terminalPanel);
     Disposer.register(terminalPanel, () -> myTerminalPanels.remove(terminalPanel));
+  }
+
+  public void fireCursorUpdate() {
+    for (JBTerminalPanel panel : myTerminalPanels) {
+      JBTerminalSystemSettingsProviderBase provider = panel.getSettingsProvider();
+      panel.setCursorShape(provider.getCursorShape());
+      panel.repaint();
+    }
   }
 
   private void fireFontChanged() {
