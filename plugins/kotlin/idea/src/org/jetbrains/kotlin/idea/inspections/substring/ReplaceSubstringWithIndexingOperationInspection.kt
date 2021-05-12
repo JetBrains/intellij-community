@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 
 class ReplaceSubstringWithIndexingOperationInspection : ReplaceSubstringInspection() {
     override fun inspectionText(element: KtDotQualifiedExpression): String =
-        KotlinBundle.message("replace.substring.call.with.indexing.operation.call")
+        KotlinBundle.message("inspection.replace.substring.with.indexing.operation.display.name")
 
     override val defaultFixText: String get() = KotlinBundle.message("replace.substring.call.with.indexing.operation.call")
     override val isAlwaysStable: Boolean = true
