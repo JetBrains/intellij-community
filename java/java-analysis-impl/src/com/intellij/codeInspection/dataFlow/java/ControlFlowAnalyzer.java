@@ -141,7 +141,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return null;
     }
 
-    addInstruction(new ReturnInstruction(myFactory, FList.emptyList(), null));
     myCurrentFlow.finish();
     new LiveVariablesAnalyzer(myCurrentFlow).flushDeadVariablesOnStatementFinish();
     return myCurrentFlow;
