@@ -10,7 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.project.isDirectoryBased
+import com.intellij.project.stateStore
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +29,7 @@ sealed class JpsProjectConfigLocation {
 
   abstract val baseDirectoryUrl: VirtualFileUrl
 
-  data class DirectoryBased(val projectDir: VirtualFileUrl) : JpsProjectConfigLocation() {
+  data class DirectoryBased(val projectDir: VirtualFileUrl, val ideaFolder: VirtualFileUrl) : JpsProjectConfigLocation() {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = projectDir
   }
@@ -142,7 +144,8 @@ fun getJpsProjectConfigLocation(project: Project): JpsProjectConfigLocation? {
   return if (project.isDirectoryBased) {
     project.basePath?.let {
       val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-      JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.fromPath(it))
+      val ideaFolder = project.stateStore.directoryStorePath!!.toVirtualFileUrl(virtualFileUrlManager)
+      JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.fromPath(it), ideaFolder)
     }
   }
   else {

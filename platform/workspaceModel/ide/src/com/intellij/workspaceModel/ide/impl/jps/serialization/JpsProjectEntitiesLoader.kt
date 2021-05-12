@@ -89,16 +89,16 @@ object JpsProjectEntitiesLoader {
                                                 virtualFileManager: VirtualFileUrlManager,
                                                 externalStorageConfigurationManager: ExternalStorageConfigurationManager?,
                                                 fileInDirectorySourceNames: FileInDirectorySourceNames): JpsProjectSerializers {
-    val projectDirUrl = configLocation.projectDir.url
+    val ideaFolderUrl = configLocation.ideaFolder.url
     val directorySerializersFactories = ArrayList<JpsDirectoryEntitiesSerializerFactory<*>>()
-    val librariesDirectoryUrl = "$projectDirUrl/.idea/libraries"
-    val artifactsDirectoryUrl = "$projectDirUrl/.idea/artifacts"
+    val librariesDirectoryUrl = "$ideaFolderUrl/libraries"
+    val artifactsDirectoryUrl = "$ideaFolderUrl/artifacts"
     directorySerializersFactories += JpsLibrariesDirectorySerializerFactory(librariesDirectoryUrl)
     if (serializeArtifacts) {
       directorySerializersFactories += JpsArtifactsDirectorySerializerFactory(artifactsDirectoryUrl)
     }
     val externalStorageRoot = externalStorageMapping.externalStorageRoot
-    val externalStorageEnabled = isExternalStorageEnabled(reader, projectDirUrl)
+    val externalStorageEnabled = isExternalStorageEnabled(reader, ideaFolderUrl)
     val librariesExternalStorageFile = JpsFileEntitySource.ExactFile(externalStorageRoot.append("project/libraries.xml"), configLocation)
     val externalModuleListSerializer = ExternalModuleListSerializer(externalStorageRoot, virtualFileManager)
 
@@ -117,7 +117,7 @@ object JpsProjectEntitiesLoader {
       entityTypeSerializers = entityTypeSerializers,
       directorySerializersFactories = directorySerializersFactories,
       moduleListSerializers = listOf(
-        ModuleListSerializerImpl("$projectDirUrl/.idea/modules.xml", virtualFileManager, externalModuleListSerializer,
+        ModuleListSerializerImpl("$ideaFolderUrl/modules.xml", virtualFileManager, externalModuleListSerializer,
                                  externalStorageConfigurationManager),
         externalModuleListSerializer
       ),
@@ -130,8 +130,8 @@ object JpsProjectEntitiesLoader {
     )
   }
 
-  private fun isExternalStorageEnabled(reader: JpsFileContentReader, projectDirUrl: String): Boolean {
-    val component = reader.loadComponent("$projectDirUrl/.idea/misc.xml", "ExternalStorageConfigurationManager")
+  private fun isExternalStorageEnabled(reader: JpsFileContentReader, ideaFolderPath: String): Boolean {
+    val component = reader.loadComponent("$ideaFolderPath/misc.xml", "ExternalStorageConfigurationManager")
     return component?.getAttributeValue("enabled") == "true"
   }
 
@@ -183,15 +183,15 @@ object JpsProjectEntitiesLoader {
   }
 
   fun createJpsEntitySourceForProjectLibrary(configLocation: JpsProjectConfigLocation): JpsFileEntitySource {
-    return createJpsEntitySource(configLocation, ".idea/libraries")
+    return createJpsEntitySource(configLocation, "libraries")
   }
 
   fun createJpsEntitySourceForArtifact(configLocation: JpsProjectConfigLocation): JpsFileEntitySource {
-    return createJpsEntitySource(configLocation, ".idea/artifacts")
+    return createJpsEntitySource(configLocation, "artifacts")
   }
 
   private fun createJpsEntitySource(configLocation: JpsProjectConfigLocation, directoryLocation: String) = when (configLocation) {
-    is JpsProjectConfigLocation.DirectoryBased -> JpsFileEntitySource.FileInDirectory(configLocation.projectDir.append(directoryLocation),
+    is JpsProjectConfigLocation.DirectoryBased -> JpsFileEntitySource.FileInDirectory(configLocation.ideaFolder.append(directoryLocation),
                                                                                       configLocation)
     is JpsProjectConfigLocation.FileBased -> JpsFileEntitySource.ExactFile(configLocation.iprFile, configLocation)
   }
