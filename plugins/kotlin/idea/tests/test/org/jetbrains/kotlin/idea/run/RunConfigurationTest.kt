@@ -8,34 +8,44 @@ package org.jetbrains.kotlin.idea.run
 import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.MapDataContext
+import junit.framework.TestCase
 import org.jdom.Element
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.checkers.languageVersionSettingsFromText
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.project.withLanguageVersionSettings
+import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration.Companion.findMainClassFile
 import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.withCustomLanguageAndApiVersion
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.atomic.AtomicReference
 
 private const val RUN_PREFIX = "// RUN:"
 
@@ -53,20 +63,29 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
             assertTrue(javaParameters.classPath.rootDirs.contains(configuredModule.srcOutputDir))
             assertTrue(javaParameters.classPath.rootDirs.contains(configuredModule.testOutputDir))
 
-            val ktFiles = configuredModule.srcDir?.children?.filter { it.extension == "kt" }.orEmpty()
+            fun VirtualFile.findKtFiles(): List<VirtualFile> {
+                return children.filter { it.isDirectory }.flatMap { it.findKtFiles() } + children.filter { it.extension == "kt" }
+            }
+
+            val files = configuredModule.srcDir?.findKtFiles().orEmpty()
             val psiManager = PsiManager.getInstance(project)
 
-            for (ktFile in ktFiles) {
-                val psiFile = psiManager.findFile(ktFile) as? KtFile ?: continue
-                val languageVersionSettings = languageVersionSettingsFromText(listOf(psiFile.text))
+            for (file in files) {
+                val ktFile = psiManager.findFile(file) as? KtFile ?: continue
+                val languageVersionSettings = languageVersionSettingsFromText(listOf(ktFile.text))
 
                 module.withLanguageVersionSettings(languageVersionSettings) {
-                    psiFile.acceptChildren(
-                        object : KtVisitorVoid() {
+                    var functionCandidates: List<KtNamedFunction>? = null
+                    ktFile.acceptChildren(
+                        object : KtTreeVisitorVoid() {
                             override fun visitNamedFunction(function: KtNamedFunction) {
-                                functionVisitor(languageVersionSettings, function)
+                                functionCandidates = functionVisitor(languageVersionSettings, function)
                             }
                         }
+                    )
+                    TestCase.assertTrue(
+                        "function candidates expected to be found for $file",
+                        functionCandidates?.isNotEmpty() ?: false
                     )
                 }
             }
@@ -221,24 +240,63 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
     }
 
     companion object {
-        private fun functionVisitor(fileLanguageSettings: LanguageVersionSettings, function: KtNamedFunction) {
+        private fun functionVisitor(fileLanguageSettings: LanguageVersionSettings, function: KtNamedFunction): List<KtNamedFunction> {
             val project = function.project
             val file = function.containingKtFile
             val options = function.bodyExpression?.allChildren?.filterIsInstance<PsiComment>()
                 ?.map { it.text.trim().replace("//", "").trim() }
                 ?.filter { it.isNotBlank() }?.toList() ?: emptyList()
+            val functionCandidates = file.collectDescendantsOfType<PsiComment>()
+                .filter {
+                    val option = it.text.trim().replace("//", "").trim()
+                    "yes" == option || "no" == option
+                }
+                .mapNotNull { it.getParentOfType<KtNamedFunction>(true) }
 
             if (options.isNotEmpty()) {
                 val assertIsMain = "yes" in options
                 val assertIsNotMain = "no" in options
 
-                val isMainFunction = MainFunctionDetector(fileLanguageSettings) { it.resolveToDescriptorIfAny() }.isMain(function)
+                fun isMainFunction(f: KtNamedFunction) =
+                    MainFunctionDetector(fileLanguageSettings) { it.resolveToDescriptorIfAny() }.isMain(f)
+
+                val isMainFunction = isMainFunction(function)
+                val functionCandidatesAreMain = functionCandidates.map(::isMainFunction)
+                val anyFunctionCandidatesAreMain = functionCandidatesAreMain.any { it }
+                val allFunctionCandidatesAreNotMain = functionCandidatesAreMain.none { it }
+
+                val text = function.containingFile.text
+
+                val module = file.module!!
+                val mainClassName = function.toLightMethods().first().containingClass?.qualifiedName!!
+                val findMainClassFileSlowResolve = if (text.contains("NO-DUMB-MODE")) {
+                    findMainClassFile(module, mainClassName, true)
+                } else {
+                    val findMainClassFileResult = AtomicReference<KtFile>()
+                    DumbServiceImpl.getInstance(project).runInDumbMode {
+                        findMainClassFileResult.set(findMainClassFile(module, mainClassName, true))
+                    }
+                    findMainClassFileResult.get()
+                }
+
+                val findMainClassFile = findMainClassFile(module, mainClassName, false)
+                TestCase.assertEquals(
+                    "findMainClassFile $mainClassName in useSlowResolve $findMainClassFileSlowResolve mode diff from normal mode $findMainClassFile",
+                    findMainClassFileSlowResolve,
+                    findMainClassFile
+                )
 
                 if (assertIsMain) {
                     assertTrue("$file: The function ${function.fqName?.asString()} should be main", isMainFunction)
+                    if (anyFunctionCandidatesAreMain) {
+                        assertEquals("$file: The function ${function.fqName?.asString()} is main", file, findMainClassFile)
+                    }
                 }
                 if (assertIsNotMain) {
                     assertFalse("$file: The function ${function.fqName?.asString()} should NOT be main", isMainFunction)
+                    if (allFunctionCandidatesAreNotMain) {
+                        assertNull("$file / $findMainClassFile: The function ${function.fqName?.asString()} is NOT main", findMainClassFile)
+                    }
                 }
 
                 if (isMainFunction) {
@@ -257,7 +315,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     } catch (expected: Throwable) {
                     }
 
-                    if (function.containingFile.text.startsWith("// entryPointExists")) {
+                    if (text.startsWith("// entryPointExists")) {
                         assertNotNull(
                             "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
                             KotlinRunConfigurationProducer.getEntryPointContainer(function),
@@ -270,10 +328,21 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     }
                 }
             }
+            return functionCandidates
         }
 
         private fun createConfigurationFromMain(project: Project, mainFqn: String): KotlinRunConfiguration {
-            val mainFunction = KotlinTopLevelFunctionFqnNameIndex.getInstance().get(mainFqn, project, project.allScope()).first()
+            val scope = project.allScope()
+            val mainFunction =
+                KotlinTopLevelFunctionFqnNameIndex.getInstance().get(mainFqn, project, scope).firstOrNull()
+                    ?: run {
+                        val className = StringUtil.getPackageName(mainFqn)
+                        val shortName = StringUtil.getShortName(mainFqn)
+                        KotlinFullClassNameIndex.getInstance().get(className, project, scope)
+                            .flatMap { it.declarations }
+                            .filterIsInstance<KtNamedFunction>()
+                            .firstOrNull { it.name == shortName }
+                    } ?: error("unable to look up top level function $mainFqn")
             return createConfigurationFromElement(mainFunction) as KotlinRunConfiguration
         }
     }

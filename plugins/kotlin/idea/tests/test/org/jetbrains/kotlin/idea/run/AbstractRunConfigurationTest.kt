@@ -118,6 +118,8 @@ abstract class AbstractRunConfigurationTest : KotlinCodeInsightTestCase() {
             val projectBaseVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectBaseDir)
                 ?: error("Can't find VirtualFile for $projectBaseDir")
 
+            projectBaseVirtualFile.refresh(false, true)
+
             VfsUtil.copyDirectory(this, projectBaseVirtualFile, projectDir, null)
 
             platform.addJdk(testRootDisposable)

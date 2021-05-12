@@ -1,6 +1,7 @@
 package companions
 
-class A {
+// NO-DUMB-MODE
+class A0 {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
@@ -9,7 +10,7 @@ class A {
     }
 }
 
-class B {
+class B0 {
     companion object {
         fun main(args: Array<String>) {
             // no
@@ -17,7 +18,7 @@ class B {
     }
 }
 
-class C {
+class C0 {
     companion object {
         @JvmStatic
         @JvmName("main0")
@@ -26,7 +27,7 @@ class C {
     }
 }
 
-class D {
+class D0 {
     companion object {
         @JvmStatic
         @JvmName("main")

@@ -7,9 +7,3 @@ class A {
         }
     }
 }
-
-object B {
-    @JvmStatic
-    fun main() { // no
-    }
-}

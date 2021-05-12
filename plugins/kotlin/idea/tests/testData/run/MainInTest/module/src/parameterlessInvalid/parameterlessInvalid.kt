@@ -1,4 +1,6 @@
 // entryPointExists
+// NO-DUMB-MODE
+
 package parameterlessInvalid
 
 fun main() { // no
