@@ -3,21 +3,27 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler
 import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 
 class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
   override fun update(before: WorkspaceEntityStorage, builder: WorkspaceEntityStorageBuilder): Boolean {
     // TODO: 21.12.2020 We need an api to find removed modules faster
     val changes = builder.collectChanges(before)
 
-    val removedModulePersistentIds = changes[ModuleEntity::class.java]
-      ?.asSequence()
-      ?.filterIsInstance<EntityChange.Removed<*>>()
-      ?.map { (it.entity as ModuleEntity).persistentId() }?.toSet() ?: return false
+    val removedModulePersistentIds = LinkedHashSet<ModuleId>()
+    changes[ModuleEntity::class.java]?.asSequence()?.forEach { change ->
+      when (change) {
+        is EntityChange.Added -> removedModulePersistentIds.remove((change.entity as ModuleEntity).persistentId())
+        is EntityChange.Removed -> removedModulePersistentIds.add((change.entity as ModuleEntity).persistentId())
+        else -> {}
+      }
+    }
 
     if (removedModulePersistentIds.isEmpty()) return false
 
