@@ -295,7 +295,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public void scrollTo(int offset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (getEditor() == null) return;
     final class ScrollRunnable extends FlushRunnable {
       private ScrollRunnable() {
