@@ -69,7 +69,7 @@ public final class ChangelistConflictNotificationPanel extends EditorNotificatio
     myLinksPanel.add(new InplaceButton(VcsBundle.message("tooltip.show.options.dialog"), AllIcons.General.Settings, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ShowSettingsUtil.getInstance().editConfigurable(project, new ChangelistConflictConfigurable(project));
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, ChangelistConflictConfigurable.class);
       }
     }));
   }
