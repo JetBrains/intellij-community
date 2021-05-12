@@ -51,6 +51,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.*;
 
@@ -123,7 +124,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       JPanel fieldPanel = new ToolbarDecorator() {
         @Override
         protected @NotNull JComponent getComponent() {
-          return field;
+          return createScrollPane(field, true);
         }
 
         @Override
