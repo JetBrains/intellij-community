@@ -945,39 +945,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
   }
 
-  public void testReplacePlainTextLikeFileTypesWithDetectedFileType() throws IOException {
-    String extension = "replaceable";
-    FileType replaceableFileType = createFileTypeReplaceableByContentDetection();
-    WriteAction.run(() -> myFileTypeManager.associatePattern(replaceableFileType, "*." + extension));
-
-    String hashBangSuffix = "detectedFileType";
-    FileType detectedFileType = new MyTestFileType();
-    HashBangFileTypeDetector detector = new HashBangFileTypeDetector(detectedFileType, hashBangSuffix);
-    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
-
-    VirtualFile file = createTempVirtualFile(extension, null, "#!/" + hashBangSuffix + "\n", StandardCharsets.UTF_8);
-    assertEquals(detectedFileType, file.getFileType());
-  }
-
-  public void testDoNotReplaceEmptyPlainTextLikeFileTypesWithDetectedFileType() throws IOException {
-    String extension = "replaceable";
-    FileType replaceableFileType = createFileTypeReplaceableByContentDetection();
-    WriteAction.run(() -> myFileTypeManager.associatePattern(replaceableFileType, "*." + extension));
-
-    VirtualFile file = createTempVirtualFile(extension, null, "", StandardCharsets.UTF_8);
-    assertEquals(replaceableFileType, file.getFileType());
-  }
-
-  public void testReplaceBinaryPlainTextLikeFileTypesWithUnknownFileType() throws IOException {
-    String extension = "replaceable";
-    FileType replaceableFileType = createFileTypeReplaceableByContentDetection();
-    WriteAction.run(() -> myFileTypeManager.associatePattern(replaceableFileType, "*." + extension));
-
-    File file = new File(createTempDirectory(), "name." + extension);
-    FileUtil.writeToFile(file, new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'x', 'a', 'b'});
-    assertEquals(UnknownFileType.INSTANCE, getVirtualFile(file).getFileType());
-  }
-
   public void testRegisterUnregisterExtension() {
     FileTypeBean bean = new FileTypeBean();
     bean.name = MyTestFileType.NAME;
@@ -1184,50 +1151,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     WriteAction.run(() -> Disposer.dispose(disposable));
   }
 
-  @NotNull
-  private static FileType createFileTypeReplaceableByContentDetection() {
-    return new MyReplaceableByContentDetectionFileType();
-  }
-
-  private static class MyReplaceableByContentDetectionFileType implements FileType, PlainTextLikeFileType {
-    private MyReplaceableByContentDetectionFileType() {
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "PlainTextLike Replaceable";
-    }
-
-    @NotNull
-    @Override
-    public String getDescription() {
-      return "";
-    }
-
-    @NotNull
-    @Override
-    public String getDefaultExtension() {
-      return "fromPlugin";
-    }
-
-    @Nullable
-    @Override
-    public Icon getIcon() {
-      return null;
-    }
-
-    @Override
-    public boolean isBinary() {
-      return false;
-    }
-
-    @Override
-    public boolean isReadOnly() {
-      return true;
-    }
-  }
-
   public void testHashBangPatternsCanBeConfiguredDynamically() throws IOException {
     VirtualFile file0 = createTempVirtualFile("x.xxxx", null, "#!/usr/bin/gogogo\na=b", StandardCharsets.UTF_8);
     assertEquals(PlainTextFileType.INSTANCE, file0.getFileType());
@@ -1398,5 +1321,22 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
     }, disposable);
     return myType;
+  }
+
+  public void testDetectorMustWorkForEmptyFileNow() throws IOException {
+    Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
+    String magicName = "blah-blah.todetect";
+    FileTypeRegistry.FileTypeDetector detector = (file, __, __0) -> {
+      detectorCalled.add(file);
+      if (file.getName().equals(magicName)) {
+        return new MyTestFileType();
+      }
+      return null;
+    };
+    runWithDetector(detector, () -> {
+      VirtualFile vFile = createTempVirtualFile(magicName, null, "", StandardCharsets.UTF_8);
+      ensureRedetected(vFile, detectorCalled);
+      assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof MyTestFileType);
+    });
   }
 }

@@ -663,18 +663,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     else if (fileType == null) {
       return myDetectionService.getOrDetectFromContent(file, content);
     }
-    else if (mightBeReplacedByDetectedFileType(fileType) && FileTypeDetectionService.isDetectable(file)) {
-      FileType detectedFromContent = myDetectionService.getOrDetectFromContent(file, content);
-      // unknown file type means that it was detected as binary, it's better to keep it binary
-      if (detectedFromContent != PlainTextFileType.INSTANCE) {
-        return detectedFromContent;
-      }
-    }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
-  }
-
-  static boolean mightBeReplacedByDetectedFileType(@NotNull FileType fileType) {
-    return fileType instanceof PlainTextLikeFileType && fileType.isReadOnly();
   }
 
   @Nullable // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
@@ -699,12 +688,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (specialType.isMyFileType(file)) {
         if (toLog()) {
           log("getByFile(" + file.getName() + "): Special file type: " + specialType.getName());
-        }
-        boolean willBeRedetectedAnyway = mightBeReplacedByDetectedFileType(specialType) && FileTypeDetectionService.isDetectable(file);
-        if (willBeRedetectedAnyway) {
-          LOG.error("File type '"+specialType +"' is inconsistent. " +
-                    "File '"+ file.getPresentableUrl()+ "' was recognized by "+specialType+" but this fact will be promptly ignored and file will be re-detected immediately from its content. " +
-                    "To avoid that, "+specialType+" should be either not PlainTextLike or not readonly");
         }
         return specialType;
       }
