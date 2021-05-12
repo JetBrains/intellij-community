@@ -12,6 +12,8 @@ public interface IdeaWatchdog extends Remote {
   long WAIT_TIMEOUT = 20 * 1000L;
 
   void die() throws RemoteException;
+  //always throws RemoteException
+  void dieNow(int exitCode) throws RemoteException;
   boolean isAlive() throws RemoteException;
   void ping() throws RemoteException;
 }
