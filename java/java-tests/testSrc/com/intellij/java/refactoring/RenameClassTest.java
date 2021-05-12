@@ -31,6 +31,10 @@ public class RenameClassTest extends LightMultiFileTestCase {
   public void testInnerClass() {
     doTest("pack1.OuterClass.InnerClass", "NewInnerClass");
   }
+  
+  public void testInnerClassConflicting() {
+    doTest("pack1.OuterClass.InnerClass", "NewInnerClass");
+  }
 
   public void testImport() {
     //noinspection SpellCheckingInspection
