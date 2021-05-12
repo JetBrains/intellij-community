@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFi
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.fix.FindDfaProblemCauseFix;
+import com.intellij.codeInspection.dataFlow.fix.ReplaceWithBooleanEqualsFix;
 import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.pom.java.LanguageLevel;
@@ -15,6 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -202,6 +204,15 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       LOG.error(e);
     }
     return fixes;
+  }
+
+  @Override
+  protected @NotNull List<LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+    List<LocalQuickFix> result = new SmartList<>();
+    if (TypeConversionUtil.isBooleanType(qualifier.getType())) {
+      result.add(new ReplaceWithBooleanEqualsFix(qualifier));
+    }
+    return result;
   }
 
   @Override

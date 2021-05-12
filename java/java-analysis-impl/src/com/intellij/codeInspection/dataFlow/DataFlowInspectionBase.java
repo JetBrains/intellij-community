@@ -250,6 +250,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return Collections.emptyList();
   }
 
+  protected @NotNull List<LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+    return Collections.emptyList();
+  }
+
   protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
     return Collections.emptyList();
   }
@@ -633,7 +637,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         if (anchor instanceof PsiTypeCastExpression && anchor.getType() instanceof PsiPrimitiveType) {
           anchor = Objects.requireNonNull(((PsiTypeCastExpression)anchor).getOperand());
         }
-        reporter.registerProblem(anchor, problem.getMessage(expressions));
+        if (anchor != null) {
+          LocalQuickFix[] fixes = createUnboxingNullableFixes(anchor, expression, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY);
+          reporter.registerProblem(anchor, problem.getMessage(expressions), fixes);
+        }
       });
       NullabilityProblemKind.nullableFunctionReturn.ifMyProblem(
         problem, expr -> reporter.registerProblem(expression == null ? expr : expression, problem.getMessage(expressions)));
