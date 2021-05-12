@@ -69,7 +69,7 @@ final class NullParameterConstraintChecker {
       .toArray(PsiParameter[]::new);
   }
 
-  private static class MyDfaMemoryState extends DfaMemoryStateImpl {
+  private static class MyDfaMemoryState extends JvmDfaMemoryStateImpl {
     final Set<PsiParameter> myPossiblyViolatedParameters;
 
     protected MyDfaMemoryState(DfaValueFactory factory, Set<PsiParameter> possiblyViolatedParameters) {

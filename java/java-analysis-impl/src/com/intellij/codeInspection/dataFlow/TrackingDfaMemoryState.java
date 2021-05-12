@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
+public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
   private MemoryStateChange myHistory;
 
   protected TrackingDfaMemoryState(DfaValueFactory factory) {

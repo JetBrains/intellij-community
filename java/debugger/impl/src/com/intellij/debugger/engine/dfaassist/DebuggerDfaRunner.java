@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.dfaassist;
 
-import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
@@ -91,7 +91,7 @@ class DebuggerDfaRunner {
     if (myFlow == null) return null;
     int offset = myFlow.getStartOffset(myAnchor).getInstructionOffset();
     if (offset < 0) return null;
-    DfaMemoryState state = new DfaMemoryStateImpl(myFactory);
+    DfaMemoryState state = new JvmDfaMemoryStateImpl(myFactory);
     StateBuilder builder = new StateBuilder(proxy, state);
     for (DfaValue dfaValue : myFactory.getValues().toArray(new DfaValue[0])) {
       if (dfaValue instanceof DfaVariableValue) {

@@ -5,9 +5,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
@@ -185,7 +185,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
 
   @NotNull
   private static DfaMemoryState createMemoryState(DfaValueFactory factory) {
-    DfaMemoryState state = new DfaMemoryStateImpl(factory);
+    DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
     List<DfaVariableValue> vars = StreamEx.of(factory.getValues())
       .select(DfaVariableValue.class)
       .filter(var -> {

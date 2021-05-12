@@ -2,6 +2,7 @@
 package com.intellij.java.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -38,7 +39,7 @@ public class DfaMemoryStateImplTest extends LightJavaCodeInsightTestCase {
     DfaValueFactory factory = new DfaValueFactory(getProject());
     DfaVariableValue a = factory.getVarFactory().createVariableValue(new MyDescriptor("a"));
     DfaVariableValue b = factory.getVarFactory().createVariableValue(new MyDescriptor("b"));
-    DfaMemoryStateImpl left = new DfaMemoryStateImpl(factory);
+    DfaMemoryStateImpl left = new JvmDfaMemoryStateImpl(factory);
     DfaMemoryStateImpl right = left.createCopy();
     assertTrue(left.applyCondition(a.cond(RelationType.LT, b)));
     assertEquals(RelationType.LT, left.getRelation(a, b));
@@ -65,7 +66,7 @@ public class DfaMemoryStateImplTest extends LightJavaCodeInsightTestCase {
     DfaValueFactory factory = new DfaValueFactory(getProject());
     DfaVariableValue a = factory.getVarFactory().createVariableValue(new MyDescriptor("a"));
     DfaVariableValue b = factory.getVarFactory().createVariableValue(new MyDescriptor("b"));
-    DfaMemoryStateImpl left = new DfaMemoryStateImpl(factory);
+    DfaMemoryStateImpl left = new JvmDfaMemoryStateImpl(factory);
     assertTrue(left.applyCondition(a.cond(RelationType.GT, factory.fromDfType(DfTypes.intValue(10)))));
     assertTrue(left.applyCondition(b.cond(RelationType.LT, factory.fromDfType(DfTypes.intValue(1000)))));
     DfaMemoryStateImpl right = left.createCopy();

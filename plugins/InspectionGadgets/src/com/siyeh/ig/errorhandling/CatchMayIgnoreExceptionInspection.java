@@ -7,8 +7,8 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
@@ -180,7 +180,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         ControlFlow flow = ControlFlowAnalyzer.buildFlow(block, factory, true);
         if (flow == null) return null;
         var interpreter = new CatchDataFlowInterpreter(exception, parameter, flow);
-        DfaMemoryState memState = new DfaMemoryStateImpl(factory);
+        DfaMemoryState memState = new JvmDfaMemoryStateImpl(factory);
         DfaVariableValue stableExceptionVar = PlainDescriptor.createVariableValue(factory, new LightParameter("tmp", exception, block));
         DfaVariableValue exceptionVar = PlainDescriptor.createVariableValue(factory, parameter);
         memState.applyCondition(exceptionVar.eq(stableExceptionVar));

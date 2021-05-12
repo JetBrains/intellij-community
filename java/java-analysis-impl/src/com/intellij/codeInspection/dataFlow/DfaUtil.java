@@ -355,7 +355,7 @@ public final class DfaUtil {
   }
 
   public static @NotNull DfaMemoryState createStateWithEnabledAssertions(@NotNull DfaValueFactory factory) {
-    final DfaMemoryState initialState = new DfaMemoryStateImpl(factory);
+    final DfaMemoryState initialState = new JvmDfaMemoryStateImpl(factory);
     DfaVariableValue assertionStatus = AssertionDisabledDescriptor.getAssertionsDisabledVar(factory);
     if (assertionStatus != null) {
       initialState.applyCondition(assertionStatus.eq(DfTypes.FALSE));

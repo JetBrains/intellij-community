@@ -263,7 +263,7 @@ public class StandardDataFlowRunner {
   }
 
   protected @NotNull DfaMemoryState createMemoryState() {
-    return new DfaMemoryStateImpl(myValueFactory);
+    return new JvmDfaMemoryStateImpl(myValueFactory);
   }
 
   public void forNestedClosures(BiConsumer<? super PsiElement, ? super Collection<? extends DfaMemoryState>> consumer) {

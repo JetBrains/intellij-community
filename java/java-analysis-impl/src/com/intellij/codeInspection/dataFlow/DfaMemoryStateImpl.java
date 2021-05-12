@@ -39,9 +39,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private final List<EqClass> myEqClasses;
   // dfa value id -> indices in myEqClasses list of the classes which contain the id
-  private final Int2IntMap myIdToEqClassesIndices;
-  private final Stack<DfaValue> myStack;
-  private final DistinctPairSet myDistinctClasses;
+  protected final Int2IntMap myIdToEqClassesIndices;
+  protected final Stack<DfaValue> myStack;
+  protected final DistinctPairSet myDistinctClasses;
   private final LinkedHashMap<DfaVariableValue,DfType> myVariableTypes;
   private boolean myEphemeral;
 
@@ -743,19 +743,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myStack.isEmpty();
   }
 
-  private void convertReferenceEqualityToValueEquality(DfaValue value) {
-    int id = canonicalize(value).getID();
-    int index = myIdToEqClassesIndices.getOrDefault(id, -1);
-    if (index == -1) return;
-    for (Iterator<DistinctPairSet.DistinctPair> iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
-      DistinctPairSet.DistinctPair pair = iterator.next();
-      EqClass otherClass = pair.getOtherClass(index);
-      if (otherClass != null && getDfType(otherClass.getVariable(0)) != DfTypes.NULL) {
-        iterator.remove();
-      }
-    }
-  }
-
   @Override
   public void setDfType(@NotNull DfaValue value, @NotNull DfType dfType) {
     if (value instanceof DfaVariableValue) {
@@ -781,24 +768,22 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfType result = type.meet(dfType);
       if (result.equals(type)) return true;
       if (result == DfType.BOTTOM) return false;
-      recordVariableType(var, result);
-      for (DerivedVariableDescriptor desc : result.getDerivedVariables()) {
-        if (!meetDfType(desc.createValue(getFactory(), var), result.getDerivedValue(desc))) {
-          return false;
-        }
-      }
-      TypeConstraint newConstraint = TypeConstraint.fromDfType(result);
-      if (newConstraint.isComparedByEquals() && !newConstraint.equals(TypeConstraint.fromDfType(type))) {
-        // Type is narrowed to java.lang.String, java.lang.Integer, etc.: we consider String & boxed types
-        // equivalence by content, but other object types by reference, so we need to remove distinct pairs, if any.
-        convertReferenceEqualityToValueEquality(value);
-      }
-      if (!updateDependentVariables(var, result)) return false;
-      if (!correctRelatedValues(var, result)) return false;
-      if (result instanceof DfConstantType && !propagateConstant(var, (DfConstantType<?>)result)) return false;
-      return true;
+      return meetVariableType(var, type, result);
     }
     return value.getDfType().meet(dfType) != DfType.BOTTOM;
+  }
+
+  protected boolean meetVariableType(@NotNull DfaVariableValue var, @NotNull DfType originalType, @NotNull DfType newType) {
+    recordVariableType(var, newType);
+    for (DerivedVariableDescriptor desc : newType.getDerivedVariables()) {
+      if (!meetDfType(desc.createValue(getFactory(), var), newType.getDerivedValue(desc))) {
+        return false;
+      }
+    }
+    if (!updateDependentVariables(var, newType)) return false;
+    if (!correctRelatedValues(var, newType)) return false;
+    if (newType instanceof DfConstantType && !propagateConstant(var, (DfConstantType<?>)newType)) return false;
+    return true;
   }
 
   private boolean propagateRangeBack(@Nullable DfIntegralType appliedRange, @NotNull DfaBinOpValue binOp) {
@@ -1074,13 +1059,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private void checkEphemeral(DfaValue left, DfaValue right) {
-    if (getDfType(right) == DfTypes.NULL) {
-      DfaNullability nullability = DfaNullability.fromDfType(getDfType(left));
-      if (nullability == DfaNullability.UNKNOWN || nullability == DfaNullability.FLUSHED) {
-        markEphemeral();
-      }
-    }
+  protected void checkEphemeral(DfaValue left, DfaValue right) {
   }
 
   private boolean updateQualifierOnEquality(DfaVariableValue target, DfaValue value) {
@@ -1268,7 +1247,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private @NotNull DfaValue canonicalize(@NotNull DfaValue value) {
+  @NotNull
+  protected DfaValue canonicalize(@NotNull DfaValue value) {
     if (value instanceof DfaVariableValue) {
       return canonicalize((DfaVariableValue)value);
     }
@@ -1386,11 +1366,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
   }
 
-  void doFlush(@NotNull DfaVariableValue var, boolean markFlushed) {
+  protected void doFlush(@NotNull DfaVariableValue var, boolean markFlushed) {
     DfType typeBefore = getDfType(var);
-    if (getDfType(var) == DfTypes.NULL) {
-      myStack.replaceAll(val -> val == var ? myFactory.fromDfType(DfTypes.NULL) : val);
-    }
 
     removeEquivalence(var);
     myVariableTypes.remove(var);

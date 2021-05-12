@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.guess.impl;
 
-import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * Useful for completion. E.g. if {@code Collection<?> c = new ArrayList<>();} was created
  * it might be undesired to suggest List-specific methods on e.g. {@code c.add} completion.
  */
-public class AssignmentFilteringMemoryState extends DfaMemoryStateImpl {
+public class AssignmentFilteringMemoryState extends JvmDfaMemoryStateImpl {
   /**
    * @param factory factory to use
    */

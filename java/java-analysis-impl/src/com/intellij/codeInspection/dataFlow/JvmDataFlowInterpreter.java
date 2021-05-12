@@ -299,7 +299,7 @@ public class JvmDataFlowInterpreter implements DataFlowInterpreter {
     DfaMemoryStateImpl curState = (DfaMemoryStateImpl)instructionState.getMemoryState();
     Object key = curState.getMergeabilityKey();
     DfaMemoryStateImpl mergedState =
-      StreamEx.of(processed).select(DfaMemoryStateImpl.class).filterBy(DfaMemoryStateImpl::getMergeabilityKey, key)
+      StreamEx.of(processed).select(JvmDfaMemoryStateImpl.class).filterBy(DfaMemoryStateImpl::getMergeabilityKey, key)
         .foldLeft(curState, (s1, s2) -> {
           s1.merge(s2);
           return s1;
