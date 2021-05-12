@@ -33,7 +33,6 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
   private static final CompletionPhaseHolder DEFAULT_PHASE_HOLDER = new CompletionPhaseHolder(CompletionPhase.NoCompletion, null);
   private static final Map<ClientId, CompletionPhaseHolder> clientId2Holders = new ConcurrentHashMap<>();
-  private static boolean ourTracePhases;
 
   public CompletionServiceImpl() {
     super();
@@ -176,20 +175,22 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
   @SafeVarargs
   private static void assertPhase(@NotNull ClientId clientId, Class<? extends CompletionPhase> @NotNull ... possibilities) {
-    assertPhase(getCompletionPhaseHolder(clientId), possibilities);
+    assertPhase(clientId, getCompletionPhaseHolder(clientId), possibilities);
   }
 
   @SafeVarargs
-  private static void assertPhase(@NotNull CompletionPhaseHolder phaseHolder, Class<? extends CompletionPhase> @NotNull ... possibilities) {
+  private static void assertPhase(@NotNull ClientId clientId,
+                                  @NotNull CompletionPhaseHolder phaseHolder,
+                                  Class<? extends CompletionPhase> @NotNull ... possibilities) {
     if (!isPhase(phaseHolder.getPhase(), possibilities)) {
-      reportPhase(phaseHolder);
+      reportPhase(clientId, phaseHolder);
     }
   }
 
-  private static void reportPhase(@NotNull CompletionPhaseHolder phaseHolder) {
+  private static void reportPhase(@NotNull ClientId clientId, @NotNull CompletionPhaseHolder phaseHolder) {
     Throwable phaseTrace = phaseHolder.getPhaseTrace();
-    LOG.error(phaseHolder.getPhase() + (phaseTrace != null ? "; set at " + ExceptionUtil.getThrowableText(phaseTrace) : ""));
-    ourTracePhases = true; // let's have more diagnostics in case the exception happens again in this session
+    String traceText = phaseTrace != null ? "; set at " + ExceptionUtil.getThrowableText(phaseTrace) : "";
+    LOG.error(phaseHolder.getPhase() + "; " + clientId + traceText);
   }
 
   @SafeVarargs
@@ -234,7 +235,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     }
 
     Disposer.dispose(oldPhase);
-    Throwable phaseTrace = ourTracePhases ? new Throwable() : null;
+    Throwable phaseTrace = new Throwable();
     CompletionPhaseHolder holder = new CompletionPhaseHolder(phase, phaseTrace);
     clientId2Holders.put(clientId, holder);
   }
