@@ -36,7 +36,6 @@ import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 
 public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionBase {
 
@@ -79,58 +78,25 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
     ActionOrGroup actionOrGroup = overrideText.getParentOfType(ActionOrGroup.class, true);
     assert actionOrGroup != null;
-    String keyPrefix = getKeyPrefix(actionOrGroup);
-    final String resourceKey = keyPrefix + "." + actionOrGroup.getId().getStringValue() + "." + overrideText.getPlace().getStringValue() + ".text";
     checkPropertyCapitalization(holder, overrideText, Nls.Capitalization.Title,
-                                resourceKey, true);
-  }
-
-  @NotNull
-  private static String getKeyPrefix(ActionOrGroup actionOrGroup) {
-    return actionOrGroup instanceof Action ? "action" : "group";
+                                ActionOrGroup.TextType.TEXT.getMessageKey(actionOrGroup, overrideText), true);
   }
 
   private static void checkActionOrGroup(ActionOrGroup actionOrGroup, DomElementAnnotationHolder holder) {
-    checkActionOrGroupCapitalization(holder, actionOrGroup, ActionOrGroupText.TEXT);
-    checkActionOrGroupCapitalization(holder, actionOrGroup, ActionOrGroupText.DESCRIPTION);
-  }
-
-  enum ActionOrGroupText {
-
-    TEXT(ActionOrGroup::getText, Nls.Capitalization.Title, ".text", actionOrGroup -> {
-      if (!(actionOrGroup instanceof Action)) return false;
-      final PsiClass actionClass = ((Action)actionOrGroup).getClazz().getValue();
-      return actionClass == null || actionClass.getConstructors().length == 0;
-    }),
-
-    DESCRIPTION(ActionOrGroup::getDescription, Nls.Capitalization.Sentence, ".description", actionOrGroup -> false);
-
-    private final Function<ActionOrGroup, GenericDomValue> myGetter;
-    private final Nls.Capitalization myCapitalization;
-    private final String mySuffix;
-    private final Function<ActionOrGroup, Boolean> myRequired;
-
-    ActionOrGroupText(Function<ActionOrGroup, GenericDomValue> getter,
-                      Nls.Capitalization capitalization, String propertyKeySuffix,
-                      Function<ActionOrGroup, Boolean> required) {
-      myGetter = getter;
-      myCapitalization = capitalization;
-      mySuffix = propertyKeySuffix;
-      myRequired = required;
-    }
+    checkActionOrGroupCapitalization(holder, actionOrGroup, ActionOrGroup.TextType.TEXT);
+    checkActionOrGroupCapitalization(holder, actionOrGroup, ActionOrGroup.TextType.DESCRIPTION);
   }
 
   private static void checkActionOrGroupCapitalization(DomElementAnnotationHolder holder,
                                                        ActionOrGroup actionOrGroup,
-                                                       ActionOrGroupText actionOrGroupText) {
-    final GenericDomValue genericDomValue = actionOrGroupText.myGetter.apply(actionOrGroup);
-    final Nls.Capitalization capitalization = actionOrGroupText.myCapitalization;
+                                                       ActionOrGroup.TextType textType) {
+    final GenericDomValue<String> genericDomValue = textType.getDomValue(actionOrGroup);
+    final Nls.Capitalization capitalization = textType.getCapitalization();
     if (checkCapitalization(holder, genericDomValue, capitalization)) return;
 
-    String keyPrefix = getKeyPrefix(actionOrGroup);
     checkPropertyCapitalization(holder, actionOrGroup, capitalization,
-                                keyPrefix + "." + actionOrGroup.getId().getStringValue() + actionOrGroupText.mySuffix,
-                                actionOrGroupText.myRequired.apply(actionOrGroup));
+                                textType.getMessageKey(actionOrGroup),
+                                textType.isRequired(actionOrGroup));
   }
 
   private static void checkPropertyCapitalization(DomElementAnnotationHolder holder,
