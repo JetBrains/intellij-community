@@ -22,10 +22,7 @@ import org.jetbrains.kotlin.idea.platform.testintegration.NoLightTestFrameworkRe
 import org.jetbrains.kotlin.idea.platform.testintegration.ResolvedLightTestFrameworkResult
 import org.jetbrains.kotlin.idea.platform.testintegration.UnsureLightTestFrameworkResult
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.PathUtil
 import javax.swing.Icon
 
@@ -76,12 +73,12 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
         val (urls, framework) = calculateUrlsToFramework(declaration) ?: return null
 
         framework?.let {
-            return getTestStateIcon(urls, declaration.project, strict = false, it.icon)
+            return getTestStateIcon(urls, declaration, defaultIcon = it.icon)
         }
 
         descriptorProvider()?.takeIf { it.isKotlinTestDeclaration() } ?: return null
 
-        return getTestStateIcon(urls, declaration.project, strict = false)
+        return getTestStateIcon(urls, declaration)
     }
 
     override fun acceptsAsEntryPoint(function: KtFunction) = true

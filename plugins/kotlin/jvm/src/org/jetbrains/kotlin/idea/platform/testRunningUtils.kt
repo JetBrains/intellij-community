@@ -59,7 +59,7 @@ fun getGenericTestIcon(
     val prefix = if (testName != null) "test://" else "suite://"
     val url = prefix + locations.joinWithEscape('.')
 
-    return getTestStateIcon(listOf("java:$url", url), declaration.project, strict = false)
+    return getTestStateIcon(listOf("java:$url", url), declaration)
 }
 
 private tailrec fun DeclarationDescriptor.isIgnored(): Boolean {

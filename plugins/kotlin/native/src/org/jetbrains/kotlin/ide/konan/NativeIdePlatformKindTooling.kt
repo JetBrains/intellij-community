@@ -72,7 +72,7 @@ class NativeIdePlatformKindTooling : IdePlatformKindTooling() {
             else -> return null
         }
 
-        return getTestStateIcon(urls, declaration.project, strict = false)
+        return getTestStateIcon(urls, declaration)
     }
 
     override fun acceptsAsEntryPoint(function: KtFunction): Boolean {
