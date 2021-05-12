@@ -62,10 +62,6 @@ public class Alarm implements Disposable {
     }
   }
 
-  private void checkDisposed() {
-    LOG.assertTrue(!myDisposed, "Already disposed");
-  }
-
   public enum ThreadToUse {
     /**
      * Run request in Swing EventDispatchThread. This is the default.
@@ -192,7 +188,10 @@ public class Alarm implements Disposable {
 
   protected void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
     synchronized (LOCK) {
-      checkDisposed();
+      if (isDisposed()) {
+        LOG.warn("Can't add request. Alarm is already disposed.");
+        return;
+      }
       Request requestToSchedule = new Request(request, modalityState, delayMillis);
 
       if (myActivationComponent == null || myActivationComponent.isShowing()) {
