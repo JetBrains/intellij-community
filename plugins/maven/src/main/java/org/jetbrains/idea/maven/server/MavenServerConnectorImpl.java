@@ -196,6 +196,10 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     }
   }
 
+  @Override
+  public boolean checkConnected() {
+    return !mySupport.getActiveConfigurations().isEmpty();
+  }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {
     @Override
@@ -244,6 +248,9 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
         }
         MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(myProject);
         mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+        mySupport.onTerminate(e -> {
+          myManager.cleanUp(MavenServerConnectorImpl.this);
+        });
         MavenServer server = mySupport.acquire(this, "", indicator);
         myLoggerExported = MavenRemoteObjectWrapper.doWrapAndExport(myLogger) != null;
 

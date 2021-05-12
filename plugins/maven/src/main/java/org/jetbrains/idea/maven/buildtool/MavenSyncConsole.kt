@@ -230,14 +230,26 @@ class MavenSyncConsole(private val myProject: Project) {
 
   private fun createMessageEvent(e: Throwable): MessageEventImpl {
     if (e is CannotStartServerException) {
-      val cause = ExceptionUtil.findCause(e, ExecutionException::class.java)
+      var cause = ExceptionUtil.findCause(e, ExecutionException::class.java)
       if (cause != null) {
         return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
-                                cause.localizedMessage.orEmpty(), ExceptionUtil.getThrowableText(cause))
+                                getExceptionText(cause), getExceptionText(cause))
+      } else {
+        return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
+                                getExceptionText(e), getExceptionText(e))
       }
     }
     return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.error"),
-                            e.localizedMessage ?: e.message ?: "Error", ExceptionUtil.getThrowableText(e))
+                            getExceptionText(e), getExceptionText(e))
+  }
+
+
+  private fun getExceptionText(e: Throwable): @NlsSafe String {
+    if (MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().isPrintErrorStackTraces) {
+      return ExceptionUtil.getThrowableText(e)
+    }
+    return e.localizedMessage.ifEmpty { e.message ?: SyncBundle.message("build.event.title.error") }
+
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {

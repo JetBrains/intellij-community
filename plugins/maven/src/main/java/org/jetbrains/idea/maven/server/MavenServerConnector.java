@@ -54,7 +54,8 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   protected abstract MavenServer getServer();
 
   MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
-    return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
+    MavenServer server = getServer();
+    return server.createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
   }
 
   MavenServerIndexer createIndexer() throws RemoteException {
@@ -107,6 +108,8 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   public abstract String getSupportType();
 
   public abstract State getState();
+
+  public abstract boolean checkConnected();
 
   public enum State {
     STARTING,

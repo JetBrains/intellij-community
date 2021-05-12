@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
@@ -79,7 +81,7 @@ public abstract class RemoteObjectWrapper<T> {
         handleRemoteError(last = e);
       }
     }
-    throw new RuntimeException("Cannot reconnect.", last);
+    throw new CannotStartServerException(SyncBundle.message("maven.cannot.reconnect"), last);
   }
 
   protected <R, E extends Exception> R performCancelable(RetriableCancelable<R, E> r) throws MavenProcessCanceledException, E {
@@ -95,7 +97,7 @@ public abstract class RemoteObjectWrapper<T> {
         throw new MavenProcessCanceledException();
       }
     }
-    throw new RuntimeException("Cannot reconnect.", last);
+    throw new CannotStartServerException(SyncBundle.message("maven.cannot.reconnect"), last);
   }
 
   @FunctionalInterface

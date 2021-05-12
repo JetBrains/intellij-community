@@ -26,10 +26,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenTask;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.*;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -187,6 +184,7 @@ public class MavenProjectsProcessor {
     }
     ReadAction.run(() -> {
       if (myProject.isDisposed()) return;
+      MavenLog.LOG.error(e);
       MavenProjectsManager.getInstance(myProject).showServerException(e);
     });
   }
