@@ -29,9 +29,8 @@ class ReplaceToStringWithStringTemplateInspection : AbstractApplicabilityBasedIn
         if (blockStringTemplateEntry?.canDropBraces() == true) blockStringTemplateEntry.dropBraces()
     }
 
-    override fun inspectionText(element: KtDotQualifiedExpression) = KotlinBundle.message(
-        "call.of.tostring.could.be.replaced.with.string.template"
-    )
+    override fun inspectionText(element: KtDotQualifiedExpression) =
+        KotlinBundle.message("inspection.replace.to.string.with.string.template.display.name")
 
     override val defaultFixText get() = KotlinBundle.message("replace.tostring.with.string.template")
 }
