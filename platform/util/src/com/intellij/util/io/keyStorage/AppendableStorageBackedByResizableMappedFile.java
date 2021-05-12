@@ -94,6 +94,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     if (myFileLength == 0) return true;
 
     return readInputStream(is -> {
+      // calculation may restart few times, so it's expected that processor processes duplicated
       DataInputStream keyStream = new DataInputStream(
         new BufferedInputStream(new LimitedInputStream(is, myFileLength) {
           @Override

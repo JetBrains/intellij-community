@@ -119,8 +119,8 @@ public final class DirectBufferWrapper {
 
 
   private ByteBuffer create() throws IOException {
+    ByteBuffer buffer = ByteBuffer.allocateDirect(myLength);
     return myFile.useChannel(ch -> {
-      ByteBuffer buffer = ByteBuffer.allocateDirect(myLength);
       ch.read(buffer, myPosition);
       return buffer;
     }, myReadOnly);

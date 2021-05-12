@@ -20,16 +20,12 @@ import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 
 public class PagedFileStorage implements Forceable {
   private static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
-  private static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(200, EnumSet.of(StandardOpenOption.READ,
-                                                                                                StandardOpenOption.WRITE,
-                                                                                                StandardOpenOption.CREATE));
+  private static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(200);
 
   public static final int MB = 1024 * 1024;
   public static final int BUFFER_SIZE = FilePageCache.BUFFER_SIZE;
@@ -125,13 +121,13 @@ public class PagedFileStorage implements Forceable {
   }
 
 
-  <R> R useChannel(@NotNull OpenChannelsCache.ChannelProcessor<R> channelProcessor, boolean read) throws IOException {
+  <R> R useChannel(@NotNull UnInterruptibleFileChannelHandle.FileChannelIdempotentOperation<R> operation, boolean read) throws IOException {
     if (myStorageLockContext.useChannelCache()) {
-      return CHANNELS_CACHE.useChannel(myFile, channelProcessor, read);
+      return CHANNELS_CACHE.useChannel(myFile, operation, read);
     }
     else {
       try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(myFile, read)) {
-        return channelProcessor.process(desc.getChannel());
+        return desc.getChannelHandle().executeOperation(operation);
       }
     }
   }
