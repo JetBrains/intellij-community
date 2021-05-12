@@ -8,7 +8,6 @@ import com.intellij.ide.browsers.WebBrowserUrlProvider
 import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
@@ -60,7 +59,7 @@ fun getBuiltInServerUrls(info: PathInfo, project: Project, currentAuthority: Str
   val path = info.path
 
   val authority = currentAuthority ?: "localhost:$effectiveBuiltInServerPort"
-  val appendReloadOnSave = Registry.get("ide.built.in.web.server.reload.on.save").asBoolean()
+  val appendReloadOnSave = BuiltInServerOptions.getInstance().reloadPageOnSave
   val queryBuilder = StringBuilder()
   if (appendAccessToken || appendReloadOnSave) queryBuilder.append('?')
   if (appendAccessToken) queryBuilder.append(TOKEN_PARAM_NAME).append('=').append(acquireToken())
