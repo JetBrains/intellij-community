@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.template.*
-import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange

@@ -364,7 +364,6 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       }
 
       if (nextVariableNumber == -1) {
-        // TODO: notify here of Template started
         myEventPublisher.templateStarted(this);
 
         finishTemplate(false);
@@ -375,9 +374,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
           initTabStopHighlighters();
           initListeners();
         }
-        // TODO notify of started here
         myEventPublisher.templateStarted(this);
-
 
         focusCurrentExpression();
         fireCurrentVariableChanged(-1);
