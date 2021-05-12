@@ -8,9 +8,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.castSafelyTo
 import com.intellij.util.concurrency.AppExecutorUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.ChannelOption
 import io.netty.handler.codec.http.*
 import io.netty.util.concurrent.Future
 import io.netty.util.concurrent.GenericFutureListener
@@ -123,7 +125,13 @@ internal class ToolboxRestService : RestService() {
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
     channel.write(response)
 
-    val heartbeatDelay = System.getProperty("toolbox.heartbeat.millis", "1000").toLong()
+    val heartbeatDelay = requestJson.castSafelyTo<JsonObject>()?.get("heartbeatMillis")?.asLong
+                         ?: System.getProperty("toolbox.heartbeat.millis", "5000").toLong()
+
+    runCatching { channel.config().setOption(ChannelOption.TCP_NODELAY, true) }
+    runCatching { channel.config().setOption(ChannelOption.SO_KEEPALIVE, true) }
+    runCatching { channel.config().setOption(ChannelOption.SO_TIMEOUT, heartbeatDelay.toInt() * 2) }
+
     val heartbeat = context.executor().scheduleWithFixedDelay(
       object: Runnable {
         private fun handleError(t: Throwable) {
