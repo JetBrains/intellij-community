@@ -15,8 +15,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
@@ -631,11 +633,11 @@ public class GitBranchPopupActions {
         Presentation presentation = getTemplatePresentation();
 
         Supplier<@Nls String> text = GitBundle.messagePointer("branches.action.pull.into.branch.using.merge",
-                                                              getCurrentBranchTruncatedPresentation(repositories));
+                                                              getCurrentBranchTruncatedPresentation(project, repositories));
         presentation.setText(text);
 
         Supplier<@Nls String> description = GitBundle.messagePointer("branches.action.pull.into.branch.using.merge.description",
-                                                                     getCurrentBranchFullPresentation(repositories));
+                                                                     getCurrentBranchFullPresentation(project, repositories));
 
         presentation.setDescription(description);
         addTooltipText(presentation, description.get());
@@ -649,10 +651,10 @@ public class GitBranchPopupActions {
         Presentation presentation = getTemplatePresentation();
 
         Supplier<@Nls String> text = GitBundle.messagePointer("branches.action.pull.into.branch.using.rebase",
-                                                              getCurrentBranchTruncatedPresentation(repositories));
+                                                              getCurrentBranchTruncatedPresentation(project, repositories));
         presentation.setText(text);
         Supplier<@Nls String> description = GitBundle.messagePointer("branches.action.pull.into.branch.using.rebase.description",
-                                                                     getCurrentBranchFullPresentation(repositories));
+                                                                     getCurrentBranchFullPresentation(project, repositories));
 
         presentation.setDescription(description);
         addTooltipText(presentation, description.get());
@@ -690,10 +692,10 @@ public class GitBranchPopupActions {
     private final String myBranchName;
 
     CheckoutAsNewBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super(GitBundle.messagePointer("branches.new.branch.from.branch", getSelectedBranchTruncatedPresentation(branchName)));
+      super(GitBundle.messagePointer("branches.new.branch.from.branch", getSelectedBranchTruncatedPresentation(project, branchName)));
 
       Supplier<@Nls String> description = GitBundle.messagePointer("branches.new.branch.from.branch.description",
-                                                              getSelectedBranchFullPresentation(branchName));
+                                                                   getSelectedBranchFullPresentation(branchName));
       getTemplatePresentation().setDescription(description);
       addTooltipText(getTemplatePresentation(), description.get());
       myProject = project;
@@ -738,13 +740,13 @@ public class GitBranchPopupActions {
     public void update(@NotNull AnActionEvent e) {
       String description = GitBundle.message("branches.show.commits.in",
                                              getSelectedBranchFullPresentation(myBranchName),
-                                             getCurrentBranchFullPresentation(myRepositories));
+                                             getCurrentBranchFullPresentation(myProject, myRepositories));
       Presentation presentation = e.getPresentation();
       presentation.setDescription(description);
       addTooltipText(presentation, description);
 
       String text = GitBundle.message("branches.compare.with.branch",
-                                      getCurrentBranchTruncatedPresentation(myRepositories));
+                                      getCurrentBranchTruncatedPresentation(myProject, myRepositories));
       presentation.setText(text);
     }
   }
@@ -799,13 +801,13 @@ public class GitBranchPopupActions {
       Presentation presentation = e.getPresentation();
       String description = GitBundle.message("branches.merge.into",
                                              getSelectedBranchFullPresentation(myBranchName),
-                                             getCurrentBranchFullPresentation(myRepositories));
+                                             getCurrentBranchFullPresentation(myProject, myRepositories));
       presentation.setDescription(description);
       addTooltipText(presentation, description);
 
       String name = GitBundle.message("branches.merge.into",
-                                      getSelectedBranchTruncatedPresentation(myBranchName),
-                                      getCurrentBranchTruncatedPresentation(myRepositories));
+                                      getSelectedBranchTruncatedPresentation(myProject, myBranchName),
+                                      getCurrentBranchTruncatedPresentation(myProject, myRepositories));
       presentation.setText(name);
     }
 
@@ -841,7 +843,7 @@ public class GitBranchPopupActions {
 
       String description = isOnBranch
                            ? GitBundle.message("branches.rebase.onto",
-                                               getCurrentBranchFullPresentation(myRepositories),
+                                               getCurrentBranchFullPresentation(myProject, myRepositories),
                                                getSelectedBranchFullPresentation(myBranchName))
                            : GitBundle.message("branches.rebase.is.not.possible.in.the.detached.head.state");
       Presentation presentation = e.getPresentation();
@@ -851,8 +853,8 @@ public class GitBranchPopupActions {
 
       String actionText = GitBundle.message(
         "branches.rebase.onto",
-        getCurrentBranchTruncatedPresentation(myRepositories),
-        getSelectedBranchTruncatedPresentation(myBranchName));
+        getCurrentBranchTruncatedPresentation(myProject, myRepositories),
+        getSelectedBranchTruncatedPresentation(myProject, myBranchName));
       presentation.setText(actionText);
     }
 
@@ -879,14 +881,14 @@ public class GitBranchPopupActions {
     public void update(@NotNull AnActionEvent e) {
       String description = GitBundle.message("branches.checkout.and.rebase.onto.in.one.step",
                                              getSelectedBranchFullPresentation(myBranchName),
-                                             getCurrentBranchFullPresentation(myRepositories),
+                                             getCurrentBranchFullPresentation(myProject, myRepositories),
                                              myBranchName);
       Presentation presentation = e.getPresentation();
       presentation.setDescription(description);
       addTooltipText(presentation, description);
 
       String text = GitBundle.message("branches.checkout.and.rebase.onto.branch",
-                                      getCurrentBranchTruncatedPresentation(myRepositories));
+                                      getCurrentBranchTruncatedPresentation(myProject, myRepositories));
       presentation.setText(text);
     }
 
@@ -995,19 +997,22 @@ public class GitBranchPopupActions {
 
   @NlsSafe
   @NotNull
-  private static String getCurrentBranchFullPresentation(@NotNull Collection<? extends GitRepository> repositories) {
-    return getCurrentBranchPresentation(repositories, false);
+  private static String getCurrentBranchFullPresentation(@NotNull Project project,
+                                                         @NotNull Collection<? extends GitRepository> repositories) {
+    return getCurrentBranchPresentation(project, repositories, false);
   }
 
   @NlsSafe
   @NotNull
-  private static String getCurrentBranchTruncatedPresentation(@NotNull Collection<? extends GitRepository> repositories) {
-    return getCurrentBranchPresentation(repositories, true);
+  private static String getCurrentBranchTruncatedPresentation(@NotNull Project project,
+                                                              @NotNull Collection<? extends GitRepository> repositories) {
+    return getCurrentBranchPresentation(project, repositories, true);
   }
 
   @Nls
   @NotNull
-  private static String getCurrentBranchPresentation(@NotNull Collection<? extends GitRepository> repositories,
+  private static String getCurrentBranchPresentation(@NotNull Project project,
+                                                     @NotNull Collection<? extends GitRepository> repositories,
                                                      boolean truncateBranchName) {
     Set<String> currentBranches = map2Set(repositories,
                                           repo -> notNull(repo.getCurrentBranchName(),
@@ -1016,7 +1021,7 @@ public class GitBranchPopupActions {
     if (currentBranches.size() == 1) {
       String fullBranchName = currentBranches.iterator().next();
       return truncateBranchName
-             ? getCurrentBranchTruncatedName(fullBranchName)
+             ? getCurrentBranchTruncatedName(fullBranchName, project)
              : wrapWithQuotes(fullBranchName);
     }
     return GitBundle.message("branches.current.branch");
@@ -1028,21 +1033,25 @@ public class GitBranchPopupActions {
     return wrapWithQuotes(branchName);
   }
 
-  private static final int MAX_BRANCH_NAME_LENGTH = 60;
+  private static final int MAX_BRANCH_NAME_LENGTH = 40;
+  private static final int BRANCH_NAME_LENGHT_DELTA = 4;
+  private static final int BRANCH_NAME_SUFFIX_LENGTH = 5;
 
   @NlsSafe
   @NotNull
-  private static String getCurrentBranchTruncatedName(@NlsSafe @NotNull String branchName) {
+  private static String getCurrentBranchTruncatedName(@NlsSafe @NotNull String branchName,
+                                                      @NotNull Project project) {
     return showFullBranchNamesInsteadOfCurrentSelected()
-           ? wrapWithQuotes(truncateBranchName(branchName))
+           ? wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)))
            : GitBundle.message("branches.current.branch.name");
   }
 
   @NlsSafe
   @NotNull
-  private static String getSelectedBranchTruncatedPresentation(@NlsSafe @NotNull String branchName) {
+  private static String getSelectedBranchTruncatedPresentation(@NotNull Project project,
+                                                               @NlsSafe @NotNull String branchName) {
     return showFullBranchNamesInsteadOfCurrentSelected()
-           ? wrapWithQuotes(truncateBranchName(branchName))
+           ? wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)))
            : GitBundle.message("branches.selected.branch.name");
   }
 
@@ -1052,8 +1061,70 @@ public class GitBranchPopupActions {
 
   @NlsSafe
   @NotNull
-  private static String truncateBranchName(@NotNull @NlsSafe String branchName) {
-    return StringUtil.shortenTextWithEllipsis(branchName, MAX_BRANCH_NAME_LENGTH, (int)(MAX_BRANCH_NAME_LENGTH / 2.0), true);
+  static String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
+    int branchNameLength = branchName.length();
+
+    if (branchNameLength <= MAX_BRANCH_NAME_LENGTH + BRANCH_NAME_LENGHT_DELTA) {
+      return branchName;
+    }
+
+    IssueNavigationConfiguration issueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
+    List<IssueNavigationConfiguration.LinkMatch> issueMatches = issueNavigationConfiguration.findIssueLinks(branchName);
+    if (issueMatches.size() != 0) {
+      // never truncate the first occurrence of the issue id
+      IssueNavigationConfiguration.LinkMatch firstMatch = issueMatches.get(0);
+      TextRange firstMatchRange = firstMatch.getRange();
+      return truncateAndSaveIssueId(firstMatchRange, branchName, MAX_BRANCH_NAME_LENGTH, BRANCH_NAME_SUFFIX_LENGTH,
+                                    BRANCH_NAME_LENGHT_DELTA);
+    }
+
+    return StringUtil.shortenTextWithEllipsis(branchName,
+                                              MAX_BRANCH_NAME_LENGTH,
+                                              BRANCH_NAME_SUFFIX_LENGTH, true);
+  }
+
+  @NlsSafe
+  @NotNull
+  static String truncateAndSaveIssueId(@NotNull TextRange issueIdRange,
+                                       @NotNull String branchName,
+                                       int maxBranchNameLength,
+                                       int suffixLength, int delta) {
+    String truncatedByDefault = StringUtil.shortenTextWithEllipsis(branchName,
+                                                                   maxBranchNameLength,
+                                                                   suffixLength, true);
+    String issueId = issueIdRange.substring(branchName);
+
+    if (truncatedByDefault.contains(issueId)) return truncatedByDefault;
+
+    try {
+      int branchNameLength = branchName.length();
+      int endOffset = issueIdRange.getEndOffset();
+      int startOffset = issueIdRange.getStartOffset();
+
+      // suffix intersects with the issue id
+      if (endOffset >= branchNameLength - suffixLength - delta) {
+        return StringUtil.shortenTextWithEllipsis(branchName,
+                                                  maxBranchNameLength,
+                                                  branchNameLength - startOffset, true);
+      }
+
+      String suffix = branchName.substring(branchNameLength - suffixLength);
+      int prefixLength = maxBranchNameLength - suffixLength - issueId.length();
+
+      String prefixAndIssue;
+      if (Math.abs(startOffset - prefixLength) <= delta) {
+        prefixAndIssue = branchName.substring(0, endOffset);
+      }
+      else {
+        String prefix = branchName.substring(0, prefixLength);
+        prefixAndIssue = prefix + StringUtil.ELLIPSIS + issueId;
+      }
+
+      return prefixAndIssue + StringUtil.ELLIPSIS + suffix;
+    }
+    catch (Throwable e) {
+      return truncatedByDefault;
+    }
   }
 
   @NlsSafe
@@ -1064,6 +1135,7 @@ public class GitBranchPopupActions {
 
   /**
    * Adds a tooltip to action in the branches popup
+   *
    * @see com.intellij.ui.popup.ActionStepBuilder#appendAction
    */
   private static void addTooltipText(Presentation presentation, @NlsContexts.Tooltip String tooltipText) {
