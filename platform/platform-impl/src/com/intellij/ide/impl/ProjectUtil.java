@@ -13,6 +13,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -677,12 +678,19 @@ public final class ProjectUtil {
   public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<? extends Path> list, String location) {
     Project result = null;
 
-    for (Path file : list) {
-      result = openOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
-      if (result != null) {
-        LOG.debug(location + ": load project from ", file);
-        return result;
+    try
+    {
+      for (Path file : list) {
+        result = openOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
+        if (result != null) {
+          LOG.debug(location + ": load project from ", file);
+          return result;
+        }
       }
+    }
+    catch (ProcessCanceledException ex) {
+      LOG.debug(location + ": skip project opening");
+      return null;
     }
 
     for (Path file : list) {
