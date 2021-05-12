@@ -160,13 +160,14 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
           int offset = myFirstErrorOffset;
           long stamp = document.getModificationStamp();
           fixer.apply(editor, this, psiElement);
+          Project project = file.getProject();
           if (document.getModificationStamp() != stamp || offset != myFirstErrorOffset) {
-            FixerUsageCollector.log(fixer);
+            FixerUsageCollector.log(project, fixer);
           }
-          if (LookupManager.getInstance(file.getProject()).getActiveLookup() != null) {
+          if (LookupManager.getInstance(project).getActiveLookup() != null) {
             return;
           }
-          if (isUncommited(file.getProject()) || !psiElement.isValid()) {
+          if (isUncommited(project) || !psiElement.isValid()) {
             moveCaretInsideBracesIfAny(editor, file);
             process(editor, file, attempt + 1, afterCompletion);
             return;
@@ -369,7 +370,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
   private static final class FixerUsageCollector extends CounterUsagesCollector {
     private static final EventLogGroup GROUP = new EventLogGroup("java.smart.enter.fixer", 1);
-    private static final EventId1<String> USED = GROUP.registerEvent("fixer.used", new StringEventField.ValidatedByAllowedValues(
+    private static final EventId1<String> USED = GROUP.registerEvent("fixer_used", new StringEventField.ValidatedByAllowedValues(
       "fixer_used",
       ContainerUtil.map(ourFixers, f -> f.getClass().getSimpleName())));
 
@@ -378,8 +379,8 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
       return GROUP;
     }
     
-    static void log(Fixer fixer) {
-      USED.log(fixer.getClass().getSimpleName());
+    static void log(Project project, Fixer fixer) {
+      USED.log(project, fixer.getClass().getSimpleName());
     }
   }
 }
