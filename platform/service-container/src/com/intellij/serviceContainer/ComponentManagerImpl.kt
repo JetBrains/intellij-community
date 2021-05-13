@@ -15,6 +15,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.IComponentStoreOwner
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -54,8 +55,10 @@ private val methodLookup = MethodHandles.lookup()
 private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 
 @Internal
-abstract class ComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManagerImpl?,
-                                                              setExtensionsRootArea: Boolean = parent == null) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), MutablePicoContainer, ComponentManagerEx {
+abstract class ComponentManagerImpl @JvmOverloads constructor(
+  internal val parent: ComponentManagerImpl?,
+  setExtensionsRootArea: Boolean = parent == null
+) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), MutablePicoContainer, ComponentManagerEx, IComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
@@ -140,7 +143,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   @Volatile
   internal var componentContainerIsReadonly: String? = null
 
-  protected open val componentStore: IComponentStore
+  override val componentStore: IComponentStore
     get() = getService(IComponentStore::class.java)!!
 
   init {
@@ -935,7 +938,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     checkState()
 
     if (!services.isEmpty()) {
-      val stateStore = stateStore
+      val store = componentStore
       for (service in services) {
         val adapter = (componentKeyToAdapter.remove(service.`interface`) ?: continue) as ServiceComponentAdapter
         val instance = adapter.getInitializedInstance() ?: continue
@@ -944,12 +947,12 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         if (instance is Disposable) {
           Disposer.dispose(instance)
         }
-        stateStore.unloadComponent(instance)
+        store.unloadComponent(instance)
       }
     }
 
     if (isLightServiceSupported) {
-      val stateStore = stateStore
+      val store = componentStore
       val iterator = componentKeyToAdapter.values.iterator()
       while (iterator.hasNext()) {
         val adapter = iterator.next() as? LightServiceComponentAdapter ?: continue
@@ -959,7 +962,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
           if (instance is Disposable) {
             Disposer.dispose(instance)
           }
-          stateStore.unloadComponent(instance)
+          store.unloadComponent(instance)
           iterator.remove()
         }
       }
