@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
@@ -113,10 +114,7 @@ open class PluginAdvertiserService {
               project,
             )
 
-            PluginManagerConfigurable.showPluginConfigurableAndEnable(
-              project,
-              disabledDescriptors.toSet(),
-            )
+            PluginBooleanOptionDescriptor.togglePluginState(true, disabledDescriptors.toSet())
           }
         }
         else
