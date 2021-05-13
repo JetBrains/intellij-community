@@ -280,6 +280,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
     withArguments(resolvedBuildArguments)
     withJvmArguments(operationParameters.jvmArguments ?: emptyList())
+    withEnvironmentVariables(operationParameters.environmentVariables ?: emptyMap())
     (this as? TargetBuildParameters.TasksAwareBuilder)?.withTasks(operationParameters.tasks ?: emptyList())
     return build()
   }

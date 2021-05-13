@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -53,6 +54,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
+import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
 
 /**
  * @author Denis Zhdanov
@@ -435,6 +437,21 @@ public class GradleExecutionHelper {
       }
       return;
     }
+
+    TargetEnvironmentConfigurationProvider environmentConfigurationProvider =
+      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
+    TargetEnvironmentConfiguration environmentConfiguration =
+      environmentConfigurationProvider != null ? environmentConfigurationProvider.getEnvironmentConfiguration() : null;
+    if (environmentConfiguration != null && !LOCAL_TARGET_TYPE_ID.equals(environmentConfiguration.getTypeId())) {
+      if (settings.isPassParentEnvs()) {
+        String ignoreHostEnvsForTargetRunWarningMessage = "Host system environment variables will not be passed for the target run.\n";
+        LOG.warn(ignoreHostEnvsForTargetRunWarningMessage);
+        listener.onTaskOutput(taskId, ignoreHostEnvsForTargetRunWarningMessage, false);
+      }
+      operation.setEnvironmentVariables(settings.getEnv());
+      return;
+    }
+
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.withEnvironment(settings.getEnv());
     commandLine.withParentEnvironmentType(

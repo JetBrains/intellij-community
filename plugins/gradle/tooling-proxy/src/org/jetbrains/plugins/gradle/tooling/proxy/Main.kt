@@ -127,6 +127,9 @@ object Main {
       arguments.addAll(targetBuildParameters.arguments)
       withArguments(arguments)
       setJvmArguments(targetBuildParameters.jvmArguments)
+      if (targetBuildParameters.environmentVariables.isNotEmpty()) {
+        setEnvironmentVariables(targetBuildParameters.environmentVariables)
+      }
 
       when (this) {
         is BuildLauncher -> run(resultHandler)
