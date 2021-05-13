@@ -2436,4 +2436,11 @@ class Abc {
                           "  }\n" +
                           "}")
   }
+
+  @NeedsIndex.Full
+  void testVariableNameByTypeName() {
+    myFixture.configureByText("Test.java", "class DemoEntity {} class Test {DemoEntity <caret>}")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings() == ["demoEntity", "demo", "entity"]
+  }
 }
