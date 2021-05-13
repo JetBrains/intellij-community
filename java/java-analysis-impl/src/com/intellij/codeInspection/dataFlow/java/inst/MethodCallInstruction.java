@@ -25,8 +25,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 
 public class MethodCallInstruction extends ExpressionPushingInstruction {
@@ -55,7 +56,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     super(new JavaMethodReferenceReturnAnchor(reference));
     myContext = reference;
     JavaResolveResult resolveResult = reference.advancedResolve(false);
-    myTargetMethod = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
+    myTargetMethod = tryCast(resolveResult.getElement(), PsiMethod.class);
     myContracts = Collections.unmodifiableList(contracts);
     myArgCount = myTargetMethod == null ? 0 : myTargetMethod.getParameterList().getParametersCount();
     if (myTargetMethod == null) {
@@ -265,7 +266,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   }
 
   public @Nullable PsiCall getCallExpression() {
-    return ObjectUtils.tryCast(myContext, PsiCall.class);
+    return tryCast(myContext, PsiCall.class);
   }
 
   public @NotNull PsiElement getContext() {
@@ -551,5 +552,10 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue[] argValues = popCallArguments(runner, memState);
     final DfaValue qualifier = popQualifier(runner, memState, argValues);
     return new DfaCallArguments(qualifier, argValues, getMutationSignature());
+  }
+
+  @Override
+  public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
+    return ContainerUtil.createMaybeSingletonList(tryCast(myPrecalculatedReturnValue, DfaVariableValue.class));
   }
 }

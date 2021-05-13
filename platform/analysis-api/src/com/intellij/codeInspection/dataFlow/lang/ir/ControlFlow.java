@@ -53,7 +53,7 @@ public final class ControlFlow {
     myInstructions = StreamEx.of(flow.myInstructions).map(instruction -> instruction.bindToFactory(factory)).toImmutableList();
   }
 
-  public PsiElement getPsiAnchor() {
+  public @NotNull PsiElement getPsiAnchor() {
     return myPsiAnchor;
   }
 
@@ -96,6 +96,7 @@ public final class ControlFlow {
   public void finish() {
     addInstruction(new ReturnInstruction(myFactory, FList.emptyList(), null));
     myLoopNumbers = LoopAnalyzer.calcInLoop(this);
+    new LiveVariablesAnalyzer(this).flushDeadVariablesOnStatementFinish();
   }
 
   public ControlFlowOffset getStartOffset(final PsiElement element) {

@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -30,6 +31,11 @@ public class EscapeInstruction extends Instruction {
     var instruction = new EscapeInstruction(ContainerUtil.map2Set(myEscapedVars, var -> var.bindToFactory(factory)));
     instruction.setIndex(getIndex());
     return instruction;
+  }
+
+  @Override
+  public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
+    return List.copyOf(myEscapedVars);
   }
 
   @Override

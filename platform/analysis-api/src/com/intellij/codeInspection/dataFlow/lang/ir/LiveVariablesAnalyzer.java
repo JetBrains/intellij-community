@@ -1,69 +1,26 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaEndOfInstanceInitializerAnchor;
-import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.java.inst.EscapeInstruction;
-import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiMember;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
  * @author peter
  */
-public final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
-  public LiveVariablesAnalyzer(ControlFlow flow) {
+final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
+  LiveVariablesAnalyzer(ControlFlow flow) {
     super(flow);
-  }
-
-  @Nullable
-  private static DfaVariableValue getWrittenVariable(Instruction instruction) {
-    if (instruction instanceof AssignInstruction) {
-      DfaValue value = ((AssignInstruction)instruction).getAssignedValue();
-      return value instanceof DfaVariableValue ? (DfaVariableValue)value : null;
-    }
-    if (instruction instanceof FlushVariableInstruction) return ((FlushVariableInstruction)instruction).getVariable();
-    return null;
-  }
-
-  @NotNull
-  private StreamEx<DfaVariableValue> getReadVariables(Instruction instruction) {
-    if (instruction instanceof PushInstruction) {
-      DfaValue value = ((PushInstruction)instruction).getValue();
-      if (value instanceof DfaVariableValue) {
-        return StreamEx.of((DfaVariableValue)value);
-      }
-    }
-    else if (instruction instanceof EscapeInstruction) {
-      return StreamEx.of(((EscapeInstruction)instruction).getEscapedVars());
-    }
-    else if (instruction instanceof PushValueInstruction && 
-             ((PushValueInstruction)instruction).getDfaAnchor() instanceof JavaEndOfInstanceInitializerAnchor) {
-      return StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class)
-        .filter(var -> var.getPsiVariable() instanceof PsiMember);
-    }
-    else if (instruction instanceof MethodCallInstruction) {
-      return StreamEx.ofNullable(((MethodCallInstruction)instruction).getPrecalculatedReturnValue())
-        .select(DfaVariableValue.class);
-    }
-    return StreamEx.empty();
   }
 
   @Override
   protected boolean isInterestingInstruction(Instruction instruction) {
     if (instruction == myInstructions[0]) return true;
-    if (getReadVariables(instruction).findFirst().isPresent() || getWrittenVariable(instruction) != null) return true;
+    if (!instruction.getRequiredVariables(myFactory).isEmpty() || !instruction.getWrittenVariables(myFactory).isEmpty()) return true;
     return !instruction.isLinear() || instruction instanceof FinishElementInstruction;
   }
 
@@ -83,12 +40,14 @@ public final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
         }
       }
 
-      DfaVariableValue written = getWrittenVariable(instruction);
-      if (written != null) {
+      List<DfaVariableValue> writtenVariables = instruction.getWrittenVariables(myFactory);
+      if (!writtenVariables.isEmpty()) {
         BitSet newVars = (BitSet)liveVars.clone();
-        newVars.clear(written.getID());
-        for (DfaVariableValue var : written.getDependentVariables()) {
-          newVars.clear(var.getID());
+        for (DfaVariableValue written : writtenVariables) {
+          newVars.clear(written.getID());
+          for (DfaVariableValue var : written.getDependentVariables()) {
+            newVars.clear(var.getID());
+          }
         }
         return newVars;
       } else {
@@ -107,14 +66,15 @@ public final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
             }
           }
         };
-        getReadVariables(instruction).flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v)).distinct().forEach(processor);
+        StreamEx.of(instruction.getRequiredVariables(myFactory))
+          .flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v)).distinct().forEach(processor);
         return processor.newVars;
       }
     });
     return ok ? result : null;
   }
 
-  public void flushDeadVariablesOnStatementFinish() {
+  void flushDeadVariablesOnStatementFinish() {
     final Map<FinishElementInstruction, BitSet> liveVars = findLiveVars();
     if (liveVars == null) return;
 

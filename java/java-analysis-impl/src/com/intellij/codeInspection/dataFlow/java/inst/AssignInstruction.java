@@ -27,9 +27,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -62,6 +65,11 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     var instruction = new AssignInstruction(myLExpression, myRExpression, myAssignedValue.bindToFactory(factory));
     instruction.setIndex(getIndex());
     return instruction;
+  }
+
+  @Override
+  public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
+    return ContainerUtil.createMaybeSingletonList(tryCast(myAssignedValue, DfaVariableValue.class));
   }
 
   @Override
