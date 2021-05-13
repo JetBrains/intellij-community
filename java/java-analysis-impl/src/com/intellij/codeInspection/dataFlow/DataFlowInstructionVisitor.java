@@ -359,9 +359,11 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     }
     else if (problem instanceof ContractFailureProblem) {
       PsiCallExpression call = tryCast(((ContractFailureProblem)problem).getAnchor(), PsiCallExpression.class);
-      Boolean isFailing = myFailingCalls.get(call);
-      if (isFailing != null || !hasTrivialFailContract(call)) {
-        myFailingCalls.put(call, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
+      if (call != null) {
+        Boolean isFailing = myFailingCalls.get(call);
+        if (isFailing != null || !hasTrivialFailContract(call)) {
+          myFailingCalls.put(call, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
+        }
       }
     }
     else if (problem instanceof NullabilityProblemKind.NullabilityProblem) {
