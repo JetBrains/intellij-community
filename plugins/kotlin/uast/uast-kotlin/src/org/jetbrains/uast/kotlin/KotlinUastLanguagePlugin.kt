@@ -47,13 +47,16 @@ import org.jetbrains.uast.kotlin.psi.*
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 
-interface KotlinUastResolveProviderService {
+interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
     fun getBindingContext(element: KtElement): BindingContext
     fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
     fun getTypeMapper(element: KtElement): KotlinTypeMapper?
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
-    fun isJvmElement(psiElement: PsiElement): Boolean
     fun getReferenceVariants(ktElement: KtElement, nameHint: String): Sequence<DeclarationDescriptor>
+
+    override fun convertParent(uElement: UElement): UElement? {
+        return convertParentImpl(uElement)
+    }
 }
 
 var PsiElement.destructuringDeclarationInitializer: Boolean? by UserDataProperty(Key.create("kotlin.uast.destructuringDeclarationInitializer"))
