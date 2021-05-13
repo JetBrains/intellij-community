@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
@@ -58,6 +59,7 @@ public class TerminalSettingsPanel {
   private EnvironmentVariablesTextFieldWithBrowseButton myEnvVarField;
   private ActionLink myConfigureTerminalKeybindingsActionLink;
   private ComboBox<TerminalOptionsProvider.CursorShape> myCursorShape;
+  private JBCheckBox myUseOptionAsMetaKey;
 
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
@@ -98,6 +100,8 @@ public class TerminalSettingsPanel {
         ));
       }
     }
+
+    myUseOptionAsMetaKey.getParent().setVisible(SystemInfo.isMac);
 
     return myWholePanel;
   }
@@ -149,8 +153,9 @@ public class TerminalSettingsPanel {
            || (myPasteOnMiddleButtonCheckBox.isSelected() != myOptionsProvider.pasteOnMiddleMouseButton())
            || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.overrideIdeShortcuts())
            || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration())
-           || (myHighlightHyperlinks.isSelected() != myOptionsProvider.highlightHyperlinks()) ||
-           myConfigurables.stream().anyMatch(c -> c.isModified())
+           || (myHighlightHyperlinks.isSelected() != myOptionsProvider.highlightHyperlinks())
+           || (myUseOptionAsMetaKey.isSelected() != myOptionsProvider.getUseOptionAsMetaKey())
+           || myConfigurables.stream().anyMatch(c -> c.isModified())
            || !Comparing.equal(myEnvVarField.getData(), myProjectOptionsProvider.getEnvData())
            || myCursorShape.getItem() != myOptionsProvider.getCursorShape();
   }
@@ -167,6 +172,7 @@ public class TerminalSettingsPanel {
     myOptionsProvider.setOverrideIdeShortcuts(myOverrideIdeShortcuts.isSelected());
     myOptionsProvider.setShellIntegration(myShellIntegration.isSelected());
     myOptionsProvider.setHighlightHyperlinks(myHighlightHyperlinks.isSelected());
+    myOptionsProvider.setUseOptionAsMetaKey(myUseOptionAsMetaKey.isSelected());
     myConfigurables.forEach(c -> {
       try {
         c.apply();
@@ -191,6 +197,7 @@ public class TerminalSettingsPanel {
     myOverrideIdeShortcuts.setSelected(myOptionsProvider.overrideIdeShortcuts());
     myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
     myHighlightHyperlinks.setSelected(myOptionsProvider.highlightHyperlinks());
+    myUseOptionAsMetaKey.setSelected(myOptionsProvider.getUseOptionAsMetaKey());
     myConfigurables.forEach(c -> c.reset());
     myEnvVarField.setData(myProjectOptionsProvider.getEnvData());
     myCursorShape.setItem(myOptionsProvider.getCursorShape());

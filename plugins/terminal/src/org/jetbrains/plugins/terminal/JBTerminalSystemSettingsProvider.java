@@ -86,4 +86,9 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
     }
     return editorSettings.isBlinkCaret() ? CursorShape.BLINK_VERTICAL_BAR : CursorShape.STEADY_VERTICAL_BAR;
   }
+
+  @Override
+  public boolean altSendsEscape() {
+    return TerminalOptionsProvider.getInstance().getUseOptionAsMetaKey();
+  }
 }

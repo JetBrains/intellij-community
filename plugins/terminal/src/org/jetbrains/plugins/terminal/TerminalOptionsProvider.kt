@@ -69,7 +69,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
-    var blinkCursor: Boolean = true
+    var useOptionAsMetaKey: Boolean = SystemInfo.isMac
     var cursorShape: CursorShape = CursorShape.BLOCK
   }
 
@@ -124,6 +124,8 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     set(value) {
       myState.myShellPath = value
     }
+
+  var useOptionAsMetaKey: Boolean by myState::useOptionAsMetaKey
 
   var cursorShape: CursorShape
     get() = myState.cursorShape
