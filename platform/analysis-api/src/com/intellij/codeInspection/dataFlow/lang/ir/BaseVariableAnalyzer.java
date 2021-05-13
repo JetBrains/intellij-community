@@ -4,15 +4,15 @@ package com.intellij.codeInspection.dataFlow.lang.ir;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 public abstract class BaseVariableAnalyzer {
   protected final Instruction[] myInstructions;
@@ -68,14 +68,16 @@ public abstract class BaseVariableAnalyzer {
    * @return true if completed, false if "too complex"
    */
   protected boolean runDfa(boolean forward, BiFunction<? super Instruction, ? super BitSet, ? extends BitSet> handleState) {
-    Set<Instruction> entryPoints = new HashSet<>();
+    List<Instruction> entryPoints;
     if (forward) {
-      entryPoints.add(myInstructions[0]);
+      entryPoints = List.of(myInstructions[0]);
     }
     else {
-      entryPoints.addAll(ContainerUtil.findAll(myInstructions, FilteringIterator.instanceOf(ReturnInstruction.class)));
+      entryPoints = StreamEx.of(myInstructions).select(ControlTransferInstruction.class)
+        .filter(cti -> cti.getTransfer().getTarget().getPossibleTargets().length == 0)
+        .collect(Collectors.toList());
     }
-
+    
     Deque<InstructionState> queue = new ArrayDeque<>(10);
     for (Instruction i : entryPoints) {
       queue.addLast(new InstructionState(i, new BitSet()));
