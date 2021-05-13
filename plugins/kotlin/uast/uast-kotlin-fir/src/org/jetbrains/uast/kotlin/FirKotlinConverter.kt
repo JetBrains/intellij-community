@@ -187,7 +187,7 @@ internal object FirKotlinConverter {
                     convertExpression(element, givenParent, requiredTypes)
                 }
                 is KtImportDirective -> {
-                    el<UImportStatement>(build(::FirKotlinUImportStatement))
+                    el<UImportStatement>(build(::KotlinUImportStatement))
                 }
                 else -> null
             }
