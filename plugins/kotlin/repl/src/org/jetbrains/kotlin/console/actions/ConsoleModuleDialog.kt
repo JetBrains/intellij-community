@@ -36,7 +36,7 @@ class ConsoleModuleDialog(private val project: Project) {
             dataContext,
             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
             true,
-            ActionPlaces.UNKNOWN
+            ActionPlaces.EDITOR_POPUP,
         )
 
         modulePopup.showCenteredInCurrentWindow(project)
