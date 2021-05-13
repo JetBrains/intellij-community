@@ -344,9 +344,13 @@ public final class AboutPopup {
       GraphicsConfig config = new GraphicsConfig(g);
       UISettings.setupAntialiasing(g);
 
-      Font labelFont = JBFont.label();
+      Font labelFont;
       if (SystemInfo.isWindows) {
         labelFont = JBUI.Fonts.create("Segoe UI", 14);
+      } else if (SystemInfo.isMac) {
+        labelFont = JBUI.Fonts.create("Helvetica Neue", 13);
+      } else {
+        labelFont = JBUI.Fonts.create("Arial", 14);
       }
 
       int startFontSize = 14;
@@ -383,11 +387,12 @@ public final class AboutPopup {
         color = new Color((int)copyrightForeground, copyrightForeground > 0xffffff);
       }
       g2.setColor(color);
-      if (SystemInfo.isMac) {
-        g2.setFont(JBUI.Fonts.miniFont());
-      }
-      else {
-        g2.setFont(JBUI.Fonts.create("Segoe UI", 10));
+      if (SystemInfo.isWindows) {
+        g.setFont(JBUI.Fonts.create("Segoe UI", 10));
+      } else if (SystemInfo.isMac) {
+        g.setFont(JBUI.Fonts.create("Helvetica Neue", 10));
+      } else {
+        g.setFont(JBUI.Fonts.create("Arial", 10));
       }
 
       JBPoint copyrightCoord = getCopyrightCoord();
@@ -772,7 +777,7 @@ public final class AboutPopup {
         viewer.setText(resultHtmlText);
 
         StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
-        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, \"Helvetica Neue\", Helvetica, Arial, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
         styleSheet.addRule("body {font-size:" + JBUIScale.scaleFontSize((float)14) + "pt;}");
 
