@@ -37,7 +37,7 @@ class ReplaceToWithInfixFormInspection : AbstractKotlinInspection() {
 
             holder.registerProblem(
                 expression,
-                KotlinBundle.message("replace.to.with.infix.form.quickfix.text"),
+                KotlinBundle.message("inspection.replace.to.with.infix.form.display.name"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 ReplaceToWithInfixFormQuickfix()
             )
