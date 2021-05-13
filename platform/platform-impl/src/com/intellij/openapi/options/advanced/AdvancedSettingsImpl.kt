@@ -5,7 +5,6 @@ import com.intellij.DynamicBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -142,7 +141,7 @@ class AdvancedSettingBean : PluginAware {
 
 @State(name = "AdvancedSettings", storages = [Storage(value = "ide.general.xml")])
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
-  class AdvancedSettingsState : BaseState() {
+  class AdvancedSettingsState {
     var settings = mutableMapOf<String, String>()
   }
 
