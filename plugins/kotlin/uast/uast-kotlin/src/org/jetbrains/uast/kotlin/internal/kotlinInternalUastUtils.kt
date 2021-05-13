@@ -356,17 +356,17 @@ internal fun resolveToPsiMethod(
     }
 }
 
-internal fun resolveToDeclaration(sourcePsi: KtExpression): PsiElement? =
+internal fun resolveToDeclarationImpl(sourcePsi: KtExpression): PsiElement? =
     when (sourcePsi) {
         is KtSimpleNameExpression ->
             sourcePsi.analyze()[BindingContext.REFERENCE_TARGET, sourcePsi]
-                ?.let { resolveToDeclaration(sourcePsi, it) }
+                ?.let { resolveToDeclarationImpl(sourcePsi, it) }
         else ->
             sourcePsi.getResolvedCall(sourcePsi.analyze())?.resultingDescriptor
-                ?.let { descriptor -> resolveToDeclaration(sourcePsi, descriptor) }
+                ?.let { descriptor -> resolveToDeclarationImpl(sourcePsi, descriptor) }
     }
 
-internal fun resolveToDeclaration(sourcePsi: KtExpression, declarationDescriptor: DeclarationDescriptor): PsiElement? {
+internal fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: DeclarationDescriptor): PsiElement? {
     declarationDescriptor.toSource()?.getMaybeLightElement(sourcePsi)?.let { return it }
 
     @Suppress("NAME_SHADOWING")
@@ -393,7 +393,7 @@ internal fun resolveToDeclaration(sourcePsi: KtExpression, declarationDescriptor
     }
 
     if (declarationDescriptor is ValueParameterDescriptor) {
-        val parentDeclaration = resolveToDeclaration(sourcePsi, declarationDescriptor.containingDeclaration)
+        val parentDeclaration = resolveToDeclarationImpl(sourcePsi, declarationDescriptor.containingDeclaration)
         if (parentDeclaration is PsiClass && parentDeclaration.isAnnotationType) {
             parentDeclaration.findMethodsByName(declarationDescriptor.name.asString(), false).firstOrNull()?.let { return it }
         }
@@ -401,7 +401,7 @@ internal fun resolveToDeclaration(sourcePsi: KtExpression, declarationDescriptor
 
     if (declarationDescriptor is CallableMemberDescriptor && declarationDescriptor.kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
         declarationDescriptor.overriddenDescriptors.asSequence()
-            .mapNotNull { resolveToDeclaration(sourcePsi, it) }
+            .mapNotNull { resolveToDeclarationImpl(sourcePsi, it) }
             .firstOrNull()
             ?.let { return it }
     }

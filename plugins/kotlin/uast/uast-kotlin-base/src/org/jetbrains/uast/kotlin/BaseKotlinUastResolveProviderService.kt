@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.uast.UElement
 
 interface BaseKotlinUastResolveProviderService {
@@ -10,4 +11,5 @@ interface BaseKotlinUastResolveProviderService {
 
     fun convertParent(uElement: UElement): UElement?
 
+    fun resolveToDeclaration(ktExpression: KtExpression): PsiElement?
 }
