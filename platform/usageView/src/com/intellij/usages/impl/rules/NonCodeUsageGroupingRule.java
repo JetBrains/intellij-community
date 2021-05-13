@@ -23,7 +23,10 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getCodeUsagesString();
+      if (view == null) return UsageViewBundle.message("node.group.code.usages");
+
+      UsageViewPresentation presentation = view.getPresentation();
+      return UsageViewBundle.message("usage.view.results.node.scope", presentation.getCodeUsagesString(), presentation.getScopeText());
     }
 
     public String toString() {
@@ -41,7 +44,10 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return view == null ? UsageViewBundle.message("node.non.code.usages") : view.getPresentation().getNonCodeUsagesString();
+      if (view == null) return UsageViewBundle.message("node.non.code.usages");
+
+      UsageViewPresentation presentation = view.getPresentation();
+      return UsageViewBundle.message("usage.view.results.node.scope", presentation.getNonCodeUsagesString(), presentation.getScopeText());
     }
 
     public String toString() {

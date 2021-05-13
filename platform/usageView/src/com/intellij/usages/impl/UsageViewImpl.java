@@ -998,14 +998,14 @@ public class UsageViewImpl implements UsageViewEx {
       actionsManager.createPrevOccurenceAction(myRootPanel),
       actionsManager.createNextOccurenceAction(myRootPanel),
       new Separator(),
+      canShowSettings() ? new ShowSettings() : null,
+      canShowSettings() ? new Separator() : null,
       group,
       filteringSubgroup,
       expandAllAction,
       collapseAllAction,
       new Separator(),
       isPreviewUsageActionEnabled() ? new PreviewUsageAction() : null,
-      new Separator(),
-      canShowSettings() ? new ShowSettings() : null,
     };
   }
 

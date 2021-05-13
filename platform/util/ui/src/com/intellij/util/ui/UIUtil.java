@@ -867,7 +867,6 @@ public final class UIUtil {
     Insets i = cb.getInsets();
 
     size = cb.getSize(size);
-    viewRect.x = i.left;
     viewRect.y = i.top;
     viewRect.width = size.width - (i.right + viewRect.x);
     viewRect.height = size.height - (i.bottom + viewRect.y);

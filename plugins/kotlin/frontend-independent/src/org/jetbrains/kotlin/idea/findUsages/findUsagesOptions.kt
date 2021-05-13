@@ -65,6 +65,7 @@ class KotlinFunctionFindUsagesOptions(project: Project) : KotlinCallableFindUsag
         javaOptions.isOverridingMethods = isOverridingMethods
         javaOptions.isSearchForTextOccurrences = isSearchForTextOccurrences
         javaOptions.isSkipImportStatements = isSkipImportStatements
+        javaOptions.isSearchForBaseMethod = isSearchForBaseMethod
         javaOptions.isUsages = isUsages
         javaOptions.searchScope = searchScope
 
@@ -88,6 +89,9 @@ class KotlinPropertyFindUsagesOptions(
         javaOptions.isWriteAccess = isWriteAccess
         javaOptions.isUsages = isUsages
         javaOptions.searchScope = searchScope
+        javaOptions.isSearchForAccessors = isSearchForAccessors
+        javaOptions.isSearchInOverridingMethods = isSearchInOverridingMethods
+        javaOptions.isSearchForBaseAccessors = isSearchForBaseAccessors
         return javaOptions
     }
 }
