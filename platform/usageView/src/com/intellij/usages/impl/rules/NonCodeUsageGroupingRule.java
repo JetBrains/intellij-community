@@ -122,6 +122,11 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.NON_CODE.getAbsoluteRank();
+  }
+
+  @Override
   public boolean isGroupingToggleable() {
     return false;
   }
