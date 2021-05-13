@@ -4,11 +4,15 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -33,6 +37,10 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
 
   override fun getDefaultFileName(entity: ArtifactEntity): String {
     return entity.name
+  }
+
+  override fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder, configLocation: JpsProjectConfigLocation) {
+    //todo implement this (it isn't needed in 211 and until workspace model is enabled for artifacts in 212)
   }
 }
 

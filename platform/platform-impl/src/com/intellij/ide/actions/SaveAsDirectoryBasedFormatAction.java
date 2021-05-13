@@ -16,8 +16,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,15 +43,7 @@ public final class SaveAsDirectoryBasedFormatAction extends AnAction implements 
     Path baseDir = store.getProjectFilePath().getParent();
     Path ideaDir = baseDir.resolve(Project.DIRECTORY_STORE_FOLDER);
     try {
-      if (Files.isDirectory(ideaDir)) {
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ideaDir);
-      }
-      else {
-        createDir(ideaDir);
-      }
-
-      store.clearStorages();
-      store.setPath(baseDir);
+      convertToDirectoryBasedFormat(project, store, baseDir, ideaDir);
       // closeAndDispose will also force save project
       ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
       projectManager.closeAndDispose(project);
@@ -58,6 +53,29 @@ public final class SaveAsDirectoryBasedFormatAction extends AnAction implements 
       Messages.showErrorDialog(project, String.format(IdeBundle.message("dialog.message.unable.to.create.idea.directory", e.getMessage()), ideaDir),
                                IdeBundle.message("dialog.title.error.saving.project"));
     }
+  }
+
+  private static void convertToDirectoryBasedFormat(Project project, IProjectStore store, Path baseDir, Path ideaDir) throws IOException {
+    if (Files.isDirectory(ideaDir)) {
+      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ideaDir);
+    }
+    else {
+      createDir(ideaDir);
+    }
+
+    store.clearStorages();
+    store.setPath(baseDir);
+    if (WorkspaceModel.isEnabled()) {
+      JpsProjectModelSynchronizer.Companion.getInstance(project).convertToDirectoryBasedFormat();
+    }
+  }
+
+  @TestOnly
+  public static void convertToDirectoryBasedFormat(@NotNull Project project) throws IOException {
+    IProjectStore store = ProjectKt.getStateStore(project);
+    Path baseDir = store.getProjectFilePath().getParent();
+    Path ideaDir = baseDir.resolve(Project.DIRECTORY_STORE_FOLDER);
+    convertToDirectoryBasedFormat(project, store, baseDir, ideaDir);
   }
 
   @SuppressWarnings("UnusedReturnValue")
