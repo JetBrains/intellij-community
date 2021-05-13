@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports non-static inner classes which implement the <code>java.io.Serializable</code>
-interface, but but does not define a <code>serialVersionUID</code> field.
+interface, but does not define a <code>serialVersionUID</code> field.
 <p>
   Without a <code>serialVersionUID</code> field, any change to a class will make previously
   serialized versions unreadable. It is strongly recommended that <code>Serializable</code>
@@ -9,6 +9,23 @@ interface, but but does not define a <code>serialVersionUID</code> field.
   serialization algorithm may result in serialized versions being incompatible between
   compilers, due to differences in synthetic accessor methods.
 </p>
+<p>
+  The quick-fix adds the missing <code>serialVersionUID</code> field.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Outer {
+      class Inner implements Serializable {}
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Outer {
+      class Inner implements Serializable {
+          private static final long serialVersionUID = -7004458730436243902L;
+      }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
 <ul>

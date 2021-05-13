@@ -11,6 +11,23 @@ its argument type.
   one of the standard collection classes which expect that the
   <code>Object.equals(Object)</code> method is overridden.
 </p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Foo {
+      public boolean equals(Foo foo) {  // warning
+          return false;
+      }
+  }
+  class Bar {
+      public boolean equals(Bar bar) {  // no warning here
+          return false;
+      }
+      @Override
+      public boolean equals(Object obj) {
+          return false;
+      }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 
