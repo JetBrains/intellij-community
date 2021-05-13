@@ -16,6 +16,7 @@ import java.util.Comparator;
 
 public class DebuggerGlobalSearchScope extends DelegatingGlobalSearchScope {
   private final Comparator<VirtualFile> myScopeComparator;
+  private final GlobalSearchScope myFallbackAllScope;
 
   public DebuggerGlobalSearchScope(@NotNull GlobalSearchScope scope, @NotNull Project project) {
     super(scope);
@@ -23,6 +24,8 @@ public class DebuggerGlobalSearchScope extends DelegatingGlobalSearchScope {
     myScopeComparator = Comparator.comparing(projectFileIndex::isInSourceContent)
       .thenComparing(projectFileIndex::isInLibrarySource)
       .thenComparing(super::compare);
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+    myFallbackAllScope = !allScope.equals(scope) ? new DebuggerGlobalSearchScope(allScope, project) : null;
   }
 
   @Override
@@ -33,5 +36,10 @@ public class DebuggerGlobalSearchScope extends DelegatingGlobalSearchScope {
   @Nullable
   public Module getModuleIfAny() {
     return myBaseScope instanceof ModuleWithDependenciesScope ? ((ModuleWithDependenciesScope)myBaseScope).getModule() : null;
+  }
+
+  @Nullable
+  public GlobalSearchScope fallbackAllScope() {
+    return myFallbackAllScope;
   }
 }
