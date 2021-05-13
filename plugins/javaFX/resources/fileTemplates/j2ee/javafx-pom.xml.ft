@@ -11,8 +11,6 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.target>${context.sdkFeatureVersion}</maven.compiler.target>
-    <maven.compiler.source>${context.sdkFeatureVersion}</maven.compiler.source>
     #if ($context.testRunnerId == "junit")<junit.version>${context.getVersion("org.junit.jupiter", "junit-jupiter-api")}</junit.version>#end
     #if ($context.hasLanguage("kotlin"))<kotlin.version>${context.getVersion("org.jetbrains.kotlin", "kotlin-maven-plugin")}</kotlin.version>#end
   </properties>
@@ -100,6 +98,15 @@
     <testSourceDirectory>${context.asPlaceholder("project.basedir")}/src/test/kotlin</testSourceDirectory>
     #end
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${context.getVersion("org.apache.maven.plugins", "maven-compiler-plugin")}</version>
+        <configuration>
+          <source>${context.sdkFeatureVersion}</source>
+          <target>${context.sdkFeatureVersion}</target>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-maven-plugin</artifactId>

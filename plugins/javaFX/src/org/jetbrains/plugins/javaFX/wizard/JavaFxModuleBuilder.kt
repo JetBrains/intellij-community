@@ -23,7 +23,6 @@ internal open class JavaFxModuleBuilder : StarterModuleBuilder() {
   override fun getWeight(): Int = super.getWeight() + 10
 
   override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_11.toJavaVersion()
-  override fun isExampleCodeProvided(): Boolean = true
 
   override fun getProjectTypes(): List<StarterProjectType> {
     return listOf(MAVEN_PROJECT, GRADLE_PROJECT)
@@ -132,23 +131,22 @@ internal open class JavaFxModuleBuilder : StarterModuleBuilder() {
     val samplesLanguage = starterContext.language.id
     val samplesExt = getSamplesExt(starterContext.language)
 
-    assets.add(GeneratorTemplateFile("src/main/${samplesLanguage}/module-info.java",
-                                     ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_MODULE_INFO_JAVA)))
-
-    if (starterContext.includeExamples) {
-      assets.add(GeneratorTemplateFile("src/main/${samplesLanguage}/${packagePath}/HelloApplication.${samplesExt}",
-                                       ftManager.getJ2eeTemplate("javafx-HelloApplication-${samplesLanguage}.${samplesExt}")))
-      assets.add(GeneratorTemplateFile("src/main/${samplesLanguage}/${packagePath}/HelloController.${samplesExt}",
-                                       ftManager.getJ2eeTemplate("javafx-HelloController-${samplesLanguage}.${samplesExt}")))
-      assets.add(GeneratorTemplateFile("src/main/resources/${packagePath}/hello-view.fxml",
-                                       ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_HELLO_VIEW_FXML)))
+    if (starterContext.projectType == MAVEN_PROJECT) {
+      // kotlin in Maven uses single src/main/kotlin source root
+      assets.add(GeneratorTemplateFile("src/main/${samplesLanguage}/module-info.java",
+                                       ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_MODULE_INFO_JAVA)))
     }
     else {
-      assets.add(GeneratorEmptyDirectory("src/main/${samplesLanguage}/${packagePath}"))
-      assets.add(GeneratorEmptyDirectory("src/main/resources/${packagePath}"))
+      assets.add(GeneratorTemplateFile("src/main/java/module-info.java",
+                                       ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_MODULE_INFO_JAVA)))
     }
 
-    assets.add(GeneratorEmptyDirectory("src/test/${samplesLanguage}/${packagePath}"))
+    assets.add(GeneratorTemplateFile("src/main/${samplesLanguage}/${packagePath}/HelloApplication.${samplesExt}",
+                                     ftManager.getJ2eeTemplate("javafx-HelloApplication-${samplesLanguage}.${samplesExt}")))
+    assets.add(GeneratorTemplateFile("src/main/${samplesLanguage}/${packagePath}/HelloController.${samplesExt}",
+                                     ftManager.getJ2eeTemplate("javafx-HelloController-${samplesLanguage}.${samplesExt}")))
+    assets.add(GeneratorTemplateFile("src/main/resources/${packagePath}/hello-view.fxml",
+                                     ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_HELLO_VIEW_FXML)))
 
     return assets
   }

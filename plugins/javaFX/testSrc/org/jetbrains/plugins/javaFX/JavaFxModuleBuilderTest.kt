@@ -68,8 +68,6 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
           <properties>
               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-              <maven.compiler.target>11</maven.compiler.target>
-              <maven.compiler.source>11</maven.compiler.source>
               <junit.version>${dlr}{junit.version}</junit.version>
           </properties>
 
@@ -101,6 +99,15 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
           <build>
               <plugins>
+                  <plugin>
+                      <groupId>org.apache.maven.plugins</groupId>
+                      <artifactId>maven-compiler-plugin</artifactId>
+                      <version>3.8.1</version>
+                      <configuration>
+                          <source>11</source>
+                          <target>11</target>
+                      </configuration>
+                  </plugin>
                   <plugin>
                       <groupId>org.openjfx</groupId>
                       <artifactId>javafx-maven-plugin</artifactId>
