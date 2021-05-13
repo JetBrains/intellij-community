@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.jediterm.pty.PtyProcessTtyConnector;
@@ -89,6 +90,6 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
 
   @Override
   public boolean altSendsEscape() {
-    return TerminalOptionsProvider.getInstance().getUseOptionAsMetaKey();
+    return !SystemInfo.isMac || TerminalOptionsProvider.getInstance().getUseOptionAsMetaKey();
   }
 }

@@ -69,7 +69,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
-    var useOptionAsMetaKey: Boolean = SystemInfo.isMac
+    var useOptionAsMetaKey: Boolean = true
     var cursorShape: CursorShape = CursorShape.BLOCK
   }
 
