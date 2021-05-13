@@ -6,6 +6,7 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.diff.tools.fragmented.UnifiedDiffPanel;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.SearchTextArea;
@@ -103,8 +104,14 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @Nullable
   private Editor findLeftEditor() {
     DiffSplitter splitter = UIUtil.findComponentOfType(myDiffPanel.getComponent(), DiffSplitter.class);
-    JComponent left = splitter == null ? null : splitter.getFirstComponent();
-    EditorComponentImpl comp = left == null ? null : UIUtil.findComponentOfType(left, EditorComponentImpl.class);
+    JComponent editorPanel;
+    if (splitter != null) {
+      editorPanel = splitter.getFirstComponent();
+    }
+    else {
+      editorPanel = UIUtil.findComponentOfType(myDiffPanel.getComponent(), UnifiedDiffPanel.class);
+    }
+    EditorComponentImpl comp = editorPanel == null ? null : UIUtil.findComponentOfType(editorPanel, EditorComponentImpl.class);
     return comp == null ? null : comp.getEditor();
   }
 
