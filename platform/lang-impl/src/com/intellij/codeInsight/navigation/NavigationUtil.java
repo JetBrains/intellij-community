@@ -199,7 +199,8 @@ public final class NavigationUtil {
     if (!EditorHistoryManager.getInstance(elt.getProject()).hasBeenOpen(vFile)) return false;
 
     final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
-    if (!fem.isFileOpen(vFile)) {
+    boolean wasAlreadyOpen = fem.isFileOpen(vFile);
+    if (!wasAlreadyOpen) {
       fem.openFile(vFile, requestFocus, searchForOpen);
     }
 
@@ -213,8 +214,10 @@ public final class NavigationUtil {
         final int offset = text.getCaretModel().getOffset();
 
         if (range.containsOffset(offset)) {
-          // select the file
-          fem.openFile(vFile, requestFocus, searchForOpen);
+          if (wasAlreadyOpen) {
+            // select the file
+            fem.openFile(vFile, requestFocus, searchForOpen);
+          }
           return true;
         }
       }
