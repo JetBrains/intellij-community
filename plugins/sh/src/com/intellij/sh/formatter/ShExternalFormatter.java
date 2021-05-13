@@ -164,6 +164,11 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
           handler.destroyProcess();
           return true;
         }
+
+        @Override
+        public boolean isRunUnderProgress() {
+          return true;
+        }
       };
     }
     catch (ExecutionException e) {

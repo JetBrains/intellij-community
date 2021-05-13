@@ -66,9 +66,14 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
         runAsyncFormat(formattingRequest, null);
       }
       else {
-        new FormattingProgressTask(formattingRequest)
-          .setCancelText(CodeStyleBundle.message("async.formatting.service.cancel", getName()))
-          .queue();
+        if (formattingTask.isRunUnderProgress()) {
+          new FormattingProgressTask(formattingRequest)
+            .setCancelText(CodeStyleBundle.message("async.formatting.service.cancel", getName()))
+            .queue();
+        }
+        else {
+          ApplicationManager.getApplication().executeOnPooledThread(() -> runAsyncFormat(formattingRequest, null));
+        }
       }
     }
   }
@@ -275,6 +280,14 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
      * @return {@code true} if the runnable has been successfully cancelled, {@code false} otherwise.
      */
     boolean cancel();
+
+    /**
+     * @return True if the task must be run under progress (a progress indicator is created automatically). Otherwise the task is
+     * responsible of visualizing the progress by itself, it is just started on a background thread.
+     */
+    default boolean isRunUnderProgress() {
+      return false;
+    }
   }
 
   private class FormattingProgressTask extends Task.Backgroundable {
