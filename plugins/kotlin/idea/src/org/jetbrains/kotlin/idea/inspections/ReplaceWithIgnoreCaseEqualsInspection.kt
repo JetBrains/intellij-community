@@ -54,8 +54,8 @@ class ReplaceWithIgnoreCaseEqualsInspection : AbstractKotlinInspection() {
 
             holder.registerProblem(
                 binaryExpression,
-                KotlinBundle.message("replace.with.0", "equals(..., ignoreCase = true)"),
-                ReplaceFix()
+                KotlinBundle.message("inspection.replace.with.ignore.case.equals.display.name"),
+                ReplaceFix(),
             )
         })
 
