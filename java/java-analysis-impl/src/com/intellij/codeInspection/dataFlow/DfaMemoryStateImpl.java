@@ -2,6 +2,7 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.memory.EqClass;
@@ -1640,14 +1641,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         final RelationType relation = getRelation(qualifier, qualifierToFlush);
         if (relation == RelationType.EQ) return QualifierStatus.SHOULD_FLUSH_ALWAYS;
         final DfType typeToFlush = getDfType(qualifierToFlush);
-        if (typeToFlush instanceof DfReferenceType && ((DfReferenceType)typeToFlush).isLocal()) {
-          continue;
-        }
+        if (!(typeToFlush instanceof DfReferenceType)) continue;
+        if (((DfReferenceType)typeToFlush).isLocal()) continue;
         // Calls may refer to changed object indirectly (unless it's local)
         flushCalls = true;
         if (relation != null) continue;
         if (typeToFlush.meet(dfType) != DfType.BOTTOM) {
           // possible aliasing
+          return QualifierStatus.SHOULD_FLUSH_ALWAYS;
+        }
+        if (SpecialField.fromQualifierType(typeToFlush) == SpecialField.COLLECTION_SIZE &&
+            SpecialField.fromQualifierType(dfType) == SpecialField.COLLECTION_SIZE) {
+          // Collection size is sometimes derived from another (incompatible) collection
+          // e.g. keySet Set size is affected by Map size.
           return QualifierStatus.SHOULD_FLUSH_ALWAYS;
         }
       }
