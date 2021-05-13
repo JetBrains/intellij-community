@@ -290,6 +290,8 @@
     <untrustedModeProvider implementation="org.jetbrains.idea.maven.project.MavenUntrustedModeProvider" />
 
     <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
+
+    <dependencyCollector implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
