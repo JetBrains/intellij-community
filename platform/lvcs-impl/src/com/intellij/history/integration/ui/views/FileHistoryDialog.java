@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.util.ui.UIUtil;
@@ -36,6 +37,7 @@ import java.awt.*;
 
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffRequestPanel myDiffPanel;
+  private SearchTextArea mySearchTextArea;
 
   public FileHistoryDialog(@NotNull Project p, IdeaGateway gw, VirtualFile f) {
     this(p, gw, f, true);
@@ -59,15 +61,15 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected void addExtraToolbar(JPanel toolBarPanel) {
-    SearchTextArea comp = new SearchTextArea(new JTextArea(), true);
-    comp.getTextArea().getDocument().addDocumentListener(new DocumentAdapter() {
+    mySearchTextArea = new SearchTextArea(new JTextArea(), true);
+    mySearchTextArea.getTextArea().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        myRevisionsList.setFilterText(StringUtil.nullize(comp.getTextArea().getText()));
+        myRevisionsList.setFilterText(StringUtil.nullize(mySearchTextArea.getTextArea().getText()));
         updateEditorSearch();
       }
     });
-    toolBarPanel.add(comp, BorderLayout.CENTER);
+    toolBarPanel.add(mySearchTextArea, BorderLayout.CENTER);
   }
 
   @Override
@@ -83,7 +85,13 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     String filter = myRevisionsList.getFilterText();
     EditorSearchSession session = EditorSearchSession.get(editor);
     if (StringUtil.isEmpty(filter)) {
-      if (session != null) session.close();
+      if (session != null) {
+        boolean focused = mySearchTextArea.getTextArea().isFocusOwner();
+        session.close();
+        if (focused) {
+          IdeFocusManager.getInstance(myProject).requestFocus(mySearchTextArea.getTextArea(), false);
+        }
+      }
       return;
     }
     if (session == null) {
