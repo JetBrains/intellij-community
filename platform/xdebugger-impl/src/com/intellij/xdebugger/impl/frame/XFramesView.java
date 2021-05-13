@@ -314,6 +314,7 @@ public final class XFramesView extends XDebugView {
     final ActionToolbarImpl toolbar =
       (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, framesGroup, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setTargetComponent(myFramesList);
     return toolbar;
   }
 
