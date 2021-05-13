@@ -81,15 +81,15 @@ public class CommitCompletionContributor extends CompletionContributor {
           }
         }
       }
+    }
 
-      if (count > 0) {
-        result.caseInsensitive()
-          .withPrefixMatcher(new PlainPrefixMatcher(prefix))
-          .addAllElements(
-            StreamEx.of(VcsConfiguration.getInstance(project).getRecentMessages())
-              .reverseSorted()
-              .map(lookupString -> PrioritizedLookupElement.withPriority(LookupElementBuilder.create(lookupString), Integer.MIN_VALUE)));
-      }
+    if (count > 0) {
+      result.caseInsensitive()
+        .withPrefixMatcher(new PlainPrefixMatcher(prefix))
+        .addAllElements(
+          StreamEx.of(VcsConfiguration.getInstance(project).getRecentMessages())
+            .reverseSorted()
+            .map(lookupString -> PrioritizedLookupElement.withPriority(LookupElementBuilder.create(lookupString), Integer.MIN_VALUE)));
     }
   }
 
