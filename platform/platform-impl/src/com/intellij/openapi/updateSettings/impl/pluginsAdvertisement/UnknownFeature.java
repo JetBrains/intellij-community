@@ -40,8 +40,8 @@ public final class UnknownFeature {
     return myFeatureDisplayName;
   }
 
-  public @Nls @Nullable String getImplementationDisplayName() {
-    return myImplementationDisplayName;
+  public @Nls @NotNull String getImplementationDisplayName() {
+    return myImplementationDisplayName == null ? myImplementationName : myImplementationDisplayName;
   }
 
   public UnknownFeature withImplementationDisplayName(@NotNull @Nls String implementationDisplayName) {
