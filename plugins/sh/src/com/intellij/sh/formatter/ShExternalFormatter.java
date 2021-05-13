@@ -62,6 +62,11 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
   }
 
   @Override
+  protected @NotNull String getName() {
+    return message("sh.shell.script");
+  }
+
+  @Override
   protected @Nullable FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest request) {
     FormattingContext formattingContext = request.getContext();
     Project project = formattingContext.getProject();

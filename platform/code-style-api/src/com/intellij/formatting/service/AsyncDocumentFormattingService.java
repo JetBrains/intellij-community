@@ -1,15 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.service;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Extend this class if there is a long lasting formatting operation which may block EDT. The actual formatting code is placed then
@@ -35,6 +40,9 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   private final static Logger LOG = Logger.getInstance(AsyncDocumentFormattingService.class);
 
   private final List<AsyncFormattingRequest> myPendingRequests = Collections.synchronizedList(new ArrayList<>());
+
+  protected static final int DEFAULT_TIMEOUT = 30; // seconds
+  private static final int RETRY_PERIOD = 1000; // milliseconds
 
   @Override
   public final synchronized void formatDocument(@NotNull Document document,
@@ -55,10 +63,12 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     if (formattingTask != null) {
       formattingRequest.setTask(formattingTask);
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        runAsyncFormat(formattingRequest);
+        runAsyncFormat(formattingRequest, null);
       }
       else {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> runAsyncFormat(formattingRequest));
+        new FormattingProgressTask(formattingRequest)
+          .setCancelText(CodeStyleBundle.message("async.formatting.service.cancel", getName()))
+          .queue();
       }
     }
   }
@@ -70,10 +80,10 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
   }
 
-  private void runAsyncFormat(@NotNull FormattingRequestImpl formattingRequest) {
+  private void runAsyncFormat(@NotNull FormattingRequestImpl formattingRequest, @Nullable ProgressIndicator indicator) {
     myPendingRequests.add(formattingRequest);
     try {
-      formattingRequest.runTask();
+      formattingRequest.runTask(indicator);
     }
     finally {
       myPendingRequests.remove(formattingRequest);
@@ -104,6 +114,27 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
    */
   protected abstract @NotNull String getNotificationGroupId();
 
+  /**
+   * @return A name which can be used in UI, for example, in notification messages.
+   */
+  protected abstract @NotNull @NlsSafe String getName();
+
+  /**
+   * @return A number of seconds to wait for the service to respond (call either {@code onTextReady()} or {@code onError()}).
+   */
+  protected int getTimeout() {
+    return DEFAULT_TIMEOUT;
+  }
+
+  private enum FormattingRequestState {
+    NOT_STARTED,
+    RUNNING,
+    CANCELLING,
+    CANCELLED,
+    COMPLETED,
+    EXPIRED
+  }
+
   private class FormattingRequestImpl implements AsyncFormattingRequest {
     private final Document          myDocument;
     private final List<TextRange>   myRanges;
@@ -111,8 +142,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     private final FormattingContext myContext;
     private final boolean           myCanChangeWhitespaceOnly;
     private final boolean           myQuickFormat;
+    private final Semaphore         myTaskSemaphore = new Semaphore(1);
 
     private volatile @Nullable FormattingTask myTask;
+
+    private volatile FormattingRequestState myState = FormattingRequestState.NOT_STARTED;
 
     private FormattingRequestImpl(@NotNull FormattingContext formattingContext,
                                   @NotNull Document document,
@@ -133,9 +167,14 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     private boolean cancel() {
-      FormattingTask runnable = myTask;
-      if (runnable != null) {
-        return runnable.cancel();
+      FormattingTask formattingTask = myTask;
+      if (formattingTask != null && myState == FormattingRequestState.RUNNING) {
+        myState = FormattingRequestState.CANCELLING;
+        if (formattingTask.cancel()) {
+          myState = FormattingRequestState.CANCELLED;
+          myTaskSemaphore.release();
+          return true;
+        }
       }
       return false;
     }
@@ -163,8 +202,34 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       myTask = formattingTask;
     }
 
-    private void runTask() {
-      ObjectUtils.consumeIfNotNull(myTask, Runnable::run);
+    private void runTask(@Nullable ProgressIndicator indicator) {
+      FormattingTask task = myTask;
+      if (task != null) {
+        try {
+          myTaskSemaphore.acquire();
+          myState = FormattingRequestState.RUNNING;
+          task.run();
+          long waitTime = 0;
+          while (waitTime < getTimeout() * 1000L) {
+            if (myTaskSemaphore.tryAcquire(RETRY_PERIOD, TimeUnit.MILLISECONDS)) {
+              myState = FormattingRequestState.COMPLETED;
+              myTaskSemaphore.release();
+              break;
+            }
+            if (indicator != null) indicator.checkCanceled();
+            waitTime += RETRY_PERIOD;
+          }
+          if (!myState.equals(FormattingRequestState.COMPLETED)) {
+            myState = FormattingRequestState.EXPIRED;
+            FormattingNotificationService.getInstance(myContext.getProject()).reportError(
+              getNotificationGroupId(), getName(),
+              CodeStyleBundle.message("async.formatting.service.timeout", getName(), Integer.toString(getTimeout())));
+          }
+        }
+        catch (InterruptedException ie) {
+          LOG.warn("Interrupted formatting thread.");
+        }
+      }
     }
 
     @Override
@@ -174,6 +239,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
     @Override
     public void onTextReady(@NotNull final String updatedText) {
+      if (!myState.equals(FormattingRequestState.RUNNING)) return;
+      myTaskSemaphore.release();
       ApplicationManager.getApplication().invokeLater(() ->{
         CommandProcessor.getInstance().runUndoTransparentAction(() -> {
           try {
@@ -195,6 +262,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
     @Override
     public void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
+      if (!myState.equals(FormattingRequestState.RUNNING)) return;
+      myTaskSemaphore.release();
       FormattingNotificationService.getInstance(myContext.getProject()).reportError(getNotificationGroupId(), title, message);
     }
   }
@@ -206,5 +275,27 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
      * @return {@code true} if the runnable has been successfully cancelled, {@code false} otherwise.
      */
     boolean cancel();
+  }
+
+  private class FormattingProgressTask extends Task.Backgroundable {
+    private final FormattingRequestImpl myRequest;
+
+    private FormattingProgressTask(@NotNull FormattingRequestImpl request) {
+      super(request.getContext().getProject(), CodeStyleBundle.message("async.formatting.service.running", getName()), true);
+      myRequest = request;
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(false);
+      indicator.setFraction(0.0);
+      runAsyncFormat(myRequest, indicator);
+      indicator.setFraction(1.0);
+    }
+
+    @Override
+    public void onCancel() {
+      myRequest.cancel();
+    }
   }
 }
