@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
@@ -32,13 +33,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.stream.Collectors
 
 @ApiStatus.Internal
 class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable) : Disposable, WorkspaceModelCache {
   private val cacheFile: Path
   private val invalidateProjectCacheMarkerFile: File
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
+  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
 
   init {
     Disposer.register(parentDisposable, this)
@@ -204,6 +206,14 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
       catch (t: Throwable) {
         LOG.warn("Cannot update the invalidation marker file", t)
       }
+    }
+
+    private val WORKSPACE_MODEL_CACHE_VERSION_EP = ExtensionPointName.create<WorkspaceModelCacheVersion>("com.intellij.workspaceModel.cache.version")
+
+    fun collectExternalCacheVersions(): Map<String, String> {
+      return WORKSPACE_MODEL_CACHE_VERSION_EP
+        .extensions()
+        .collect(Collectors.toMap(WorkspaceModelCacheVersion::getId, WorkspaceModelCacheVersion::getVersion))
     }
   }
 }

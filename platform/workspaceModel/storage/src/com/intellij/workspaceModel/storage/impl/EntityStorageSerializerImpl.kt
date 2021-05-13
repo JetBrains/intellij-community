@@ -40,9 +40,10 @@ private val LOG = logger<EntityStorageSerializerImpl>()
 class EntityStorageSerializerImpl(
   private val typesResolver: EntityTypesResolver,
   private val virtualFileManager: VirtualFileUrlManager,
+  private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v17"
+    const val SERIALIZER_VERSION = "v18"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -326,6 +327,8 @@ class EntityStorageSerializerImpl(
       // Save version
       output.writeString(serializerDataFormatVersion)
 
+      saveContributedVersions(kryo, output)
+
       val entityDataSequence = storage.entitiesByType.entityFamilies.filterNotNull().asSequence().flatMap { family ->
         family.entities.asSequence().filterNotNull()
       }
@@ -373,6 +376,7 @@ class EntityStorageSerializerImpl(
 
       // Save version
       output.writeString(serializerDataFormatVersion)
+      saveContributedVersions(kryo, output)
 
       val entityDataSequence = log.changeLog.values.mapNotNull {
         when (it) {
@@ -401,6 +405,7 @@ class EntityStorageSerializerImpl(
 
       // Save version
       output.writeString(serializerDataFormatVersion)
+      saveContributedVersions(kryo, output)
 
       val mapData = converterMap.map { (key, value) -> TypeInfo(key.name, typesResolver.getPluginId(key)) to value }
 
@@ -445,6 +450,8 @@ class EntityStorageSerializerImpl(
           return null
         }
 
+        if (!checkContributedVersion(kryo, input)) return null
+
         readAndRegisterClasses(input, kryo)
 
         // Read and register persistent ids
@@ -486,6 +493,34 @@ class EntityStorageSerializerImpl(
     }
   }
 
+  private fun checkContributedVersion(kryo: Kryo, input: Input): Boolean {
+    @Suppress("UNCHECKED_CAST")
+    val cacheContributedVersions = kryo.readClassAndObject(input) as Map<String, String>
+    val currentContributedVersions = versionsContributor()
+    for ((id, version) in cacheContributedVersions) {
+      // Cache is invalid in case:
+      // - current version != cache version
+      // cache version is missing in current version
+      //
+      // If some version that currently exists but missing in cache, cache is not treated as invalid
+      val currentVersion = currentContributedVersions[id] ?: run {
+        LOG.info("Cache isn't loaded. Cache id '$id' is missing in current state")
+        return false
+      }
+      if (currentVersion != version) {
+        LOG.info("Cache isn't loaded. For cache id '$id' cache version is '$version' and current versioni is '$currentVersion'")
+        return false
+      }
+    }
+    return true
+  }
+
+  private fun saveContributedVersions(kryo: Kryo, output: Output) {
+    // Save contributed versions
+    val versions = versionsContributor()
+    kryo.writeClassAndObject(output, versions)
+  }
+
   private fun readAndRegisterClasses(input: Input, kryo: Kryo) {
     // Read and register all kotlin objects
     val objectCount = input.readVarInt(true)
@@ -516,6 +551,8 @@ class EntityStorageSerializerImpl(
         return null
       }
 
+      if (!checkContributedVersion(kryo, input)) return null
+
       readAndRegisterClasses(input, kryo)
 
       log = kryo.readClassAndObject(input) as ChangeLog
@@ -538,6 +575,8 @@ class EntityStorageSerializerImpl(
         LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
         return
       }
+
+      if (!checkContributedVersion(kryo, input)) return
 
       val classes = kryo.readClassAndObject(input) as List<Pair<TypeInfo, Int>>
       val map = classes.map { (first, second) -> typesResolver.resolveClass(first.name, first.pluginId) to second }.toMap()

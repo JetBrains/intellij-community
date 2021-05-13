@@ -13,6 +13,9 @@
     <extensionPoint name="workspaceModel.preUpdateHandler"
                     interface="com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler"
                     dynamic="true"/>
+    <extensionPoint name="workspaceModel.cache.version"
+                    interface="com.intellij.workspaceModel.ide.WorkspaceModelCacheVersion"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="ide.old.project.model" defaultValue="false" restartRequired="true"
