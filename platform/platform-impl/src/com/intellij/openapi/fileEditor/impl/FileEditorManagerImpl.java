@@ -1049,21 +1049,29 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     window.getOwner().afterFileOpen(file);
     addSelectionRecord(file, window);
 
-    composite.getSelectedEditor().selectNotify();
+    FileEditor selectedEditor = composite.getSelectedEditor();
+    selectedEditor.selectNotify();
 
     // transfer focus into editor
     if (!ApplicationManager.getApplication().isUnitTestMode() && options.isFocusEditor()) {
-      //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
-      window.setAsCurrentWindow(true);
-      Window windowAncestor = SwingUtilities.getWindowAncestor(window.myPanel);
-      if (windowAncestor != null &&
-          windowAncestor.equals(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow())) {
-        JComponent component = composite.getPreferredFocusedComponent();
-        if (component != null) {
-          component.requestFocus();
+      Runnable focusRunnable = () -> {
+        window.setAsCurrentWindow(true);
+        Window windowAncestor = SwingUtilities.getWindowAncestor(window.myPanel);
+        if (windowAncestor != null &&
+            windowAncestor.equals(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow())) {
+          JComponent component = composite.getPreferredFocusedComponent();
+          if (component != null) {
+            component.requestFocus();
+          }
         }
+        IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
+      };
+      if (selectedEditor instanceof TextEditor) {
+        runWhenLoaded(((TextEditor)selectedEditor).getEditor(), focusRunnable);
       }
-      IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
+      else {
+        focusRunnable.run();
+      }
     }
 
     if (newEditor) {
