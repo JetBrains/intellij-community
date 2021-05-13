@@ -52,6 +52,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
   @NonNls private static final String DESCRIPTION = ".description";
+  @NonNls private static final String TRAILING_LABEL = ".trailingLabel";
   @NonNls private static final String ADVANCED_SETTING = "advanced.setting.";
   @NonNls public static final String BUNDLE_PROPERTIES = "Bundle.properties";
 
@@ -122,7 +123,9 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
         private PsiReference createAdvancedSettingReference(@NotNull PsiElement element, String text) {
           if (!isAdvancedSettingKey(text)) return null;
 
-          String id = StringUtil.trimEnd(StringUtil.notNullize(StringUtil.substringAfter(text, ADVANCED_SETTING)), DESCRIPTION);
+          String s = StringUtil.notNullize(StringUtil.substringAfter(text, ADVANCED_SETTING));
+          String id = s.endsWith(DESCRIPTION) ? StringUtil.trimEnd(s, DESCRIPTION) :
+                      (s.endsWith(TRAILING_LABEL) ? StringUtil.trimEnd(s, TRAILING_LABEL) : s);
           return new AdvancedSettingReference(element, id);
         }
       });
