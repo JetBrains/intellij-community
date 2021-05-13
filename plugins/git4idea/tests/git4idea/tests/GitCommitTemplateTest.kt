@@ -155,6 +155,22 @@ class GitCommitTemplateTest : GitPlatformTest() {
     assertTrue("Commit template exist for $repository", !commitTemplateTracker.exists(repository))
   }
 
+  fun `test commit template with empty or blank content`() {
+    val repository = createRepository(projectPath)
+
+    setupCommitTemplate(repository, "template.txt", "", true)
+    assertCommitTemplateNotExists(repository)
+
+    setupCommitTemplate(repository, "template2.txt", "  ", true)
+    assertCommitTemplateNotExists(repository)
+
+    setupCommitTemplate(repository, "template3.txt",
+                        """
+                          
+                        """.trimIndent(), true)
+    assertCommitTemplateNotExists(repository)
+  }
+
   private fun setupCommitTemplate(repository: GitRepository,
                                   templateFileName: String,
                                   templateContent: String,
@@ -176,11 +192,17 @@ class GitCommitTemplateTest : GitPlatformTest() {
     return commitTemplate
   }
 
-  private fun assertCommitTemplate(repository: GitRepository, expectedTemplateContent: String) {
+  private fun assertCommitTemplate(repository: GitRepository, expectedTemplateContent: String?) {
     val commitTemplateTracker = project.service<GitCommitTemplateTracker>()
     assertTrue("Commit template doesn't exist for $repository", commitTemplateTracker.exists(repository))
     assertEquals("Commit template content doesn't match $repository", expectedTemplateContent,
                  commitTemplateTracker.getTemplateContent(repository))
+  }
+
+  private fun assertCommitTemplateNotExists(repository: GitRepository) {
+    val commitTemplateTracker = project.service<GitCommitTemplateTracker>()
+    assertTrue("Commit template exist for $repository", !commitTemplateTracker.exists(repository))
+    assertEquals("Commit template content doesn't match $repository", null, commitTemplateTracker.getTemplateContent(repository))
   }
 
   private fun File.refresh() {
