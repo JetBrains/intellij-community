@@ -28,7 +28,11 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.isFlexible
 
 @Suppress("DEPRECATION")
-class SimplifyBooleanWithConstantsInspection : IntentionBasedInspection<KtBinaryExpression>(SimplifyBooleanWithConstantsIntention::class)
+class SimplifyBooleanWithConstantsInspection : IntentionBasedInspection<KtBinaryExpression>(SimplifyBooleanWithConstantsIntention::class) {
+    override fun inspectionProblemText(element: KtBinaryExpression): String {
+        return KotlinBundle.message("inspection.simplify.boolean.with.constants.display.name")
+    }
+}
 
 class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
