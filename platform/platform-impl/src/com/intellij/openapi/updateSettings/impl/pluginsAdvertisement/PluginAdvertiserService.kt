@@ -129,15 +129,7 @@ open class PluginAdvertiserService {
           plugins,
           disabledPlugins.values,
           features,
-        ) to listOf(
-          action,
-          NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.unknown.features")) {
-            FUSEventSource.NOTIFICATION.logIgnoreUnknownFeatures(project)
-
-            val collector = UnknownFeaturesCollector.getInstance(project)
-            unknownFeatures.forEach { collector.ignoreFeature(it) }
-          },
-        )
+        ) to listOf(action, createIgnoreUnknownFeaturesNotification(project, plugins, disabledPlugins.values, unknownFeatures))
       }
       else if (bundledPlugin.isNotEmpty()
                && !isIgnoreUltimate) {
@@ -160,6 +152,23 @@ open class PluginAdvertiserService {
       notificationGroup.createNotification(notificationMessage, NotificationType.INFORMATION)
         .addActions(notificationActions as Collection<AnAction>)
         .notify(project)
+    }
+  }
+
+  private fun createIgnoreUnknownFeaturesNotification(project: Project,
+                                                      plugins: Collection<PluginDownloader>,
+                                                      disabledPlugins: Collection<IdeaPluginDescriptor>,
+                                                      unknownFeatures: Collection<UnknownFeature>): NotificationAction {
+    val ids = plugins.mapTo(LinkedHashSet()) { it.id } +
+              disabledPlugins.map { it.pluginId }
+
+    val message = IdeBundle.message("plugins.advertiser.action.ignore.unknown.features", ids.size)
+
+    return NotificationAction.createSimpleExpiring(message) {
+      FUSEventSource.NOTIFICATION.logIgnoreUnknownFeatures(project)
+
+      val collector = UnknownFeaturesCollector.getInstance(project)
+      unknownFeatures.forEach { collector.ignoreFeature(it) }
     }
   }
 
