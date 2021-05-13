@@ -52,8 +52,13 @@ internal class UISettings {
   val completedColor = JBColor(0x368746, 0x50A661)
   val activeTaskBorder: Color = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR
 
+  val tooltipBackgroundColor: Color = JBColor(0x1071E8, 0x0E62CF)
+  val tooltipTextColor: Color = Color(0xF5F5F5)
+  val tooltipCodeBackgroundColor: Color = JBColor(0x0D5CBD, 0x0250B0)
+
   val futureTaskNumberColor: Color = JBColor(0xDEDEDE, 0x777777)
   val activeTaskNumberColor: Color = JBColor(0x808080, 0xFEFEFE)
+  val tooltipTaskNumber: Color = JBColor(0x6CA6ED, 0x6A9DDE)
 
   //BORDERS
   val emptyBorder: Border

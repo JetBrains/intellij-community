@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -29,6 +28,22 @@ import javax.swing.text.StyleConstants
 import kotlin.math.roundToInt
 
 internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
+  //Style Attributes for LessonMessagePane(JTextPane)
+  private val INACTIVE = SimpleAttributeSet()
+  private val REGULAR = SimpleAttributeSet()
+  private val BOLD = SimpleAttributeSet()
+  private val SHORTCUT = SimpleAttributeSet()
+  private val ROBOTO = SimpleAttributeSet()
+  private val CODE = SimpleAttributeSet()
+  private val LINK = SimpleAttributeSet()
+
+  private val TASK_PARAGRAPH_STYLE = SimpleAttributeSet()
+  private val INTERNAL_PARAGRAPH_STYLE = SimpleAttributeSet()
+  private val BALLOON_STYLE = SimpleAttributeSet()
+
+  private val textColor: Color = if (panelMode) UISettings.instance.defaultTextColor else UISettings.instance.tooltipTextColor
+  private val codeForegroundColor: Color = if (panelMode) UISettings.instance.codeForegroundColor else UISettings.instance.tooltipTextColor
+
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
   data class MessageProperties(val state: MessageState = MessageState.NORMAL, val visualIndex: Int? = null)
@@ -121,24 +136,19 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
     StyleConstants.setFontFamily(REGULAR, fontFamily)
     StyleConstants.setFontSize(REGULAR, fontSize)
-    StyleConstants.setForeground(REGULAR, JBColor.BLACK)
 
     StyleConstants.setFontFamily(BOLD, fontFamily)
     StyleConstants.setFontSize(BOLD, fontSize)
     StyleConstants.setBold(BOLD, true)
-    StyleConstants.setForeground(BOLD, JBColor.BLACK)
 
     StyleConstants.setFontFamily(SHORTCUT, fontFamily)
     StyleConstants.setFontSize(SHORTCUT, fontSize)
     StyleConstants.setBold(SHORTCUT, true)
-    StyleConstants.setForeground(SHORTCUT, JBColor.BLACK)
 
-    StyleConstants.setForeground(CODE, UISettings.instance.codeForegroundColor)
     EditorColorsManager.getInstance().globalScheme.editorFontName
     StyleConstants.setFontFamily(CODE, EditorColorsManager.getInstance().globalScheme.editorFontName)
     StyleConstants.setFontSize(CODE, fontSize)
 
-    StyleConstants.setForeground(LINK, JBColor.BLUE)
     StyleConstants.setFontFamily(LINK, fontFamily)
     StyleConstants.setUnderline(LINK, true)
     StyleConstants.setFontSize(LINK, fontSize)
@@ -156,13 +166,13 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setLineSpacing(INTERNAL_PARAGRAPH_STYLE, 0.2f)
 
     StyleConstants.setLineSpacing(BALLOON_STYLE, 0.2f)
+    StyleConstants.setLeftIndent(BALLOON_STYLE, UISettings.instance.checkIndent.toFloat())
 
-    StyleConstants.setForeground(REGULAR, UISettings.instance.defaultTextColor)
-    StyleConstants.setForeground(BOLD, UISettings.instance.defaultTextColor)
+    StyleConstants.setForeground(REGULAR, textColor)
+    StyleConstants.setForeground(BOLD, textColor)
     StyleConstants.setForeground(SHORTCUT, UISettings.instance.shortcutTextColor)
     StyleConstants.setForeground(LINK, UISettings.instance.lessonLinkColor)
-    StyleConstants.setForeground(CODE, UISettings.instance.codeForegroundColor)
-
+    StyleConstants.setForeground(CODE, codeForegroundColor)
   }
 
   fun messagesNumber(): Int = activeMessages.size
@@ -392,9 +402,12 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     for (lessonMessage in inactiveMessages) {
       paintNumber(lessonMessage, UISettings.instance.futureTaskNumberColor)
     }
-    if (activeMessages.lastOrNull()?.state != MessageState.PASSED) { // lesson can be opened as passed
+    if (activeMessages.lastOrNull()?.state != MessageState.PASSED || panelMode == false) { // lesson can be opened as passed
       val firstActiveMessage = firstActiveMessage()
-      if (firstActiveMessage != null) paintNumber(firstActiveMessage, UISettings.instance.activeTaskNumberColor)
+      if (firstActiveMessage != null) {
+        val color = if (panelMode) UISettings.instance.activeTaskNumberColor else UISettings.instance.tooltipTaskNumber
+        paintNumber(firstActiveMessage, color)
+      }
     }
     g.font = oldFont
   }
@@ -458,8 +471,14 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
             }
           }
           MessagePart.MessageType.CODE -> {
-            drawRectangleAroundText(myMessage, g2d, UISettings.instance.codeBorderColor) { r2d ->
-              g2d.draw(r2d)
+            val needColor = if (panelMode) UISettings.instance.codeBorderColor else UISettings.instance.tooltipCodeBackgroundColor
+            drawRectangleAroundText(myMessage, g2d, needColor) { r2d ->
+              if (panelMode) {
+                g2d.draw(r2d)
+              }
+              else {
+                g2d.fill(r2d)
+              }
             }
           }
           MessagePart.MessageType.ICON_IDX -> {
@@ -534,19 +553,6 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
   companion object {
     private val LOG = Logger.getInstance(LessonMessagePane::class.java)
-
-    //Style Attributes for LessonMessagePane(JTextPane)
-    private val INACTIVE = SimpleAttributeSet()
-    private val REGULAR = SimpleAttributeSet()
-    private val BOLD = SimpleAttributeSet()
-    private val SHORTCUT = SimpleAttributeSet()
-    private val ROBOTO = SimpleAttributeSet()
-    private val CODE = SimpleAttributeSet()
-    private val LINK = SimpleAttributeSet()
-
-    private val TASK_PARAGRAPH_STYLE = SimpleAttributeSet()
-    private val INTERNAL_PARAGRAPH_STYLE = SimpleAttributeSet()
-    private val BALLOON_STYLE = SimpleAttributeSet()
 
     //arc & indent for shortcut back plate
     private val arc by lazy { JBUI.scale(4) }

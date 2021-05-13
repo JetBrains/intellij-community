@@ -71,6 +71,8 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
 
   private val parentDisposable: Disposable = LearnToolWindowFactory.learnWindowPerProject[project]?.parentDisposable ?: project
 
+  internal val visualIndexNumber: Int get() = taskActions[currentTaskIndex].taskVisualIndex ?: 0
+
   // Is used from ui detection pooled thread
   @Volatile
   var hasBeenStopped = false

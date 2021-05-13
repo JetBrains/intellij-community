@@ -25,7 +25,6 @@ import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.*
-import javax.swing.border.EmptyBorder
 
 internal data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
 
@@ -43,21 +42,25 @@ internal object LessonExecutorUtil {
     return fakeTaskContext.messages
   }
 
-  fun showBalloonMessage(text: String, ui: JComponent, balloonConfig: LearningBalloonConfig, actionsRecorder: ActionsRecorder, project: Project) {
+  fun showBalloonMessage(text: String,
+                         ui: JComponent,
+                         balloonConfig: LearningBalloonConfig,
+                         actionsRecorder: ActionsRecorder,
+                         project: Project,
+                         visualIndexNumber: Int) {
     val messages = MessageFactory.convert(text)
     val messagesPane = LessonMessagePane(false)
     messagesPane.setBounds(0, 0, balloonConfig.width.takeIf { it != 0 } ?: 500, 1000)
     messagesPane.isOpaque = false
-    messagesPane.addMessage(messages)
+    messagesPane.addMessage(messages, LessonMessagePane.MessageProperties(visualIndex = visualIndexNumber))
 
     val preferredSize = messagesPane.preferredSize
 
     val balloonPanel = JPanel()
-    balloonPanel.border = EmptyBorder(8, 8, 8, 8)
     balloonPanel.isOpaque = false
     balloonPanel.layout = BoxLayout(balloonPanel, BoxLayout.Y_AXIS)
-    var height = preferredSize.height + 16
-    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + 6)) + 16
+    var height = preferredSize.height
+    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + 6))
     balloonPanel.add(messagesPane)
     val gotItCallBack = balloonConfig.gotItCallBack
     val gotItButton = if (gotItCallBack != null) JButton().also {
@@ -82,8 +85,8 @@ internal object LessonExecutorUtil {
       .setHideOnAction(false)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
-      .setFillColor(UISettings.instance.backgroundColor)
-      .setBorderColor(UISettings.instance.activeTaskBorder)
+      .setFillColor(UISettings.instance.tooltipBackgroundColor)
+      .setBorderColor(UISettings.instance.tooltipBackgroundColor)
       .setHideOnCloseClick(false)
       .setDisposable(actionsRecorder)
       .createBalloon()
@@ -94,7 +97,7 @@ internal object LessonExecutorUtil {
         val checkStopLesson = {
           invokeLater {
             if (!actionsRecorder.disposed)
-              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project)
+              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project, visualIndexNumber)
           }
         }
         Alarm().addRequest(checkStopLesson, 500) // it is a hacky a little bit
