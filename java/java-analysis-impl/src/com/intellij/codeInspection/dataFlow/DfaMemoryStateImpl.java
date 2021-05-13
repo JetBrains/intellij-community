@@ -2,14 +2,16 @@
 
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.memory.EqClass;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfEphemeralType;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1628,34 +1630,23 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     private @NotNull QualifierStatus calculate(@NotNull DfaValue qualifier) {
-      final DfReferenceType dfType = ObjectUtils.tryCast(getDfType(qualifier), DfReferenceType.class);
-      if (dfType == null) return QualifierStatus.SHOULD_FLUSH_ALWAYS;
-      if (dfType.getMutability() == Mutability.UNMODIFIABLE) return QualifierStatus.SHOULD_NOT_FLUSH;
+      final DfType dfType = getDfType(qualifier);
       if (dfType.isLocal()) {
         return myQualifiersToFlush != null && myQualifiersToFlush.contains(qualifier) ?
                QualifierStatus.SHOULD_FLUSH_ALWAYS : QualifierStatus.SHOULD_NOT_FLUSH;
       }
+      if (Mutability.fromDfType(dfType) == Mutability.UNMODIFIABLE) return QualifierStatus.SHOULD_NOT_FLUSH;
       if (myQualifiersToFlush == null) return QualifierStatus.SHOULD_FLUSH_ALWAYS;
       boolean flushCalls = false;
       for (final DfaValue qualifierToFlush : myQualifiersToFlush) {
         final RelationType relation = getRelation(qualifier, qualifierToFlush);
         if (relation == RelationType.EQ) return QualifierStatus.SHOULD_FLUSH_ALWAYS;
         final DfType typeToFlush = getDfType(qualifierToFlush);
-        if (!(typeToFlush instanceof DfReferenceType)) continue;
-        if (((DfReferenceType)typeToFlush).isLocal()) continue;
+        if (typeToFlush.isLocal()) continue;
         // Calls may refer to changed object indirectly (unless it's local)
         flushCalls = true;
         if (relation != null) continue;
-        if (typeToFlush.meet(dfType) != DfType.BOTTOM) {
-          // possible aliasing
-          return QualifierStatus.SHOULD_FLUSH_ALWAYS;
-        }
-        if (SpecialField.fromQualifierType(typeToFlush) == SpecialField.COLLECTION_SIZE &&
-            SpecialField.fromQualifierType(dfType) == SpecialField.COLLECTION_SIZE) {
-          // Collection size is sometimes derived from another (incompatible) collection
-          // e.g. keySet Set size is affected by Map size.
-          return QualifierStatus.SHOULD_FLUSH_ALWAYS;
-        }
+        if (dfType.mayAlias(typeToFlush)) return QualifierStatus.SHOULD_FLUSH_ALWAYS;
       }
       return flushCalls ? QualifierStatus.SHOULD_FLUSH_CALLS : QualifierStatus.SHOULD_NOT_FLUSH;
     }

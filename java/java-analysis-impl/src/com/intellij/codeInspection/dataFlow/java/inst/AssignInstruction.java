@@ -108,7 +108,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
       PsiElement psi = var.getPsiVariable();
       if (dfaSource instanceof DfaTypeValue &&
           ((psi instanceof PsiField && ((PsiField)psi).hasModifierProperty(PsiModifier.STATIC)) ||
-           (var.getQualifier() != null && !DfReferenceType.isLocal(stateBefore.getDfType(var.getQualifier()))))) {
+           (var.getQualifier() != null && !stateBefore.getDfType(var.getQualifier()).isLocal()))) {
         DfType dfType = dfaSource.getDfType();
         if (dfType instanceof DfReferenceType) {
           dfaSource = dfaSource.getFactory().fromDfType(((DfReferenceType)dfType).dropLocality());
