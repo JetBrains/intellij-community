@@ -39,14 +39,14 @@ open class PluginAdvertiserService {
       ProgressManager.checkCanceled()
       val featureType = feature.featureType
       val implementationName = feature.implementationName
-      val installedPluginData = PluginFeatureService.instance
-        .getPluginForFeature(featureType, implementationName)
-        ?.pluginData
+      val featurePluginData = PluginFeatureService.instance.getPluginForFeature(featureType, implementationName)
+
+      val installedPluginData = featurePluginData?.pluginData
 
       fun putFeature(data: PluginData) {
         val id = data.pluginId
         ids[id] = data
-        features.putValue(id, feature)
+        features.putValue(id, featurePluginData?.displayName?.let { feature.withImplementationDisplayName(it) } ?: feature)
       }
 
       if (installedPluginData != null) {

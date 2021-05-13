@@ -63,8 +63,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
       dependencyCollector.collectDependencies(project).map { coordinate ->
         UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
                        IdeBundle.message("plugins.advertiser.feature.dependency"),
-                       dependencyCollector.dependencyKind + ":" + coordinate,
-                       coordinate)
+                       dependencyCollector.dependencyKind + ":" + coordinate, null)
       }
     }
   }
