@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -15,8 +16,10 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinConverter.convertDeclarationOrElement
 
-interface FirKotlinUastResolveProviderService {
-    fun isJvmElement(psiElement: PsiElement): Boolean
+interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
+    override fun convertParent(uElement: UElement): UElement? {
+        TODO("Not yet implemented")
+    }
 }
 
 class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
@@ -30,7 +33,10 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     }
 
     private val PsiElement.isJvmElement: Boolean
-        get() = service.isJvmElement(this)
+        get() {
+            val resolveProvider = ServiceManager.getService(project, FirKotlinUastResolveProviderService::class.java)
+            return resolveProvider.isJvmElement(this)
+        }
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
         if (!element.isJvmElement) return null
