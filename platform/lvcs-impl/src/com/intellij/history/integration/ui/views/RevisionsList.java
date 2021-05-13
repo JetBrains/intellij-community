@@ -158,7 +158,37 @@ public final class RevisionsList {
 
   public void setFilterText(@Nullable String filter) {
     filterText = filter;
+    List<Object> sel = storeSelection();
     getFilteringModel().refilter();
+    restoreSelection(sel);
+  }
+
+  private void restoreSelection(List<Object> sel) {
+    ListSelectionModel sm = table.getSelectionModel();
+    sm.clearSelection();
+    for (Object o : sel) {
+      int idx = -1;
+      for (int i = 0, e = table.getModel().getRowCount(); i < e; ++i) {
+        if (table.getModel().getValueAt(i, 0) == o) {
+          idx = i;
+          break;
+        }
+      }
+      sm.addSelectionInterval(idx, idx);
+    }
+    if (sm.isSelectionEmpty()) sm.setSelectionInterval(0, 0);
+    sm.setValueIsAdjusting(false);
+  }
+
+  @NotNull
+  private List<Object> storeSelection() {
+    ListSelectionModel sm = table.getSelectionModel();
+    sm.setValueIsAdjusting(true);
+    List<Object> sel = new ArrayList<>();
+    for (int index : sm.getSelectedIndices()) {
+      sel.add(table.getModel().getValueAt(index, 0));
+    }
+    return sel;
   }
 
   private FilteringTableModel<?> getFilteringModel() {

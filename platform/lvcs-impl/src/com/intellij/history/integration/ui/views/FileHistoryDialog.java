@@ -4,6 +4,7 @@ package com.intellij.history.integration.ui.views;
 
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestPanel;
+import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.find.EditorSearchSession;
@@ -14,6 +15,7 @@ import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
@@ -66,6 +68,13 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
       }
     });
     toolBarPanel.add(comp, BorderLayout.CENTER);
+  }
+
+  @Override
+  protected ContentDiffRequest createDifference(FileDifferenceModel m) {
+    ContentDiffRequest request = super.createDifference(m);
+    ApplicationManager.getApplication().invokeLater(this::updateEditorSearch, ModalityState.stateForComponent(myRevisionsList.getComponent()));
+    return request;
   }
 
   private void updateEditorSearch() {
