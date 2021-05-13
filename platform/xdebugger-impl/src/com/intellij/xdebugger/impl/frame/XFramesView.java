@@ -90,8 +90,8 @@ public final class XFramesView extends XDebugView {
     };
     myFramesList = new XDebuggerFramesList(project) {
       @Override
-      protected @NotNull Navigatable getSelectedFrameNavigatable(boolean canFocusEditor) {
-        Navigatable navigatable = super.getSelectedFrameNavigatable(canFocusEditor);
+      protected @NotNull Navigatable getSelectedFrameNavigatable() {
+        Navigatable navigatable = super.getSelectedFrameNavigatable();
         return new NavigatableAdapter() {
           @Override
           public void navigate(boolean requestFocus) {

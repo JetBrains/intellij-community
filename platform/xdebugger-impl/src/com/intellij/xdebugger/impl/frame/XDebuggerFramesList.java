@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -9,6 +10,7 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
@@ -102,7 +104,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         }
       }
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        return getFrameNavigatable(frame, true);
+        return getFrameNavigatable(frame);
       }
     }
     if (FRAMES_LIST.is(dataId)) {
@@ -155,16 +157,19 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   }
 
   @Override
-  protected @Nullable Navigatable getSelectedFrameNavigatable(boolean canFocusEditor) {
+  protected @Nullable Navigatable getSelectedFrameNavigatable() {
     XStackFrame frame = getSelectedFrame();
-    return frame != null ? getFrameNavigatable(frame, canFocusEditor) : null;
+    Navigatable navigatable = frame != null ? getFrameNavigatable(frame) : null;
+    return navigatable != null ? keepFocus(navigatable) : null;
   }
 
-  private @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame, boolean canFocusEditor) {
-    XSourcePosition position = frame.getSourcePosition();
-    Navigatable navigatable = position != null ? position.createNavigatable(myProject) : null;
-    if (canFocusEditor || navigatable == null) return navigatable;
-    return new Navigatable() {
+  /**
+   * Forbids focus requests unless the editor area is already focused.
+   */
+  private @NotNull Navigatable keepFocus(@NotNull Navigatable navigatable) {
+    Component editorAreaComponent = FileEditorManagerEx.getInstanceEx(myProject).getComponent();
+    boolean isEditorAreaFocused = IdeFocusManager.getInstance(myProject).getFocusedDescendantFor(editorAreaComponent) != null;
+    return isEditorAreaFocused ? navigatable : new Navigatable() {
       @Override
       public void navigate(boolean requestFocus) {
         navigatable.navigate(false);
@@ -176,6 +181,11 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       @Override
       public boolean canNavigateToSource() { return navigatable.canNavigateToSource(); }
     };
+  }
+
+  private @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
+    XSourcePosition position = frame.getSourcePosition();
+    return position != null ? position.createNavigatable(myProject) : null;
   }
 
   @Nullable

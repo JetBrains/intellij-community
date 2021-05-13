@@ -57,16 +57,16 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
   @Override
   public OccurenceInfo goNextOccurence() {
     setSelectedIndex(getSelectedIndex() + 1);
-    return new OccurenceInfo(getSelectedFrameNavigatable(false), -1, -1);
+    return new OccurenceInfo(getSelectedFrameNavigatable(), -1, -1);
   }
 
   @Override
   public OccurenceInfo goPreviousOccurence() {
     setSelectedIndex(getSelectedIndex() - 1);
-    return new OccurenceInfo(getSelectedFrameNavigatable(false), -1, -1);
+    return new OccurenceInfo(getSelectedFrameNavigatable(), -1, -1);
   }
 
-  protected @Nullable Navigatable getSelectedFrameNavigatable(boolean canFocusEditor) {
+  protected @Nullable Navigatable getSelectedFrameNavigatable() {
     return null;
   }
 
