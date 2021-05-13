@@ -1,5 +1,15 @@
 <html>
 <body>
-This inspection detects a redundant receiver-based <b>let</b> call.
+Reports a redundant receiver-based <code>let</code> call.
+<p>The quick-fix removes the redundant <code>let</code> call.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun test(s: String?): Int? = s?.let { it.length }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test(s: String?): Int? = s?.length
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>
