@@ -43,6 +43,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -444,9 +445,8 @@ public class GradleExecutionHelper {
       environmentConfigurationProvider != null ? environmentConfigurationProvider.getEnvironmentConfiguration() : null;
     if (environmentConfiguration != null && !LOCAL_TARGET_TYPE_ID.equals(environmentConfiguration.getTypeId())) {
       if (settings.isPassParentEnvs()) {
-        String ignoreHostEnvsForTargetRunWarningMessage = "Host system environment variables will not be passed for the target run.\n";
-        LOG.warn(ignoreHostEnvsForTargetRunWarningMessage);
-        listener.onTaskOutput(taskId, ignoreHostEnvsForTargetRunWarningMessage, false);
+        LOG.warn("Host system environment variables will not be passed for the target run.");
+        listener.onTaskOutput(taskId, GradleBundle.message("gradle.target.execution.pass.parent.envs.warning") + "\n", false);
       }
       operation.setEnvironmentVariables(settings.getEnv());
       return;
