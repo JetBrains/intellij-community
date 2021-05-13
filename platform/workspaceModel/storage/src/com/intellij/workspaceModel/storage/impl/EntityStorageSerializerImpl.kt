@@ -37,8 +37,10 @@ import kotlin.reflect.jvm.jvmName
 
 private val LOG = logger<EntityStorageSerializerImpl>()
 
-class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
-                                  private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
+class EntityStorageSerializerImpl(
+  private val typesResolver: EntityTypesResolver,
+  private val virtualFileManager: VirtualFileUrlManager,
+) : EntityStorageSerializer {
   companion object {
     const val SERIALIZER_VERSION = "v17"
   }
@@ -245,7 +247,10 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
    * [simpleClasses] - set of classes
    * [objectClasses] - set of kotlin objects
    */
-  private fun recursiveClassFinder(kryo: Kryo, entity: Any, simpleClasses: MutableMap<TypeInfo, Class<out Any>>, objectClasses: MutableMap<TypeInfo, Class<out Any>>) {
+  private fun recursiveClassFinder(kryo: Kryo,
+                                   entity: Any,
+                                   simpleClasses: MutableMap<TypeInfo, Class<out Any>>,
+                                   objectClasses: MutableMap<TypeInfo, Class<out Any>>) {
     val jClass = entity.javaClass
     val classAlreadyRegistered = registerKClass(entity::class, jClass, kryo, objectClasses, simpleClasses)
     if (classAlreadyRegistered) return
