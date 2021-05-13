@@ -2,7 +2,9 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 
 class MavenDependencyCollector : DependencyCollector {
   override val dependencyKind: String
@@ -16,5 +18,11 @@ class MavenDependencyCollector : DependencyCollector {
       }
     }
     return result.toList()
+  }
+}
+
+class MavenDependencyUpdater(private val project: Project) : MavenImportListener {
+  override fun importFinished(importedProjects: Collection<MavenProject>, newModules: List<Module>) {
+    PluginAdvertiserService.instance.rescanDependencies(project)
   }
 }

@@ -212,4 +212,15 @@ open class PluginAdvertiserService {
       .forEach { result.putValue(it.featureDisplayName, it.implementationDisplayName) }
     return result
   }
+
+  fun rescanDependencies(project: Project) {
+    val dependencyUnknownFeatures = collectDependencyUnknownFeatures(project)
+    if (dependencyUnknownFeatures.isNotEmpty()) {
+      instance.run(
+        project,
+        loadPluginsFromCustomRepositories(),
+        dependencyUnknownFeatures,
+      )
+    }
+  }
 }

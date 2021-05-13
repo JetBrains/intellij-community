@@ -58,16 +58,6 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
     }
   }
 
-  private fun collectDependencyUnknownFeatures(project: Project): List<UnknownFeature> {
-    return DependencyCollector.EP_NAME.extensions.flatMap { dependencyCollector ->
-      dependencyCollector.collectDependencies(project).map { coordinate ->
-        UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
-                       IdeBundle.message("plugins.advertiser.feature.dependency"),
-                       dependencyCollector.dependencyKind + ":" + coordinate, null)
-      }
-    }
-  }
-
   companion object {
 
     @JvmStatic
@@ -79,6 +69,16 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
           { it.implementationName!! },
           { feature -> feature.toPluginData { customPluginIds.contains(it) } }
         ).mapValues { it.value.filterNotNull().toSet() }
+    }
+  }
+}
+
+fun collectDependencyUnknownFeatures(project: Project): List<UnknownFeature> {
+  return DependencyCollector.EP_NAME.extensions.flatMap { dependencyCollector ->
+    dependencyCollector.collectDependencies(project).map { coordinate ->
+      UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
+                     IdeBundle.message("plugins.advertiser.feature.dependency"),
+                     dependencyCollector.dependencyKind + ":" + coordinate, null)
     }
   }
 }

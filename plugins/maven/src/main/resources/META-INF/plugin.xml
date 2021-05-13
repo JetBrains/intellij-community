@@ -701,4 +701,8 @@
     </group>
 
   </actions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.idea.maven.project.MavenDependencyUpdater" topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
+  </projectListeners>
 </idea-plugin>
