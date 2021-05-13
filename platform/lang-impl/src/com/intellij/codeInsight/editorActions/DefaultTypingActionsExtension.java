@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class DefaultCopyPasteExtension implements CopyPasteExtension {
-  private static final Logger LOG = Logger.getInstance(DefaultCopyPasteExtension.class);
+public class DefaultTypingActionsExtension implements TypingActionsExtension {
+  private static final Logger LOG = Logger.getInstance(DefaultTypingActionsExtension.class);
   private static final int LINE_LIMIT_FOR_BULK_CHANGE = 5000;
 
   @Override
@@ -48,14 +48,20 @@ public class DefaultCopyPasteExtension implements CopyPasteExtension {
 
   @Override
   public boolean isSuitableContext(@NotNull Project project, @NotNull Editor editor) {
-    LOG.error("Should not be called for `DefaultCopyPasteExtension`. Please, override.");
+    LOG.error("Should not be called for `DefaultTypingActionsExtension`. Please, override.");
     return false;
   }
 
   @Override
-  public void format(@NotNull Project project, @NotNull Editor editor, int reformatOnPaste, int startOffset, int endOffset, int anchorColumn) {
+  public void format(@NotNull Project project,
+                     @NotNull Editor editor,
+                     int howtoReformat,
+                     int startOffset,
+                     int endOffset,
+                     int anchorColumn,
+                     boolean indentBeforeReformat) {
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-    switch (reformatOnPaste) {
+    switch (howtoReformat) {
       case CodeInsightSettings.INDENT_BLOCK:
         indentBlock(project, editor, startOffset, endOffset, anchorColumn);
         break;
@@ -64,8 +70,10 @@ public class DefaultCopyPasteExtension implements CopyPasteExtension {
         break;
       case CodeInsightSettings.REFORMAT_BLOCK:
         final RangeMarker bounds = editor.getDocument().createRangeMarker(startOffset, endOffset);
-        indentEachLine(project, editor, startOffset, endOffset); // this is needed for example when inserting a comment before method
-        reformatBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
+        if (indentBeforeReformat) {
+          indentEachLine(project, editor, startOffset, endOffset); // this is needed for example when inserting a comment before method
+        }
+        reformatRange(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
         bounds.dispose();
         break;
     }
@@ -101,7 +109,7 @@ public class DefaultCopyPasteExtension implements CopyPasteExtension {
     }
   }
 
-  protected void reformatBlock(@NotNull Project project, @NotNull Editor editor, int startOffset, int endOffset) {
+  protected void reformatRange(@NotNull Project project, @NotNull Editor editor, int startOffset, int endOffset) {
     Document document = editor.getDocument();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);

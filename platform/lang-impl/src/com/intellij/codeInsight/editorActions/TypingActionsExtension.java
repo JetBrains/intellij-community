@@ -12,15 +12,15 @@ import org.jetbrains.annotations.NotNull;
 
 
 @ApiStatus.Experimental
-public interface CopyPasteExtension {
-  ExtensionPointName<CopyPasteExtension> EP_NAME = ExtensionPointName.create("com.intellij.copyPasteExtension");
+public interface TypingActionsExtension {
+  ExtensionPointName<TypingActionsExtension> EP_NAME = ExtensionPointName.create("com.intellij.typingActionsExtension");
 
   @NotNull
-  static CopyPasteExtension findForContext(@NotNull Project project, @NotNull Editor editor) {
-    final CopyPasteExtension extension =
+  static TypingActionsExtension findForContext(@NotNull Project project, @NotNull Editor editor) {
+    final TypingActionsExtension extension =
       ContainerUtil.find(EP_NAME.getExtensionList(), provider -> provider.isSuitableContext(project, editor));
     return extension == null
-      ? new DefaultCopyPasteExtension()
+      ? new DefaultTypingActionsExtension()
       : extension;
   }
 
@@ -34,22 +34,23 @@ public interface CopyPasteExtension {
   boolean isSuitableContext(@NotNull Project project, @NotNull Editor editor);
 
   /**
-   * Optimal implementation of formatting procedure after the Paste action.
-   *
+   * Optimal implementation of formatting procedure in UI thread.
    * @param project       current project
    * @param editor        target editor
    * @param howtoReformat one of magic constants
    *                      {@code NO_REFORMAT, INDENT_BLOCK, INDENT_EACH_LINE, REFORMAT_BLOCK} from the {@code CodeInsightSettings} class
-   * @param startOffset   the start offset of pasted fragment
-   * @param endOffset     the end offset of pasted fragment
-   * @param anchorColumn  the indent for the first pasted line
+   * @param startOffset   the start offset of fragment
+   * @param endOffset     the end offset of fragment
+   * @param anchorColumn  the indent for the first line (with {@code INDENT_BLOCK}, {@code 0} with other consts)
+   * @param indentationBeforeReformat indent block before re-format block (with {@code REFORMAT_BLOCK}, {@code false} with other consts)
    */
   default void format(@NotNull Project project,
                       @NotNull Editor editor,
                       int howtoReformat,
                       int startOffset,
                       int endOffset,
-                      int anchorColumn) {}
+                      int anchorColumn,
+                      boolean indentationBeforeReformat) {}
 
   /**
    * Entry point for implementing formatting and folding hints before pasting the text.
@@ -82,4 +83,20 @@ public interface CopyPasteExtension {
    * @param editor  target editor
    */
   default void endCopy(@NotNull Project project, @NotNull Editor editor) {}
+
+   /**
+   * Entry point for implementing formatting hints before smart brace action.
+   *
+   * @param project current project
+   * @param editor  target editor
+   */
+  default void startSmartBrace(@NotNull Project project, @NotNull Editor editor) {}
+
+  /**
+   * The entry point for postponed post-smart brace operations.
+   *
+   * @param project current project
+   * @param editor  target editor
+   */
+  default void endSmartBrace(@NotNull Project project, @NotNull Editor editor) {}
 }

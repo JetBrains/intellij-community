@@ -41,7 +41,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileWithOneLanguage;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -617,13 +616,10 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
     int spaceStart = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
     if (spaceStart < 0 || chars.charAt(spaceStart) == '\n' || chars.charAt(spaceStart) == '\r'){
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      documentManager.commitDocument(document);
-
-      final PsiFile file = documentManager.getPsiFile(document);
-      if (file == null || !file.isWritable()) return;
-      PsiElement element = file.findElementAt(offset);
-      if (element == null) return;
+      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (file == null || !file.isWritable()) {
+        return;
+      }
 
       EditorHighlighter highlighter = editor.getHighlighter();
       HighlighterIterator iterator = highlighter.createIterator(offset);
@@ -644,29 +640,44 @@ public final class TypedHandler extends TypedActionHandlerBase {
           fileType
         );
       }
-      if (element.getNode() != null && isBrace) {
+      if (isBrace) {
         DefaultRawTypedHandler handler = ((TypedActionImpl)TypedAction.getInstance()).getDefaultRawTypedHandler();
         handler.beginUndoablePostProcessing();
 
         final int finalLBraceOffset = lBraceOffset;
         ApplicationManager.getApplication().runWriteAction(() -> {
+          final TypingActionsExtension extension = TypingActionsExtension.findForContext(project, editor);
           try{
-            int newOffset;
+            extension.startSmartBrace(project, editor);
+            RangeMarker marker = document.createRangeMarker(offset, offset + 1);
             if (finalLBraceOffset != -1) {
-              RangeMarker marker = document.createRangeMarker(offset, offset + 1);
-              CodeStyleManager.getInstance(project).reformatRange(file, finalLBraceOffset, offset, true);
-              newOffset = marker.getStartOffset();
-              marker.dispose();
-            } else {
-              newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+              extension.format(project,
+                               editor,
+                               CodeInsightSettings.REFORMAT_BLOCK,
+                               finalLBraceOffset,
+                               offset,
+                               0,
+                               false);
             }
-
-            editor.getCaretModel().moveToOffset(newOffset + 1);
+            else {
+              extension.format(project,
+                               editor,
+                               CodeInsightSettings.INDENT_EACH_LINE,
+                               offset,
+                               offset,
+                               0,
+                               false);
+            }
+            editor.getCaretModel().moveToOffset(marker.getStartOffset() + 1);
             editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
             editor.getSelectionModel().removeSelection();
+            marker.dispose();
           }
           catch(IncorrectOperationException e){
             LOG.error(e);
+          }
+          finally {
+            extension.endSmartBrace(project, editor);
           }
         });
       }

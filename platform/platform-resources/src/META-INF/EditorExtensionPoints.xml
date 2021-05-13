@@ -37,9 +37,10 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
     </extensionPoint>
 
+    <extensionPoint name="typingActionsExtension" interface="com.intellij.codeInsight.editorActions.TypingActionsExtension" dynamic="true"/>
+
     <!--copy/paste-->
     <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider" dynamic="true"/>
-    <extensionPoint name="copyPasteExtension" interface="com.intellij.codeInsight.editorActions.CopyPasteExtension" dynamic="true"/>
     <extensionPoint name="copyPastePreProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePreProcessor" dynamic="true"/>
     <extensionPoint name="copyPastePostProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePostProcessor" dynamic="true"/>
     <extensionPoint name="preserveIndentOnPaste" beanClass="com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean" dynamic="true"/>

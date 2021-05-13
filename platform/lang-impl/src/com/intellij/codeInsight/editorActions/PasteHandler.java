@@ -116,13 +116,13 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
                               final PsiFile file,
                               final Document document,
                               @NotNull final Transferable content) {
-    final CopyPasteExtension copyPasteExtension = CopyPasteExtension.findForContext(project, editor);
+    final TypingActionsExtension typingActionsExtension = TypingActionsExtension.findForContext(project, editor);
     try {
-      copyPasteExtension.startPaste(project, editor);
-      doPasteAction(editor, project, file, document, content, copyPasteExtension);
+      typingActionsExtension.startPaste(project, editor);
+      doPasteAction(editor, project, file, document, content, typingActionsExtension);
     }
     finally {
-      copyPasteExtension.endPaste(project, editor);
+      typingActionsExtension.endPaste(project, editor);
     }
   }
 
@@ -131,7 +131,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
                               final PsiFile file,
                               final Document document,
                               @NotNull final Transferable content,
-                              @NotNull final CopyPasteExtension copyPasteExtension) {
+                              @NotNull final TypingActionsExtension typingActionsExtension) {
     CopyPasteManager.getInstance().stopKillRings();
 
     String text = null;
@@ -234,8 +234,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         ? CodeInsightSettings.NO_REFORMAT
         : indentOptions;
       ApplicationManager.getApplication().runWriteAction(
-        () -> copyPasteExtension
-          .format(project, editor, howtoReformat, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn)
+        () -> typingActionsExtension
+          .format(project, editor, howtoReformat, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn, true)
       );
     }
 
