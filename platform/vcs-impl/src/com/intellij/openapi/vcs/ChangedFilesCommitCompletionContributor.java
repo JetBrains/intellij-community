@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class CommitCompletionContributor extends CompletionContributor {
+public class ChangedFilesCommitCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -54,6 +54,9 @@ public class CommitCompletionContributor extends CompletionContributor {
     result.stopHere();
     int count = parameters.getInvocationCount();
 
+    List<ChangeList> lists = commitMessage.getChangeLists();
+    if (lists.isEmpty()) return;
+
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
     if (count == 0 && prefix.length() < 5) {
       result.restartCompletionOnPrefixChange(StandardPatterns.string().withLength(5));
@@ -62,7 +65,7 @@ public class CommitCompletionContributor extends CompletionContributor {
     CompletionResultSet resultSet = result.caseInsensitive().withPrefixMatcher(
       count == 0 ? new PlainPrefixMatcher(prefix, true) : new CamelHumpMatcher(prefix));
     CompletionResultSet prefixed = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, count == 0));
-    for (ChangeList list : commitMessage.getChangeLists()) {
+    for (ChangeList list : lists) {
       ProgressManager.checkCanceled();
       for (Change change : list.getChanges()) {
         ProgressManager.checkCanceled();
@@ -78,15 +81,6 @@ public class CommitCompletionContributor extends CompletionContributor {
           }
         }
       }
-    }
-
-    if (count > 0) {
-      result.caseInsensitive()
-        .withPrefixMatcher(new PlainPrefixMatcher(prefix))
-        .addAllElements(
-          StreamEx.of(VcsConfiguration.getInstance(project).getRecentMessages())
-            .reverseSorted()
-            .map(lookupString -> PrioritizedLookupElement.withPriority(LookupElementBuilder.create(lookupString), Integer.MIN_VALUE)));
     }
   }
 
