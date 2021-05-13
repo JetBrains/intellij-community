@@ -23,7 +23,6 @@ interface ProjectModuleProvider {
             extensionPointName.extensions(project)
                 .asSequence()
                 .flatMap { it.obtainAllProjectModulesFor(project) }
-                .distinctBy { it.buildFile }
     }
 
     /**

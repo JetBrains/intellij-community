@@ -53,7 +53,7 @@ internal open class GradleProjectModuleProvider : ProjectModuleProvider {
         for (ourModule in modules) {
             yieldAll(getAllSubmodules(ourModule, project))
         }
-    }.distinct()
+    }.distinctBy { it.buildFile }
 
     private fun obtainProjectModulesFor(project: Project, module: Module): ProjectModule? {
         val externalRootProject = findExternalProject(project, module) ?: return null

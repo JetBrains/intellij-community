@@ -96,6 +96,7 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
                         ?: return null
 
                     arrayOf(usageInfo.projectModule.getNavigatableDependency(packageModel.groupId, packageModel.artifactId, usageInfo.version))
+                        .filterNotNull().takeIf { it.isNotEmpty() }
                 }
                 else -> getData(dataId)
             }
