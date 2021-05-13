@@ -145,6 +145,9 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
     if (expression == null) return factory.getUnknown();
     DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(factory, expression);
     if (value != null) {
+      if (value instanceof DfaVariableValue) {
+        value = factory.fromDfType(value.getDfType());
+      }
       return DfaUtil.boxUnbox(value, targetType);
     }
     if (expression instanceof PsiConditionalExpression) {

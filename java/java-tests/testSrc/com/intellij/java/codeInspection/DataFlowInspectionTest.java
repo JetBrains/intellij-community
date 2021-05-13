@@ -705,4 +705,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullableCallWithPrecalculatedValueAndSpecialField() { doTest(); }
   public void testJoinConstantAndSubtype() { doTest(); }
   public void testDereferenceInThrowMessage() { doTest(); }
+  public void testArrayInitializerElementRewritten() { doTest(); }
 }
