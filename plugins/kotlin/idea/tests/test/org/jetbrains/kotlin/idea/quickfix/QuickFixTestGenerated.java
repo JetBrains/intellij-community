@@ -651,6 +651,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/addExclExclCall/array4.kt");
         }
 
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("idea/testData/quickfix/addExclExclCall/assignment.kt");
+        }
+
+        @TestMetadata("assignmentToUnsafeCallExpression.kt")
+        public void testAssignmentToUnsafeCallExpression() throws Exception {
+            runTest("idea/testData/quickfix/addExclExclCall/assignmentToUnsafeCallExpression.kt");
+        }
+
         @TestMetadata("functionReference.kt")
         public void testFunctionReference() throws Exception {
             runTest("testData/quickfix/addExclExclCall/functionReference.kt");
@@ -11680,6 +11690,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("assignmentToPropertyWithNoExplicitType.kt")
         public void testAssignmentToPropertyWithNoExplicitType() throws Exception {
             runTest("idea/testData/quickfix/replaceWithSafeCall/assignmentToPropertyWithNoExplicitType.kt");
+        }
+
+        @TestMetadata("assignmentToUnsafeCallExpression.kt")
+        public void testAssignmentToUnsafeCallExpression() throws Exception {
+            runTest("idea/testData/quickfix/replaceWithSafeCall/assignmentToUnsafeCallExpression.kt");
         }
 
         @TestMetadata("comment.kt")
