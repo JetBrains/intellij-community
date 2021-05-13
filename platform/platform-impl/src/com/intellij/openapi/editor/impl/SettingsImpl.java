@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,6 +33,7 @@ import java.util.function.Supplier;
 
 public class SettingsImpl implements EditorSettings {
   private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
+  public static final String EDITOR_SHOW_SPECIAL_CHARS = "editor.show.special.chars";
 
   @Nullable private final EditorImpl myEditor;
   @Nullable private Supplier<? extends Language> myLanguageSupplier;
@@ -756,7 +758,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isShowingSpecialChars() {
-    return myShowingSpecialCharacters == null ? EditorSettingsExternalizable.getInstance().isShowSpecialChars() : myShowingSpecialCharacters;
+    return myShowingSpecialCharacters == null ? AdvancedSettings.getBoolean(EDITOR_SHOW_SPECIAL_CHARS) : myShowingSpecialCharacters;
   }
 
   @Override

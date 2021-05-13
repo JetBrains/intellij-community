@@ -124,6 +124,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @DirtyUI
 final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider, Accessible {
+  public static final String DISTRACTION_FREE_MARGIN = "editor.distraction.free.margin";
   private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
 
   private static final JBValueGroup JBVG = new JBValueGroup();
@@ -828,7 +829,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myTextAnnotationExtraSize = 0;
     if (!myEditor.isInDistractionFreeMode() || isMirrored()) return;
 
-    int marginFromSettings = AdvancedSettings.getInt(EditorSettingsExternalizable.DISTRACTION_FREE_MARGIN);
+    int marginFromSettings = AdvancedSettings.getInt(DISTRACTION_FREE_MARGIN);
     if (marginFromSettings != -1) {
       myTextAnnotationExtraSize = marginFromSettings;
       return;
