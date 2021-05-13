@@ -212,7 +212,7 @@ public final class ScrollingUtil {
     int first = list.getFirstVisibleIndex();
     int last = list.getLastVisibleIndex();
 
-    if (index < 0 || first < 0 || last < 0 || index < first || index > last) {
+    if (first < 0 || last < 0 || index < first || index > last) {
       return false;
     }
     if (index > first && index < last) {
@@ -857,7 +857,7 @@ public final class ScrollingUtil {
   private static class TableMovePageDownAction extends MyScrollingAction {
     private @NotNull final JTable myTable;
 
-    public TableMovePageDownAction(@NotNull JTable table) {
+    private TableMovePageDownAction(@NotNull JTable table) {
       super(table);
       myTable = table;
     }
