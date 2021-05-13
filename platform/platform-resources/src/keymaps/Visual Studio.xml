@@ -558,6 +558,7 @@
     <keyboard-shortcut first-keystroke="control R" second-keystroke="E" />
     <keyboard-shortcut first-keystroke="control R" second-keystroke="control E" />
   </action>
+  <action id="GoFmtProjectAction"/>
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->
   <!--MISSING VISUAL STUDIO SHORTCUTS-->
