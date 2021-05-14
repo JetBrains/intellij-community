@@ -156,8 +156,8 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       row {
         cell(isFullWidth = true) {
           searchField.textEditor(pushX, growX)
-          JSeparator(JSeparator.VERTICAL)(growY).withLargeLeftGap()
-          accountsPanel().withLargeLeftGap()
+          JSeparator(JSeparator.VERTICAL)(growY)
+          accountsPanel()
         }
       }
       row {
