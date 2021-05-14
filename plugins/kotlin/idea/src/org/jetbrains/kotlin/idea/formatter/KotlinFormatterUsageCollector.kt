@@ -36,7 +36,7 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("kotlin.ide.formatter", 3)
+        private val GROUP = EventLogGroup("kotlin.ide.formatter", 4)
         private val settingsEvent = GROUP.registerEvent(
             eventId = "settings",
             eventField1 = EventFields.Enum("kind", KotlinFormatterKind::class.java),
@@ -58,19 +58,18 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
             val isProject = CodeStyle.usesOwnSettings(project)
             val currentSettings = CodeStyle.getSettings(project)
 
-            return when (currentSettings.kotlinCodeStyleDefaults()) {
-                KotlinStyleGuideCodeStyle.CODE_STYLE_ID -> {
-                    if (codeStylesIsEquals(currentSettings, KOTLIN_OFFICIAL_CODE_STYLE))
-                        paired(IDEA_OFFICIAL_KOTLIN, isProject)
-                    else
-                        paired(IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM, isProject)
+            val codeStyleDefaults = currentSettings.kotlinCodeStyleDefaults()
+            return when (val supposedCodeStyleDefaults = currentSettings.supposedKotlinCodeStyleDefaults()) {
+                KotlinStyleGuideCodeStyle.CODE_STYLE_ID -> when {
+                    supposedCodeStyleDefaults != codeStyleDefaults -> paired(IDEA_WITH_BROKEN_OFFICIAL_KOTLIN, isProject)
+                    codeStylesIsEquals(currentSettings, KOTLIN_OFFICIAL_CODE_STYLE) -> paired(IDEA_OFFICIAL_KOTLIN, isProject)
+                    else -> paired(IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM, isProject)
                 }
 
-                KotlinObsoleteCodeStyle.CODE_STYLE_ID -> {
-                    if (codeStylesIsEquals(currentSettings, KOTLIN_OBSOLETE_CODE_STYLE))
-                        paired(IDEA_OBSOLETE_KOTLIN, isProject)
-                    else
-                        paired(IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM, isProject)
+                KotlinObsoleteCodeStyle.CODE_STYLE_ID -> when {
+                    supposedCodeStyleDefaults != codeStyleDefaults -> paired(IDEA_WITH_BROKEN_OBSOLETE_KOTLIN, isProject)
+                    codeStylesIsEquals(currentSettings, KOTLIN_OBSOLETE_CODE_STYLE) -> paired(IDEA_OBSOLETE_KOTLIN, isProject)
+                    else -> paired(IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM, isProject)
                 }
 
                 else -> paired(IDEA_CUSTOM, isProject)
@@ -82,10 +81,15 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
 
             return when (kind) {
                 IDEA_CUSTOM -> PROJECT_CUSTOM
+
                 IDEA_OFFICIAL_KOTLIN -> PROJECT_OFFICIAL_KOTLIN
                 IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM -> PROJECT_OFFICIAL_KOTLIN_WITH_CUSTOM
+                IDEA_WITH_BROKEN_OFFICIAL_KOTLIN -> PROJECT_WITH_BROKEN_OFFICIAL_KOTLIN
+
                 IDEA_OBSOLETE_KOTLIN -> PROJECT_OBSOLETE_KOTLIN
                 IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM -> PROJECT_OBSOLETE_KOTLIN_WITH_CUSTOM
+                IDEA_WITH_BROKEN_OBSOLETE_KOTLIN -> PROJECT_WITH_BROKEN_OBSOLETE_KOTLIN
+
                 else -> kind
             }
         }
@@ -96,8 +100,10 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
 
         IDEA_OFFICIAL_KOTLIN, PROJECT_OFFICIAL_KOTLIN,
         IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM, PROJECT_OFFICIAL_KOTLIN_WITH_CUSTOM,
+        IDEA_WITH_BROKEN_OFFICIAL_KOTLIN, PROJECT_WITH_BROKEN_OFFICIAL_KOTLIN,
 
         IDEA_OBSOLETE_KOTLIN, PROJECT_OBSOLETE_KOTLIN,
         IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM, PROJECT_OBSOLETE_KOTLIN_WITH_CUSTOM,
+        IDEA_WITH_BROKEN_OBSOLETE_KOTLIN, PROJECT_WITH_BROKEN_OBSOLETE_KOTLIN,
     }
 }
