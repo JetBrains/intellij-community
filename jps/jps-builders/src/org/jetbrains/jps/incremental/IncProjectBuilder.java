@@ -299,9 +299,9 @@ public final class IncProjectBuilder {
     if (estimatedWorkTime >= timeThreshold) {
       final String message = JpsBuildBundle.message("build.message.too.many.modules.require.recompilation.forcing.full.project.rebuild");
       LOG.info(message);
-      LOG.info("Estimated build duration (linear): " + BuildProgress.formatDuration(estimatedWorkTime));
-      LOG.info("Last successful rebuild duration (linear): " + BuildProgress.formatDuration(targetsState.getLastSuccessfulRebuildDuration()));
-      LOG.info("Rebuild heuristic time threshold: " + BuildProgress.formatDuration(timeThreshold));
+      LOG.info("Estimated build duration (linear): " + StringUtil.formatDuration(estimatedWorkTime));
+      LOG.info("Last successful rebuild duration (linear): " + StringUtil.formatDuration(targetsState.getLastSuccessfulRebuildDuration()));
+      LOG.info("Rebuild heuristic time threshold: " + StringUtil.formatDuration(timeThreshold));
       myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, message));
       throw new RebuildRequestedException(null);
     }
@@ -1248,14 +1248,12 @@ public final class IncProjectBuilder {
     }
   }
 
-
   private void buildTargetsChunk(CompileContext context, BuildTargetChunk chunk, BuildProgress buildProgress) throws ProjectBuildException {
     final BuildFSState fsState = myProjectDescriptor.fsState;
     boolean doneSomething;
     try {
       context.setCompilationStartStamp(chunk.getTargets(), System.currentTimeMillis());
-      buildProgress.onTargetChunkStart(chunk, context);
-      
+
       sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.STARTED);
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
 
