@@ -245,6 +245,20 @@ class XDebugSessionTab3(
     (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(false)
     val toolbar = DefaultActionGroup()
     toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
+
+    // reversed because it was like this in the original tab
+    for (action in session.restartActions.reversed()) {
+      toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
+    }
+
+    for (action in session.extraActions.reversed()) {
+      toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+    }
+
+    for (action in session.extraStopActions) {
+      toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+    }
+
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
     myUi.options.setTitleProducer(Producer {
