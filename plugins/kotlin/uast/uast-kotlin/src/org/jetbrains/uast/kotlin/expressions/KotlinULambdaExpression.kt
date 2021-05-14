@@ -17,6 +17,9 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiType
+import org.jetbrains.kotlin.backend.common.descriptors.explicitParameters
+import org.jetbrains.kotlin.descriptors.ParameterDescriptor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.resolve.BindingContext.FUNCTION
@@ -27,8 +30,8 @@ import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
 class KotlinULambdaExpression(
-        override val sourcePsi: KtLambdaExpression,
-        givenParent: UElement?
+    override val sourcePsi: KtLambdaExpression,
+    givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), ULambdaExpression, KotlinUElementWithType {
     override val functionalInterfaceType: PsiType?
         get() = getFunctionalInterfaceType()
@@ -60,14 +63,21 @@ class KotlinULambdaExpression(
     }
 
     override val valueParameters by lz {
+        getParameters { valueParameters }
+    }
 
+    override val parameters: List<UParameter> by lz {
+        getParameters { explicitParameters }
+    }
+
+    private inline fun getParameters(parametersSelector: SimpleFunctionDescriptor.() -> List<ParameterDescriptor>): List<UParameter> {
         val explicitParameters = sourcePsi.valueParameters.mapIndexed { i, p ->
             KotlinUParameter(UastKotlinPsiParameter.create(p, sourcePsi, this, i), p, this)
         }
-        if (explicitParameters.isNotEmpty()) return@lz explicitParameters
+        if (explicitParameters.isNotEmpty()) return explicitParameters
 
-        val functionDescriptor = sourcePsi.analyze()[FUNCTION, sourcePsi.functionLiteral] ?: return@lz emptyList()
-        functionDescriptor.valueParameters.mapIndexed { i, p ->
+        val functionDescriptor = sourcePsi.analyze()[FUNCTION, sourcePsi.functionLiteral] ?: return emptyList()
+        return functionDescriptor.parametersSelector().mapIndexed { i, p ->
             KotlinUParameter(
                 UastKotlinPsiParameterBase(
                     p.name.asString(),
@@ -78,14 +88,14 @@ class KotlinULambdaExpression(
             )
         }
     }
-    
+
     override fun asRenderString(): String {
         val renderedValueParameters = if (valueParameters.isEmpty())
             ""
         else
             valueParameters.joinToString { it.asRenderString() } + " ->\n"
         val expressions = (body as? UBlockExpression)?.expressions
-                                  ?.joinToString("\n") { it.asRenderString().withMargin } ?: body.asRenderString()
+            ?.joinToString("\n") { it.asRenderString().withMargin } ?: body.asRenderString()
 
         return "{ $renderedValueParameters\n$expressions\n}"
     }
