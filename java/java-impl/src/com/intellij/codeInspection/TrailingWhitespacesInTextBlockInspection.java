@@ -103,10 +103,10 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
 
   private static class ReplaceTrailingWhiteSpacesFix implements LocalQuickFix {
     private final String myMessage;
-    private final Function<String, CharSequence> myTransformation;
+    private final @NotNull Function<? super @NotNull String, ? extends @Nullable CharSequence> myTransformation;
 
     private ReplaceTrailingWhiteSpacesFix(@NotNull String message,
-                                          @NotNull Function<@NotNull String, @Nullable CharSequence> transformation) {
+                                          @NotNull Function<? super @NotNull String, ? extends @Nullable CharSequence> transformation) {
       myMessage = message;
       myTransformation = transformation;
     }
@@ -128,7 +128,7 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     }
 
     private static @Nullable String transformTextBlockLines(String @NotNull [] lines,
-                                                            @NotNull Function<String, @Nullable CharSequence> lineTransformation) {
+                                                            @NotNull Function<? super String, ? extends @Nullable CharSequence> lineTransformation) {
       StringBuilder newTextBlock = new StringBuilder();
       newTextBlock.append("\"\"\"\n");
       for (int i = 0; i < lines.length; i++) {

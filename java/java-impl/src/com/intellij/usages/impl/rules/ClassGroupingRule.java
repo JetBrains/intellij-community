@@ -4,9 +4,7 @@ package com.intellij.usages.impl.rules;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
@@ -88,7 +86,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     return index < 0? name : name.substring(0, index);
   }
 
-  private static class ClassUsageGroup implements UsageGroup, TypeSafeDataProvider {
+  private static class ClassUsageGroup implements UsageGroup, DataProvider {
     private final SmartPsiElementPointer<PsiClass> myClassPointer;
     private final @NlsSafe String myText;
     private final String myQName;
@@ -171,18 +169,18 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (!isValid()) return;
-      if (CommonDataKeys.PSI_ELEMENT == key) {
-        sink.put(CommonDataKeys.PSI_ELEMENT, getPsiClass());
+    public Object getData(@NotNull String dataId) {
+      if (!isValid()) return null;
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return getPsiClass();
       }
-      if (UsageView.USAGE_INFO_KEY == key) {
+      else if (UsageView.USAGE_INFO_KEY.is(dataId)) {
         PsiClass psiClass = getPsiClass();
-        if (psiClass != null) {
-          sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(psiClass));
-        }
+        return psiClass == null ? null : new UsageInfo(psiClass);
       }
+      return null;
     }
   }
 }

@@ -16,8 +16,8 @@
 
 package com.intellij.history.core.changes;
 
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 
@@ -35,13 +35,13 @@ public class RenameChange extends StructuralChange {
 
   public RenameChange(DataInput in) throws IOException {
     super(in);
-    myOldName = StreamUtil.readString(in);
+    myOldName = DataStreamUtil.readString(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    StreamUtil.writeString(out, myOldName);
+    DataStreamUtil.writeString(out, myOldName);
   }
 
   @Override

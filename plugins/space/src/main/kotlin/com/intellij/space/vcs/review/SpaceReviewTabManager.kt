@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review
 
 import circlet.workspaces.Workspace
@@ -17,7 +17,7 @@ import com.intellij.ui.content.ContentManager
 import icons.SpaceIcons
 import libraries.coroutines.extra.LifetimeSource
 import runtime.reactive.Property
-import runtime.reactive.mapInit
+import runtime.reactive.property.mapInit
 
 @Service
 internal class SpaceCodeReviewTabManager(private val project: Project) {
@@ -77,18 +77,18 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
   private fun createContent(project: Project,
                             spaceProjectInfo: SpaceProjectInfo,
                             projectRepos: Set<SpaceRepoInfo>): Content {
-    val lifeTime = LifetimeSource()
+    val contentLifetime = LifetimeSource()
     val factory = ContentFactory.SERVICE.getInstance()
 
     return factory.createContent(null, spaceProjectInfo.project.name, false).apply { // NON-NLS
       val disposable = Disposable {
-        lifeTime.terminate()
+        contentLifetime.terminate()
       }
       isCloseable = false
       setDisposer(disposable)
       icon = SpaceIcons.Main
 
-      component = ReviewLoginComponent(disposable, lifetime, project, spaceProjectInfo, projectRepos).view
+      component = ReviewLoginComponent(disposable, contentLifetime, project, spaceProjectInfo, projectRepos).view
       description = spaceProjectInfo.key.key // NON-NLS
     }
   }

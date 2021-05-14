@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
@@ -11,7 +11,6 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Font
@@ -56,7 +55,7 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
 
   private fun createComponent(): JComponent {
     val result = BorderLayoutPanel()
-    mainPanel = JPanel(VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP)))
+    mainPanel = JPanel(VerticalLayout(UIUtil.DEFAULT_VGAP))
     recreateRuntimePanels()
 
     result.addToCenter(mainPanel)
@@ -92,10 +91,10 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
         separator.titleFont = separator.titleFont.deriveFont(Font.BOLD)
         separator(CCFlags.growX, CCFlags.pushX)
         gearButton(DuplicateRuntimeAction(language), RemoveRuntimeAction(language))
-      }
-      row {
-        val languageUI = configurable.createComponent() ?: throw IllegalStateException("for runtime: $language")
-        languageUI(CCFlags.growX)
+        row {
+          val languageUI = configurable.createComponent() ?: throw IllegalStateException("for runtime: $language")
+          languageUI(CCFlags.growX)
+        }
       }
     }
     configurable.reset()

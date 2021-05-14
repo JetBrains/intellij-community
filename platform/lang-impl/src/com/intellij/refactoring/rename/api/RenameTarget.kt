@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.Pointer
@@ -12,7 +12,6 @@ import com.intellij.psi.search.SearchScope
  * Visible in the UI.
  * Lifecycle: single read action.
  *
- * @see com.intellij.refactoring.rename.symbol.SymbolRenameTarget
  * @see com.intellij.find.usages.api.SearchTarget
  */
 interface RenameTarget {
@@ -38,8 +37,8 @@ interface RenameTarget {
   /**
    * @return presentation to be displayed in the disambiguation popup
    * when several [different][equals] targets exist to choose from,
-   * or in the Usage View (only [icon][TargetPopupPresentation.getIcon]
-   * and [presentable text][TargetPopupPresentation.getPresentableText] are used)
+   * or in the Usage View (only [icon][TargetPopupPresentation.icon]
+   * and [presentable text][TargetPopupPresentation.presentableText] are used)
    * @see com.intellij.find.usages.api.SearchTarget.presentation
    */
   val presentation: TargetPopupPresentation

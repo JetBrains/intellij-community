@@ -28,9 +28,9 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,10 +112,23 @@ public class IncrementDecrementUsedAsExpressionInspection
     }
   }
 
+  public static PsiExpression getSurroundPrefixPostfixExpression(@NotNull PsiUnaryExpression element) {
+    final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    if (statement == null) return null;
+    if (statement instanceof PsiLoopStatement) {
+      return element;
+    }
+    final CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(element);
+    if (surrounder == null) return null;
+    final CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+    return result.getExpression();
+  }
+
   public static void extractPrefixPostfixExpressionToSeparateStatement(PsiElement element) {
     final PsiExpression operand;
     if (element instanceof PsiUnaryExpression) {
       operand = ((PsiUnaryExpression)element).getOperand();
+      element = getSurroundPrefixPostfixExpression((PsiUnaryExpression)element);
     }
     else {
       assert false;
@@ -136,80 +149,46 @@ public class IncrementDecrementUsedAsExpressionInspection
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final String newStatementText = element.getText() + ';';
     final String operandText = operand.getText();
-    if (parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement || parent instanceof PsiSwitchLabeledRuleStatement) {
-      // need to add braces because
-      // in/decrement is inside braceless control statement body
-      @NonNls final StringBuilder text = new StringBuilder();
-      text.append('{');
-      final String elementText = PsiReplacementUtil.getElementText(statement, element, operandText);
-      if (element instanceof PsiPostfixExpression) {
-        if (parent instanceof PsiSwitchLabeledRuleStatement) {
-          text.append("break ");
-        }
-        text.append(elementText);
-        text.append(newStatementText);
-      }
-      else {
-        text.append(newStatementText);
-        if (parent instanceof PsiSwitchLabeledRuleStatement) {
-          text.append("break ");
-        }
-        text.append(elementText);
-      }
-      text.append('}');
-      statement.replace(factory.createStatementFromText(text.toString(), parent));
-      return;
-    }
     final PsiStatement newStatement = factory.createStatementFromText(newStatementText, element);
-    if (statement instanceof PsiReturnStatement || statement instanceof PsiYieldStatement) {
+    if (statement instanceof PsiReturnStatement || statement instanceof PsiYieldStatement || statement instanceof PsiThrowStatement) {
       if (element instanceof PsiPostfixExpression) {
-        // special handling of postfix expression in return statement
-        final PsiExpression returnValue = statement instanceof PsiReturnStatement ? ((PsiReturnStatement)statement).getReturnValue() 
-                                                                                  : ((PsiYieldStatement)statement).getExpression();
-        if (returnValue == null) {
+        // special handling of postfix expression in return/yield/throw statement
+        final PsiExpression expression;
+        if (statement instanceof PsiReturnStatement) {
+          expression = ((PsiReturnStatement)statement).getReturnValue();
+        } else if (statement instanceof PsiYieldStatement) {
+          expression = ((PsiYieldStatement)statement).getExpression();
+        } else {
+          expression = ((PsiThrowStatement)statement).getException();
+        }
+        if (expression == null) {
           return;
         }
-        final PsiType type = returnValue.getType();
+        final PsiType type = expression.getType();
         if (type == null) {
           return;
         }
-        final String variableName = new VariableNameGenerator(returnValue, VariableKind.LOCAL_VARIABLE).byType(type)
-          .byExpression(returnValue).byName("result").generate(true);
-        final String newReturnValueText = PsiReplacementUtil.getElementText(returnValue, element, operandText);
+        final String[] names = (statement instanceof PsiThrowStatement) ? new String[]{"e", "ex", "exc"} : new String[]{"result"};
+        VariableNameGenerator generator = new VariableNameGenerator(expression, VariableKind.LOCAL_VARIABLE);
+        if (statement instanceof PsiReturnStatement || statement instanceof PsiYieldStatement) {
+          generator = generator.byType(type).byExpression(expression);
+        }
+        final String variableName = generator.byName(names).generate(true);
+        final String newReturnValueText = PsiReplacementUtil.getElementText(expression, element, operandText);
         final String declarationStatementText = type.getCanonicalText() + ' ' + variableName + '=' + newReturnValueText + ';';
         final PsiStatement declarationStatement = factory.createStatementFromText(declarationStatementText, statement);
         parent.addBefore(declarationStatement, statement);
         parent.addBefore(newStatement, statement);
-        final PsiStatement newReturnStatement = factory.createStatementFromText(
-          (statement instanceof PsiReturnStatement ? PsiKeyword.RETURN : PsiKeyword.YIELD) + " " + variableName + ';', statement);
+        final String keyword;
+        if (statement instanceof PsiReturnStatement) {
+          keyword = PsiKeyword.RETURN;
+        } else if (statement instanceof PsiYieldStatement) {
+          keyword = PsiKeyword.YIELD;
+        } else {
+          keyword = PsiKeyword.THROW;
+        }
+        final PsiStatement newReturnStatement = factory.createStatementFromText(keyword + " " + variableName + ';', statement);
         statement.replace(newReturnStatement);
-        return;
-      }
-      else {
-        parent.addBefore(newStatement, statement);
-      }
-    }
-    else if (statement instanceof PsiThrowStatement) {
-      if (element instanceof PsiPostfixExpression) {
-        // special handling of postfix expression in throw statement
-        final PsiThrowStatement returnStatement = (PsiThrowStatement)statement;
-        final PsiExpression exception = returnStatement.getException();
-        if (exception == null) {
-          return;
-        }
-        final String variableName = new VariableNameGenerator(exception, VariableKind.LOCAL_VARIABLE)
-          .byName("e", "ex", "exc").generate(true);
-        final PsiType type = exception.getType();
-        if (type == null) {
-          return;
-        }
-        final String newReturnValueText = PsiReplacementUtil.getElementText(exception, element, operandText);
-        final String declarationStatementText = type.getCanonicalText() + ' ' + variableName + '=' + newReturnValueText + ';';
-        final PsiStatement declarationStatement = factory.createStatementFromText(declarationStatementText, returnStatement);
-        parent.addBefore(declarationStatement, statement);
-        parent.addBefore(newStatement, statement);
-        final PsiStatement newReturnStatement = factory.createStatementFromText("throw " + variableName + ';', returnStatement);
-        returnStatement.replace(newReturnStatement);
         return;
       }
       else {
@@ -290,7 +269,12 @@ public class IncrementDecrementUsedAsExpressionInspection
     if (!tokenType.equals(JavaTokenType.PLUSPLUS) && !tokenType.equals(JavaTokenType.MINUSMINUS)) {
       return false;
     }
-    return PsiTreeUtil.getParentOfType(expression, PsiStatement.class) != null;
+    final PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
+    final PsiForStatement forStatement = PsiTreeUtil.getParentOfType(expression, PsiForStatement.class);
+    if (forStatement != null && PsiTreeUtil.isAncestor(forStatement.getInitialization(), expression, false)) {
+      return false;
+    }
+    return statement != null && (CodeBlockSurrounder.canSurround(expression) || statement instanceof PsiLoopStatement);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -525,7 +525,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  private static @NlsSafe String formatDescription(@NotNull CharSequence text, TextRange textRange, List<TextRange> additionalRanges) {
+  private static @NlsSafe String formatDescription(@NotNull CharSequence text, TextRange textRange, List<? extends TextRange> additionalRanges) {
     StringJoiner joiner = new StringJoiner("\n");
     JBIterable.of(textRange).append(additionalRanges).forEach(
       range -> joiner.add(text.subSequence(range.getStartOffset(), range.getEndOffset()))

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef
 
 import com.intellij.ide.DataManager
@@ -16,7 +16,6 @@ object JBCefPsiNavigationUtils {
   private val PSI_ELEMENT_COORDINATES = "${JBCefSourceSchemeHandlerFactory.SOURCE_SCHEME}://(.+):(\\d+)".toRegex()
   private const val FILE_PATH_GROUP = 1
   private const val OFFSET_GROUP = 2
-
 
   fun navigateTo(requestLink: String): Boolean {
     val (filePath, offset) = parsePsiElementCoordinates(requestLink) ?: return false

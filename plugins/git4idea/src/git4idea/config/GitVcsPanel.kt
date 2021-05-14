@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -125,7 +125,7 @@ internal class GitVcsPanel(private val project: Project) :
       modalityState, disposable!!
     )
 
-    object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
+    object : Task.Modal(project, GitBundle.message("git.executable.version.progress.title"), true) {
       private lateinit var gitVersion: GitVersion
 
       override fun run(indicator: ProgressIndicator) {
@@ -230,7 +230,7 @@ internal class GitVcsPanel(private val project: Project) :
     if (!versionCheckRequested) {
       ApplicationManager.getApplication().invokeLater(
         {
-          object : Task.Backgroundable(project, GitBundle.getString("git.executable.version.progress.title"), true) {
+          object : Task.Backgroundable(project, message("git.executable.version.progress.title"), true) {
             override fun run(indicator: ProgressIndicator) {
               GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
             }

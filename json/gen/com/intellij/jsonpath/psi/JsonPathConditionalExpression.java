@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface JsonPathConditionalExpression extends JsonPathExpression {
 
   @NotNull
+  JsonPathBinaryConditionalOperator getBinaryConditionalOperator();
+
+  @NotNull
   List<JsonPathExpression> getExpressionList();
 
 }

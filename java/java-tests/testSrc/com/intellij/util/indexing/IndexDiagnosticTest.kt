@@ -16,8 +16,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.ZonedDateTime
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
 import kotlin.streams.toList
 
 /**
@@ -70,11 +68,8 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
       JsonIndexDiagnosticAppInfo.create(),
       JsonRuntimeInfo.create(),
       JsonProjectIndexingHistory(
-        "projectName",
-        123,
-        456,
-        789,
-        JsonProjectIndexingHistoryTimes(
+        projectName = "projectName",
+        times = JsonProjectIndexingHistoryTimes(
           JsonDuration(123),
           JsonDuration(456),
           JsonDuration(789),
@@ -85,8 +80,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
           JsonDuration(333),
           false
         ),
-        33,
-        listOf(
+        totalStatsPerFileType = listOf(
           JsonProjectIndexingHistory.JsonStatsPerFileType(
             "java",
             JsonPercentages(30, 100),
@@ -104,7 +98,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             )
           )
         ),
-        listOf(
+        totalStatsPerIndexer = listOf(
           JsonProjectIndexingHistory.JsonStatsPerIndexer(
             "IdIndex",
             JsonPercentages(5, 10),
@@ -114,21 +108,27 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             JsonProcessingSpeed(111, 222)
           )
         ),
-        listOf(
+        scanningStatistics = listOf(
           JsonScanningStatistics(
             "providerName",
             333,
             11,
-            10,
             55,
             33,
             JsonDuration(123),
             JsonDuration(456),
             JsonDuration(789),
-            JsonDuration(222)
+            JsonDuration(222),
+            scannedFiles = listOf(
+              JsonScanningStatistics.JsonScannedFile(
+                path = PortableFilePath.RelativePath (PortableFilePath.ProjectRoot, "src/a.java"),
+                isUpToDate = true,
+                wasFullyIndexedByInfrastructureExtension = false
+              )
+            )
           )
         ),
-        listOf(
+        fileProviderStatistics = listOf(
           JsonFileProviderIndexStatistics(
             "providerName",
             444,
@@ -136,7 +136,10 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             JsonDuration(123),
             1,
             listOf(
-              PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java")
+              JsonFileProviderIndexStatistics.JsonIndexedFile(
+                path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),
+                wasFullyIndexedByExtensions = true
+              )
             )
           )
         )
@@ -144,6 +147,9 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     )
 
     val mapper = jacksonObjectMapper().registerKotlinModule()
+
+    println(mapper.writeValueAsString(indexDiagnostic))
+
     val deserialized = mapper.readValue<JsonIndexDiagnostic>(mapper.writeValueAsString(indexDiagnostic))
     Assert.assertEquals(indexDiagnostic, deserialized)
   }

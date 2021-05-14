@@ -603,4 +603,66 @@ public class RootsChangedTest extends JavaModuleTestCase {
       connection.disconnect();
     }
   }
+
+  public void testRootsChangeEventAtCreatingAndMoveFolderUnderJarDir() throws IOException {
+    String rootJarDirName = "jarDir";
+
+    File temp = new File(FileUtil.getTempDirectory());
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile jarDir = VfsTestUtil.createDir(root, rootJarDirName);
+
+    LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    LibraryTable.ModifiableModel projectLibraryTableModifiableModel = projectLibraryTable.getModifiableModel();
+    Library projectLib = projectLibraryTableModifiableModel.createLibrary("lib");
+    Library.ModifiableModel modifiableModel = projectLib.getModifiableModel();
+    modifiableModel.addJarDirectory(jarDir, false);
+    WriteAction.runAndWait(() -> {
+      modifiableModel.commit();
+      projectLibraryTableModifiableModel.commit();
+    });
+
+    myModuleRootListener.reset();
+    // Creating simple file - first event
+    VfsTestUtil.createFile(jarDir, "test.txt");
+    // Creating folder - second event
+    VirtualFile newVirtualDirectory = VfsTestUtil.createDir(jarDir, "foo");
+    // Recursive folder creating - third event
+    VfsTestUtil.createDir(newVirtualDirectory, "bar");
+    assertEventsCount(3);
+
+    VirtualFile otherFolder = VfsTestUtil.createDir(root, "baz");
+    assertNoEvents();
+    WriteAction.runAndWait(() -> otherFolder.move(this, newVirtualDirectory));
+    assertEventsCount(1);
+  }
+
+  public void testRootsChangeEventAtRenameCopyAndDeleteFileUnderJarDir() throws IOException {
+    String rootJarDirName = "jarDir";
+
+    File temp = new File(FileUtil.getTempDirectory());
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile testFileUnderRoot = VfsTestUtil.createFile(root, "test.jar");
+
+    VirtualFile jarDir = VfsTestUtil.createDir(root, rootJarDirName);
+    VirtualFile testFileUnderJarDir = VfsTestUtil.createFile(jarDir, "test.jar");
+
+    LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    LibraryTable.ModifiableModel projectLibraryTableModifiableModel = projectLibraryTable.getModifiableModel();
+    Library projectLib = projectLibraryTableModifiableModel.createLibrary("lib");
+    Library.ModifiableModel modifiableModel = projectLib.getModifiableModel();
+    modifiableModel.addJarDirectory(jarDir, false);
+    WriteAction.runAndWait(() -> {
+      modifiableModel.commit();
+      projectLibraryTableModifiableModel.commit();
+    });
+
+    myModuleRootListener.reset();
+    WriteAction.runAndWait(() -> testFileUnderJarDir.rename(this, "test2.jar"));
+    assertEventsCount(1);
+    WriteAction.runAndWait(() -> testFileUnderJarDir.delete(this));
+    assertEventsCount(1);
+
+    WriteAction.runAndWait(() -> testFileUnderRoot.copy(this, jarDir, "test2.jar"));
+    assertEventsCount(1);
+  }
 }

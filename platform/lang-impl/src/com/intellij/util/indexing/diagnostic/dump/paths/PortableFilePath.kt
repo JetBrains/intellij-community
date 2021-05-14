@@ -19,6 +19,9 @@ sealed class PortableFilePath {
 
     override fun equals(other: Any?) = other is ProjectRoot
 
+    /**
+     * Make it constant across IDE restarts.
+     */
     override fun hashCode() = 42
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -110,7 +110,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
             null, getPredefinedChangeList(changeList, ChangeListManager.getInstance(project)), binaryShelvedPatches,
             hasNotAllSelectedChanges(changeList, preselectedChanges) ? Arrays.asList(preselectedChanges) : null,
             getChangeListNameForUnshelve(changeList), true);
-      setOKButtonText(VcsBundle.getString("unshelve.changes.action"));
+      setOKButtonText(VcsBundle.message("unshelve.changes.action"));
     }
 
     @Nullable

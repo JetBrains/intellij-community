@@ -4,6 +4,7 @@ package com.intellij.space.vcs.review.details
 
 import circlet.code.api.CodeReviewListItem
 import circlet.workspaces.Workspace
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -43,9 +44,10 @@ internal class SpaceReviewDetails(parentDisposable: Disposable,
       uiDisposable?.let { Disposer.dispose(it) }
       if (reviewListItem == null) return@forEach
       val detailsLifetime = sequentialLifetimes.next()
-      val detailsVm = createReviewDetailsVm(detailsLifetime, project, workspace, spaceProjectInfo, repoInfo, reviewListItem)
-
       uiDisposable = Disposer.newDisposable()
+
+      val detailsVm = createReviewDetailsVm(uiDisposable!!, detailsLifetime, project, workspace, spaceProjectInfo, repoInfo, reviewListItem)
+
       Disposer.register(parentDisposable, uiDisposable as Disposable)
 
       val detailsTabInfo = TabInfo(SpaceReviewInfoTabPanel(parentDisposable, detailsVm)).apply {
@@ -61,8 +63,18 @@ internal class SpaceReviewDetails(parentDisposable: Disposable,
         }
       }
 
-      detailsVm.commits.forEach(lifetime) {
-        commitsTabInfo.text = SpaceBundle.message("review.tab.name.commits.count", it.size)
+      detailsVm.commits.forEach(lifetime) { commits ->
+        val hasUnreachableCommits: Boolean = commits.any { it.commitWithGraph.unreachable }
+        if (hasUnreachableCommits) {
+          commitsTabInfo.icon = AllIcons.General.Warning
+          commitsTabInfo.tooltipText = SpaceBundle.message("review.tab.name.commits.warning.unreachable.commits")
+        }
+        else {
+          commitsTabInfo.icon = null
+          commitsTabInfo.tooltipText = null
+        }
+
+        commitsTabInfo.text = SpaceBundle.message("review.tab.name.commits.count", commits.size)
       }
 
       val tabs = object : SingleHeightTabs(project, uiDisposable as Disposable) {

@@ -18,7 +18,7 @@ BEGIN
   BEGIN
     BLOCK "0000fde9"
     BEGIN
-      VALUE "CompanyName", "JetBrains"
+      VALUE "CompanyName", "JetBrains s.r.o."
       VALUE "FileDescription", "Filesystem events processor"
       VALUE "FileVersion", VERSION_STR
       VALUE "InternalName", FILE_NAME

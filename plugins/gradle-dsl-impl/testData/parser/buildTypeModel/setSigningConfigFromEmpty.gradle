@@ -1,7 +1,0 @@
-android {
-  signingConfigs {
-    myConfig {
-      storeFile file('config.keystore')
-    }
-  }
-}

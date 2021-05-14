@@ -42,4 +42,19 @@ object LearningUiManager {
     }
     return index
   }
+
+  private val callbackMap = mutableMapOf<Int, () -> Unit>()
+  private var currentCallbackId = 0
+
+  /** The returned Id should be used in the text only once */
+  fun addCallback(callback: () -> Unit) : Int {
+    callbackMap[currentCallbackId++] = callback
+    return currentCallbackId - 1
+  }
+
+  fun getAndClearCallback(id: Int): (() -> Unit)? {
+    val result = callbackMap[id]
+    callbackMap.remove(id)
+    return result
+  }
 }

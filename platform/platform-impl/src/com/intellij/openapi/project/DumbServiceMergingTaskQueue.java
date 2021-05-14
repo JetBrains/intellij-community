@@ -120,7 +120,7 @@ public class DumbServiceMergingTaskQueue {
     }
   }
 
-  private static void disposeSafe(@NotNull Collection<DumbModeTask> tasks) {
+  private static void disposeSafe(@NotNull Collection<? extends DumbModeTask> tasks) {
     for (DumbModeTask task : tasks) {
       disposeSafe(task);
     }
@@ -138,7 +138,7 @@ public class DumbServiceMergingTaskQueue {
     }
   }
 
-  private static void cancelIndicatorSafe(@NotNull List<ProgressIndicatorEx> indicators) {
+  private static void cancelIndicatorSafe(@NotNull List<? extends ProgressIndicatorEx> indicators) {
     for (ProgressIndicatorEx indicator : indicators) {
       cancelIndicatorSafe(indicator);
     }

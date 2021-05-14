@@ -141,7 +141,7 @@ class ServiceTreeView extends ServiceView {
     for (int i = 0; i < rows.length; i++) {
       objectRows.add(Pair.create(objects.get(i), rows[i]));
     }
-    objectRows.sort(Comparator.comparing(pair -> pair.second));
+    objectRows.sort(Pair.comparingBySecond());
     return ContainerUtil.mapNotNull(objectRows, pair -> ObjectUtils.tryCast(pair.first, ServiceViewItem.class));
   }
 

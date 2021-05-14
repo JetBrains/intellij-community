@@ -222,11 +222,17 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   @NotNull
   @Override
   public MarkdownCssSettings getMarkdownCssSettings() {
+    String customCssText = myEditor != null && !myEditor.isDisposed() ? ReadAction.compute(() -> myEditor.getDocument().getText()) : "";
+    //font change available only from the preview
+    Integer fontSize = MarkdownApplicationSettings.getInstance().getMarkdownCssSettings().getFontSize();
+    String fontFamily = MarkdownApplicationSettings.getInstance().getMarkdownCssSettings().getFontFamily();
+
     return new MarkdownCssSettings(myCustomCssFromPathEnabled.isSelected(),
                                    myCustomCssPath.getText(),
                                    myApplyCustomCssText.isSelected(),
-                                   myEditor != null && !myEditor.isDisposed() ?
-                                   ReadAction.compute(() -> myEditor.getDocument().getText()) : "");
+                                   customCssText,
+                                   fontSize,
+                                   fontFamily);
   }
 
   @NotNull

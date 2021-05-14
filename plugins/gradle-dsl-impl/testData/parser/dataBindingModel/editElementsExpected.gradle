@@ -1,7 +1,0 @@
-android {
-  dataBinding {
-    addDefaultAdapters false
-    enabled true
-    version '2.0'
-  }
-}

@@ -115,9 +115,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private static final class RunnableDelegate implements Runnable {
     final Runnable task;
-    private final Consumer<Runnable> executor;
+    private final @NotNull Consumer<? super Runnable> executor;
 
-    private RunnableDelegate(@NotNull Runnable task, @NotNull Consumer<Runnable> executor) {
+    private RunnableDelegate(@NotNull Runnable task, @NotNull Consumer<? super Runnable> executor) {
       this.task = task;
       this.executor = executor;
     }

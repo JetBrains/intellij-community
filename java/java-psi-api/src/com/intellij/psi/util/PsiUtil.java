@@ -701,15 +701,25 @@ public final class PsiUtil extends PsiUtilCore {
       return equalOnEquivalentClasses(s1, containingClass1, s2, containingClass2);
     }
 
-    return containingClass1 == null && containingClass2 == null;
+    if (containingClass1 == null && containingClass2 == null) {
+      if (aClass == bClass && isLocalClass(aClass)) {
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+        return containingClass != null && equalOnEquivalentClasses(s1, containingClass, s2, containingClass);
+      }
+      return true;
+    }
+
+    return false;
+    
   }
 
   /**
    * JLS 15.28
    */
   public static boolean isCompileTimeConstant(@NotNull PsiVariable field) {
-    return field.hasModifierProperty(PsiModifier.FINAL)
-           && (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) || field.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING))
+    if (!field.hasModifierProperty(PsiModifier.FINAL)) return false;
+    PsiType type = field.getType();
+    return (TypeConversionUtil.isPrimitiveAndNotNull(type) || type.equalsToText(CommonClassNames.JAVA_LANG_STRING))
            && field.hasInitializer()
            && isConstantExpression(field.getInitializer());
   }
@@ -945,6 +955,10 @@ public final class PsiUtil extends PsiUtilCore {
       }
 
       if (currentOwner.hasModifierProperty(PsiModifier.STATIC)) break;
+      if (currentOwner instanceof PsiClass && isLocalClass((PsiClass)currentOwner)) {
+        currentOwner = PsiTreeUtil.getParentOfType(currentOwner, PsiTypeParameterListOwner.class);
+        continue;
+      }
       currentOwner = currentOwner.getContainingClass();
     }
 

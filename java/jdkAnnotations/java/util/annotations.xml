@@ -1837,6 +1837,9 @@
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;param1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Collection T[] toArray(T[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -1898,6 +1901,9 @@
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>
     </annotation>
+      <annotation name='org.jetbrains.annotations.Contract'>
+          <val name="pure" val="true"/>
+      </annotation>
   </item>
   <item name="java.util.Collection java.util.Iterator&lt;E&gt; iterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />

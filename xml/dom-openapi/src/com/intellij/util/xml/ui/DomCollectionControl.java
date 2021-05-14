@@ -40,7 +40,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public class DomCollectionControl<T extends DomElement> extends DomUIControl implements Highlightable, TypeSafeDataProvider {
+public class DomCollectionControl<T extends DomElement> extends DomUIControl implements Highlightable, DataProvider {
   private static final DataKey<DomCollectionControl> DOM_COLLECTION_CONTROL = DataKey.create("DomCollectionControl");
 
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
@@ -120,11 +120,13 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     myCollectionPanel.getTable().setRowSelectionInterval(index, index);
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-    if (DOM_COLLECTION_CONTROL.equals(key)) {
-      sink.put(DOM_COLLECTION_CONTROL, this);
+  public Object getData(@NotNull String dataId) {
+    if (DOM_COLLECTION_CONTROL.is(dataId)) {
+      return this;
     }
+    return null;
   }
 
   @Nullable @NonNls

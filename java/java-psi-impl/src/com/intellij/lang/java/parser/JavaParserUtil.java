@@ -61,7 +61,7 @@ public final class JavaParserUtil {
     }
 
     @Override
-    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter
+    public int getEdgePosition(final List<? extends IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter
       getter) {
       if (tokens.size() == 0) return 0;
 
@@ -93,7 +93,7 @@ public final class JavaParserUtil {
 
   private static class TrailingWhitespacesAndCommentsBinder implements WhitespacesAndCommentsBinder {
     @Override
-    public int getEdgePosition(final List<IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
+    public int getEdgePosition(final List<? extends IElementType> tokens, final boolean atStreamEdge, final TokenTextGetter getter) {
       if (tokens.size() == 0) return 0;
 
       int result = 0;

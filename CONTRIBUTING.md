@@ -2,8 +2,8 @@ Contributing to IntelliJ IDEA
 ===
 
 Opening a PR, please make sure you've read these articles:
-- [IntelliJ Coding Guidelines](https://www.jetbrains.org/intellij/sdk/docs/basics/intellij_coding_guidelines.html)
-- [Contribute Code](https://www.jetbrains.org/display/IJOS/Contribute#Contribute-ContributeCode)
+- [IntelliJ Coding Guidelines](https://plugins.jetbrains.com/docs/intellij/intellij-coding-guidelines.html)
+- [Contribute Code](https://www.jetbrains.com/opensource/idea/)
 
 Additionally, you **NEED** to have a signed Contributor License Agreement (CLA) sent to JetBrains before your
 code can be merged. Please [request it here](https://www.jetbrains.com/agreements/cla/).

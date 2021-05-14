@@ -90,7 +90,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   protected abstract fun createSaveSession(states: StateMap): SaveSessionProducer
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<String>) {
+  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     val oldData = storageDataRef.get()
     val newData = getStorageData(true)
     if (oldData == null) {

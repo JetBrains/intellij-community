@@ -505,6 +505,9 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TodoDefault = load("general/todoDefault.svg", -6679998985908400939L, 0);
     /** 16x16 */ public static final @NotNull Icon TodoImportant = load("general/todoImportant.svg", 4071827613157420132L, 0);
     /** 16x16 */ public static final @NotNull Icon TodoQuestion = load("general/todoQuestion.svg", -998896081257651016L, 0);
+    /** 16x16 */ public static final @NotNull Icon Tree = load("general/tree.svg", -2075024216113450683L, 0);
+    /** 16x16 */ public static final @NotNull Icon TreeHovered = load("general/treeHovered.svg", -3207966685029359517L, 0);
+    /** 16x16 */ public static final @NotNull Icon TreeSelected = load("general/treeSelected.svg", 1034377141145894224L, 0);
     /** 16x16 */ public static final @NotNull Icon User = load("general/user.svg", -4532685924149411001L, 0);
     /** 16x16 */ public static final @NotNull Icon Warning = load("general/warning.svg", 3745461258866722132L, 2);
     /** 16x16 */ public static final @NotNull Icon WarningDecorator = load("general/warningDecorator.svg", -203970029791479627L, 2);
@@ -935,6 +938,7 @@ public class AllIcons {
   public static final class Providers {
     /** 16x16 */ public static final @NotNull Icon Apache = load("providers/apache.svg", -5934225321775094516L, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("providers/apacheDerby.svg", -7079921244068107461L, 2);
+    /** 16x16 */ public static final @NotNull Icon Athena = load("providers/athena.svg", -3010672165063217069L, 0);
     /** 16x16 */ public static final @NotNull Icon Azure = load("providers/azure.svg", -4108322146501572749L, 0);
     /** 16x16 */ public static final @NotNull Icon BigQuery = load("providers/bigQuery.svg", -1485203038192915431L, 0);
     /** 16x16 */ public static final @NotNull Icon Cassandra = load("providers/cassandra.svg", -7281058075200040514L, 2);
@@ -943,19 +947,25 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Couchbase = load("providers/couchbase.svg", 2362485358505666920L, 0);
     /** 16x16 */ public static final @NotNull Icon DB2 = load("providers/DB2.svg", 6413560575348587225L, 2);
     /** 16x16 */ public static final @NotNull Icon Eclipse = load("providers/eclipse.svg", 8001776984939118232L, 2);
+    /** 16x16 */ public static final @NotNull Icon Elasticsearch = load("providers/elasticsearch.svg", 3950577951814466348L, 0);
     /** 16x16 */ public static final @NotNull Icon Exasol = load("providers/exasol.svg", -1472668320766890121L, 2);
     /** 16x16 */ public static final @NotNull Icon Firebird = load("providers/firebird.svg", -1150242811120149019L, 0);
+    /** 16x16 */ public static final @NotNull Icon GoogleCloudSpanner = load("providers/googleCloudSpanner.svg", -3323630209325162171L, 0);
     /** 16x16 */ public static final @NotNull Icon Greenplum = load("providers/greenplum.svg", 2114952280079692584L, 0);
     /** 16x16 */ public static final @NotNull Icon H2 = load("providers/h2.svg", 6942065945738417775L, 2);
     /** 16x16 */ public static final @NotNull Icon HANA = load("providers/HANA.svg", -4405317222219393929L, 0);
     /** 16x16 */ public static final @NotNull Icon Hive = load("providers/hive.svg", 4145120119652405940L, 2);
     /** 16x16 */ public static final @NotNull Icon Hsqldb = load("providers/hsqldb.svg", -517631853275388229L, 0);
     /** 16x16 */ public static final @NotNull Icon Ibm = load("providers/ibm.svg", 8643999117649454663L, 2);
+    /** 16x16 */ public static final @NotNull Icon Impala = load("providers/impala.svg", 7023351534974100583L, 2);
     /** 16x16 */ public static final @NotNull Icon Informix = load("providers/informix.svg", -8615543225570285214L, 0);
+    /** 16x16 */ public static final @NotNull Icon IntersystemCache = load("providers/intersystemCache.svg", 5464778334378267767L, 2);
     /** 16x16 */ public static final @NotNull Icon Mariadb = load("providers/mariadb.svg", 3897094340920354305L, 2);
     /** 16x16 */ public static final @NotNull Icon Microsoft = load("providers/microsoft.svg", -5340043463794251127L, 0);
     /** 16x16 */ public static final @NotNull Icon MongoDB = load("providers/mongoDB.svg", 6296755881258720059L, 0);
     /** 16x16 */ public static final @NotNull Icon Mysql = load("providers/mysql.svg", -7850712015561444588L, 2);
+    /** 16x16 */ public static final @NotNull Icon Netezza = load("providers/netezza.svg", -753702870144654119L, 2);
+    /** 16x16 */ public static final @NotNull Icon Openedge = load("providers/openedge.svg", -4234925129624821686L, 0);
     /** 16x16 */ public static final @NotNull Icon Oracle = load("providers/oracle.svg", 4943732813650556562L, 0);
     /** 16x16 */ public static final @NotNull Icon Postgresql = load("providers/postgresql.svg", 8942378240461502503L, 2);
     /** 16x16 */ public static final @NotNull Icon Presto = load("providers/presto.svg", 4677484317865724648L, 2);
@@ -967,6 +977,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Sun = load("providers/sun.svg", 901999003933198963L, 2);
     /** 16x16 */ public static final @NotNull Icon Sybase = load("providers/sybase.svg", 469976759404647468L, 0);
     /** 16x16 */ public static final @NotNull Icon Teradata = load("providers/teradata.svg", -1965526284412460845L, 0);
+    /** 16x16 */ public static final @NotNull Icon Tibero = load("providers/tibero.svg", 3743642978823178398L, 2);
+    /** 16x16 */ public static final @NotNull Icon Trino = load("providers/trino.svg", 6102370661544681716L, 2);
     /** 16x16 */ public static final @NotNull Icon Vertica = load("providers/vertica.svg", -7134506734952828743L, 2);
   }
 

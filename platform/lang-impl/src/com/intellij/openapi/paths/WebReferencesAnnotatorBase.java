@@ -45,7 +45,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
 
   @SuppressWarnings("unchecked")
   @Nullable
-  private static WebReference lookForWebReference(Collection<PsiReference> references) {
+  private static WebReference lookForWebReference(Collection<? extends PsiReference> references) {
     for (PsiReference reference : references) {
       if (reference instanceof WebReference) {
         return (WebReference)reference;

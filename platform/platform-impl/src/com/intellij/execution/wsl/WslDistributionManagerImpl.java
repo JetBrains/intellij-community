@@ -23,8 +23,8 @@ import java.util.Set;
 
 public final class WslDistributionManagerImpl extends WslDistributionManager {
 
-  // Distributions created by tools, e.g. Docker. Not suitable for running users apps.
-  private static final Set<String> INTERNAL_DISTRIBUTIONS = Set.of("docker-desktop-data");
+  // Distributions created by tools, e.g. Docker. Not suitable for running user apps.
+  private static final Set<String> INTERNAL_DISTRIBUTIONS = Set.of("docker-desktop-data", "docker-desktop");
 
   @Override
   protected @NotNull List<String> loadInstalledDistributionMsIds() {

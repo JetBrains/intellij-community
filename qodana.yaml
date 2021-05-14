@@ -1,0 +1,7 @@
+version: 1.0
+profile:
+  name: idea.fatal.errors
+exclude:
+  - name: All
+    paths:
+      - lib

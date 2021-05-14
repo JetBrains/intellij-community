@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.java;
 
@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaImportOptimizer implements ImportOptimizer {
@@ -36,6 +37,10 @@ public class JavaImportOptimizer implements ImportOptimizer {
 
       @Override
       public void run() {
+        SlowOperations.allowSlowOperations(() -> doRun());
+      }
+
+      private void doRun() {
         try {
           final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
           final Document document = manager.getDocument(file);

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class PushedFilePropertiesUpdater {
-  public abstract void runConcurrentlyIfPossible(List<Runnable> tasks);
+  public abstract void runConcurrentlyIfPossible(List<? extends Runnable> tasks);
 
   @NotNull
   public static PushedFilePropertiesUpdater getInstance(@NotNull Project project) {

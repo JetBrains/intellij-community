@@ -132,9 +132,10 @@ public final class ActionsTreeUtil {
   }
 
   private static Group createMainMenuGroup(Condition<? super AnAction> filtered) {
+    ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(getMainMenuTitle(), IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
-    ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
+    ActionGroup mainMenuGroup = (ActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
+    fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered, actionManager);
     return group;
   }
 
@@ -170,8 +171,11 @@ public final class ActionsTreeUtil {
     return false;
   }
 
-  private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, Condition<? super AnAction> filtered) {
-    AnAction[] mainMenuTopGroups = getActions(actionGroup);
+  private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup,
+                                               Group group,
+                                               Condition<? super AnAction> filtered,
+                                               ActionManager actionManager) {
+    AnAction[] mainMenuTopGroups = getActions(actionGroup, actionManager);
     for (AnAction action : mainMenuTopGroups) {
       if (!(action instanceof ActionGroup)) continue;
       Group subGroup = createGroup((ActionGroup)action, false, filtered);
@@ -224,7 +228,7 @@ public final class ActionsTreeUtil {
                                   boolean normalizeSeparators) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon);
-    AnAction[] children = getActions(actionGroup);
+    AnAction[] children = getActions(actionGroup, actionManager);
 
     for (AnAction action : children) {
       if (action == null) {
@@ -260,13 +264,13 @@ public final class ActionsTreeUtil {
   @NotNull
   public static Group createCorrectedGroup(@NotNull ActionGroup actionGroup,
                                            @NotNull @NlsActions.ActionText String groupName,
-                                           @NotNull List<String> path,
-                                           @NotNull List<ActionUrl> actionUrls) {
+                                           @NotNull List<? super String> path,
+                                           @NotNull List<? extends ActionUrl> actionUrls) {
     path.add(groupName);
 
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), null);
-    List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup));
+    List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup, actionManager));
 
     for (ActionUrl actionUrl : actionUrls) {
       if (path.equals(actionUrl.getGroupPath())) {
@@ -362,7 +366,7 @@ public final class ActionsTreeUtil {
     }
   }
 
-  private static Group createExtensionGroup(Condition<AnAction> filtered, final Project project, KeymapExtension provider) {
+  private static Group createExtensionGroup(Condition<? super AnAction> filtered, final Project project, KeymapExtension provider) {
     return (Group) provider.createGroup(filtered, project);
   }
 
@@ -434,7 +438,7 @@ public final class ActionsTreeUtil {
 
     AnAction[] groupedActions = getActions("Other.KeymapGroup");
     for (AnAction action : groupedActions) {
-      addAction(group, action, filtered);
+      addAction(group, action, actionManager, filtered, false);
     }
     result.removeAll(group.initIds());
 
@@ -607,11 +611,16 @@ public final class ActionsTreeUtil {
   }
 
   public static void addAction(KeymapGroup group, AnAction action, Condition<? super AnAction> filtered, boolean forceNonPopup) {
+    addAction(group, action, ActionManager.getInstance(), filtered, forceNonPopup);
+  }
+
+  private static void addAction(KeymapGroup group, AnAction action, ActionManager actionManager,
+                                Condition<? super AnAction> filtered, boolean forceNonPopup) {
     if (action instanceof ActionGroup) {
       if (forceNonPopup) {
-        AnAction[] actions = getActions((ActionGroup)action);
+        AnAction[] actions = getActions((ActionGroup)action, actionManager);
         for (AnAction childAction : actions) {
-          addAction(group, childAction, filtered, true);
+          addAction(group, childAction, actionManager, filtered, true);
         }
       }
       else {
@@ -628,20 +637,25 @@ public final class ActionsTreeUtil {
     }
     else {
       if (filtered == null || filtered.value(action)) {
-        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
+        String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         group.addActionId(id);
       }
     }
   }
 
-  public static AnAction[] getActions(@NonNls String actionGroup) {
-    return getActions((ActionGroup)ActionManager.getInstance().getActionOrStub(actionGroup));
+  public static AnAction @NotNull [] getActions(@NonNls String actionGroup) {
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction group = actionManager.getActionOrStub(actionGroup);
+    LOG.assertTrue(group instanceof ActionGroup, actionGroup + " is " + (group == null ? "not found" : "not a group"));
+    return getActions((ActionGroup)group, actionManager);
   }
 
-  public static AnAction[] getActions(ActionGroup group) {
-    return group instanceof DefaultActionGroup
-           ? ((DefaultActionGroup)group).getChildActionsOrStubs()
-           : group.getChildren(null);
+  private static AnAction @NotNull [] getActions(@NotNull ActionGroup group, @NotNull ActionManager actionManager) {
+    // ActionManagerImpl#preloadActions does not preload action groups, e.g. File | New, so unstub it
+    ActionGroup adjusted = group instanceof ActionGroupStub? (ActionGroup)actionManager.getAction(((ActionGroupStub)group).getId()) : group;
+    return adjusted instanceof DefaultActionGroup
+           ? ((DefaultActionGroup)adjusted).getChildActionsOrStubs()
+           : adjusted.getChildren(null);
   }
 
   @NotNull

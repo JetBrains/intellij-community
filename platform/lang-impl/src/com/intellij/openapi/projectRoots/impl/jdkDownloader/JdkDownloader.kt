@@ -112,6 +112,8 @@ internal interface JdkDownloaderBase {
       override fun doDownload(indicator: ProgressIndicator) {
         JdkInstaller.getInstance().installJdk(request, indicator, project)
       }
+
+      override fun toString() = "DownloadTask{${request.item.fullPresentationText}, dir=${request.installDir}}"
     }
   }
 }

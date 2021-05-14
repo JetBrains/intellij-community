@@ -35,9 +35,4 @@ public abstract class XmlLikeFileType extends LanguageFileType {
     Charset charset = CharsetToolkit.forName(name);
     return charset == null ? StandardCharsets.UTF_8 : charset;
   }
-
-  @Override
-  public @NotNull CharsetHint getCharsetHint() {
-    return CharsetHint.CONTENT_DEPENDENT_CHARSET;
-  }
 }

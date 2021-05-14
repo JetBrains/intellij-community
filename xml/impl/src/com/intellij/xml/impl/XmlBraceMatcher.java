@@ -17,13 +17,15 @@ package com.intellij.xml.impl;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.XmlAwareBraceMatcher;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XHtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
@@ -126,7 +128,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   protected boolean isFileTypeWithSingleHtmlTags(final FileType fileType) {
-    return fileType == StdFileTypes.HTML;
+    return fileType == HtmlFileType.INSTANCE;
   }
 
   @Override
@@ -180,13 +182,13 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   protected boolean isStrictTagMatchingForFileType(final FileType fileType) {
-    return fileType == StdFileTypes.XML ||
-           fileType == StdFileTypes.XHTML;
+    return fileType == XmlFileType.INSTANCE ||
+           fileType == XHtmlFileType.INSTANCE;
   }
 
   @Override
   public boolean areTagsCaseSensitive(final @NotNull FileType fileType, final int braceGroupId) {
-    return braceGroupId == XML_TAG_TOKEN_GROUP && fileType == StdFileTypes.XML;
+    return braceGroupId == XML_TAG_TOKEN_GROUP && fileType == XmlFileType.INSTANCE;
   }
 
   private static boolean findEndTagStart(HighlighterIterator iterator) {

@@ -119,7 +119,6 @@ import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeTestFilePointersTracker;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +170,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myReadEditorMarkupModel;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private ResourceBundle[] myMessageBundles = new ResourceBundle[0];
-  private LegacyBridgeTestFilePointersTracker myLegacyBridgeTestFilePointersTracker;
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -1139,12 +1137,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void checkResult(@NotNull String text) {
-    checkResult(text, false);
+  public void checkResult(@NotNull String expectedText) {
+    checkResult(expectedText, false);
   }
 
   @Override
-  public void checkResult(@NotNull String text, boolean stripTrailingSpaces) {
+  public void checkResult(@NotNull String expectedText, boolean stripTrailingSpaces) {
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     if (policy != null) {
       policy.beforeCheckResult(getFile());
@@ -1152,12 +1150,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       EditorUtil.fillVirtualSpaceUntilCaret(getHostEditor());
-      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), getHostFile().getText());
+      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(expectedText), getHostFile().getText());
     });
   }
 
   @Override
-  public void checkResult(@NotNull String filePath, @NotNull String text, boolean stripTrailingSpaces) {
+  public void checkResult(@NotNull String filePath, @NotNull String expectedText, boolean stripTrailingSpaces) {
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     if (policy != null) {
       policy.beforeCheckResult(getFile());
@@ -1165,7 +1163,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       PsiFile psiFile = getFileToCheck(filePath);
-      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), psiFile.getText());
+      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(expectedText), psiFile.getText());
     });
   }
 
@@ -1229,8 +1227,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (shouldTrackVirtualFilePointers()) {
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     }
-    myLegacyBridgeTestFilePointersTracker = new LegacyBridgeTestFilePointersTracker(myProjectFixture.getProject());
-    myLegacyBridgeTestFilePointersTracker.startTrackPointersCreatedInTest();
   }
 
   protected boolean shouldTrackVirtualFilePointers() {
@@ -1285,12 +1281,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       () -> disposeRootDisposable(),
       () -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown()),
       () -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()),
-      () -> {
-        LegacyBridgeTestFilePointersTracker tracker = myLegacyBridgeTestFilePointersTracker;
-        if (tracker != null) {
-          tracker.disposePointersCreatedInTest();
-        }
-      },
       () -> super.tearDown(),
       () -> {
         if (myVirtualFilePointerTracker != null) {

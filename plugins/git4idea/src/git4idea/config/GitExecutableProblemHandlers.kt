@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.CommonBundle
@@ -99,7 +99,7 @@ internal fun getLinkToConfigure(project: Project): ErrorNotifier.FixOption = Err
 internal fun ProcessOutput.dumpToString() = "output: ${stdout}, error output: ${stderr}"
 
 internal fun getErrorTitle(text: @Nls String, description: @Nls String?): @Nls String =
-  if (description == null) GitBundle.getString("git.executable.validation.error.start.title") else text
+  if (description == null) GitBundle.message("git.executable.validation.error.start.title") else text
 
 internal fun getErrorMessage(text: @Nls String, description: @Nls String?): @Nls String = description ?: text
 

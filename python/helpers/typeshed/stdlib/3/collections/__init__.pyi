@@ -1,44 +1,9 @@
 import sys
 import typing
-from typing import (
-    AbstractSet,
-    Any,
-    AsyncGenerator as AsyncGenerator,
-    AsyncIterable as AsyncIterable,
-    AsyncIterator as AsyncIterator,
-    Awaitable as Awaitable,
-    ByteString as ByteString,
-    Callable as Callable,
-    Collection as Collection,
-    Container as Container,
-    Coroutine as Coroutine,
-    Dict,
-    Generator as Generator,
-    Generic,
-    Hashable as Hashable,
-    ItemsView as ItemsView,
-    Iterable as Iterable,
-    Iterator as Iterator,
-    KeysView as KeysView,
-    List,
-    Mapping as Mapping,
-    MappingView as MappingView,
-    MutableMapping as MutableMapping,
-    MutableSequence as MutableSequence,
-    MutableSet as MutableSet,
-    Optional,
-    Reversible as Reversible,
-    Sequence as Sequence,
-    Sized as Sized,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    ValuesView as ValuesView,
-    overload,
-)
+from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union, overload
 
-Set = AbstractSet
+if sys.version_info < (3, 10):
+    from _collections_abc import *
 
 _S = TypeVar("_S")
 _T = TypeVar("_T")
@@ -137,8 +102,11 @@ class UserString(Sequence[str]):
     def casefold(self: _UserStringT) -> _UserStringT: ...
     def center(self: _UserStringT, width: int, *args: Any) -> _UserStringT: ...
     def count(self, sub: Union[str, UserString], start: int = ..., end: int = ...) -> int: ...
-    def encode(self: _UserStringT, encoding: Optional[str] = ..., errors: Optional[str] = ...) -> _UserStringT: ...
-    def endswith(self, suffix: Union[str, Tuple[str, ...]], start: int = ..., end: int = ...) -> bool: ...
+    if sys.version_info >= (3, 8):
+        def encode(self: _UserStringT, encoding: Optional[str] = ..., errors: Optional[str] = ...) -> bytes: ...
+    else:
+        def encode(self: _UserStringT, encoding: Optional[str] = ..., errors: Optional[str] = ...) -> _UserStringT: ...
+    def endswith(self, suffix: Union[str, Tuple[str, ...]], start: Optional[int] = ..., end: Optional[int] = ...) -> bool: ...
     def expandtabs(self: _UserStringT, tabsize: int = ...) -> _UserStringT: ...
     def find(self, sub: Union[str, UserString], start: int = ..., end: int = ...) -> int: ...
     def format(self, *args: Any, **kwds: Any) -> str: ...
@@ -180,7 +148,7 @@ class UserString(Sequence[str]):
     def split(self, sep: Optional[str] = ..., maxsplit: int = ...) -> List[str]: ...
     def rsplit(self, sep: Optional[str] = ..., maxsplit: int = ...) -> List[str]: ...
     def splitlines(self, keepends: bool = ...) -> List[str]: ...
-    def startswith(self, prefix: Union[str, Tuple[str, ...]], start: int = ..., end: int = ...) -> bool: ...
+    def startswith(self, prefix: Union[str, Tuple[str, ...]], start: Optional[int] = ..., end: Optional[int] = ...) -> bool: ...
     def strip(self: _UserStringT, chars: Optional[str] = ...) -> _UserStringT: ...
     def swapcase(self: _UserStringT) -> _UserStringT: ...
     def title(self: _UserStringT) -> _UserStringT: ...
@@ -321,3 +289,4 @@ class ChainMap(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     def __getitem__(self, k: _KT) -> _VT: ...
     def __iter__(self) -> Iterator[_KT]: ...
     def __len__(self) -> int: ...
+    def __missing__(self, key: _KT) -> _VT: ...  # undocumented

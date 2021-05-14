@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -28,8 +28,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
@@ -42,7 +40,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class JavaFxPsiUtil {
-
   private static final Logger LOG = Logger.getInstance(JavaFxPsiUtil.class);
 
   public static XmlProcessingInstruction createSingleImportInstruction(String qualifiedName, Project project) {
@@ -762,7 +759,7 @@ public final class JavaFxPsiUtil {
     final Map<String, XmlAttributeValue> cachedIds = CachedValuesManager
       .getCachedValue(rootTag, () -> new CachedValueProvider.Result<>(prepareFileIds(rootTag), PsiModificationTracker.MODIFICATION_COUNT));
     if (skipController && cachedIds.containsKey(FxmlConstants.CONTROLLER)) {
-      final Map<String, XmlAttributeValue> filteredIds = new THashMap<>(cachedIds);
+      final Map<String, XmlAttributeValue> filteredIds = new HashMap<>(cachedIds);
       filteredIds.remove(FxmlConstants.CONTROLLER);
       return filteredIds;
     }
@@ -771,7 +768,7 @@ public final class JavaFxPsiUtil {
 
   @NotNull
   private static Map<String, XmlAttributeValue> prepareFileIds(XmlTag rootTag) {
-    final Map<String, XmlAttributeValue> fileIds = new THashMap<>();
+    final Map<String, XmlAttributeValue> fileIds = new HashMap<>();
     for (XmlTag tag : SyntaxTraverser.psiTraverser().withRoot(rootTag).filter(XmlTag.class)) {
       final XmlAttribute idAttribute = tag.getAttribute(FxmlConstants.FX_ID);
       if (idAttribute != null) {
@@ -856,7 +853,7 @@ public final class JavaFxPsiUtil {
 
   @NotNull
   private static Map<String, PsiMember> prepareReadableProperties(@NotNull PsiClass psiClass) {
-    final Map<String, PsiMember> acceptableMembers = new THashMap<>();
+    final Map<String, PsiMember> acceptableMembers = new HashMap<>();
     for (PsiMethod method : psiClass.getAllMethods()) {
       if (method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
       if (PropertyUtilBase.isSimplePropertyGetter(method)) {
@@ -880,7 +877,7 @@ public final class JavaFxPsiUtil {
   @NotNull
   private static Map<String, PsiMember> prepareWritableProperties(@NotNull PsiClass psiClass) {
     // todo search for setter in corresponding builder class, e.g. MyDataBuilder.setText() + MyData.getText(), reuse logic from hasBuilder()
-    final Map<String, PsiMember> acceptableMembers = new THashMap<>();
+    final Map<String, PsiMember> acceptableMembers = new HashMap<>();
     for (String propertyName : prepareConstructorNamedArgProperties(psiClass)) {
       if (!acceptableMembers.containsKey(propertyName)) {
         final PsiField field = psiClass.findFieldByName(propertyName, true);
@@ -957,7 +954,7 @@ public final class JavaFxPsiUtil {
 
   @NotNull
   private static Set<String> prepareConstructorNamedArgProperties(@NotNull PsiClass psiClass) {
-    final Set<String> properties = new THashSet<>();
+    final Set<String> properties = new HashSet<>();
     for (PsiMethod constructor : psiClass.getConstructors()) {
       if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();
@@ -1112,7 +1109,7 @@ public final class JavaFxPsiUtil {
                                           .filter(PsiEnumConstant.class::isInstance)
                                           .map(PsiField::getName)
                                           .map(StringUtil::toUpperCase)
-                                          .collect(Collectors.toCollection(THashSet::new)),
+                                          .collect(Collectors.toCollection(HashSet::new)),
                                         PsiModificationTracker.MODIFICATION_COUNT));
     if (!constantNames.contains(StringUtil.toUpperCase(name))) {
       return JavaFXBundle.message("enum.constant.not.found", name, enumClass.getQualifiedName());

@@ -11,6 +11,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 
 public final class MakeStaticUtil {
@@ -51,7 +52,7 @@ public final class MakeStaticUtil {
         }
       }
     }
-    else if (element instanceof PsiThisExpression) {
+    else if (element instanceof PsiThisExpression && !(element.getParent() instanceof PsiReceiverParameter)) {
       PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression) element).getQualifier();
       PsiElement refElement = qualifier != null ?
           qualifier.resolve() : PsiTreeUtil.getParentOfType(element, PsiClass.class);
@@ -134,7 +135,7 @@ public final class MakeStaticUtil {
     }
 
     final ArrayList<PsiField> psiFields = new ArrayList<>(reported);
-    psiFields.sort((psiField, psiField1) -> psiField.getName().compareTo(psiField1.getName()));
+    psiFields.sort(Comparator.comparing(PsiField::getName));
     for (final PsiField field : psiFields) {
       if (accessedForWriting.contains(field)) continue;
       VariableData data = new VariableData(field);

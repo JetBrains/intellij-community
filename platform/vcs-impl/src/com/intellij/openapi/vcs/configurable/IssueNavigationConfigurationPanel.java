@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.icons.AllIcons;
@@ -180,9 +180,9 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, VcsBundle.getString(
-        "issue.action.enter.jira.installation.url.label"),
-                                          VcsBundle.getString("issue.action.add.jira.issue.navigation.pattern.title"), Messages.getQuestionIcon());
+      String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this,
+                                          VcsBundle.message("issue.action.enter.jira.installation.url.label"),
+                                          VcsBundle.message("issue.action.add.jira.issue.navigation.pattern.title"), Messages.getQuestionIcon());
       if (s == null) {
         return;
       }

@@ -10,32 +10,58 @@ fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
 // Can be used to skip int value from JSON if it is equal to 0 (to not pollute the JSON report).
 typealias PositiveInt = Int?
 
-fun ScanningStatistics.toJsonStatistics() =
-  JsonScanningStatistics(
+fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
+  val jsonScannedFiles = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
+    scannedFiles.map { it.toJson() }
+  }
+  else {
+    null
+  }
+
+  return JsonScanningStatistics(
     providerName = fileSetName,
     numberOfScannedFiles = numberOfScannedFiles,
     numberOfFilesForIndexing = numberOfFilesForIndexing,
     numberOfSkippedFiles = numberOfSkippedFiles,
-    numberOfUpToDateFiles = numberOfScannedFiles - numberOfFilesForIndexing,
     numberOfFilesFullyIndexedByInfrastructureExtensions = numberOfFilesFullyIndexedByInfrastructureExtension,
     scanningTime = JsonDuration(scanningTime),
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
     timeUpdatingContentLessIndexes = JsonDuration(timeUpdatingContentLessIndexes),
-    timeIndexingWithoutContent = JsonDuration(timeIndexingWithoutContent)
+    timeIndexingWithoutContent = JsonDuration(timeIndexingWithoutContent),
+    scannedFiles = jsonScannedFiles
+  )
+}
+
+fun ScanningStatistics.ScannedFile.toJson(): JsonScanningStatistics.JsonScannedFile =
+  JsonScanningStatistics.JsonScannedFile(
+    path = portableFilePath,
+    isUpToDate = isUpToDate,
+    wasFullyIndexedByInfrastructureExtension = wasFullyIndexedByInfrastructureExtension
   )
 
+@Suppress("DuplicatedCode")
 fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
-  val indexedFilePaths = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) indexedFiles else null
+  val jsonIndexedFiles = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
+    indexedFiles.map { it.toJson() }
+  }
+  else {
+    null
+  }
 
   return JsonFileProviderIndexStatistics(
     providerName = fileSetName,
-    totalNumberOfFiles = numberOfIndexedFiles,
+    totalNumberOfIndexedFiles = numberOfIndexedFiles,
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
     totalIndexingTime = JsonDuration(totalIndexingTime),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
-    indexedFiles = indexedFilePaths
+    indexedFiles = jsonIndexedFiles
   )
 }
+
+fun IndexingJobStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonIndexedFile(
+  path = portableFilePath,
+  wasFullyIndexedByExtensions = wasFullyIndexedByExtensions
+)
 
 fun ProjectIndexingHistory.IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
@@ -55,11 +81,7 @@ private fun calculatePercentages(part: Long, total: Long): JsonPercentages = Jso
 fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory =
   JsonProjectIndexingHistory(
     projectName = project.name,
-    numberOfFileProviders = scanningStatistics.size,
-    totalNumberOfFiles = scanningStatistics.map { it.numberOfScannedFiles }.sum(),
-    totalNumberOfUpToDateFiles = scanningStatistics.map { it.numberOfUpToDateFiles }.sum(),
     times = times.toJson(),
-    totalNumberOfTooLargeForIndexingFiles = totalNumberOfTooLargeFiles,
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
     scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },
@@ -102,8 +124,6 @@ private fun ProjectIndexingHistory.aggregateStatsPerFileType(): List<JsonProject
     )
   }
 }
-
-private fun TooLargeForIndexingFile.toJson() = JsonTooLargeForIndexingFile(fileName, JsonFileSize(fileSize))
 
 private fun ProjectIndexingHistory.aggregateStatsPerIndexer(): List<JsonProjectIndexingHistory.JsonStatsPerIndexer> {
   val totalIndexingTime = totalStatsPerIndexer.values.map { it.totalIndexingTimeInAllThreads }.sum()

@@ -11,8 +11,16 @@ public class JsonPathVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
+  public void visitArrayValue(@NotNull JsonPathArrayValue o) {
+    visitValue(o);
+  }
+
+  public void visitBinaryConditionalOperator(@NotNull JsonPathBinaryConditionalOperator o) {
+    visitPsiElement(o);
+  }
+
   public void visitBooleanLiteral(@NotNull JsonPathBooleanLiteral o) {
-    visitLiteral(o);
+    visitLiteralValue(o);
   }
 
   public void visitConditionalExpression(@NotNull JsonPathConditionalExpression o) {
@@ -59,8 +67,8 @@ public class JsonPathVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitLiteral(@NotNull JsonPathLiteral o) {
-    visitExpression(o);
+  public void visitLiteralValue(@NotNull JsonPathLiteralValue o) {
+    visitValue(o);
   }
 
   public void visitMinusExpression(@NotNull JsonPathMinusExpression o) {
@@ -72,11 +80,19 @@ public class JsonPathVisitor extends PsiElementVisitor {
   }
 
   public void visitNullLiteral(@NotNull JsonPathNullLiteral o) {
-    visitLiteral(o);
+    visitLiteralValue(o);
   }
 
   public void visitNumberLiteral(@NotNull JsonPathNumberLiteral o) {
-    visitLiteral(o);
+    visitLiteralValue(o);
+  }
+
+  public void visitObjectProperty(@NotNull JsonPathObjectProperty o) {
+    visitPsiElement(o);
+  }
+
+  public void visitObjectValue(@NotNull JsonPathObjectValue o) {
+    visitValue(o);
   }
 
   public void visitOrExpression(@NotNull JsonPathOrExpression o) {
@@ -124,7 +140,7 @@ public class JsonPathVisitor extends PsiElementVisitor {
   }
 
   public void visitStringLiteral(@NotNull JsonPathStringLiteral o) {
-    visitLiteral(o);
+    visitLiteralValue(o);
   }
 
   public void visitUnaryMinusExpression(@NotNull JsonPathUnaryMinusExpression o) {
@@ -132,6 +148,10 @@ public class JsonPathVisitor extends PsiElementVisitor {
   }
 
   public void visitUnaryNotExpression(@NotNull JsonPathUnaryNotExpression o) {
+    visitExpression(o);
+  }
+
+  public void visitValue(@NotNull JsonPathValue o) {
     visitExpression(o);
   }
 

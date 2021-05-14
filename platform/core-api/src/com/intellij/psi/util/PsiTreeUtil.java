@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -18,7 +18,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -310,7 +310,9 @@ public class PsiTreeUtil {
   public static @NotNull <T extends PsiElement> Collection<T> findChildrenOfAnyType(@Nullable PsiElement element,
                                                                            boolean strict,
                                                                            Class<? extends T> @NotNull ... classes) {
-    if (element == null) return ContainerUtil.emptyList();
+    if (element == null) {
+      return Collections.emptyList();
+    }
 
     CollectElements<PsiElement> processor = new CollectElements<PsiElement>() {
       @Override
@@ -839,7 +841,7 @@ public class PsiTreeUtil {
     }
     return null;
   }
-  
+
   /**
    * Finds the closest parent that is an instance of one of supplied classes. Traversal stops at {@link PsiFile} level.
    *
@@ -1283,13 +1285,13 @@ public class PsiTreeUtil {
    * @param element an element to find
    * @param copy file that must be a copy of {@code element.getContainingFile()}
    * @return found element; null if input element is null
-   * @throws IllegalStateException if it's detected that the supplied file is not exact copy of original file. 
-   * The exception is thrown on a best-effort basis, so you cannot rely on it. 
+   * @throws IllegalStateException if it's detected that the supplied file is not exact copy of original file.
+   * The exception is thrown on a best-effort basis, so you cannot rely on it.
    */
   @Contract("null, _ -> null; !null, _ -> !null")
   public static <T extends PsiElement> T findSameElementInCopy(@Nullable T element, @NotNull PsiFile copy) throws IllegalStateException {
     if (element == null) return null;
-    TIntArrayList offsets = new TIntArrayList();
+    IntArrayList offsets = new IntArrayList();
     PsiElement cur = element;
     while (!cur.getClass().equals(copy.getClass())) {
       int pos = 0;
@@ -1304,7 +1306,7 @@ public class PsiTreeUtil {
     }
     cur = copy;
     for (int level = offsets.size() - 1; level >= 0; level--) {
-      int pos = offsets.get(level);
+      int pos = offsets.getInt(level);
       cur = cur.getFirstChild();
       if (cur == null) {
         throw new IllegalStateException("File structure differs: no child");
@@ -1322,7 +1324,7 @@ public class PsiTreeUtil {
     //noinspection unchecked
     return (T)cur;
   }
-  
+
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link SyntaxTraverser#psiTraverser()} */
   @Deprecated

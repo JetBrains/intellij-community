@@ -40,7 +40,6 @@ import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -196,12 +195,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
             }
           }
         }
-      }
-    })
-    project.messageBus.connect().subscribe(VirtualFilePointerListener.TOPIC, object : VirtualFilePointerListener {
-      override fun beforeValidityChanged(pointers: Array<out VirtualFilePointer>) {
-        val virtualFileUrlIndex = WorkspaceModel.getInstance(project).entityStorage.current.getVirtualFileUrlIndex()
-        pointers.forEach { virtualFileUrlIndex.findEntitiesByUrl(it as VirtualFileUrl).forEach { sourcesToSave.add(it.first.entitySource) } }
       }
     })
   }

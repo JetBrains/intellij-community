@@ -1,20 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.model.Symbol;
-import com.intellij.model.SymbolResolveResult;
-import com.intellij.model.psi.PsiSymbolService;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 /**
  * Represents the result of resolving a {@link PsiPolyVariantReference}.
  *
  * @see PsiElementResolveResult
  */
-public interface ResolveResult extends SymbolResolveResult {
+public interface ResolveResult {
+
   /**
    * The empty array of PSI resolve results which can be reused to avoid unnecessary allocations.
    */
@@ -30,15 +25,8 @@ public interface ResolveResult extends SymbolResolveResult {
 
   /**
    * Checks if the reference was resolved to a valid element.
-   * 
+   *
    * @return true if the resolve encountered no problems
    */
   boolean isValidResult();
-
-  @NotNull
-  @Override
-  default Symbol getTarget() {
-    PsiElement element = Objects.requireNonNull(getElement(), "#getTarget() must not be invoked on empty resolve result");
-    return PsiSymbolService.getInstance().asSymbol(element);
-  }
 }

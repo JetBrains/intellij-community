@@ -7,13 +7,13 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.template.emmet.completion.EmmetAbbreviationCompletionProvider;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -285,7 +285,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
       descriptorFiles = ContainerUtil.packNullables(findDescriptorFile(tag, containingFile));
     }
 
-    final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
+    final boolean acceptSystemEntities = containingFile.getFileType() == XmlFileType.INSTANCE;
     final PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<>() {
       @Override
       public boolean execute(@NotNull final PsiElement element) {

@@ -145,7 +145,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   protected Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
 
   @ApiStatus.Internal
-  public final void registerFileTypeIndentOptions(@NotNull Collection<CodeStyleSettings> allSettings,
+  public final void registerFileTypeIndentOptions(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                                   @NotNull FileType fileType,
                                                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
     allSettings.forEach(settings -> settings.registerAdditionalIndentOptions(fileType, indentOptions));
@@ -153,35 +153,35 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   }
 
   @ApiStatus.Internal
-  public final void unregisterFileTypeIndentOptions(@NotNull Collection<CodeStyleSettings> allSettings,
+  public final void unregisterFileTypeIndentOptions(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                                     @NotNull FileType fileType) {
     allSettings.forEach(settings -> settings.unregisterAdditionalIndentOptions(fileType));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
-  public final void registerLanguageSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+  public final void registerLanguageSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                              @NotNull LanguageCodeStyleProvider provider) {
     allSettings.forEach(settings -> settings.registerSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
-  public final void unregisterLanguageSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+  public final void unregisterLanguageSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                                @NotNull LanguageCodeStyleProvider provider) {
     allSettings.forEach(settings -> settings.removeSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
-  public final void registerCustomSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+  public final void registerCustomSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                            @NotNull CustomCodeStyleSettingsFactory provider) {
     allSettings.forEach(settings -> settings.registerSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
-  public final void unregisterCustomSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+  public final void unregisterCustomSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                              @NotNull CustomCodeStyleSettingsFactory provider) {
     allSettings.forEach(settings -> settings.removeSettings(provider));
     notifyCodeStyleSettingsChanged();

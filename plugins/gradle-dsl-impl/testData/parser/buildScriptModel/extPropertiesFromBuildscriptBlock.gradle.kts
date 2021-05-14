@@ -1,3 +1,0 @@
-buildscript {
-  extra["hello"] = "boo"
-}

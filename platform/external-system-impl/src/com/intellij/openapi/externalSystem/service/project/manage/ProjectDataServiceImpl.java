@@ -45,7 +45,7 @@ public class ProjectDataServiceImpl extends AbstractProjectDataService<ProjectDa
   }
 
   @Override
-  public void importData(@NotNull Collection<DataNode<ProjectData>> toImport,
+  public void importData(@NotNull Collection<? extends DataNode<ProjectData>> toImport,
                          @Nullable ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {

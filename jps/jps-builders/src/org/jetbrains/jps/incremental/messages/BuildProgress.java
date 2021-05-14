@@ -50,7 +50,7 @@ public class BuildProgress {
   private final TObjectIntHashMap<BuildTargetType<?>> myNumberOfFullyRebuiltTargets = new TObjectIntHashMap<>();
 
 
-  public BuildProgress(BuildDataManager dataManager, BuildTargetIndex targetIndex, List<BuildTargetChunk> allChunks, Predicate<BuildTargetChunk> isAffected) {
+  public BuildProgress(BuildDataManager dataManager, BuildTargetIndex targetIndex, List<BuildTargetChunk> allChunks, Predicate<? super BuildTargetChunk> isAffected) {
     myDataManager = dataManager;
     myTargetIndex = targetIndex;
     Set<BuildTargetType<?>> targetTypes = new LinkedHashSet<>();

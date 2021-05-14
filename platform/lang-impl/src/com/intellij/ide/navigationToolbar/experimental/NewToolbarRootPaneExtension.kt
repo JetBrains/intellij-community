@@ -40,7 +40,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
   private val myPanelWrapper = JPanel(BorderLayout())
   private val myPanel: JPanel = object : JPanel(
-    MigLayout("fillx,novisualpadding,ins 0 ${JBUI.scale(5)} 0 ${JBUI.scale(2)},righttoleft", "[shrink 1][shrink 2]push[shrink 0]")) {
+    MigLayout("fillx,novisualpadding,ins 0 ${JBUI.scale(5)} 0 ${JBUI.scale(2)},righttoleft", "[shrink 1]0[shrink 2]0:push[shrink 0]")) {
     init {
       isOpaque = true
       border = BorderFactory.createEmptyBorder()
@@ -50,9 +50,9 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
       return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
     }
   }
-  private val myRightPanel: JPanel = JPanel(MigLayout("ins 0, gap ${JBUI.scale(4)}, fillx, novisualpadding"))
-  private val myCenterPanel: JPanel = JPanel(MigLayout("ins 0, gap ${JBUI.scale(4)}, fillx, novisualpadding"))
-  private val myLeftPanel: JPanel = JPanel(MigLayout("ins 0, gap ${JBUI.scale(4)}, fillx, novisualpadding"))
+  private val myRightPanel: JPanel = JPanel(MigLayout("ins 0, gap 0, fillx, novisualpadding"))
+  private val myCenterPanel: JPanel = JPanel(MigLayout("ins 0, gap 0, fillx, novisualpadding"))
+  private val myLeftPanel: JPanel = JPanel(MigLayout("ins 0, gap 0, fillx, novisualpadding"))
 
   private val registryListener = object : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {
@@ -69,24 +69,15 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
   private fun addGroupComponent(panel: JPanel, layoutConstrains: String, vararg children: AnAction) {
     for (c in children) {
-      when (c) {
-        is Separator -> {
-          panel.add(SeparatorComponent(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(),
-                                       SeparatorOrientation.VERTICAL),
-                    "$layoutConstrains, height 80%!")
-        }
 
-        else -> {
           val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NEW_TOOLBAR,
                                                                         if (c is ActionGroup) c else DefaultActionGroup(c),
                                                                         true) as ActionToolbarImpl
           toolbar.updateActionsImmediately()
           toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
-          toolbar.border = JBUI.Borders.empty()
           toolbar.addNotify()
           panel.add(toolbar, if (c is CustomComponentAction) "$layoutConstrains, shrink 0" else layoutConstrains)
-        }
-      }
+
     }
   }
 
@@ -109,9 +100,9 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
     val newToolbarActions = CustomActionsSchema.getInstance().getCorrectedAction("NewToolbarActions")
 
     val listChildren = (newToolbarActions as ActionGroup).getChildren(null)
-    addGroupComponent(myLeftPanel, "align leading", *(listChildren[0] as ActionGroup).getChildren(null))
-    addGroupComponent(myCenterPanel, "align leading, width 0:pref:max", *(listChildren[1] as ActionGroup).getChildren(null))
-    addGroupComponent(myRightPanel, "align trailing, width pref!", *(listChildren[2] as ActionGroup).getChildren(null))
+    addGroupComponent(myLeftPanel, "align leading", listChildren[0])
+    addGroupComponent(myCenterPanel, "align leading, width 0:pref:max", listChildren[1])
+    addGroupComponent(myRightPanel, "align trailing, width pref!", listChildren[2])
 
     val toolbarSettingsService = ToolbarSettings.Companion.getInstance()
     if (toolbarSettingsService is ExperimentalToolbarSettings) {

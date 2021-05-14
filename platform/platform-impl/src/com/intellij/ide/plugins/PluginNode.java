@@ -302,7 +302,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     }
   }
 
-  public void setDependencies(@NotNull List<IdeaPluginDependency> dependencies) {
+  public void setDependencies(@NotNull List<? extends IdeaPluginDependency> dependencies) {
     myDependencies = new ArrayList<>(dependencies);
   }
 

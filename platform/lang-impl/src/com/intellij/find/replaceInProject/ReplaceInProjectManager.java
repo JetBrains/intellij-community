@@ -193,7 +193,7 @@ public final class ReplaceInProjectManager {
   }
 
   public void searchAndShowUsages(@NotNull UsageViewManager manager,
-                                  @NotNull Factory<UsageSearcher> usageSearcherFactory,
+                                  @NotNull Factory<? extends UsageSearcher> usageSearcherFactory,
                                   @NotNull final FindModel findModelCopy,
                                   @NotNull UsageViewPresentation presentation,
                                   @NotNull FindUsagesProcessPresentation processPresentation) {
@@ -393,7 +393,7 @@ public final class ReplaceInProjectManager {
     //replaceContext.getUsageView().addButtonToLowerPane(skipThisFileAction);
   }
 
-  private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<Usage> usages) {
+  private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<? extends Usage> usages) {
     if (!ensureUsagesWritable(replaceContext, usages)) {
       return true;
     }

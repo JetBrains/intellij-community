@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.codeInsight.hint.HintUtil.PROMOTION_PANE_KEY
@@ -38,9 +38,9 @@ import javax.swing.JComponent
 
 private const val PROMOTION_STATE_KEY = "NonModalCommitPromotionState"
 private fun isDontShowAgain(): Boolean = getPromotionState().let { it == ACCEPTED || it == REJECTED }
-private fun setPromotionState(value: NonModalCommitPromotionState) {
+private fun setPromotionState(project: Project, value: NonModalCommitPromotionState) {
   PropertiesComponent.getInstance().setValue(PROMOTION_STATE_KEY, value.name)
-  logPromotionEvent(value)
+  logPromotionEvent(project, value)
 }
 
 internal enum class NonModalCommitPromotionState {
@@ -58,7 +58,7 @@ internal class NonModalCommitPromoter(private val project: Project) {
     if (isDontShowAgain()) return null
     if (commitModeManager.run { !canSetNonModal() || getCurrentCommitMode() != CommitMode.ModalCommitMode }) return null
 
-    setPromotionState(SHOWN)
+    setPromotionState(project, SHOWN)
     return NonModalCommitPromotionPanel(commitDialog)
   }
 
@@ -86,7 +86,7 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
       icon = AllIcons.Ide.Gift
       text = message("non.modal.commit.promoter.text")
     })
-    addToRight(NonOpaquePanel(HorizontalLayout(scale(12))).apply {
+    addToRight(NonOpaquePanel(HorizontalLayout(12)).apply {
       add(createSwitchAction())
       add(createCloseAction())
     })
@@ -98,10 +98,10 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
   private fun createSwitchAction(): JComponent =
     HyperlinkLabel(message("non.modal.commit.promoter.use.non.modal.action.text")).apply {
       addHyperlinkListener {
-        setPromotionState(ACCEPTED)
+        setPromotionState(commitDialog.project, ACCEPTED)
         commitDialog.doCancelAction()
 
-        setCommitFromLocalChanges(true)
+        setCommitFromLocalChanges(commitDialog.project, true)
         SwitchToCommitDialogHint.install(commitDialog.project)
 
         val commitAction = ActionManager.getInstance().getAction(ACTION_CHECKIN_PROJECT) ?: return@addHyperlinkListener
@@ -117,7 +117,7 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
         AllIcons.Actions.CloseHovered
       )
     ) {
-      setPromotionState(REJECTED)
+      setPromotionState(commitDialog.project, REJECTED)
       this@NonModalCommitPromotionPanel.isVisible = false
     }
 }

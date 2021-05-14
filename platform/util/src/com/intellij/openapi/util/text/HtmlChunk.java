@@ -57,9 +57,9 @@ public abstract class HtmlChunk {
   }
   
   static class Fragment extends HtmlChunk {
-    private final List<HtmlChunk> myContent;
+    private final List<? extends HtmlChunk> myContent;
 
-    Fragment(List<HtmlChunk> content) {
+    Fragment(List<? extends HtmlChunk> content) {
       myContent = content;
     }
 
@@ -188,7 +188,7 @@ public abstract class HtmlChunk {
      * @return a new element that is like this element but has extra children
      */
     @Contract(pure = true)
-    public @NotNull Element children(@NotNull List<HtmlChunk> chunks) {
+    public @NotNull Element children(@NotNull List<? extends HtmlChunk> chunks) {
       if (myChildren.isEmpty()) {
         return new Element(myTagName, myAttributes, new ArrayList<>(chunks));
       }

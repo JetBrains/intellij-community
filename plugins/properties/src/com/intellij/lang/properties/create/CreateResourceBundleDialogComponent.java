@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -186,8 +185,8 @@ public final class CreateResourceBundleDialogComponent {
                                    .getOrDefault(locale, locale.toString()))) + suffix);
   }
 
-  private void combineToResourceBundleIfNeeded(Collection<PsiFile> files) {
-    Collection<PropertiesFile> createdFiles = ContainerUtil.map(files, (NotNullFunction<PsiFile, PropertiesFile>)dom -> {
+  private void combineToResourceBundleIfNeeded(Collection<? extends PsiFile> files) {
+    Collection<PropertiesFile> createdFiles = ContainerUtil.map(files, dom -> {
       final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(dom);
       LOG.assertTrue(file != null, dom.getName());
       return file;

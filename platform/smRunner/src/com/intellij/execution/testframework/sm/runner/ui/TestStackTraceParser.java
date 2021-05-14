@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.Location;
@@ -6,6 +6,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.SlowOperations;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -59,7 +60,8 @@ public class TestStackTraceParser {
           myErrorMessage = line;
         }
         if (myTopLocationLine == null) {
-          List<Location> location = locator.getLocation(line, project, scope);
+          String finalLine = line;
+          List<Location> location = SlowOperations.allowSlowOperations(() -> locator.getLocation(finalLine, project, scope));
           if (!location.isEmpty()) {
             myTopLocationLine = line;
           }

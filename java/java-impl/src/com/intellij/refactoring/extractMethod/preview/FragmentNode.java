@@ -2,7 +2,6 @@
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -10,7 +9,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -62,8 +60,7 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
       int startLine = getLineNumber(document, start.getTextRange().getStartOffset()) + 1;
       int endLine = getLineNumber(document, end.getTextRange().getEndOffset()) + 1;
       String lineText = startLine == endLine ? Integer.toString(startLine) : startLine + ".." + endLine;
-      EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-      return new TextChunk(colorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), lineText + "  ");
+      return new TextChunk(UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes(), lineText + "  ");
     }
     return null;
   }

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public class DetachDirectoryAction extends DumbAwareAction {
                       files.filter(o -> !o.equals(index.getContentRootForFile(o))).isEmpty();
     e.getPresentation().setEnabledAndVisible(enabled);
     if (enabled) {
-      e.getPresentation().setText(IdeBundle.message("detach.directory.action.text.detach.0", files.take(2).size()));
+      e.getPresentation().setText(getTitle(files.take(2).size()));
     }
   }
 
@@ -44,11 +45,21 @@ public class DetachDirectoryAction extends DumbAwareAction {
       .filter(o -> o.equals(index.getContentRootForFile(o))).toList();
     String target = AttachDirectoryUtils.getDisplayName(roots);
     String message = IdeBundle.message("detach.directory.dialog.message.detach.0", target);
-    if (Messages.showOkCancelDialog(project, message, IdeBundle.message("detach.directory.dialog.title.detach"),
+    if (Messages.showOkCancelDialog(project, message, getConfirmDetachDialogTitle(),
                                     IdeBundle.message("detach.directory.dialog.button.detach"), Messages.getCancelButton(),
                                     Messages.getQuestionIcon()) == Messages.OK) {
       detachDirectoriesWithUndo(project, roots);
     }
+  }
+
+  @NlsSafe
+  protected String getTitle(int directoriesAmount) {
+    return IdeBundle.message("detach.directory.action.text.detach.0", directoriesAmount);
+  }
+
+  @NlsSafe
+  protected String getConfirmDetachDialogTitle() {
+    return IdeBundle.message("detach.directory.dialog.title.detach");
   }
 
   public static void detachDirectoriesWithUndo(@NotNull Project project, @NotNull List<VirtualFile> files) {

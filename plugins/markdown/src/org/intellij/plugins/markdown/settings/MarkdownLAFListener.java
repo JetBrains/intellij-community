@@ -30,12 +30,15 @@ class MarkdownLAFListener implements LafManagerListener {
                                  ? MarkdownCssSettings.DEFAULT.getCustomStylesheetPath()
                                  : currentCssSettings.getCustomStylesheetPath();
 
-    MarkdownApplicationSettings.getInstance().setMarkdownCssSettings(new MarkdownCssSettings(
+    final MarkdownCssSettings newSettings = new MarkdownCssSettings(
       currentCssSettings.isCustomStylesheetEnabled(),
       stylesheetUri,
       currentCssSettings.isTextEnabled(),
-      currentCssSettings.getCustomStylesheetText()
-    ));
+      currentCssSettings.getCustomStylesheetText(),
+      currentCssSettings.getFontSize(),
+      currentCssSettings.getFontFamily());
+
+    MarkdownApplicationSettings.getInstance().setMarkdownCssSettings(newSettings);
 
     ApplicationManager.getApplication().getMessageBus()
       .syncPublisher(MarkdownApplicationSettings.SettingsChangedListener.TOPIC)

@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.Formats;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,17 +46,14 @@ final class IdeStartupScripts implements StartupActivity.DumbAware {
     if (!isActive.compareAndSet(true, false)) {
       return;
     }
-
-    runAllScriptsImpl(project, prepareScriptsAndEngines());
-  }
-
-  private static @NotNull List<Pair<Path, IdeScriptEngine>> prepareScriptsAndEngines() {
     List<Path> scripts = getScripts();
     LOG.info(scripts.size() + " startup script(s) found");
-    if (scripts.isEmpty()) {
-      return Collections.emptyList();
-    }
+    if (scripts.isEmpty()) return;
 
+    runAllScriptsImpl(project, prepareScriptsAndEngines(scripts), LOG);
+  }
+
+  static @NotNull List<Pair<Path, IdeScriptEngine>> prepareScriptsAndEngines(List<Path> scripts) {
     IdeScriptEngineManager scriptEngineManager = IdeScriptEngineManager.getInstance();
     List<Pair<Path, IdeScriptEngine>> result = new ArrayList<>();
     for (Path script : scripts) {
@@ -92,10 +90,12 @@ final class IdeStartupScripts implements StartupActivity.DumbAware {
     return Collections.emptyList();
   }
 
-  private static void runAllScriptsImpl(@NotNull Project project, @NotNull List<Pair<Path, IdeScriptEngine>> result) {
+  static void runAllScriptsImpl(@Nullable Project project,
+                                @NotNull List<Pair<Path, IdeScriptEngine>> result,
+                                @NotNull Logger logger) {
     for (Pair<Path, IdeScriptEngine> pair : result) {
       try {
-        LOG.info(pair.first.toString());
+        logger.info(pair.first.toString());
 
         String scriptText = PathKt.readText(pair.first);
         IdeConsoleScriptBindings.ensureIdeIsBound(project, pair.second);
@@ -105,14 +105,14 @@ final class IdeStartupScripts implements StartupActivity.DumbAware {
           pair.second.eval(scriptText);
         }
         catch (ProcessCanceledException e) {
-          LOG.warn("... cancelled");
+          logger.warn("... cancelled");
         }
         finally {
-          LOG.info("... completed in " + Formats.formatDuration(System.currentTimeMillis() - start));
+          logger.info("... completed in " + Formats.formatDuration(System.currentTimeMillis() - start));
         }
       }
       catch (Exception e) {
-        LOG.warn(e);
+        logger.warn(e);
       }
     }
   }

@@ -74,7 +74,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     if (document != null) FileDocumentManager.getInstance().saveDocument(document);
   }
 
-  private boolean checkArguments(@NotNull List<String> args) {
+  protected boolean checkArguments(@NotNull List<String> args) {
     return Arrays.binarySearch(myArgsCount, args.size() - 1) != -1 && getCommandName().equals(args.get(0));
   }
 

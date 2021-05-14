@@ -186,7 +186,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   protected AbstractTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel,
                                                   AbstractTreeStructure treeStructure,
-                                                  Comparator<NodeDescriptor<?>> comparator,
+                                                  Comparator<? super NodeDescriptor<?>> comparator,
                                                   FileChooserDescriptor descriptor,
                                                   @Nullable Runnable onInitialized) {
     return new FileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);

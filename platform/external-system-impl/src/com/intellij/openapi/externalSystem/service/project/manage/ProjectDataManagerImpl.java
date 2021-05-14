@@ -52,7 +52,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   @Override
-  public void importData(@NotNull Collection<DataNode<?>> nodes,
+  public void importData(@NotNull Collection<? extends DataNode<?>> nodes,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider,
                          boolean synchronous) {
@@ -150,7 +150,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     runFinalTasks(project, synchronous, onSuccessImportTasks);
   }
 
-  private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<Runnable> tasks) {
+  private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<? extends Runnable> tasks) {
     Runnable runnable = new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
@@ -192,7 +192,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   }
 
   @Override
-  public <T> void importData(@NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
+  public <T> void importData(@NotNull Collection<? extends DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
     Collection<DataNode<?>> dummy = new SmartList<>();
     dummy.addAll(nodes);
     importData(dummy, project, new IdeModifiableModelsProviderImpl(project), synchronous);
@@ -217,7 +217,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   private <T> void doImportData(@NotNull Key<T> key,
-                                @NotNull Collection<DataNode<?>> nodes,
+                                @NotNull Collection<? extends DataNode<?>> nodes,
                                 @Nullable final ProjectData projectData,
                                 @NotNull final Project project,
                                 @NotNull final IdeModifiableModelsProvider modifiableModelsProvider,
@@ -381,7 +381,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
   }
 
-  private void ensureTheDataIsReadyToUse(@NotNull Collection<DataNode<?>> nodes) {
+  private void ensureTheDataIsReadyToUse(@NotNull Collection<? extends DataNode<?>> nodes) {
     for (DataNode<?> node : nodes) {
       ensureTheDataIsReadyToUse(node);
     }

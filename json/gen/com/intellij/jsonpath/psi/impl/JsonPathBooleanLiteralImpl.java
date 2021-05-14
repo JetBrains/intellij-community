@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.jsonpath.psi.JsonPathTypes.*;
 import com.intellij.jsonpath.psi.*;
 
-public class JsonPathBooleanLiteralImpl extends JsonPathLiteralImpl implements JsonPathBooleanLiteral {
+public class JsonPathBooleanLiteralImpl extends JsonPathLiteralValueImpl implements JsonPathBooleanLiteral {
 
   public JsonPathBooleanLiteralImpl(@NotNull ASTNode node) {
     super(node);

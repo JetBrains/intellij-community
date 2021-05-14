@@ -129,8 +129,7 @@ public class WSLDistribution {
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
-    //noinspection deprecation
-    return WSLUtil.addInputCloseListener(processHandler).runProcess(timeout);
+    return processHandler.runProcess(timeout);
   }
 
   public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
@@ -273,7 +272,14 @@ public class WSLDistribution {
       commandLine.setExePath(wslExe.toString());
       commandLine.addParameters("--distribution", getMsId());
       if (options.isExecuteCommandInShell()) {
-        commandLine.addParameters("--exec", "/bin/sh", "-c", linuxCommandStr);
+        commandLine.addParameters("--exec", "/bin/sh");
+        if (options.isExecuteCommandInInteractiveShell()) {
+          commandLine.addParameters("-i");
+        }
+        if (options.isExecuteCommandInLoginShell()) {
+          commandLine.addParameters("-l");
+        }
+        commandLine.addParameters("-c", linuxCommandStr);
       }
       else {
         commandLine.addParameter("--exec");
@@ -393,7 +399,14 @@ public class WSLDistribution {
    */
   public @NotNull Map<String, String> getEnvironment() {
     try {
-      ProcessOutput processOutput = executeOnWsl(5000, "env");
+      ProcessOutput processOutput =
+        executeOnWsl(Collections.singletonList("env"),
+                     new WSLCommandLineOptions()
+                       .setExecuteCommandInShell(true)
+                       .setExecuteCommandInLoginShell(true)
+                       .setExecuteCommandInInteractiveShell(true),
+                     5000,
+                     null);
       Map<String, String> result = new HashMap<>();
       for (String string : processOutput.getStdoutLines()) {
         int assignIndex = string.indexOf('=');
@@ -483,7 +496,7 @@ public class WSLDistribution {
     return "WSLDistribution{myDescriptor=" + myDescriptor + '}';
   }
 
-  private static void prependCommand(@NotNull List<String> command, String @NotNull ... commandToPrepend) {
+  private static void prependCommand(@NotNull List<? super String> command, String @NotNull ... commandToPrepend) {
     command.addAll(0, Arrays.asList(commandToPrepend));
   }
 

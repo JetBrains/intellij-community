@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -508,7 +507,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
 
     DnDSupport.createBuilder(myTree)
-      .setBeanProvider((NullableFunction<DnDActionInfo, DnDDragStartBean>)dnDActionInfo -> {
+      .setBeanProvider(dnDActionInfo -> {
         Point point = dnDActionInfo.getPoint();
         if (myTree.getPathForLocation(point.x, point.y) == null) return null;
 
@@ -535,7 +534,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
                         Objects.requireNonNull(getDropGroup(event)).getName());
         }
       })
-      .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)dnDActionInfo -> {
+      .setImageProvider(dnDActionInfo -> {
         Point point = dnDActionInfo.getPoint();
         TreePath path = myTree.getPathForLocation(point.x, point.y);
         return path == null ? null : new DnDImage(DnDAwareTree.getDragImage(myTree, path, point).first);

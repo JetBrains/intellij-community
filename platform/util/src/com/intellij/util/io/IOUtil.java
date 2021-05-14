@@ -268,9 +268,9 @@ public final class IOUtil {
    * Consider to use {@link com.intellij.util.io.externalizer.StringCollectionExternalizer}.
    */
   @NotNull
-  public static <C extends Collection<String>> C readStringCollection(@NotNull DataInput in, @NotNull IntFunction<C> generator) throws IOException {
+  public static <C extends Collection<String>> C readStringCollection(@NotNull DataInput in, @NotNull IntFunction<? extends C> collectionGenerator) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
-    C strings = generator.apply(size);
+    C strings = collectionGenerator.apply(size);
     for (int i = 0; i < size; i++) {
       strings.add(readUTF(in));
     }

@@ -101,7 +101,7 @@ public final class PlaceholderTextRanges {
     return filterNestedRanges ? filterNested(ranges) : ranges;
   }
 
-  private static Set<TextRange> filterNested(Set<TextRange> allRanges) {
+  private static Set<TextRange> filterNested(Set<? extends TextRange> allRanges) {
     Set<TextRange> filtered = new LinkedHashSet<>(allRanges.size());
     for (TextRange outer : allRanges) {
       boolean contains = anyRangeContains(allRanges, outer);
@@ -111,7 +111,7 @@ public final class PlaceholderTextRanges {
     return filtered;
   }
 
-  private static boolean anyRangeContains(Set<TextRange> allRanges, TextRange inner) {
+  private static boolean anyRangeContains(Set<? extends TextRange> allRanges, TextRange inner) {
     for (TextRange outer : allRanges) {
       if (!inner.equals(outer) &&
           outer.contains(inner)) {

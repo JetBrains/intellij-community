@@ -36,5 +36,5 @@ import java.util.List;
 public interface ActionPromoter {
   ExtensionPointName<ActionPromoter> EP_NAME = ExtensionPointName.create("com.intellij.actionPromoter");
 
-  List<AnAction> promote(@NotNull List<AnAction> actions, @NotNull DataContext context);
+  List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context);
 }

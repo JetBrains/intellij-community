@@ -7,7 +7,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,6 +19,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Property;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -36,7 +40,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
 
   private static final String CONDA_ENVS_DIR = "envs";
 
-  @Nullable @SystemDependent private String PREFERRED_CONDA_PATH = null;
+  @Nullable @SystemDependent @Property private String PREFERRED_CONDA_PATH = null;
 
   @Override
   public PyCondaPackageService getState() {

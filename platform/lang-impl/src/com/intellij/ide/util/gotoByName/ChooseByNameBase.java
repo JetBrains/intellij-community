@@ -71,7 +71,6 @@ import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
@@ -1080,7 +1079,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   protected void chosenElementMightChange() {
   }
 
-  protected final class MyTextField extends JTextField implements PopupOwner, TypeSafeDataProvider {
+  protected final class MyTextField extends JTextField implements PopupOwner, DataProvider {
     private final KeyStroke myCompletionKeyStroke;
     private final KeyStroke forwardStroke;
     private final KeyStroke backStroke;
@@ -1125,18 +1124,16 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       return null;
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (LangDataKeys.POSITION_ADJUSTER_POPUP.equals(key)) {
-        if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
-          sink.put(key, myDropdownPopup);
-        }
+    public Object getData(@NotNull String dataId) {
+      if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+        return myDropdownPopup != null && myDropdownPopup.isVisible() ? myDropdownPopup : null;
       }
-      else if (LangDataKeys.PARENT_POPUP.equals(key)) {
-        if (myTextPopup != null && myTextPopup.isVisible()) {
-          sink.put(key, myTextPopup);
-        }
+      else if (LangDataKeys.PARENT_POPUP.is(dataId)) {
+        return myTextPopup != null && myTextPopup.isVisible() ? myTextPopup : null;
       }
+      return null;
     }
 
     @Override

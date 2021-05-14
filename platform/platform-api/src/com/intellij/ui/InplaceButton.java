@@ -39,11 +39,11 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   private boolean myHoveringEnabled;
 
   public InplaceButton(@Tooltip String tooltip, Icon icon, ActionListener listener) {
-    this(new IconButton(tooltip, icon, icon), listener, (Consumer<? super MouseEvent>)null, TimedDeadzone.DEFAULT);
+    this(new IconButton(tooltip, icon, icon), listener, null, TimedDeadzone.DEFAULT);
   }
 
   public InplaceButton(IconButton source, ActionListener listener) {
-    this(source, listener, (Consumer<? super MouseEvent>)null, TimedDeadzone.DEFAULT);
+    this(source, listener, null, TimedDeadzone.DEFAULT);
   }
 
   public InplaceButton(IconButton source, ActionListener listener, Consumer<? super MouseEvent> consumer, TimedDeadzone.Length mouseDeadzone) {

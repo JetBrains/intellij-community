@@ -10,7 +10,7 @@ import java.util.Map;
 
 public interface Queryable {
 
-  void putInfo(@NotNull Map<String, String> info);
+  void putInfo(@NotNull Map<? super String, ? super String> info);
 
   class PrintInfo {
     private final String[] myIdKeys;

@@ -418,7 +418,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return null;
   }
 
-  private static Inlay<?> findInlay(List<Inlay<?>> inlays, int x, int startX) {
+  private static Inlay<?> findInlay(List<? extends Inlay<?>> inlays, int x, int startX) {
     for (Inlay inlay : inlays) {
       int endX = startX + inlay.getWidthInPixels();
       if (x >= startX && x < endX) return inlay;

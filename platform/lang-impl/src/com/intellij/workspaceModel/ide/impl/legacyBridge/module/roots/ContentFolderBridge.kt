@@ -29,7 +29,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
 
   override fun getFile(): VirtualFile? {
     val virtualFilePointer = sourceRootEntity.url as VirtualFilePointer
-    return if (virtualFilePointer.isValid) virtualFilePointer.file else null
+    return virtualFilePointer.file
   }
 
   private var packagePrefixVar: String? = null
@@ -123,6 +123,6 @@ internal class ExcludeFolderBridge(val entry: ContentEntryBridge, val excludeFol
   : ContentFolderBridge(entry, excludeFolderUrl), ExcludeFolder {
   override fun getFile(): VirtualFile? {
     val virtualFilePointer = excludeFolderUrl as VirtualFilePointer
-    return if (virtualFilePointer.isValid) virtualFilePointer.file else null
+    return virtualFilePointer.file
   }
 }

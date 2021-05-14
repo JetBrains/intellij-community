@@ -9,7 +9,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+/**
+ * A main interface to provide custom inverted index implementation.
+ */
 @ApiStatus.Experimental
+@ApiStatus.Internal
 public interface IndexStorageLayout<Key, Value> {
   @NotNull IndexStorage<Key, Value> createOrClearIndexStorage() throws IOException;
 

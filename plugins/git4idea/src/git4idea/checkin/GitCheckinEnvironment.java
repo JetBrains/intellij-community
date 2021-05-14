@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.google.common.collect.HashMultiset;
@@ -60,9 +60,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
@@ -153,7 +151,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
   @Override
   public String getCheckinOperationName() {
-    return GitBundle.getString("commit.action.name");
+    return GitBundle.message("commit.action.name");
   }
 
   @Override
@@ -851,7 +849,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
           SelectFilePathsDialog dialog = new SelectFilePathsDialog(repository.getProject(), files, message, null,
                                                                    GitBundle.message("button.commit.all.files"),
                                                                    CommonBundle.getCancelButtonText(), false);
-          dialog.setTitle(GitBundle.getString("commit.partial.merge.title"));
+          dialog.setTitle(GitBundle.message("commit.partial.merge.title"));
           dialog.show();
           mergeAll.set(dialog.isOK());
         });

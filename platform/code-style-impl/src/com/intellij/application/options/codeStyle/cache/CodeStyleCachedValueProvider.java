@@ -45,32 +45,25 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
 
   CodeStyleCachedValueProvider(@NotNull PsiFile file) {
     myFileRef = new WeakReference<>(file);
-    myComputation = new AsyncComputation();
+    myComputation = new AsyncComputation(file.getProject());
   }
 
   boolean isExpired() {
     return myFileRef.get() == null || myComputation.isExpired();
   }
 
+  @Nullable
   CodeStyleSettings tryGetSettings() {
-    try {
-      final PsiFile file = getReferencedPsi();
-      if (myComputationLock.tryLock()) {
-        try {
-          return CachedValuesManager.getCachedValue(file, this);
-        }
-        finally {
-          myComputationLock.unlock();
-        }
+    final PsiFile file = myFileRef.get();
+    if (file != null && myComputationLock.tryLock()) {
+      try {
+        return CachedValuesManager.getCachedValue(file, this);
       }
-      else {
-        return null;
+      finally {
+        myComputationLock.unlock();
       }
     }
-    catch (OutdatedFileReferenceException e) {
-      LOG.error(e);
-      return null;
-    }
+    return null;
   }
 
   void scheduleWhenComputed(@NotNull Runnable runnable) {
@@ -82,7 +75,10 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
   public Result<CodeStyleSettings> compute() {
     CodeStyleSettings settings = myComputation.getCurrResult();
     if (settings != null) {
-      logCached(getReferencedPsi(), settings);
+      PsiFile file = myFileRef.get();
+      if (file != null) {
+        logCached(file, settings);
+      }
       return new Result<>(settings, getDependencies(settings, myComputation));
     }
     return null;
@@ -123,8 +119,8 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     private                   CancellablePromise<Void>  myPromise;
     private final             List<Runnable>            myScheduledRunnables = new ArrayList<>();
 
-    private AsyncComputation() {
-      myProject = getReferencedPsi().getProject();
+    private AsyncComputation(@NotNull Project project) {
+      myProject = project;
       mySettingsManager = CodeStyleSettingsManager.getInstance(myProject);
       //noinspection deprecation
       myCurrResult = mySettingsManager.getCurrentSettings();
@@ -247,15 +243,6 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     }
   }
 
-  @NotNull
-  private PsiFile getReferencedPsi() {
-    PsiFile file = myFileRef.get();
-    if (file == null) {
-      throw new OutdatedFileReferenceException();
-    }
-    return file;
-  }
-
   //
   // Check provider equivalence by file ref. Other fields make no sense since AsyncComputation is a stateful object
   // whose state (active=true->false) changes over time due to long computation.
@@ -266,9 +253,5 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
            Objects.equals(this.myFileRef.get(), ((CodeStyleCachedValueProvider)obj).myFileRef.get());
   }
 
-  static class OutdatedFileReferenceException extends RuntimeException {
-    OutdatedFileReferenceException() {
-      super("Outdated file reference used to obtain settings");
-    }
-  }
+
 }

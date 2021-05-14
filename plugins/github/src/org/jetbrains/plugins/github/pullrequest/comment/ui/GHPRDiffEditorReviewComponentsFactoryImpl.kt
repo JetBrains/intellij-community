@@ -9,6 +9,7 @@ import com.intellij.util.ui.codereview.comment.wrapComponentUsingRoundedPanel
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
+import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
@@ -52,8 +53,8 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
   override fun createNewReviewCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHSubmittableTextFieldModel {
       val filePath = createCommentParametersHelper.filePath
+      val commitSha = createCommentParametersHelper.commitSha
       if (line == startLine) {
-        val commitSha = createCommentParametersHelper.commitSha
         val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
         reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha,
                                         listOf(GHPullRequestDraftReviewComment(it, filePath, diffLine))).successOnEdt {
@@ -61,9 +62,11 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
         }
       }
       else {
-        reviewDataProvider.createReview(EmptyProgressIndicator(), it, line + 1, side, startLine + 1, filePath).successOnEdt {
-          hideCallback()
-        }
+        reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha, null,
+                                        listOf(GHPullRequestDraftReviewThread(it, line + 1, filePath, side, startLine + 1, side)))
+          .successOnEdt {
+            hideCallback()
+          }
       }
     }
 

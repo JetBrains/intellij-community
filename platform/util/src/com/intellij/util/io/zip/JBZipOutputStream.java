@@ -10,7 +10,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.*;
 
+import static com.intellij.util.io.zip.JBZipFile.*;
+
 class JBZipOutputStream {
+  private static final int ZIP64_MIN_VERSION = 45;
+  private static final int ZIP_MIN_VERSION = 10;
+
+  private static final long ZIP64_MAGIC = 0xFFFFFFFFL;
+
   /**
    * Default compression level for deflated entries.
    */
@@ -101,9 +108,66 @@ class JBZipOutputStream {
       writeCentralFileHeader(entry);
     }
     long cdLength = getWritten() - cdOffset;
+
+    if (myFile.isZip64()) {
+      writeZip64CentralDirectory(cdLength, cdOffset);
+    }
     writeCentralDirectoryEnd(cdLength, cdOffset);
     flushBuffer();
     def.end();
+  }
+
+  private void writeZip64CentralDirectory(long cdLength, long cdOffset) throws IOException {
+    long offset = getWritten();
+
+    writeOut(ZIP64_EOCD_SIG);
+
+    writeOut(ZipUInt64
+               .getBytes(SHORT   /* version made by */
+                         + SHORT /* version needed to extract */
+                         + WORD  /* disk number */
+                         + WORD  /* disk with central directory */
+                         + DWORD /* number of entries in CD on this disk */
+                         + DWORD /* total number of entries */
+                         + DWORD /* size of CD */
+                         + (long) DWORD /* offset of CD */
+               ));
+
+    // version made by
+    writeOut(ZipShort.getBytes(ZIP64_MIN_VERSION));
+    // version needed to extract
+    writeOut(ZipShort.getBytes(ZIP64_MIN_VERSION));
+
+    // number of this disk
+    writeOut(ZipLong.getBytes(0));
+
+    // disk number of the start of central directory
+    writeOut(ZipLong.getBytes(0));
+
+    // total number of entries in the central directory on this disk
+    int numOfEntriesOnThisDisk = myFile.getEntries().size();
+    final byte[] numOfEntriesOnThisDiskData = ZipUInt64.getBytes(numOfEntriesOnThisDisk);
+    writeOut(numOfEntriesOnThisDiskData);
+
+    // number of entries
+    final byte[] num = ZipUInt64.getBytes(myFile.getEntries().size());
+    writeOut(num);
+
+    // length and location of CD
+    writeOut(ZipUInt64.getBytes(cdLength));
+    writeOut(ZipUInt64.getBytes(cdOffset));
+
+    // no "zip64 extensible data sector"
+
+    // and now the "ZIP64 end of central directory locator"
+    writeOut(ZIP64_EOCD_LOC_SIG);
+
+    // disk number holding the ZIP64 EOCD record
+    writeOut(ZipLong.getBytes(0));
+    // relative offset of ZIP64 EOCD record
+    writeOut(ZipUInt64.getBytes(offset));
+    // total number of disks
+    writeOut(ZipLong.getBytes(1));
   }
 
   /**
@@ -159,18 +223,38 @@ class JBZipOutputStream {
   protected static final byte[] EOCD_SIG = ZipLong.getBytes(0X06054B50L);
 
   /**
+   * end of zip 64 central dir locator signature
+   */
+  protected static final byte[] ZIP64_EOCD_LOC_SIG = ZipLong.getBytes(0X07064B50L);
+
+  /**
+   * end of zip 64 central dir signature
+   */
+  protected static final byte[] ZIP64_EOCD_SIG = ZipLong.getBytes(0X06064B50L);
+
+  /**
    * Writes the local file header entry
    *
    * @param ze the entry to write
    * @throws IOException on error
    */
-  protected void writeLocalFileHeader(JBZipEntry ze) throws IOException {
-    ze.setHeaderOffset(getWritten());
+  protected ExtraFieldData writeLocalFileHeader(JBZipEntry ze) throws IOException {
+    long headerOffset = getWritten();
+    ze.setHeaderOffset(headerOffset);
+
+    if (myFile.isZip64()) {
+      ze.addExtra(new Zip64ExtraField(new ZipUInt64(ze.getSize()),
+                                      new ZipUInt64(ze.getCompressedSize()),
+                                      new ZipUInt64(ze.getHeaderOffset())));
+    }
+    else if (headerOffset >= ZIP64_MAGIC) {
+      throw new IOException("entry header offset is greater than maximal supported: " + headerOffset);
+    }
 
     writeOut(LFH_SIG);
 
     // version needed to extract
-    writeOutShort(10);
+    writeOutShort(myFile.isZip64() ? ZIP64_MIN_VERSION : ZIP_MIN_VERSION);
 
     // general purpose bit flag
     writeOutShort(0);
@@ -180,28 +264,51 @@ class JBZipOutputStream {
     writeOutLong(DosTime.javaToDosTime(ze.getTime()));
 
     writeOutLong(ze.getCrc());
+
+    if (ze.getCompressedSize() >= ZIP64_MAGIC) {
+      throw new IOException("compressed size is greater than maximal supported: " + ze.getCompressedSize());
+    }
     writeOutLong(ze.getCompressedSize());
+
+    if (ze.getSize() >= ZIP64_MAGIC) {
+      throw new IOException("size is greater than maximal supported: " + ze.getSize());
+    }
     writeOutLong(ze.getSize());
 
     byte[] name = getBytes(ze.getName());
     writeOutShort(name.length);
 
-    byte[] extra = ze.getLocalFileDataExtra();
+    byte[] extra = ze.getLocalFileHeaderDataExtra();
     writeOutShort(extra.length);
 
     writeOut(name);
 
+    long extraOffset = getWritten();
     writeOut(extra);
+    return new ExtraFieldData(extraOffset, extra.length);
   }
 
-  private void updateLocalFileHeader(JBZipEntry ze, long crc, long compressedSize) throws IOException {
+  private void updateLocalFileHeader(JBZipEntry ze, long crc, long compressedSize, ExtraFieldData extra) throws IOException {
     ze.setCrc(crc);
     ze.setCompressedSize(compressedSize);
+    if (myFile.isZip64()) {
+      ze.addExtra(new Zip64ExtraField(new ZipUInt64(ze.getSize()),
+                                      new ZipUInt64(ze.getCompressedSize()),
+                                      new ZipUInt64(ze.getHeaderOffset())));
+    }
     flushBuffer();
-    long offset = ze.getHeaderOffset() + JBZipFile.LFH_OFFSET_FOR_CRC;
+    long offset = ze.getHeaderOffset() + LFH_OFFSET_FOR_CRC;
     raf.seek(offset);
     raf.write(ZipLong.getBytes(crc));
     raf.write(ZipLong.getBytes(compressedSize));
+    raf.write(ZipLong.getBytes(ze.getSize()));
+
+    raf.seek(extra.offset);
+    byte[] extraData = ze.getLocalFileHeaderDataExtra();
+    if (extra.length != extraData.length) {
+      throw new IOException("Extra data is unstable");
+    }
+    raf.write(extraData);
   }
 
   private void writeOutShort(int s) throws IOException {
@@ -241,7 +348,7 @@ class JBZipOutputStream {
     byte[] name = getBytes(ze.getName());
     writeOutShort(name.length);
 
-    byte[] extra = ze.getExtra();
+    byte[] extra = ze.getCentralDirectoryExtraBytes();
     writeOutShort(extra.length);
 
     String comm = ze.getComment();
@@ -254,7 +361,8 @@ class JBZipOutputStream {
     writeOutShort(0);
     writeOutShort(ze.getInternalAttributes());
     writeOutLong(ze.getExternalAttributes());
-    writeOutLong(ze.getHeaderOffset());
+    // todo make this extra field optional
+    writeOutLong(Math.min(ze.getHeaderOffset(), ZIP64_MAGIC));
 
     writeOut(name);
     writeOut(extra);
@@ -350,7 +458,6 @@ class JBZipOutputStream {
 
   public void putNextEntryBytes(JBZipEntry entry, byte[] bytes) throws IOException {
     prepareNextEntry(entry);
-
     crc.reset();
     crc.update(bytes);
     entry.setCrc(crc.getValue());
@@ -379,7 +486,7 @@ class JBZipOutputStream {
 
   void putNextEntryContent(JBZipEntry entry, InputStream content) throws IOException {
     prepareNextEntry(entry);
-    writeLocalFileHeader(entry);
+    ExtraFieldData extra = writeLocalFileHeader(entry);
     flushBuffer();
 
     RandomAccessFileOutputStream fileOutput = new RandomAccessFileOutputStream(raf);
@@ -411,7 +518,7 @@ class JBZipOutputStream {
     writtenOnDisk += fileOutput.myWrittenBytes;
 
     entry.setSize(writtenSize);
-    updateLocalFileHeader(entry, crc.getValue(), fileOutput.myWrittenBytes);
+    updateLocalFileHeader(entry, crc.getValue(), fileOutput.myWrittenBytes, extra);
   }
 
   private void prepareNextEntry(JBZipEntry entry) {
@@ -421,6 +528,14 @@ class JBZipOutputStream {
 
     if (entry.getTime() == -1) {
       entry.setTime(System.currentTimeMillis());
+    }
+
+    if (myFile.isZip64()) {
+      // will be overwritten after offset is known
+      Zip64ExtraField field = new Zip64ExtraField(new ZipUInt64(entry.getSize()),
+                                                  new ZipUInt64(entry.getCompressedSize()),
+                                                  new ZipUInt64(0));
+      entry.addExtra(field);
     }
   }
 
@@ -446,6 +561,16 @@ class JBZipOutputStream {
     public void write(byte @NotNull [] b, int off, int len) throws IOException {
       myFile.write(b, off, len);
       myWrittenBytes += len;
+    }
+  }
+
+  private static class ExtraFieldData {
+    private final long offset;
+    private final long length;
+
+    ExtraFieldData(long offset, long length) {
+      this.offset = offset;
+      this.length = length;
     }
   }
 }

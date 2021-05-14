@@ -1,7 +1,0 @@
-android {
-  buildTypes {
-    'debug-custom' {
-      applicationIdSuffix 'foo'
-    }
-  }
-}

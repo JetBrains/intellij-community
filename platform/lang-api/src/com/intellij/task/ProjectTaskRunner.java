@@ -137,9 +137,9 @@ public abstract class ProjectTaskRunner {
 
   @SuppressWarnings("deprecation")
   private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
-    private final AsyncPromise<Result> myPromise;
+    private final @NotNull AsyncPromise<? super Result> myPromise;
 
-    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<Result> promise) {
+    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<? super Result> promise) {
       myPromise = promise;
     }
 
@@ -160,7 +160,7 @@ public abstract class ProjectTaskRunner {
   }
 
   @SuppressWarnings("deprecation")
-  private static void notifyIfNeeded(@NotNull Promise<Result> promise, @Nullable ProjectTaskNotification callback) {
+  private static void notifyIfNeeded(@NotNull Promise<? extends Result> promise, @Nullable ProjectTaskNotification callback) {
     if (callback != null) {
       promise
         .onSuccess(result -> callback.finished(new ProjectTaskResult(result.isAborted(), result.hasErrors() ? 1 : 0, 0)))

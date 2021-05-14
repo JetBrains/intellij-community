@@ -30,7 +30,6 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NonNls;
@@ -43,8 +42,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
@@ -67,11 +64,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   @Override
   protected String getComponentStateKey() {
     return SCOPE_CHOOSER_CONFIGURABLE_UI_KEY;
-  }
-
-  @Override
-  protected Dimension getPanelPreferredSize() {
-    return JBUI.size(400, 200);
   }
 
   @Override

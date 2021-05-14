@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.parser.ShShebangParserUtil;
@@ -61,8 +62,8 @@ public class ShRunFileAction extends DumbAwareAction {
       PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
       if (file != null) {
         if (file instanceof ShFile) return true;
-        PsiElement firstChild = file.getFirstChild();
-        return firstChild != null && firstChild.getText().startsWith("#!");
+        PsiElement firstChild = file.findElementAt(0);
+        return firstChild instanceof PsiComment && firstChild.getText().startsWith("#!");
       }
     }
     return false;

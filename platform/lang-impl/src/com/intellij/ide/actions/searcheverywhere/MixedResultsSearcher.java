@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,9 +19,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.REPLACE;
-import static com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.SKIP;
 
 /**
  * @author msokolov
@@ -285,8 +283,11 @@ class MixedResultsSearcher implements SESearcher {
           return false;
         }
 
-        Map<SEResultsEqualityProvider.SEEqualElementsActionType, Collection<SearchEverywhereFoundElementInfo>> otherElementsMap = getActionsWithOtherElements(newElementInfo);
-        if (otherElementsMap.get(REPLACE).isEmpty() && !otherElementsMap.get(SKIP).isEmpty()) {
+        List<SearchEverywhereFoundElementInfo> alreadyFoundItems = mySections.values().stream()
+          .flatMap(Collection::stream)
+          .collect(Collectors.toList());
+        SEEqualElementsActionType action = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
+        if (action == SEEqualElementsActionType.Skip.INSTANCE) {
           LOG.debug(String.format("Element %s for contributor %s was skipped", element.toString(), contributor.getSearchProviderId()));
           return true;
         }
@@ -294,7 +295,9 @@ class MixedResultsSearcher implements SESearcher {
         section.add(newElementInfo);
         runInNotificationExecutor(() -> myListener.elementsAdded(Collections.singletonList(newElementInfo)));
 
-        List<SearchEverywhereFoundElementInfo> toRemove = new ArrayList<>(otherElementsMap.get(REPLACE));
+        List<SearchEverywhereFoundElementInfo> toRemove = action instanceof SEEqualElementsActionType.Replace
+                                                          ? ((SEEqualElementsActionType.Replace)action).getToBeReplaced()
+                                                          : Collections.emptyList();
         toRemove.forEach(info -> {
           Collection<SearchEverywhereFoundElementInfo> list = mySections.get(info.getContributor());
           Condition listCondition = conditionsMap.get(info.getContributor());
@@ -357,25 +360,6 @@ class MixedResultsSearcher implements SESearcher {
 
       Integer limit = sectionsLimits.get(contributor);
       return limit == null || mySections.get(contributor).size() >= limit;
-    }
-
-    private Map<SEResultsEqualityProvider.SEEqualElementsActionType, Collection<SearchEverywhereFoundElementInfo>> getActionsWithOtherElements(
-      SearchEverywhereFoundElementInfo newElement) {
-      Map<SEResultsEqualityProvider.SEEqualElementsActionType, Collection<SearchEverywhereFoundElementInfo>> res = new EnumMap<>(
-        SEResultsEqualityProvider.SEEqualElementsActionType.class);
-      res.put(REPLACE, new ArrayList<>());
-      res.put(SKIP, new ArrayList<>());
-      mySections.values()
-        .stream()
-        .flatMap(Collection::stream)
-        .forEach(info -> {
-          SEResultsEqualityProvider.SEEqualElementsActionType action = myEqualityProvider.compareItems(newElement, info);
-          if (action != SEResultsEqualityProvider.SEEqualElementsActionType.DO_NOTHING) {
-            res.get(action).add(info);
-          }
-        });
-
-      return res;
     }
 
     private void runInNotificationExecutor(Runnable runnable) {

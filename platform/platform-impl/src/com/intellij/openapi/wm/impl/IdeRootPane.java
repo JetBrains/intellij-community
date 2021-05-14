@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.CustomizeUIAction;
 import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.ui.UISettings;
@@ -65,7 +64,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private MenuFrameHeader myCustomFrameTitlePane;
   private CustomDecorationPath mySelectedEditorFilePath;
   private final boolean myDecoratedMenu;
-  private IdeLeftToolbar myTwToolbar;
+  private ToolwindowToolbar myLeftToolwindowToolbar;
+  private ToolwindowToolbar myRightToolwindowToolbar;
 
   protected IdeRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper, @NotNull Disposable parentDisposable) {
     if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
@@ -121,34 +121,18 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateMainMenuVisibility();
 
     if (Registry.is("ide.new.stripes.ui")) {
-      myTwToolbar = new IdeLeftToolbar(parentDisposable);
-      myContentPane.add(myTwToolbar, IdeLeftToolbar.getMainPosition());
-      addMainPanePositionListener(parentDisposable);
+      myLeftToolwindowToolbar = new ToolwindowLeftToolbar();
+      myRightToolwindowToolbar = new ToolwindowRightToolbar();
+      myContentPane.add(myLeftToolwindowToolbar, BorderLayout.WEST);
+      myContentPane.add(myRightToolwindowToolbar, BorderLayout.EAST);
     }
 
     myContentPane.add(getCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
 
     if (Registry.is("ide.new.stripes.ui")) {
-      myTwToolbar.pane = myToolWindowsPane;
+      myLeftToolwindowToolbar.toolwindowPane = myToolWindowsPane;
+      myRightToolwindowToolbar.toolwindowPane = myToolWindowsPane;
     }
-  }
-
-  private void addMainPanePositionListener(@NotNull Disposable parentDisposable) {
-    Runnable listener = () -> {
-      myContentPane.remove(myTwToolbar);
-      myContentPane.add(myTwToolbar, IdeLeftToolbar.getMainPosition());
-      myContentPane.revalidate();
-    };
-    ToolwindowSidebarPositionProvider positionProvider =
-      SearchTopHitProvider.EP_NAME.findExtension(ToolwindowSidebarPositionProvider.class);
-    if (positionProvider != null) {
-      positionProvider.addUpdateListener(listener);
-      Disposer.register(parentDisposable, () -> positionProvider.removeUpdateListener(listener));
-    }
-  }
-
-  public IdeLeftToolbar getTwToolbar() {
-    return myTwToolbar;
   }
 
   protected @NotNull IdeMenuBar createMenuBar() {
@@ -156,7 +140,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected @NotNull Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-    myToolWindowsPane = new ToolWindowsPane(frame, parentDisposable, myTwToolbar);
+    myToolWindowsPane = new ToolWindowsPane(frame, parentDisposable, myLeftToolwindowToolbar, myRightToolwindowToolbar);
     return myToolWindowsPane;
   }
 
@@ -286,7 +270,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
-    return new IdeStatusBarImpl(frame, true);
+    return new IdeStatusBarImpl(frame, !Registry.is("ide.new.stripes.ui"));
   }
 
   final @Nullable IdeStatusBarImpl getStatusBar() {

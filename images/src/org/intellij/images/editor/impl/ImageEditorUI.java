@@ -607,7 +607,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       PsiElement psi = findPsiFile();
       return psi != null ? new PsiElement[]{psi} : PsiElement.EMPTY_ARRAY;
     }
-    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && copyPasteSupport != null) {
+    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }
     else if (PlatformDataKeys.CUT_PROVIDER.is(dataId) && copyPasteSupport != null) {

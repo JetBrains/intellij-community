@@ -184,7 +184,7 @@ public final class PluginLogo {
     return lazyIcons;
   }
 
-  private static void runLoadTask(@NotNull List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> loadInfo) {
+  private static void runLoadTask(@NotNull List<? extends Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> loadInfo) {
     Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(() -> {
       for (Pair<IdeaPluginDescriptor, LazyPluginLogoIcon> info : loadInfo) {

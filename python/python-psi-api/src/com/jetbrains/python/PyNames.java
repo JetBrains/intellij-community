@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 @NonNls
 public final class PyNames {
   public static final String SITE_PACKAGES = "site-packages";
+  public static final String DIST_PACKAGES = "dist-packages";
   /**
    * int type
    */

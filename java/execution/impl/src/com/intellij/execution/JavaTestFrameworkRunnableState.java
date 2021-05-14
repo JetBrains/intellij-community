@@ -140,9 +140,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
 
-    boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
-    int port = local ? myServerSocket.getLocalPort() : remoteEnvironment.getLocalPortBindings().get(myPortBindingForSocket).getPort();
-    myPortPromise.setResult(String.valueOf(port));
+    resolveServerSocketPort(remoteEnvironment);
 
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
 
@@ -163,6 +161,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       searchForTestsTask.attachTaskToProcess(processHandler);
     }
     return processHandler;
+  }
+
+  public void resolveServerSocketPort(@NotNull TargetEnvironment remoteEnvironment) {
+    if (myServerSocket != null) {
+      boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
+      int port = local ? myServerSocket.getLocalPort() : remoteEnvironment.getLocalPortBindings().get(myPortBindingForSocket).getPort();
+      myPortPromise.setResult(String.valueOf(port));
+   }
   }
 
   /**

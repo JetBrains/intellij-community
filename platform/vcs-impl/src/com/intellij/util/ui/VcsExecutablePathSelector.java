@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
@@ -41,18 +41,18 @@ public class VcsExecutablePathSelector {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
 
     myPathSelector = new TextFieldWithBrowseButton(null, disposable);
-    myPathSelector.addBrowseFolderListener(VcsBundle.getString("executable.select.title"),
+    myPathSelector.addBrowseFolderListener(VcsBundle.message("executable.select.title"),
                                            null,
                                            null,
                                            FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
                                            new MyTextComponentAccessor(handler));
     panel.addToCenter(myPathSelector);
 
-    JButton testButton = new JButton(VcsBundle.getString("executable.test"));
+    JButton testButton = new JButton(VcsBundle.message("executable.test"));
     testButton.addActionListener(e -> handler.testExecutable(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
     panel.addToRight(testButton);
 
-    myProjectPathCheckbox = new JBCheckBox(VcsBundle.getString("executable.project.override"));
+    myProjectPathCheckbox = new JBCheckBox(VcsBundle.message("executable.project.override"));
     myProjectPathCheckbox.addActionListener(e -> handleProjectOverrideStateChanged());
 
     JLabel label = new JBLabel(VcsBundle.message("executable.select.label", vcsName));
@@ -78,10 +78,10 @@ public class VcsExecutablePathSelector {
     else if (!Objects.equals(getCurrentPath(), mySavedPath)) {
 
       switch (Messages.showYesNoCancelDialog(myMainPanel,
-                                             VcsBundle.getString("executable.project.override.reset.message"),
-                                             VcsBundle.getString("executable.project.override.reset.title"),
-                                             VcsBundle.getString("executable.project.override.reset.globalize"),
-                                             VcsBundle.getString("executable.project.override.reset.revert"),
+                                             VcsBundle.message("executable.project.override.reset.message"),
+                                             VcsBundle.message("executable.project.override.reset.title"),
+                                             VcsBundle.message("executable.project.override.reset.globalize"),
+                                             VcsBundle.message("executable.project.override.reset.revert"),
                                              Messages.getCancelButton(),
                                              null)) {
         case Messages.NO:

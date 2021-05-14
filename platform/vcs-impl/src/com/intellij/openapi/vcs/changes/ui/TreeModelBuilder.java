@@ -558,8 +558,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   private static ChangesBrowserNode<?> createPathNode(@NotNull StaticFilePath path) {
-    FilePath filePath = VcsUtil.getFilePath(path.getPath(), path.isDirectory());
-    return ChangesBrowserNode.createFilePath(filePath);
+    return ChangesBrowserNode.createFilePath(path.getFilePath());
   }
 
   public boolean isEmpty() {

@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -10,7 +9,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions.ActionDescription
 import com.intellij.openapi.util.NlsActions.ActionText
-import com.intellij.ui.ComponentUtil
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -21,8 +19,7 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val button = createButton()
     button.addActionListener {
-      val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, button)
-      val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(button)
+      val dataContext = ActionToolbar.getDataContextFor(button)
       val action = this@JButtonAction
       val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.application.options.XmlSettings;
@@ -19,6 +19,7 @@ import com.intellij.javaee.UriUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.ant.dom.AntResolveInspection;
 import com.intellij.model.psi.PsiSymbolReference;
+import com.intellij.model.psi.PsiSymbolService;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -2075,7 +2076,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     List<? extends PsiSymbolReference> list = Registry.is("ide.symbol.url.references")
                                               ? PlatformTestUtil.collectUrlReferences(myFile)
-                                              : PlatformTestUtil.collectWebReferences(myFile);
+                                              : ContainerUtil.map(
+                                                PlatformTestUtil.collectWebReferences(myFile),
+                                                PsiSymbolService.getInstance()::asSymbolReference
+                                              );
     assertEquals(2, list.size());
 
     Collections.sort(list, Comparator.comparingInt(o -> o.getRangeInElement().getLength()));

@@ -11,7 +11,7 @@ public final class ListIntToIntMap extends AbstractIntToIntMap implements Updata
   public static final int DEFAULT_BLOCK_SIZE = 30;
 
   @NotNull
-  public static UpdatableIntToIntMap newInstance(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize) {
+  public static UpdatableIntToIntMap newInstance(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize) {
     return newInstance(new BooleanFunctionFlags(thisIsVisible, longSize));
   }
 

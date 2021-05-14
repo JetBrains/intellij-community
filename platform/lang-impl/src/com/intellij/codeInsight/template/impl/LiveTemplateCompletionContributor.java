@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filterTemplatesByPrefix;
 
@@ -82,17 +83,17 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
           final CompletionResultSet finalResult = result;
           if (Registry.is("ide.completion.show.live.templates.on.top")) {
-            ensureTemplatesShown(templatesShown, templates, finalResult, isAutopopup);
+            ensureTemplatesShown(templatesShown, templates, availableTemplates, finalResult, isAutopopup);
           }
 
           result.runRemainingContributors(parameters, completionResult -> {
             finalResult.passResult(completionResult);
             if (completionResult.isStartMatch()) {
-              ensureTemplatesShown(templatesShown, templates, finalResult, isAutopopup);
+              ensureTemplatesShown(templatesShown, templates, availableTemplates, finalResult, isAutopopup);
             }
           });
 
-          ensureTemplatesShown(templatesShown, templates, result, isAutopopup);
+          ensureTemplatesShown(templatesShown, templates, availableTemplates, result, isAutopopup);
           showCustomLiveTemplates(parameters, result);
           return;
         }
@@ -142,13 +143,16 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
 
   private static void ensureTemplatesShown(AtomicBoolean templatesShown,
                                            Map<TemplateImpl, String> templates,
+                                           List<TemplateImpl> availableTemplates,
                                            CompletionResultSet result,
                                            boolean isAutopopup) {
     if (!templatesShown.getAndSet(true)) {
+      var templateKeys = ContainerUtil.map(availableTemplates, template -> template.getKey());
+
       result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<>("type after non-identifier") {
         @Override
         public boolean accepts(@NotNull String s, ProcessingContext context) {
-          return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2));
+          return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2)) && templateKeys.stream().anyMatch(template -> s.endsWith(template));
         }
       }));
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {

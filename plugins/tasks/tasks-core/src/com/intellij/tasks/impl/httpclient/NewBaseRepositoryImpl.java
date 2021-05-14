@@ -63,7 +63,7 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
   protected HttpClient getHttpClient() {
     HttpClientBuilder builder = HttpClients.custom()
       .setDefaultRequestConfig(createRequestConfig())
-      .setSslcontext(CertificateManager.getInstance().getSslContext())
+      .setSSLContext(CertificateManager.getInstance().getSslContext())
       .setDefaultCredentialsProvider(createCredentialsProvider())
       .addInterceptorFirst(PREEMPTIVE_BASIC_AUTH)
       .addInterceptorLast(createRequestInterceptor());

@@ -250,7 +250,7 @@ public final class BootstrapClassLoaderUtil {
       myMinor = minor;
     }
 
-    public boolean isAtLeast(@NotNull Comparable<SimpleVersion> ver) {
+    public boolean isAtLeast(@NotNull Comparable<? super SimpleVersion> ver) {
       return ver.compareTo(this) <= 0;
     }
 

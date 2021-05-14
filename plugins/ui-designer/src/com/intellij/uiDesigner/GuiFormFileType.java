@@ -17,13 +17,13 @@ package com.intellij.uiDesigner;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 public class GuiFormFileType implements /*UIBased*/FileType {
 
@@ -64,7 +64,7 @@ public class GuiFormFileType implements /*UIBased*/FileType {
   }
 
   @Override
-  public @NotNull CharsetHint getCharsetHint() {
-    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
+    return CharsetToolkit.UTF8;
   }
 }

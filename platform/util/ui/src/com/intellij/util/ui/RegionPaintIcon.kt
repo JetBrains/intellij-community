@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
 import com.intellij.ui.scale.DerivedScaleType.PIX_SCALE
@@ -33,7 +33,7 @@ class RegionPaintIcon(
     return icon
   }
 
-  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     if (g is Graphics2D) {
       val width = iconWidth
       val height = iconHeight

@@ -12,6 +12,26 @@
   elementTypeHolderClass="com.intellij.jsonpath.psi.JsonPathTypes"
   elementTypeClass="com.intellij.jsonpath.psi.JsonPathElementType"
   tokenTypeClass="com.intellij.jsonpath.psi.JsonPathTokenType"
+  psiImplUtilClass = "com.intellij.jsonpath.psi.JsonPathPsiUtils"
+  tokens = [
+    LBRACE='{'
+    RBRACE='}'
+    LBRACKET='['
+    RBRACKET=']'
+    LPARENTH='('
+    RPARENTH=')'
+    COMMA=','
+    COLON=':'
+    DOT='.'
+    RECURSIVE_DESCENT='..'
+    TRUE='true'
+    FALSE='false'
+    NULL='null'
+    ROOT_CONTEXT='$'
+    EVAL_CONTEXT='@'
+    FILTER_OPERATOR='?'
+    WILDCARD='*'
+  ]
 }
 
 private root ::= functionCall | (head_ segments_*)
@@ -27,7 +47,8 @@ private dotExpr ::= DOT segmentExpression+
 private scanExpr ::= RECURSIVE_DESCENT segmentExpression+
 
 wildcardSegment ::= WILDCARD segmentExpression* {
-  name="wildcard"
+  pin=1
+  name="*"
 }
 id ::= IDENTIFIER {
   name="identifier"
@@ -37,7 +58,9 @@ idSegment ::= id segmentExpression*
 quotedSegment ::= LBRACKET quotedPathsList RBRACKET segmentExpression*
 quotedPathsList ::= stringLiteral (COMMA stringLiteral)*
 
-functionCall ::= id LPARENTH functionArgsList? RPARENTH
+functionCall ::= id LPARENTH functionArgsList? RPARENTH {
+  pin=2
+}
 functionArgsList ::= expression (COMMA expression)* {
   name="function arguments"
 }
@@ -46,13 +69,17 @@ segmentExpression ::= LBRACKET nestedExpression_ RBRACKET
 
 private nestedExpression_ ::=
   wildcardSegment |
-  FILTER_OPERATOR (LPARENTH filterExpression RPARENTH)? | // standalone filter operator may be substituted by programmatic filter
-  (LPARENTH indexExpression RPARENTH) | // supported only in some implementations
+  filterExpression | // standalone filter operator may be substituted by programmatic filter
+  indexExpression | // supported only in some implementations
   spliceExpression |
   indexesList
 
-filterExpression ::= expression
-indexExpression ::= expression
+filterExpression ::= FILTER_OPERATOR (LPARENTH expression RPARENTH)? {
+  pin=1
+}
+indexExpression ::= LPARENTH expression RPARENTH {
+  pin=1
+}
 spliceExpression ::=
   (INTEGER_NUMBER COLON INTEGER_NUMBER) |
   (INTEGER_NUMBER COLON) |
@@ -79,25 +106,55 @@ private conditionalGroup_ ::= conditionalExpression | regexExpression
 private booleanGroup_ ::= andExpression | orExpression
 private addGroup_ ::= plusExpression | minusExpression
 private mulGroup_ ::= multiplyExpression | divideExpression
-private primaryGroup_ ::= literal | pathExpression | parenthesizedExpression
+private primaryGroup_ ::= value | pathExpression | parenthesizedExpression
 
-literal ::= nullLiteral | booleanLiteral | numberLiteral | stringLiteral {
+value ::= objectValue | arrayValue | literalValue {
   extends=expression
-  name="literal"
+}
+
+literalValue ::= nullLiteral | booleanLiteral | numberLiteral | stringLiteral {
+  extends=value
+  name="literalValue"
 }
 
 nullLiteral ::= NULL {
-  extends=literal
+  extends=literalValue
+  name="null"
 }
 booleanLiteral ::= TRUE | FALSE {
-  extends=literal
+  extends=literalValue
 }
 numberLiteral ::= DOUBLE_NUMBER | INTEGER_NUMBER {
-  extends=literal
+  extends=literalValue
 }
 stringLiteral ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING {
-  extends=literal
+  methods=[
+    getTextFragments
+  ]
+  extends=literalValue
+  mixin="com.intellij.jsonpath.psi.JsonPathStringLiteralMixin"
 }
+arrayValue ::= LBRACKET arrayElement_* RBRACKET {
+  extends=value
+}
+private arrayElement_ ::= value (COMMA|&RBRACKET) {
+  recoverWhile=notBracketOrNextValue
+  pin=1
+}
+private notBracketOrNextValue ::= !(RBRACKET|value)
+
+objectValue ::= LBRACE objectElement* RBRACE {
+  pin=1
+  extends=value
+}
+private objectElement ::= objectProperty (COMMA|&RBRACE) {
+  recoverWhile=notBraceOrNextValue
+  pin=1
+}
+objectProperty ::= stringLiteral (COLON value) {
+  pin(".*")=1
+}
+private notBraceOrNextValue ::= !(RBRACE|value)
 
 unaryNotExpression ::= NOT_OP expression {
   extends=expression
@@ -116,8 +173,14 @@ parenthesizedExpression ::= LPARENTH expression RPARENTH {
   extends=expression
 }
 
-conditionalExpression ::= expression (EQ_OP | NE_OP | GT_OP | LT_OP | GE_OP | LE_OP | IN_OP) expression {
+conditionalExpression ::= expression binaryConditionalOperator expression {
   extends=expression
+}
+
+binaryConditionalOperator ::=
+  EQ_OP | NE_OP | GT_OP | LT_OP | GE_OP | LE_OP |
+  IN_OP | NIN_OP | SUBSETOF_OP | ANYOF_OP | NONEOF_OP | SIZE_OP | EMPTY_OP {
+  name="operator"
 }
 
 regexExpression ::= expression RE_OP regexLiteral {

@@ -1,7 +1,0 @@
-android {
-  externalNativeBuild {
-    ndkBuild {
-      path new File("foo", "Android.mk")
-    }
-  }
-}

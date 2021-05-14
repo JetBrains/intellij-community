@@ -309,7 +309,7 @@ public final class ChunkExtractor {
     return attrs;
   }
 
-  private void appendPrefix(@NotNull List<? super TextChunk> result, int lineNumber) {
-    result.add(new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), String.valueOf(lineNumber + 1)));
+  private static void appendPrefix(@NotNull List<? super TextChunk> result, int lineNumber) {
+    result.add(new TextChunk(UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes(), String.valueOf(lineNumber + 1)));
   }
 }

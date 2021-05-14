@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -29,8 +15,9 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.jsp.JspElementType;
-import com.intellij.psi.jsp.JspTokenType;
+import com.intellij.psi.jsp.JspCommentType;
+import com.intellij.psi.jsp.JspJavaCodeType;
+import com.intellij.psi.jsp.JspScriptletType;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
@@ -91,7 +78,7 @@ public class ShiftIndentInsideHelper {
           ASTNode next = element.findLeafElementAt(offset1);
           if ((next.getElementType() == JavaTokenType.END_OF_LINE_COMMENT
                || next.getElementType() == JavaTokenType.C_STYLE_COMMENT
-               || next.getElementType() == JspTokenType.JSP_COMMENT
+               || next.getElementType() instanceof JspCommentType
           ) &&
               next != element) {
             if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
@@ -153,8 +140,8 @@ public class ShiftIndentInsideHelper {
     return (isComment(leaf) && !checkJspTexts(leaf))
            || leaf.getElementType() == TokenType.WHITE_SPACE
            || leaf.getElementType() == XmlTokenType.XML_DATA_CHARACTERS
-           || leaf.getElementType() == JspTokenType.JAVA_CODE
-           || leaf.getElementType() == JspElementType.JSP_SCRIPTLET
+           || leaf.getElementType() instanceof JspJavaCodeType
+           || leaf.getElementType() instanceof JspScriptletType
            || leaf.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 

@@ -31,7 +31,7 @@ public final class ExtensionPointUtil {
 
   public static @NotNull <T, U> Disposable createExtensionDisposable(@NotNull T extensionObject,
                                                                      @NotNull ExtensionPoint<U> extensionPoint,
-                                                                     @NotNull Predicate<U> removePredicate) {
+                                                                     @NotNull Predicate<? super U> removePredicate) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<U>() {
       @Override

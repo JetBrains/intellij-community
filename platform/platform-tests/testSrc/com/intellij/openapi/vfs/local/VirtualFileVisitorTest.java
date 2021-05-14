@@ -304,8 +304,8 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
 
   private static class AbortException extends RuntimeException { }
 
-  private void doTest(@Nullable Function<VirtualFile, Object> condition,
-                      @Nullable Function<VirtualFile, Iterable<VirtualFile>> iterable,
+  private void doTest(@Nullable Function<? super VirtualFile, Object> condition,
+                      @Nullable Function<? super VirtualFile, ? extends Iterable<VirtualFile>> iterable,
                       @NotNull String expected,
                       VirtualFileVisitor.Option @NotNull ... options) {
     MultiMap<VirtualFile, Pair<VirtualFile, String>> visitLog = MultiMap.create();

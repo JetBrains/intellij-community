@@ -1,5 +1,0 @@
-repositories {
-  jcenter {
-    name 'hello'
-  }
-}

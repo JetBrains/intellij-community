@@ -76,7 +76,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private JavaSpacePropertyProcessor(Block block, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     ASTNode child = AbstractJavaBlock.getTreeNode(block);
-    if (isErrorElement(child)) {
+    if (child == null || isErrorElement(child)) {
       myResult = Spacing.getReadOnlySpacing();
       return;
     }

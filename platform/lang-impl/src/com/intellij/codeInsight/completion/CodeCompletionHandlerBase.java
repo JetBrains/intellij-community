@@ -373,7 +373,7 @@ public class CodeCompletionHandlerBase {
   }
 
   private AutoCompletionDecision shouldAutoComplete(@NotNull CompletionProgressIndicator indicator,
-                                                    @NotNull List<LookupElement> items,
+                                                    @NotNull List<? extends LookupElement> items,
                                                     @NotNull CompletionParameters parameters) {
     if (!invokedExplicitly) {
       return AutoCompletionDecision.SHOW_LOOKUP;

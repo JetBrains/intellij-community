@@ -287,7 +287,7 @@ public class WindowsDefenderChecker {
    * returning a map of the results.
    */
   @NotNull
-  private static Map<Path, Boolean> checkPathsExcluded(@NotNull List<Path> paths, @NotNull List<Pattern> excludedPatterns) {
+  private static Map<Path, Boolean> checkPathsExcluded(@NotNull List<? extends Path> paths, @NotNull List<Pattern> excludedPatterns) {
     Map<Path, Boolean> result = new HashMap<>();
     for (Path path : paths) {
       if (!path.toFile().exists()) continue;

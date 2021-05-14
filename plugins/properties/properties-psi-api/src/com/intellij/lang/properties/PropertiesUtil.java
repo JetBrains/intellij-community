@@ -12,7 +12,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftLazyValue;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -35,7 +34,7 @@ public class PropertiesUtil {
     protected Set<String> compute() {
       final HashSet<String> locales =
         new HashSet<>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(),
-                                                              (Function<Locale, List<String>>)locale -> {
+                                                              locale -> {
                                                                 final ArrayList<String> languages =
                                                                   ContainerUtil.newArrayList(locale.getLanguage());
                                                                 try {

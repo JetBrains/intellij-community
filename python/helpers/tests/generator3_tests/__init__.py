@@ -81,17 +81,12 @@ class GeneratorTestCase(unittest.TestCase):
 
     def _test_has_failed(self):
         try:
-            result = self._resultForDoCleanups  # type: unittest.TestResult
-            return result.failures or result.errors
+            return any(error for _, error in self._outcome.errors)
         except AttributeError:
-            pass
-
-        try:
-            return any(error for (method, error) in self._outcome.errors)
-        except AttributeError:
-            pass
-
-        return False
+            # Python 2 fallback
+            class_result = self._resultForDoCleanups  # type: unittest.TestResult
+            problems = class_result.failures + class_result.errors
+            return any(test is self for test, _ in problems)
 
     @property
     def test_name(self):

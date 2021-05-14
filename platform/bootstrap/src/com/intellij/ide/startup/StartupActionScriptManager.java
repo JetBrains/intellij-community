@@ -44,7 +44,7 @@ public final class StartupActionScriptManager {
     executeActionScriptCommands(loadActionScript(scriptFile), oldTarget, newTarget);
   }
 
-  public static void executeActionScriptCommands(List<ActionCommand> commands,
+  public static void executeActionScriptCommands(List<? extends ActionCommand> commands,
                                                  @NotNull Path oldTarget,
                                                  @NotNull Path newTarget) throws IOException {
     for (ActionCommand command : commands) {
@@ -207,7 +207,7 @@ public final class StartupActionScriptManager {
 
     private final String mySource;
     private final String myDestination;
-    private final Predicate<String> myFilenameFilter;
+    private final @Nullable Predicate<? super String> myFilenameFilter;
 
     public UnzipCommand(@NotNull Path source, @NotNull Path destination) {
       this(source, destination, null);
@@ -221,7 +221,7 @@ public final class StartupActionScriptManager {
       this(source.toPath(), destination.toPath());
     }
 
-    public UnzipCommand(@NotNull Path source, @NotNull Path destination, @Nullable Predicate<String> filenameFilter) {
+    public UnzipCommand(@NotNull Path source, @NotNull Path destination, @Nullable Predicate<? super String> filenameFilter) {
       mySource = source.toAbsolutePath().toString();
       myDestination = destination.toAbsolutePath().toString();
       myFilenameFilter = filenameFilter;

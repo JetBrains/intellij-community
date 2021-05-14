@@ -33,7 +33,7 @@ public abstract class MoveDirectoryWithClassesHelper {
                                   List<PsiFile> movedFiles,
                                   RefactoringElementListener listener);
 
-  public abstract void postProcessUsages(UsageInfo[] usages, Function<PsiDirectory, PsiDirectory> newDirMapper);
+  public abstract void postProcessUsages(UsageInfo[] usages, Function<? super PsiDirectory, ? extends PsiDirectory> newDirMapper);
 
   public abstract void beforeMove(PsiFile psiFile);
 
@@ -72,7 +72,7 @@ public abstract class MoveDirectoryWithClassesHelper {
     }
 
     @Override
-    public void postProcessUsages(UsageInfo[] usages, Function<PsiDirectory, PsiDirectory> newDirMapper) {
+    public void postProcessUsages(UsageInfo[] usages, Function<? super PsiDirectory, ? extends PsiDirectory> newDirMapper) {
       for (UsageInfo usage : usages) {
         if (usage instanceof MoveDirectoryUsageInfo) {
           PsiReference reference = usage.getReference();

@@ -33,7 +33,7 @@ public final class CachingPainter {
    * Subpixel-antialiased text shouldn't be rendered using this procedure, as the result depends on the target surface's background color,
    * and it cannot be determined when cached image is produced.
    */
-  public static void paint(@NotNull Graphics2D g, float x, float y, float width, float height, @NotNull Consumer<Graphics2D> painter,
+  public static void paint(@NotNull Graphics2D g, float x, float y, float width, float height, @NotNull Consumer<? super Graphics2D> painter,
                            @NotNull Object key, Object @NotNull ... parameters) {
     GraphicsConfiguration config = g.getDeviceConfiguration();
     float scale = JBUIScale.sysScale(config);
@@ -79,7 +79,7 @@ public final class CachingPainter {
     // cause we cannot repeat painting over the initial graphics reliably anyway (without restoring its initial contents first).
   }
 
-  private static void paintAndDispose(Graphics2D g, Consumer<Graphics2D> painter) {
+  private static void paintAndDispose(Graphics2D g, Consumer<? super Graphics2D> painter) {
     try {
       painter.accept(g);
     }

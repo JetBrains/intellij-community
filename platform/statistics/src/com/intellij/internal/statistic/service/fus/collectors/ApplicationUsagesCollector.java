@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.util.Set;
  * <ol>
  *   <li>Inherit the class, implement {@link ApplicationUsagesCollector#getGroup()} and {@link ApplicationUsagesCollector#getMetrics()} and register collector in plugin.xml.
  *   See <i>fus-collectors.md</i> for more details.</li>
- *   <li>Implement custom validation rules if necessary. For more information see {@link SensitiveDataValidator}.</li>
+ *   <li>Implement custom validation rules if necessary. For more information see {@link IntellijSensitiveDataValidator}.</li>
  *   <li>If new group is implemented in a platform or a plugin built with IntelliJ Ultimate, YT issue will be created automatically</li>
  *   <li>Otherwise, create a YT issue in FUS project with group data scheme and descriptions to register it on the statistics metadata server</li>
  * </ol>

@@ -587,6 +587,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     public @NotNull Pair<String, Integer> getRemoteSocket(int localPort) {
       return Pair.create("localhost", localPort);
     }
+
+    @Override
+    public void close() throws IOException {
+      // Nothing.
+    }
   }
 
   /**

@@ -4,8 +4,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -143,12 +142,13 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   @Nullable
   @Override
   public PsiModifierList getModifierList() {
-    return null;
+    return (PsiModifierList)findPsiChildByType(JavaElementType.MODIFIER_LIST);
   }
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return false;
+    final PsiModifierList modifierList = getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
   @NotNull

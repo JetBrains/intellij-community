@@ -20,7 +20,7 @@ import javax.swing.text.BadLocationException
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
-class LessonMessagePane : JTextPane() {
+class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
   private data class LessonMessage(
@@ -41,6 +41,8 @@ class LessonMessagePane : JTextPane() {
   private val ranges = mutableSetOf<RangeData>()
 
   private var insertOffset: Int = 0
+
+  private var paragraphStyle = SimpleAttributeSet()
 
   private fun allLessonMessages() = activeMessages + restoreMessages + inactiveMessages
 
@@ -120,6 +122,14 @@ class LessonMessagePane : JTextPane() {
     StyleConstants.setSpaceBelow(TASK_PARAGRAPH_STYLE, 0.0f)
     StyleConstants.setLineSpacing(TASK_PARAGRAPH_STYLE, 0.2f)
 
+    StyleConstants.setLeftIndent(INTERNAL_PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
+    StyleConstants.setRightIndent(INTERNAL_PARAGRAPH_STYLE, 0f)
+    StyleConstants.setSpaceAbove(INTERNAL_PARAGRAPH_STYLE, 8.0f)
+    StyleConstants.setSpaceBelow(INTERNAL_PARAGRAPH_STYLE, 0.0f)
+    StyleConstants.setLineSpacing(INTERNAL_PARAGRAPH_STYLE, 0.2f)
+
+    StyleConstants.setLineSpacing(BALLOON_STYLE, 0.2f)
+
     StyleConstants.setForeground(REGULAR, UISettings.instance.defaultTextColor)
     StyleConstants.setForeground(BOLD, UISettings.instance.defaultTextColor)
     StyleConstants.setForeground(SHORTCUT, UISettings.instance.shortcutTextColor)
@@ -157,7 +167,7 @@ class LessonMessagePane : JTextPane() {
 
   private fun insertText(text: String, attributeSet: AttributeSet) {
     document.insertString(insertOffset, text, attributeSet)
-    styledDocument.setParagraphAttributes(insertOffset, insertOffset + text.length - 1, TASK_PARAGRAPH_STYLE, true)
+    styledDocument.setParagraphAttributes(insertOffset, text.length - 1, paragraphStyle, true)
     insertOffset += text.length
   }
 
@@ -173,7 +183,7 @@ class LessonMessagePane : JTextPane() {
 
     val startRect = modelToView(lessonMessage.start) ?: return null
     val endRect = modelToView(lessonMessage.end - 1) ?: return null
-    return Rectangle(startRect.x, startRect.y, endRect.x + endRect.width - startRect.x, endRect.y + endRect.height - startRect.y)
+    return Rectangle(startRect.x, startRect.y, endRect.x + endRect.width - startRect.x, endRect.y + endRect.height - startRect.y + activeTaskInset*2)
   }
 
   fun redrawMessages() {
@@ -181,6 +191,7 @@ class LessonMessagePane : JTextPane() {
     text = ""
     insertOffset = 0
     for (lessonMessage in allLessonMessages()) {
+      paragraphStyle = if (panelMode) TASK_PARAGRAPH_STYLE else BALLOON_STYLE
       val messageParts: List<MessagePart> = lessonMessage.messageParts
       lessonMessage.start = insertOffset
       if (insertOffset != 0)
@@ -197,6 +208,10 @@ class LessonMessagePane : JTextPane() {
           MessagePart.MessageType.LINK -> appendLink(part)?.let { ranges.add(it) }
           MessagePart.MessageType.ICON_IDX -> LearningUiManager.iconMap[part.text]?.let { addPlaceholderForIcon(it) }
           MessagePart.MessageType.PROPOSE_RESTORE -> insertText(part.text, BOLD)
+          MessagePart.MessageType.LINE_BREAK -> {
+            insertText("\n", REGULAR)
+            paragraphStyle = INTERNAL_PARAGRAPH_STYLE
+          }
         }
         part.endOffset = insertOffset
       }
@@ -251,12 +266,12 @@ class LessonMessagePane : JTextPane() {
     val range = appendClickableRange(" ${messagePart.text} ", SHORTCUT)
     val actionId = messagePart.link ?: return null
     val clickRange = IntRange(range.first + 1, range.last - 1) // exclude around spaces
-    return RangeData(clickRange) { p, h -> showShortcutBalloon(p, h, actionId, messagePart.text.replace("\u00A0", " ")) }
+    return RangeData(clickRange) { p, h -> showShortcutBalloon(p, h, actionId) }
   }
 
-  private fun showShortcutBalloon(point: Point, height: Int, actionName: String?, shortcut: String) {
+  private fun showShortcutBalloon(point: Point, height: Int, actionName: String?) {
     if (actionName == null) return
-    showActionKeyPopup(this, point, height, actionName, shortcut)
+    showActionKeyPopup(this, point, height, actionName)
   }
 
   private fun appendClickableRange(clickable: String, attributeSet: SimpleAttributeSet): IntRange {
@@ -330,7 +345,7 @@ class LessonMessagePane : JTextPane() {
     val lastPassedMessage: LessonMessage? = activeMessages.indexOfLast { it.state == MessageState.PASSED }
       .takeIf { it != -1 && it < activeMessages.size - 1 }
       ?.let { activeMessages[it + 1] }
-    if (lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
+    if (panelMode && lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
       drawRectangleAroundMessage(lastPassedMessage, lastActiveMessage, g2d, UISettings.instance.activeTaskBorder)
     }
   }
@@ -401,6 +416,8 @@ class LessonMessagePane : JTextPane() {
     private val LINK = SimpleAttributeSet()
 
     private val TASK_PARAGRAPH_STYLE = SimpleAttributeSet()
+    private val INTERNAL_PARAGRAPH_STYLE = SimpleAttributeSet()
+    private val BALLOON_STYLE = SimpleAttributeSet()
 
     //arc & indent for shortcut back plate
     private val arc by lazy { JBUI.scale(4) }

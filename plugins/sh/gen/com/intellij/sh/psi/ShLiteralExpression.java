@@ -29,6 +29,6 @@ public interface ShLiteralExpression extends ShExpression {
   @NotNull
   List<ShVariable> getVariableList();
 
-  PsiReference[] getReferences();
+  PsiReference @NotNull [] getReferences();
 
 }

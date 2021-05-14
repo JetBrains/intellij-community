@@ -33,7 +33,7 @@ import java.util.List;
 public class ToolWindowKeymapExtension implements KeymapExtension {
   @Nullable
   @Override
-  public KeymapGroup createGroup(Condition<AnAction> filtered, Project project) {
+  public KeymapGroup createGroup(Condition<? super AnAction> filtered, Project project) {
     String title = UIUtil.removeMnemonic(ActionsBundle.message("group.ToolWindowsGroup.text"));
     List<ActivateToolWindowAction> windowActions = project != null ?
                                                    ToolWindowsGroup.getToolWindowActions(project, false) :

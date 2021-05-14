@@ -50,13 +50,10 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Schedule cache update")
-        isCachingRequested = true
         saveAlarm.request()
       }
     })
   }
-
-  override var isCachingRequested: Boolean = false
 
   private fun initCacheFile(): Path {
 
@@ -78,21 +75,16 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
   }
 
   private fun doCacheSaving() {
-    try {
-      val storage = WorkspaceModel.getInstance(project).entityStorage.current
-      if (!storage.isConsistent) invalidateProjectCache()
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    if (!storage.isConsistent) invalidateProjectCache()
 
-      if (!cachesInvalidated.get()) {
-        LOG.debug("Saving project model cache to $cacheFile")
-        saveCache(storage)
-      }
-
-      if (cachesInvalidated.get()) {
-        FileUtil.delete(cacheFile)
-      }
+    if (!cachesInvalidated.get()) {
+      LOG.debug("Saving project model cache to $cacheFile")
+      saveCache(storage)
     }
-    finally {
-      isCachingRequested = false
+
+    if (cachesInvalidated.get()) {
+      FileUtil.delete(cacheFile)
     }
   }
 

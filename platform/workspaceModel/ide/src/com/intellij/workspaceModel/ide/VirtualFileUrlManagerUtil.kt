@@ -18,10 +18,6 @@ import java.nio.file.Paths
  */
 fun VirtualFileUrlManager.Companion.getInstance(project: Project): VirtualFileUrlManager = project.service()
 
-fun VirtualFileUrl.append(relativePath: String, manager: VirtualFileUrlManager): VirtualFileUrl {
-  return manager.fromUrl(this.url + "/" + relativePath.removePrefix("/"))
-}
-
 fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean = FileUtil.startsWith(other.url, url)
 
 fun VirtualFileUrl.toPath(): Path = Paths.get(JpsPathUtil.urlToPath(url))

@@ -33,7 +33,7 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
   public @Nullable CodeStyleScheme importScheme(@NotNull Project project,
                                                 @NotNull VirtualFile selectedFile,
                                                 @NotNull CodeStyleScheme currentScheme,
-                                                @NotNull SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
+                                                @NotNull SchemeFactory<? extends CodeStyleScheme> schemeFactory) throws SchemeImportException {
     Pair<String, CodeStyleScheme> importPair =
       ImportSchemeChooserDialog.selectOrCreateTargetScheme(project, currentScheme, schemeFactory, readSchemeNames(selectedFile));
     if (importPair != null) {

@@ -865,11 +865,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         regExpPredicate = handler.findRegExpPredicate();
 
         if (regExpPredicate != null) {
-          regExpPredicate.setNodeTextGenerator(element -> {
-            final StringBuilder builder = new StringBuilder(StructuralSearchUtil.getMeaningfulText(element));
-            for (int i = 0; i < matchedArrayDimensions; ++i) builder.append("[]");
-            return builder.toString();
-          });
+          regExpPredicate.setNodeTextGenerator(
+            element -> StructuralSearchUtil.getMeaningfulText(element) + "[]".repeat(matchedArrayDimensions));
         }
         fullTypeResult = true;
       }

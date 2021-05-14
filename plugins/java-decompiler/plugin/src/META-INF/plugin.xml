@@ -9,7 +9,7 @@
 
   <depends>com.intellij.modules.java</depends>
 
-  <resource-bundle>messages.Decompiler</resource-bundle>
+  <resource-bundle>messages.IdeaDecompilerBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
     <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last, before clsStubBuilder"/>

@@ -92,7 +92,7 @@ public final class MoveFilesOrDirectoriesUtil {
                             final PsiElement[] elements,
                             final PsiElement[] targetElement,
                             final MoveCallback moveCallback,
-                            final Function<PsiElement[], PsiElement[]> adjustElements) {
+                            final Function<? super PsiElement[], ? extends PsiElement[]> adjustElements) {
     if (adjustElements == null) {
       for (PsiElement element : elements) {
         if (!(element instanceof PsiFile) && !(element instanceof PsiDirectory)) {

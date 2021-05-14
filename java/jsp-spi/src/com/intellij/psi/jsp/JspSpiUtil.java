@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.jsp;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
@@ -207,22 +206,4 @@ public abstract class JspSpiUtil {
       return null;
     }
   }
-
-  @Nullable
-  public static IElementType getJspElementType(@NotNull final JspElementType.Kind kind) {
-    final JspSpiUtil spiUtil = getJspSpiUtil();
-    return spiUtil != null ? spiUtil._getJspElementType(kind) : null;
-  }
-
-  @Nullable
-  public static IElementType getJspScriptletType() {
-    return getJspElementType(JspElementType.Kind.JSP_SCRIPTLET);
-  }
-
-  @Nullable
-  public static IElementType getJspExpressionType() {
-    return getJspElementType(JspElementType.Kind.JSP_EXPRESSION);
-  }
-
-  protected abstract IElementType _getJspElementType(@NotNull final JspElementType.Kind kind);
 }

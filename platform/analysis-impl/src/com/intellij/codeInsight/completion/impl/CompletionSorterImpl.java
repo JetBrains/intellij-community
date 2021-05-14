@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -66,6 +68,10 @@ public class CompletionSorterImpl extends CompletionSorter {
                                              boolean beforeAnchor, ClassifierFactory<LookupElement> classifierFactory) {
     final int i = idIndex(anchorId);
     return enhanced(classifierFactory, beforeAnchor ? Math.max(0, i) : i + 1);
+  }
+
+  public CompletionSorterImpl withoutClassifiers(@NotNull Predicate<ClassifierFactory<LookupElement>> removeCondition) {
+    return new CompletionSorterImpl(myMembers.stream().filter(removeCondition.negate()).collect(Collectors.toList()));
   }
 
   private CompletionSorterImpl enhanced(ClassifierFactory<LookupElement> classifierFactory, int index) {

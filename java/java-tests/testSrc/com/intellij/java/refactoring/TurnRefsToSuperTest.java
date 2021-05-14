@@ -55,6 +55,7 @@ public class TurnRefsToSuperTest extends LightMultiFileTestCase {
   public void testTryWithResources1() { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
   public void testTryWithResources2() { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
   public void testDifferentNumberOfParams() { doTest("Bar", "SuperBar", false); }
+  public void testSelfReference() { doTest("Bar", "SuperBar", false); }
 
   //todo[ann] fix and uncomment
   //public void testStaticCallArguments() throws Exception { doTest("Impl", "Int", false); }

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.storage
 
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence
 import com.intellij.openapi.util.io.FileUtil
@@ -20,7 +20,7 @@ internal abstract class ValidationRulesBaseStorageTest : BasePlatformTestCase() 
 
     // initialize validation rules storage
     for (recorder in recordersToCleanUp) {
-      SensitiveDataValidator.getInstance(recorder)
+      IntellijSensitiveDataValidator.getInstance(recorder)
     }
   }
 

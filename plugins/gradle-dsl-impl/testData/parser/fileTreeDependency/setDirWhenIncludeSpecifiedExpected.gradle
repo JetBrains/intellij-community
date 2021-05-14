@@ -1,3 +1,0 @@
-dependencies {
-  compile fileTree(include: '*.jar', dir: 'jars')
-}

@@ -14,6 +14,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProper
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -35,7 +36,7 @@ public final class DuplicateComponentsAction extends AbstractGuiEditorAction {
     assert parent != null;
     List<RadComponent> duplicates = new ArrayList<>();
     Map<RadComponent, RadComponent> duplicateMap = new HashMap<>();
-    IntOpenHashSet insertedRows = new IntOpenHashSet();
+    IntSet insertedRows = new IntOpenHashSet();
     boolean incrementRow = true;
     if (selection.size() > 1 && canDuplicate(selection, false) && FormEditingUtil.getSelectionBounds(selection).width == 1) {
       incrementRow = false;

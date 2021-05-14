@@ -29,8 +29,6 @@ import com.intellij.refactoring.copy.CopyHandlerDelegateBase;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -79,7 +77,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     }
     final ResourceBundle resourceBundle = representative.getPropertiesFile().getResourceBundle();
     final List<IProperty> properties = ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(),
-                                                                (NullableFunction<PropertiesFile, IProperty>)propertiesFile -> propertiesFile.findPropertyByKey(key));
+                                                                propertiesFile -> propertiesFile.findPropertyByKey(key));
     final PropertiesCopyDialog dlg = new PropertiesCopyDialog(properties, resourceBundle);
     if (!properties.isEmpty() && dlg.showAndGet()) {
       final String propertyNewName = dlg.getCurrentPropertyName();
@@ -115,7 +113,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     if (!propertiesFileMapping.isEmpty()) {
       WriteCommandAction.runWriteCommandAction(project, () -> {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(ContainerUtil.map(propertiesFileMapping.values(),
-                                                                                                (Function<PropertiesFile, PsiElement>)PropertiesFile::getContainingFile))) return;
+                                                                                                PropertiesFile::getContainingFile))) return;
         for (Map.Entry<IProperty, PropertiesFile> entry : propertiesFileMapping.entrySet()) {
           final String value = entry.getKey().getValue();
           final PropertiesFile target = entry.getValue();

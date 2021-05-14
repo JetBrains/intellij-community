@@ -138,7 +138,7 @@ class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
-  void addButton(@NotNull StripeButton button, @NotNull Comparator<StripeButton> comparator) {
+  void addButton(@NotNull StripeButton button, @NotNull Comparator<? super StripeButton> comparator) {
     preferredSize = null;
     buttons.add(button);
     buttons.sort(comparator);

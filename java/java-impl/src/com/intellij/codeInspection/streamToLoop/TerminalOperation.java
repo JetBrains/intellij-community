@@ -331,7 +331,7 @@ abstract class TerminalOperation extends Operation {
    * @return the corrected type.
    */
   @NotNull
-  static PsiType correctTypeParameters(PsiType resultType, String superClassName, Map<String, Function<PsiType, PsiType>> downstreamCorrectors) {
+  static PsiType correctTypeParameters(PsiType resultType, String superClassName, Map<String, Function<? super PsiType, ? extends PsiType>> downstreamCorrectors) {
     PsiClass resultClass = PsiUtil.resolveClassInClassTypeOnly(resultType);
     if(resultClass == null) return resultType;
 

@@ -80,7 +80,7 @@ final class MultiFilesSettings implements ArtifactsSettings, ProjectLibrariesSet
     return result;
   }
 
-  public void collectAffectedFiles(@NotNull Collection<Path> files) {
+  public void collectAffectedFiles(@NotNull Collection<? super Path> files) {
     if (projectFile != null) {
       files.add(projectFile.getFile());
     }

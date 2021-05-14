@@ -126,8 +126,8 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public void removeData(@NotNull Computable toRemove,
-                           @NotNull Collection toIgnore,
+    public void removeData(Computable<? extends Collection<?>> toRemove,
+                           Collection<? extends DataNode<Object>> toIgnore,
                            @NotNull ProjectData projectData,
                            @NotNull Project project,
                            @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -136,7 +136,7 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
 
     @NotNull
     @Override
-    public Computable<Collection> computeOrphanData(@NotNull Collection toImport,
+    public Computable<Collection<Object>> computeOrphanData(Collection<? extends DataNode<Object>> toImport,
                                                     @NotNull ProjectData projectData,
                                                     @NotNull Project project,
                                                     @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -145,7 +145,7 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public void importData(@NotNull Collection toImport,
+    public void importData(Collection<? extends DataNode<Object>> toImport,
                            @Nullable ProjectData projectData,
                            @NotNull Project project,
                            @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -176,8 +176,8 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public void removeData(@NotNull Computable toRemove,
-                           @NotNull Collection toIgnore,
+    public void removeData(Computable<? extends Collection<?>> toRemove,
+                           Collection<? extends DataNode<Object>> toIgnore,
                            @NotNull ProjectData projectData,
                            @NotNull Project project,
                            @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -186,7 +186,7 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
 
     @NotNull
     @Override
-    public Computable<Collection> computeOrphanData(@NotNull Collection toImport,
+    public Computable<Collection<Object>> computeOrphanData(Collection<? extends DataNode<Object>> toImport,
                                                     @NotNull ProjectData projectData,
                                                     @NotNull Project project,
                                                     @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -195,7 +195,7 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public void importData(@NotNull Collection toImport,
+    public void importData(Collection<? extends DataNode<Object>> toImport,
                            @Nullable ProjectData projectData,
                            @NotNull Project project,
                            @NotNull IdeModifiableModelsProvider modelsProvider) {

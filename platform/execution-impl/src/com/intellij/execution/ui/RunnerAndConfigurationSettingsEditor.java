@@ -25,12 +25,12 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
                                                                                                          TargetAwareRunConfigurationEditor {
 
   private final RunConfigurationFragmentedEditor<RunConfigurationBase<?>> myConfigurationEditor;
-  private final Consumer<JComponent> myConfigurationCreator;
+  private final Consumer<? super JComponent> myConfigurationCreator;
   private final @Nullable RunConfigurationStorageUi myRCStorageUi;
 
   public RunnerAndConfigurationSettingsEditor(RunnerAndConfigurationSettings settings,
                                               RunConfigurationFragmentedEditor<RunConfigurationBase<?>> configurationEditor,
-                                              Consumer<JComponent> configurationCreator) {
+                                              Consumer<? super JComponent> configurationCreator) {
     super(settings.createFactory());
     myConfigurationEditor = configurationEditor;
     myConfigurationCreator = configurationCreator;

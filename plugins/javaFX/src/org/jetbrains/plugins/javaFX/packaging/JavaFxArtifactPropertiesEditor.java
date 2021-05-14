@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.execution.util.ListTableWithButtons;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -66,7 +66,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myHtmlParams.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.title" ), JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.description"), project, descriptor);
     myParams.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.title"), JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.description"), project, descriptor);
     myHtmlTemplate.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.title"), JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.description"), project,
-                                           FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.HTML));
+                                           FileChooserDescriptorFactory.createSingleFileDescriptor(HtmlFileType.INSTANCE));
     myEditSignCertificateButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -947,7 +947,16 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
   }
 
   public void testNewSettingsNotModified() throws Exception {
-    doTest(NEW_SETTINGS);
+    // check if order is set correctly after loading
+    final SSBasedInspection inspection = readSettings(NEW_SETTINGS);
+    Configuration previous = null;
+    for (Configuration configuration : inspection.getConfigurations()) {
+      final boolean family = previous != null && previous.getUuid().equals(configuration.getUuid());
+      assertEquals(family ? previous.getOrder() + 1 : 0, configuration.getOrder());
+      previous = configuration;
+    }
+
+    assertEquals(NEW_SETTINGS, writeSettings(inspection));
   }
 
   private static void doTest(String xml) throws Exception {

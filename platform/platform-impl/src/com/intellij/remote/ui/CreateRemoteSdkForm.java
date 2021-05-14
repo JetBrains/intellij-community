@@ -159,7 +159,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     myRadioPanel.setVisible(false);
   }
 
-  private void installRadioListeners(@NotNull final Collection<TypeHandler> values) {
+  private void installRadioListeners(final @NotNull Collection<? extends TypeHandler> values) {
     ActionListener l = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

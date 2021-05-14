@@ -1,5 +1,0 @@
-def var1 = false
-
-ext {
-  prop = "Hello i am ${var1}!"
-}

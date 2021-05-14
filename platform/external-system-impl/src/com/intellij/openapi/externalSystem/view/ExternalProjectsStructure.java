@@ -250,10 +250,10 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
   }
 
   private static final class CollectingVisitor<T extends ExternalSystemNode> implements TreeVisitor {
-    private final List<TreePath> myCollector;
+    private final List<? super TreePath> myCollector;
     private final Collection<Class<? extends T>> myNodeClasses;
 
-    private CollectingVisitor(List<TreePath> nodeCollector, Collection<Class<? extends T>> nodeClasses) {
+    private CollectingVisitor(List<? super TreePath> nodeCollector, Collection<Class<? extends T>> nodeClasses) {
       myCollector = nodeCollector;
       myNodeClasses = nodeClasses;
     }

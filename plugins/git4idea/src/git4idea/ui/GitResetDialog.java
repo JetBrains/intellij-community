@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui;
 
 import com.intellij.openapi.project.Project;
@@ -64,7 +64,7 @@ public class GitResetDialog extends DialogWrapper {
   public GitResetDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
     myProject = project;
-    setTitle(GitBundle.getString("reset.title"));
+    setTitle(GitBundle.message("reset.title"));
     setOKButtonText(GitBundle.message("git.reset.button"));
     myResetTypeComboBox.addItem(ResetMode.MIXED);
     myResetTypeComboBox.addItem(ResetMode.SOFT);
@@ -87,7 +87,7 @@ public class GitResetDialog extends DialogWrapper {
    */
   void validateFields() {
     if (myGitReferenceValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("reset.commit.invalid"));
+      setErrorText(GitBundle.message("reset.commit.invalid"));
       setOKActionEnabled(false);
     }
     setErrorText(null);

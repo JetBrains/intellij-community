@@ -37,7 +37,7 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
         moduleAppears(module)
       }
 
-      override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<Module, String>) {
+      override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
         for (module in modules) {
           moduleAppears(module)
         }

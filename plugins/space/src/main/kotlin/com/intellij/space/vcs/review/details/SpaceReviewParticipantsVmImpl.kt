@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.ProjectKey
@@ -15,7 +15,7 @@ import libraries.coroutines.extra.Lifetime
 import runtime.reactive.Property
 import runtime.reactive.cellProperty
 import runtime.reactive.live
-import runtime.reactive.property.combineLatest
+import runtime.reactive.property.map
 
 internal class SpaceReviewParticipantsVmImpl(
   override val lifetime: Lifetime,
@@ -41,19 +41,25 @@ internal class SpaceReviewParticipantsVmImpl(
   override val me: TD_MemberProfile
     get() = workspace.me.value
 
-  override val controlVm: Property<ParticipantStateControlVM> = combineLatest(
+  override val controlVm: Property<ParticipantStateControlVM> = map(
     review.property(),
     reviewers,
-    authors)
+    authors
+  )
   { reviewRecord, reviewers, authors ->
-    if (reviewRecord.state != CodeReviewState.Opened) return@combineLatest ParticipantStateControlVM.WithoutControls
-
-    createControlVm(reviewers, authors, reviewRecord)
+    if (reviewRecord.state != CodeReviewState.Opened) {
+      ParticipantStateControlVM.WithoutControls
+    }
+    else {
+      createControlVm(reviewers, authors, reviewRecord)
+    }
   }
 
-  private fun createControlVm(reviewers: List<CodeReviewParticipant>,
-                              authors: List<CodeReviewParticipant>,
-                              reviewRecord: CodeReviewRecord): ParticipantStateControlVM {
+  private fun createControlVm(
+    reviewers: List<CodeReviewParticipant>,
+    authors: List<CodeReviewParticipant>,
+    reviewRecord: CodeReviewRecord
+  ): ParticipantStateControlVM {
     val meReviewer = reviewers.me()
     val meAuthor = authors.me()
     val isTurnBased = reviewRecord.turnBased == true

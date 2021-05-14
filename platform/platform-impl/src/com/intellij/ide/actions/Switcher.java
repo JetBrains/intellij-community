@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -131,12 +131,16 @@ public final class Switcher extends AnAction implements DumbAware {
         if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
           final KeyEvent keyEvent = (KeyEvent)event;
           if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
+            keyEvent.consume();
             ApplicationManager.getApplication().invokeLater(CHECKER, ModalityState.current());
+            return true; // because the key event is actually processed
           }
           else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
                    && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
+            keyEvent.consume();
             SWITCHER.myPopup.closeOk(null);
             tw.activate(null, true, true);
+            return true; // because the key event is actually processed
           }
         }
         return false;
@@ -622,9 +626,8 @@ public final class Switcher extends AnAction implements DumbAware {
           public void actionPerformed(@NotNull AnActionEvent e) {
             if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
               mySpeedSearch.hidePopup();
-              Object[] elements = mySpeedSearch.getAllElements();
-              if (elements != null && elements.length > 0) {
-                mySpeedSearch.selectElement(elements[0], "");
+              if (mySpeedSearch.getElementCount() > 0) {
+                mySpeedSearch.selectElement(mySpeedSearch.getElementAt(0), "");
               }
             }
             else {
@@ -743,7 +746,7 @@ public final class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    static List<FileInfo> getFilesToShow(@NotNull Project project, @NotNull List<VirtualFile> filesForInit,
+    static List<FileInfo> getFilesToShow(@NotNull Project project, @NotNull List<? extends VirtualFile> filesForInit,
                                          int toolWindowsCount, boolean pinned) {
       FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       List<FileInfo> filesData = new ArrayList<>();
@@ -890,7 +893,7 @@ public final class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    private static Map<String, ToolWindow> createShortcuts(@NotNull List<ToolWindow> windows) {
+    private static Map<String, ToolWindow> createShortcuts(@NotNull List<? extends ToolWindow> windows) {
       final Map<String, ToolWindow> keymap = new HashMap<>(windows.size());
       final List<ToolWindow> otherTW = new ArrayList<>();
       for (ToolWindow window : windows) {
@@ -1167,7 +1170,7 @@ public final class Switcher extends AnAction implements DumbAware {
               VirtualFile file = info.first;
               if (mode == RIGHT_SPLIT) {
                 if (splitWindow == null) {
-                  splitWindow = OpenInRightSplitAction.Companion.openInRightSplit(project, file, null);
+                  splitWindow = OpenInRightSplitAction.Companion.openInRightSplit(project, file, null, true);
                 }
                 else {
                   manager.openFileWithProviders(file, true, splitWindow);
@@ -1189,7 +1192,7 @@ public final class Switcher extends AnAction implements DumbAware {
                 settings.setReuseNotModifiedTabs(false);
                 manager.openFile(file, true, true);
                 if (LightEdit.owns(project)) {
-                  LightEditFeatureUsagesUtil.logFileOpen(RecentFiles);
+                  LightEditFeatureUsagesUtil.logFileOpen(project, RecentFiles);
                 }
                 if (oldValue) {
                   CommandProcessor.getInstance().executeCommand(project, () -> settings.setReuseNotModifiedTabs(true), "", null);
@@ -1322,26 +1325,17 @@ public final class Switcher extends AnAction implements DumbAware {
       }
 
       @Override
-      protected Object @NotNull [] getAllElements() {
-        ListModel filesModel = myComponent.files.getModel();
-        Object[] files = new Object[filesModel.getSize()];
-        for (int i = 0; i < files.length; i++) {
-          files[i] = filesModel.getElementAt(i);
-        }
-
-        ListModel twModel = myComponent.toolWindows.getModel();
-        Object[] toolWindows = new Object[twModel.getSize()];
-        for (int i = 0; i < toolWindows.length; i++) {
-          toolWindows[i] = twModel.getElementAt(i);
-        }
-
-        Object[] elements = new Object[files.length + toolWindows.length];
-        System.arraycopy(files, 0, elements, 0, files.length);
-        System.arraycopy(toolWindows, 0, elements, files.length, toolWindows.length);
-
-        return elements;
+      protected int getElementCount() {
+        return myComponent.files.getModel().getSize() + myComponent.toolWindows.getModel().getSize();
       }
 
+      @Override
+      protected Object getElementAt(int viewIndex) {
+        ListModel<FileInfo> filesModel = myComponent.files.getModel();
+        ListModel<Object> twModel = myComponent.toolWindows.getModel();
+        if (viewIndex < filesModel.getSize()) return filesModel.getElementAt(viewIndex);
+        return twModel.getElementAt(viewIndex - filesModel.getSize());
+      }
 
       @Override
       protected String getElementText(Object element) {
@@ -1476,7 +1470,9 @@ public final class Switcher extends AnAction implements DumbAware {
     @NlsSafe String getNameForRendering() {
       if (myNameForRendering == null) {
         // Recently changed files would also be taken into account (not only open 'visible' files)
-        myNameForRendering = EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first, second);
+        myNameForRendering = SlowOperations.allowSlowOperations(
+          () -> EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first, second)
+        );
       }
       return myNameForRendering;
     }

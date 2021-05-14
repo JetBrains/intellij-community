@@ -2,9 +2,7 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -16,6 +14,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -43,7 +42,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     return "UsageGrouping.Package";
   }
 
-  private final class PackageGroup implements UsageGroup, TypeSafeDataProvider {
+  private final class PackageGroup implements UsageGroup, DataProvider {
     private final PsiPackage myPackage;
     private Icon myIcon;
 
@@ -113,12 +112,14 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
       return myPackage.hashCode();
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (!isValid()) return;
-      if (CommonDataKeys.PSI_ELEMENT == key) {
-        sink.put(CommonDataKeys.PSI_ELEMENT, myPackage);
+    public Object getData(@NotNull String dataId) {
+      if (!isValid()) return null;
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return myPackage;
       }
+      return null;
     }
   }
 }

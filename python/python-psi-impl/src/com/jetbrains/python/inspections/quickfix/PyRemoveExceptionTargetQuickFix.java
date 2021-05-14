@@ -28,7 +28,7 @@ public class PyRemoveExceptionTargetQuickFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.NAME.remove.target.expr");
+    return PyPsiBundle.message("QFIX.NAME.remove.exception.target");
   }
 
   @Override

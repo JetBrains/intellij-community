@@ -65,7 +65,7 @@ public final class SocketLock {
   private static final String OK_RESPONSE = "ok";
   private static final String PATHS_EOT_RESPONSE = "---";
 
-  private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef;
+  private final AtomicReference<Function<? super List<String>, ? extends Future<CliResult>>> myCommandProcessorRef;
   private final Path myConfigPath;
   private final Path mySystemPath;
   private final List<AutoCloseable> myLockedFiles = new ArrayList<>(4);
@@ -88,7 +88,7 @@ public final class SocketLock {
     return mySystemPath;
   }
 
-  public void setCommandProcessor(@Nullable Function<List<String>, Future<CliResult>> processor) {
+  public void setCommandProcessor(@Nullable Function<? super List<String>, ? extends Future<CliResult>> processor) {
     myCommandProcessorRef.set(processor);
   }
 
@@ -341,11 +341,11 @@ public final class SocketLock {
     private enum State {HEADER, CONTENT}
 
     private final List<String> myLockedPaths;
-    private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef;
+    private final AtomicReference<? extends Function<? super List<String>, ? extends Future<CliResult>>> myCommandProcessorRef;
     private final String myToken;
     private State myState = State.HEADER;
 
-    MyChannelInboundHandler(Path[] lockedPaths, AtomicReference<Function<List<String>, Future<CliResult>>> commandProcessorRef, String token) {
+    MyChannelInboundHandler(Path[] lockedPaths, AtomicReference<? extends Function<? super List<String>, ? extends Future<CliResult>>> commandProcessorRef, String token) {
       myLockedPaths = new ArrayList<>(lockedPaths.length);
       for (Path path : lockedPaths) {
         myLockedPaths.add(path.toString());

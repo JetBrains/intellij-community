@@ -5,6 +5,8 @@ import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -299,11 +301,18 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   override fun saveEntities(storage: WorkspaceEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter) {
+    if (LOG.isTraceEnabled) {
+      LOG.trace("save entities; current serializers (${fileSerializersByUrl.values.size}):")
+      fileSerializersByUrl.values.forEach {
+        LOG.trace(it.toString())
+      }
+    }
     val affectedFileFactories = HashSet<JpsModuleListSerializer>()
 
     fun processObsoleteSource(fileUrl: String, deleteObsoleteFilesFromFileFactories: Boolean) {
       val obsoleteSerializers = fileSerializersByUrl.getValues(fileUrl)
       fileSerializersByUrl.removeKey(fileUrl)
+      LOG.trace { "processing obsolete source $fileUrl: serializers = $obsoleteSerializers" }
       obsoleteSerializers.forEach {
         // Clean up module files content
         val fileFactory = moduleSerializers.remove(it)
@@ -311,6 +320,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           if (deleteObsoleteFilesFromFileFactories) {
             fileFactory.deleteObsoleteFile(fileUrl, writer)
           }
+          LOG.trace { "affected file factory: $fileFactory" }
           affectedFileFactories.add(fileFactory)
         }
         // Remove libraries under `.idea/libraries` folder
@@ -334,6 +344,13 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       || source in sourcesStoredInternally
       || source is JpsImportedEntitySource && !source.storedExternally && source.internalFile in affectedSources
     }
+    if (LOG.isTraceEnabled) {
+      LOG.trace("Affected sources: $affectedSources")
+      LOG.trace("Entities to save:")
+      for ((source, entities) in entitiesToSave) {
+        LOG.trace(" $source: $entities")
+      }
+    }
     val internalSourceConvertedToImported = affectedSources.filterIsInstance<JpsImportedEntitySource>().mapTo(HashSet()) {
       it.internalFile
     }
@@ -342,6 +359,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       .associateBy { it.internalFile }
 
     val obsoleteSources = affectedSources - entitiesToSave.keys
+    LOG.trace { "Obsolete sources: $obsoleteSources" }
     for (source in obsoleteSources) {
       val fileUrl = getActualFileUrl(source)
       if (fileUrl != null) {
@@ -529,7 +547,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun saveModulesList(it: JpsModuleListSerializer, storage: WorkspaceEntityStorage, writer: JpsFileContentWriter) {
+    LOG.trace("saving modules list")
     it.saveEntitiesList(storage.entities(ModuleEntity::class.java), writer)
+  }
+
+  companion object {
+    private val LOG = logger<JpsProjectSerializersImpl>()
   }
 }
 

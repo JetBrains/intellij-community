@@ -84,7 +84,7 @@ public final class SignatureParsing {
   }
 
   @NotNull
-  static TypeParametersDeclaration parseTypeParametersDeclaration(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
+  static TypeParametersDeclaration parseTypeParametersDeclaration(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     if (signature.current() != '<') {
       return TypeParametersDeclaration.EMPTY;
     }
@@ -98,7 +98,7 @@ public final class SignatureParsing {
     return new TypeParametersDeclaration(typeParameters);
   }
 
-  private static TypeParameterDeclaration parseTypeParameter(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
+  private static TypeParameterDeclaration parseTypeParameter(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     StringBuilder name = new StringBuilder();
     while (signature.current() != ':' && signature.current() != CharacterIterator.DONE) {
       name.append(signature.current());
@@ -121,7 +121,7 @@ public final class SignatureParsing {
   }
 
   @Nullable
-  public static String parseTopLevelClassRefSignature(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
+  public static String parseTopLevelClassRefSignature(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     switch (signature.current()) {
       case 'L':
         return parseParameterizedClassRefSignature(signature, mapping);
@@ -151,7 +151,7 @@ public final class SignatureParsing {
     return id.toString();
   }
 
-  private static String parseParameterizedClassRefSignature(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
+  private static String parseParameterizedClassRefSignature(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     StringBuilder canonicalText = new StringBuilder();
     boolean mapped = false, firstArg;
 
@@ -186,7 +186,7 @@ public final class SignatureParsing {
     return text;
   }
 
-  private static String parseClassOrTypeVariableElement(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
+  private static String parseClassOrTypeVariableElement(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     char variance = parseVariance(signature);
     if (variance == '*') {
       return decorateTypeText(null, variance);
@@ -256,7 +256,7 @@ public final class SignatureParsing {
   }
 
   @NotNull
-  public static String parseTypeString(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
+  public static String parseTypeString(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     int dimensions = parseDimensions(signature);
 
     String text = parseTypeWithoutVariance(signature, mapping);
@@ -270,7 +270,7 @@ public final class SignatureParsing {
   }
 
   @Nullable
-  private static String parseTypeWithoutVariance(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
+  private static String parseTypeWithoutVariance(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     String text = null;
 
     switch (signature.current()) {

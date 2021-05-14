@@ -41,9 +41,4 @@ public class CoreJavaCodeStyleSettingsFacade extends JavaCodeStyleSettingsFacade
   public boolean isGenerateFinalParameters() {
     return false;
   }
-
-  @Override
-  public boolean isGenerateFinalLocals() {
-    return false;
-  }
 }

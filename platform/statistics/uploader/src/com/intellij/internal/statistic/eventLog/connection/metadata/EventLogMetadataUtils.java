@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
+import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException.EventLogMetadataLoadErrorType;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException.EventLogMetadataParseErrorType;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestResult;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsResponseException;
@@ -13,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpaces;
 
@@ -33,44 +30,13 @@ public final class EventLogMetadataUtils {
    * @return empty rules if error happened during groups fetching or parsing
    */
   @NotNull
-  public static EventGroupsFilterRules loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
+  public static EventGroupsFilterRules<EventLogBuild> loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
     try {
       String content = loadMetadataFromServer(serviceUrl, settings);
-      return parseGroupFilterRules(content);
+      return EventGroupsFilterRules.create(content);
     }
     catch (EventLogMetadataParseException | EventLogMetadataLoadException e) {
       return EventGroupsFilterRules.empty();
-    }
-  }
-
-  @NotNull
-  public static EventGroupsFilterRules parseGroupFilterRules(@Nullable String content) throws EventLogMetadataParseException {
-    EventGroupRemoteDescriptors groups = parseGroupRemoteDescriptors(content);
-    Map<String, EventGroupFilterRules> groupToCondition = new HashMap<>();
-    for (EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group : groups.groups) {
-      groupToCondition.put(group.id, EventGroupFilterRules.create(group));
-    }
-    return EventGroupsFilterRules.create(groupToCondition);
-  }
-
-  @NotNull
-  public static EventGroupRemoteDescriptors parseGroupRemoteDescriptors(@Nullable String content) throws EventLogMetadataParseException {
-    if (isEmptyOrSpaces(content)) {
-      throw new EventLogMetadataParseException(EventLogMetadataParseErrorType.EMPTY_CONTENT);
-    }
-
-    try {
-      EventGroupRemoteDescriptors groups = new GsonBuilder().create().fromJson(content, EventGroupRemoteDescriptors.class);
-      if (groups != null) {
-        return groups;
-      }
-      throw new EventLogMetadataParseException(EventLogMetadataParseErrorType.INVALID_JSON);
-    }
-    catch (JsonSyntaxException e) {
-      throw new EventLogMetadataParseException(EventLogMetadataParseErrorType.INVALID_JSON, e);
-    }
-    catch (Exception e) {
-      throw new EventLogMetadataParseException(EventLogMetadataParseErrorType.UNKNOWN, e);
     }
   }
 

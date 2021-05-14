@@ -174,7 +174,7 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @NotNull
-  private static CompletableFuture<List<Object2LongMap<String>>> computeModuleFilesTimestamp(@NotNull List<Path> moduleFiles, @NotNull Executor executor) {
+  private static CompletableFuture<List<Object2LongMap<String>>> computeModuleFilesTimestamp(@NotNull List<? extends Path> moduleFiles, @NotNull Executor executor) {
     return CompletableFuture.supplyAsync(() -> {
       Object2LongMap<String> result = new Object2LongOpenHashMap<>(moduleFiles.size());
       result.defaultReturnValue(-1);
@@ -183,7 +183,7 @@ public final class ConversionContextImpl implements ConversionContext {
     }, executor);
   }
 
-  private static void addLastModifiedTime(@NotNull List<Path> moduleFiles, @NotNull Object2LongMap<String> result) {
+  private static void addLastModifiedTime(@NotNull List<? extends Path> moduleFiles, @NotNull Object2LongMap<String> result) {
     for (Path file : moduleFiles) {
       addLastModifiedTme(file, result);
     }
@@ -485,7 +485,7 @@ public final class ConversionContextImpl implements ConversionContext {
     return myStorageScheme;
   }
 
-  public void saveFiles(@NotNull Collection<Path> files) throws IOException {
+  public void saveFiles(@NotNull Collection<? extends Path> files) throws IOException {
     for (Path file : files) {
       SettingsXmlFile xmlFile = mySettingsFiles.get(file);
       if (xmlFile != null) {

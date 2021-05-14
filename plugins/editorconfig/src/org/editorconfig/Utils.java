@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig;
 
 import com.intellij.BundleBase;
@@ -64,7 +64,9 @@ public final class Utils {
   }
 
   public static boolean isEnabled(CodeStyleSettings currentSettings) {
-    return currentSettings != null && currentSettings.getCustomSettings(EditorConfigSettings.class).ENABLED;
+    if (currentSettings == null) return false;
+    EditorConfigSettings settings = currentSettings.getCustomSettingsIfCreated(EditorConfigSettings.class);
+    return settings != null && settings.ENABLED;
   }
 
   public static boolean isEnabled(@NotNull Project project) {

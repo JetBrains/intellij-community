@@ -188,7 +188,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
       } else if (MethodCallUtils.isNecessaryForSurroundingMethodCall(expressionToReplace, replacementExpression) ||
           isExplicitBoxingNecessary(expressionToReplace, replacementExpression)) {
         PsiType type = expressionToReplace.getType();
-        if (type != null) {
+        if (type != null && !LambdaUtil.notInferredType(type)) {
           replacementExpression = factory
             .createExpressionFromText("(" + type.getCanonicalText() + ")" + tracker.text(replacementExpression), null);
         }

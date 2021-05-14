@@ -21,7 +21,6 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -428,7 +427,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.nonBlocking(() -> {
           SourcePosition position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), false);
           if (position != null) {
             navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
@@ -439,7 +438,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
             }
           }
-        });
+        }).executeSynchronously();
       }
     });
   }
@@ -477,7 +476,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       @Override
       protected void doAction(@Nullable final SourcePosition sourcePosition) {
         if (sourcePosition != null) {
-          ApplicationManager.getApplication().runReadAction(() -> navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(sourcePosition)));
+          ReadAction.nonBlocking(() -> navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(sourcePosition)))
+            .executeSynchronously();
         }
       }
     });
@@ -514,7 +514,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                   result.setError(ex);
                 }
                 else if (psiExpression != null) {
-                  ReadAction.run(() -> {
+                  ReadAction.nonBlocking(() -> {
                     XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
                     // add runtime imports if any
                     Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
@@ -526,7 +526,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                     }
                     evaluationExpression = res;
                     result.setResult(res);
-                  });
+                  }).executeSynchronously();
                 }
                 else {
                   result.setError("Null");

@@ -66,7 +66,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
 
   @NotNull private final Project myProject;
   private final List<I18nizedPropertyData<D>> myKeyValuePairs;
-  private final Function<D, List<UsageInfo>> myUsagePreviewProvider;
+  private final @NotNull Function<? super D, ? extends List<UsageInfo>> myUsagePreviewProvider;
   private final Set<Module> myContextModules;
   private final ResourceBundleManager myResourceBundleManager;
   private JComboBox<String> myPropertiesFile;
@@ -79,7 +79,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   public I18nizeMultipleStringsDialog(@NotNull Project project,
                                       @NotNull List<I18nizedPropertyData<D>> keyValuePairs,
                                       @NotNull Set<PsiFile> contextFiles,
-                                      @NotNull Function<D, List<UsageInfo>> usagePreviewProvider,
+                                      @NotNull Function<? super D, ? extends List<UsageInfo>> usagePreviewProvider,
                                       Icon markAsNonNlsButtonIcon,
                                       boolean canShowCodeInfo) {
     super(project, true);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.filter
 
 import com.intellij.internal.statistic.eventLog.*
@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.filters.LogEventMetadataFilter
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.logger.TestDataCollectorDebugLogger
-import com.intellij.internal.statistics.metadata.TestGroupFilterRulesBuilder
+import com.intellij.internal.statistic.eventLog.connection.metadata.TestGroupFilterRulesBuilder
 import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -865,11 +865,11 @@ class FeatureEventLogMetadataFilterTest {
     testGroupFilteRules(rulesBuilder.build(), all, filtered)
   }
 
-  private fun testGroupFilteRules(rules: EventGroupsFilterRules, all: List<LogEvent>, filtered: List<LogEvent>) {
+  private fun testGroupFilteRules(rules: EventGroupsFilterRules<EventLogBuild>, all: List<LogEvent>, filtered: List<LogEvent>) {
     testMetadataFilter(all, filtered, LogEventMetadataFilter(rules))
   }
 
-  private fun testMetadataAndSnapshotBuildFilter(rules: EventGroupsFilterRules, all: List<LogEvent>, filtered: List<LogEvent>) {
+  private fun testMetadataAndSnapshotBuildFilter(rules: EventGroupsFilterRules<EventLogBuild>, all: List<LogEvent>, filtered: List<LogEvent>) {
     testMetadataFilter(all, filtered, LogEventCompositeFilter(LogEventMetadataFilter(rules), LogEventSnapshotBuildFilter))
   }
 

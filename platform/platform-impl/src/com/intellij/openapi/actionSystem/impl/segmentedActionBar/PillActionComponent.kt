@@ -7,10 +7,8 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
-import net.miginfocom.swing.MigLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 open class PillActionComponent : AnAction(), CustomComponentAction, DumbAware {
   companion object {

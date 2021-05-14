@@ -7,10 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.json.JsonBundle;
-import com.intellij.json.JsonDialectUtil;
-import com.intellij.json.JsonElementTypes;
-import com.intellij.json.JsonLanguage;
+import com.intellij.json.*;
 import com.intellij.json.psi.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -227,7 +224,10 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     public void visitValue(@NotNull JsonValue value) {
       if (value.getContainingFile() instanceof JsonFile) {
         final JsonFile jsonFile = (JsonFile)value.getContainingFile();
-        if (myWarnAboutMultipleTopLevelValues && value.getParent() == jsonFile && value != jsonFile.getTopLevelValue()) {
+        if (myWarnAboutMultipleTopLevelValues &&
+            value.getParent() == jsonFile &&
+            value != jsonFile.getTopLevelValue() &&
+            jsonFile.getFileType() != JsonLinesFileType.INSTANCE) {
           myHolder.registerProblem(value, JsonBundle.message("inspection.compliance.msg.multiple.top.level.values"));
         }
       }

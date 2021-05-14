@@ -33,7 +33,7 @@ final class LaunchServiceUpdater {
     myBundleId = id;
   }
 
-  void addFileTypes(@NotNull List<FileType> fileTypes) throws OSFileAssociationException {
+  void addFileTypes(@NotNull List<? extends FileType> fileTypes) throws OSFileAssociationException {
     for (FileType fileType : fileTypes) {
       String[] uri = UniformIdentifierUtil.getURIs(fileType);
       if (uri.length > 0) {

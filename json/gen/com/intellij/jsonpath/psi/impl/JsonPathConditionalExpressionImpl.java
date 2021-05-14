@@ -29,6 +29,12 @@ public class JsonPathConditionalExpressionImpl extends JsonPathExpressionImpl im
 
   @Override
   @NotNull
+  public JsonPathBinaryConditionalOperator getBinaryConditionalOperator() {
+    return findNotNullChildByClass(JsonPathBinaryConditionalOperator.class);
+  }
+
+  @Override
+  @NotNull
   public List<JsonPathExpression> getExpressionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonPathExpression.class);
   }

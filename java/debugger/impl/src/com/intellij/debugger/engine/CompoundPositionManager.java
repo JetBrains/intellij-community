@@ -56,15 +56,15 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
 
   private final Map<Location, SourcePosition> mySourcePositionCache = new WeakHashMap<>();
 
-  private interface Processor<T> {
-    T process(PositionManager positionManager) throws NoDataException;
+  private interface Producer<T> {
+    T produce(PositionManager positionManager) throws NoDataException;
   }
 
-  private <T> T iterate(Processor<? extends T> processor, T defaultValue, SourcePosition position) {
+  private <T> T iterate(Producer<? extends T> processor, T defaultValue, SourcePosition position) {
     return iterate(processor, defaultValue, position, true);
   }
 
-  private <T> T iterate(Processor<? extends T> processor, T defaultValue, SourcePosition position, boolean ignorePCE) {
+  private <T> T iterate(Producer<? extends T> processor, T defaultValue, SourcePosition position, boolean ignorePCE) {
     FileType fileType = position != null ? position.getFile().getFileType() : null;
     for (PositionManager positionManager : myPositionManagers) {
       if (fileType != null) {
@@ -77,7 +77,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
         if (!ignorePCE) {
           ProgressManager.checkCanceled();
         }
-        return DebuggerUtilsImpl.suppressExceptions(() -> processor.process(positionManager), defaultValue, ignorePCE, NoDataException.class);
+        return DebuggerUtilsImpl.suppressExceptions(() -> processor.produce(positionManager), defaultValue, ignorePCE, NoDataException.class);
       }
       catch (NoDataException ignored) {
       }

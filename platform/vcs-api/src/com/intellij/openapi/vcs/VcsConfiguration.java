@@ -35,6 +35,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT =
     !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine() && !PlatformUtils.isCLion();
   public String CODE_SMELLS_PROFILE = null;
+  public boolean CODE_SMELLS_PROFILE_LOCAL = false;
   public boolean CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT = false;
   public boolean CHECK_NEW_TODO = true;
   public TodoPanelSettings myTodoPanelSettings = new TodoPanelSettings();

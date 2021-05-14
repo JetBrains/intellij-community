@@ -27,9 +27,21 @@ public class ExtractIncrementAndDecrementTest extends IPPTestCase {
 
   public void testSingleDoWhileBody() {doExtractTest("++");}
 
-  public void testDecrementInForUpdate() {doNegativeTest("--");}
+  public void testDecrementInVoidContext() {doNegativeTest("--");}
 
   public void testTwoIncrementsInForUpdate() {doNegativeTest("++");}
+
+  public void testLambdaExpression() {doExtractTest("++");} //
+
+  public void testThrowStatement() {doExtractTest("++");}
+
+  public void testForInitialization() {doNegativeTest("++");}
+
+  public void testForCondition() {doExtractTest("++");}
+
+  public void testDecrementInForUpdate() {doNegativeTest("--");}
+
+  public void testForWithoutBraces() {doExtractTest("++");}
 
   private void doExtractTest(@NotNull String operator) {
     super.doTest(getMessage(operator));

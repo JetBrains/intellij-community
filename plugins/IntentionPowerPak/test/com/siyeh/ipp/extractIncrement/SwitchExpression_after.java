@@ -3,7 +3,7 @@ class Main {
     return switch(i) {
       default -> {
           ++i;
-          break i;
+          yield i;
       }
     };
   }

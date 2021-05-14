@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.Bookmark;
+import com.intellij.ide.bookmarks.BookmarkBundle;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,7 +22,7 @@ class EditBookmarkDescriptionAction extends DumbAwareAction {
   private JBPopup myPopup;
 
   EditBookmarkDescriptionAction(Project project, JList<? extends BookmarkItem> list) {
-    super(IdeBundle.message("action.bookmark.edit.description"), IdeBundle.message("action.bookmark.edit.description.description"), AllIcons.Actions.Edit);
+    super(BookmarkBundle.message("action.bookmark.edit.description"), BookmarkBundle.message("action.bookmark.edit.description.description"), AllIcons.Actions.Edit);
     setEnabledInModalContext(true);
     myProject = project;
     myList = list;

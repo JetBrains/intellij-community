@@ -85,6 +85,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     // we don't use here getLanguageLevelOrDefault() - if null, just set to provided value, because our default (LanguageLevel.HIGHEST) is changed every java release
     if (myLanguageLevel != languageLevel) {
       myLanguageLevel = languageLevel;
+      setDefault(false);
       languageLevelsChanged();
     }
   }
@@ -92,6 +93,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   @Override
   public void languageLevelsChanged() {
     if (!myProject.isDefault()) {
+      myProject.getMessageBus().syncPublisher(LANGUAGE_LEVEL_CHANGED_TOPIC).onLanguageLevelsChanged();
       ProjectRootManager.getInstance(myProject).incModificationCount();
       JavaLanguageLevelPusher.pushLanguageLevel(myProject);
     }
@@ -102,6 +104,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
       if (version != null) {
         setLanguageLevel(version.getMaxLanguageLevel());
+        setDefault(true);
       }
     }
   }

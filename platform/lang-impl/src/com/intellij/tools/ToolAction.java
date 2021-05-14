@@ -21,14 +21,12 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,12 +100,8 @@ public class ToolAction extends AnAction implements DumbAware {
 
   @NotNull
   public static DataContext getToolDataContext(@NotNull DataContext dataContext) {
-    SimpleDataContext.Builder builder = SimpleDataContext.builder();
-    for (DataKey<?> key : ContainerUtil.ar(
-      PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE)) {
-      //noinspection unchecked
-      builder.add((DataKey<Object>)key, dataContext.getData(key));
-    }
+    SimpleDataContext.Builder builder = SimpleDataContext.builder()
+      .addAll(dataContext, PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE);
     VirtualFile virtualFile = dataContext.getData(VIRTUAL_FILE);
     if (virtualFile == null) {
       Project project = dataContext.getData(PROJECT);

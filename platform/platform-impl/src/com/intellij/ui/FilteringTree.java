@@ -243,7 +243,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     private final @NotNull Function<? super U, String> myNamer;
     private final @NotNull Function<? super U, ? extends N> myFactory;
     private final U myRootObject;
-    private final Function<? super U, ? extends Iterable<U>> myStructure;
+    private final Function<? super U, ? extends Iterable<? extends U>> myStructure;
     private final boolean myUseIdentityHashing;
     private SpeedSearchSupply mySpeedSearch;
     private Map<U, N> myNodeCache;
@@ -252,7 +252,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
 
     public SearchTreeModel(@NotNull N root, @NotNull SpeedSearchSupply speedSearch,
                            @NotNull Function<? super U, String> namer, @NotNull Function<? super U, ? extends N> nodeFactory,
-                           @NotNull Function<? super U, ? extends Iterable<U>> structure, boolean useIdentityHashing) {
+                           @NotNull Function<? super U, ? extends Iterable<? extends U>> structure, boolean useIdentityHashing) {
       super(root);
       myRootObject = Objects.requireNonNull(getUserObject(root));
       mySpeedSearch = speedSearch;
@@ -369,7 +369,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
 
     private boolean computeAcceptCache(@NotNull U object, @NotNull Set<? super U> cache) {
       boolean isAccepted = false;
-      Iterable<U> children = getChildren(object);
+      Iterable<? extends U> children = getChildren(object);
       for (U child : children) {
         isAccepted |= computeAcceptCache(child, cache);
       }
@@ -385,12 +385,12 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
 
     @NotNull
-    public Iterable<U> getChildren(@Nullable U object) {
+    public Iterable<? extends U> getChildren(@Nullable U object) {
       return object == null ? JBIterable.empty() : myStructure.fun(object);
     }
 
     @NotNull
-    public Function<? super U, ? extends Iterable<U>> getStructure() {
+    public Function<? super U, ? extends Iterable<? extends U>> getStructure() {
       return myStructure;
     }
 

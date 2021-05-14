@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
@@ -188,10 +189,10 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
   }
 
 
-  override fun computeOrphanData(toImport: MutableCollection<DataNode<AnnotationProcessingData>>,
+  override fun computeOrphanData(toImport: Collection<DataNode<AnnotationProcessingData>>,
                                  projectData: ProjectData,
                                  project: Project,
-                                 modelsProvider: IdeModifiableModelsProvider): Computable<MutableCollection<ProcessorConfigProfile>> =
+                                 modelsProvider: IdeModifiableModelsProvider): Computable<Collection<ProcessorConfigProfile>> =
     Computable {
       val profiles = ArrayList((CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl).moduleProcessorProfiles)
       val importedProcessingProfiles = ArrayList(toImport).asSequence()
@@ -207,8 +208,8 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
       orphans
     }
 
-  override fun removeData(toRemoveComputable: Computable<MutableCollection<ProcessorConfigProfile>>,
-                          toIgnore: MutableCollection<DataNode<AnnotationProcessingData>>,
+  override fun removeData(toRemoveComputable: Computable<out Collection<ProcessorConfigProfile>>,
+                          toIgnore: Collection<DataNode<AnnotationProcessingData>>,
                           projectData: ProjectData,
                           project: Project,
                           modelsProvider: IdeModifiableModelsProvider) {

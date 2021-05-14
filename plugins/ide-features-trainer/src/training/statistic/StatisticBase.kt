@@ -3,16 +3,14 @@ package training.statistic
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventId1
-import com.intellij.internal.statistic.eventLog.events.EventId2
-import com.intellij.internal.statistic.eventLog.events.EventId3
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.DefaultKeymapImpl
 import com.intellij.util.TimeoutUtil
+import training.keymap.KeymapUtil
 import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.interfaces.Lesson
@@ -30,21 +28,24 @@ import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
 import training.statistic.FeatureUsageStatisticConsts.PASSED
 import training.statistic.FeatureUsageStatisticConsts.PROGRESS
 import training.statistic.FeatureUsageStatisticConsts.RESTORE
-import training.statistic.FeatureUsageStatisticConsts.SHORTCUT
 import training.statistic.FeatureUsageStatisticConsts.SHORTCUT_CLICKED
-import training.statistic.FeatureUsageStatisticConsts.SHORTCUT_RULE
 import training.statistic.FeatureUsageStatisticConsts.START
 import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
 import training.statistic.FeatureUsageStatisticConsts.TASK_ID
+import java.awt.event.KeyEvent
 import java.util.concurrent.ConcurrentHashMap
+import javax.swing.JOptionPane
 
 internal class StatisticBase : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
+  private data class LessonProgress(val lessonId: String, val taskId: Int)
+
   companion object {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 6)
+    private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 7)
 
     // FIELDS
     private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, LESSON_ID)
@@ -56,7 +57,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val actionIdField = EventFields.StringValidatedByCustomRule(ACTION_ID, ACTION_ID)
     private val keymapSchemeField = EventFields.StringValidatedByCustomRule(KEYMAP_SCHEME, KEYMAP_SCHEME)
     private val versionField = EventFields.Version
-    private val shortcutField = EventFields.StringValidatedByCustomRule(SHORTCUT, SHORTCUT_RULE)
+    private val inputEventField = EventFields.InputEvent
 
     // EVENTS
     private val lessonStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START, lessonIdField, languageField)
@@ -66,7 +67,7 @@ internal class StatisticBase : CounterUsagesCollector() {
                                                                  languageField)
     private val moduleStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START_MODULE_ACTION, moduleNameField, languageField)
     private val welcomeScreenPanelExpandedEvent: EventId1<String?> = GROUP.registerEvent(EXPAND_WELCOME_PANEL, languageField)
-    private val shortcutClickedEvent = GROUP.registerVarargEvent(SHORTCUT_CLICKED, shortcutField, keymapSchemeField,
+    private val shortcutClickedEvent = GROUP.registerVarargEvent(SHORTCUT_CLICKED, inputEventField, keymapSchemeField,
                                                                  lessonIdField, taskIdField, actionIdField, versionField)
     private val restorePerformedEvent = GROUP.registerVarargEvent(RESTORE, lessonIdField, taskIdField, versionField)
 
@@ -98,13 +99,12 @@ internal class StatisticBase : CounterUsagesCollector() {
       welcomeScreenPanelExpandedEvent.log(courseLanguage())
     }
 
-    fun logShortcutClicked(shortcut: String, actionId: String) {
+    fun logShortcutClicked(actionId: String) {
       val lessonManager = LessonManager.instance
       if (lessonManager.lessonIsRunning()) {
         val lesson = lessonManager.currentLesson!!
         val keymap = getDefaultKeymap() ?: return
-        val shortcutOrNone = if (isSingleShortcut(shortcut)) shortcut else "none"
-        shortcutClickedEvent.log(shortcutField with shortcutOrNone,
+        shortcutClickedEvent.log(inputEventField with createInputEvent(actionId),
                                  keymapSchemeField with keymap.name,
                                  lessonIdField with lesson.id,
                                  taskIdField with lessonManager.currentLessonExecutor?.currentTaskIndex.toString(),
@@ -114,17 +114,29 @@ internal class StatisticBase : CounterUsagesCollector() {
     }
 
     fun logRestorePerformed(lesson: Lesson, taskId: Int) {
-      restorePerformedEvent.log(lessonIdField with lesson.id,
-                                taskIdField with taskId.toString(),
-                                versionField with getPluginVersion(lesson))
+      val curLessonProgress = LessonProgress(lesson.id, taskId)
+      if (curLessonProgress != prevRestoreLessonProgress) {
+        prevRestoreLessonProgress = curLessonProgress
+        restorePerformedEvent.log(lessonIdField with lesson.id,
+                                  taskIdField with taskId.toString(),
+                                  versionField with getPluginVersion(lesson))
+      }
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""
 
     private fun completedCount(): Int = CourseManager.instance.lessonsForModules.count { it.passed }
 
-    private fun isSingleShortcut(shortcut: String): Boolean {
-      return shortcut.split(" → ").size == 1
+    private fun createInputEvent(actionId: String): FusInputEvent? {
+      val keyStroke = KeymapUtil.getShortcutByActionId(actionId) ?: return null
+      val inputEvent = KeyEvent(JOptionPane.getRootFrame(),
+                                KeyEvent.KEY_PRESSED,
+                                System.currentTimeMillis(),
+                                keyStroke.modifiers,
+                                keyStroke.keyCode,
+                                keyStroke.keyChar,
+                                KeyEvent.KEY_LOCATION_STANDARD)
+      return FusInputEvent(inputEvent, "")
     }
 
     private fun getPluginVersion(lesson: Lesson): String? {

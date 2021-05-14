@@ -1,8 +1,0 @@
-android {
-  defaultConfig {
-    externalNativeBuild {
-    }
-    ndk {
-    }
-  }
-}

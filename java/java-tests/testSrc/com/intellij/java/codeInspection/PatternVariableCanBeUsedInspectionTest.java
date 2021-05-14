@@ -17,7 +17,7 @@ public class PatternVariableCanBeUsedInspectionTest extends LightQuickFixParamet
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_16;
   }
   
   @Override

@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible.filters
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.OpenTHashSet
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
 import com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER
@@ -14,15 +13,16 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
-
 object VcsLogFilterObject {
+  private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
+
   const val ME = "*"
 
   @JvmStatic
@@ -198,8 +198,8 @@ object VcsLogFilterObject {
   fun collection(vararg filters: VcsLogFilter?): VcsLogFilterCollection {
     val filterSet = createFilterSet()
     for (f in filters) {
-      if (f != null) {
-        if (filterSet.replace(f)) LOG.warn("Two filters with the same key ${f.key} in filter collection. Keeping only ${f}.")
+      if (f != null && replace(filterSet, f)) {
+        LOG.warn("Two filters with the same key ${f.key} in filter collection. Keeping only ${f}.")
       }
     }
     return VcsLogFilterCollectionImpl(filterSet)
@@ -214,7 +214,7 @@ fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {
 
   val filterSet = createFilterSet()
   filterSet.addAll(this.filters)
-  filterSet.replace(filter)
+  replace(filterSet, filter)
   return VcsLogFilterCollectionImpl(filterSet)
 }
 
@@ -262,20 +262,18 @@ private fun VcsLogFilter.withPrefix(): String {
   return displayText
 }
 
-private fun createFilterSet() = OpenTHashSet(FilterByKeyHashingStrategy())
+private fun createFilterSet() = ObjectOpenCustomHashSet(object : Hash.Strategy<VcsLogFilter> {
+  override fun hashCode(o: VcsLogFilter?): Int {
+    return o?.key?.hashCode() ?: 0
+  }
 
-private fun <T> OpenTHashSet<T>.replace(element: T): Boolean {
-  val isModified = remove(element)
-  add(element)
+  override fun equals(o1: VcsLogFilter?, o2: VcsLogFilter?): Boolean {
+    return o1 === o2 || (o1?.key == o2?.key)
+  }
+})
+
+private fun <T> replace(set: ObjectOpenCustomHashSet<T>, element: T): Boolean {
+  val isModified = set.remove(element)
+  set.add(element)
   return isModified
-}
-
-internal class FilterByKeyHashingStrategy : TObjectHashingStrategy<VcsLogFilter> {
-  override fun computeHashCode(`object`: VcsLogFilter): Int {
-    return `object`.key.hashCode()
-  }
-
-  override fun equals(o1: VcsLogFilter, o2: VcsLogFilter): Boolean {
-    return o1.key == o2.key
-  }
 }

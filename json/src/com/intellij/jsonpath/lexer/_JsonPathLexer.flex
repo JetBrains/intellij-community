@@ -63,6 +63,12 @@ FLOATING_POINT_LITERAL3=({DIGIT})+({EXPONENT_PART})
 EXPONENT_PART=[Ee]["+""-"]?({DIGIT})*
 
 IN_OP=[iI][nN]
+NIN_OP=[nN][iI][nN]
+SUBSETOF_OP=[sS][uU][bB][sS][eE][tT][oO][fF]
+ANYOF_OP=[aA][nN][yY][oO][fF]
+NONEOF_OP=[nN][oO][nN][eE][oO][fF]
+SIZE_OP=[sS][iI][zZ][eE]
+EMPTY_OP=[eE][mM][pP][tT][yY]
 
 %eof{
   resetInternal();
@@ -111,6 +117,8 @@ IN_OP=[iI][nN]
   ".."                                 { return JsonPathTypes.RECURSIVE_DESCENT; }
   "["                                  { return JsonPathTypes.LBRACKET; }
   "]"                                  { return JsonPathTypes.RBRACKET; }
+  "{"                                  { return JsonPathTypes.LBRACE; }
+  "}"                                  { return JsonPathTypes.RBRACE; }
   "("                                  { pushState(SCRIPT_EXPRESSION); return JsonPathTypes.LPARENTH; }
   ")"                                  { popState(); return JsonPathTypes.RPARENTH; }
 
@@ -119,7 +127,15 @@ IN_OP=[iI][nN]
   "=="                                 { return JsonPathTypes.EQ_OP; }
   "!="                                 { return JsonPathTypes.NE_OP; }
   "=~"                                 { pushState(REGEX_EXPECTED); return JsonPathTypes.RE_OP; }
-  {IN_OP}                              { return JsonPathTypes.IN_OP; } // todo nin, subsetof, anyof, noneof, size, empty
+
+  {IN_OP}                              { return JsonPathTypes.IN_OP; }
+  {NIN_OP}                             { return JsonPathTypes.NIN_OP; }
+  {SUBSETOF_OP}                        { return JsonPathTypes.SUBSETOF_OP; }
+  {ANYOF_OP}                           { return JsonPathTypes.ANYOF_OP; }
+  {NONEOF_OP}                          { return JsonPathTypes.NONEOF_OP; }
+  {SIZE_OP}                            { return JsonPathTypes.SIZE_OP; }
+  {EMPTY_OP}                           { return JsonPathTypes.EMPTY_OP; }
+
   ">"                                  { return JsonPathTypes.GT_OP; }
   "<"                                  { return JsonPathTypes.LT_OP; }
   ">="                                 { return JsonPathTypes.GE_OP; }

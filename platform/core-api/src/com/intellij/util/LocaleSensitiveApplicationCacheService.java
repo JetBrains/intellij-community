@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.DynamicBundle;
@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  */
 public final class LocaleSensitiveApplicationCacheService implements Disposable {
   private final ClearableLazyValue<Map<Class<?>, Object>> myMapProvider =
-    ClearableLazyValue.create(() -> ContainerUtil.createConcurrentWeakMap());
+    ClearableLazyValue.create(() -> CollectionFactory.createConcurrentWeakMap());
 
   public LocaleSensitiveApplicationCacheService() {
     //todo remove this check after we made languageBundle dynamic; it's added to avoid warnings

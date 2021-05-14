@@ -98,8 +98,7 @@ public class ReplaceListComprehensionWithForIntention extends PyBaseIntentionAct
           stringBuilder.append(":\n");
         }
       }
-      for (int i = 0; i != slashNum; ++i)
-        stringBuilder.append("\t");
+      stringBuilder.append("\t".repeat(slashNum));
       ++slashNum;
     }
     stringBuilder.append(result);

@@ -93,7 +93,8 @@ final class CommunityRepositoryModules {
     "intellij.platform.diagnostic",
     "intellij.platform.core.ui",
     "intellij.platform.credentialStore",
-    "intellij.platform.rd.community"
+    "intellij.platform.rd.community",
+    "intellij.platform.ml.impl"
   ]
 
   /**
@@ -127,6 +128,9 @@ final class CommunityRepositoryModules {
     plugin("intellij.properties.resource.bundle.editor"),
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
+    },
+    plugin("intellij.vcs.svn"){
+      withProjectLibrary("sqlite")
     },
     plugin("intellij.xpath") {
       withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
@@ -194,9 +198,10 @@ final class CommunityRepositoryModules {
     plugin("intellij.gradle.dependencyUpdater"),
 Android Studio: exclude dependencyUpdater */
 /* Android Studio: exclude intellij.gradle.dsl
-    plugin("intellij.gradle.dsl") {
-      withModule("intellij.gradle.dsl.impl")
-      withModule("intellij.gradle.dsl.kotlin.impl")
+    plugin("intellij.android.gradle.dsl") {
+      withModule("intellij.android.gradle.dsl")
+      withModule("intellij.android.gradle.dsl.kotlin.impl")
+      withModule("intellij.android.gradle.dsl.impl")
     },
 Android Studio: exclude intellij.gradle.dsl */
     plugin("intellij.gradle.java") {
@@ -278,7 +283,6 @@ Android Studio: exclude intellij.statsCollector */
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")
       withProjectLibrary("jackson-datatype-joda")
-      withProjectLibrary("ktor-server-jetty")
     },
 Android Studio: exclude intellij.space */
     plugin("intellij.lombok") {

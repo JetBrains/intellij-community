@@ -33,6 +33,7 @@ public class SuperBuilderClassProcessor extends AbstractClassProcessor {
     return ApplicationManager.getApplication().getService(SuperBuilderHandler.class);
   }
 
+  @Override
   protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
                                                    @NotNull PsiAnnotation psiAnnotation) {
     if (null == nameHint) {

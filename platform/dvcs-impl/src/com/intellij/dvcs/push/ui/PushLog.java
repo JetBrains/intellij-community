@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushSettings;
@@ -37,10 +37,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import kotlin.Unit;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -109,7 +106,7 @@ public final class PushLog extends JPanel implements DataProvider {
           return "";
         }
         if (node instanceof TooltipNode) {
-          String select = DvcsBundle.getString("push.select.all.commit.details");
+          String select = DvcsBundle.message("push.select.all.commit.details");
           return ((TooltipNode)node).getTooltip() + "<p style='font-style:italic;color:gray;'>" + select + "</p>"; //NON-NLS
         }
         return "";
@@ -311,7 +308,7 @@ public final class PushLog extends JPanel implements DataProvider {
   private JComponent createStrategyPanel() {
     final JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBackground(RenderingUtil.getBackground(myTree));
-    final LinkLabel<String> linkLabel = new LinkLabel<>(DvcsBundle.getString("push.edit.all.targets"), null);
+    final LinkLabel<String> linkLabel = new LinkLabel<>(DvcsBundle.message("push.edit.all.targets"), null);
     linkLabel.setBorder(JBUI.Borders.empty(2));
     linkLabel.setListener(new LinkListener<>() {
       @Override

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,10 +17,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import org.apache.commons.lang.SystemUtils;
@@ -39,7 +37,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.function.Predicate;
@@ -109,6 +106,7 @@ public final class MavenServerManager implements Disposable {
       connector.connect();
     } else {
       if(!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
+        MavenLog.LOG.info("Maven connector in " + multimoduleDirectory + " is incompatible, restarting");
         connector.shutdown(false);
         synchronized (myMultimoduleDirToConnectorMap) {
           connector = myMultimoduleDirToConnectorMap.computeIfAbsent(multimoduleDirectory, dir -> registerNewConnector(project, jdk, multimoduleDirectory));
@@ -125,6 +123,7 @@ public final class MavenServerManager implements Disposable {
     MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory);
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
+    MavenLog.LOG.info("Creating new maven connector for " + project + " in " + multimoduleDirectory);
     MavenServerConnector connector = new MavenServerConnector(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
     registerDisposable(project, connector);
     return connector;
@@ -376,18 +375,21 @@ public final class MavenServerManager implements Disposable {
   }
 
   public MavenIndexerWrapper createIndexer(@NotNull Project project) {
-    if(project.getBasePath() != null && WslDistributionManager.isWslPath(project.getBasePath())) {
-      throw new UnsupportedOperationException("indexing for WSL is not supported yet");
+    String path = project.getBasePath();
+    if (path == null) {
+      path = new File(".").getPath();
     }
+    String finalPath = path;
     return new MavenIndexerWrapper(null, project) {
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {
         MavenServerConnector connector = null;
         synchronized (myMultimoduleDirToConnectorMap) {
-          connector = myMultimoduleDirToConnectorMap.values().stream().findFirst().orElse(null);
+          connector = ContainerUtil.find(myMultimoduleDirToConnectorMap.values(), c -> FileUtil
+            .isAncestor(finalPath, c.getMultimoduleDirectory(), false));
         }
-        if(connector!=null){
+        if (connector != null) {
           return connector.createIndexer();
         }
         return MavenServerManager.this.getConnector(project,

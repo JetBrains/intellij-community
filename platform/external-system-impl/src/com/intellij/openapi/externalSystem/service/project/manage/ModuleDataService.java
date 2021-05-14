@@ -41,7 +41,7 @@ public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
 
   @NotNull
   @Override
-  public Computable<Collection<Module>> computeOrphanData(@NotNull final Collection<DataNode<ModuleData>> toImport,
+  public Computable<Collection<Module>> computeOrphanData(final @NotNull Collection<? extends DataNode<ModuleData>> toImport,
                                                           @NotNull final ProjectData projectData,
                                                           @NotNull final Project project,
                                                           @NotNull final IdeModifiableModelsProvider modelsProvider) {
@@ -65,7 +65,7 @@ public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
   }
 
   @Override
-  public void postProcess(@NotNull Collection<DataNode<ModuleData>> toImport,
+  public void postProcess(@NotNull Collection<? extends DataNode<ModuleData>> toImport,
                           @Nullable ProjectData projectData,
                           @NotNull Project project,
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -74,7 +74,7 @@ public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
     updateLocalSettings(toImport, project);
   }
 
-  private static void updateLocalSettings(Collection<DataNode<ModuleData>> toImport, Project project) {
+  private static void updateLocalSettings(Collection<? extends DataNode<ModuleData>> toImport, Project project) {
     if (toImport.isEmpty()) {
       return;
     }

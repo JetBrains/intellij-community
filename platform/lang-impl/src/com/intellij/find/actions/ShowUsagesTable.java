@@ -228,13 +228,13 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
     }
 
     @Override
-    protected int convertIndexToModel(int viewIndex) {
-      return getTable().convertRowIndexToModel(viewIndex);
+    protected int getElementCount() {
+      return ((MyModel)getTable().getModel()).getItems().size();
     }
 
     @Override
-    protected Object @NotNull [] getAllElements() {
-      return ((MyModel)getTable().getModel()).getItems().toArray();
+    protected Object getElementAt(int viewIndex) {
+      return ((MyModel)getTable().getModel()).getItems().get(getTable().convertRowIndexToModel(viewIndex));
     }
 
     @Override

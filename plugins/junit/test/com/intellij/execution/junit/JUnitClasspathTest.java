@@ -4,6 +4,8 @@ package com.intellij.execution.junit;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
@@ -51,18 +53,18 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
     };
 
     //ensure no fork if single module is selected
-    aPackage.createSearchingForTestsTask().startSearch();
+    aPackage.createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest())).startSearch();
     File workingDirsFile = aPackage.getWorkingDirsFile();
     assertNotNull(workingDirsFile);
     assertEmpty(FileUtil.loadFile(workingDirsFile));
 
     //ensure fork when whole project is used
     persistentData.setScope(TestSearchScope.WHOLE_PROJECT);
-    aPackage.createSearchingForTestsTask().startSearch();
+    aPackage.createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest())).startSearch();
     workingDirsFile = aPackage.getWorkingDirsFile();
     assertNotNull(workingDirsFile);
     String file;
-    aPackage.createSearchingForTestsTask().startSearch();
+    aPackage.createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest())).startSearch();
     workingDirsFile = aPackage.getWorkingDirsFile();
     assertNotNull(workingDirsFile);
     file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
@@ -104,7 +106,7 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
     final ExecutionEnvironment environment =
       ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
     final TestPackage aPackage = new TestPackage(configuration, environment);
-    aPackage.createSearchingForTestsTask().startSearch();
+    aPackage.createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest())).startSearch();
     final File workingDirsFile = aPackage.getWorkingDirsFile();
     assertNotNull(workingDirsFile);
     assertEmpty(FileUtil.loadFile(workingDirsFile));

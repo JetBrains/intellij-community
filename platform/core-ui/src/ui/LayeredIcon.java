@@ -340,7 +340,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     return null;
   }
 
-  private static void buildCompositeTooltip(Icon[] icons, StringBuilder result, Set<String> seenTooltips) {
+  private static void buildCompositeTooltip(Icon[] icons, StringBuilder result, Set<? super String> seenTooltips) {
     for (int i = 0; i < icons.length; i++) {
       // first layer is the actual object (noun), other layers are modifiers (adjectives), so put first object in last position
       Icon icon = i == icons.length - 1 ? icons[0] : icons[i + 1];

@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -183,9 +184,10 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
       int oldDelay = settings.getAutoReparseDelay();
       try {
         InspectionProfile currentProfile;
-        String codeSmellProfile = VcsConfiguration.getInstance(myProject).CODE_SMELLS_PROFILE;
+        VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
+        String codeSmellProfile = vcsConfiguration.CODE_SMELLS_PROFILE;
         if (codeSmellProfile != null) {
-          currentProfile = InspectionProjectProfileManager.getInstance(myProject).getProfile(codeSmellProfile);
+          currentProfile = (vcsConfiguration.CODE_SMELLS_PROFILE_LOCAL ? InspectionProfileManager.getInstance() : InspectionProjectProfileManager.getInstance(myProject)).getProfile(codeSmellProfile);
         }
         else {
           currentProfile = null;

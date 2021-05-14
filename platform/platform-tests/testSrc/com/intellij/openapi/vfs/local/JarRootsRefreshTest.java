@@ -50,7 +50,7 @@ public class JarRootsRefreshTest extends HeavyPlatformTestCase {
     assertNotNull(jarRoot);
     assertTrue(jarRoot.isValid());
     PsiDirectory directory = getPsiManager().findDirectory(vLibDir);
-    DataContext psiDataContext = SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), directory);
+    DataContext psiDataContext = SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT, directory);
     new MoveHandler().invoke(myProject, new PsiElement[] {file}, psiDataContext);
     assertFalse(jarRoot.isValid());
 

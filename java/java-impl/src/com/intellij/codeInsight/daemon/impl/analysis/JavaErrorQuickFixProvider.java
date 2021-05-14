@@ -16,17 +16,17 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   @Override
-  public void registerErrorQuickFix(@NotNull PsiErrorElement errorElement, @NotNull HighlightInfo highlightInfo) {
+  public void registerErrorQuickFix(@NotNull PsiErrorElement errorElement, @NotNull HighlightInfo info) {
     PsiElement parent = errorElement.getParent();
     if (parent instanceof PsiTryStatement && errorElement.getErrorDescription().equals(
       JavaPsiBundle.message("expected.catch.or.finally"))) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddExceptionToCatchFix(false));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddFinallyFix((PsiTryStatement)parent));
+      QuickFixAction.registerQuickFixAction(info, new AddExceptionToCatchFix(false));
+      QuickFixAction.registerQuickFixAction(info, new AddFinallyFix((PsiTryStatement)parent));
     }
     if (parent instanceof PsiSwitchLabeledRuleStatement && errorElement.getErrorDescription().equals(
       JavaPsiBundle.message("expected.switch.rule"))) {
       QuickFixAction.registerQuickFixAction(
-        highlightInfo, QUICK_FIX_FACTORY.createWrapSwitchRuleStatementsIntoBlockFix((PsiSwitchLabeledRuleStatement)parent));
+        info, QUICK_FIX_FACTORY.createWrapSwitchRuleStatementsIntoBlockFix((PsiSwitchLabeledRuleStatement)parent));
     }
     if (parent instanceof PsiJavaFile && errorElement.getErrorDescription().equals(
       JavaPsiBundle.message("expected.class.or.interface"))) {
@@ -34,15 +34,13 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
       if (child instanceof PsiIdentifier) {
         switch (child.getText()) {
           case PsiKeyword.RECORD:
-            HighlightUtil.registerIncreaseLanguageLevelFixes(new QuickFixActionRegistrarImpl(highlightInfo), errorElement,
-                                                             HighlightingFeature.RECORDS);
+            HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.RECORDS, new QuickFixActionRegistrarImpl(info));
             if (ConvertRecordToClassFix.tryMakeRecord(errorElement) != null) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, new ConvertRecordToClassFix(errorElement));
+              QuickFixAction.registerQuickFixAction(info, new ConvertRecordToClassFix(errorElement));
             }
             break;
           case PsiKeyword.SEALED:
-            HighlightUtil.registerIncreaseLanguageLevelFixes(new QuickFixActionRegistrarImpl(highlightInfo), errorElement,
-                                                             HighlightingFeature.SEALED_CLASSES);
+            HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.SEALED_CLASSES, new QuickFixActionRegistrarImpl(info));
             break;
           default:
             break;

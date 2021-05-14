@@ -4,20 +4,22 @@ package com.intellij.openapi.fileChooser.tree;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.ui.tree.MapBasedTree;
 import com.intellij.ui.tree.MapBasedTree.Entry;
 import com.intellij.ui.tree.MapBasedTree.UpdateResult;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,19 +32,12 @@ import java.lang.reflect.Method;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.openapi.util.Disposer.register;
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
-import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
-import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
-import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
-import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 
 public final class FileTreeModel extends AbstractTreeModel implements InvokerSupplier {
   private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
@@ -54,9 +49,9 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   public FileTreeModel(@NotNull FileChooserDescriptor descriptor, FileRefresher refresher, boolean sortDirectories, boolean sortArchives) {
-    if (refresher != null) register(this, refresher);
+    if (refresher != null) Disposer.register(this, refresher);
     state = new State(descriptor, refresher, sortDirectories, sortArchives, this);
-    getApplication().getMessageBus().connect(this).subscribe(VFS_CHANGES, new BulkFileListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         invoker.invoke(() -> process(events));
@@ -229,7 +224,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   private static VirtualFile findFile(String path) {
-    return LocalFileSystem.getInstance().findFileByPath(toSystemIndependentName(path));
+    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
 
   private static final class State {
@@ -267,7 +262,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
           if (isArchive != FileElement.isArchive(two)) return isArchive ? -1 : 1;
         }
       }
-      return naturalCompare(one.getName(), two.getName());
+      return StringUtil.naturalCompare(one.getName(), two.getName());
     }
 
     private static boolean isValid(VirtualFile file) {
@@ -295,7 +290,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     private List<Root> getRoots() {
       List<VirtualFile> files = roots;
       if (files == null) files = getSystemRoots();
-      if (files == null || files.isEmpty()) return emptyList();
+      if (files == null || files.isEmpty()) return Collections.emptyList();
       return ContainerUtil.map(files, file -> new Root(this, file));
     }
 
@@ -330,7 +325,8 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
 
     private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull List<Path> paths) {
-      return paths.stream().map(root -> LocalFileSystem.getInstance().findFileByNioFile(root)).filter(State::isValid).collect(toList());
+      return paths.stream().map(root -> LocalFileSystem.getInstance().findFileByNioFile(root)).filter(State::isValid).collect(
+        Collectors.toList());
     }
 
     @Override
@@ -388,7 +384,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
 
     private static void markDirtyInternal(VirtualFile file) {
       if (file instanceof VirtualFileSystemEntry) {
-        Method method = getDeclaredMethod(VirtualFileSystemEntry.class, "markDirtyInternal");
+        Method method = ReflectionUtil.getDeclaredMethod(VirtualFileSystemEntry.class, "markDirtyInternal");
         if (method != null) {
           try {
             method.invoke(file);
@@ -402,13 +398,13 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     private UpdateResult<Node> updateChildren(State state, Entry<Node> parent) {
       VirtualFile[] children = state.getChildren(parent.getNode().getFile());
       if (children == null) return tree.update(parent, null);
-      if (children.length == 0) return tree.update(parent, emptyList());
+      if (children.length == 0) return tree.update(parent, Collections.emptyList());
       return tree.update(parent, Arrays.stream(children).filter(state::isVisible).sorted(state::compare).map(file -> {
         Entry<Node> entry = tree.findEntry(file);
         return entry != null && parent == entry.getParentPath()
                ? Pair.create(entry.getNode(), entry.isLeaf())
                : Pair.create(new Node(state, file), state.isLeaf(file));
-      }).collect(toList()));
+      }).collect(Collectors.toList()));
     }
   }
 }

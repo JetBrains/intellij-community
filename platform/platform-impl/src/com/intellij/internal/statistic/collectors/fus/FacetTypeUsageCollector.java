@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.facet.Facet;
@@ -66,7 +66,7 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
         return ValidationResultType.REJECTED;
       }
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(facet.getClass());
-      context.setPluginInfo(info);
+      context.setPayload(PLUGIN_INFO, info);
       return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
 

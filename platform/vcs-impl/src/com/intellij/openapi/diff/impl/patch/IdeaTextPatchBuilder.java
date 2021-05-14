@@ -180,13 +180,7 @@ public final class IdeaTextPatchBuilder {
 
     @Override
     public byte[] getContentAsBytes() throws VcsException {
-      if (myRevision instanceof ByteBackedContentRevision) {
-        return ((ByteBackedContentRevision)myRevision).getContentAsBytes();
-      }
-
-      String textContent = getContentAsString();
-      if (textContent == null) return null;
-      return textContent.getBytes(getCharset());
+      return ChangesUtil.loadContentRevision(myRevision);
     }
 
     @Override

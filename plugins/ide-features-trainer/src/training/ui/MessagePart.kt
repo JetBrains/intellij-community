@@ -8,7 +8,7 @@ class MessagePart(val type: MessageType, private val textFn: () -> String) {
   val text: String
     get() = textFn()
 
-  enum class MessageType { TEXT_REGULAR, TEXT_BOLD, SHORTCUT, CODE, LINK, CHECK, ICON_IDX, PROPOSE_RESTORE }
+  enum class MessageType { TEXT_REGULAR, TEXT_BOLD, SHORTCUT, CODE, LINK, CHECK, ICON_IDX, PROPOSE_RESTORE, LINE_BREAK }
 
   var startOffset = 0
   var endOffset = 0

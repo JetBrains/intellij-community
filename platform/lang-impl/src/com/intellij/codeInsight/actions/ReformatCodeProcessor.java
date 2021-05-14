@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
          : document.getImmutableCharSequence();
 
         try {
-          EditorScrollingPositionKeeper.perform(document, true, () -> {
+          EditorScrollingPositionKeeper.perform(document, true, () -> SlowOperations.allowSlowOperations(() -> {
             if (processChangedTextOnly) {
               ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
               if (info != null) {
@@ -117,7 +118,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
               Collection<TextRange> ranges = getRangesToFormat(fileToProcess);
               CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
             }
-          });
+          }));
         }
         catch (ProcessCanceledException pce) {
           if (before != null) {

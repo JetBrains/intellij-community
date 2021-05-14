@@ -114,7 +114,7 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent> {
         action.addData(key, transformNumbers(value))
       }
     }
-    return newLogEvent(session, build, bucket, time, groupId, groupVersion, recorderVersion, action)
+    return LogEvent(session, build, bucket, time, groupId, groupVersion, recorderVersion, action)
   }
 
   private fun transformNumbers(value: Any): Any {

@@ -144,4 +144,28 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
     temp.getExcludedFiles().addDescriptor(descriptor);
     CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest(new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true)));
   }
+
+  public void testReformatWithOptimizeImportMustNotBeCanceledUnexpectedly() {
+    CodeStyleSettings temp = CodeStyle.createTestSettings();
+    CodeStyle.doWithTemporarySettings(getProject(), temp, () -> {
+      String text = "class X {\n" +
+                    "    void f(Runnable dddd) {\n" +
+                    "        f(()->{});vvdds<caret>\n" +
+                    "    }\n" +
+                    "}";
+      myFixture.configureByText("x.java", text);
+      myFixture.type("abc");
+
+      LayoutCodeOptions options = new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true);
+      FileInEditorProcessor processor = new FileInEditorProcessor(myFixture.getFile(), myFixture.getEditor(), options);
+      processor.processCode();
+      myFixture.checkResult("class X {\n" +
+                            "    void f(Runnable dddd) {\n" +
+                            "        f(() -> {\n" +
+                            "        });\n" +
+                            "        vvddsabc\n" +
+                            "    }\n" +
+                            "}");
+    });
+  }
 }

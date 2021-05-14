@@ -18,7 +18,9 @@ object FileUtils {
                                   jarPath: String,
                                   destinationFilter: FileFilter? = null): Boolean {
     val splitJarPath = splitJarPath(jarPath)
-    val jarFile = JarFile(URL(splitJarPath.first).file)
+    val mayBeEscapedFile = URL(splitJarPath.first).file
+    val file = URLUtil.unescapePercentSequences(mayBeEscapedFile)
+    val jarFile = JarFile(file)
     val prefix = splitJarPath.second
 
     val entries = jarFile.entries()

@@ -153,7 +153,7 @@ public class NameSuggester {
    * @return
    */
   private TreeMap<Pair<Integer, Integer>, String> calculateReplacements(String[] propertyWords, TIntIntHashMap matches) {
-    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<>(Comparator.comparing(pair -> pair.getFirst()));
+    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<>(Pair.comparingByFirst());
     for (final OriginalToNewChange change : myChanges) {
       final int first = change.oldFirst;
       final int last = change.oldLast;
@@ -164,7 +164,7 @@ public class NameSuggester {
 
           if (first >= myOldClassName.length || last >= myOldClassName.length) {
             LOG.error("old class name = " + myOldClassNameAsGiven + ", new class name = " + myNewClassNameAsGiven + ", propertyWords = " +
-                      Arrays.asList(propertyWords).toString());
+                      Arrays.asList(propertyWords));
           }
 
           final String replacement = suggestReplacement(propertyWords[propertyWordFirst], newString);

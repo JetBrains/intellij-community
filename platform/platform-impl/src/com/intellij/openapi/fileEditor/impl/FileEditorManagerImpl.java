@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
@@ -189,6 +189,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
     });
 
+    closeFilesOnFileEditorRemoval();
+  }
+
+  private void closeFilesOnFileEditorRemoval() {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull FileEditorProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -414,12 +418,18 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     updateFileIcon(file, false);
   }
 
+  /**
+   * Reset the preview tab flag if an internal document change is made.
+   */
   private void resetPreviewFlag(@NotNull VirtualFile file) {
+    if (!FileDocumentManager.getInstance().isFileModified(file)) {
+      return;
+    }
     for (EditorsSplitters splitter : getAllSplitters()) {
       splitter.findEditorComposites(file).stream()
         .filter(EditorComposite::isPreview)
         .forEach(c -> c.setPreview(false));
-      splitter.updateFileStyle(file);
+      splitter.updateFileColor(file);
     }
   }
 
@@ -453,9 +463,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
       @Override
       public void run() {
-        for (EditorsSplitters each : getAllSplitters()) {
-          each.updateFileName(file);
-        }
+        SlowOperations.allowSlowOperations(() -> {
+          for (EditorsSplitters each : getAllSplitters()) {
+            each.updateFileName(file);
+          }
+        });
       }
     });
   }

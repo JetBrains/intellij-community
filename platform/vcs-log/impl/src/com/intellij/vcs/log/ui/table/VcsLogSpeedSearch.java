@@ -34,18 +34,13 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
 
   @NotNull
   @Override
-  protected ListIterator<Object> getElementIterator(int startingIndex) {
-    return new MyRowsList().listIterator(startingIndex);
+  protected ListIterator<Object> getElementIterator(int startingViewIndex) {
+    return new MyRowsList().listIterator(startingViewIndex);
   }
 
   @Override
   protected int getSelectedIndex() {
     return myComponent.getSelectedRow();
-  }
-
-  @Override
-  protected Object @NotNull [] getAllElements() {
-    throw new UnsupportedOperationException("Getting all elements in a Log in an array is unsupported.");
   }
 
   @Nullable

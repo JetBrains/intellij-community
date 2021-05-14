@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 @ApiStatus.Internal
@@ -87,7 +88,8 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
     );
   }
 
-  private static EventGroupsFilterRules notNull(@Nullable EventGroupsFilterRules groupFilterConditions, @NotNull EventGroupsFilterRules defaultValue) {
+  private static EventGroupsFilterRules<EventLogBuild> notNull(@Nullable EventGroupsFilterRules<EventLogBuild> groupFilterConditions,
+                                                               @NotNull EventGroupsFilterRules<EventLogBuild> defaultValue) {
     return groupFilterConditions != null ? groupFilterConditions : defaultValue;
   }
 
@@ -97,7 +99,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   }
 
   @Nullable
-  protected EventGroupsFilterRules loadApprovedGroupsRules() {
+  protected EventGroupsFilterRules<EventLogBuild> loadApprovedGroupsRules() {
     final String productUrl = getMetadataProductUrl();
     if (productUrl == null) return null;
     EventLogConnectionSettings settings = myApplicationInfo.getConnectionSettings();

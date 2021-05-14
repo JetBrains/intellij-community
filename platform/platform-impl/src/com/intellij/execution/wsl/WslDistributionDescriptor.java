@@ -157,8 +157,7 @@ final class WslDistributionDescriptor {
   }
 
   private @Nullable List<String> readWSLOutput(WSLCommandLineOptions options, List<String> command) {
-    WSLDistribution distribution = WSLUtil.getDistributionById(getId());
-    if (distribution == null) return null;
+    WSLDistribution distribution = WslDistributionManager.getInstance().getOrCreateDistributionByMsId(getId());
 
     ProcessOutput output;
     try {
@@ -185,6 +184,9 @@ final class WslDistributionDescriptor {
   }
 
   @Nullable String getEnvironmentVariable(String name) {
-    return readWslOutputLine(new WSLCommandLineOptions(), List.of("printenv", name));
+    return readWslOutputLine(new WSLCommandLineOptions()
+                               .setExecuteCommandInInteractiveShell(true)
+                               .setExecuteCommandInLoginShell(true),
+                             List.of("printenv", name));
   }
 }

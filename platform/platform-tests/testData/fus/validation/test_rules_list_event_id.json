@@ -25,21 +25,21 @@
       "id": "existing.util.rule.and.enum",
       "builds": [{"from": "191.4811"}],
       "rules": {
-        "event_id": ["{util#existing_rule}", "enum:AAA|BBB|CCC"]
+        "event_id": ["{util#existing_rule}", "AAA", "BBB", "CCC"]
       }
     },
     {
       "id": "not.existing.util.rule.and.enum",
       "builds": [{"from": "191.4811"}],
       "rules": {
-        "event_id": ["{util#unknown_rule}", "enum:AAA|BBB|CCC"]
+        "event_id": ["{util#unknown_rule}", "AAA", "BBB", "CCC"]
       }
     },
     {
       "id": "third.party.util.rule.and.enum",
       "builds": [{"from": "191.4811"}],
       "rules": {
-        "event_id": ["{util#third_party_rule}", "{enum:AAA|BBB|CCC}"]
+        "event_id": ["{util#third_party_rule}", "AAA", "BBB", "CCC"]
       }
     }
   ]

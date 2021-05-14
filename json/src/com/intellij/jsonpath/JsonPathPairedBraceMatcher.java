@@ -12,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
 final class JsonPathPairedBraceMatcher implements PairedBraceMatcher {
   public static final BracePair[] PAIRS = new BracePair[]{
     new BracePair(JsonPathTypes.LPARENTH, JsonPathTypes.RPARENTH, true),
-    new BracePair(JsonPathTypes.LBRACKET, JsonPathTypes.RBRACKET, true)
+    new BracePair(JsonPathTypes.LBRACKET, JsonPathTypes.RBRACKET, true),
+    new BracePair(JsonPathTypes.LBRACE, JsonPathTypes.RBRACE, true)
   };
 
   @Override

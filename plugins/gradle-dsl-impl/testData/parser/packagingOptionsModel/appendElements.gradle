@@ -1,8 +1,0 @@
-android {
-  packagingOptions {
-    exclude 'exclude1'
-    merges = ['merge1']
-    pickFirsts = []
-    pickFirst 'pickFirst1'
-  }
-}

@@ -25,9 +25,9 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
@@ -76,6 +76,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus, int row, int column) {
         Component component = super.getTableCellRendererComponent(table, value, false, focus, row, column);
+        setBorder(JBUI.Borders.empty(1, 2));
         Color bg = RenderingUtil.getBackground(table, selected);
         component.setBackground(bg);
         ((JLabel) component).setText("");
@@ -117,7 +118,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
         final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
         if (path != null) {
           return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(),
-                                                                               (NullableFunction<Object, String>)o -> o == path.getPath()[0] ? null : o.toString()), " | "));
+                                                                               o -> o == path.getPath()[0] ? null : o.toString()), " | "));
         }
         return null;
       }

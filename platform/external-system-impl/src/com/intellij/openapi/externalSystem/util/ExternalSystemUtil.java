@@ -26,10 +26,7 @@ import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
@@ -433,7 +430,7 @@ public final class ExternalSystemUtil {
           Disposer.register(project, processHandler);
         }
 
-        Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
+        Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
         SyncViewManager syncViewManager = ServiceManager.getService(project, SyncViewManager.class);
         try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(resolveProjectTask.getId(), syncViewManager, false)) {
           ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
@@ -502,9 +499,9 @@ public final class ExternalSystemUtil {
             public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
               String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
                                                           externalSystemId.getReadableName(), projectName);
-              DataProvider dataProvider = BuildConsoleUtils.getDataProvider(id, syncViewManager);
+              DataContext dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
               com.intellij.build.events.FailureResult failureResult =
-                createFailureResult(title, e, externalSystemId, project, dataProvider);
+                createFailureResult(title, e, externalSystemId, project, dataContext);
               finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                          BuildBundle.message("build.status.failed"), failureResult));
               processHandler.notifyProcessTerminated(1);
@@ -550,7 +547,7 @@ public final class ExternalSystemUtil {
 
       private void handExecutionResult(@NotNull ExternalSystemTaskActivator externalSystemTaskActivator,
                                        @NotNull BuildEventDispatcher eventDispatcher,
-                                       @NotNull Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
+                                       @NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
         if (project.isDisposed()) return;
 
         try {
@@ -604,9 +601,9 @@ public final class ExternalSystemUtil {
       }
 
       @NotNull
-      private FinishBuildEvent getSyncFinishEvent(@NotNull Ref<? extends Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
+      private FinishBuildEvent getSyncFinishEvent(@NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
         Exception exception = null;
-        Supplier<FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
+        Supplier<? extends FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
         if (finishBuildEventSupplier != null) {
           try {
             return finishBuildEventSupplier.get();
@@ -675,10 +672,10 @@ public final class ExternalSystemUtil {
                                                       @NotNull Exception exception,
                                                       @NotNull ProjectSystemId externalSystemId,
                                                       @NotNull Project project,
-                                                      @NotNull DataProvider dataProvider) {
+                                                      @NotNull DataContext dataContext) {
     ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
     NotificationData notificationData =
-      notificationManager.createNotification(title, exception, externalSystemId, project, dataProvider);
+      notificationManager.createNotification(title, exception, externalSystemId, project, dataContext);
     if (notificationData == null) {
       return new FailureResultImpl();
     }

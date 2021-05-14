@@ -16,10 +16,12 @@ public class ShBitwiseExclusiveOrExpressionImpl extends ShBinaryExpressionImpl i
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitBitwiseExclusiveOrExpression(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

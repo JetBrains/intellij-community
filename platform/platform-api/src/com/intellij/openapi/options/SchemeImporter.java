@@ -32,8 +32,8 @@ public interface SchemeImporter <T extends Scheme> {
   @Nullable
   T importScheme(@NotNull Project project,
                  @NotNull VirtualFile selectedFile,
-                 @NotNull T currentScheme, 
-                 @NotNull SchemeFactory<T> schemeFactory) throws SchemeImportException;
+                 @NotNull T currentScheme,
+                 @NotNull SchemeFactory<? extends T> schemeFactory) throws SchemeImportException;
 
   /**
    * Called after the scheme has been imported.

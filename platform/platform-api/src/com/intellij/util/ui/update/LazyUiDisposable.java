@@ -48,7 +48,7 @@ public abstract class LazyUiDisposable<T> implements Activatable {
     if (parent == null) {
       if (project == null) {
         Logger.getInstance(LazyUiDisposable.class).warn("use application as a parent disposable");
-        parent = Disposer.get("ui");
+        parent = ApplicationManager.getApplication();
       }
       else {
         Logger.getInstance(LazyUiDisposable.class).warn("use project as a parent disposable");

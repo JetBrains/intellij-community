@@ -118,7 +118,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           throw e
         } catch (t: Throwable) {
           LOG.warn("JdkAuto has failed to download the list of available JDKs. " + t.message, t)
-          listOf<JdkItem>()
+          listOf()
         } finally {
           indicator.popState()
         }
@@ -164,7 +164,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           override fun getExistingSdkHome(): String = path
           override fun getVersionString(): String = version
           override fun getSuggestedSdkName() = sdkType.suggestSdkName(null, hint.path)
-          override fun toString() = "resolved to hint $version, $path"
+          override fun toString() = "UnknownSdkLocalSdkFix{hint $version, $path}"
         }
       }
 
@@ -184,7 +184,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
                                   it to v
                                 }
                                 else null
-                              }.maxBy { it.second }
+                              }.maxByOrNull { it.second }
                               ?.first ?: return null
 
         val jarConfigurator = JarSdkConfigurator(resolveHint(sdk)?.includeJars ?: listOf())
@@ -201,6 +201,8 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
             val request = jdkInstaller.prepareJdkInstallation(jdkToDownload, homeDir)
             return newDownloadTask(request, project)
           }
+
+          override fun toString() = "UnknownSdkDownloadableFix{${jdkToDownload.fullPresentationText}, wsl=${projectWslDistribution}}"
         }
       }
 
@@ -228,7 +230,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         val req = parseSdkRequirement(sdk) ?: return null
         LOG.info("Looking for a local SDK for ${sdk.sdkType.presentableName} with name ${sdk}")
 
-        fun List<JavaLocalSdkFix>.pickBestMatch() = this.maxBy { it.version }
+        fun List<JavaLocalSdkFix>.pickBestMatch() = this.maxByOrNull { it.version }
 
         val localSdkFix = tryUsingExistingSdk(req, sdk.sdkType, indicator).filterByWsl().pickBestMatch()
                           ?: lazyLocalJdks.filter { req.matches(it) }.filterByWsl().pickBestMatch()
@@ -276,5 +278,6 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
     override fun getPresentableVersionString() = version.toFeatureMinorUpdateString()
     override fun getSuggestedSdkName() : String = suggestedName
     override fun getRegisteredSdkPrototype(): Sdk? = prototype
+    override fun toString() = "UnknownSdkLocalSdkFix{$presentableVersionString, dir=$homeDir}"
   }
 }

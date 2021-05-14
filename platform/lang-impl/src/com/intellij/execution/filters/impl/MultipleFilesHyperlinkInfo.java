@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -125,7 +126,18 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
     OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file.getVirtualFile(), offset);
     Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
     if (myAction != null && editor != null) {
-      myAction.onLinkFollowed(file, editor, originalEditor);
+      if (editor instanceof EditorEx) {
+        ((EditorEx)editor).setCaretEnabled(false);
+        try {
+          myAction.onLinkFollowed(file, editor, originalEditor);
+        }
+        finally {
+          ((EditorEx)editor).setCaretEnabled(true);
+        }
+      }
+      else {
+        myAction.onLinkFollowed(file, editor, originalEditor);
+      }
     }
   }
 

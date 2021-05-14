@@ -339,7 +339,7 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  public void updateFileStatus(@NotNull Collection<VirtualFile> files) {
+  public void updateFileStatus(@NotNull Collection<? extends VirtualFile> files) {
     List<LightEditorInfo> editors = ContainerUtil.mapNotNull(files, myEditorManager::findOpen);
     if (!editors.isEmpty()) {
       myEditorManager.fireFileStatusChanged(editors);

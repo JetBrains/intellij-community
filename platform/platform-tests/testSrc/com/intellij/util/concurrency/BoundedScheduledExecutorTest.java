@@ -130,9 +130,9 @@ public class BoundedScheduledExecutorTest extends TestCase {
   }
 
   static void doTestBoundedExecutor(String testName,
-                                    BiFunction<ExecutorService, Integer, ? extends ExecutorService> executorCreator,
+                                    BiFunction<? super ExecutorService, ? super Integer, ? extends ExecutorService> executorCreator,
                                     IntUnaryOperator numberOfFuturesComputer,
-                                    TripleFunction<ExecutorService, Runnable, Integer, Future<?>> executorScheduler) throws Exception {
+                                    TripleFunction<? super ExecutorService, ? super Runnable, ? super Integer, ? extends Future<?>> executorScheduler) throws Exception {
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(testName));
     for (int maxSimultaneousTasks = 1; maxSimultaneousTasks < 20; maxSimultaneousTasks++) {
       LOG.debug("maxSimultaneousTasks = " + maxSimultaneousTasks);

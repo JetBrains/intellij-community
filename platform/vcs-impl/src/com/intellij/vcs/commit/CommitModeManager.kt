@@ -38,7 +38,7 @@ internal class NonModalCommitCustomization : ApplicationInitializedListener {
 
     PropertiesComponent.getInstance().setValue(KEY, true)
     appSettings.COMMIT_FROM_LOCAL_CHANGES = true
-    logStateChanged()
+    logStateChanged(null)
   }
 
   companion object {
@@ -131,12 +131,12 @@ class CommitModeManager(private val project: Project) {
     fun getInstance(project: Project): CommitModeManager = project.service()
 
     @JvmStatic
-    fun setCommitFromLocalChanges(value: Boolean) {
+    fun setCommitFromLocalChanges(project: Project?, value: Boolean) {
       val oldValue = appSettings.COMMIT_FROM_LOCAL_CHANGES
       if (oldValue == value) return
 
       appSettings.COMMIT_FROM_LOCAL_CHANGES = value
-      logStateChanged()
+      logStateChanged(project)
       getApplication().messageBus.syncPublisher(SETTINGS).settingsChanged()
     }
 

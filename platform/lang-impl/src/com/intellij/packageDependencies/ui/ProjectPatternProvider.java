@@ -142,6 +142,9 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       final String fqName = VfsUtilCore.getRelativePath(virtualFile, contentRoot, '/');
       if (fqName != null) return new FilePatternPackageSet(getModulePattern(node), fqName);
     }
+    else if (node instanceof GeneralGroupNode) {//external dependencies
+      return new FilePatternPackageSet("", recursively ? "*/" : "*", false);
+    }
     return null;
   }
 

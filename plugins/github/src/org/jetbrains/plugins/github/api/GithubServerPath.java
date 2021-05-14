@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -131,6 +131,14 @@ public class GithubServerPath {
   @NotNull
   public String toUrl() {
     return getSchemaUrlPart() + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);
+  }
+
+  @NotNull
+  public String toUrl(boolean showSchema) {
+    StringBuilder builder = new StringBuilder();
+    if (showSchema) builder.append(getSchemaUrlPart());
+    builder.append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix));
+    return builder.toString();
   }
 
   @NotNull

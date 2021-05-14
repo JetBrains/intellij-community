@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PermanentListIntToIntMapTest extends UpdatableIntToIntMapTest {
   @Override
-  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
+  protected UpdatableIntToIntMap createUpdatableIntToIntMap(final @NotNull BooleanFunction<? super Integer> thisIsVisible, final int longSize) {
     return new UpdatableIntToIntMapWrapper(new Flags() {
       @Override
       public int size() {

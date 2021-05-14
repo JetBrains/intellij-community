@@ -38,8 +38,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
 
   @NotNull
   private final SimpleTree myTree;
-  @Nullable
-  private final Predicate<SimpleNode> mySelector;
+  private final @Nullable Predicate<? super SimpleNode> mySelector;
   @Nullable
   protected Boolean groupTasks;
   @Nullable
@@ -49,7 +48,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
                                         @NotNull Project project,
                                         @NotNull @NlsContexts.DialogTitle String title,
                                         Class<? extends ExternalSystemNode> nodeClass,
-                                        @Nullable Predicate<SimpleNode> selector) {
+                                        @Nullable Predicate<? super SimpleNode> selector) {
     //noinspection unchecked
     this(systemId, project, title, new Class[]{nodeClass}, selector);
   }
@@ -58,7 +57,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
                                         @NotNull Project project,
                                         @NotNull @NlsContexts.DialogTitle String title,
                                         final Class<? extends ExternalSystemNode>[] nodeClasses,
-                                        @Nullable Predicate<SimpleNode> selector) {
+                                        @Nullable Predicate<? super SimpleNode> selector) {
     super(project, false);
     mySelector = selector;
     setTitle(title);

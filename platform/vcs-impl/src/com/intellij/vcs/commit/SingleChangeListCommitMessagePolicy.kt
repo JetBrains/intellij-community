@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
@@ -16,13 +16,13 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     private set
 
   fun init(changeList: LocalChangeList, includedChanges: List<Change>) {
+    commitMessage = initialCommitMessage
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
 
     lastChangeListName = changeList.name
 
-    if (initialCommitMessage != null) {
-      defaultNameChangeListMessage = initialCommitMessage
-      commitMessage = initialCommitMessage
+    if (commitMessage != null) {
+      defaultNameChangeListMessage = commitMessage
     }
     else {
       commitMessage = getCommitMessageFor(changeList)
@@ -35,7 +35,6 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
 
   fun update(changeList: LocalChangeList, currentMessage: String) {
     commitMessage = currentMessage
-
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
 
     if (changeList.name != lastChangeListName) {

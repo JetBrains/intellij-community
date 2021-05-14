@@ -42,6 +42,7 @@ import java.util.Objects;
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiAnnotatedJavaCodeReferenceElement {
   private final PsiElement myParent;
   private final String myCanonicalText;
+  private String myShortName;
   private final String myQualifiedName;
   private final PsiReferenceParameterList myRefParameterList;
   private final TypeAnnotationContainer myAnnotations;
@@ -276,7 +277,12 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
   @Override
   public String getReferenceName() {
-    return PsiNameHelper.getShortClassName(myCanonicalText);
+    String name = myShortName;
+    if (name == null) {
+      name = PsiNameHelper.getShortClassName(myCanonicalText);
+      myShortName = name;
+    }
+    return name;
   }
 
   @Override

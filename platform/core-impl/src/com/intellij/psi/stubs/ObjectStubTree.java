@@ -48,7 +48,7 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   @ApiStatus.Internal
-  public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree(@Nullable Function<StubIndexKey<?, ?>, Hash.Strategy<Object>> keyHashingStrategyFunction) {
+  public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree(@Nullable Function<? super StubIndexKey<?, ?>, ? extends Hash.Strategy<Object>> keyHashingStrategyFunction) {
     StubIndexSink sink = new StubIndexSink(keyHashingStrategyFunction);
     final List<T> plainList = getPlainListFromAllRoots();
     for (int i = 0, plainListSize = plainList.size(); i < plainListSize; i++) {
@@ -102,10 +102,10 @@ public class ObjectStubTree<T extends Stub> {
 
   private static final class StubIndexSink implements IndexSink {
     private final Map<StubIndexKey<?, ?>, Map<Object, int[]>> myResult = new HashMap<>();
-    private final Function<StubIndexKey<?, ?>, Hash.Strategy<Object>> myHashingStrategyFunction;
+    private final @Nullable Function<? super StubIndexKey<?, ?>, ? extends Hash.Strategy<Object>> myHashingStrategyFunction;
     private int myStubIdx;
 
-    private StubIndexSink(@Nullable Function<StubIndexKey<?, ?>, Hash.Strategy<Object>> hashingStrategyFunction) {
+    private StubIndexSink(@Nullable Function<? super StubIndexKey<?, ?>, ? extends Hash.Strategy<Object>> hashingStrategyFunction) {
       myHashingStrategyFunction = hashingStrategyFunction;
     }
 
@@ -113,7 +113,7 @@ public class ObjectStubTree<T extends Stub> {
     public void occurrence(final @NotNull StubIndexKey indexKey, @NotNull Object value) {
       Map<Object, int[]> map = myResult.get(indexKey);
       if (map == null) {
-        map = myHashingStrategyFunction == null ? new HashMap<>() : new Object2ObjectOpenCustomHashMap<>(myHashingStrategyFunction.apply(indexKey));
+        map = myHashingStrategyFunction == null ? new HashMap<>() : new Object2ObjectOpenCustomHashMap<>(myHashingStrategyFunction.apply((StubIndexKey<?, ?>)indexKey));
         myResult.put(indexKey, map);
       }
 

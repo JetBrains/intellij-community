@@ -68,11 +68,11 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract T createComponent();
 
-  protected void doUpdateComponent(@NotNull CompletableFuture<PsiElement> elementFuture, PsiElement originalElement, T component) {
+  protected void doUpdateComponent(@NotNull CompletableFuture<? extends PsiElement> elementFuture, PsiElement originalElement, T component) {
     doUpdateComponent(elementFuture, originalElement, component, false);
   }
 
-  protected void doUpdateComponent(@NotNull CompletableFuture<PsiElement> elementFuture,
+  protected void doUpdateComponent(@NotNull CompletableFuture<? extends PsiElement> elementFuture,
                                    PsiElement originalElement,
                                    T component,
                                    boolean onAutoUpdate) {
@@ -108,6 +108,12 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract String getToolwindowId();
 
+  protected @NlsContexts.TabTitle String getToolwindowTitle() {
+    LOG.error(getClass().getName() + " should override getToolwindowTitle() method");
+    //noinspection HardCodedStringLiteral
+    return getToolwindowId(); // fallback for API compatibility
+  }
+
   public Content recreateToolWindow(PsiElement element, PsiElement originalElement) {
     if (myToolWindow == null) {
       createToolWindow(element, originalElement);
@@ -142,7 +148,8 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolwindowId());
     if (toolWindow == null) {
       toolWindow = toolWindowManager
-        .registerToolWindow(RegisterToolWindowTask.closable(getToolwindowId(), AllIcons.Toolwindows.Documentation, ToolWindowAnchor.RIGHT));
+        .registerToolWindow(RegisterToolWindowTask.closable(getToolwindowId(), this::getToolwindowTitle,
+                                                            AllIcons.Toolwindows.Documentation, ToolWindowAnchor.RIGHT));
     }
     else {
       toolWindow.setAvailable(true);
@@ -189,10 +196,6 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     }
   }
 
-  private boolean isAutoUpdateSupported() {
-    return PropertiesComponent.getInstance().getBoolean(IS_AUTO_UPDATE_SUPPORTED, true);
-  }
-
   protected void installComponentActions(@NotNull ToolWindow toolWindow, T component) {
     ((ToolWindowEx)toolWindow).setAdditionalGearActions(new DefaultActionGroup(createActions()));
   }
@@ -203,11 +206,6 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   }
 
   protected AnAction[] createActions() {
-    AnAction createRestorePopupAction = createRestorePopupAction();
-
-    if (!isAutoUpdateSupported())
-      return new AnAction[]{createRestorePopupAction};
-
     ToggleAction toggleAutoUpdateAction = new ToggleAction(getAutoUpdateTitle(), getAutoUpdateDescription(),
                                            AllIcons.General.AutoscrollFromSource) {
       @Override
@@ -222,8 +220,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
         restartAutoUpdate(state);
       }
     };
-
-    return new AnAction[]{createRestorePopupAction, toggleAutoUpdateAction};
+    return new AnAction[]{createRestorePopupAction(), toggleAutoUpdateAction};
   }
 
   @NotNull
@@ -237,7 +234,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   }
 
   void restartAutoUpdate(final boolean state) {
-    boolean enabled = state && myToolWindow != null && !myAutoUpdateMuted && isAutoUpdateSupported();
+    boolean enabled = state && myToolWindow != null && !myAutoUpdateMuted;
     if (enabled) {
       if (myAutoUpdateRequest == null) {
         myAutoUpdateRequest = () -> updateComponent(false, true);
@@ -337,6 +334,4 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   public boolean hasActiveDockedDocWindow() {
     return myToolWindow != null && myToolWindow.isVisible();
   }
-
-  public static final String IS_AUTO_UPDATE_SUPPORTED = "documentation.is.auto.update.supported";
 }

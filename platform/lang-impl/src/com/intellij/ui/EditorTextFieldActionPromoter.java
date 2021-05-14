@@ -23,7 +23,7 @@ import static com.intellij.util.containers.ContainerUtil.filterIsInstance;
  */
 public class EditorTextFieldActionPromoter implements ActionPromoter {
   @Override
-  public List<AnAction> promote(@NotNull List<AnAction> actions, @NotNull DataContext context) {
+  public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     return filterIsInstance(actions, TextComponentEditorAction.class);
   }
 }

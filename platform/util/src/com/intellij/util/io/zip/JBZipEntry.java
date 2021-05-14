@@ -1,14 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 import java.util.zip.ZipEntry;
@@ -30,7 +34,7 @@ public class JBZipEntry implements Cloneable {
   private long size = -1;     // uncompressed size of entry data
   private long csize = -1;    // compressed size of entry data
   private int method = -1;    // compression method
-  private byte[] extra = ArrayUtilRt.EMPTY_BYTE_ARRAY;   // optional extra field data for entry
+  private List<JBZipExtraField> extra = new SmartList<>();   // optional extra field data for entry
   private String comment;     // optional comment string for entry
 
   private int internalAttributes = 0;
@@ -152,21 +156,16 @@ public class JBZipEntry implements Cloneable {
    *		  extra field data is greater than 0xFFFF bytes
    * @see #getExtra()
    */
-  public void setExtra(byte[] extra) {
-      if (extra != null && extra.length > 0xFFFF) {
-          throw new IllegalArgumentException("invalid extra field length");
-      }
+  void setExtra(@NotNull List<JBZipExtraField> extra) {
       this.extra = extra;
   }
 
-  /**
-   * Retrieves the extra data for the local file data.
-   *
-   * @return the extra data for local file
-   */
-  public byte[] getLocalFileDataExtra() {
-    byte[] e = getExtra();
-    return e != null ? e : new byte[0];
+  public void addExtra(@NotNull JBZipExtraField field) {
+    JBZipExtraField current = ContainerUtil.find(extra, f -> f.getHeaderId().equals(field.getHeaderId()));
+    if (current != null) {
+      extra.remove(current);
+    }
+    extra.add(field);
   }
 
   /**
@@ -355,13 +354,88 @@ public class JBZipEntry implements Cloneable {
   }
 
   /**
-   * Returns the extra field data for the entry, or null if none.
+   * Returns the extra field data.
    *
-   * @return the extra field data for the entry, or null if none
-   * @see #setExtra(byte[])
+   * @return the extra field data
+   * @see #addExtra(JBZipExtraField)
    */
-  public byte[] getExtra() {
+  public @NotNull List<JBZipExtraField> getExtra() {
     return extra;
+  }
+
+  /**
+   * Retrieves the extra data for central directory file record.
+   *
+   * @return the extra data for central directory file record
+   */
+  byte @NotNull [] getCentralDirectoryExtraBytes() throws IOException {
+    BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
+    for (JBZipExtraField field : extra) {
+      stream.write(field.getHeaderId().getBytes());
+      stream.write(field.getCentralDirectoryLength().getBytes());
+      stream.write(field.getCentralDirectoryData());
+    }
+
+    byte[] bytes = stream.toByteArray();
+    assertValidExtraFieldSize(bytes);
+    return bytes;
+  }
+
+  /**
+   * Retrieves the extra data for the local file data.
+   *
+   * @return the extra data for local file header
+   */
+  byte @NotNull [] getLocalFileHeaderDataExtra() throws IOException {
+    BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
+    for (JBZipExtraField field : extra) {
+      stream.write(field.getHeaderId().getBytes());
+      stream.write(field.getLocalFileDataLength().getBytes());
+      stream.write(field.getLocalFileDataData());
+    }
+    byte[] bytes = stream.toByteArray();
+
+    assertValidExtraFieldSize(bytes);
+
+    return bytes;
+  }
+
+  private static void assertValidExtraFieldSize(byte @NotNull [] bytes) {
+    if (bytes.length > 0xFFFF) {
+      throw new IllegalArgumentException("invalid extra field length");
+    }
+  }
+
+  void readExtraFromCentralDirectoryBytes(byte @NotNull [] extraBytes) throws IOException {
+    UnsyncByteArrayInputStream stream = new UnsyncByteArrayInputStream(extraBytes);
+    while (stream.available() > 0) {
+      ZipShort headerId = new ZipShort(readNBytes(stream, JBZipFile.SHORT));
+      JBZipExtraField field;
+      if (headerId.equals(Zip64ExtraField.HEADER_ID)) {
+        field = new Zip64ExtraField();
+      }
+      else {
+        field = new UnrecognizedExtraField(headerId);
+      }
+      int length = ZipShort.getValue(readNBytes(stream, JBZipFile.SHORT));
+      field.parseFromCentralDirectoryData(readNBytes(stream, length), 0, length);
+      addExtra(field);
+      if (field instanceof Zip64ExtraField) {
+        Zip64ExtraField zip64ExtraField = (Zip64ExtraField)field;
+        ZipUInt64 compressedSize = zip64ExtraField.getCompressedSize();
+        if (compressedSize != null) {
+          setCompressedSize(compressedSize.getLongValue());
+        }
+        ZipUInt64 size = zip64ExtraField.getSize();
+        if (size != null) {
+          setSize(size.getLongValue());
+        }
+        ZipUInt64 offset = zip64ExtraField.getHeaderOffset();
+        if (offset != null) {
+          setHeaderOffset(offset.getLongValue());
+        }
+      }
+    }
   }
 
   /**
@@ -477,6 +551,22 @@ public class JBZipEntry implements Cloneable {
     int fileNameLen = ZipShort.getValue(b, 0);
     int extraFieldLen = ZipShort.getValue(b, JBZipFile.SHORT);
     return offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD + fileNameLen + extraFieldLen;
+  }
+
+  private static byte[] readNBytes(@NotNull InputStream is, int length) throws IOException {
+    byte[] bytes = new byte[length];
+
+    int n = 0;
+    int off = 0;
+    while (n < length) {
+      int count = is.read(bytes, off + n, length - n);
+      if (count < 0) {
+        throw new EOFException();
+      }
+      n += count;
+    }
+
+    return bytes;
   }
 
   /**

@@ -401,7 +401,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
       ConcurrentFactoryMap.createMap(key -> new UsageType(LangBundle.messagePointer("usage.type.usage.in.0", key.getDisplayName())));
 
     @Override
-    public @Nullable UsageType getUsageType(PsiElement element) {
+    public @Nullable UsageType getUsageType(@NotNull PsiElement element) {
       VirtualFile file = PsiUtilCore.getVirtualFile(element);
       RootType rootType = ScratchFileService.getInstance().getRootType(file);
       return rootType == null ? null : ourUsageTypes.get(rootType);

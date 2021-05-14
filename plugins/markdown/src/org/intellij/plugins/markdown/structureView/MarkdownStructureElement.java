@@ -121,7 +121,7 @@ public class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> imp
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     info.put("text", getPresentableText());
     if (!(getElement() instanceof PsiFileImpl)) {
       info.put("location", getLocationString());

@@ -1,4 +1,0 @@
-ext.jUnitVersion = '2.3'
-dependencies {
-  implementation "junit:junit:${jUnitVersion}"
-}

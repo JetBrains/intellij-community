@@ -6,11 +6,13 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection
 
@@ -83,6 +85,27 @@ public class Foo {
 }
 '''
     assert !myFixture.filterAvailableIntentions("Import class")
+  }
+
+  void testUncommentInnerClass() {
+    myFixture.addClass 'package bar; public class FooBar {}'
+    def file = myFixture.configureByText 'a.java', '''\
+package foo;
+public class Foo {
+    Foo<caret>Bar fb;
+    //class FooBar {}
+}
+'''
+
+    def intentions = myFixture.filterAvailableIntentions("Import class")
+    assert intentions.size() > 0
+
+    def commentOffset = file.getText().indexOf("//")
+    myFixture.getEditor().getCaretModel().moveToOffset(commentOffset)
+    LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
+    LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
+    PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
+    assert !intentions.get(0).isAvailable(myFixture.project, myFixture.editor, myFixture.file)
   }
 
   void testPackageLocalInner() {

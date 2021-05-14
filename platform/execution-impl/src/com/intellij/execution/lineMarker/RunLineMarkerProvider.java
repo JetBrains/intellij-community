@@ -129,7 +129,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
   static class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final DefaultActionGroup myActionGroup;
 
-    RunLineMarkerInfo(PsiElement element, Icon icon, Function<PsiElement, String> tooltipProvider, DefaultActionGroup actionGroup) {
+    RunLineMarkerInfo(PsiElement element, Icon icon, Function<? super PsiElement, String> tooltipProvider, DefaultActionGroup actionGroup) {
       super(element, element.getTextRange(), icon, tooltipProvider, null, GutterIconRenderer.Alignment.CENTER);
       myActionGroup = actionGroup;
     }

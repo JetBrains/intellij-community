@@ -79,6 +79,12 @@ class ThreadPool(Pool, ContextManager[ThreadPool]):
     ) -> None: ...
 
 # undocumented
-RUN: int
-CLOSE: int
-TERMINATE: int
+if sys.version_info >= (3, 8):
+    INIT: str
+    RUN: str
+    CLOSE: str
+    TERMINATE: str
+else:
+    RUN: int
+    CLOSE: int
+    TERMINATE: int

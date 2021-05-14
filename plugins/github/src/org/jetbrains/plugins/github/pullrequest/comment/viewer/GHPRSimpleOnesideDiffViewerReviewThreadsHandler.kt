@@ -31,7 +31,7 @@ class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRRe
                                                                                 inlaysManager,
                                                                                 componentsFactory,
                                                                                 cumulative) { line ->
-      val (endLine, startLine) = getCommentLinesRange(viewer.editor, line)
+      val (startLine, endLine) = getCommentLinesRange(viewer.editor, line)
       GHPRCommentLocation(viewer.side, endLine, startLine)
     }
 

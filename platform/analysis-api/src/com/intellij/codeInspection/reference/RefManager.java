@@ -116,7 +116,7 @@ public abstract class RefManager {
   @Nullable
   public abstract @NlsSafe String getQualifiedName(@Nullable RefEntity refEntity);
 
-  public abstract void removeRefElement(@NotNull RefElement refElement, @NotNull List<RefElement> deletedRefs);
+  public abstract void removeRefElement(@NotNull RefElement refElement, @NotNull List<? super RefElement> deletedRefs);
 
   @NotNull
   public abstract PsiManager getPsiManager();

@@ -65,7 +65,7 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   }
 
   @Override
-  public void saveDocuments(@NotNull Predicate<Document> filter) {
+  public void saveDocuments(@NotNull Predicate<? super Document> filter) {
   }
 
   @Override

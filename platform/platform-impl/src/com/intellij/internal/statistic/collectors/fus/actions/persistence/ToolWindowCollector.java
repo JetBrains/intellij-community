@@ -16,6 +16,7 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAllowlistEP;
 import com.intellij.openapi.wm.ToolWindowEP;
@@ -102,23 +103,28 @@ public final class ToolWindowCollector {
     }
   }
 
-  public void recordActivation(@Nullable String toolWindowId, @Nullable WindowInfoImpl info, @Nullable ToolWindowEventSource source) {
-    record(toolWindowId, ACTIVATED, info, source);
+  public void recordActivation(@NotNull Project project,
+                               @Nullable String toolWindowId,
+                               @Nullable WindowInfoImpl info,
+                               @Nullable ToolWindowEventSource source) {
+    record(project, toolWindowId, ACTIVATED, info, source);
   }
 
-  public void recordHidden(@NotNull WindowInfoImpl info, @Nullable ToolWindowEventSource source) {
-    record(info.getId(), HIDDEN, info, source);
+  public void recordHidden(@NotNull Project project,
+                           @NotNull WindowInfoImpl info,
+                           @Nullable ToolWindowEventSource source) {
+    record(project, info.getId(), HIDDEN, info, source);
   }
 
-  public void recordShown(@NotNull WindowInfoImpl info, @Nullable ToolWindowEventSource source) {
-    record(info.getId(), SHOWN, info, source);
+  public void recordShown(@NotNull Project project, @Nullable ToolWindowEventSource source, @NotNull WindowInfoImpl info) {
+    record(project, info.getId(), SHOWN, info, source);
   }
 
   //todo[kb] provide a proper way to track activations by clicks
   public void recordClick(String toolWindowId, @Nullable WindowInfoImpl info) {
   }
 
-  private static void record(@Nullable String toolWindowId,
+  private static void record(@NotNull Project project, @Nullable String toolWindowId,
                              @NotNull VarargEventId event,
                              @Nullable WindowInfoImpl windowInfo,
                              @Nullable ToolWindowEventSource source) {
@@ -178,11 +184,16 @@ public final class ToolWindowCollector {
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if ("unknown".equals(data)) return ValidationResultType.ACCEPTED;
-      return acceptWhenReportedByJetBrainsPlugin(context);
+
+      if (hasPluginField(context)) {
+        return acceptWhenReportedByJetBrainsPlugin(context);
+      }
+      ToolWindowInfo info = getToolWindowInfo(data);
+      return info.myPluginInfo.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
   }
 
-  private static final class ToolWindowInfo {
+  public static final class ToolWindowInfo {
     private final String myRecordedId;
     private final PluginInfo myPluginInfo;
 

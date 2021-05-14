@@ -1,6 +1,6 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolReader
 
-import gnu.trove.THashSet
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.JsonParseMethod
 import java.lang.reflect.Method
@@ -8,8 +8,8 @@ import java.lang.reflect.ParameterizedType
 import java.util.*
 
 internal class ReaderRoot<R>(val type: Class<R>, private val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
-  private val visitedInterfaces = THashSet<Class<*>>(1)
-  val methodMap = LinkedHashMap<Method, ReadDelegate>()
+  private val visitedInterfaces = HashSet<Class<*>>(1)
+  private val methodMap = LinkedHashMap<Method, ReadDelegate>()
 
   init {
     readInterfaceRecursive(type)

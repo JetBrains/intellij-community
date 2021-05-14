@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.JDOMUtil
@@ -74,7 +74,21 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         className = "AllIcons"
 
         val dir = util.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + "/com/intellij/icons"
-        outFile = Paths.get(dir, "AllIcons.java")
+        outFile = Path.of(dir, "$className.java")
+      }
+      "intellij.struts2.dom" -> {
+        packageName = "com.intellij.struts2"
+        className = "Struts2Icons"
+
+        val dir = module.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + '/' + packageName.replace('.', '/')
+        outFile = Path.of(dir, "$className.java")
+      }
+      "intellij.css" -> {
+        packageName = "com.intellij.lang.css"
+        className = "CssIcons"
+
+        val dir = module.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + '/' + packageName.replace('.', '/')
+        outFile = Path.of(dir, "$className.java")
       }
       "intellij.android.artwork" -> {
         packageName = "icons"
@@ -671,7 +685,7 @@ internal fun loadAndNormalizeSvgFile(svgFile: Path): String {
 
 private fun getPluginPackageIfPossible(module: JpsModule): String? {
   for (resourceRoot in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
-    val metaInf = Paths.get(JpsPathUtil.urlToPath(resourceRoot.url), "META-INF")
+    val metaInf = Path.of(JpsPathUtil.urlToPath(resourceRoot.url), "META-INF")
     if (!Files.isDirectory(metaInf)) {
       break
     }

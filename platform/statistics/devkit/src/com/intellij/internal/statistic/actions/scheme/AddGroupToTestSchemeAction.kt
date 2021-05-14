@@ -34,7 +34,7 @@ class AddGroupToTestSchemeAction constructor(private val recorderId: String = St
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val testStorage = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)
+    val testStorage = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)
     if (testStorage == null) {
       showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.cannot.find.test.scheme.storage"))
       return

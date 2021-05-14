@@ -1,6 +1,0 @@
-repositories {
-  jcenter()
-}
-repositories {
-  google()
-}

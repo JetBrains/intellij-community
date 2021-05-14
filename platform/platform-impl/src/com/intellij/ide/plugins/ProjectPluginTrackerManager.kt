@@ -17,11 +17,10 @@ import javax.swing.JComponent
 @State(
   name = "ProjectPluginTrackerManager",
   storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)],
+  reloadable = false,
 )
 @ApiStatus.Internal
-class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPluginTrackerManager.Companion.ProjectPluginTrackerManagerState>(
-  ProjectPluginTrackerManagerState()
-) {
+class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPluginTrackerManagerState>(ProjectPluginTrackerManagerState()) {
 
   companion object {
 
@@ -45,12 +44,6 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
       return descriptors.isEmpty() ||
              DynamicPlugins.loadPlugins(descriptors).requireRestartIfNecessary()
-    }
-
-    class ProjectPluginTrackerManagerState : BaseState() {
-
-      @get:XCollection
-      var trackers by map<String, ProjectPluginTracker.Companion.ProjectPluginTrackerState>()
     }
 
     private fun Boolean.requireRestartIfNecessary(): Boolean {
@@ -98,27 +91,10 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     )
   }
 
-  fun createPluginTracker(project: Project): ProjectPluginTracker {
-    val workspaceId = if (project.isDefault) null else project.stateStore.projectWorkspaceId
-    val key = workspaceId ?: project.name
-    return ProjectPluginTracker(
-      project,
-      state.trackers.getOrPut(key) { ProjectPluginTracker.Companion.ProjectPluginTrackerState() },
-    )
-  }
-
-  fun stopTrackingPerProject(
-    pluginIds: Collection<PluginId>,
-    project: Project?,
-  ) {
-    if (project == null) return
-
-    state
-      .trackers
-      .values
-      .map { ProjectPluginTracker(project, it) }
-      .forEach { state -> state.stopTrackingPerProject(pluginIds) }
-  }
+  fun createPluginTracker(project: Project) = ProjectPluginTracker(
+    project.name,
+    state.findStateByProject(project),
+  )
 
   @JvmOverloads
   fun updatePluginsState(
@@ -133,9 +109,9 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
     fun enablePlugins(enabled: Boolean) = DisabledPluginsState.enablePlugins(descriptors, enabled)
 
-    fun startTrackingPerProject(enable: Boolean) = createPluginTracker(project!!).startTrackingPerProject(pluginIds, enable)
+    fun startTrackingPerProject(enable: Boolean) = state.startTracking(project!!, pluginIds, enable)
 
-    fun stopTrackingPerProject() = stopTrackingPerProject(pluginIds, project)
+    fun stopTrackingPerProject() = state.stopTracking(pluginIds)
 
     fun loadPlugins() = loadPlugins(descriptors)
 
@@ -173,7 +149,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
   internal fun unloadPlugins(
     candidatesToUnload: Collection<PluginId>,
-    project: Project? = null,
+    project: Project,
   ) {
     unloadPlugins(
       candidatesToUnload.findPluginById(),
@@ -215,6 +191,41 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       val pluginId = descriptor.pluginId
       trackers.all { !it.isEnabled(pluginId) } &&
       (DisabledPluginsState.isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
+    }
+  }
+}
+
+class ProjectPluginTrackerManagerState : BaseState() {
+
+  @get:XCollection
+  var trackers by map<String, ProjectPluginTrackerState>()
+
+  fun startTracking(
+    project: Project,
+    pluginIds: Collection<PluginId>,
+    enable: Boolean,
+  ) {
+    val updated = findStateByProject(project)
+      .startTracking(pluginIds, enable)
+
+    if (updated) incrementModificationCount()
+  }
+
+  fun stopTracking(pluginIds: Collection<PluginId>) {
+    var updated = false
+
+    trackers.forEach { (_, state) ->
+      updated = state.stopTracking(pluginIds) || updated
+    }
+
+    if (updated) incrementModificationCount()
+  }
+
+  internal fun findStateByProject(project: Project): ProjectPluginTrackerState {
+    val workspaceId = if (project.isDefault) null else project.stateStore.projectWorkspaceId
+
+    return trackers.getOrPut(workspaceId ?: project.name) {
+      ProjectPluginTrackerState().also { incrementModificationCount() }
     }
   }
 }

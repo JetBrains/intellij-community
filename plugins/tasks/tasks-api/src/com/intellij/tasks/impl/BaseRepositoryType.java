@@ -29,7 +29,7 @@ public abstract class BaseRepositoryType<T extends BaseRepository> extends TaskR
 
   @Override
   @NotNull
-  public TaskRepositoryEditor createEditor(final T repository, Project project, final Consumer<T> changeListener) {
+  public TaskRepositoryEditor createEditor(final T repository, Project project, final Consumer<? super T> changeListener) {
     return new BaseRepositoryEditor<>(project, repository, changeListener);
   }
 }

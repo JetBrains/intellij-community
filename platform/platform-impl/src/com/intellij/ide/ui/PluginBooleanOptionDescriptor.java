@@ -66,7 +66,7 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
     }
   }
 
-  private void showAutoSwitchNotification(@NotNull Collection<IdeaPluginDescriptor> autoSwitchedPlugins, boolean enabled) {
+  private void showAutoSwitchNotification(@NotNull Collection<? extends IdeaPluginDescriptor> autoSwitchedPlugins, boolean enabled) {
     StringBuilder builder = new StringBuilder();
     for (IdeaPluginDescriptor autoSwitchedPlugin : autoSwitchedPlugins) {
       if (builder.length() > 0) {
@@ -155,10 +155,10 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
   }
 
   private static final class UndoPluginsSwitchAction extends NotificationAction {
-    private final Collection<IdeaPluginDescriptor> myDescriptors;
+    private final @NotNull Collection<? extends IdeaPluginDescriptor> myDescriptors;
     private final boolean myEnabled;
 
-    UndoPluginsSwitchAction(@NotNull Collection<IdeaPluginDescriptor> descriptors, boolean enabled) {
+    UndoPluginsSwitchAction(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors, boolean enabled) {
       super(IdeBundle.message("plugins.auto.switch.action.name"));
 
       myDescriptors = descriptors;

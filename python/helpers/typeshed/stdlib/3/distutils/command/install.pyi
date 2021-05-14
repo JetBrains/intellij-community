@@ -1,5 +1,7 @@
 from distutils.cmd import Command
-from typing import Optional
+from typing import Optional, Tuple
+
+SCHEME_KEYS: Tuple[str, ...]
 
 class install(Command):
     user: bool

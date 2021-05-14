@@ -189,7 +189,9 @@ final class ModuleHighlightUtil {
         else {
           String message = JavaErrorBundle.message("module.not.on.path", refElement.getReferenceText());
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message).create();
-          factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
+          if (info != null) {
+            factory().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), ref);
+          }
           return info;
         }
       }

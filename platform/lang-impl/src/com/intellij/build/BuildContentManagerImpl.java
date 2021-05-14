@@ -6,12 +6,10 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.BaseContentCloseListener;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -82,21 +80,6 @@ public final class BuildContentManagerImpl implements BuildContentManager {
     toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(
       TOOL_WINDOW_ID, UIBundle.messagePointer("tool.window.name.build"), AllIcons.Toolwindows.ToolWindowBuild));
     ContentManager contentManager = toolWindow.getContentManager();
-    contentManager.addDataProvider(new DataProvider() {
-      private int myInsideGetData = 0;
-
-      @Override
-      public Object getData(@NotNull String dataId) {
-        myInsideGetData++;
-        try {
-          return myInsideGetData == 1 ? DataManager.getInstance().getDataContext(contentManager.getComponent()).getData(dataId) : null;
-        }
-        finally {
-          myInsideGetData--;
-        }
-      }
-    });
-
     ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
     return toolWindow;
   }

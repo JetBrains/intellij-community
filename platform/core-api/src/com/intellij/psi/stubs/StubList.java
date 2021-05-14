@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,7 +161,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     };
   }
 
-  private TIntObjectHashMap<MostlyUShortIntList> tempMap() {
+  private Int2ObjectOpenHashMap<MostlyUShortIntList> tempMap() {
     assert myTempState != null;
     return Objects.requireNonNull(myTempState.myTempJoinedChildrenMap);
   }
@@ -219,8 +219,8 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     return getParentIndex(childId - 1) != parentId;
   }
 
-  private class TempState {
-    @Nullable TIntObjectHashMap<MostlyUShortIntList> myTempJoinedChildrenMap;
+  private final class TempState {
+    @Nullable Int2ObjectOpenHashMap<MostlyUShortIntList> myTempJoinedChildrenMap;
 
     int myCurrentParent = -1;
     int myExpectedChildrenCount;
@@ -267,7 +267,9 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     }
 
     private void switchChildrenToTempMap(int parentId) {
-      if (myTempJoinedChildrenMap == null) myTempJoinedChildrenMap = new TIntObjectHashMap<>();
+      if (myTempJoinedChildrenMap == null) {
+        myTempJoinedChildrenMap = new Int2ObjectOpenHashMap<>();
+      }
 
       int start = getChildrenStart(parentId);
       int count = getChildrenCount(parentId);
@@ -305,7 +307,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
 
 }
 
-class MaterialStubList extends StubList {
+final class MaterialStubList extends StubList {
   /** The list of all stubs ordered by id. The order is DFS (except maybe temporarily during construction, fixed by {@link #finalizeLoadingStage()} later) */
   private final ArrayList<StubBase<?>> myPlainList;
 

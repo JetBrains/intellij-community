@@ -12,6 +12,7 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -66,7 +67,7 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
       return;
     }
 
-    final IntOpenHashSet unusedDefs = new IntOpenHashSet();
+    final IntSet unusedDefs = new IntOpenHashSet();
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction) instruction).isWrite()) {
         unusedDefs.add(instruction.num());

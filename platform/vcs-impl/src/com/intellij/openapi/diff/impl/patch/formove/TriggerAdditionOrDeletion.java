@@ -25,8 +25,6 @@ public class TriggerAdditionOrDeletion {
   private final Project myProject;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
-  private final Set<FilePath> myExisting = new HashSet<>();
-  private final Set<FilePath> myDeleted = new HashSet<>();
   private final Set<FilePath> myAffected = new HashSet<>();
 
   private final Map<AbstractVcs, Set<FilePath>> myPreparedAddition = new HashMap<>();
@@ -37,41 +35,32 @@ public class TriggerAdditionOrDeletion {
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
   }
 
-  public void addExisting(@NotNull Collection<? extends FilePath> files) {
-    myExisting.addAll(files);
-  }
-
-  public void addDeleted(@NotNull Collection<? extends FilePath> files) {
-    myDeleted.addAll(files);
-  }
-
   public Set<FilePath> getAffected() {
     return myAffected;
   }
 
   /**
-   * Prepare files to be added|deleted in VCS
-   * <p/>
-   * For VCS with async file listeners (see {@link AbstractVcs#fileListenerIsSynchronous}),<br/>
-   * should be always called inside {@link com.intellij.openapi.command.CommandProcessor#executeCommand}<br/>
-   * This will ensure that added files will be correctly filtered in {@link VcsVFSListener.MyCommandAdapter#commandFinished}<br/>
-   * and {@link VcsVFSListener.MyAsyncVfsListener#prepareChange} for deleted files<br/>
-   *
-   * @see VcsFileListenerContextHelper
+   * Notify that files should be added/deleted in VCS.
+   * <p>
+   * Should be called in the same command as file modifications. Typically - BEFORE the actual file modification.
+   * See {@link VcsFileListenerContextHelper} javadoc for exact constraints on order of events.
    */
-  public void prepare() {
-    if (!myExisting.isEmpty()) {
-      processAddition();
-    }
-    if (!myDeleted.isEmpty()) {
-      processDeletion();
-    }
+  public void prepare(@NotNull Collection<? extends FilePath> toBeAdded,
+                      @NotNull Collection<? extends FilePath> toBeDeleted) {
+    processAddition(toBeAdded);
+    processDeletion(toBeDeleted);
   }
 
+  /**
+   * Should be called on EDT after the command is finished.
+   */
   public void cleanup() {
     myVcsFileListenerContextHelper.clearContext();
   }
 
+  /**
+   * Called on pooled thread when all operations are completed.
+   */
   public void processIt() {
     final List<FilePath> incorrectFilePath = new ArrayList<>();
 
@@ -120,8 +109,8 @@ public class TriggerAdditionOrDeletion {
                                                               message);
   }
 
-  private void processDeletion() {
-    Map<VcsRoot, List<FilePath>> map = groupByRoots(myProject, myDeleted, identity());
+  private void processDeletion(@NotNull Collection<? extends FilePath> filePaths) {
+    Map<VcsRoot, List<FilePath>> map = groupByRoots(myProject, filePaths, identity());
 
     for (VcsRoot vcsRoot : map.keySet()) {
       AbstractVcs vcs = vcsRoot.getVcs();
@@ -156,8 +145,8 @@ public class TriggerAdditionOrDeletion {
     }
   }
 
-  private void processAddition() {
-    Map<VcsRoot, List<FilePath>> map = groupByRoots(myProject, myExisting, identity());
+  private void processAddition(@NotNull Collection<? extends FilePath> filePaths) {
+    Map<VcsRoot, List<FilePath>> map = groupByRoots(myProject, filePaths, identity());
 
     for (VcsRoot vcsRoot : map.keySet()) {
       AbstractVcs vcs = vcsRoot.getVcs();

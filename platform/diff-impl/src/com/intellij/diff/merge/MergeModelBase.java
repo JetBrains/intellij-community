@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.util.DiffUtil;
@@ -16,14 +16,17 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 public abstract class MergeModelBase<S extends MergeModelBase.State> implements Disposable {
   private static final Logger LOG = Logger.getInstance(MergeModelBase.class);
@@ -32,10 +35,10 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   @NotNull private final Document myDocument;
   @Nullable private final UndoManager myUndoManager;
 
-  @NotNull private final TIntArrayList myStartLines = new TIntArrayList();
-  @NotNull private final TIntArrayList myEndLines = new TIntArrayList();
+  @NotNull private final IntArrayList myStartLines = new IntArrayList();
+  @NotNull private final IntArrayList myEndLines = new IntArrayList();
 
-  @NotNull private final TIntHashSet myChangesToUpdate = new TIntHashSet();
+  @NotNull private final IntSet myChangesToUpdate = new IntOpenHashSet();
   private int myBulkChangeUpdateDepth;
 
   private boolean myInsideCommand;
@@ -71,16 +74,16 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   }
 
   public int getLineStart(int index) {
-    return myStartLines.get(index);
+    return myStartLines.getInt(index);
   }
 
   public int getLineEnd(int index) {
-    return myEndLines.get(index);
+    return myEndLines.getInt(index);
   }
 
   public void setChanges(@NotNull List<? extends LineRange> changes) {
-    myStartLines.clear(changes.size());
-    myEndLines.clear(changes.size());
+    myStartLines.clear();
+    myEndLines.clear();
 
     for (LineRange range : changes) {
       myStartLines.add(range.start);
@@ -126,9 +129,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     LOG.assertTrue(myBulkChangeUpdateDepth >= 0);
 
     if (myBulkChangeUpdateDepth == 0) {
-      myChangesToUpdate.forEach(index -> {
+      myChangesToUpdate.forEach((IntConsumer)index -> {
         reinstallHighlighters(index);
-        return true;
       });
       myChangesToUpdate.clear();
     }
@@ -208,9 +210,9 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
                                      @Nullable String commandGroupId,
                                      @NotNull UndoConfirmationPolicy confirmationPolicy,
                                      boolean underBulkUpdate,
-                                     @Nullable TIntArrayList affectedChanges,
+                                     @Nullable IntList affectedChanges,
                                      @NotNull Runnable task) {
-    TIntArrayList allAffectedChanges = affectedChanges != null ? collectAffectedChanges(affectedChanges) : null;
+    IntList allAffectedChanges = affectedChanges != null ? collectAffectedChanges(affectedChanges) : null;
     return DiffUtil.executeWriteCommand(myProject, myDocument, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, () -> {
       LOG.assertTrue(!myInsideCommand);
 
@@ -236,15 +238,14 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     });
   }
 
-  private void registerUndoRedo(boolean undo, @Nullable TIntArrayList affectedChanges) {
+  private void registerUndoRedo(boolean undo, @Nullable IntList affectedChanges) {
     if (myUndoManager == null) return;
 
     List<S> states;
     if (affectedChanges != null) {
       states = new ArrayList<>(affectedChanges.size());
-      affectedChanges.forEach((index) -> {
+      affectedChanges.forEach((IntConsumer)(index) -> {
         states.add(storeChangeState(index));
-        return true;
       });
     }
     else {
@@ -256,7 +257,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     myUndoManager.undoableActionPerformed(new MyUndoableAction(this, states, undo));
   }
 
-  private static class MyUndoableAction extends BasicUndoableAction {
+  private static final class MyUndoableAction extends BasicUndoableAction {
     @NotNull private final WeakReference<MergeModelBase> myModelRef;
     @NotNull private final List<? extends State> myStates;
     private final boolean myUndo;
@@ -375,13 +376,13 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
    */
   @NotNull
   @RequiresEdt
-  private TIntArrayList collectAffectedChanges(@NotNull TIntArrayList directChanges) {
-    TIntArrayList result = new TIntArrayList(directChanges.size());
+  private IntList collectAffectedChanges(@NotNull IntList directChanges) {
+    IntList result = new IntArrayList(directChanges.size());
 
     int directArrayIndex = 0;
     int otherIndex = 0;
     while (directArrayIndex < directChanges.size() && otherIndex < getChangesCount()) {
-      int directIndex = directChanges.get(directArrayIndex);
+      int directIndex = directChanges.getInt(directArrayIndex);
 
       if (directIndex == otherIndex) {
         result.add(directIndex);

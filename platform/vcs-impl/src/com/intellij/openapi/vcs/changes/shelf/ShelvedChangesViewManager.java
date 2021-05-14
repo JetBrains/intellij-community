@@ -624,7 +624,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (attachedObject instanceof ChangeListDragBean) {
         FileDocumentManager.getInstance().saveAllDocuments();
         List<Change> changes = Arrays.asList(((ChangeListDragBean)attachedObject).getChanges());
-        ShelveChangesManager.getInstance(myProject).shelveSilentlyUnderProgress(changes);
+        ShelveChangesManager.getInstance(myProject).shelveSilentlyUnderProgress(changes, true);
       }
     }
 

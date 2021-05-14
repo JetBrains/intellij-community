@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui.discussion
 
-import circlet.code.api.CodeDiscussionAddedFeedEvent
+import circlet.code.api.CodeDiscussionRecord
 import circlet.code.api.CodeDiscussionSnippet
 import circlet.m2.channel.M2ChannelVm
+import circlet.platform.api.Ref
 import circlet.platform.client.property
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
@@ -32,7 +33,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import runtime.reactive.Property
-import runtime.reactive.map
+import runtime.reactive.property.map
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -43,9 +44,9 @@ class SpaceChatCodeDiscussionComponentFactory(
   private val lifetime: Lifetime,
   private val server: String,
 ) {
-  fun createComponent(event: CodeDiscussionAddedFeedEvent, thread: M2ChannelVm): JComponent? {
-    val discussion = event.codeDiscussion.resolve()
-    val discussionProperty = event.codeDiscussion.property()
+  fun createComponent(codeDiscussion: Ref<CodeDiscussionRecord>, thread: M2ChannelVm): JComponent? {
+    val discussion = codeDiscussion.resolve()
+    val discussionProperty = codeDiscussion.property()
     val resolved = lifetime.map(discussionProperty) { it.resolved }
     val collapseButton = InlineIconButton(AllIcons.General.CollapseComponent, AllIcons.General.CollapseComponentHover)
     val expandButton = InlineIconButton(AllIcons.General.ExpandComponent, AllIcons.General.ExpandComponentHover)
@@ -90,25 +91,30 @@ class SpaceChatCodeDiscussionComponentFactory(
     val threadComponent = createThreadComponent(project, lifetime, thread, threadActionsFactory, withFirst = false)
     val outerActionsPanel = BorderLayoutPanel().apply {
       isOpaque = false
-      border = JBUI.Borders.emptyTop(JBUIScale.scale(4))
+      border = JBUI.Borders.emptyTop(10)
       val outerActionsFactory = SpaceChatDiscussionActionsFactory(
         discussionProperty,
         withOffset = false,
-        avatarType = SpaceChatAvatarType.THREAD
+        avatarType = SpaceChatAvatarType.THREAD,
+        closeOnSend = true
       )
       addToCenter(outerActionsFactory.createActionsComponent(thread))
     }
     val collapseModel = SingleValueModelImpl(true)
 
+    val threadWithActionsComponent = JPanel(VerticalLayout(0)).apply {
+      isOpaque = false
+      add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
+      add(outerActionsPanel, VerticalLayout.FILL_HORIZONTAL)
+    }
     val component = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       add(panel, VerticalLayout.FILL_HORIZONTAL)
-      add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
-      add(outerActionsPanel, VerticalLayout.FILL_HORIZONTAL)
+      add(threadWithActionsComponent, VerticalLayout.FILL_HORIZONTAL)
       addDiscussionExpandCollapseHandling(
         this,
         collapseModel,
-        listOf(threadComponent, reviewCommentComponent, diffEditorComponent, outerActionsPanel),
+        listOf(threadWithActionsComponent, reviewCommentComponent, diffEditorComponent),
         collapseButton,
         expandButton,
         resolved
@@ -118,44 +124,34 @@ class SpaceChatCodeDiscussionComponentFactory(
     collapseModel.addValueUpdatedListener { collapsed ->
       if (!collapsed) {
         val messagesCount = thread.mvms.value.messages.size
-        updateActionsComponentsVisibility(threadComponent, outerActionsPanel, component, null, messagesCount)
+        updateActionsComponentVisibility(outerActionsPanel, null, messagesCount)
       }
     }
 
     thread.mvms.forEachWithPrevious(lifetime) { prev, new ->
       val messages = new.messages
-      val comment = messages.first()
+      val comment = messages.firstOrNull() ?: return@forEachWithPrevious
       reviewCommentComponent.setMarkdownText(comment.message.text, comment.message.edited != null)
       reviewCommentComponent.repaint()
       if (!collapseModel.value) {
-        updateActionsComponentsVisibility(threadComponent, outerActionsPanel, component, prev?.messages?.size, messages.size)
+        updateActionsComponentVisibility(outerActionsPanel, prev?.messages?.size, messages.size)
       }
     }
 
     return component
   }
 
-  private fun updateActionsComponentsVisibility(
-    threadComponent: JComponent,
+  private fun updateActionsComponentVisibility(
     outerActionsPanel: JComponent,
-    parent: JComponent,
     prevMessagesCount: Int?,
     newMessagesCount: Int
   ) {
     if (newMessagesCount == 1) {
-      threadComponent.isVisible = false
       outerActionsPanel.isVisible = true
-      parent.revalidate()
-      parent.repaint()
     }
-    else {
-      if (prevMessagesCount == null || prevMessagesCount == 1) {
-        // update only for 1 -> 1+ messages count change
-        threadComponent.isVisible = true
-        outerActionsPanel.isVisible = false
-        parent.revalidate()
-        parent.repaint()
-      }
+    else if (prevMessagesCount == null || prevMessagesCount == 1) {
+      // update only for 1 -> 1+ messages count change
+      outerActionsPanel.isVisible = false
     }
   }
 

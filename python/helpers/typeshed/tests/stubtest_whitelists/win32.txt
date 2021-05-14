@@ -21,6 +21,7 @@ dbm.ndbm
 fcntl
 grp
 nis
+ossaudiodev
 posix
 pwd
 readline

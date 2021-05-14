@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
@@ -15,7 +15,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
@@ -32,12 +31,13 @@ import java.lang.ref.Reference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Pavel.Dolgov
  */
-public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspectionTool {
+public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance(JavaFxRedundantPropertyValueInspection.class);
 
   private static Reference<Map<String, Map<String, String>>> ourDefaultPropertyValues;
@@ -183,7 +183,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
       return Collections.emptyMap();
     }
 
-    final Map<String, Map<String, String>> result = new THashMap<>(200);
+    final Map<String, Map<String, String>> result = new HashMap<>(200);
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
       for (String line : FileUtil.loadLines(reader)) {
         if (line.isEmpty() || line.startsWith("--")) continue;
@@ -196,7 +196,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
             final String propertyName = line.substring(p1 + 1, p2);
             final String valueText = line.substring(p2 + 1);
             lineParsed = true;
-            final Map<String, String> properties = result.computeIfAbsent(className, ignored -> new THashMap<>());
+            final Map<String, String> properties = result.computeIfAbsent(className, ignored -> new HashMap<>());
             if (properties.put(propertyName, valueText) != null) {
               LOG.warn("Duplicate default property value " + line);
             }

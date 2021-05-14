@@ -116,10 +116,14 @@ def currentframe(depth: int = ...) -> FrameType: ...
 def stack(context: int = ...) -> List[_FrameInfo]: ...
 def trace(context: int = ...) -> List[_FrameInfo]: ...
 
+# Create private type alias to avoid conflict with symbol of same
+# name created in Attribute class.
+_Object = object
+
 class Attribute(NamedTuple):
     name: str
     kind: str
     defining_class: type
-    object: object
+    object: _Object
 
 def classify_class_attrs(cls: type) -> List[Attribute]: ...

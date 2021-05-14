@@ -4,22 +4,10 @@ package com.intellij.openapi.rd;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.jetbrains.rd.util.lifetime.Lifetime;
-import com.jetbrains.rd.util.lifetime.LifetimeDefinition;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 
 public final class DisposableExKt {
   private DisposableExKt() {}
-
-  /**
-   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#defineNestedLifetime(Disposable)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static LifetimeDefinition defineNestedLifetime(Disposable disposable) {
-    return DisposableEx.defineNestedLifetime(disposable);
-  }
 
   /**
    * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#createLifetime(Disposable)}
@@ -31,40 +19,11 @@ public final class DisposableExKt {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#createNestedDisposable(Lifetime, String)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static Disposable createNestedDisposable(Lifetime lifetime, String debugName) {
-    return DisposableEx.createNestedDisposable(lifetime, debugName);
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#createNestedDisposable(Lifetime, String)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static Disposable createNestedDisposable$default(Lifetime lifetime, String debugName, int intArg, Object ignored) {
-    if((intArg & 1) != 0)
-      debugName = "lifetimeToDisposable";
-    return createNestedDisposable(lifetime, debugName);
-  }
-
-  /**
    * @deprecated Use {@link Disposer#register(Disposable, Disposable)}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @Deprecated
   public static void attachChild(Disposable parent, Disposable child) {
     Disposer.register(parent, child);
-  }
-
-  /**
-   * @deprecated Use {@link DisposableEx#attach(Disposable, Function0)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public static void attach(Disposable parent, Function0<Unit> disposable) {
-    DisposableEx.attach(parent, disposable);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -69,7 +69,7 @@ public class GitRebaser {
 
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
       String oldText = myProgressIndicator.getText();
-      myProgressIndicator.setText(GitBundle.getString("rebase.progress.indicator.title"));
+      myProgressIndicator.setText(GitBundle.message("rebase.progress.indicator.title"));
       GitCommandResult result = myGit.runCommand(rebaseHandler);
       myProgressIndicator.setText(oldText);
       return result.success() ?
@@ -93,7 +93,7 @@ public class GitRebaser {
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.setStdoutSuppressed(false);
     rh.addParameters("--abort");
-    GitTask task = new GitTask(myProject, rh, GitBundle.getString("rebase.update.project.abort.task.title"));
+    GitTask task = new GitTask(myProject, rh, GitBundle.message("rebase.update.project.abort.task.title"));
     task.setProgressIndicator(myProgressIndicator);
     task.executeAsync(new GitTaskResultNotificationHandler(
       myProject,
@@ -252,9 +252,9 @@ public class GitRebaser {
   private static GitConflictResolver.Params makeParams(@NotNull Project project) {
     return new GitConflictResolver.Params(project)
       .setReverse(true)
-      .setErrorNotificationTitle(GitBundle.getString("rebase.update.project.conflict.error.notification.title"))
-      .setMergeDescription(GitBundle.getString("rebase.update.project.conflict.merge.description.label"))
-      .setErrorNotificationAdditionalDescription(GitBundle.getString("rebase.update.project.conflict.error.notification.description"));
+      .setErrorNotificationTitle(GitBundle.message("rebase.update.project.conflict.error.notification.title"))
+      .setMergeDescription(GitBundle.message("rebase.update.project.conflict.merge.description.label"))
+      .setErrorNotificationAdditionalDescription(GitBundle.message("rebase.update.project.conflict.error.notification.description"));
   }
 
   public static class TrivialEditor implements GitRebaseEditorHandler {
@@ -298,7 +298,7 @@ public class GitRebaser {
         myProject,
         LOCAL_CHANGES_DETECTED,
         root,
-        GitBundle.getString("rebase.git.operation.name"),
+        GitBundle.message("rebase.git.operation.name"),
         localChangesDetector.getRelativeFilePaths()
       );
       return GitUpdateResult.ERROR;
@@ -306,7 +306,7 @@ public class GitRebaser {
     else {
       LOG.info("handleRebaseFailure error " + handler.errors());
       VcsNotifier.getInstance(myProject).notifyError(REBASE_UPDATE_PROJECT_ERROR,
-                                                     GitBundle.getString("rebase.update.project.notification.failed.title"),
+                                                     GitBundle.message("rebase.update.project.notification.failed.title"),
                                                      result.getErrorOutputAsHtmlString(),
                                                      true);
       return GitUpdateResult.ERROR;

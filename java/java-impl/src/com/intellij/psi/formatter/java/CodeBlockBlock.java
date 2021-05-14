@@ -256,6 +256,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     if (state == BEFORE_LBRACE) {
       if (elementType == JavaTokenType.LBRACE
           || elementType == JavaTokenType.CLASS_KEYWORD
+          || elementType == JavaTokenType.RECORD_KEYWORD
           || elementType == JavaTokenType.INTERFACE_KEYWORD
           || elementType == JavaTokenType.IDENTIFIER
           || elementType == JavaTokenType.ENUM_KEYWORD

@@ -14,18 +14,35 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
+import kotlin.math.max
+import kotlin.math.min
 
 @State(name = "ActionsLocalSummary", storages = [Storage("actionSummary.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
 @Service
 class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummaryState>, SimpleModificationTracker() {
   @Volatile
   private var state = ActionsLocalSummaryState()
+  @Volatile
+  private var totalSummary: ActionsTotalSummary = ActionsTotalSummary()
 
   override fun getState() = state
 
   override fun loadState(state: ActionsLocalSummaryState) {
     this.state = state
+    this.totalSummary = calculateTotalSummary(state)
   }
+
+  fun calculateTotalSummary(state: ActionsLocalSummaryState): ActionsTotalSummary {
+    var maxUsageCount = 0
+    var minUsageCount = Integer.MAX_VALUE
+    for (value in state.data.values) {
+      maxUsageCount = max(maxUsageCount, value.usageCount)
+      minUsageCount = min(minUsageCount, value.usageCount)
+    }
+    return ActionsTotalSummary(maxUsageCount, minUsageCount)
+  }
+
+  fun getTotalStats(): ActionsTotalSummary = totalSummary
 
   fun getActionsStats(): Map<String, ActionSummary> = if (state.data.isEmpty()) emptyMap() else HashMap(state.data)
 
@@ -33,6 +50,9 @@ class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummaryState>, 
     val summary = state.data.computeIfAbsent(actionId) { ActionSummary() }
     summary.lastUsedTimestamp = System.currentTimeMillis()
     summary.usageCount++
+
+    totalSummary.maxUsageCount = max(summary.usageCount, totalSummary.maxUsageCount)
+    totalSummary.minUsageCount = min(summary.usageCount, totalSummary.minUsageCount)
     incModificationCount()
   }
 }
@@ -59,6 +79,8 @@ class ActionSummary {
 }
 
 data class ActionsLocalSummaryState(@get:XMap(entryTagName = "e", keyAttributeName = "n") @get:Property(surroundWithTag = false) internal val data: MutableMap<String, ActionSummary> = HashMap())
+
+data class ActionsTotalSummary(var maxUsageCount: Int = 0, var minUsageCount: Int = 0)
 
 private class ActionsLocalSummaryListener : AnActionListener {
   private val service = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)

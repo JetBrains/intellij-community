@@ -41,7 +41,7 @@ final class GithubRepositoryType extends BaseRepositoryType<GithubRepository> {
   @Override
   public TaskRepositoryEditor createEditor(GithubRepository repository,
                                            Project project,
-                                           Consumer<GithubRepository> changeListener) {
+                                           Consumer<? super GithubRepository> changeListener) {
     return new GithubRepositoryEditor(project, repository, changeListener);
   }
 

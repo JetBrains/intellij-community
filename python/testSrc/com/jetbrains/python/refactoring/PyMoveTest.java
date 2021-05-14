@@ -530,10 +530,5 @@ public class PyMoveTest extends PyTestCase {
       super.setUp();
       Registry.get("run.refactorings.in.model.branch").setValue(true, getTestRootDisposable());
     }
-
-    @Override
-    public void testModuleToNonPackage() {
-      super.testModuleToNonPackage();
-    }
   }
 }

@@ -26,7 +26,7 @@ final class AntKeymapExtension implements KeymapExtension {
   private static final Logger LOG = Logger.getInstance(AntKeymapExtension.class);
 
   @Override
-  public KeymapGroup createGroup(final Condition<AnAction> filtered, Project project) {
+  public KeymapGroup createGroup(final Condition<? super AnAction> filtered, Project project) {
     final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<>();
     final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(AntBundle.message("ant.targets.group.title"),
                                                                             AllIcons.Nodes.KeymapAnt);

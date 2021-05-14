@@ -45,7 +45,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
 
     override fun getItemClass() = ReadonlySource::class.java
 
-    override fun edit(item: ReadonlySource, mutator: Function<ReadonlySource, ReadonlySource>, isAdd: Boolean) {
+    override fun edit(item: ReadonlySource, mutator: Function<in ReadonlySource, out ReadonlySource>, isAdd: Boolean) {
       var urlField: TextFieldWithBrowseButton by notNull()
       val panel = panel {
         row(IcsBundle.message("readonly.sources.configuration.url.label")) {

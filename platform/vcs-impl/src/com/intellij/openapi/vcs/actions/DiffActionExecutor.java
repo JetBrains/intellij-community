@@ -81,12 +81,12 @@ public abstract class DiffActionExecutor {
     DiffContent diffContent;
     if (fileRevision instanceof ByteBackedContentRevision) {
       byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
-      if (content == null) throw new VcsException(VcsBundle.message("diff.action.executor.error.failed.to.load.content"));
+      if (content == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
       diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());
     }
     else {
       String content = fileRevision.getContent();
-      if (content == null) throw new VcsException(VcsBundle.message("diff.action.executor.error.failed.to.load.content"));
+      if (content == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
       diffContent = contentFactory.create(myProject, content, fileRevision.getFile());
     }
 

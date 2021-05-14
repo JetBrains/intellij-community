@@ -29,9 +29,11 @@ public final class ContainerUtilRt {
   }
 
   /**
-   * Use only for {@link Iterable}, for {@link Collection} please use {@link LinkedList#LinkedList(Collection)} directly.
+   * @deprecated isn't used in the platform and the plugins anymore; use {@link LinkedList#LinkedList(Collection)} if {@code elements} is
+   * instance of {@link Collection}
    */
   @NotNull
+  @Deprecated
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
     return copy(new LinkedList<T>(), elements);

@@ -41,7 +41,7 @@ public final class OSFileAssociationPreferences implements PersistentStateCompon
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  public void updateFileTypes(List<FileType> fileTypes) {
+  public void updateFileTypes(List<? extends FileType> fileTypes) {
     fileTypeNames.clear();
     fileTypeNames.addAll(ContainerUtil.map(fileTypes, fileType -> fileType.getName()));
     updateIdeLocationHash();

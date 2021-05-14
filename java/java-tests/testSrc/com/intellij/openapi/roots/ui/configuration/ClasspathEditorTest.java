@@ -8,6 +8,7 @@ import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,12 @@ public class ClasspathEditorTest extends LightPlatformTestCase {
 
     ClasspathEditor e = new ClasspathEditor(new ModuleConfigurationStateImpl(project, new DefaultModulesProvider(project)) {
       @Override
-      public @NotNull ModifiableRootModel getRootModel() {
+      public ModifiableRootModel getModifiableRootModel() {
+        return uiRootModel;
+      }
+
+      @Override
+      public ModuleRootModel getCurrentRootModel() {
         return uiRootModel;
       }
     });

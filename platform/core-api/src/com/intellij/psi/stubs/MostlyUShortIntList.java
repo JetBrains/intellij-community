@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.util.containers.UnsignedShortArrayList;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 import java.util.function.IntUnaryOperator;
 
 /** An int list where most values are in range 0..2^16 */
-class MostlyUShortIntList implements IntUnaryOperator {
+final class MostlyUShortIntList implements IntUnaryOperator {
   private static final int IN_MAP = Character.MAX_VALUE;
   private final UnsignedShortArrayList myList;
-  private TIntIntHashMap myMap;
+  private Int2IntOpenHashMap myMap;
 
   MostlyUShortIntList(int initialCapacity) {
     myList = new UnsignedShortArrayList(initialCapacity);
@@ -32,8 +32,10 @@ class MostlyUShortIntList implements IntUnaryOperator {
     myList.setQuick(index, value);
   }
 
-  private TIntIntHashMap initMap() {
-    if (myMap == null) myMap = new TIntIntHashMap();
+  private Int2IntOpenHashMap initMap() {
+    if (myMap == null) {
+      myMap = new Int2IntOpenHashMap();
+    }
     return myMap;
   }
 
@@ -54,7 +56,7 @@ class MostlyUShortIntList implements IntUnaryOperator {
   void trimToSize() {
     myList.trimToSize();
     if (myMap != null) {
-      myMap.trimToSize();
+      myMap.trim();
     }
   }
 }

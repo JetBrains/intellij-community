@@ -37,6 +37,14 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   @Override
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint == null ||
+           nameHint.equals(getConstructorName(psiClass)) ||
+           nameHint.equals(getStaticConstructorName(psiAnnotation));
+  }
+
+  @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (!validateAnnotationOnRightType(psiClass, builder)) {

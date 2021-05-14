@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +10,9 @@ import org.cef.network.CefRequest;
 import org.cef.network.CefResponse;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 
 /**
@@ -18,7 +20,7 @@ import java.nio.charset.Charset;
  *
  * @author tav
  */
-class JBCefLoadHtmlResourceHandler extends CefResourceHandlerAdapter {
+final class JBCefLoadHtmlResourceHandler extends CefResourceHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(JBCefLoadHtmlResourceHandler.class.getName());
 
   @NotNull private final InputStream myInputStream;

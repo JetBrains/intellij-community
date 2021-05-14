@@ -19,6 +19,7 @@ internal object GrazieFUSCounter {
   fun typoFound(typo: Typo) = log("typo.found") {
     addData("id", typo.info.rule.id)
     addData("fixes", typo.fixes.size)
+    addProject(typo.location.element?.project)
   }
 
   private fun log(eventId: String, body: FeatureUsageData.() -> Unit) {

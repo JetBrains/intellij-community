@@ -75,7 +75,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<T> task) {
+  public static <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<? extends T> task) {
     return AsyncExecutionService.getService().buildNonBlockingReadAction(task);
   }
 }

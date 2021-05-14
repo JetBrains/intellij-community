@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.Activity;
@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -36,7 +37,10 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DirtyUI;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
@@ -138,6 +142,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     ApplicationManager.getApplication().getMessageBus().connect(myManager).subscribe(LafManagerListener.TOPIC, laf -> {
       colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     });
+
+    Disposer.register(parentDisposable, () -> setDropTarget(null));
   }
 
   @NotNull
@@ -418,20 +424,16 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   void updateFileColor(@NotNull VirtualFile file) {
     Collection<EditorWindow> windows = findWindows(file);
     for (EditorWindow window : windows) {
-      int index = window.findEditorIndex(window.findFileComposite(file));
-      LOG.assertTrue(index != -1);
-      window.setForegroundAt(index, getManager().getFileColor(file));
-      window.setTextAttributes(index, getManager().isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null);
-    }
-  }
-
-  void updateFileStyle(@NotNull VirtualFile file) {
-    Collection<EditorWindow> windows = findWindows(file);
-    for (EditorWindow window : windows) {
       EditorWithProviderComposite composite = window.findFileComposite(file);
       int index = window.findEditorIndex(composite);
       LOG.assertTrue(index != -1);
-      window.setStyleAt(index, composite != null && composite.isPreview() ? SimpleTextAttributes.STYLE_ITALIC : -1);
+      window.setForegroundAt(index, getManager().getFileColor(file));
+      TextAttributes attributes = getManager().isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
+      if (composite != null && composite.isPreview()) {
+        var italic = new TextAttributes(null, null, null, null, Font.ITALIC);
+        attributes = (attributes == null) ? italic : TextAttributes.merge(italic, attributes);
+      }
+      window.setTextAttributes(index, attributes);
     }
   }
 
@@ -1026,6 +1028,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           JPanel panel = new JPanel(new BorderLayout());
           panel.setOpaque(false);
           Splitter splitter = new OnePixelSplitter(orientation, proportion, 0.1f, 0.9f);
+          splitter.setHonorComponentsMinimumSize(false);
           panel.add(splitter, BorderLayout.CENTER);
           splitter.setFirstComponent(firstComponent);
           splitter.setSecondComponent(secondComponent);
@@ -1112,6 +1115,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @Nullable
   public EditorWindow openInRightSplit(@NotNull VirtualFile file) {
+    return openInRightSplit(file, true);
+  }
+
+  @Nullable
+  public EditorWindow openInRightSplit(@NotNull VirtualFile file, boolean requestFocus) {
     EditorWindow window = getCurrentWindow();
 
     if (window == null) {
@@ -1124,13 +1132,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         //reuse
         EditorWindow rightSplitWindow = findWindowWith(component);
         if (rightSplitWindow != null) {
-          myManager.openFileWithProviders(file, true, rightSplitWindow);
+          myManager.openFileWithProviders(file, requestFocus, rightSplitWindow);
           return rightSplitWindow;
         }
       }
     }
 
-    return window.split(SwingConstants.VERTICAL, true, file, true);
+    return window.split(SwingConstants.VERTICAL, true, file, requestFocus);
   }
 
   public static boolean focusDefaultComponentInSplittersIfPresent(@NotNull Project project) {

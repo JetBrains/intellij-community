@@ -429,6 +429,12 @@ public final class ReorderingUtils {
       if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
         return false;
       }
+      if (element instanceof PsiSwitchExpression) {
+        // We cannot correctly process possible NPE in switch selector expression inside 
+        // ConditionCoveredByFurtherConditionInspection.computeOperandValues, 
+        // so let's conservatively assume that the exception is possible
+        return false;
+      }
       if (element instanceof PsiReferenceExpression) {
         PsiReferenceExpression ref = (PsiReferenceExpression)element;
         if (!allowNpe) {

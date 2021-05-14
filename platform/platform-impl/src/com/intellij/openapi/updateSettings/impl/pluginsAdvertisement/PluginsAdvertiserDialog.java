@@ -32,7 +32,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
 
   private final PluginManagerMain.PluginEnabler.HEADLESS pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
 
-  private Function<Boolean, Void> myFinishFunction;
+  private @NotNull Function<? super Boolean, Void> myFinishFunction;
 
   PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<? extends IdeaPluginDescriptor> customPlugins) {
     super(project);
@@ -68,7 +68,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     }
   }
 
-  public void setFinishFunction(@NotNull Function<Boolean, Void> finishFunction) {
+  public void setFinishFunction(@NotNull Function<? super Boolean, Void> finishFunction) {
     myFinishFunction = finishFunction;
   }
 

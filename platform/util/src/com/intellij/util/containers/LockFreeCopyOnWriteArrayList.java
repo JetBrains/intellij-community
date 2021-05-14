@@ -646,6 +646,8 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
   public boolean addAll(@NotNull Collection<? extends E> c) {
     if (c.isEmpty()) return false;
     Object[] cs = c.toArray();
+    //could still be empty for concurrent collection
+    //noinspection ConstantConditions
     if (cs.length == 0) {
       return false;
     }

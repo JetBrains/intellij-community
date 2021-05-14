@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
@@ -49,7 +49,7 @@ public final class SmartFMap<K,V> implements Map<K,V> {
       }
     }
     if (array.length == 2 * ARRAY_THRESHOLD) {
-      Map<Object,Object> map = new THashMap<>();
+      Map<Object,Object> map = new HashMap<>();
       for (int i = 0; i < array.length; i += 2) {
         map.put(array[i], array[i + 1]);
       }
@@ -65,7 +65,7 @@ public final class SmartFMap<K,V> implements Map<K,V> {
 
   public SmartFMap<K, V> minus(@NotNull K key) {
     if (myMap instanceof Map) {
-      Map<K, V> newMap = new THashMap<>(asMap());
+      Map<K, V> newMap = new HashMap<>(asMap());
       newMap.remove(key);
       if (newMap.size() <= ARRAY_THRESHOLD) {
         Object[] newArray = new Object[newMap.size() * 2];

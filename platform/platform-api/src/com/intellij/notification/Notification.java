@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -364,7 +365,7 @@ public class Notification {
     hideBalloon(myBalloonRef.getAndSet(null));
   }
 
-  private static void hideBalloon(@Nullable WeakReference<Balloon> balloonRef) {
+  private static void hideBalloon(@Nullable Reference<? extends Balloon> balloonRef) {
     if (balloonRef == null) return;
     var balloon = balloonRef.get();
     if (balloon == null) return;

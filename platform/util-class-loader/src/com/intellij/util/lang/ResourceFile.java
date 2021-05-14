@@ -4,14 +4,13 @@ package com.intellij.util.lang;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
-public interface ResourceFile extends Closeable {
+public interface ResourceFile {
   @Nullable Attributes loadManifestAttributes() throws IOException;
 
   @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() throws IOException;
@@ -21,6 +20,6 @@ public interface ResourceFile extends Closeable {
   @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException;
 
-  void processResources(@NotNull String dir, @NotNull Predicate<String> nameFilter, @NotNull BiConsumer<String, InputStream> consumer)
+  void processResources(@NotNull String dir, @NotNull Predicate<? super String> nameFilter, @NotNull BiConsumer<? super String, ? super InputStream> consumer)
     throws IOException;
 }

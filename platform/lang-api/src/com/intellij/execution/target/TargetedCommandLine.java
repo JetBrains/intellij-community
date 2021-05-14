@@ -31,14 +31,14 @@ public final class TargetedCommandLine {
   @NotNull private final TargetValue<String> myWorkingDirectory;
   @NotNull private final TargetValue<String> myInputFilePath;
   @NotNull private final Charset myCharset;
-  @NotNull private final List<TargetValue<String>> myParameters;
+  private final @NotNull List<? extends TargetValue<String>> myParameters;
   @NotNull private final Map<String, TargetValue<String>> myEnvironment;
 
   public TargetedCommandLine(@NotNull TargetValue<String> exePath,
                              @NotNull TargetValue<String> workingDirectory,
                              @NotNull TargetValue<String> inputFilePath,
                              @NotNull Charset charset,
-                             @NotNull List<TargetValue<String>> parameters,
+                             @NotNull List<? extends TargetValue<String>> parameters,
                              @NotNull Map<String, TargetValue<String>> environment) {
     myExePath = exePath;
     myWorkingDirectory = workingDirectory;

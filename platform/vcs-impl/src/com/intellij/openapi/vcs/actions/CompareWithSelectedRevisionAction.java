@@ -267,13 +267,13 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
       }
 
       @Override
-      protected int convertIndexToModel(int viewIndex) {
-        return table.convertRowIndexToModel(viewIndex);
+      protected int getElementCount() {
+        return revisions.size();
       }
 
       @Override
-      protected Object @NotNull [] getAllElements() {
-        return revisions.toArray();
+      protected Object getElementAt(int viewIndex) {
+        return revisions.get(table.convertRowIndexToModel(viewIndex));
       }
 
       @Override

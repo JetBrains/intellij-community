@@ -1113,8 +1113,8 @@ public class GeneratedParserUtilBase {
 
   private static final int MAX_CHILDREN_IN_TREE = 10;
   private static void checkSiblings(IElementType chunkType,
-                                    ArrayDeque<Pair<PsiBuilder.Marker, PsiBuilder.Marker>> parens,
-                                    ArrayDeque<Pair<PsiBuilder.Marker, Integer>> siblings) {
+                                    Deque<Pair<PsiBuilder.Marker, PsiBuilder.Marker>> parens,
+                                    Deque<Pair<PsiBuilder.Marker, Integer>> siblings) {
     main:
     while (!siblings.isEmpty()) {
       Pair<PsiBuilder.Marker, PsiBuilder.Marker> parenPair = parens.peek();

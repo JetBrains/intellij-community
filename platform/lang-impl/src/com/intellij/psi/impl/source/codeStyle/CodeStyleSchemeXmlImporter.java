@@ -38,7 +38,7 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
   public @Nullable CodeStyleScheme importScheme(@NotNull Project project,
                                                 @NotNull VirtualFile selectedFile,
                                                 @NotNull CodeStyleScheme currentScheme,
-                                                @NotNull SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
+                                                @NotNull SchemeFactory<? extends CodeStyleScheme> schemeFactory) throws SchemeImportException {
     Element rootElement = SchemeImportUtil.loadSchemeDom(selectedFile);
     Element schemeRoot = findSchemeRoot(rootElement);
     Pair<String, CodeStyleScheme> importPair =

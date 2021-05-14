@@ -1,3 +1,4 @@
+import sys
 from _typeshed import SupportsWrite
 from typing import (
     IO,
@@ -20,6 +21,11 @@ from typing import (
     Union,
     overload,
 )
+
+if sys.version_info >= (3, 8):
+    from typing import SupportsIndex
+else:
+    from typing_extensions import SupportsIndex
 
 _K = TypeVar("_K")
 _V = TypeVar("_V")
@@ -264,7 +270,7 @@ class Accept(ImmutableList[Tuple[str, float]]):
     provided: bool
     def __init__(self, values: Union[None, Accept, Iterable[Tuple[str, float]]] = ...) -> None: ...
     @overload
-    def __getitem__(self, key: int) -> Tuple[str, float]: ...
+    def __getitem__(self, key: SupportsIndex) -> Tuple[str, float]: ...
     @overload
     def __getitem__(self, s: slice) -> List[Tuple[str, float]]: ...
     @overload

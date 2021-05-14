@@ -16,9 +16,9 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.ide.highlighter.XmlFileHighlighter;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -55,7 +55,7 @@ public class XMLColorsPage implements ColorSettingsPage {
 
   @Override
   public Icon getIcon() {
-    return StdFileTypes.XML.getIcon();
+    return XmlFileType.INSTANCE.getIcon();
   }
 
   @Override

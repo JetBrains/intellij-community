@@ -20,7 +20,7 @@ class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData, Project
   override fun getTargetDataKey() = ProjectSdkData.KEY
 
   override fun importData(
-    toImport: MutableCollection<DataNode<ProjectSdkData>>,
+    toImport: Collection<DataNode<ProjectSdkData>>,
     projectData: ProjectData?,
     project: Project,
     modelsProvider: IdeModifiableModelsProvider
@@ -53,7 +53,7 @@ class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, Project?>
   override fun getTargetDataKey() = ModuleSdkData.KEY
 
   override fun importData(
-    toImport: MutableCollection<DataNode<ModuleSdkData>>,
+    toImport: Collection<DataNode<ModuleSdkData>>,
     projectData: ProjectData?,
     project: Project,
     modelsProvider: IdeModifiableModelsProvider

@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import kotlin.text.Regex.Companion.escapeReplacement
 
-fun getJsMdnDocumentation(qualifiedName: String, namespace: MdnApiNamespace): MdnSymbolDocumentation? {
+fun getJsMdnDocumentation(namespace: MdnApiNamespace, qualifiedName: String): MdnSymbolDocumentation? {
   assert(namespace == MdnApiNamespace.WebApi || namespace == MdnApiNamespace.GlobalObjects)
   val mdnQualifiedName = qualifiedName.let {
     when {
@@ -97,6 +97,23 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
     ?.let { (source, doc) -> MdnSymbolDocumentationAdapter(symbolName!!.toLowerCase(Locale.US), source, doc) }
 }
 
+fun getHtmlMdnTagDocumentation(namespace: MdnApiNamespace, tagName: String): MdnSymbolDocumentation? {
+  assert(namespace == MdnApiNamespace.Html || namespace == MdnApiNamespace.MathML || namespace == MdnApiNamespace.Svg)
+
+  return getTagDocumentation(namespace, tagName)?.let { (source, doc) ->
+    MdnSymbolDocumentationAdapter(tagName, source, doc)
+  }
+}
+
+fun getHtmlMdnAttributeDocumentation(namespace: MdnApiNamespace,
+                                     tagName: String?,
+                                     attributeName: String): MdnSymbolDocumentation? {
+  assert(namespace == MdnApiNamespace.Html || namespace == MdnApiNamespace.MathML || namespace == MdnApiNamespace.Svg)
+  return getAttributeDocumentation(namespace, tagName, attributeName)?.let { (source, doc) ->
+    MdnSymbolDocumentationAdapter(attributeName, source, doc)
+  }
+}
+
 private fun getTagDocumentation(namespace: MdnApiNamespace, tagName: String): Pair<MdnHtmlDocumentation, MdnHtmlElementDocumentation>? {
   val documentation = documentationCache[Pair(namespace, null)] as? MdnHtmlDocumentation ?: return null
   return documentation.tags[tagName.let { documentation.tagAliases[it] ?: it }]?.let { Pair(documentation, it) }
@@ -164,7 +181,7 @@ data class MdnJsDocumentation(override val lang: String,
                               val symbols: Map<String, MdnJsSymbolDocumentation>) : MdnDocumentation
 
 data class MdnCssDocumentation(override val lang: String,
-                               val atRules: Map<String, MdnCssBasicSymbolDocumentation>,
+                               val atRules: Map<String, MdnCssAtRuleSymbolDocumentation>,
                                val properties: Map<String, MdnCssPropertySymbolDocumentation>,
                                val pseudoClasses: Map<String, MdnCssBasicSymbolDocumentation>,
                                val pseudoElements: Map<String, MdnCssBasicSymbolDocumentation>,
@@ -207,6 +224,12 @@ data class MdnCssBasicSymbolDocumentation(override val url: String,
                                           override val doc: String?,
                                           override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
 
+data class MdnCssAtRuleSymbolDocumentation(override val url: String,
+                                           override val status: Set<MdnApiStatus>?,
+                                           override val doc: String?,
+                                           override val sections: Map<String, String>?,
+                                           val properties: Map<String, MdnCssPropertySymbolDocumentation>?) : MdnRawSymbolDocumentation
+
 data class MdnCssPropertySymbolDocumentation(override val url: String,
                                              override val status: Set<MdnApiStatus>?,
                                              override val doc: String?,
@@ -244,6 +267,17 @@ enum class MdnCssSymbolKind {
   Property {
     override fun decorateName(name: String): String = name
     override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.properties
+    override fun getSymbolDoc(documentation: MdnCssDocumentation, name: String): MdnSymbolDocumentation? {
+      if (name.startsWith("@")) {
+        val atRule = name.takeWhile { it != '.' }.substring(1).toLowerCase(Locale.US)
+        val propertyName = name.takeLastWhile { it != '.' }.toLowerCase(Locale.US)
+        documentation.atRules[atRule]?.properties?.get(propertyName)?.let {
+          return MdnSymbolDocumentationAdapter(name, documentation, it)
+        }
+        return super.getSymbolDoc(documentation, propertyName)
+      }
+      return super.getSymbolDoc(documentation, name)
+    }
   },
   PseudoClass {
     override fun decorateName(name: String): String = ":$name"

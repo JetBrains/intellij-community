@@ -85,6 +85,7 @@ public class BreakpointChooser {
 
     ComboBoxModel<BreakpointItem> model = new CollectionComboBoxModel<>(myBreakpointItems, breakpointItem);
     myComboBox = new ComboBox<>(model);
+    myComboBox.setSwingPopup(false);
 
     myComboBox.addPopupMenuListener(new PopupMenuListener() {
       @Override

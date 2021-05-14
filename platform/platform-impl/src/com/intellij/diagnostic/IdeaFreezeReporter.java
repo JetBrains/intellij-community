@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -32,6 +32,8 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final String MESSAGE_FILE_NAME = ".message";
   private static final String THROWABLE_FILE_NAME = ".throwable";
   public static final String APPINFO_FILE_NAME = ".appinfo";
+  // common sub-stack contains more than the specified % samples
+  private static final double COMMON_SUB_STACK_WEIGHT = 0.25;
 
   @SuppressWarnings("FieldMayBeFinal")
   private static boolean DEBUG = false;
@@ -265,10 +267,11 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static boolean isWithReadLock(ThreadInfo thread) {
     boolean read = false;
     for (StackTraceElement s : thread.getStackTrace()) {
-      if ("runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) {
+      String methodName = s.getMethodName();
+      if ("runReadAction".equals(methodName) || "tryRunReadAction".equals(methodName) || "insideReadAction".equals(methodName)) {
         read = true;
       }
-      if ("waitABit".equals(s.getMethodName())) {
+      if ("waitABit".equals(methodName)) {
         return false;
       }
     }
@@ -294,7 +297,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
     CallTreeNode root = CallTreeNode.buildTree(causeThreads, dumpInterval);
     int classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size();
-    CallTreeNode commonStackNode = root.findDominantCommonStack(causeThreads.size() * dumpInterval / 2);
+    CallTreeNode commonStackNode = root.findDominantCommonStack((long)(causeThreads.size() * dumpInterval * COMMON_SUB_STACK_WEIGHT));
     List<StackTraceElement> commonStack = commonStackNode != null ? commonStackNode.getStack() : null;
 
     boolean nonEdtCause = false;
@@ -354,7 +357,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     return ApplicationImpl.class.getName().equals(e.getClassName()) && "runEdtProgressWriteAction".equals(e.getMethodName());
   }
 
-  private static int countClassLoading(List<ThreadInfo> causeThreads) {
+  private static int countClassLoading(List<? extends ThreadInfo> causeThreads) {
     return (int)causeThreads.stream().filter(t -> Arrays.stream(t.getStackTrace()).anyMatch(IdeaFreezeReporter::isClassLoading)).count();
   }
 
@@ -380,7 +383,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       myThreadInfo = info;
     }
 
-    public static @NotNull CallTreeNode buildTree(List<ThreadInfo> threadInfos, long time) {
+    public static @NotNull CallTreeNode buildTree(List<? extends ThreadInfo> threadInfos, long time) {
       CallTreeNode root = new CallTreeNode(null, null, 0, null);
       for (ThreadInfo thread : threadInfos) {
         CallTreeNode node = root;

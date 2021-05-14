@@ -126,10 +126,9 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   }
 
   @Override
+  @Nullable
   public ASTNode getFirstTreeNode() {
-    ASTNode result = AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
-    assert result != null;
-    return result;
+    return AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
   }
 
   public void setChildAttributes(final ChildAttributes childAttributes) {

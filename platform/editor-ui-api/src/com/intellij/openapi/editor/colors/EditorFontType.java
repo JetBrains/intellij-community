@@ -28,6 +28,13 @@ public enum EditorFontType {
   }
 
   /**
+   * @return a plain font according to the global colors scheme
+   */
+  public static @NotNull Font getGlobalPlainFont() {
+    return PLAIN.getGlobalFont();
+  }
+
+  /**
    * @return a font of this type according to the global colors scheme
    */
   public @NotNull Font getGlobalFont() {

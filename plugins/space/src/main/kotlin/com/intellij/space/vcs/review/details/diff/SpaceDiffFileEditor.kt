@@ -27,12 +27,15 @@ internal class SpaceDiffFileEditor(project: Project, spaceDiffFile: SpaceDiffFil
     Disposer.register(this, Disposable { editorLifetime.terminate() })
     Disposer.register(this, diffProcessor)
 
-    editorLifetime.bind(spaceDiffFile.changesVm) { changesVm: SpaceReviewChangesVm ->
-      val chainBuilder = SpaceDiffRequestChainBuilder(lifetime, project, spaceDiffFile.diffVm)
+    editorLifetime.bind(spaceDiffFile.spaceDiffFileData) { spaceDiffFileData ->
+      val (changesVmProperty, spaceDiffVm) = spaceDiffFileData ?: return@bind
+      bind(changesVmProperty) { changesVm: SpaceReviewChangesVm ->
+        val chainBuilder = SpaceDiffRequestChainBuilder(lifetime, project, spaceDiffVm)
 
-      bind(changesVm.changes) {
-        bind(changesVm.selectedChanges) { selectedChange ->
-          diffProcessor.chain = chainBuilder.getRequestChain(selectedChange)
+        bind(changesVm.changes) {
+          bind(changesVm.selectedChanges) { selectedChange ->
+            diffProcessor.chain = chainBuilder.getRequestChain(selectedChange)
+          }
         }
       }
     }

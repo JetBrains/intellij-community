@@ -399,7 +399,7 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
 
-  @Nullable
+  @NotNull
   public abstract List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull PsiReference reference);
 
   @NotNull
@@ -445,9 +445,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createPushDownMethodFix();
 
   @NotNull
-  public IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
-    throw new AbstractMethodError();
-  }
+  public abstract IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod);
 
   @NotNull
   public abstract IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases);
@@ -481,11 +479,11 @@ public abstract class QuickFixFactory {
   /**
    * @param subClass class that should be added to parents permits list
    * @param superClass sealed parent class from subclasses' extends / implements clause
-   * @return
    */
   @NotNull
   public abstract IntentionAction createAddToPermitsListFix(@NotNull PsiClass subClass, @NotNull PsiClass superClass);
 
+  @NotNull
   public abstract IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName);
 
   /**
@@ -493,7 +491,6 @@ public abstract class QuickFixFactory {
    * possibly mark extending class with one of sealed subclass modifiers (final, sealed, non-sealed)
    *
    * @param subclassRef reference in permits list of a parent class
-   * @return
    */
   public abstract @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
                                                                             @NotNull PsiClass parentClass, @NotNull PsiClass subClass);

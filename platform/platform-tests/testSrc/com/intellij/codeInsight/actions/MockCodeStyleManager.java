@@ -38,7 +38,7 @@ public class MockCodeStyleManager extends CodeStyleManager {
   }
 
   @Override
-  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) throws IncorrectOperationException {
     ChangedLines[] formattedLines = new ChangedLines[ranges.size()];
     int i = 0;
     for (TextRange range : ranges) {

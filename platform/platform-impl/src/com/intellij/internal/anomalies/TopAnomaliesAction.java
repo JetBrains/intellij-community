@@ -186,7 +186,7 @@ public class TopAnomaliesAction extends ActionGroup {
     }
   }
 
-  private static <K, V extends Integer> String getChange(Set<Pair<K, V>> old, K key, int newResult) {
+  private static <K, V extends Integer> String getChange(Set<? extends Pair<K, V>> old, K key, int newResult) {
     for (Pair<K, V> oldPair : old) {
       if (oldPair.first == key) {
         int oldResult = oldPair.second.intValue();

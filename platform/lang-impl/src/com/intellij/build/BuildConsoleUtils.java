@@ -7,10 +7,11 @@ import com.intellij.build.issue.BuildIssueQuickFix;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -58,7 +59,9 @@ public final class BuildConsoleUtils {
     for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
       listenerMap.put(quickFix.getId(), (notification, event) -> {
         BuildView buildView = findBuildView(consoleView);
-        quickFix.runQuickFix(project, buildView == null ? consoleView : buildView);
+        Component component = buildView == null ? consoleView : buildView;
+        DataContext dataContext = DataManager.getInstance().getDataContext(component);
+        quickFix.runQuickFix(project, dataContext);
       });
     }
     NotificationListener listener = new NotificationListener.Adapter() {
@@ -139,26 +142,26 @@ public final class BuildConsoleUtils {
 
   @ApiStatus.Experimental
   @NotNull
-  public static DataProvider getDataProvider(@NotNull Object buildId, @NotNull AbstractViewManager buildListener) {
+  public static DataContext getDataContext(@NotNull Object buildId, @NotNull AbstractViewManager buildListener) {
     BuildView buildView = buildListener.getBuildView(buildId);
-    return (buildView != null) ? buildView : dataId -> null;
+    return (buildView != null) ? DataManager.getInstance().getDataContext(buildView) : DataContext.EMPTY_CONTEXT;
   }
 
   @ApiStatus.Experimental
   @NotNull
-  public static DataProvider getDataProvider(@NotNull Object buildId, @NotNull BuildProgressListener buildListener) {
-    DataProvider provider;
+  public static DataContext getDataContext(@NotNull Object buildId, @NotNull BuildProgressListener buildListener) {
+    DataContext dataContext;
     if (buildListener instanceof BuildView) {
-      provider = (BuildView)buildListener;
+      dataContext = DataManager.getInstance().getDataContext((BuildView)buildListener);
     }
     else if (buildListener instanceof AbstractViewManager) {
-      provider = getDataProvider(buildId, (AbstractViewManager)buildListener);
+      dataContext = getDataContext(buildId, (AbstractViewManager)buildListener);
     }
     else {
-      LOG.error("BuildView or AbstractViewManager expected to obtain proper DataProvider for build console quick fixes");
-      provider = dataId -> null;
+      LOG.error("BuildView or AbstractViewManager expected to obtain proper DataContext for build console quick fixes");
+      dataContext = DataContext.EMPTY_CONTEXT;
     }
-    return provider;
+    return dataContext;
   }
 
 

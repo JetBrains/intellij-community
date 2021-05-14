@@ -10,10 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.presentation.CodeStyleBoundedIntegerSettingPresentation;
-import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentation;
-import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
-import com.intellij.psi.codeStyle.presentation.CodeStyleSoftMarginsPresentation;
+import com.intellij.psi.codeStyle.presentation.*;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.util.containers.MultiMap;
@@ -35,6 +32,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     new CommaSeparatedIntegersField(null, 0, CodeStyleConstraints.MAX_RIGHT_MARGIN,
                                     ApplicationBundle.message("settings.code.style.visual.guides.optional"));
   private final JComboBox<String> myWrapOnTypingCombo = new ComboBox<>(getInstance().WRAP_ON_TYPING_OPTIONS);
+  private final CommaSeparatedIdentifiersField myCommaSeparatedIdentifiersField = new CommaSeparatedIdentifiersField();
 
   public WrappingAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
@@ -87,6 +85,9 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
         else if (setting instanceof CodeStyleSoftMarginsPresentation) {
           addSoftMarginsOption(fieldName, uiName, group.name);
           showOption(fieldName);
+        }
+        else if (setting instanceof CodeStyleCommaSeparatedIdentifiersPresentation) {
+          addCustomOption(new CommaSeparatedIdentifiersOption(fieldName, uiName, group.name));
         }
         else {
           addOption(fieldName, uiName, group.name);
@@ -172,6 +173,34 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     }
   }
 
+  private class CommaSeparatedIdentifiersOption extends FieldOption {
+
+    protected CommaSeparatedIdentifiersOption(@NotNull String optionName,
+                                              @NotNull String title,
+                                              @Nullable String groupName) {
+      super(null, optionName, title, groupName, null, null);
+    }
+
+    @Override
+    public Object getValue(CodeStyleSettings settings) {
+      try {
+        return field.get(getSettings(settings));
+      }
+      catch (IllegalAccessException e) {
+        return null;
+      }
+    }
+
+    @Override
+    public void setValue(Object value, CodeStyleSettings settings) {
+      try {
+        field.set(getSettings(settings), value);
+      }
+      catch (IllegalAccessException ignored) {
+      }
+    }
+  }
+
   private static List<Integer> castToIntList(@Nullable Object value) {
     if (value instanceof List && ((List<?>)value).size() > 0 && ((List<?>)value).get(0) instanceof Integer) {
       //noinspection unchecked
@@ -226,6 +255,13 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       }
       return myWrapOnTypingCombo;
     }
+    else if (node.getKey() instanceof CommaSeparatedIdentifiersOption) {
+      myCommaSeparatedIdentifiersField.setValueName(node.getText());
+      String currValue = (String)node.getValue();
+      myCommaSeparatedIdentifiersField.setText(currValue);
+      myCommaSeparatedIdentifiersField.getEditor().setDefaultValue(currValue);
+      return myCommaSeparatedIdentifiersField;
+    }
     return super.getCustomNodeEditor(node);
   }
 
@@ -238,6 +274,9 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     else if (customEditor == myWrapOnTypingCombo) {
       int i = myWrapOnTypingCombo.getSelectedIndex();
       return i >= 0 ? getInstance().WRAP_ON_TYPING_OPTIONS[i] : null;
+    }
+    else if (customEditor == myCommaSeparatedIdentifiersField) {
+      return myCommaSeparatedIdentifiersField.getEditor().getValue();
     }
     return super.getCustomNodeEditorValue(customEditor);
   }

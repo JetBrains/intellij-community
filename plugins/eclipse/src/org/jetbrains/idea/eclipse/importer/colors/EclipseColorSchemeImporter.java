@@ -120,7 +120,7 @@ public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsSc
   public EditorColorsScheme importScheme(@NotNull Project project,
                                          @NotNull VirtualFile selectedFile,
                                          @NotNull EditorColorsScheme currentScheme,
-                                         @NotNull SchemeFactory<EditorColorsScheme> schemeFactory) throws SchemeImportException {
+                                         @NotNull SchemeFactory<? extends EditorColorsScheme> schemeFactory) throws SchemeImportException {
     String themeName = readSchemeName(selectedFile);
     if (themeName != null) {
       EditorColorsScheme colorsScheme = schemeFactory.createNewScheme(themeName);

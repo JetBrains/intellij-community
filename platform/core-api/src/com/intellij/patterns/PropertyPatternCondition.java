@@ -31,7 +31,7 @@ public abstract class PropertyPatternCondition<T,P> extends PatternConditionPlus
   }
 
   @Override
-  public boolean processValues(T t, ProcessingContext context, PairProcessor<P, ProcessingContext> processor) {
+  public boolean processValues(T t, ProcessingContext context, PairProcessor<? super P, ? super ProcessingContext> processor) {
     return processor.process(getPropertyValue(t), context);
   }
 

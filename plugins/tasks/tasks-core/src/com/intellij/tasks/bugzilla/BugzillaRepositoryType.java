@@ -30,7 +30,7 @@ public class BugzillaRepositoryType extends TaskRepositoryType<BugzillaRepositor
 
   @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(BugzillaRepository repository, Project project, Consumer<BugzillaRepository> changeListener) {
+  public TaskRepositoryEditor createEditor(BugzillaRepository repository, Project project, Consumer<? super BugzillaRepository> changeListener) {
     return new BugzillaRepositoryEditor(project, repository, changeListener);
   }
 

@@ -216,7 +216,7 @@ private compound_list_recover ::= !(elif | else | then | fi)
 private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
   pin=1
 } // todo with pin
-private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '\n') newlines
+private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '|&' | '\n') newlines
 
 function_definition ::= &(function | word '(') function_definition_inner {
   mixin="com.intellij.sh.psi.impl.ShFunctionDefinitionMixin"

@@ -4,7 +4,6 @@ package com.intellij.ui.jcef;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -12,7 +11,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CountDownLatch;
 
-import static com.intellij.ui.jcef.JBCefTestHelper.loadAndWait;
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
 /**
  * Tests https://youtrack.jetbrains.com/issue/IDEA-246306
@@ -58,7 +58,7 @@ public class IDEA246306Test {
         return null;
       });
 
-      loadAndWait(this, () -> SwingUtilities.invokeLater(() -> {
+      invokeAndWaitForLoad(this, () -> SwingUtilities.invokeLater(() -> {
         JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
         frame.setSize(640, 480);
         frame.setLocationRelativeTo(null);
@@ -66,7 +66,7 @@ public class IDEA246306Test {
         frame.setVisible(true);
       }));
 
-      loadAndWait(latch, () -> SwingUtilities.invokeLater(() -> {
+      invokeAndWaitForLatch(latch, () -> SwingUtilities.invokeLater(() -> {
         getCefBrowser().executeJavaScript(myQuery.inject("'" + this + "'"), getCefBrowser().getURL(), 0);
       }));
     }

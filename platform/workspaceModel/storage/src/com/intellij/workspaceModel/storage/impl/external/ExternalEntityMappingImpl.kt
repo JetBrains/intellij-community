@@ -102,10 +102,27 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>, replaceMap: HashBiMap<EntityId, EntityId>) {
+    val initialData = HashMap<EntityId, T>()
+    //todo there will be no need to remember initial data if we merge events like we do in WorkspaceBuilderChangeLog
     other.indexLog.forEach { indexEntry ->
       when (indexEntry) {
-        is IndexLogRecord.Add<*> -> getTargetId(replaceMap, indexEntry.id)?.let { add(it, indexEntry.data as T) }
-        is IndexLogRecord.Remove -> getTargetId(replaceMap, indexEntry.id)?.let { remove(it) }
+        is IndexLogRecord.Add<*> -> getTargetId(replaceMap, indexEntry.id)?.let { entityId ->
+          val oldData = index[entityId]
+          if (oldData != null) {
+            initialData.putIfAbsent(entityId, oldData)
+          }
+          @Suppress("UNCHECKED_CAST")
+          add(entityId, indexEntry.data as T)
+        }
+        is IndexLogRecord.Remove -> getTargetId(replaceMap, indexEntry.id)?.let { entityId ->
+          val initialValue = initialData.remove(entityId)
+          if (initialValue != null) {
+            add(entityId, initialValue)
+          }
+          else {
+            remove(entityId)
+          }
+        }
         IndexLogRecord.Clear -> clearMapping()
       }
     }

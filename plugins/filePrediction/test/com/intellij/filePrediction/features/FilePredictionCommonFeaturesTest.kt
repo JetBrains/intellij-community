@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features
 
+import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramFeatures
 import com.intellij.filePrediction.references.ExternalReferencesResult.Companion.FAILED_COMPUTATION
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
@@ -36,7 +37,7 @@ class FilePredictionCommonFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtur
     val prevFile = myFixture.addFileToProject(prevPath, "PREVIOUS FILE")
     val nextFile = myFixture.addFileToProject(newPath, "NEXT FILE")
 
-    val emptyCache = FilePredictionFeaturesCache(FAILED_COMPUTATION)
+    val emptyCache = FilePredictionFeaturesCache(FAILED_COMPUTATION, FilePredictionNGramFeatures(emptyMap()))
     val actual: MutableMap<String, FilePredictionFeature> = hashMapOf()
     for (provider in providers) {
       val features = provider.calculateFileFeatures(
@@ -73,7 +74,7 @@ class FilePredictionCommonFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtur
     val nextFile = myFixture.addFileToProject(newPath, "NEXT FILE")
     configurator.configure(myFixture.project, myModule)
 
-    val emptyCache = FilePredictionFeaturesCache(FAILED_COMPUTATION)
+    val emptyCache = FilePredictionFeaturesCache(FAILED_COMPUTATION, FilePredictionNGramFeatures(emptyMap()))
     val actual = provider.calculateFileFeatures(
       myFixture.project, nextFile.virtualFile, null, emptyCache
     )

@@ -25,12 +25,12 @@ public interface ProjectDataManager {
     return ApplicationManager.getApplication().getService(ProjectDataManager.class);
   }
 
-  void importData(@NotNull Collection<DataNode<?>> nodes,
+  void importData(@NotNull Collection<? extends DataNode<?>> nodes,
                   @NotNull Project project,
                   @NotNull IdeModifiableModelsProvider modelsProvider,
                   boolean synchronous);
 
-  <T> void importData(@NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous);
+  <T> void importData(@NotNull Collection<? extends DataNode<T>> nodes, @NotNull Project project, boolean synchronous);
 
   <T> void importData(@NotNull DataNode<T> node,
                       @NotNull Project project,

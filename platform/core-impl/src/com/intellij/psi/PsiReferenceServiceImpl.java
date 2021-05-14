@@ -41,7 +41,7 @@ public class PsiReferenceServiceImpl extends PsiReferenceService {
 
   private static final Set<String> ourReportedReferenceClasses = ContainerUtil.newConcurrentSet();
 
-  private static void assertReferencesHaveSameElement(@NotNull PsiElement element, @NotNull List<PsiReference> references) {
+  private static void assertReferencesHaveSameElement(@NotNull PsiElement element, @NotNull List<? extends PsiReference> references) {
     for (PsiReference reference : references) {
       PsiElement referenceElement = reference.getElement();
       if (referenceElement == element) {

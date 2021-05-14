@@ -38,7 +38,7 @@ public abstract class ByteBufferWrapper {
   @Nullable
   public abstract ByteBuffer getCachedBuffer();
 
-  public final void markDirty() {
+  public void markDirty() throws IOException {
     if (!myDirty) myDirty = true;
   }
 

@@ -63,7 +63,7 @@ public final class PostfixTemplateLogger {
       if (result.getFirst() != null && result.getSecond() != null) {
         final PluginInfo templateInfo = PluginInfoDetectorKt.getPluginInfo(result.getFirst().getClass());
         final PluginInfo providerInfo = PluginInfoDetectorKt.getPluginInfo(result.getSecond().getClass());
-        context.setPluginInfo(templateInfo);
+        context.setPayload(PLUGIN_INFO, templateInfo);
         return templateInfo.isDevelopedByJetBrains() && providerInfo.isDevelopedByJetBrains() ?
                ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
       }

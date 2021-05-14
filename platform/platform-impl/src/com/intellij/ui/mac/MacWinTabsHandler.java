@@ -4,15 +4,18 @@ package com.intellij.ui.mac;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBDimension;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
@@ -21,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Method;
 
 /**
  * @author Alexander Lobas
@@ -119,7 +123,16 @@ public class MacWinTabsHandler {
       if (frames.length == 1) {
         updateTabBar(frames[0], 0);
 
-        if (newFrame != null) {
+        if (newFrame == null) {
+          ProjectFrameHelper helper = (ProjectFrameHelper)frames[0];
+          if (helper.isInFullScreen()) {
+            IdeFrameImpl frame = helper.getFrame();
+            if (frame != null) {
+              handleFullScreenResize(frame);
+            }
+          }
+        }
+        else {
           Foundation.executeOnMainThread(true, false, () -> {
             addTabObserver(MacUtil.getWindowFromJavaWindow(newFrame));
           });
@@ -135,6 +148,10 @@ public class MacWinTabsHandler {
 
       for (int i = 0; i < frames.length; i++) {
         ProjectFrameHelper helper = (ProjectFrameHelper)frames[i];
+        if (Disposer.isDisposed(helper)) {
+          visibleAndHeights[i] = 0;
+          continue;
+        }
         if (newFrame == helper.getFrame()) {
           newIndex = i;
         }
@@ -200,6 +217,9 @@ public class MacWinTabsHandler {
       frame = (JFrame)frameObject;
     }
     else if (frameObject instanceof ProjectFrameHelper) {
+      if (Disposer.isDisposed((Disposable)frameObject)) {
+        return;
+      }
       frame = ((ProjectFrameHelper)frameObject).getFrame();
     }
     if (frame == null) {
@@ -222,6 +242,35 @@ public class MacWinTabsHandler {
     parent.doLayout();
     parent.revalidate();
     parent.repaint();
+  }
+
+  private static void handleFullScreenResize(@NotNull Window window) {
+    try {
+      Object cPlatformWindow = MacUtil.getPlatformWindow(window);
+      if (cPlatformWindow != null) {
+        Class<?> windowClass = cPlatformWindow.getClass();
+
+        Method deliverMoveResize = ReflectionUtil
+          .getDeclaredMethod(windowClass, "deliverMoveResizeEvent", int.class, int.class, int.class, int.class, boolean.class);
+        if (deliverMoveResize == null) {
+          return;
+        }
+
+        DisplayMode displayMode = window.getGraphicsConfiguration().getDevice().getDisplayMode();
+
+        Foundation.executeOnMainThread(true, false, () -> {
+          try {
+            deliverMoveResize.invoke(cPlatformWindow, 0, 0, displayMode.getWidth(), displayMode.getHeight(), true);
+          }
+          catch (Throwable e) {
+            Logger.getInstance(MacWinTabsHandler.class).error(e);
+          }
+        });
+      }
+    }
+    catch (Throwable e) {
+      Logger.getInstance(MacWinTabsHandler.class).error(e);
+    }
   }
 
   private static int DEFAULT_WIN_TAB_HEIGHT() {

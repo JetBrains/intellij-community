@@ -18,7 +18,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     myVariantNameProvider = variantNameProvider;
   }
 
-  public void setToggleListener(Consumer<V> toggleListener) {
+  public void setToggleListener(Consumer<? super V> toggleListener) {
     myToggleListener = toggleListener;
   }
 
@@ -42,7 +42,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   private final Function<? super T, ? extends V> myGetter;
   private final BiConsumer<? super T, ? super V> mySetter;
   private Function<? super V, String> myVariantNameProvider;
-  private Consumer<V> myToggleListener;
+  private Consumer<? super V> myToggleListener;
 
   public VariantTagFragment(String id,
                             @Nls(capitalization = Nls.Capitalization.Sentence) String name,

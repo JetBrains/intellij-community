@@ -51,7 +51,7 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
   }
 
   @Override
-  public void importData(@NotNull final Collection<DataNode<BuildScriptClasspathData>> toImport,
+  public void importData(final @NotNull Collection<? extends DataNode<BuildScriptClasspathData>> toImport,
                          @Nullable final ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final IdeModifiableModelsProvider modelsProvider) {

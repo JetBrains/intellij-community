@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
@@ -12,19 +12,14 @@ final class VmOptionsGenerator {
       '-XX:+UseG1GC',
       '-XX:SoftRefLRUPolicyMSPerMB=50',
       '-XX:CICompilerCount=2',
-/* Android Studio: removed by Change Ie7351d92
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:-OmitStackTraceInFastThrow',
       '-ea',
-Android Studio: removed by Change Ie7351d92 */
       '-Dsun.io.useCanonCaches=false',
       '-Djdk.http.auth.tunneling.disabledSchemes=""',
       '-Djdk.attach.allowAttachSelf=true',
       '-Djdk.module.illegalAccess.silent=true',
       '-Dkotlinx.coroutines.debug=off',
-      '-Djna.nosys=true',  // Android Studio: added by Change Ie7351d92
-      '-Djna.boot.library.path=',  // Android Studio: added by Change Ie7351d92
-      '-Didea.vendor.name=Google',  // Android Studio
     ]
 
   static final String defaultCodeCacheSetting = '-XX:ReservedCodeCacheSize=512m'
@@ -33,8 +28,7 @@ Android Studio: removed by Change Ie7351d92 */
     List<String> commonVmOptions
     if (isEAP) {
       // must be consistent with `com.intellij.openapi.application.ConfigImportHelper#updateVMOptions`
-      // Android Studio: modified by Change Ie7351d92
-      commonVmOptions = ["-XX:MaxJavaStackTraceDepth=10000", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:-OmitStackTraceInFastThrow", "-ea"] + COMMON_VM_OPTIONS
+      commonVmOptions = ["-XX:MaxJavaStackTraceDepth=10000"] + COMMON_VM_OPTIONS
     }
     else {
       commonVmOptions = COMMON_VM_OPTIONS
@@ -44,13 +38,14 @@ Android Studio: removed by Change Ie7351d92 */
 
   private static List<String> vmMemoryOptions(JvmArchitecture arch, ProductProperties productProperties) {
     switch (arch) {
+      case JvmArchitecture.x32:
+        return ['-Xms128m', '-Xmx512m', '-XX:ReservedCodeCacheSize=384m']
       // when changing, please review usages of `ProductProperties#getCustomJvmMemoryOptionsX64` and synchronize if necessary
-      // Android Studio: modified by Change Ie7351d92
-      case JvmArchitecture.x32: return ['-server', '-Xms256m', '-Xmx768m', '-XX:ReservedCodeCacheSize=384m']
-      case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms256m', '-Xmx1280m', defaultCodeCacheSetting]
-      case JvmArchitecture.aarch64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
-      // todo review options for aarch64
+      case JvmArchitecture.x64:
+      case JvmArchitecture.aarch64:
+        return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
+      default:
+        throw new AssertionError(arch)
     }
-    throw new AssertionError(arch)
   }
 }

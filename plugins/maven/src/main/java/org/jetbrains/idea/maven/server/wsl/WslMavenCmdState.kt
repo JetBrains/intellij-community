@@ -17,7 +17,7 @@ import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import org.jetbrains.idea.maven.utils.MavenWslUtl.getPropertiesFromMavenOpts
+import org.jetbrains.idea.maven.utils.MavenWslUtil.getPropertiesFromMavenOpts
 
 class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
                        jdk: Sdk,

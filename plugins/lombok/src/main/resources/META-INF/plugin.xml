@@ -200,6 +200,15 @@
     <localInspection
       groupKey="inspection.lombok.group.name.lombok"
       groupBundle="messages.LombokBundle"
+      shortName="SpringQualifierCopyableLombok"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.SpringQualifierCopyableLombokAnnotationInspection"
+      key="inspection.springqualifiercopyable.lombok.display.name"
+      bundle="messages.LombokBundle"/>
+
+    <localInspection
+      groupKey="inspection.lombok.group.name.lombok"
+      groupBundle="messages.LombokBundle"
       shortName="DeprecatedLombok"
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.DeprecatedLombokAnnotationInspection"

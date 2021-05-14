@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup.impl.actions;
 
@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +69,7 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT);
       }
 
-      lookup.finishLookup(finishingChar);
+      SlowOperations.allowSlowOperations(() -> lookup.finishLookup(finishingChar));
     }
 
 
@@ -116,8 +117,11 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
         return true;
       }
 
-      List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
-        TemplateActionContext.expanding(file, editor));
+      List<TemplateImpl> templates = SlowOperations.allowSlowOperations(
+        () -> TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
+          TemplateActionContext.expanding(file, editor)
+        )
+      );
       TemplateImpl template = LiveTemplateCompletionContributor.findFullMatchedApplicableTemplate(editor, offset, templates);
       if (template != null && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template)) {
         return true;

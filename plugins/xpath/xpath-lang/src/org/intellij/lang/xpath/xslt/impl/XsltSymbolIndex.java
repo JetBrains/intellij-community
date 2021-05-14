@@ -15,7 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -114,7 +114,7 @@ public final class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltS
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML) {
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
         return !(file.getFileSystem() instanceof JarFileSystem);

@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public abstract class TableViewSpeedSearch<Item> extends SpeedSearchBase<TableView<Item>> {
+public abstract class TableViewSpeedSearch<Item> extends TableSpeedSearchBase<TableView<Item>> {
   public TableViewSpeedSearch(TableView<Item> component) {
     super(component);
     setComparator(new SpeedSearchComparator(false));
@@ -36,13 +36,14 @@ public abstract class TableViewSpeedSearch<Item> extends SpeedSearchBase<TableVi
   }
 
   @Override
-  protected int convertIndexToModel(int viewIndex) {
-    return myComponent.convertRowIndexToModel(viewIndex);
+  protected int getElementCount() {
+    // if filtering is enabled rowCount != itemsSize
+    return getComponent().getRowCount();
   }
 
   @Override
-  protected Object @NotNull [] getAllElements() {
-    return getComponent().getItems().toArray();
+  protected Object getElementAt(int viewIndex) {
+    return getComponent().getItems().get(myComponent.convertRowIndexToModel(viewIndex));
   }
 
   @Nullable
@@ -56,7 +57,7 @@ public abstract class TableViewSpeedSearch<Item> extends SpeedSearchBase<TableVi
 
   @Override
   protected void selectElement(final Object element, final String selectedText) {
-    final List items = getComponent().getItems();
+    final List<Item> items = getComponent().getItems();
     for (int i = 0, itemsSize = items.size(); i < itemsSize; i++) {
       final Object o = items.get(i);
       if (o == element) {
@@ -66,6 +67,11 @@ public abstract class TableViewSpeedSearch<Item> extends SpeedSearchBase<TableVi
         break;
       }
     }
+  }
+
+  @Override
+  protected boolean isMatchingRow(int modelRow, String pattern) {
+    return isMatchingElement(getComponent().getItems().get(modelRow), pattern);
   }
 }
 

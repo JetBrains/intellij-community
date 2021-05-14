@@ -64,6 +64,7 @@ class HelpersGenerator implements ResourcesGenerator {
     context.ant.copy(todir: output) {
       fileset(dir: "$context.paths.communityHome/python/helpers") {
         exclude(name: "**/setup.py")
+        exclude(name: "**/.idea/")
         exclude(name: "pydev/pydev_test*")
         exclude(name: "tests/")
       }

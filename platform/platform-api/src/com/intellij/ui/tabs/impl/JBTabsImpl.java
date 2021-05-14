@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -22,6 +22,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
@@ -1455,17 +1456,18 @@ public class JBTabsImpl extends JComponent
     revalidateAndRepaint(true);
   }
 
+  @Override
+  public boolean isOpaque() {
+    return super.isOpaque() && !myVisibleInfos.isEmpty();
+  }
+
   protected void revalidateAndRepaint(final boolean layoutNow) {
     if (myVisibleInfos.isEmpty()) {
-      setOpaque(false);
       Component nonOpaque = UIUtil.findUltimateParent(this);
       if (getParent() != null) {
         final Rectangle toRepaint = SwingUtilities.convertRectangle(getParent(), getBounds(), nonOpaque);
         nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height);
       }
-    }
-    else {
-      setOpaque(true);
     }
 
     if (layoutNow) {
@@ -1675,7 +1677,7 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  public static class Toolbar extends JPanel {
+  public static class Toolbar extends NonOpaquePanel {
     public Toolbar(JBTabsImpl tabs, TabInfo info) {
       setLayout(new BorderLayout());
 
@@ -1940,7 +1942,7 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  private static List<TabInfo> groupPinnedFirst(List<TabInfo> infos, @Nullable Comparator<TabInfo> comparator) {
+  private static List<TabInfo> groupPinnedFirst(List<TabInfo> infos, @Nullable Comparator<? super TabInfo> comparator) {
     int firstNotPinned = -1;
     for (int i = 0; i < infos.size(); i++) {
       TabInfo info = infos.get(i);
@@ -2179,7 +2181,8 @@ public class JBTabsImpl extends JComponent
   }
 
   private void processRemove(final TabInfo info, boolean forcedNow) {
-    remove(myInfo2Label.get(info));
+    TabLabel tabLabel = myInfo2Label.get(info);
+    remove(tabLabel);
     remove(myInfo2Toolbar.get(info));
 
     JComponent tabComponent = info.getComponent();
@@ -2196,6 +2199,9 @@ public class JBTabsImpl extends JComponent
     myInfo2Label.remove(info);
     myInfo2Page.remove(info);
     myInfo2Toolbar.remove(info);
+    if (tabLabelAtMouse == tabLabel) {
+      tabLabelAtMouse = null;
+    }
     resetTabsCache();
 
     updateAll(false);
@@ -2961,7 +2967,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     final TabInfo selected = getSelectedInfo();
     if (selected != null) {
       selected.putInfo(info);

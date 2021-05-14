@@ -15,4 +15,34 @@ third_party/2and3/attr/__init__.pyi
 third_party/2and3/attr/converters.pyi
 third_party/2and3/attr/filters.pyi
 third_party/2and3/attr/validators.pyi
+third_party/2and3/paramiko/_winapi.pyi
+third_party/2and3/paramiko/win_pageant.pyi
 third_party/2and3/pynamodb/models.pyi
+
+# _pb2.pyi have some constructs that break pytype
+# Eg
+# pytype.pyi.parser.ParseError:   File: "/Users/nipunn/src/typeshed/third_party/2and3/google/protobuf/descriptor_pb2.pyi", line 195
+# b"TypeValue = typing___NewType('TypeValue', builtin___int)"
+third_party/2and3/google/protobuf/any_pb2.pyi
+third_party/2and3/google/protobuf/api_pb2.pyi
+third_party/2and3/google/protobuf/compiler/plugin_pb2.pyi
+third_party/2and3/google/protobuf/descriptor.pyi
+third_party/2and3/google/protobuf/descriptor_pb2.pyi
+third_party/2and3/google/protobuf/duration_pb2.pyi
+third_party/2and3/google/protobuf/empty_pb2.pyi
+third_party/2and3/google/protobuf/field_mask_pb2.pyi
+third_party/2and3/google/protobuf/internal/containers.pyi
+third_party/2and3/google/protobuf/internal/enum_type_wrapper.pyi
+third_party/2and3/google/protobuf/internal/extension_dict.pyi
+third_party/2and3/google/protobuf/json_format.pyi
+third_party/2and3/google/protobuf/message.pyi
+third_party/2and3/google/protobuf/message_factory.pyi
+third_party/2and3/google/protobuf/service.pyi
+third_party/2and3/google/protobuf/source_context_pb2.pyi
+third_party/2and3/google/protobuf/struct_pb2.pyi
+third_party/2and3/google/protobuf/symbol_database.pyi
+third_party/2and3/google/protobuf/timestamp_pb2.pyi
+third_party/2and3/google/protobuf/type_pb2.pyi
+third_party/2and3/google/protobuf/util/json_format_pb2.pyi
+third_party/2and3/google/protobuf/util/json_format_proto3_pb2.pyi
+third_party/2and3/google/protobuf/wrappers_pb2.pyi

@@ -532,7 +532,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public String getConsolidatedVcsName() {
     AbstractVcs singleVcs = getSingleVCS();
-    return singleVcs != null ? singleVcs.getShortName() : VcsBundle.message("vcs.generic.name");
+    return singleVcs != null ? singleVcs.getShortNameWithMnemonic() : VcsBundle.message("vcs.generic.name.with.mnemonic");
   }
 
   @Override

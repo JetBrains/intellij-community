@@ -112,8 +112,10 @@ final class VariableExtractor {
 
     highlight(var);
 
-    if (!(var instanceof PsiPatternVariable)) {
+    if (!(var instanceof PsiPatternVariable) || PsiUtil.isLanguageLevel16OrHigher(myContainer.getContainingFile())) {
       PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
+    }
+    if (!(var instanceof PsiPatternVariable)) {
       if (mySettings.isDeclareVarType()) {
         PsiTypeElement typeElement = var.getTypeElement();
         LOG.assertTrue(typeElement != null);
@@ -308,31 +310,24 @@ final class VariableExtractor {
       }
     }
     if (anchor instanceof PsiStatement) {
-      while (true) {
-        PsiElement prevSibling = PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor);
-        PsiElement prevStatement = null;
-        if (prevSibling instanceof PsiErrorElement) {
-          prevStatement = PsiTreeUtil.getPrevSiblingOfType(prevSibling, PsiStatement.class);
-        }
-        else if (prevSibling instanceof PsiStatement && prevSibling.getLastChild() instanceof PsiErrorElement) {
-          prevStatement = prevSibling;
-        }
-        if (prevStatement == null) break;
-        // Let's try to find more valid context to be able to reparse
-        anchor = prevStatement;
-      }
+      anchor = correctDueToSyntaxErrors(anchor);
     }
     Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).filter(PsiElement::isPhysical).append(expr).toSet();
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
     if (HighlightingFeature.PATTERNS.isAvailable(anchor)) {
       PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(firstOccurrence), PsiTypeCastExpression.class);
-      if (cast != null && !(cast.getType() instanceof PsiPrimitiveType) &&
-          !(PsiUtil.skipParenthesizedExprUp(firstOccurrence.getParent()) instanceof PsiExpressionStatement)) {
-        PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(cast);
-        if (candidate != null && allOccurrences.stream()
-          .map(occ -> ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(occ), PsiTypeCastExpression.class))
-          .allMatch(occ -> occ != null && (occ == firstOccurrence || InstanceOfUtils.findPatternCandidate(occ) == candidate))) {
-          return candidate;
+      if (cast != null) {
+        PsiType castType = cast.getType();
+        PsiExpression operand = cast.getOperand();
+        if (castType != null && !(castType instanceof PsiPrimitiveType) && operand != null && operand.getType() != null && 
+            !(castType.isAssignableFrom(operand.getType())) &&
+            !(PsiUtil.skipParenthesizedExprUp(firstOccurrence.getParent()) instanceof PsiExpressionStatement)) {
+          PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(cast);
+          if (candidate != null && allOccurrences.stream()
+            .map(occ -> ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(occ), PsiTypeCastExpression.class))
+            .allMatch(occ -> occ != null && (occ == firstOccurrence || InstanceOfUtils.findPatternCandidate(occ) == candidate))) {
+            return candidate;
+          }
         }
       }
     }
@@ -383,8 +378,34 @@ final class VariableExtractor {
     PsiElement child = locateAnchor(anchor);
     if (IntroduceVariableBase.isFinalVariableOnLHS(expr)) {
       child = child.getNextSibling();
+      if (child != null) {
+        child = correctDueToSyntaxErrors(child);
+      }
     }
     return child == null ? anchor : child;
+  }
+
+  private static @NotNull PsiElement correctDueToSyntaxErrors(@NotNull PsiElement anchor) {
+    while (true) {
+      PsiElement prevSibling = PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor);
+      PsiElement prevStatement = null;
+      if (prevSibling instanceof PsiErrorElement) {
+        prevStatement = PsiTreeUtil.getPrevSiblingOfType(prevSibling, PsiStatement.class);
+      }
+      else if (prevSibling instanceof PsiStatement) {
+        PsiElement lastChild = prevSibling;
+        while (lastChild != null && !(lastChild instanceof PsiErrorElement)) {
+          lastChild = lastChild.getLastChild();
+        }
+        if (lastChild != null) {
+          prevStatement = prevSibling;
+        }
+      }
+      if (prevStatement == null) break;
+      // Let's try to find more valid context to be able to reparse
+      anchor = prevStatement;
+    }
+    return anchor;
   }
 
   private static PsiElement locateAnchor(PsiElement child) {

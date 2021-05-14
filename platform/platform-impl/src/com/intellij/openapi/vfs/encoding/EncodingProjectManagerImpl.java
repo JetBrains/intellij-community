@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,6 +33,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -41,6 +41,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -122,7 +123,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       element.setAttribute("defaultCharsetForConsole", myDefaultConsoleCharset.name());
     }
     if (myBomForNewUtf8Files != BOMForNewUTF8Files.NEVER) {
-      element.setAttribute("addBOMForNewFiles", myBomForNewUtf8Files.name);
+      element.setAttribute("addBOMForNewFiles", myBomForNewUtf8Files.getExternalName());
     }
 
     return element;
@@ -156,7 +157,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
     myDefaultCharsetForPropertiesFiles = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForPropertiesFiles"));
     myDefaultConsoleCharset = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForConsole"));
-    myBomForNewUtf8Files = BOMForNewUTF8Files.getByNameOrDefault(element.getAttributeValue("addBOMForNewFiles"));
+    myBomForNewUtf8Files = BOMForNewUTF8Files.getByExternalName(element.getAttributeValue("addBOMForNewFiles"));
 
     myModificationTracker.incModificationCount();
   }
@@ -504,31 +505,37 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   }
 
   public enum BOMForNewUTF8Files {
-    ALWAYS("with BOM"),
-    NEVER("with NO BOM"),
-    WINDOWS_ONLY("with BOM under Windows, with no BOM otherwise");
+    ALWAYS("create.new.UT8.file.option.always"),
+    NEVER("create.new.UT8.file.option.never"),
+    WINDOWS_ONLY("create.new.UT8.file.option.only.under.windows");
 
-    private final String name;
+    private final String key;
 
-    BOMForNewUTF8Files(@NotNull String name) {
-      this.name = name;
+    BOMForNewUTF8Files(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key) {
+      this.key = key;
     }
 
     @Override
     public String toString() {
-      return name;
+      return IdeBundle.message(key);
+    }
+
+    static final Pair<String, BOMForNewUTF8Files>[] EXTERNAL_NAMES = new Pair[]{
+      Pair.create("with BOM", ALWAYS),
+      Pair.create("with NO BOM", NEVER),
+      Pair.create("with BOM under Windows, with no BOM otherwise", WINDOWS_ONLY)};
+
+    @NotNull
+    private static BOMForNewUTF8Files getByExternalName(@Nullable String externalName) {
+      int i = ArrayUtil.indexOf(EXTERNAL_NAMES, Pair.create(externalName, null), (pair1, pair2) -> pair1.first.equalsIgnoreCase(pair2.first));
+      if (i == -1) i = 1; // NEVER
+      return EXTERNAL_NAMES[i].second;
     }
 
     @NotNull
-    private static BOMForNewUTF8Files getByNameOrDefault(@Nullable String name) {
-      if (!StringUtil.isEmpty(name)) {
-        for (BOMForNewUTF8Files value : values()) {
-          if (value.name.equalsIgnoreCase(name)) {
-            return value;
-          }
-        }
-      }
-      return NEVER;
+    private String getExternalName() {
+      int i = ArrayUtil.indexOf(EXTERNAL_NAMES, Pair.create(null, this), (pair1, pair2) -> pair1.second == pair2.second);
+      return EXTERNAL_NAMES[i].first;
     }
   }
 

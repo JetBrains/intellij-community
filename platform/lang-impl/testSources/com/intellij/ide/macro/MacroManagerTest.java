@@ -15,8 +15,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 public class MacroManagerTest extends CodeInsightFixtureTestCase {
   private void doTest(String filePath, String str, String expected) throws Macro.ExecutionCancelledException {
@@ -27,11 +25,11 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
 
   public DataContext getContext(VirtualFile file) {
     Project project = myFixture.getProject();
-    Map<String, Object> dataId2data = new HashMap<>();
-    dataId2data.put(CommonDataKeys.PROJECT.getName(), project);
-    dataId2data.put(CommonDataKeys.VIRTUAL_FILE.getName(), file);
-    dataId2data.put(PlatformDataKeys.PROJECT_FILE_DIRECTORY.getName(), PlatformTestUtil.getOrCreateProjectBaseDir(project));
-    return SimpleDataContext.getSimpleContext(dataId2data, null);
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.VIRTUAL_FILE, file)
+      .add(PlatformDataKeys.PROJECT_FILE_DIRECTORY, PlatformTestUtil.getOrCreateProjectBaseDir(project))
+      .build();
   }
 
   public void testFileParentDirMacro() throws Throwable {

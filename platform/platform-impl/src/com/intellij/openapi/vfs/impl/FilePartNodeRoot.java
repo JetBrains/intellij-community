@@ -2,10 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl.NodeToUpdate;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -99,9 +96,13 @@ final class FilePartNodeRoot extends FilePartNode {
                                  @NotNull MultiMap<? super VirtualFilePointerListener, ? super VirtualFilePointerImpl> toFirePointers,
                                  boolean createIfNotFound,
                                  boolean addRecursiveDirectoryPtr,
-                                 @NotNull NewVirtualFileSystem fs) {
+                                 @NotNull NewVirtualFileSystem childFs) {
     if (childNameId <= 0 && childNameId != JAR_SEPARATOR_NAME_ID) throw new IllegalArgumentException("invalid argument childNameId: " + childNameId);
-    List<VirtualFile> hierarchy = parent == null ? Collections.emptyList() : getHierarchy(parent, fs);
+    if (file != null) {
+      VirtualFileSystem fsFromFile = file.getFileSystem();
+      assert childFs == fsFromFile : "fs=" + childFs + "; file.fs=" + fsFromFile+"; parent="+parent+"; file="+file;
+    }
+    List<VirtualFile> hierarchy = parent == null ? Collections.emptyList() : getHierarchy(parent);
     FilePartNode node = this;
     for (int i = hierarchy.size() - 1; i >= 0; i--) {
       VirtualFile part = hierarchy.get(i);
@@ -119,11 +120,12 @@ final class FilePartNodeRoot extends FilePartNode {
       node = child;
     }
 
-    FilePartNode child = node.findChildByNameId(file, childNameId, createIfNotFound, fs);
+    FilePartNode child = node.findChildByNameId(file, childNameId, createIfNotFound, childFs);
     return child == null ? null : new NodeToUpdate(node, child);
   }
 
-  private static @NotNull List<VirtualFile> getHierarchy(@NotNull VirtualFile file, @NotNull NewVirtualFileSystem fs) {
+  private static @NotNull List<VirtualFile> getHierarchy(@NotNull VirtualFile file) {
+    NewVirtualFileSystem fs = (NewVirtualFileSystem)file.getFileSystem();
     List<VirtualFile> result = new ArrayList<>();
     while (true) {
       result.add(file);
@@ -270,7 +272,7 @@ final class FilePartNodeRoot extends FilePartNode {
         removeEmptyNodesByPath(parts);
       }
       else {
-        List<VirtualFile> parts = getHierarchy(file, (NewVirtualFileSystem)file.getFileSystem());
+        List<VirtualFile> parts = getHierarchy(file);
         removeEmptyNodesByFile(parts);
       }
     }

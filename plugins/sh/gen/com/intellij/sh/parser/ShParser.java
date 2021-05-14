@@ -1892,7 +1892,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ('&&'|  '||' |  '&' |  ';' | '|' | '\n') newlines
+  // ('&&'|  '||' |  '&' |  ';' | '|' | '|&' | '\n') newlines
   static boolean pipeline_command_list_separator(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_list_separator")) return false;
     boolean r;
@@ -1903,7 +1903,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '&&'|  '||' |  '&' |  ';' | '|' | '\n'
+  // '&&'|  '||' |  '&' |  ';' | '|' | '|&' | '\n'
   private static boolean pipeline_command_list_separator_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_list_separator_0")) return false;
     boolean r;
@@ -1912,6 +1912,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, AMP);
     if (!r) r = consumeToken(b, SEMI);
     if (!r) r = consumeToken(b, PIPE);
+    if (!r) r = consumeToken(b, PIPE_AMP);
     if (!r) r = consumeToken(b, LINEFEED);
     return r;
   }

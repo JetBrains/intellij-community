@@ -14,7 +14,7 @@ import java.util.List;
 
 public class TabActionsPromoter implements ActionPromoter {
   @Override
-  public List<AnAction> promote(@NotNull List<AnAction> actions, @NotNull DataContext context) {
+  public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     List<AnAction> newList = new ArrayList<>(actions);
     newList.sort(Comparator.comparingInt(action -> {
       if (action instanceof BraceOrQuoteOutAction) return 0;

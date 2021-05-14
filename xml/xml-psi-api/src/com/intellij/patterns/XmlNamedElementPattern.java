@@ -66,7 +66,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
       @Override
       public boolean processValues(T t,
                                    ProcessingContext context,
-                                   PairProcessor<String, ProcessingContext> processor) {
+                                   PairProcessor<? super String, ? super ProcessingContext> processor) {
         return processor.process(getNamespace(t), context);
       }
     });
@@ -97,7 +97,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
         @Override
         public boolean processValues(XmlAttribute t,
                                      ProcessingContext context,
-                                     PairProcessor<String, ProcessingContext> processor) {
+                                     PairProcessor<? super String, ? super ProcessingContext> processor) {
           return processor.process(t.getValue(), context);
         }
       });

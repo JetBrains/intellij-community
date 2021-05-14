@@ -74,18 +74,17 @@ public final class ModulePathSplitter {
     return dotIndex >= 0? fName.substring(0, dotIndex) : fName;
   };
 
-  @NotNull
-  private final Function<File, String> myModuleNameSearch;
+  private final @NotNull Function<? super File, String> myModuleNameSearch;
 
   public ModulePathSplitter() {
     this(DEFAULT_MODULE_NAME_SEARCH);
   }
 
-  public ModulePathSplitter(@NotNull Function<File, String> moduleNameSearch) {
+  public ModulePathSplitter(@NotNull Function<? super File, String> moduleNameSearch) {
     myModuleNameSearch = moduleNameSearch;
   }
 
-  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<File> chunkOutputs, Collection<File> path) {
+  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path) {
     if (myModuleFinderCreateMethod == null) {
       // the module API is not available
       return Pair.create(ModulePath.create(path), Collections.emptyList());

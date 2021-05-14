@@ -20,7 +20,7 @@ class OSFileAssociationFeatureUsagesUtil {
   private OSFileAssociationFeatureUsagesUtil() {
   }
 
-  static void logFilesAssociated(@NotNull List<FileType> fileTypes) {
+  static void logFilesAssociated(@NotNull List<? extends FileType> fileTypes) {
     ContainerUtil.map(fileTypes, fileType -> getAllowedTypeName(fileType))
                  .forEach(
                    fileType -> FUCounterUsageLogger.getInstance().logEvent(

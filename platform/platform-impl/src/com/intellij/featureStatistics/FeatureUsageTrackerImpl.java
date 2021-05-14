@@ -228,7 +228,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
             final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
             final PluginInfo info =
               provider == null ? PluginInfoDetectorKt.getPlatformPlugin() : getPluginInfo(provider);
-            context.setPluginInfo(info);
+            context.setPayload(PLUGIN_INFO, info);
             return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
           }
         }

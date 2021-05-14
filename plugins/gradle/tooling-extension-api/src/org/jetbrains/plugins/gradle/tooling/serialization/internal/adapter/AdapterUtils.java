@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 public final class AdapterUtils {
   @Contract("null -> null;!null -> !null;")
   @Nullable
-  static <T> ImmutableDomainObjectSet<T> wrap(@Nullable Iterable<T> children) {
+  static <T> ImmutableDomainObjectSet<T> wrap(@Nullable Iterable<? extends T> children) {
     if (children == null) return null;
     return children instanceof ImmutableDomainObjectSet ? (ImmutableDomainObjectSet<T>)children : ImmutableDomainObjectSet.of(children);
   }

@@ -100,6 +100,17 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
+   * Returns the short or abbreviated name of this VCS, with mnemonic, which name can be used in menus and action names.
+   * (e.g. it can be "_SVN" for Subversion or "_Hg" for Mercurial).<br/><br/>
+   * Returns generic "VC_S" by default.
+   */
+  @Nls
+  @NotNull
+  public String getShortNameWithMnemonic() {
+    return VcsBundle.message("vcs.generic.name.with.mnemonic");
+  }
+
+  /**
    * Allows to hide 'VCS' action group in 'Main Menu'.
    * Takes effect for projects that have configured mappings for this VCS only.
    *

@@ -16,8 +16,8 @@ import org.junit.Test;
 import javax.swing.*;
 import java.util.concurrent.CountDownLatch;
 
-import static com.intellij.ui.jcef.JBCefTestHelper.loadAndWait;
 import static com.intellij.ui.jcef.JBCefTestHelper.await;
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
 /**
  * Tests https://youtrack.jetbrains.com/issue/IDEA-259472
@@ -79,7 +79,7 @@ public class IDEA259472Test {
       }
     }, jbCefBrowser.getCefBrowser());
 
-    loadAndWait(jbCefBrowser, () -> {
+    invokeAndWaitForLoad(jbCefBrowser, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);

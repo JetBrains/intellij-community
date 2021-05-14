@@ -14,7 +14,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +32,18 @@ public final class AsyncEventSupport {
 
   @ApiStatus.Internal
   public static final ExtensionPointName<AsyncFileListener> EP_NAME = new ExtensionPointName<>("com.intellij.vfs.asyncListener");
-  private static boolean ourSuppressAppliers;
+  private static final Stack<Boolean> ourSuppressAppliers = new Stack<>();
+
+  static boolean shouldSuppressAppliers() {
+    ApplicationManager.getApplication().assertIsWriteThread();
+    if (ourSuppressAppliers.isEmpty()) return false;
+    Boolean shouldSuppressAppliers = ourSuppressAppliers.peek();
+    if (shouldSuppressAppliers == null) {
+      LOG.error("Should not be called outside VFS event processing");
+      return true;
+    }
+    return shouldSuppressAppliers.booleanValue();
+  }
 
   public static void startListening() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
@@ -38,7 +51,7 @@ public final class AsyncEventSupport {
 
       @Override
       public void before(@NotNull List<? extends VFileEvent> events) {
-        if (ourSuppressAppliers) return;
+        if (shouldSuppressAppliers()) return;
         List<AsyncFileListener.ChangeApplier> appliers = runAsyncListeners(events);
         appliersFromBefore = Pair.create(events, appliers);
         beforeVfsChange(appliers);
@@ -46,7 +59,7 @@ public final class AsyncEventSupport {
 
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        if (ourSuppressAppliers) return;
+        if (shouldSuppressAppliers()) return;
         List<AsyncFileListener.ChangeApplier> appliers;
         if (appliersFromBefore != null && appliersFromBefore.first.equals(events)) {
           appliers = appliersFromBefore.second;
@@ -119,18 +132,21 @@ public final class AsyncEventSupport {
     }
   }
 
-  static void processEventsFromRefresh(@NotNull List<? extends VFileEvent> events,
+  static void processEventsFromRefresh(@NotNull List<? extends DisclosedVfsEvent> events,
                                        @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (appliers != null) {
       beforeVfsChange(appliers);
-      ourSuppressAppliers = true;
+      ourSuppressAppliers.push(Boolean.TRUE);
+    }
+    else {
+      ourSuppressAppliers.push(Boolean.FALSE);
     }
     try {
-      PersistentFS.getInstance().processEvents(events);
+      ((PersistentFSImpl) PersistentFS.getInstance()).processEventsImpl(events);
     }
     finally {
-      ourSuppressAppliers = false;
+      ourSuppressAppliers.pop();
     }
     if (appliers != null) {
       afterVfsChange(appliers);

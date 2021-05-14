@@ -91,9 +91,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   private final List<Runnable> myResetRunnables = new ArrayList<>();
   private final Map<String, T> myDefaultVals = new HashMap<>();
-  private final List<Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>>> myDefaultProps = new ArrayList<>();
+  private final List<Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>>> myDefaultProps = new ArrayList<>();
   private VirtualFile myFileToSelect;
-  private final Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>> myProjectMapping;
+  private final Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> myProjectMapping;
 
   protected interface Value<T> extends Setter<T>, Getter<T> {
     void commit();
@@ -117,8 +117,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @Nullable
   protected abstract <S> Object getParameter(@NotNull Key<S> key);
 
-  @NotNull
-  protected List<Trinity<@Nls String, Supplier<T>, Consumer<T>>> getDefaultMappings() {
+  protected @NotNull List<Trinity<@Nls String, Supplier<? extends T>, Consumer<? super T>>> getDefaultMappings() {
     return ContainerUtil.emptyList();
   }
 
@@ -216,7 +215,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     cons2.insets = cons1.insets;
     panel.add(Box.createGlue(), new GridBagConstraints(2, 0, 1, 1, 1., 1., GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
 
-    for (Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
+    for (Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> prop : myDefaultProps) {
       myDefaultVals.put(prop.first, prop.second.get());
       JPanel p = createActionPanel(null, new Value<>() {
         @Override
@@ -304,7 +303,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       if (keyMatches(p.first, file, false) && p.second != null) return p.second;
     }
     ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
-    for (Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
+    for (Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> prop : ContainerUtil.reverse(myDefaultProps)) {
       if (isProjectMapping(prop) && file != null && index.isInContent(file) || isGlobalMapping(prop)) {
         T t = myDefaultVals.get(prop.first);
         if (t != null) return t;
@@ -313,11 +312,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return myMappings.getDefaultMapping(file);
   }
 
-  protected boolean isGlobalMapping(Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>> prop) {
+  protected boolean isGlobalMapping(Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> prop) {
     return false;
   }
 
-  protected boolean isProjectMapping(Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>> prop) {
+  protected boolean isProjectMapping(Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> prop) {
     return prop == myProjectMapping;
   }
 
@@ -331,7 +330,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   @Override
   public boolean isModified() {
-    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
+    for (Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> prop : myDefaultProps) {
       if (!Comparing.equal(prop.second.get(), myDefaultVals.get(prop.first))) {
         return true;
       }
@@ -345,7 +344,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @Override
   public void apply() throws ConfigurationException {
     myMappings.setMappings(getNewMappings());
-    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
+    for (Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> prop : myDefaultProps) {
       prop.third.consume(myDefaultVals.get(prop.first));
     }
   }
@@ -357,7 +356,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       if (e.getKey() == null) continue;
       myModel.data.add(pair(e.getKey(), e.getValue()));
     }
-    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
+    for (Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> prop : myDefaultProps) {
       myDefaultVals.put(prop.first, prop.second.get());
     }
 
@@ -388,7 +387,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
     }
     if (myMappings instanceof LanguagePerFileMappings) {
-      for (Trinity<String, Supplier<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
+      for (Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> prop : ContainerUtil.reverse(myDefaultProps)) {
         if (isProjectMapping(prop)) {
           T t = myDefaultVals.get(prop.first);
           if (t != null) map.put(null, t);

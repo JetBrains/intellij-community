@@ -29,7 +29,7 @@ import java.util.List;
  */
 public interface PathReferenceProvider {
 
-  boolean createReferences(@NotNull PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft);
+  boolean createReferences(@NotNull PsiElement psiElement, @NotNull List<PsiReference> references, final boolean soft);
 
   @Nullable
   PathReference getPathReference(@NotNull String path, @NotNull final PsiElement element);

@@ -169,6 +169,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
 
     @Override
     public void activate(@Nullable Runnable runnable) {
+      if (runnable != null) runnable.run();
     }
 
     @Override
@@ -180,6 +181,14 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
     public boolean isVisible() {
       return false;
     }
+
+    @Override
+    public boolean isVisibleOnLargeStripe() {
+      return false;
+    }
+
+    @Override
+    public void setVisibleOnLargeStripe(boolean visible) { }
 
     @Override
     public void setShowStripeButton(boolean show) {
@@ -207,6 +216,14 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
     public @NotNull ToolWindowAnchor getAnchor() {
       return ToolWindowAnchor.BOTTOM;
     }
+
+    @Override
+    public @NotNull ToolWindowAnchor getLargeStripeAnchor() {
+      return ToolWindowAnchor.BOTTOM;
+    }
+
+    @Override
+    public void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor) { }
 
     @Override
     public void setAnchor(@NotNull ToolWindowAnchor anchor, @Nullable Runnable runnable) {
@@ -328,10 +345,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
 
     @Override
     public void activate(final @Nullable Runnable runnable, final boolean autoFocusContents) {
+      activate(runnable);
     }
 
     @Override
     public void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced) {
+      activate(runnable);
     }
 
     @Override

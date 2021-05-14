@@ -12,7 +12,7 @@ import java.security.ProtectionDomain;
 @ApiStatus.Internal
 public final class PathClassLoader extends UrlClassLoader {
   private static final ClassPath.ResourceFileFactory RESOURCE_FILE_FACTORY =
-    Boolean.parseBoolean(System.getProperty("idea.use.lock.free.zip.impl", "false")) ? file -> new ZipResourceFile(file) : null;
+    Boolean.parseBoolean(System.getProperty("idea.use.lock.free.zip.impl", "true")) ? file -> new ZipResourceFile(file) : null;
 
   private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
   private static final ClassLoader appClassLoader = PathClassLoader.class.getClassLoader();
@@ -53,7 +53,13 @@ public final class PathClassLoader extends UrlClassLoader {
       return appClassLoader.loadClass(name);
     }
 
-    Class<?> clazz = classPath.findClass(name);
+    Class<?> clazz;
+    try {
+      clazz = classPath.findClass(name);
+    }
+    catch (IOException e) {
+      throw new ClassNotFoundException(name, e);
+    }
     if (clazz == null) {
       throw new ClassNotFoundException(name);
     }

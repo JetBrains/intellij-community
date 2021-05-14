@@ -87,7 +87,7 @@ internal fun allTargets(dataContext: DataContext): List<TargetVariant> {
   return allTargets
 }
 
-private fun searchTargets(dataContext: DataContext): List<SearchTarget> {
+internal fun searchTargets(dataContext: DataContext): List<SearchTarget> {
   val file = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return emptyList()
   val offset: Int = dataContext.getData(CommonDataKeys.CARET)?.offset ?: return emptyList()
   return searchTargets(file, offset)

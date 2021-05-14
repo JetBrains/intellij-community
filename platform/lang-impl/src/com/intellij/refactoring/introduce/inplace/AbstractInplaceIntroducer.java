@@ -26,6 +26,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -423,51 +424,54 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   protected void restoreState(@NotNull final V psiField) {
     if (!ReadonlyStatusHandler.ensureDocumentWritable(myProject, InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getDocument())) return;
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final PsiFile containingFile = psiField.getContainingFile();
-      final RangeMarker exprMarker = getExprMarker();
-      if (exprMarker != null) {
-        myExpr = restoreExpression(containingFile, psiField, exprMarker, myExprText);
-      }
+    PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(
+      () -> ApplicationManager.getApplication().runWriteAction(() -> doRestoreState(psiField)));
+  }
 
-      if (myLocalMarker != null) {
-        final PsiElement refVariableElement = containingFile.findElementAt(myLocalMarker.getStartOffset());
-        if (refVariableElement != null) {
-          final PsiElement parent = refVariableElement.getParent();
-          if (parent instanceof PsiNamedElement) {
-            ((PsiNamedElement)parent).setName(myLocalName);
-          }
-        }
+  private void doRestoreState(@NotNull V psiField) {
+    final PsiFile containingFile = psiField.getContainingFile();
+    final RangeMarker exprMarker = getExprMarker();
+    if (exprMarker != null) {
+      myExpr = restoreExpression(containingFile, psiField, exprMarker, myExprText);
+    }
 
-        final V localVariable = getLocalVariable();
-        if (localVariable != null && localVariable.isPhysical()) {
-          myLocalVariable = localVariable;
-          final PsiElement nameIdentifier = localVariable.getNameIdentifier();
-          if (nameIdentifier != null) {
-            myLocalMarker = createMarker(nameIdentifier);
-          }
-        }
-      }
-      final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
-      for (int i = 0; i < occurrenceMarkers.size(); i++) {
-        RangeMarker marker = occurrenceMarkers.get(i);
-        if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset() && myExpr != null) {
-          myOccurrences[i] = myExpr;
-          continue;
-        }
-        final E psiExpression =
-           restoreExpression(containingFile, psiField, marker, getLocalVariable() != null ? myLocalName : myExprText);
-        if (psiExpression != null) {
-          myOccurrences[i] = psiExpression;
+    if (myLocalMarker != null) {
+      final PsiElement refVariableElement = containingFile.findElementAt(myLocalMarker.getStartOffset());
+      if (refVariableElement != null) {
+        final PsiElement parent = refVariableElement.getParent();
+        if (parent instanceof PsiNamedElement) {
+          ((PsiNamedElement)parent).setName(myLocalName);
         }
       }
 
-      if (myExpr != null && myExpr.isPhysical()) {
-        myExprMarker = createMarker(myExpr);
+      final V localVariable = getLocalVariable();
+      if (localVariable != null && localVariable.isPhysical()) {
+        myLocalVariable = localVariable;
+        final PsiElement nameIdentifier = localVariable.getNameIdentifier();
+        if (nameIdentifier != null) {
+          myLocalMarker = createMarker(nameIdentifier);
+        }
       }
-      myOccurrenceMarkers = null;
-      deleteTemplateField(psiField);
-    });
+    }
+    final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
+    for (int i = 0; i < occurrenceMarkers.size(); i++) {
+      RangeMarker marker = occurrenceMarkers.get(i);
+      if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset() && myExpr != null) {
+        myOccurrences[i] = myExpr;
+        continue;
+      }
+      final E psiExpression =
+        restoreExpression(containingFile, psiField, marker, getLocalVariable() != null ? myLocalName : myExprText);
+      if (psiExpression != null) {
+        myOccurrences[i] = psiExpression;
+      }
+    }
+
+    if (myExpr != null && myExpr.isPhysical()) {
+      myExprMarker = createMarker(myExpr);
+    }
+    myOccurrenceMarkers = null;
+    deleteTemplateField(psiField);
   }
 
   protected void deleteTemplateField(V psiField) {

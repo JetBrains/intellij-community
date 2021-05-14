@@ -20,6 +20,7 @@ public class ShArrayAssignmentImpl extends ShCompositeElementImpl implements ShA
     visitor.visitArrayAssignment(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

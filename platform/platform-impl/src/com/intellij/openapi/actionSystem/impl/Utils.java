@@ -237,7 +237,7 @@ public final class Utils {
     }
   }
 
-  private static boolean hasIcons(List<Component> components) {
+  private static boolean hasIcons(List<? extends Component> components) {
     for (Component comp : components) {
       if (hasNotEmptyIcon(comp)) {
         return true;

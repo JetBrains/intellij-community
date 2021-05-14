@@ -15,6 +15,7 @@ import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
@@ -107,7 +108,7 @@ final class LookupUsageTracker {
         }
       });
 
-      FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, EVENT_ID, data);
+      FUCounterUsageLogger.getInstance().logEvent(myLookup.getProject(), GROUP_ID, EVENT_ID, data);
     }
 
     private void addCommonUsageInfo(@NotNull FeatureUsageData data,

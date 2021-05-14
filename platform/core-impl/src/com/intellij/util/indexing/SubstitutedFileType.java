@@ -24,11 +24,6 @@ public final class SubstitutedFileType extends LanguageFileType {
     myFileType = substitutionFileType;
   }
 
-  @Override
-  public @NotNull CharsetHint getCharsetHint() {
-    return myFileType.getCharsetHint();
-  }
-
   @NotNull
   public static FileType substituteFileType(@NotNull VirtualFile file, @NotNull FileType fileType, @Nullable Project project) {
     if (project == null) {

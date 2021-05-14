@@ -37,12 +37,8 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     super(project, getCommandName(), getProgressText(), false);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, Module module) {
+  public OptimizeImportsProcessor(@NotNull Project project, @NotNull Module module) {
     super(project, module, getCommandName(), getProgressText(), false);
-  }
-
-  public OptimizeImportsProcessor(@NotNull Project project, @NotNull PsiDirectory directory, boolean includeSubdirs) {
-    super(project, directory, includeSubdirs, getProgressText(), getCommandName(), false);
   }
 
   public OptimizeImportsProcessor(@NotNull Project project,
@@ -56,24 +52,25 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     super(project, file, getProgressText(), getCommandName(), false);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, Runnable postRunnable) {
+  public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, @Nullable Runnable postRunnable) {
     this(project, files, getCommandName(), postRunnable);
   }
 
   public OptimizeImportsProcessor(@NotNull Project project,
                                   PsiFile @NotNull [] files,
                                   @NotNull @NlsContexts.Command String commandName,
-                                  Runnable postRunnable) {
+                                  @Nullable Runnable postRunnable) {
     super(project, files, getProgressText(), commandName, postRunnable, false);
   }
 
-  public OptimizeImportsProcessor(@NotNull AbstractLayoutCodeProcessor processor) {
-    super(processor, getCommandName(), getProgressText());
+  public OptimizeImportsProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
+    super(previousProcessor, getCommandName(), getProgressText());
   }
 
   @Override
   @NotNull
   protected FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (DumbService.isDumb(file.getProject())) {
       return emptyTask();
     }

@@ -16,7 +16,12 @@
     <extensionPoint name="clonePathProvider"
                     interface="com.intellij.dvcs.repo.ClonePathProvider"
                     dynamic="true"/>
-
+    <extensionPoint name="pushDialogActionsProvider"
+                    interface="com.intellij.dvcs.push.PushDialogActionsProvider"
+                    dynamic="true"/>
+    <extensionPoint name="pushDialogCustomizer"
+                    interface="com.intellij.dvcs.push.PushDialogCustomizer"
+                    dynamic="true"/>
   </extensionPoints>
   <actions>
     <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
@@ -26,10 +31,10 @@
       <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
     </action>
-    <action id="Vcs.Force.Push" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
 
     <group id="Vcs.Push.Actions">
-      <reference id="Vcs.Force.Push" />
+      <action id="Vcs.Push.Simple" class="com.intellij.dvcs.push.ui.SimplePushAction"/>
+      <action id="Vcs.Push.Force" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
     </group>
 
     <group id="Dvcs.Log.ContextMenu">

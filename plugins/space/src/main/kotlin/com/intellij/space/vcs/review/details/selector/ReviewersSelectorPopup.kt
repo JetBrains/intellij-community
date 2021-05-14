@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details.selector
 
 import circlet.platform.client.BatchResult
+import circlet.platform.client.resolve
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Pair
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.LoadableListVmImpl
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.bindScroll
@@ -16,9 +19,12 @@ import com.intellij.util.ui.UIUtil
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import runtime.Ui
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.KeyStroke
 import javax.swing.ListSelectionModel
 import javax.swing.event.DocumentEvent
 
@@ -37,16 +43,7 @@ internal fun showPopup(selectorVm: SpaceReviewersSelectorVm,
     addMouseListener(object : MouseAdapter() {
       override fun mouseReleased(e: MouseEvent) {
         if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed) {
-          for (item in selectedValuesList) {
-            launch(lifetime, Ui) {
-              val isReviewer = item.checked.value.contains(item.reviewer.id)
-              if (isReviewer) {
-                participantsVm.removeReviewer(item.reviewer)
-              } else {
-                participantsVm.addReviewer(item.reviewer)
-              }
-            }
-          }
+          selectReviewers(lifetime, participantsVm)
           repaint()
         }
       }
@@ -63,11 +60,31 @@ internal fun showPopup(selectorVm: SpaceReviewersSelectorVm,
     model.removeAll()
     it.isLoading.forEach(lifetime) { isLoading ->
       list.setPaintBusy(isLoading)
+      list.setEmptyText(
+        if (isLoading) {
+          SpaceBundle.message("review.reviewers.selector.loading")
+        }
+        else {
+          SpaceBundle.message("review.reviewers.selector.list.empty.text")
+        }
+      )
     }
+    val authors = participantsVm.authors.value.map { author -> author.user.resolve() }.toSet()
     it.batches.forEach(lifetime) { batchResult ->
       when (batchResult) {
-        is BatchResult.More -> model.add(batchResult.items)
+        is BatchResult.More -> model.add(batchResult.items.filter { item -> item.reviewer !in authors })
         is BatchResult.Reset -> model.removeAll()
+      }
+    }
+  }
+
+  participantsVm.authors.forEach(lifetime) { authors ->
+    val possibleReviewers = model.items.map { it.reviewer }
+    authors.forEach { authorParticipant ->
+      val author = authorParticipant.user.resolve()
+      val authorIndex = possibleReviewers.indexOf(author)
+      if (authorIndex != -1) {
+        model.remove(authorIndex)
       }
     }
   }
@@ -94,8 +111,23 @@ internal fun showPopup(selectorVm: SpaceReviewersSelectorVm,
     .setCancelOnClickOutside(true)
     .setResizable(true)
     .setMovable(true)
+    .setKeyboardActions(listOf(Pair.create(ActionListener { list.selectReviewers(lifetime, participantsVm) },
+                                           KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))))
     .createPopup()
     .showUnderneathOf(parent)
 }
 
+private fun JBList<CheckedReviewer>.selectReviewers(lifetime: Lifetime, participantsVm: SpaceReviewParticipantsVm) {
+  for (item in selectedValuesList) {
+    launch(lifetime, Ui) {
+      val isReviewer = item.checked.value.contains(item.reviewer.id)
+      if (isReviewer) {
+        participantsVm.removeReviewer(item.reviewer)
+      }
+      else {
+        participantsVm.addReviewer(item.reviewer)
+      }
+    }
+  }
+}
 

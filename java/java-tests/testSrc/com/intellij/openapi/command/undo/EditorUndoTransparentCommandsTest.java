@@ -237,7 +237,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     checkEditorText("test");
   }
 
-  private <T extends Exception> void executeTransparentlyInWriteAction(@NotNull ThrowableRunnable<T> action) {
+  private static <T extends Exception> void executeTransparentlyInWriteAction(@NotNull ThrowableRunnable<T> action) {
     executeTransparently(() -> WriteAction.run(action));
   }
 }

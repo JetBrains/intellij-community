@@ -31,23 +31,23 @@ public abstract class Loader {
 
   abstract @Nullable Resource getResource(@NotNull String name);
 
-  void processResources(@NotNull String dir, @NotNull Predicate<String> fileNameFilter, @NotNull BiConsumer<String, InputStream> consumer)
-    throws IOException {
-  }
+  abstract void processResources(@NotNull String dir,
+                                 @NotNull Predicate<? super String> fileNameFilter,
+                                 @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException;
 
   public abstract Map<Loader.Attribute, String> getAttributes() throws IOException;
 
-  abstract @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException;
+  abstract @Nullable Class<?> findClass(@NotNull String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException;
 
   abstract @NotNull ClasspathCache.IndexRegistrar buildData() throws IOException;
 
-  final boolean containsName(@NotNull String name, @NotNull String shortName) {
+  final boolean containsName(@NotNull String name) {
     if (name.isEmpty()) {
       return true;
     }
 
     Predicate<String> filter = nameFilter;
-    return filter == null || filter.test(shortName);
+    return filter == null || filter.test(name);
   }
 
   final void setNameFilter(@NotNull Predicate<String> filter) {

@@ -4,24 +4,49 @@ package com.intellij.space.vcs.review.details.diff
 import circlet.platform.api.TID
 import com.intellij.diff.editor.DiffContentVirtualFile
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.vfs.VirtualFilePathWrapper
+import com.intellij.space.editor.SpaceDiffComplexPathVirtualFileSystem
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
 import com.intellij.testFramework.LightVirtualFile
 import icons.SpaceIcons
+import runtime.reactive.MutableProperty
+import runtime.reactive.Property
+import runtime.reactive.mutableProperty
 import javax.swing.Icon
 
-internal class SpaceDiffFile(
-  val changesVm: runtime.reactive.Property<SpaceReviewChangesVm>,
-  val diffVm: SpaceDiffVm
-) : LightVirtualFile(SpaceBundle.message("review.diff.tab.title", diffVm.reviewKey),
-                     SpaceDiffFileType,
-                     ""), DiffContentVirtualFile {
+internal data class SpaceDiffFileId(val projectKey: String, val reviewKey: String, val reviewId: TID)
 
-  private val reviewId: TID = diffVm.reviewId
+internal class SpaceDiffFile(
+  private val sessionId: String,
+  private val projectHash: String,
+  val fileId: SpaceDiffFileId,
+  reviewKey: String
+) : LightVirtualFile(SpaceBundle.message("review.diff.tab.title", reviewKey),
+                     SpaceDiffFileType,
+                     ""), DiffContentVirtualFile, VirtualFilePathWrapper {
 
   init {
     isWritable = false
   }
+  val spaceDiffFileData: MutableProperty<SpaceDiffFileData?> = mutableProperty(null)
+
+  fun updateDiffFileData(newSpaceFileData: SpaceDiffFileData) {
+    spaceDiffFileData.value = newSpaceFileData
+  }
+
+  override fun getFileSystem() = SpaceDiffComplexPathVirtualFileSystem.getInstance()
+
+  override fun getPath(): String = try {
+    fileSystem.getPath(sessionId, projectHash, fileId)
+  }
+  catch (e: Exception) {
+    name
+  }
+
+  override fun enforcePresentableName(): Boolean = true
+
+  override fun getPresentablePath(): String = name
 
   // equals and hasCode are required to avoid opening each selected change in new tab
 
@@ -31,19 +56,12 @@ internal class SpaceDiffFile(
 
     other as SpaceDiffFile
 
-    if (diffVm != other.diffVm) return false
-    if (reviewId != other.reviewId) return false
+    if (fileId != other.fileId) return false
 
     return true
   }
 
-  override fun hashCode(): Int {
-    var result = diffVm.hashCode()
-    result = 31 * result + reviewId.hashCode()
-    return result
-  }
-
-
+  override fun hashCode(): Int = fileId.hashCode()
 }
 
 object SpaceDiffFileType : FileType {
@@ -59,3 +77,8 @@ object SpaceDiffFileType : FileType {
 
   override fun isReadOnly(): Boolean = true
 }
+
+internal data class SpaceDiffFileData(
+  val changesVm: Property<SpaceReviewChangesVm>,
+  val spaceDiffVm: SpaceDiffVm
+)

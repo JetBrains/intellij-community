@@ -8,10 +8,10 @@ import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
 public class FilteringMarkupIterator<T> implements MarkupIterator<T> {
-  @NotNull private final MarkupIterator<T> myDelegate;
+  private final @NotNull MarkupIterator<? extends T> myDelegate;
   @NotNull private final Predicate<? super T> myFilter;
 
-  public FilteringMarkupIterator(@NotNull MarkupIterator<T> delegate, @NotNull Predicate<? super T> filter) {
+  public FilteringMarkupIterator(@NotNull MarkupIterator<? extends T> delegate, @NotNull Predicate<? super T> filter) {
     myDelegate = delegate;
     myFilter = filter;
     skipUnrelated();

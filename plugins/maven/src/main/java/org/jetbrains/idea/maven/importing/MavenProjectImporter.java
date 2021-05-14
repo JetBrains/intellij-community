@@ -107,7 +107,7 @@ public class MavenProjectImporter {
     }
   }
 
-  private <T extends WorkspaceEntity> T findFirst(WorkspaceEntityStorage storage, Class<T> klass, Predicate<T> filter) {
+  private <T extends WorkspaceEntity> T findFirst(WorkspaceEntityStorage storage, Class<T> klass, Predicate<? super T> filter) {
     Iterator<T> iterator = storage.entities(klass).iterator();
     while (iterator.hasNext()) {
       T next = iterator.next();
@@ -154,7 +154,7 @@ public class MavenProjectImporter {
 
 
     WorkspaceEntityStorageBuilder facetDiff =
-      WorkspaceEntityStorageBuilder.Companion.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
+      WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
     IdeModifiableModelsProviderBridge providerForFacets = new IdeModifiableModelsProviderBridge(myProject, facetDiff);
 
     List<Module> modulesToMavenize = new ArrayList<>();

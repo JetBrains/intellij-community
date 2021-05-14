@@ -8,3 +8,7 @@ IPSECKEY_PID=$!
 # port-only for DST3
 telnet $TEST_REMOTE_DST3 &
 tpid=$!
+
+foo() {
+  echo "test" |& tee $Log
+}

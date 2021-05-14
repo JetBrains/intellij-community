@@ -22,7 +22,7 @@ public abstract class AsyncExecutionService {
   protected abstract AppUIExecutor createWriteThreadExecutor(@NotNull ModalityState modalityState);
 
   @NotNull
-  protected abstract <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<T> computation);
+  protected abstract <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<? extends T> computation);
 
   @NotNull
   static AsyncExecutionService getService() {

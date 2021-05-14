@@ -125,7 +125,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   private ModifiableRootModel getModifiableModel() {
-    return getState().getRootModel();
+    return getState().getModifiableRootModel();
   }
 
   public void selectOrderEntry(@NotNull final OrderEntry entry) {
@@ -190,7 +190,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
 
     private @NlsContexts.Label String getModuleClasspathFormat() {
-      @NlsSafe final String type = ClassPathStorageUtil.getStorageType(myState.getRootModel().getModule());
+      @NlsSafe final String type = ClassPathStorageUtil.getStorageType(myState.getCurrentRootModel().getModule());
       return type;
     }
 
@@ -201,13 +201,13 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     public void canApply() throws ConfigurationException {
       ClasspathStorageProvider provider = ClasspathStorage.getProvider(getSelectedClasspathFormat());
       if (provider != null) {
-        provider.assertCompatible(myState.getRootModel());
+        provider.assertCompatible(myState.getCurrentRootModel());
       }
     }
 
     private void apply() throws ConfigurationException {
       canApply();
-      ClasspathStorage.setStorageType(myState.getRootModel(), getSelectedClasspathFormat());
+      ClasspathStorage.setStorageType(myState.getCurrentRootModel(), getSelectedClasspathFormat());
     }
   }
 

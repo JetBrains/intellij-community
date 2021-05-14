@@ -26,9 +26,16 @@ private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(pro
     }
   }
 
-  override fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage? {
+  override fun unloadComponent(component: Any) {
+    super.unloadComponent(component)
+    if (component is PersistentStateComponent<*>) {
+      storages.remove(component.javaClass)
+    }
+  }
+
+  override fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage {
     // service container ensures that one key is never requested from different threads
-    return storages.getOrPut(componentClass) { ReadOnlyStorage(configurationSchemaKey, componentClass, this) }
+    return storages.computeIfAbsent(componentClass) { ReadOnlyStorage(configurationSchemaKey, componentClass, this) }
   }
 
   override fun doCreateStateGetter(reloadData: Boolean,
@@ -41,12 +48,8 @@ private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(pro
     val configurationFileManager = ConfigurationFileManager.getInstance(project)
     val node = configurationFileManager.findValueNode(configurationSchemaKey) ?: return stateGetter
     return object : StateGetter<Any> {
-      override fun getState(mergeInto: Any?): Any? {
-        var state = stateGetter.getState(mergeInto)
-        if (state == null) {
-          state = ReflectionUtil.newInstance(stateClass, false)
-        }
-
+      override fun getState(mergeInto: Any?): Any {
+        val state = stateGetter.getState(mergeInto) ?: ReflectionUtil.newInstance(stateClass, false)
         val affectedProperties = mutableListOf<String>()
         readIntoObject(state as BaseState, node) { affectedProperties.add(it.name!!) }
         info.affectedPropertyNames = affectedProperties
@@ -116,6 +119,6 @@ private class ReadOnlyStorage(val configurationSchemaKey: String, val componentC
 
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<String>) {
+  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.icons.AllIcons;
@@ -104,7 +104,6 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
 public class HelpTooltip {
   private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
 
-  private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
   private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
   private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
@@ -253,6 +252,18 @@ public class HelpTooltip {
   }
 
   /**
+   * Clears previously specified title, shortcut, link and description.
+   * @return {@code this}
+   */
+  public HelpTooltip clear() {
+    title = null;
+    shortcut = null;
+    link = null;
+    description = null;
+    return this;
+  }
+
+  /**
    * Toggles whether to hide tooltip automatically on timeout. For default behaviour just don't call this method.
    *
    * @param neverHide {@code true} don't hide, {@code false} otherwise.
@@ -280,6 +291,9 @@ public class HelpTooltip {
    * @param component is the owner component for the tooltip.
    */
   public void installOn(@NotNull JComponent component) {
+    if (component.getClientProperty(TOOLTIP_PROPERTY) == this) {
+      return;
+    }
     getDismissDelay();
     neverHide = neverHide || UIUtil.isHelpButton(component);
 
@@ -355,7 +369,7 @@ public class HelpTooltip {
   @NotNull
   protected final JPanel createTipPanel() {
     JPanel tipPanel = new JPanel();
-    tipPanel.setLayout(new VerticalLayout(VGAP.get()));
+    tipPanel.setLayout(new VerticalLayout(JBUI.getInt("HelpTooltip.verticalGap", 4)));
     tipPanel.setBackground(UIUtil.getToolTipBackground());
 
     boolean hasTitle = StringUtil.isNotEmpty(title);
@@ -419,6 +433,20 @@ public class HelpTooltip {
         instance.masterPopupOpenCondition = null;
       }
     }
+  }
+
+  /**
+   * @return existing {@code HelpTooltip} instance installed on component or new instance if absent.
+   * @param owner a possible {@code HelpTooltip} owner.
+   */
+  @NotNull
+  public static HelpTooltip getOrCreate(@NotNull Component owner) {
+    if (owner instanceof JComponent) {
+      JComponent component = (JComponent)owner;
+      HelpTooltip instance = (HelpTooltip)component.getClientProperty(TOOLTIP_PROPERTY);
+      if (instance != null) return instance;
+    }
+    return new HelpTooltip();
   }
 
   /**
@@ -572,7 +600,7 @@ public class HelpTooltip {
       setFont(deriveHeaderFont(getFont()));
       setForeground(UIUtil.getToolTipForeground());
 
-      if (obeyWidth) {
+      if (obeyWidth || title.length() > MAX_WIDTH.get()) {
         View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
         float width = v.getPreferredSpan(View.X_AXIS);
         isMultiline = isMultiline || width > MAX_WIDTH.get();

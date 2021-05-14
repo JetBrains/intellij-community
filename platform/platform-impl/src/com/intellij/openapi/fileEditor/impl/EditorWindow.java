@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -28,12 +28,12 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
@@ -321,10 +321,6 @@ public final class EditorWindow {
     myTabbedPane.setForegroundAt(index, color);
   }
 
-  void setStyleAt(int index, @SimpleTextAttributes.StyleAttributeConstant int style) {
-    myTabbedPane.setStyleAt(index, style);
-  }
-
   void setTextAttributes(int index, @Nullable TextAttributes attributes) {
     myTabbedPane.setTextAttributes(index, attributes);
   }
@@ -569,7 +565,7 @@ public final class EditorWindow {
         myOwner.updateFileIconLater(file);
         myOwner.updateFileColor(file);
       }
-      myOwner.updateFileStyle(editor.getFile());
+      myOwner.updateFileColor(editor.getFile());
       myOwner.setCurrentWindow(this, false);
       hideTabsIfNeeded(editor);
     }
@@ -769,7 +765,9 @@ public final class EditorWindow {
   void updateFileName(@NotNull VirtualFile file) {
     int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
-      setTitleAt(index, EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file, this));
+      setTitleAt(index, SlowOperations.allowSlowOperations(
+        () -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file, this)
+      ));
       setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips()
                               ? getManager().getFileTooltipText(file)
                               : null);
@@ -950,6 +948,10 @@ public final class EditorWindow {
     }
     boolean wasPinned = editorComposite.isPinned();
     editorComposite.setPinned(pinned);
+    if (editorComposite.isPreview()) {
+      editorComposite.setPreview(false);
+      myOwner.updateFileColor(file);
+    }
     if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread()) {
       ObjectUtils.consumeIfCast(getTabbedPane().getTabs(), JBTabsImpl.class, JBTabsImpl::doLayout);
     }

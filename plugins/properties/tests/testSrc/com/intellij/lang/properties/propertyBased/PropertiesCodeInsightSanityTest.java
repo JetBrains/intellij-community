@@ -40,7 +40,7 @@ public class PropertiesCodeInsightSanityTest extends LightJavaCodeInsightFixture
   }
 
   @NotNull
-  private Supplier<MadTestingAction> actionsOnPropertiesFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
+  private Supplier<MadTestingAction> actionsOnPropertiesFiles(Function<? super PsiFile, ? extends Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(),
                                                 f -> f.getName().endsWith(PropertiesFileType.DOT_DEFAULT_EXTENSION),
                                                 fileActions);

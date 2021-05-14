@@ -603,7 +603,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @ApiStatus.Internal
   public void registerExtensions(@NotNull ExtensionsAreaImpl area,
                                  @NotNull ContainerDescriptor containerDescriptor,
-                                 @Nullable List<Runnable> listenerCallbacks) {
+                                 @Nullable List<? super Runnable> listenerCallbacks) {
     Map<String, List<Element>> extensions = containerDescriptor.extensions;
     if (extensions != null) {
       area.registerExtensions(extensions, this, listenerCallbacks);

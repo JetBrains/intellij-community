@@ -16,7 +16,7 @@ class WelcomeScreenEventCollector : CounterUsagesCollector() {
 
   internal companion object {
 
-    private val GROUP = EventLogGroup("welcomescreen.interaction", 1)
+    private val GROUP = EventLogGroup("welcomescreen.interaction", 2)
 
     private val shown = GROUP.registerEvent("screen.shown", EventFields.Boolean("first_start"), EventFields.Boolean("config_imported"))
 
@@ -34,6 +34,9 @@ class WelcomeScreenEventCollector : CounterUsagesCollector() {
     private val colorBlindnessChanged = GROUP.registerEvent("color.blindness.changed", EventFields.Boolean("enabled"))
     private val keymapChanged = GROUP.registerEvent("keymap.changed", EventFields.StringValidatedByEnum("keymap_name", "keymaps"))
     private val pluginsModified = GROUP.registerEvent("plugins.modified")
+
+    internal val debuggerTabProcessesSearchUsed = GROUP.registerEvent("debugger.processes.search")
+    internal val debuggerAttachUsed = GROUP.registerEvent("debugger.attach")
 
     @JvmStatic
     fun logWelcomeScreenShown() = shown.log(ConfigImportHelper.isFirstSession(), ConfigImportHelper.isConfigImported())

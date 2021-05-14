@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -34,10 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class SearchInLibsTest extends JavaPsiTestCase {
   @Override
@@ -164,7 +162,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
 
     assertEquals("files count", expectedFileNames.length, files.size());
 
-    Collections.sort(files, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+    Collections.sort(files, Comparator.comparing(PsiFileSystemItem::getName));
     Arrays.sort(expectedFileNames);
 
     for (int i = 0; i < expectedFileNames.length; i++) {

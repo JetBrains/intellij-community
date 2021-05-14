@@ -35,19 +35,19 @@ private class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalF
 
   companion object {
     private fun createDataContext(project: Project, localSession: Boolean, workingDirectory: String?, executor: Executor? = null): DataContext {
-      return SimpleDataContext.getSimpleContext(
-        mutableMapOf<String, Any?>()
-          .also {
-            it[CommonDataKeys.PROJECT.name] = project
-            val virtualFile =
-              if (localSession && workingDirectory != null) LocalFileSystem.getInstance().findFileByPath(workingDirectory) else null
-            if (virtualFile != null) {
-              it[CommonDataKeys.VIRTUAL_FILE.name] = virtualFile
-              it[RunAnythingProvider.EXECUTING_CONTEXT.name] = RunAnythingContext.RecentDirectoryContext(
-                virtualFile.path)
-            }
-            it[RunAnythingAction.EXECUTOR_KEY.name] = executor
-          }, null)
+      val virtualFile = if (localSession && workingDirectory != null)
+        LocalFileSystem.getInstance().findFileByPath(workingDirectory) else null
+
+      return SimpleDataContext.builder()
+        .add(CommonDataKeys.PROJECT, project)
+        .add(RunAnythingAction.EXECUTOR_KEY, executor)
+        .apply {
+          if (virtualFile != null) {
+            add(CommonDataKeys.VIRTUAL_FILE, virtualFile)
+            add(RunAnythingProvider.EXECUTING_CONTEXT, RunAnythingContext.RecentDirectoryContext(virtualFile.path))
+          }
+        }
+        .build()
     }
 
     private fun checkForCLI(it: RunAnythingProvider<*>?): Boolean {

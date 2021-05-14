@@ -11,12 +11,28 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.icons.RowIcon
 import com.intellij.ui.layout.*
+import com.intellij.util.IconUtil
 import icons.CompletionMlRankingIcons
+import java.awt.Rectangle
 import javax.swing.Icon
 
 class MLRankingConfigurable(private val availableProviders: List<RankingModelProvider>) :
   BoundConfigurable(MLCompletionBundle.message("ml.completion.settings.group")) {
   private val settings = CompletionMLRankingSettings.getInstance()
+
+  companion object {
+    val UP_DOWN_ICON = createUpDownIcon()
+    val RELEVANT_ICON = cropIcon(CompletionMlRankingIcons.RelevantProposal)
+
+    private fun createUpDownIcon(): Icon {
+      val icon = IconManager.getInstance().createRowIcon(2, RowIcon.Alignment.CENTER)
+      icon.setIcon(cropIcon(CompletionMlRankingIcons.ProposalUp), 0)
+      icon.setIcon(cropIcon(CompletionMlRankingIcons.ProposalDown), 1)
+      return icon
+    }
+
+    private fun cropIcon(icon: Icon): Icon = IconUtil.cropIcon(icon, Rectangle(4, 0, 8, 16))
+  }
 
   override fun createPanel(): DialogPanel {
     val providers = availableProviders.distinctBy { it.displayNameInSettings }.sortedBy { it.displayNameInSettings }
@@ -45,18 +61,21 @@ class MLRankingConfigurable(private val availableProviders: List<RankingModelPro
               checkBox(MLCompletionBundle.message("ml.completion.show.diff"),
                        { settings.isShowDiffEnabled },
                        { settings.isShowDiffEnabled = it }).enableIf(enableRanking.selected)
-              JBLabel(createUpDownIcon())()
+              JBLabel(UP_DOWN_ICON)()
+            }
+          }
+        }
+        row {
+          cell {
+            enableRankingCheckbox?.let { enableRanking ->
+              checkBox(MLCompletionBundle.message("ml.completion.decorate.relevant"),
+                       { settings.isDecorateRelevantEnabled },
+                       { settings.isDecorateRelevantEnabled = it }).enableIf(enableRanking.selected)
+              JBLabel(RELEVANT_ICON)()
             }
           }
         }
       }
     }
-  }
-
-  private fun createUpDownIcon(): Icon {
-    val icon = IconManager.getInstance().createRowIcon(2, RowIcon.Alignment.CENTER)
-    icon.setIcon(CompletionMlRankingIcons.ProposalUp, 0)
-    icon.setIcon(CompletionMlRankingIcons.ProposalDown, 1)
-    return icon
   }
 }

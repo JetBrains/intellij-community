@@ -7,6 +7,7 @@
 #import <AppKit/AppKit.h>
 #import <dlfcn.h>
 
+
 NSBundle *vm;
 NSString *const JVMOptions = @"JVMOptions";
 NSString *JVMVersion = NULL;

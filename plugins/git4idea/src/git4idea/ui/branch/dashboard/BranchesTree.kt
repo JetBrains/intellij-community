@@ -204,6 +204,11 @@ internal class FilteringBranchesTree(project: Project,
         }
       }
 
+      override fun updatePattern(string: String?) {
+        super.updatePattern(string)
+        onUpdatePattern(string)
+      }
+
       override fun onUpdatePattern(text: String?) {
         customWordMatchers.clear()
         customWordMatchers.addAll(buildCustomWordMatchers(text))

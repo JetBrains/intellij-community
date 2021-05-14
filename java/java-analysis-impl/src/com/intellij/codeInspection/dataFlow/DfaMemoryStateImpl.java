@@ -85,13 +85,25 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public @NotNull DfaMemoryStateImpl createClosureState() {
     DfaMemoryStateImpl copy = createCopy();
-    forRecordedVariableTypes((value, dfType) -> {
-      if (dfType instanceof DfReferenceType) {
-        copy.setDfType(value, ((DfReferenceType)dfType).dropLocality());
-      }
-    });
     copy.flushFields();
     copy.emptyStack();
+    for (DfaValue value : getFactory().getValues().toArray(new DfaValue[0])) {
+      if (value instanceof DfaVariableValue) {
+        DfType type = copy.getDfType(value);
+        if (type instanceof DfReferenceType) {
+          DfReferenceType newType = ((DfReferenceType)type).dropLocality();
+          if (newType.getMutability() == Mutability.MUST_NOT_MODIFY) {
+            // If we must not modify parameter inside the method body itself, 
+            // we may still be able to modify it inside nested closures, 
+            // as they could be executed later.
+            newType = newType.dropMutability();
+          }
+          if (newType != type) {
+            copy.setDfType(value, newType);
+          }
+        }
+      }
+    }
     return copy;
   }
 

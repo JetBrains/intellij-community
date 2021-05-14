@@ -84,7 +84,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
                              : UIBundle.message("status.bar.notifications.widget.no.notification.tooltip"));
   }
 
-  private void updateIconOnStatusBar(ArrayList<Notification> notifications) {
+  private void updateIconOnStatusBar(List<? extends Notification> notifications) {
     setIcon(createIconWithNotificationCount(notifications));
   }
 

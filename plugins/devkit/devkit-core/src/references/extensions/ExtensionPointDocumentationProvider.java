@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references.extensions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -12,13 +12,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -162,22 +159,9 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
 
   @Nullable
   private static ExtensionPoint findExtensionPoint(PsiElement element) {
-    if (element instanceof PomTargetPsiElement &&
+    if ((element instanceof PomTargetPsiElement || element instanceof XmlTag) &&
         DescriptorUtil.isPluginXml(element.getContainingFile())) {
-      final PomTarget pomTarget = ((PomTargetPsiElement)element).getTarget();
-      if (pomTarget instanceof DomTarget) {
-        final DomElement domElement = ((DomTarget)pomTarget).getDomElement();
-        if (domElement instanceof ExtensionPoint) {
-          return (ExtensionPoint)domElement;
-        }
-      }
-    } // via XmlTag for "qualifiedName"
-    else if (element instanceof XmlTag &&
-             DescriptorUtil.isPluginXml(element.getContainingFile())) {
-      DomElement domElement = DomUtil.getDomElement(element);
-      if (domElement instanceof ExtensionPoint) {
-        return (ExtensionPoint)domElement;
-      }
+      return ExtensionPoint.resolveFromDeclaration(element);
     }
 
     return null;

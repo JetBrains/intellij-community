@@ -6,7 +6,6 @@ import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import java.time.Duration
-import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
@@ -26,8 +25,6 @@ data class ProjectIndexingHistory(val project: Project) {
   val totalStatsPerFileType = hashMapOf<String /* File type name */, StatsPerFileType>()
 
   val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexer>()
-
-  var totalNumberOfTooLargeFiles: Int = 0
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
     scanningStatistics += statistics.toJsonStatistics()
@@ -63,8 +60,6 @@ data class ProjectIndexingHistory(val project: Project) {
       totalStats.totalBytes += stats.totalBytes
       totalStats.totalIndexingTimeInAllThreads += stats.indexingTime.sumTime
     }
-
-    totalNumberOfTooLargeFiles += statistics.numberOfTooLargeForIndexingFiles
   }
 
   data class StatsPerFileType(

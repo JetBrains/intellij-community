@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog.uploader
 import com.google.gson.Gson
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType.*
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.*
@@ -97,6 +98,7 @@ object EventLogExternalUploader {
     libPaths.add(findLibraryByClass(NotNull::class.java))
     libPaths.add(findLibraryByClass(org.apache.log4j.Logger::class.java))
     libPaths.add(findLibraryByClass(Gson::class.java))
+    libPaths.add(findLibraryByClass(EventGroupsFilterRules::class.java))
     val classpath = joinAsClasspath(libPaths, uploader)
 
     val args = arrayListOf<String>()

@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 public class PythonConsoleParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
 
-  private Disposable myServiceDisposable = null;
+  private Disposable myServiceDisposable;
 
 
   public PythonConsoleParsingTest() {
@@ -34,14 +34,8 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
 
     if (PythonRuntimeService.getInstance() == null) {
-      myServiceDisposable = new Disposable() {
-        @Override
-        public void dispose() {
-        }
-      };
+      myServiceDisposable = Disposer.newDisposable();
       ((MockApplication)ApplicationManager.getApplication()).registerService(PythonRuntimeService.class, new PythonRuntimeServiceImpl(), myServiceDisposable);
-    } else {
-      myServiceDisposable = null;
     }
   }
 

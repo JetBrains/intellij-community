@@ -1,40 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
-import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.ui.Messages.getWarningIcon;
-import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
-import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.exists;
-import static com.intellij.util.containers.ContainerUtil.filter;
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static git4idea.GitNotificationIdsHolder.REBASE_NOT_STARTED;
-import static git4idea.GitNotificationIdsHolder.REBASE_SUCCESSFUL;
-import static git4idea.GitUtil.HEAD;
-import static git4idea.GitUtil.getHead;
-import static git4idea.GitUtil.getRepositoryManager;
-import static git4idea.GitUtil.getRootsFromRepositories;
-import static git4idea.GitUtil.refreshChangedVfs;
-import static git4idea.rebase.conflict.GitRebaseMergeDialogCustomizerKt.createRebaseDialogCustomizer;
-import static java.util.Collections.singleton;
-
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -54,11 +33,7 @@ import com.intellij.vcs.log.TimedVcsCommit;
 import git4idea.DialogManager;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.branch.GitRebaseParams;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandlerListener;
-import git4idea.commands.GitRebaseCommandResult;
-import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
+import git4idea.commands.*;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
@@ -68,21 +43,22 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.stash.GitChangesSaver;
 import git4idea.util.GitFreezingProcess;
 import git4idea.util.GitUntrackedFilesHelper;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import org.jetbrains.annotations.*;
+
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.openapi.ui.Messages.getWarningIcon;
+import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.*;
+import static git4idea.GitNotificationIdsHolder.REBASE_NOT_STARTED;
+import static git4idea.GitNotificationIdsHolder.REBASE_SUCCESSFUL;
+import static git4idea.GitUtil.*;
+import static git4idea.rebase.conflict.GitRebaseMergeDialogCustomizerKt.createRebaseDialogCustomizer;
+import static java.util.Collections.singleton;
 
 public class GitRebaseProcess {
 
@@ -420,7 +396,7 @@ public class GitRebaseProcess {
       null,
       "git.rebase.stopped.due.to.conflicts"
     );
-    notification.addAction(new ResolveAction(conflictingRepository));
+    notification.addAction(createResolveNotificationAction(conflictingRepository));
     notification.addAction(CONTINUE_ACTION);
     notification.addAction(ABORT_ACTION);
     if (mySaver.wereChangesSaved()) notification.addAction(VIEW_STASH_ACTION);
@@ -617,23 +593,30 @@ public class GitRebaseProcess {
     UNRESOLVED_REMAIN
   }
 
-  private class ResolveAction extends NotificationAction {
-    @NotNull private final GitRepository myCurrentRepository;
-
-    ResolveAction(@NotNull GitRepository currentRepository) {
-      super(GitBundle.messagePointer("action.NotificationAction.text.resolve"));
-      myCurrentRepository = currentRepository;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-      myProgressManager.run(new Task.Backgroundable(
-        myProject,
-        GitBundle.message("rebase.progress.indicator.conflicts.collecting.title")
-      ) {
+  @NotNull
+  private NotificationAction createResolveNotificationAction(@NotNull GitRepository currentRepository) {
+    return NotificationAction.create(GitBundle.message("action.NotificationAction.text.resolve"), (e, notification) -> {
+      myProgressManager.run(new Task.Backgroundable(myProject, GitBundle.message("rebase.progress.indicator.conflicts.collecting.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          showConflictResolver(myCurrentRepository, true);
+          resolveConflicts(currentRepository, notification);
+        }
+      });
+    });
+  }
+
+  private void resolveConflicts(@NotNull GitRepository currentRepository, @NotNull Notification notification) {
+    ResolveConflictResult result = showConflictResolver(currentRepository, true);
+    if (result == ResolveConflictResult.NOTHING_TO_MERGE) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        boolean continueRebase = MessageDialogBuilder.yesNo(GitBundle.message("rebase.notification.all.conflicts.resolved.title"),
+                                                            GitBundle.message("rebase.notification.all.conflicts.resolved.text"))
+          .yesText(GitBundle.message("rebase.notification.all.conflicts.resolved.continue.rebase.action.text"))
+          .noText(CommonBundle.getCancelButtonText())
+          .ask(myProject);
+        if (continueRebase) {
+          retry(GitBundle.message("rebase.progress.indicator.continue.title"));
+          notification.expire();
         }
       });
     }

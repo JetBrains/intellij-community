@@ -275,14 +275,13 @@ final class ClassLoaderConfigurator {
     }
     else if (descriptor.descriptorPath == null && idString.equals("com.intellij.diagram")) {
       // multiple packages - intellij.diagram and intellij.diagram.impl modules
-      return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
-                                   descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory) {
-        @Override
-        protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
-          return super.isDefinitelyAlienClass(name, packagePrefix) &&
-                 !name.startsWith("com.intellij.diagram.");
-        }
-      };
+      return createPluginClassLoaderWithExtraPackage(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                                     "com.intellij.diagram.");
+    }
+    else if (descriptor.descriptorPath == null && idString.equals("com.intellij.struts2")) {
+      // multiple packages - intellij.diagram and intellij.diagram.impl modules
+      return createPluginClassLoaderWithExtraPackage(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                                     "com.intellij.lang.ognl.");
     }
     else if (descriptor.descriptorPath == null && idString.equals("com.intellij.kubernetes") &&
              descriptor.dependenciesDescriptor != null /* old plugin version */) {
@@ -309,13 +308,29 @@ final class ClassLoaderConfigurator {
     }
   }
 
+  private static @NotNull PluginClassLoader createPluginClassLoaderWithExtraPackage(@NotNull ClassLoader @NotNull [] parentLoaders,
+                                                                                    @NotNull IdeaPluginDescriptorImpl descriptor,
+                                                                                    @NotNull UrlClassLoader.Builder urlClassLoaderBuilder,
+                                                                                    @NotNull ClassLoader coreLoader,
+                                                                                    @Nullable ClassPath.ResourceFileFactory resourceFileFactory,
+                                                                                    @NotNull String customPackage) {
+    return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
+                                 descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory) {
+      @Override
+      protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
+        return super.isDefinitelyAlienClass(name, packagePrefix) &&
+               !name.startsWith(customPackage);
+      }
+    };
+  }
+
   private static final class ContentPredicateBasedPluginClassLoader extends PluginClassLoader {
-    private final Predicate<String> contentBasedPredicate;
+    private final @NotNull Predicate<? super String> contentBasedPredicate;
 
     private ContentPredicateBasedPluginClassLoader(@NotNull UrlClassLoader.Builder builder,
                                                    @NotNull ClassLoader @NotNull [] parentLoaders,
                                                    @NotNull IdeaPluginDescriptorImpl descriptor,
-                                                   @NotNull Predicate<String> contentBasedPredicate,
+                                                   @NotNull Predicate<? super String> contentBasedPredicate,
                                                    @NotNull ClassLoader coreLoader,
                                                    @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
       super(builder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory);
@@ -337,12 +352,12 @@ final class ClassLoaderConfigurator {
   }
 
   private static final class FilteringPluginClassLoader extends PluginClassLoader {
-    private @NotNull final Predicate<String> dependencyBasedPredicate;
+    private final @NotNull Predicate<? super String> dependencyBasedPredicate;
 
     private FilteringPluginClassLoader(@NotNull UrlClassLoader.Builder builder,
                                        @NotNull ClassLoader @NotNull [] parentLoaders,
                                        @NotNull IdeaPluginDescriptorImpl descriptor,
-                                       @NotNull Predicate<String> dependencyBasedPredicate,
+                                       @NotNull Predicate<? super String> dependencyBasedPredicate,
                                        @NotNull ClassLoader coreLoader,
                                        @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
       super(builder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory);
@@ -601,7 +616,7 @@ final class ClassLoaderConfigurator {
     }
   }
 
-  private @NotNull static ClassLoader configureUsingIdeaClassloader(@NotNull List<Path> classPath, @NotNull IdeaPluginDescriptorImpl descriptor) {
+  private @NotNull static ClassLoader configureUsingIdeaClassloader(@NotNull List<? extends Path> classPath, @NotNull IdeaPluginDescriptorImpl descriptor) {
     getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
     ClassLoader loader = ClassLoaderConfigurator.class.getClassLoader();
     try {
@@ -617,7 +632,7 @@ final class ClassLoaderConfigurator {
 
   private void addLoaderOrLogError(@NotNull IdeaPluginDescriptorImpl dependent,
                                    @NotNull IdeaPluginDescriptorImpl dependency,
-                                   @NotNull Collection<ClassLoader> loaders) {
+                                   @NotNull Collection<? super ClassLoader> loaders) {
     ClassLoader loader = dependency.getClassLoader();
     if (loader == null) {
       getLogger().error(PluginLoadingError.formatErrorMessage(dependent,

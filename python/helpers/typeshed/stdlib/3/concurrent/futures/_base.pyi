@@ -2,7 +2,6 @@ import sys
 import threading
 from abc import abstractmethod
 from logging import Logger
-from types import TracebackType
 from typing import (
     Any,
     Callable,
@@ -86,13 +85,13 @@ class Executor:
 def as_completed(fs: Iterable[Future[_T]], timeout: Optional[float] = ...) -> Iterator[Future[_T]]: ...
 
 # Ideally this would be a namedtuple, but mypy doesn't support generic tuple types. See #1976
-class DoneAndNotDoneFutures(Sequence[_T]):
+class DoneAndNotDoneFutures(Sequence[Set[Future[_T]]]):
     done: Set[Future[_T]]
     not_done: Set[Future[_T]]
     def __new__(_cls, done: Set[Future[_T]], not_done: Set[Future[_T]]) -> DoneAndNotDoneFutures[_T]: ...
     def __len__(self) -> int: ...
     @overload
-    def __getitem__(self, i: int) -> _T: ...
+    def __getitem__(self, i: int) -> Set[Future[_T]]: ...
     @overload
     def __getitem__(self, s: slice) -> DoneAndNotDoneFutures[_T]: ...
 

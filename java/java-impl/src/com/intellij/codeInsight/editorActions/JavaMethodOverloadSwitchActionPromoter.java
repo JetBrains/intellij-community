@@ -11,7 +11,7 @@ import java.util.List;
 
 public class JavaMethodOverloadSwitchActionPromoter implements ActionPromoter {
   @Override
-  public List<AnAction> promote(@NotNull List<AnAction> actions, @NotNull DataContext context) {
+  public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     return ContainerUtil.findAll(actions, a -> a instanceof JavaMethodOverloadSwitchUpAction ||
                                                a instanceof JavaMethodOverloadSwitchDownAction);
   }

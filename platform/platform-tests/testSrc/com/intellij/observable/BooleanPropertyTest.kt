@@ -13,7 +13,6 @@ class BooleanPropertyTest {
   @Test
   fun `test parallel setup`() {
     repeat(1000) {
-      val latch = CountDownLatch(1)
       val setEventCounter = AtomicInteger(0)
       val resetEventCounter = AtomicInteger(0)
       val changeEventCounter = AtomicInteger(0)
@@ -22,40 +21,69 @@ class BooleanPropertyTest {
       observable.afterReset { resetEventCounter.incrementAndGet() }
       observable.afterChange { changeEventCounter.incrementAndGet() }
 
-      run {
-        val threads = generate(10) {
-          thread {
-            latch.await()
-            observable.set()
-          }
-        }
-        latch.countDown()
-        threads.forEach(Thread::join)
-
-        assertEquals(true, observable.get())
-        assertEquals(1, setEventCounter.get())
-        assertEquals(0, resetEventCounter.get())
-        assertEquals(10, changeEventCounter.get())
+      runConcurrentAction {
+        observable.set()
       }
-      run {
-        val threads = generate(10) {
-          thread {
-            latch.await()
-            observable.reset()
-          }
-        }
-        latch.countDown()
-        threads.forEach(Thread::join)
+      assertEquals(true, observable.get())
+      assertEquals(1, setEventCounter.get())
+      assertEquals(0, resetEventCounter.get())
+      assertEquals(10, changeEventCounter.get())
 
-        assertEquals(false, observable.get())
-        assertEquals(1, setEventCounter.get())
-        assertEquals(1, resetEventCounter.get())
-        assertEquals(20, changeEventCounter.get())
+      runConcurrentAction {
+        observable.reset()
       }
+      assertEquals(false, observable.get())
+      assertEquals(1, setEventCounter.get())
+      assertEquals(1, resetEventCounter.get())
+      assertEquals(20, changeEventCounter.get())
+
+      runConcurrentAction {
+        observable.compareAndSet(false, true)
+      }
+      assertEquals(true, observable.get())
+      assertEquals(2, setEventCounter.get())
+      assertEquals(1, resetEventCounter.get())
+      assertEquals(21, changeEventCounter.get())
+
+      runConcurrentAction {
+        observable.compareAndSet(true, false)
+      }
+      assertEquals(false, observable.get())
+      assertEquals(2, setEventCounter.get())
+      assertEquals(2, resetEventCounter.get())
+      assertEquals(22, changeEventCounter.get())
+
+      runConcurrentAction {
+        observable.compareAndSet(true, false)
+      }
+      assertEquals(false, observable.get())
+      assertEquals(2, setEventCounter.get())
+      assertEquals(2, resetEventCounter.get())
+      assertEquals(22, changeEventCounter.get())
+
+      runConcurrentAction {
+        observable.compareAndSet(false, false)
+      }
+      assertEquals(false, observable.get())
+      assertEquals(2, setEventCounter.get())
+      assertEquals(2, resetEventCounter.get())
+      assertEquals(32, changeEventCounter.get())
     }
   }
 
   private fun <R> generate(times: Int, action: (Int) -> R): Iterable<R> {
     return (0 until times).map(action)
+  }
+
+  private fun runConcurrentAction(action: () -> Unit) {
+    val latch = CountDownLatch(1)
+    val threads = generate(10) {
+      thread {
+        latch.await()
+        action()
+      }
+    }
+    latch.countDown()
+    threads.forEach(Thread::join)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,7 +161,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   public boolean canRepresent(final Object element) {
     if (!isValid()) return false;
 
-    return super.canRepresent(element) || canRepresent(getValue(), element);
+    return super.canRepresent(element) || SlowOperations.allowSlowOperations(() -> canRepresent(getValue(), element));
   }
 
   private boolean canRepresent(final PsiClass psiClass, final Object element) {

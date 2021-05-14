@@ -317,12 +317,13 @@ public class PagedFileStorage implements Forceable {
   private ByteBufferWrapper getBufferWrapper(long page, boolean modify, boolean readOnly) {
     ByteBufferWrapper pageFromCache =
       myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getStorageLock().getMappingChangeCount(), readOnly);
-    if (pageFromCache != null) {
-      if (modify) markDirty(pageFromCache);
-      return pageFromCache;
-    }
 
     try {
+      if (pageFromCache != null) {
+        if (modify) markDirty(pageFromCache);
+        return pageFromCache;
+      }
+
       assert page >= 0 && page <= StorageLock.MAX_PAGES_COUNT:page;
 
       if (myStorageIndex == -1) {
@@ -344,7 +345,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  private void markDirty(ByteBufferWrapper buffer) {
+  private void markDirty(ByteBufferWrapper buffer) throws IOException {
     if (!isDirty) isDirty = true;
     buffer.markDirty();
   }

@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features.history
 
+import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramFeatures
+import com.intellij.internal.ml.ngram.NGramIncrementalModelRunner
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
 
@@ -10,7 +12,9 @@ data class NextFileProbability(
   val mle: Double, val minMle: Double, val maxMle: Double, val mleToMin: Double, val mleToMax: Double
 )
 
-class FileHistoryManager(private var state: FilePredictionHistoryState, private val recentFilesLimit: Int) {
+class FileHistoryManager(private val model: NGramIncrementalModelRunner,
+                         private var state: FilePredictionHistoryState,
+                         private val recentFilesLimit: Int) {
   val helper: FileSequenceModelHelper = FileSequenceModelHelper()
 
   @TestOnly
@@ -19,11 +23,14 @@ class FileHistoryManager(private var state: FilePredictionHistoryState, private 
 
   @Synchronized
   fun saveFileHistory(project: Project) {
+    FileHistoryPersistence.saveNGrams(project, model)
     FileHistoryPersistence.saveFileHistory(project, state)
   }
 
   @Synchronized
   fun onFileOpened(fileUrl: String) {
+    model.learnNextToken(fileUrl)
+
     val entry = findOrAddEntry(fileUrl, recentFilesLimit)
     val code = entry.code
 
@@ -81,6 +88,15 @@ class FileHistoryManager(private var state: FilePredictionHistoryState, private 
     val uniGram = helper.calculateUniGramProb(state.root, entry?.code)
     val biGram = helper.calculateBiGramProb(state.root, entry?.code, state.prevFile)
     return FileHistoryFeatures(position, uniGram, biGram)
+  }
+
+  fun calcNGramFeatures(candidates: List<String>): FilePredictionNGramFeatures {
+    val result: MutableMap<String, Double> = hashMapOf()
+    val scorer = model.createScorer()
+    for (candidate in candidates) {
+      result[candidate] = scorer.score(candidate)
+    }
+    return FilePredictionNGramFeatures(result)
   }
 
   private fun findEntry(fileUrl: String): Int {

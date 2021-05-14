@@ -6,14 +6,14 @@ import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.EventRateThrottleResult;
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class TypingEventsLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 2);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 3);
 
   private static final EventId TYPED = GROUP.registerEvent("typed");
   private static final EventId TOO_MANY_EVENTS = GROUP.registerEvent("too.many.events");
@@ -27,7 +27,7 @@ public class TypingEventsLogger extends CounterUsagesCollector {
   }
 
   private static void logTypingEvent(@NotNull DataContext dataContext, @NotNull EventId eventId) {
-    Project project = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     eventId.log(project);
   }
 

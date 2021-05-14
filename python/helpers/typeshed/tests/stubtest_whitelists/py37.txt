@@ -1,3 +1,7 @@
+_collections_abc.AsyncGenerator.ag_await
+_collections_abc.AsyncGenerator.ag_code
+_collections_abc.AsyncGenerator.ag_frame
+_collections_abc.AsyncGenerator.ag_running
 asyncio.AbstractEventLoop.sock_sendfile
 asyncio.compat  # Removed in 3.7
 asyncio.Future.__init__
@@ -21,12 +25,12 @@ collections.abc.AsyncGenerator.ag_await
 collections.abc.AsyncGenerator.ag_code
 collections.abc.AsyncGenerator.ag_frame
 collections.abc.AsyncGenerator.ag_running
+concurrent.futures.ProcessPoolExecutor.map
 contextvars.Context.__init__
 contextvars.Context.get
 contextvars.ContextVar.get
 copy.PyStringMap
 ctypes.CDLL.__init__
-dataclasses.Field.__init__
 dataclasses.field
 email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
@@ -36,6 +40,7 @@ http.client.HTTPSConnection.__init__
 http.server.SimpleHTTPRequestHandler.__init__
 importlib.metadata
 ipaddress._BaseNetwork.__init__
+itertools.accumulate
 json.loads
 macurl2path  # removed in 3.7
 multiprocessing.shared_memory

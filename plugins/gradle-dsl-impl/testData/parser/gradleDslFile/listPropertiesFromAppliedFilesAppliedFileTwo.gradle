@@ -1,6 +1,0 @@
-ext {
-  def hello = "hello"
-  prop2 = false
-}
-
-apply from: "b.gradle"

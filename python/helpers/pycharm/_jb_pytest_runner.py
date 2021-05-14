@@ -1,5 +1,6 @@
 # coding=utf-8
 import pytest
+from distutils import version
 import sys
 from _pytest.config import get_plugin_manager
 from pkg_resources import iter_entry_points
@@ -24,7 +25,7 @@ if __name__ == '__main__':
             plugins_to_load.append(pytest_plugin)
 
     args = sys.argv[1:]
-    if sys.version_info > (3,0):
+    if version.LooseVersion(pytest.__version__) >= version.LooseVersion("6.0"):
         args += ["--no-header", "--no-summary", "-q"]
 
     if JB_DISABLE_BUFFERING and "-s" not in args:

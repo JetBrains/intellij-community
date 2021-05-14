@@ -6,6 +6,7 @@ import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.ranker.ExperimentModelProvider.Companion.match
 import com.intellij.completion.ml.ranker.local.MLCompletionLocalModelsUtil
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
+import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
@@ -19,7 +20,7 @@ object RankingSupport {
   private var enabledInTests: Boolean = false
 
   fun getRankingModel(language: Language): RankingModelWrapper? {
-    MLCompletionLocalModelsUtil.getModel(language.id)?.let { return LanguageRankingModel(it) }
+    MLCompletionLocalModelsUtil.getModel(language.id)?.let { return LanguageRankingModel(it, DecoratingItemsPolicy.DISABLED) }
     val provider = findProviderSafe(language)
     return if (provider != null && shouldSortByML(language, provider)) tryGetModel(provider) else null
   }
@@ -48,7 +49,7 @@ object RankingSupport {
 
   private fun tryGetModel(provider: RankingModelProvider): RankingModelWrapper? {
     try {
-      return LanguageRankingModel(provider.model)
+      return LanguageRankingModel(provider.model, provider.decoratingPolicy)
     }
     catch (e: Exception) {
       LOG.error("Could not create ranking model with id '${provider.id}' and name '${provider.displayNameInSettings}'", e)

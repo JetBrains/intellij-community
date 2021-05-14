@@ -1,4 +1,0 @@
-ext {
-  def varList = [1, 2, 3, 4]
-  propertyList = ['a', 'b', 'c', 'd']
-}

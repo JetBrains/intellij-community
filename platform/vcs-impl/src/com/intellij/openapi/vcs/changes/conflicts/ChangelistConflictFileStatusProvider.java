@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
@@ -9,7 +8,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.FileStatusProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,16 +45,5 @@ public final class ChangelistConflictFileStatusProvider implements FileStatusPro
       }
     }
     return null;
-  }
-
-  @Override
-  public void refreshFileStatusFromDocument(@NotNull VirtualFile virtualFile, @NotNull Document doc) {
-
-  }
-
-  @NotNull
-  @Override
-  public ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile) {
-    throw new UnsupportedOperationException("Shouldn't be called");
   }
 }

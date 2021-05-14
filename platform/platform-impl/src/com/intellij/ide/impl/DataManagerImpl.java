@@ -4,7 +4,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.impl.dataRules.*;
+import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.UserDataHolder;
@@ -42,8 +41,6 @@ import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -52,18 +49,9 @@ public class DataManagerImpl extends DataManager {
 
   private static final ThreadLocal<AtomicInteger> ourGetDataLevel = ThreadLocal.withInitial(AtomicInteger::new);
 
-  private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = new ConcurrentHashMap<>();
-
   private final KeyedExtensionCollector<GetDataRule, String> myDataRuleCollector = new KeyedExtensionCollector<>(GetDataRule.EP_NAME);
 
   public DataManagerImpl() {
-    myDataConstantToRuleMap.put(PlatformDataKeys.COPY_PROVIDER.getName(), new CopyProviderRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.CUT_PROVIDER.getName(), new CutProviderRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.PASTE_PROVIDER.getName(), new PasteProviderRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.FILE_TEXT.getName(), new FileTextRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.FILE_EDITOR.getName(), new FileEditorRule());
-    myDataConstantToRuleMap.put(CommonDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
-    myDataConstantToRuleMap.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
   }
 
   private @Nullable Object getData(@NotNull String dataId, final Component focusedComponent) {
@@ -148,10 +136,6 @@ public class DataManagerImpl extends DataManager {
   }
 
   private @Nullable GetDataRule getRuleFromMap(@NotNull String dataId) {
-    GetDataRule rule = myDataConstantToRuleMap.get(dataId);
-    if (rule != null) {
-      return rule;
-    }
     return myDataRuleCollector.findSingle(dataId);
   }
 
@@ -172,7 +156,7 @@ public class DataManagerImpl extends DataManager {
     if (Registry.is("actionSystem.dataContextAssertions")) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (ourGetDataLevel.get().get() > 0) {
-        LOG.warn("DataContext shall not be created and queried inside another getData() call.");
+        LOG.error("DataContext shall not be created and queried inside another getData() call.");
       }
     }
     return new MyDataContext(component);
@@ -211,22 +195,6 @@ public class DataManagerImpl extends DataManager {
     IdeFocusManager.getGlobalInstance()
                    .doWhenFocusSettlesDown(() -> result.setResult(getDataContext()), ModalityState.any());
     return result;
-  }
-
-  public @NotNull DataContext getDataContextTest(Component component) {
-    DataContext dataContext = getDataContext(component);
-
-    WindowManager windowManager = WindowManager.getInstance();
-    if (!(windowManager instanceof WindowManagerEx)) {
-      return dataContext;
-    }
-
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Component focusedComponent = ((WindowManagerEx)windowManager).getFocusedComponent(project);
-    if (focusedComponent != null) {
-      dataContext = getDataContext(focusedComponent);
-    }
-    return dataContext;
   }
 
   private static @Nullable Component getFocusedComponent() {

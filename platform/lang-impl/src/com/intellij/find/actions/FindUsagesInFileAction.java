@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
 import com.intellij.CommonBundle;
@@ -22,6 +22,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.find.actions.ResolverKt.searchTargets;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_HIGHLIGHT_USAGES_IN_FILE;
 
 public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAware {
@@ -82,6 +83,10 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
         EditorGutter.KEY.getData(dataContext) != null ||
         Boolean.TRUE.equals(dataContext.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       return false;
+    }
+
+    if (!searchTargets(dataContext).isEmpty()) {
+      return true;
     }
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);

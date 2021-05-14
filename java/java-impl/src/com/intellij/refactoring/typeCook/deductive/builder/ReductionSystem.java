@@ -23,6 +23,7 @@ import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -91,7 +92,7 @@ public class ReductionSystem {
     return memberString(method) + "#" + var.getName();
   }
 
-  @SuppressWarnings({"StringConcatenationInsideStringBufferAppend"})
+  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public String toString() {
     @NonNls StringBuilder buffer = new StringBuilder();
 
@@ -105,12 +106,12 @@ public class ReductionSystem {
       }
 
       if (element instanceof PsiParameter) {
-        final PsiParameter parm = (PsiParameter)element;
-        final PsiElement declarationScope = parm.getDeclarationScope();
+        final PsiParameter param = (PsiParameter)element;
+        final PsiElement declarationScope = param.getDeclarationScope();
         if (declarationScope instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)declarationScope;
 
-          buffer.append("   parameter " + method.getParameterList().getParameterIndex(parm) + " of " + memberString(method));
+          buffer.append("   parameter " + method.getParameterList().getParameterIndex(param) + " of " + memberString(method));
         }
         else {
           buffer.append("   parameter of foreach");
@@ -353,18 +354,7 @@ public class ReductionSystem {
       data[i++] = Util.getType(element).getCanonicalText() + "\\n" + elementString(element);
     }
 
-    Arrays.sort(data,
-                (x, y) -> x.compareTo(y));
-
-
-    final StringBuilder repr = new StringBuilder();
-
-    for (String aData : data) {
-      repr.append(aData);
-      repr.append("\n");
-    }
-
-    return repr.toString();
+    return StreamEx.of(data).sorted().map(aData -> aData + "\n").joining();
   }
 
   @NonNls private static
@@ -466,18 +456,7 @@ public class ReductionSystem {
       }
     }
 
-    Arrays.sort(data,
-                (x, y) -> x.compareTo(y));
-
-
-    final StringBuilder repr = new StringBuilder();
-
-    for (String aData : data) {
-      repr.append(aData);
-      repr.append("\n");
-    }
-
-    return repr.toString();
+    return StreamEx.of(data).sorted().map(aData -> aData + "\n").joining();
   }
 
   public Settings getSettings() {

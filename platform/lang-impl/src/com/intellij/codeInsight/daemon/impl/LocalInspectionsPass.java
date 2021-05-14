@@ -190,24 +190,19 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     setProgressLimit(toolWrappers.size() * 2L);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset());
 
-    try {
-      List<InspectionContext> init = visitPriorityElementsAndInit(
-        InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside)),
-        iManager, isOnTheFly, progress, inside, session);
-      Set<PsiFile> alreadyVisitedInjected =
-        inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers, Collections.emptySet());
-      visitRestElementsAndCleanup(progress, outside, session, init);
-      inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
-      ProgressManager.checkCanceled();
+    List<InspectionContext> init = visitPriorityElementsAndInit(
+      InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside)),
+      iManager, isOnTheFly, progress, inside, session);
+    Set<PsiFile> alreadyVisitedInjected = inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers, Collections.emptySet());
+    visitRestElementsAndCleanup(progress, outside, session, init);
+    inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
+    ProgressManager.checkCanceled();
 
-      myInfos = new ArrayList<>();
-      addHighlightsFromResults(myInfos);
+    myInfos = new ArrayList<>();
+    addHighlightsFromResults(myInfos);
 
-      if (isOnTheFly) {
-        highlightRedundantSuppressions(toolWrappers, iManager, inside, outside);
-      }
-    } catch (Throwable e) {
-      throw e;
+    if (isOnTheFly) {
+      highlightRedundantSuppressions(toolWrappers, iManager, inside, outside);
     }
   }
 
@@ -267,7 +262,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final List<InspectionContext> init = new ArrayList<>();
 
     PsiFile file = session.getFile();
-
     Processor<LocalInspectionToolWrapper> processor = toolWrapper ->
       AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(file, () -> {
         if (elements.isEmpty()) {
@@ -835,7 +829,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  public static final class InspectionContext extends UserDataHolderBase {
+  private static final class InspectionContext {
     private InspectionContext(@NotNull LocalInspectionToolWrapper tool,
                               @NotNull ProblemsHolder holder,
                               int problemsSize, // need this to diff between found problems in visible part and the rest

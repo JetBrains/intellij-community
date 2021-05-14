@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,7 +52,7 @@ public final class PluginDownloader {
   private final String myDescription;
   private final @NotNull List<IdeaPluginDependency> myDependencies;
 
-  private final String myPluginUrl;
+  private final @NotNull String myPluginUrl;
   private final BuildNumber myBuildNumber;
 
   private String myPluginVersion;
@@ -173,6 +174,15 @@ public final class PluginDownloader {
     String errorMessage = null;
     try {
       myFile = downloadPlugin(indicator);
+      if (Registry.is("marketplace.certificate.signature.check")) {
+        // Don't check signature for plugins from non-jetbrains custom repositories
+        if (myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)) {
+          if (!PluginSignatureChecker.isSignedByJetBrains(getPluginName(), myFile)) {
+            myShownErrors = true;
+            return null;
+          }
+        }
+      }
     }
     catch (IOException ex) {
       myFile = null;

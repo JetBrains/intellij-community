@@ -1,8 +1,0 @@
-android.buildToolsVersion("23.0.0")
-android.compileSdkVersion(23)
-android.defaultPublishConfig("debug")
-android.dynamicFeatures = mutableSetOf(":f1", ":f2")
-android.flavorDimensions("abi", "version")
-android.generatePureSplits(true)
-android.setPublishNonDefault(false)
-android.resourcePrefix("abcd")

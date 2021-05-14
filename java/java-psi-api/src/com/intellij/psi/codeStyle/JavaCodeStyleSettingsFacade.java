@@ -51,13 +51,6 @@ public abstract class JavaCodeStyleSettingsFacade {
   public abstract boolean isGenerateFinalParameters();
 
   /**
-   * @deprecated Use {@link JavaFileCodeStyleFacade#isGenerateFinalLocals()}
-   */
-  @Deprecated
-  public abstract boolean isGenerateFinalLocals();
-
-
-  /**
    * @deprecated Use {@link JavaFileCodeStyleFacade#forContext(PsiFile)} instead.
    */
   @Deprecated

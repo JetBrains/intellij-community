@@ -43,7 +43,7 @@ interface LibraryBridge : LibraryEx {
 
 @ApiStatus.Internal
 internal class LibraryBridgeImpl(
-  private val libraryTable: LibraryTable,
+  internal var libraryTable: LibraryTable,
   val project: Project,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
@@ -61,9 +61,6 @@ internal class LibraryBridgeImpl(
   var entityId: LibraryId = initialId
 
   private var disposed = false
-
-  // null to update project model via ProjectModelUpdater
-  internal var modifiableModelFactory: ((LibraryStateSnapshot, WorkspaceEntityStorageBuilder) -> LibraryModifiableModelBridgeImpl)? = null
 
   internal fun cleanCachedValue() {
     entityStorage.clearCachedValue(librarySnapshotCached)

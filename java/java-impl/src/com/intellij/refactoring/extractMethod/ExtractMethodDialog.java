@@ -704,7 +704,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   public void show() {
     super.show();
     final FeatureUsageData featureUsageData = collectStatistics();
-    FUCounterUsageLogger.getInstance().logEvent("java.extract.method","dialog.closed", featureUsageData);
+    FUCounterUsageLogger.getInstance().logEvent(myProject, "java.extract.method","dialog.closed", featureUsageData);
   }
 
   private static final class ParameterInfo {

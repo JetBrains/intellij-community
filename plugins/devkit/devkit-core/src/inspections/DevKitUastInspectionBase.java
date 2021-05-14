@@ -26,7 +26,7 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
   }
 
   protected boolean isAllowed(@NotNull ProblemsHolder holder) {
-    return DevKitInspectionBase.isAllowed(holder);
+    return DevKitInspectionBase.isAllowed(holder.getFile());
   }
 
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

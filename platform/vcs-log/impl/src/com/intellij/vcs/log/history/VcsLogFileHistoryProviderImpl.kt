@@ -49,7 +49,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     val hash = revisionNumber?.let { HashImpl.build(it) }
     val root = VcsLogUtil.getActualRoot(project, paths.first())!!
 
-    triggerFileHistoryUsage(paths, hash)
+    triggerFileHistoryUsage(project, paths, hash)
 
     val logManager = VcsProjectLog.getInstance(project).logManager!!
 
@@ -84,11 +84,11 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
     return VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY.getOrDefault(logProvider)
   }
 
-  private fun triggerFileHistoryUsage(paths: Collection<FilePath>, hash: Hash?) {
-    VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.HISTORY_SHOWN) { data ->
+  private fun triggerFileHistoryUsage(project: Project, paths: Collection<FilePath>, hash: Hash?) {
+    VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.HISTORY_SHOWN, { data ->
       val kind = if (paths.size > 1) "multiple" else if (paths.first().isDirectory) "folder" else "file"
       data.addData("kind", kind).addData("has_revision", hash != null)
-    }
+    }, project)
   }
 
   private fun findOrOpenHistory(project: Project, logManager: VcsLogManager,

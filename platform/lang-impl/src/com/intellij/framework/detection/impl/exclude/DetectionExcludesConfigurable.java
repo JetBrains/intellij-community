@@ -174,8 +174,8 @@ public class DetectionExcludesConfigurable implements Configurable {
   }
 
   private PopupStep addExcludedFramework(final @NotNull FrameworkType frameworkType) {
-    final String projectItem = "In the whole project";
-    return new BaseListPopupStep<>(null, projectItem, "In directory...") {
+    String projectItem = LangBundle.message("list.item.disable.framework.detection.in.whole.project");
+    return new BaseListPopupStep<>(null, projectItem, LangBundle.message("list.item.disable.framework.detection.in.directory")) {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
         if (selectedValue.equals(projectItem)) {

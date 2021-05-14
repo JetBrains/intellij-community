@@ -1,4 +1,26 @@
 __future__._Feature.__init__
+_collections_abc.Callable
+_collections_abc.Coroutine.cr_await
+_collections_abc.Coroutine.cr_code
+_collections_abc.Coroutine.cr_frame
+_collections_abc.Coroutine.cr_running
+_collections_abc.Generator.gi_code
+_collections_abc.Generator.gi_frame
+_collections_abc.Generator.gi_running
+_collections_abc.Generator.gi_yieldfrom
+_collections_abc.Mapping.get
+_collections_abc.MutableMapping.pop
+_collections_abc.MutableMapping.setdefault
+_collections_abc.MutableSequence.append
+_collections_abc.MutableSequence.extend
+_collections_abc.MutableSequence.insert
+_collections_abc.MutableSequence.remove
+_collections_abc.MutableSet.add
+_collections_abc.MutableSet.discard
+_collections_abc.MutableSet.remove
+_collections_abc.Sequence.count
+_collections_abc.Sequence.index
+_collections_abc.Set.isdisjoint
 _csv.Dialect.__init__
 _dummy_threading
 _importlib_modulespec
@@ -38,7 +60,6 @@ builtins.bytes.__float__
 builtins.bytes.__int__
 builtins.bytes.maketrans
 builtins.classmethod.__get__
-builtins.complex.__complex__
 builtins.ellipsis
 builtins.function
 builtins.memoryview.__contains__
@@ -85,6 +106,7 @@ collections.Generator.gi_running
 collections.Generator.gi_yieldfrom
 collections.Mapping.get
 collections.Sequence.index
+collections.Set.isdisjoint
 collections.abc.Callable
 collections.abc.Coroutine.cr_await
 collections.abc.Coroutine.cr_code
@@ -222,7 +244,6 @@ ipaddress._BaseAddress.is_unspecified
 ipaddress._BaseAddress.max_prefixlen
 ipaddress._BaseAddress.packed
 ipaddress._BaseNetwork.max_prefixlen
-itertools.accumulate
 itertools.chain.from_iterable
 itertools.combinations_with_replacement
 itertools.compress
@@ -255,7 +276,6 @@ multiprocessing.JoinableQueue
 multiprocessing.Queue
 multiprocessing.SimpleQueue
 multiprocessing.managers.BaseManager.shutdown
-multiprocessing.managers.Server.__init__
 multiprocessing.managers.SyncManager.Event
 multiprocessing.managers.SyncManager.Lock
 multiprocessing.managers.SyncManager.Namespace
@@ -363,6 +383,8 @@ timeit.main
 tkinter.Misc.grid_propagate
 tkinter.Misc.pack_propagate
 tkinter.Tk.report_callback_exception  # A bit of a lie, since it's actually a method, but typing it as an attribute allows it to be assigned to
+tkinter.Wm.wm_iconphoto  # Default value of argument can't be used without runtime error
+tkinter.font.Font.__getitem__  # Argument name differs (doesn't matter for __dunder__ methods)
 trace.CoverageResults.__init__
 traceback.FrameSummary.__init__
 traceback.TracebackException.__init__
@@ -432,6 +454,9 @@ builtins.quit
 # Builtins that mypy pretends exist
 builtins.reveal_locals
 builtins.reveal_type
+collections.abc.*  # Types are re-exported from _collections_abc, so errors should be fixed there
+# Dynamically specified by __getattr__, and thus don't exist on the class
+tempfile._TemporaryFileWrapper.[\w_]+
 # Various classes in typing aren't types at runtime. In addition, mypy thinks some special forms are tautologically defined.
 typing.[A-Z]\w+
 # We can't distinguish not having a default value from having a default value of inspect.Parameter.empty

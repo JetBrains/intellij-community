@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.envTest.scheme
 
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
+import com.intellij.internal.statistic.eventLog.EventLogBuild.EVENT_LOG_BUILD_PRODUCER
 import com.intellij.internal.statistic.eventLog.connection.EventLogBasicConnectionSettings
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.BuildRange
@@ -44,12 +45,12 @@ internal class EventLogMetadataServiceTest : StatisticsServiceBaseTest() {
   fun `test load and parse metadata`() {
     val expected = hashMapOf(
       "test.group" to EventGroupFilterRules(emptyList(), listOf(VersionRange.create("3", null))),
-      "second.test.group" to EventGroupFilterRules(listOf(BuildRange.create("191.12345", null)), emptyList())
+      "second.test.group" to EventGroupFilterRules(listOf(BuildRange.create("191.12345", null, EVENT_LOG_BUILD_PRODUCER)), emptyList())
     )
 
     val metadataUrl = getMetadataUrl()
     val actual = EventLogMetadataUtils.loadAndParseGroupsFilterRules(metadataUrl, SETTINGS)
-    TestCase.assertEquals(EventGroupsFilterRules.create(expected), actual)
+    TestCase.assertEquals(EventGroupsFilterRules.create(expected, EVENT_LOG_BUILD_PRODUCER), actual)
   }
 
   fun `test failed loading and parsing metadata because url is unreachable`() {

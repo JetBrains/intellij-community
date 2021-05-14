@@ -174,7 +174,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   }
 
   @Override
-  void revalidateAndRepaint() {
+  protected void revalidateAndRepaint() {
     // no need for this in a renderer
   }
 

@@ -40,7 +40,7 @@ public class GradleSourceSetDataService extends AbstractModuleDataService<Gradle
 
   @NotNull
   @Override
-  public Computable<Collection<Module>> computeOrphanData(@NotNull final Collection<DataNode<GradleSourceSetData>> toImport,
+  public Computable<Collection<Module>> computeOrphanData(final @NotNull Collection<? extends DataNode<GradleSourceSetData>> toImport,
                                                           @NotNull final ProjectData projectData,
                                                           @NotNull final Project project,
                                                           @NotNull final IdeModifiableModelsProvider modelsProvider) {

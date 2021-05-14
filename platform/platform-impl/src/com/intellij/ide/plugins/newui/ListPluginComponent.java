@@ -845,25 +845,20 @@ public class ListPluginComponent extends JPanel {
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
                                                                                                                       @NotNull List<ListPluginComponent> selection) {
-    return new SelectionBasedPluginModelAction.EnableDisableAction<>(
-      action.isPerProject() ? null : new CustomShortcutSet(KeyEvent.VK_SPACE),
-      myPluginModel,
-      action,
-      selection,
-      ListPluginComponent::getPluginDescriptor
-    );
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel,
+                                                                     action,
+                                                                     true,
+                                                                     selection,
+                                                                     ListPluginComponent::getPluginDescriptor);
   }
 
   private SelectionBasedPluginModelAction.@NotNull UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<ListPluginComponent> selection) {
 
-    ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
-    return new SelectionBasedPluginModelAction.UninstallAction<>(
-      deleteShortcutSet != null ? deleteShortcutSet : new CustomShortcutSet(EventHandler.DELETE_CODE),
-      myPluginModel,
-      this,
-      selection,
-      ListPluginComponent::getPluginDescriptor
-    );
+    return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel,
+                                                                 true,
+                                                                 this,
+                                                                 selection,
+                                                                 ListPluginComponent::getPluginDescriptor);
   }
 
   @NotNull

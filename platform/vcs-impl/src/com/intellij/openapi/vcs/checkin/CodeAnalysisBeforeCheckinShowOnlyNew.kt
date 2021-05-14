@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.CodeSmellInfo
@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.util.containers.MultiMap
-import gnu.trove.THashMap
 
 internal object CodeAnalysisBeforeCheckinShowOnlyNew {
   val LOG = logger<CodeAnalysisBeforeCheckinShowOnlyNew>()
@@ -34,7 +33,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
     val codeSmellDetector = CodeSmellDetector.getInstance(project)
     val newCodeSmells = codeSmellDetector.findCodeSmells(selectedFiles)
     val location2CodeSmell = MultiMap<Pair<VirtualFile, Int>, CodeSmellInfo>()
-    val fileToChanges: MutableMap<VirtualFile, List<Range>> = THashMap()
+    val fileToChanges: MutableMap<VirtualFile, List<Range>> = HashMap()
     val changeListManager = ChangeListManager.getInstance(project)
     val changes4Update = changeListManager.allChanges
     val fileDocumentManager = FileDocumentManager.getInstance()

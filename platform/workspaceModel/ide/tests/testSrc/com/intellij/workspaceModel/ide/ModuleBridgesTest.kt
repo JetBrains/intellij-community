@@ -473,7 +473,7 @@ class ModuleBridgesTest {
       tableId = LibraryTableId.ProjectLibraryTableId,
       roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
-      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager), virtualFileManager)
+      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
@@ -669,34 +669,6 @@ class ModuleBridgesTest {
 
     assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
     assertEmpty(entityStore.current.entities(SourceRootEntity::class.java).toList())
-  }
-
-  @Test
-  fun `test content root equality at case insensitive FS`() {
-    IoTestUtil.assumeCaseInsensitiveFS()
-    WriteCommandAction.runWriteCommandAction(project) {
-      val moduleName = "build"
-      val contentRoot = "test"
-      val tempDir = temporaryDirectoryRule.newPath().toFile()
-      val contentRootFolder = File(tempDir, StringUtil.capitalize(contentRoot))
-
-      val moduleFile = File(project.basePath, "$moduleName.iml")
-      val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
-        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
-        moduleModel.commit()
-        module
-      }
-
-      ModuleRootModificationUtil.updateModel(module) { model ->
-        FileUtil.createDirectory(contentRootFolder)
-        val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(File(tempDir, contentRoot).path))
-        model.addContentEntry(url)
-      }
-
-      val rootManager = ModuleRootManager.getInstance(module)
-      assertEquals(1, rootManager.contentRootUrls.size)
-      assertEquals(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(contentRootFolder.path)), rootManager.contentRootUrls[0])
-    }
   }
 
   @Test

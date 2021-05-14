@@ -534,4 +534,19 @@ class Scratch {
     assert myFixture.lookupElementStrings == []
   }
 
+  @NeedsIndex.ForStandardLibrary
+  void testQueuePeek() {
+    myFixture.configureByText 'a.java', """
+import java.util.Queue;
+
+class X {
+  void test(Queue<String> queue) {
+    queue.pe<caret>
+  }
+}
+"""
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["peek", "peek"]
+  }
+
 }

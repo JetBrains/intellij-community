@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.icons.AllIcons
@@ -18,7 +18,7 @@ import javax.swing.Icon
 internal class PsiRenameUsage2UsageInfo(
   renameUsage: PsiRenameUsage,
   private val newName: String
-) : UsageInfo(renameUsage.file, renameUsage.range, renameUsage is TextUsage) {
+) : UsageInfo(renameUsage.file, renameUsage.range, renameUsage is TextRenameUsage) {
 
   private val pointer: Pointer<out PsiRenameUsage> = renameUsage.createPointer()
 

@@ -147,7 +147,7 @@ public class NaiveCatBoostModel {
     return array;
   }
 
-  private static <T> ArrayList<T> readArrayList(DataInputStream stream, Function<DataInputStream, T> readElement) throws IOException {
+  private static <T> ArrayList<T> readArrayList(DataInputStream stream, Function<? super DataInputStream, ? extends T> readElement) throws IOException {
     int size = stream.readInt();
     assert size > 0;
     ArrayList<T> list = new ArrayList<>(size);

@@ -11,7 +11,7 @@ internal class ValidationTestGroupStorageTest : ValidationRulesBaseStorageTest()
 
   @Test
   fun testAddGroupValidationRules() {
-    val storageForTest = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!
+    val storageForTest = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)!!
     storageForTest.addTestGroup(GroupValidationTestRule(groupId, false))
 
     val groupRules = storageForTest.getGroupRules(groupId)
@@ -21,7 +21,7 @@ internal class ValidationTestGroupStorageTest : ValidationRulesBaseStorageTest()
 
   @Test
   fun testAddGroupWithCustomRules() {
-    val storageForTest = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!
+    val storageForTest = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)!!
     storageForTest.addTestGroup(GroupValidationTestRule(
       groupId,
       true,
@@ -38,9 +38,9 @@ internal class ValidationTestGroupStorageTest : ValidationRulesBaseStorageTest()
   }
 
   fun testCleanup() {
-    val storageForTest1 = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!
+    val storageForTest1 = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)!!
     storageForTest1.addTestGroup(GroupValidationTestRule(groupId, false))
-    val storageForTest2 = ValidationTestRulesPersistedStorage.getTestStorage(secondRecorderId)!!
+    val storageForTest2 = ValidationTestRulesPersistedStorage.getTestStorage(secondRecorderId, true)!!
     storageForTest2.addTestGroup(GroupValidationTestRule(groupId, false))
 
     ValidationTestRulesPersistedStorage.cleanupAll(listOf(recorderId, secondRecorderId))

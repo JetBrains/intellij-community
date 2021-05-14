@@ -102,9 +102,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
       final PsiType newExpressionType = newExpression.getType();
       assert newExpressionType != null;
       if (arrayInitializer != null) {
-        for (int i = 0; i < newExpressionType.getArrayDimensions(); i++) {
-          buf.append("[]");
-        }
+        buf.append("[]".repeat(newExpressionType.getArrayDimensions()));
         buf.append(arrayInitializer.getText());
       }
       else {

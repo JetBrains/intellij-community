@@ -111,12 +111,8 @@ public class IndentHelperImpl extends IndentHelper {
       if (indentOptions.SMART_TABS) {
         int tabCount = indentLevelSize / indentOptions.TAB_SIZE;
         int leftSpaces = indentLevelSize - tabCount * indentOptions.TAB_SIZE;
-        for (int i = 0; i < tabCount; i++) {
-          buffer.append('\t');
-        }
-        for (int i = 0; i < leftSpaces + spaceCount; i++) {
-          buffer.append(' ');
-        }
+        buffer.append("\t".repeat(tabCount));
+        buffer.append(" ".repeat(leftSpaces + spaceCount));
       }
       else {
         int size = totalSize;
@@ -133,9 +129,7 @@ public class IndentHelperImpl extends IndentHelper {
       }
     }
     else {
-      for (int i = 0; i < totalSize; i++) {
-        buffer.append(' ');
-      }
+      buffer.append(" ".repeat(totalSize));
     }
 
     return buffer.toString();

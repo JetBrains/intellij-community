@@ -18,7 +18,6 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -74,7 +73,7 @@ public final class FileTypeChooser extends DialogWrapper {
     myList.setModel(model);
     myList.addListSelectionListener(e -> updateContextHelp());
     myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
-    new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getDescription());
+    new ListSpeedSearch(myList, o -> ((FileType)o).getDescription());
 
     myContextHelpLabel.setForeground(UIUtil.getContextHelpForeground());
     updateContextHelp();

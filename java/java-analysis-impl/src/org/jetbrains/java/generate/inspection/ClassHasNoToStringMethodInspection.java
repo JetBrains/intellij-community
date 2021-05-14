@@ -154,7 +154,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
                 holder.registerProblem(nameIdentifier,
                                        JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.description", clazz.getName()),
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(holder));
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes());
             }
         };
     }

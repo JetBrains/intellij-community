@@ -1,7 +1,0 @@
-android {
-  productFlavors {
-    demo {
-      matchingFallbacks = ['trial']
-    }
-  }
-}

@@ -330,7 +330,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   public void testCustomEdgeProcessors() {
     WhitespacesAndCommentsBinder leftEdgeProcessor = new WhitespacesAndCommentsBinder() {
       @Override
-      public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+      public int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int pos = tokens.size() - 1;
         while (tokens.get(pos) != COMMENT && pos > 0) pos--;
         return pos;
@@ -338,7 +338,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     };
     WhitespacesAndCommentsBinder rightEdgeProcessor = new WhitespacesAndCommentsBinder() {
       @Override
-      public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+      public int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int pos = 0;
         while (tokens.get(pos) != COMMENT && pos < tokens.size()-1) pos++;
         return pos + 1;

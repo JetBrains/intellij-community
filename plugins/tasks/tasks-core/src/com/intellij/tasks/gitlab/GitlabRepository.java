@@ -227,12 +227,6 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return name;
   }
 
-  @NotNull
-  @Override
-  public HttpClient getHttpClient() {
-    return super.getHttpClient();
-  }
-
   @Nullable
   @Override
   public String extractId(@NotNull String taskName) {

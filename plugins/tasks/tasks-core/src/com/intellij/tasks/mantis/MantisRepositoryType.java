@@ -43,7 +43,7 @@ public class MantisRepositoryType extends BaseRepositoryType<MantisRepository> {
   @Override
   public TaskRepositoryEditor createEditor(final MantisRepository repository,
                                            final Project project,
-                                           final Consumer<MantisRepository> changeListener) {
+                                           final Consumer<? super MantisRepository> changeListener) {
     return new MantisRepositoryEditor(project, repository, changeListener);
   }
 }

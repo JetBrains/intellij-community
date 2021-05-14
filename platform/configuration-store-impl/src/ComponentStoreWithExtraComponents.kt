@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.AppUIExecutor
@@ -49,7 +49,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     super.initComponent(component, serviceDescriptor, pluginId)
   }
 
-  final override fun unloadComponent(component: Any) {
+  override fun unloadComponent(component: Any) {
     if (component is SettingsSavingComponent) {
       asyncSettingsSavingComponents.drop()
     }

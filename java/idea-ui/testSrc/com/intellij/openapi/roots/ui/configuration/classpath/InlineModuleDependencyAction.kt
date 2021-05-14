@@ -116,7 +116,8 @@ class InlineModuleDependencyActionTest : JavaModuleTestCase() {
 
   private fun setUpClasspathPanel(modifiableRootModel: ModifiableRootModel, entryToSelect: ModuleOrderEntry): ClasspathPanelImpl {
     val moduleConfigurationState = object : ModuleConfigurationStateImpl(project, ModulesProvider.EMPTY_MODULES_PROVIDER) {
-      override fun getRootModel(): ModifiableRootModel = modifiableRootModel
+      override fun getModifiableRootModel(): ModifiableRootModel = modifiableRootModel
+      override fun getCurrentRootModel(): ModuleRootModel = modifiableRootModel
     }
     return ClasspathPanelImpl(moduleConfigurationState).apply { selectOrderEntry(entryToSelect) }
   }

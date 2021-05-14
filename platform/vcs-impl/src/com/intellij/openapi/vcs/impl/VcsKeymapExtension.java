@@ -17,7 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
  */
 public class VcsKeymapExtension implements KeymapExtension {
   @Override
-  public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
+  public KeymapGroup createGroup(final Condition<? super AnAction> filtered, final Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(KeyMapBundle.message("version.control.group.title"));
 
     AnAction[] versionControlsGroups = ActionsTreeUtil.getActions("VcsGroup");

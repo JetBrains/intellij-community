@@ -661,6 +661,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     for (var entry : moduleStatementsByDescriptor.entrySet()) {
       PsiJavaModule moduleDescriptor = entry.getKey();
       for (ModifyModuleStatementUsageInfo modifyStatementInfo : entry.getValue()) {
+        if (modifyStatementInfo.getModuleStatement() == null) continue;
         if (modifyStatementInfo.isAddition()) {
           PsiUtil.addModuleStatement(moduleDescriptor, modifyStatementInfo.getModuleStatement());
         }
@@ -673,6 +674,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
     if (lastDeletionUsageInfos.isEmpty()) return;
+    PsiJavaModule firstModule = lastDeletionUsageInfos.entrySet().iterator().next().getKey();
     NotificationGroupManager.getInstance().getNotificationGroup("Remove redundant exports/opens")
       .createNotification(JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.notification.title"),
                           null,
@@ -690,6 +692,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
               for (var entry : lastDeletionUsageInfos.entrySet()) {
                 PsiJavaModule moduleDescriptor = entry.getKey();
                 for (ModifyModuleStatementUsageInfo modifyStatementInfo : entry.getValue()) {
+                  if (modifyStatementInfo.getModuleStatement() == null) continue;
                   deleteModuleStatement(moduleDescriptor, modifyStatementInfo.getModuleStatement());
                 }
               }
@@ -697,7 +700,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           notification.expire();
         }
       })
-      .notify(null);
+      .notify(firstModule.getProject());
   }
 
   private static void deleteModuleStatement(@NotNull PsiJavaModule moduleDescriptor,

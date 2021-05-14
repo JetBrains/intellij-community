@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
@@ -6,7 +6,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.net.URL
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -344,10 +344,6 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   private fun initJdomExternalizable(@Suppress("DEPRECATION") component: com.intellij.openapi.util.JDOMExternalizable, componentName: String) {
     doAddComponent(componentName, component, stateSpec = null, serviceDescriptor = null)
-    if (DecodeDefaultsUtil.getDefaults(component, componentName) != null) {
-      LOG.error("Default state is not supported for JDOMExternalizable")
-    }
-
     val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)
                     ?.getState(component, componentName, Element::class.java, null, false)
                     ?: return
@@ -498,7 +494,13 @@ abstract class ComponentStoreImpl : IComponentStore {
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
 
   private fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
-    val url = DecodeDefaultsUtil.getDefaults(component, componentName) ?: return null
+    val classLoader = component.javaClass.classLoader
+    var url: URL? = classLoader.getResource("$componentName.xml")
+    if (url == null) {
+      url = classLoader.getResource("idea/$componentName.xml") ?: return null
+      LOG.error("Do not rely on `idea/` prefix (component=$componentName)")
+    }
+
     try {
       val element = JDOMUtil.load(url)
       getPathMacroManagerForDefaults()?.expandPaths(element)
@@ -595,7 +597,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val notReloadableComponents = getNotReloadableComponents(componentNames)
     reinitComponents(componentNames, changedStorages, notReloadableComponents)
-    return if (notReloadableComponents.isEmpty()) null else notReloadableComponents
+    return notReloadableComponents.ifEmpty { null }
   }
 
   // used in settings repository plugin

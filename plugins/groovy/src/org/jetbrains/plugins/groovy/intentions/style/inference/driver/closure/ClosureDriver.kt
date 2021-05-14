@@ -1,34 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
-import org.jetbrains.plugins.groovy.intentions.style.inference.SignatureInferenceOptions
+import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.INHABIT
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.UPPER
-import org.jetbrains.plugins.groovy.intentions.style.inference.forceWildcardsAsTypeArguments
-import org.jetbrains.plugins.groovy.intentions.style.inference.isClosureTypeDeep
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import kotlin.LazyThreadSafetyMode.NONE
 
 class ClosureDriver private constructor(private val closureParameters: Map<GrParameter, ParameterizedClosure>,
                                         private val method: GrMethod,
-                                        private val options: SignatureInferenceOptions) : InferenceDriver {
+                                        private val environment: SignatureInferenceEnvironment) : InferenceDriver {
 
   companion object {
     fun createFromMethod(method: GrMethod,
                          virtualMethodPointer: SmartPsiElementPointer<GrMethod>,
                          generator: NameGenerator,
-                         options: SignatureInferenceOptions): InferenceDriver {
+                         environment: SignatureInferenceEnvironment): InferenceDriver {
       val virtualMethod = virtualMethodPointer.element ?: return EmptyDriver
       val builder = ClosureParametersStorageBuilder(generator, virtualMethod)
-      val visitedParameters = builder.extractClosuresFromOuterCalls(method, virtualMethod, options.calls.value)
+      val visitedParameters = builder.extractClosuresFromOuterCalls(method, virtualMethod, environment.getAllCallsToMethod(virtualMethod))
       virtualMethod.forEachParameterUsage { parameter, instructions ->
         if (!parameter.type.isClosureTypeDeep() || parameter in visitedParameters) {
           return@forEachParameterUsage
@@ -39,7 +35,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
         }
       }
       val closureParameters = builder.build()
-      return if (closureParameters.isEmpty()) EmptyDriver else ClosureDriver(closureParameters, virtualMethod, options)
+      return if (closureParameters.isEmpty()) EmptyDriver else ClosureDriver(closureParameters, virtualMethod, environment)
     }
   }
 
@@ -73,7 +69,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       newClosureParameter.typeParameters.forEach { typeParameterList.add(it) }
       newClosureParameters[newClosureParameter.parameter] = newClosureParameter
     }
-    return ClosureDriver(newClosureParameters, targetMethod, options)
+    return ClosureDriver(newClosureParameters, targetMethod, environment)
   }
 
   override fun typeParameters(): Collection<PsiTypeParameter> {
@@ -96,9 +92,9 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
     return closureParameters.values.flatMap { parameter ->
       parameter.closureArguments.map { closureBlock ->
         val newMethod = createMethodFromClosureBlock(closureBlock, parameter, method.typeParameterList!!)
-        val emptyOptions =
-          SignatureInferenceOptions(GlobalSearchScope.EMPTY_SCOPE, false, options.signatureInferenceContext, lazy(NONE) { emptyList<PsiReference>() })
-        val commonDriver = CommonDriver.createDirectlyFromMethod(newMethod, emptyOptions)
+        val emptyEnvironment =
+          SignatureInferenceEnvironment(method, GlobalSearchScope.EMPTY_SCOPE, environment.signatureInferenceContext, true)
+        val commonDriver = CommonDriver.createDirectlyFromMethod(newMethod, emptyEnvironment)
         val usageInformation = commonDriver.collectInnerConstraints()
         val typeParameterMapping = newMethod.typeParameters.zip(method.typeParameters).toMap()
         val shiftedRequiredTypes = usageInformation.requiredClassTypes.map { (param, list) ->
@@ -114,7 +110,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
   }
 
   private fun collectClosureInvocationConstraints(): TypeUsageInformation {
-    val builder = TypeUsageInformationBuilder(method, options.signatureInferenceContext)
+    val builder = TypeUsageInformationBuilder(method, environment.signatureInferenceContext)
     method.forEachParameterUsage { parameter, instructions ->
       if (parameter in closureParameters.keys) {
         analyzeClosureUsages(closureParameters.getValue(parameter), instructions, builder)
@@ -151,7 +147,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
       val newParameterizedClosure = ParameterizedClosure(newParameter, closure.typeParameters, closure.closureArguments, newTypes, closure.delegatesToCombiner)
       parameterizedClosureCollector.add(newParameter to newParameterizedClosure)
     }
-    return ClosureDriver(parameterizedClosureCollector.toMap(), resultMethod, options)
+    return ClosureDriver(parameterizedClosureCollector.toMap(), resultMethod, environment)
   }
 
 }

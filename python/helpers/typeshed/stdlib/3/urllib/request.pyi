@@ -58,8 +58,10 @@ class Request:
     selector: str
     data: Optional[bytes]
     headers: Dict[str, str]
+    unredirected_hdrs: Dict[str, str]
     unverifiable: bool
     method: Optional[str]
+    timeout: Optional[float]  # Undocumented, only set after __init__() by OpenerDirector.open()
     def __init__(
         self,
         url: str,
@@ -153,7 +155,7 @@ class HTTPPasswordMgrWithPriorAuth(HTTPPasswordMgrWithDefaultRealm):
     def is_authenticated(self, authuri: str) -> bool: ...
 
 class AbstractBasicAuthHandler:
-    rx: ClassVar[Pattern]  # undocumented
+    rx: ClassVar[Pattern[str]]  # undocumented
     def __init__(self, password_mgr: Optional[HTTPPasswordMgr] = ...) -> None: ...
     def http_error_auth_reqed(self, authreq: str, host: str, req: Request, headers: Mapping[str, str]) -> None: ...
     def http_request(self, req: Request) -> Request: ...  # undocumented

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -16,10 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ssh.SSHUtil;
 import com.intellij.util.PathUtil;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.regex.Matcher;
 
@@ -76,7 +73,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     if (myDoNotRememberPasswords) {
       return askUser(() -> {
         String message = GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath));
-        return Messages.showPasswordDialog(myProject, message, GitBundle.getString("ssh.ask.passphrase.title"), null);
+        return Messages.showPasswordDialog(myProject, message, GitBundle.message("ssh.ask.passphrase.title"), null);
       });
     }
     else {
@@ -100,7 +97,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     if (myDoNotRememberPasswords) {
       return askUser(() -> {
         String message = GitBundle.message("ssh.password.message", username);
-        return Messages.showPasswordDialog(myProject, message, GitBundle.getString("ssh.password.title"), null);
+        return Messages.showPasswordDialog(myProject, message, GitBundle.message("ssh.password.title"), null);
       });
     }
     else {
@@ -170,7 +167,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     }
     if (authenticationMode == GitAuthenticationMode.SILENT) return null;
     return CredentialPromptDialog.askPassword(project,
-                                              GitBundle.getString("ssh.ask.passphrase.title"),
+                                              GitBundle.message("ssh.ask.passphrase.title"),
                                               GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
                                               newAttributes, true);
   }
@@ -190,7 +187,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     }
     if (authenticationMode == GitAuthenticationMode.SILENT) return null;
     return CredentialPromptDialog.askPassword(project,
-                                              GitBundle.getString("ssh.password.title"),
+                                              GitBundle.message("ssh.password.title"),
                                               GitBundle.message("ssh.password.message", username),
                                               newAttributes, true);
   }

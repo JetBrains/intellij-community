@@ -1413,7 +1413,7 @@ public final class MVStore implements AutoCloseable {
         return tryCommit(null);
     }
 
-    private long tryCommit(@Nullable Predicate<MVStore> check) {
+    private long tryCommit(@Nullable Predicate<? super MVStore> check) {
         // we need to prevent re-entrance, which may be possible,
         // because meta map is modified within storeNow() and that
         // causes beforeWrite() call with possibility of going back here
@@ -1449,7 +1449,7 @@ public final class MVStore implements AutoCloseable {
         return commit(null);
     }
 
-    private long commit(@Nullable Predicate<MVStore> check) {
+    private long commit(@Nullable Predicate<? super MVStore> check) {
         // we need to prevent re-entrance, which may be possible,
         // because meta map is modified within storeNow() and that
         // causes beforeWrite() call with possibility of going back here
@@ -3802,7 +3802,7 @@ public final class MVStore implements AutoCloseable {
         private int autoCompactFillRate = 90;
         private int versionsToKeep = 0;
 
-        private BiConsumer<Throwable, MVStore> backgroundExceptionHandler;
+        private BiConsumer<? super Throwable, ? super MVStore> backgroundExceptionHandler;
 
         private boolean readOnly;
 
@@ -3971,7 +3971,7 @@ public final class MVStore implements AutoCloseable {
          * Set the listener to be used for exceptions that occur when writing in
          * the background thread.
          */
-        public Builder backgroundExceptionHandler(BiConsumer<Throwable, MVStore> exceptionHandler) {
+        public Builder backgroundExceptionHandler(BiConsumer<? super Throwable, ? super MVStore> exceptionHandler) {
             backgroundExceptionHandler = exceptionHandler;
             return this;
         }
@@ -3988,7 +3988,7 @@ public final class MVStore implements AutoCloseable {
         /**
          * Open database file or a create new one if IO exception occurred.
          */
-        public MVStore openOrNewOnIoError(@NotNull Path file, boolean useFileCache, @NotNull Consumer<Exception> errorConsumer) {
+        public MVStore openOrNewOnIoError(@NotNull Path file, boolean useFileCache, @NotNull Consumer<? super Exception> errorConsumer) {
             assert !readOnly;
             FileStore fileStore = null;
             try {

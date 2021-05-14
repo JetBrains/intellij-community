@@ -1,5 +1,0 @@
-android {
-  adbOptions {
-    installOptions 'abcd', 'efgh'
-  }
-}

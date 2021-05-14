@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.codeInsight;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
@@ -29,7 +29,6 @@ import com.intellij.refactoring.typeMigration.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
@@ -38,6 +37,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -95,7 +95,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       ReadAction.run(() -> {
         myReferences = ReferencesSearch.search(myProperty.myField).findAll();
 
-        final Set<PsiElement> occurrences = new THashSet<>();
+        final Set<PsiElement> occurrences = new HashSet<>();
         occurrences.add(myProperty.myField);
         occurrences.addAll(ContainerUtil.mapNotNull(myReferences, PsiReference::getElement));
 

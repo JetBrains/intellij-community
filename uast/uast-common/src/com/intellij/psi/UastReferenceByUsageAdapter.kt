@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
@@ -156,7 +156,7 @@ private fun findVariableUsages(variablePsi: PsiElement, variableName: String, fi
   return SearchService.getInstance()
     .searchWord(variablePsi.project, variableName)
     .inScope(LocalSearchScope(files, null, true))
-    .buildQuery { _, occurrencePsi, _ ->
+    .buildQuery { (_, occurrencePsi, _) ->
       val uRef = occurrencePsi.findContaining(UReferenceExpression::class.java)
       val expressionType = uRef?.getExpressionType()
       if (expressionType != null && expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {

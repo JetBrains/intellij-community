@@ -47,5 +47,5 @@ public interface WhitespacesAndCommentsBinder {
    * @param getter       token text getter.
    * @return position of element's edge relative to given tokens.
    */
-  int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter);
+  int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter);
 }

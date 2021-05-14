@@ -1169,8 +1169,8 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       }
 
       @Override
-      public @NotNull CharsetHint getCharsetHint() {
-        return new CharsetHint.ForcedCharset(StandardCharsets.ISO_8859_1);
+      public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
+        return StandardCharsets.ISO_8859_1.name();
       }
     };
     TestFileType fileType = new TestFileType();

@@ -108,6 +108,19 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     MessageBusConnection settingsConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
     MarkdownApplicationSettings.SettingsChangedListener settingsChangedListener = new MyUpdatePanelOnSettingsChangedListener();
     settingsConnection.subscribe(MarkdownApplicationSettings.SettingsChangedListener.TOPIC, settingsChangedListener);
+    settingsConnection.subscribe(MarkdownApplicationSettings.FontChangedListener.TOPIC, createFontChangedListener());
+  }
+
+  @NotNull
+  private MarkdownApplicationSettings.FontChangedListener createFontChangedListener() {
+    return new MarkdownApplicationSettings.FontChangedListener() {
+      @Override
+      public void fontChanged() {
+        if (myPanel != null && mainEditor != null) {
+          myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
+        }
+      }
+    };
   }
 
   public void setMainEditor(Editor editor) {

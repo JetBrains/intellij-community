@@ -1,6 +1,6 @@
 import sys
 from concurrent.futures._base import Error, Future as _ConcurrentFuture
-from typing import Any, Awaitable, Callable, Generator, Iterable, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Awaitable, Callable, Generator, Iterable, List, Optional, Tuple, TypeVar, Union
 
 from .events import AbstractEventLoop
 

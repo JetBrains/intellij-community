@@ -19,6 +19,10 @@ interface WindowInfo {
 
   val anchor: ToolWindowAnchor
 
+  var isVisibleOnLargeStripe: Boolean
+
+  var largeStripeAnchor: ToolWindowAnchor
+
   val floatingBounds: Rectangle?
 
   val isMaximized: Boolean

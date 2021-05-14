@@ -96,14 +96,14 @@ public final class FieldNotUsedInToStringInspection extends AbstractToStringInsp
         final String fieldName = field.getName();
         myHolder.registerProblem(field.getNameIdentifier(),
                                  JavaAnalysisBundle.message("inspection.field.not.used.in.to.string.description2", fieldName),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(myHolder));
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes());
       }
       for (PsiMethod unusedMethod : visitor.getUnusedMethods()) {
         final PsiIdentifier identifier = unusedMethod.getNameIdentifier();
         final PsiElement target = identifier == null ? unusedMethod : identifier;
         myHolder.registerProblem(target,
                                  JavaAnalysisBundle.message("inspection.field.not.used.in.to.string.description", unusedMethod.getName()),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(myHolder));
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes());
       }
     }
   }

@@ -1,0 +1,94 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.internal.ml.ngram
+
+import com.intellij.completion.ngram.slp.counting.trie.ArrayTrieCounter
+import com.intellij.completion.ngram.slp.modeling.ngram.JMModel
+import com.intellij.completion.ngram.slp.modeling.ngram.NGramModel
+import com.intellij.completion.ngram.slp.modeling.runners.ModelRunner
+
+class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Double,
+                                  model: NGramModel, vocabulary: VocabularyWithLimit) : ModelRunner(model, vocabulary) {
+
+  companion object {
+    private const val DEFAULT_LAMBDA: Double = 0.5
+    private const val LAST_STORED_TOKENS: Int = 200
+    private const val LAST_STORED_TOKENS_SEQUENCE: Int = 5000
+
+    fun createNewModelRunner(order: Int, lambda: Double = DEFAULT_LAMBDA): NGramIncrementalModelRunner {
+      return NGramIncrementalModelRunner(
+        nGramOrder = order,
+        lambda = lambda,
+        model = JMModel(counter = ArrayTrieCounter(), order = order),
+        vocabulary = VocabularyWithLimit(LAST_STORED_TOKENS, order, LAST_STORED_TOKENS_SEQUENCE)
+      )
+    }
+
+    fun createModelRunner(order: Int,
+                          lambda: Double,
+                          counter: ArrayTrieCounter,
+                          vocabulary: VocabularyWithLimit): NGramIncrementalModelRunner {
+      return NGramIncrementalModelRunner(
+        order,
+        lambda,
+        model = JMModel(counter = counter, order = order, lambda = lambda),
+        vocabulary = vocabulary
+      )
+    }
+  }
+
+  init {
+    assert(vocabulary.maxVocabularySize >= nGramOrder && vocabulary.recentSequence.maxSequenceLength >= nGramOrder)
+  }
+
+  internal var prevTokens: MutableList<String> = arrayListOf()
+
+  fun learnNextToken(token: String) {
+    updatePrevTokens(token)
+
+    if (vocabulary is VocabularyWithLimit && model is NGramModel) {
+      val indices = vocabulary.toIndicesWithLimit(prevTokens, model)
+      if (indices.size > 1) {
+        model.forget(indices.subList(0, indices.size - 1))
+      }
+      model.learn(indices)
+    }
+  }
+
+  fun createScorer(): NGramModelScorer {
+    val prefix = if (prevTokens.size > 1) prevTokens.subList(1, prevTokens.size).toTypedArray() else emptyArray()
+    return NGramModelScorer({ scoreTokens(it) }, prefix)
+  }
+
+  private fun scoreTokens(tokens: List<String>): Double {
+    if (vocabulary is VocabularyWithLimit) {
+      val queryIndices = vocabulary.toExistingIndices(tokens)
+      return model.modelToken(queryIndices, queryIndices.size - 1).first
+    }
+    return 0.0
+  }
+
+  private fun updatePrevTokens(token: String) {
+    if (prevTokens.size < nGramOrder) {
+      prevTokens.add(token)
+      return
+    }
+
+    shiftTokens()
+    prevTokens[prevTokens.size - 1] = token
+  }
+
+  private fun shiftTokens() {
+    for (i in 0..prevTokens.size - 2) {
+      prevTokens[i] = prevTokens[i + 1]
+    }
+  }
+}
+
+class NGramModelScorer(private val scoringFunction: (List<String>) -> Double, prefix: Array<String>) {
+  private val tokens: MutableList<String> = mutableListOf(*prefix, "!placeholder!")
+
+  fun score(value: String): Double {
+    tokens[tokens.lastIndex] = value
+    return scoringFunction(tokens)
+  }
+}

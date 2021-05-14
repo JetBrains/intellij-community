@@ -60,10 +60,6 @@ public class InstalledPluginsTableModel {
     return myProject;
   }
 
-  protected final @Nullable ProjectPluginTracker getPluginTracker() {
-    return myPluginTracker;
-  }
-
   protected @NotNull List<IdeaPluginDescriptor> getAllPlugins() {
     return new ArrayList<>(view);
   }
@@ -210,7 +206,7 @@ public class InstalledPluginsTableModel {
       PluginEnabledState oldState = enabledMap.get(pluginId);
 
       PluginEnabledState newState = oldState == null ?
-                                    null :
+                                    PluginEnabledState.DISABLED :
                                     action.apply(oldState);
       if (newState != null) {
         beforeHandler.accept(descriptor, Pair.create(action, newState));

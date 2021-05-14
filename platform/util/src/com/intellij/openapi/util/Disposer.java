@@ -82,6 +82,10 @@ public final class Disposer {
     return ourTree.register(parent, child) == null;
   }
 
+  /**
+   * @deprecated Use {@link #register(Disposable, Disposable)} instead
+   */
+  @Deprecated
   public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @NotNull final String key) {
     register(parent, child);
     Disposable v = get(key);
@@ -122,6 +126,10 @@ public final class Disposer {
     return isDisposed(disposable);
   }
 
+  /**
+   * @deprecated Store and use your own Disposable instead. Instead of {@code Disposer.get("ui")} use {@link com.intellij.openapi.application.ApplicationManager#getApplication()}
+   */
+  @Deprecated
   public static Disposable get(@NotNull String key) {
     return ourKeyDisposables.get(key);
   }

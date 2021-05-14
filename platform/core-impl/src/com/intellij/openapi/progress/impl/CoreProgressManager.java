@@ -22,7 +22,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,9 +66,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    *  which are not inherited from {@link StandardProgressIndicator}.
    *  for them an extra processing thread (see {@link #myCheckCancelledFuture}) has to be run
    *  to call their non-standard {@link ProgressIndicator#checkCanceled()} method periodically.
+   *  Poor-man Multiset here (instead of a set) is for simplifying add/remove indicators on process-with-progress start/end with possibly identical indicators.
+   *  ProgressIndicator -> count of this indicator occurrences in this multiset.
    */
-  // multiset here (instead of a set) is for simplifying add/remove indicators on process-with-progress start/end with possibly identical indicators
-  private static final Map<ProgressIndicator, List<ProgressIndicator>> nonStandardIndicators = new HashMap<>();
+  private static final Map<ProgressIndicator, AtomicInteger> nonStandardIndicators = new ConcurrentHashMap<>();
 
   /** true if running in non-cancelable section started with
    * {@link #executeNonCancelableSection(Runnable)} in this thread
@@ -83,14 +83,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
 
     myCheckCancelledFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-      for (List<ProgressIndicator> indicators : nonStandardIndicators.values()) {
-        for (ProgressIndicator indicator : indicators) {
-          try {
-            indicator.checkCanceled();
-          }
-          catch (ProcessCanceledException e) {
-            indicatorCanceled(indicator);
-          }
+      for (ProgressIndicator indicator : nonStandardIndicators.keySet()) {
+        try {
+          indicator.checkCanceled();
+        }
+        catch (ProcessCanceledException e) {
+          indicatorCanceled(indicator);
         }
       }
     }, 0, CHECK_CANCELED_DELAY_MILLIS, TimeUnit.MILLISECONDS);
@@ -112,7 +110,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @NotNull
-  List<ProgressIndicator> getCurrentIndicators() {
+  static List<ProgressIndicator> getCurrentIndicators() {
     synchronized (threadsUnderIndicator) {
       return new ArrayList<>(threadsUnderIndicator.keySet());
     }
@@ -498,12 +496,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           }
         }
 
-        ApplicationUtil.invokeLaterSomewhere(() -> {
+        ApplicationUtil.invokeLaterSomewhere(task.whereToRunCallbacks(), modality, () -> {
           finishTask(task, result.isCanceled(), result.getThrowable() instanceof ProcessCanceledException ? null : result.getThrowable());
           if (indicatorDisposable != null) {
             Disposer.dispose(indicatorDisposable);
           }
-        }, task.whereToRunCallbacks(), modality);
+        });
       }));
   }
 
@@ -535,7 +533,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                                                      task.isModal(),
                                                                      task.getProject(), parentComponent, task.getCancelText());
 
-    ApplicationUtil.invokeAndWaitSomewhere(() -> finishTask(task, !result, exceptionRef.get()), task.whereToRunCallbacks());
+    ApplicationUtil.invokeAndWaitSomewhere(task.whereToRunCallbacks(), ApplicationManager.getApplication().getDefaultModalityState(),
+                                           () -> finishTask(task, !result, exceptionRef.get()));
     return result;
   }
 
@@ -563,9 +562,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
     Throwable finalException = exception;
 
-    ApplicationUtil.invokeAndWaitSomewhere(() -> finishTask(task, finalCanceled, finalException),
-                                           task.whereToRunCallbacks(),
-                                           modalityState);
+    ApplicationUtil.invokeAndWaitSomewhere(task.whereToRunCallbacks(), modalityState, () -> finishTask(task, finalCanceled, finalException));
   }
 
   protected void finishTask(@NotNull Task task, boolean canceled, @Nullable Throwable error) {
@@ -640,13 +637,19 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       boolean oneOfTheIndicatorsIsCanceled = false;
 
       for (ProgressIndicator thisIndicator = indicator; thisIndicator != null; thisIndicator = thisIndicator instanceof WrappedProgressIndicator ? ((WrappedProgressIndicator)thisIndicator).getOriginalProgressIndicator() : null) {
-        Set<Thread> underIndicator = threadsUnderIndicator.computeIfAbsent(thisIndicator, __ -> new SmartHashSet<>());
+        Set<Thread> underIndicator = threadsUnderIndicator.computeIfAbsent(thisIndicator, __ -> new HashSet<>());
         boolean alreadyUnder = !underIndicator.add(currentThread);
         threadsUnderThisIndicator.add(alreadyUnder ? null : underIndicator);
 
         boolean isStandard = thisIndicator instanceof StandardProgressIndicator;
         if (!isStandard) {
-          nonStandardIndicators.computeIfAbsent(thisIndicator, __ -> new ArrayList<>()).add(thisIndicator);
+          nonStandardIndicators.compute(thisIndicator, (__, count) -> {
+            if (count == null) {
+              return new AtomicInteger(1);
+            }
+            count.incrementAndGet();
+            return count;
+          });
           startBackgroundNonStandardIndicatorsPing();
         }
 
@@ -672,8 +675,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           }
           boolean isStandard = thisIndicator instanceof StandardProgressIndicator;
           if (!isStandard) {
-            nonStandardIndicators.remove(thisIndicator);
-            if (nonStandardIndicators.isEmpty()) {
+            AtomicInteger newCount = nonStandardIndicators.compute(thisIndicator, (__, count) -> {
+              if (count.decrementAndGet() == 0) {
+                return null;
+              }
+              return count;
+            });
+            if (newCount == null) {
               stopBackgroundNonStandardIndicatorsPing();
             }
           }

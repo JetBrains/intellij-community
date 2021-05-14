@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBFont;
@@ -68,11 +69,18 @@ public interface StatusBarWidgetWrapper {
           if (myPopupState.isRecentlyHidden()) return false; // do not show new popup
           final ListPopup popup = myPresentation.getPopupStep();
           if (popup == null) return false;
-          final Dimension dimension = popup.getContent().getPreferredSize();
+          final Dimension dimension = getSizeFor(popup);
           final Point at = new Point(0, -dimension.height);
           myPopupState.prepareToShow(popup);
           popup.show(new RelativePoint(e.getComponent(), at));
           return true;
+        }
+
+        private Dimension getSizeFor(ListPopup popup) {
+          if (popup instanceof AbstractPopup) {
+            return ((AbstractPopup)popup).getSizeForPositioning();
+          }
+          return popup.getContent().getPreferredSize();
         }
       }.installOn(this, true);
     }

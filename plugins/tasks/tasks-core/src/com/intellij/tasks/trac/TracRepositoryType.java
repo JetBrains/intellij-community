@@ -57,7 +57,7 @@ public class TracRepositoryType extends BaseRepositoryType<TracRepository> {
   @Override
   public TaskRepositoryEditor createEditor(TracRepository repository,
                                            Project project,
-                                           Consumer<TracRepository> changeListener) {
+                                           Consumer<? super TracRepository> changeListener) {
     return new TracRepositoryEditor(project, repository, changeListener);
   }
 }

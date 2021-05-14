@@ -5,13 +5,13 @@ import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroup
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompositeValidationRulesStorage implements ValidationRulesStorage, ValidationTestRulesStorageHolder {
+public class CompositeValidationRulesStorage implements IntellijValidationRulesStorage, ValidationTestRulesStorageHolder {
   @NotNull
-  private final ValidationRulesStorage myRulesStorage;
+  private final IntellijValidationRulesStorage myRulesStorage;
   @NotNull
   private final ValidationTestRulesPersistedStorage myTestRulesStorage;
 
-  CompositeValidationRulesStorage(@NotNull ValidationRulesStorage rulesStorage,
+  CompositeValidationRulesStorage(@NotNull IntellijValidationRulesStorage rulesStorage,
                                   @NotNull ValidationTestRulesPersistedStorage testRulesStorage) {
     myRulesStorage = rulesStorage;
     myTestRulesStorage = testRulesStorage;

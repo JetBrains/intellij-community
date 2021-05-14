@@ -49,6 +49,18 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
         return new MethodSourceReference[]{new MethodSourceReference((PsiLanguageInjectionHost)element)};
       }
     });
+    registrar.registerReferenceProvider(getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_CONDITION_PROVIDER_ENABLED_IF, "value"), new PsiReferenceProvider() {
+      @Override
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+        return new DisabledIfEnabledIfReference[]{new DisabledIfEnabledIfReference((PsiLanguageInjectionHost)element)};
+      }
+    });
+    registrar.registerReferenceProvider(getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_CONDITION_PROVIDER_DISABLED_IF, "value"), new PsiReferenceProvider() {
+      @Override
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+        return new DisabledIfEnabledIfReference[]{new DisabledIfEnabledIfReference((PsiLanguageInjectionHost)element)};
+      }
+    });
     registrar.registerReferenceProvider(getEnumSourceNamesPattern(), new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {

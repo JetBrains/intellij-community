@@ -5,19 +5,16 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.flavor.FileIndexingFlavorProvider;
 import com.intellij.util.indexing.flavor.HashBuilder;
-import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 
 @ApiStatus.Internal
 public final class IndexedHashesSupport {
@@ -50,13 +47,9 @@ public final class IndexedHashesSupport {
     hasher.putBytes(contentHash);
 
     if (!FileContentImpl.getFileTypeWithoutSubstitution(indexedFile).isBinary()) {
-      FileType fileType = indexedFile.getFileType();
-      FileType.CharsetHint charsetHint = fileType.getCharsetHint();
       // we don't need charset if it depends only on content
-      if (charsetHint != FileType.CharsetHint.CONTENT_DEPENDENT_CHARSET || !SKIP_CONTENT_DEPENDENT_CHARSETS) {
-        Charset charset = charsetHint instanceof ForcedCharset
-                          ? ((ForcedCharset)charsetHint).getCharset()
-                          : getCharsetFromIndexedFile(indexedFile);
+      if (!SKIP_CONTENT_DEPENDENT_CHARSETS) {
+        Charset charset = getCharsetFromIndexedFile(indexedFile);
         hasher.putString(charset.name(), StandardCharsets.UTF_8);
       }
       else {

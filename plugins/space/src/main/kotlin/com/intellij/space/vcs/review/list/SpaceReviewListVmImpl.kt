@@ -15,6 +15,8 @@ import circlet.platform.client.xPagedListOnFlux
 import com.intellij.space.vcs.SpaceProjectInfo
 import libraries.coroutines.extra.Lifetime
 import runtime.reactive.*
+import runtime.reactive.property.map
+import runtime.reactive.property.mapInit
 
 
 internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
@@ -29,36 +31,38 @@ internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
     defaultQuickFiltersMap(spaceProjectInfo.key, me)
   }
 
-  override val spaceReviewsFilterSettings: MutableProperty<ReviewListFilters> = mutableProperty(
+  override val spaceReviewsQuickFilter: MutableProperty<ReviewListFilters> = mutableProperty(
     quickFiltersMap.value[DEFAULT_QUICK_FILTER] ?: error("Unable to find quick filter settings")
   )
+  override val textToSearch: MutableProperty<String> = mutableProperty("")
 
   private val refresh = Property.createMutable(Unit)
 
   override fun refresh() {
-      refresh.value = refresh.forceNotify()
+    refresh.value = refresh.forceNotify()
   }
 
-  override val reviews: Property<XPagedListOnFlux<CodeReviewListItem>> = lifetime.map(refresh, spaceReviewsFilterSettings) { _, filterSettings ->
-    lifetime.xPagedListOnFlux(
-      client = client,
-      batchSize = DEFAULT_BATCH_SIZE,
-      keyFn = { it.review.id },
-      loadImmediately = true
-    ) { batch ->
-      codeReviewService.listReviewsV2(
-        batchInfo = batch,
-        project = spaceProjectInfo.key.identifier,
-        state = filterSettings.state,
-        sort = sorting.value,
-        text = filterSettings.text,
-        author = filterSettings.author?.identifier,
-        reviewer = filterSettings.reviewer?.identifier,
-        from = filterSettings.createdFrom,
-        to = filterSettings.createdTo
-      )
+  override val reviews: Property<XPagedListOnFlux<CodeReviewListItem>> =
+    lifetime.map(refresh, textToSearch, spaceReviewsQuickFilter) { _, textToSearch, filterSettings ->
+      lifetime.xPagedListOnFlux(
+        client = client,
+        batchSize = DEFAULT_BATCH_SIZE,
+        keyFn = { it.review.id },
+        loadImmediately = true
+      ) { batch ->
+        codeReviewService.listReviewsV2(
+          batchInfo = batch,
+          project = spaceProjectInfo.key.identifier,
+          state = filterSettings.state,
+          sort = sorting.value,
+          text = textToSearch,
+          author = filterSettings.author?.identifier,
+          reviewer = filterSettings.reviewer?.identifier,
+          from = filterSettings.createdFrom,
+          to = filterSettings.createdTo
+        )
+      }
     }
-  }
 
   override val isLoading: Property<Boolean> = lifetime.flatten(
     lifetime.map(reviews) { reviewList ->

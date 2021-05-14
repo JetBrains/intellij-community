@@ -194,7 +194,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   @Override
   protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
-    Class<?> clazz = classPath.findClass(name);
+    Class<?> clazz;
+    try {
+      clazz = classPath.findClass(name);
+    }
+    catch (IOException e) {
+      throw new ClassNotFoundException(name, e);
+    }
     if (clazz == null) {
       throw new ClassNotFoundException(name);
     }
@@ -263,34 +269,34 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  public URL findResource(String name) {
+  public @Nullable URL findResource(@NotNull String name) {
     if (skipFindingResource.get() != null) {
       return null;
     }
-    Resource resource = findResourceImpl(name);
+
+    Resource resource = classPath.findResource(toCanonicalPath(name));
+    if (resource == null && name.startsWith("/")) {
+      //noinspection SpellCheckingInspection
+      if (name.startsWith("/org/bridj/")) {
+        resource = classPath.findResource(name.substring(1));
+      }
+      else {
+        throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash (path=" + name + ")");
+      }
+    }
     return resource == null ? null : resource.getURL();
   }
 
-  private @Nullable Resource findResourceImpl(@NotNull String name) {
-    String n = toCanonicalPath(name);
-    Resource resource = classPath.getResource(n);
-    // compatibility with existing code, non-standard classloader behavior
-    if (resource == null && n.startsWith("/")) {
-      return classPath.getResource(n.substring(1));
-    }
-    return resource;
-  }
-
   public final void processResources(@NotNull String dir,
-                                     @NotNull Predicate<String> fileNameFilter,
-                                     @NotNull BiConsumer<String, InputStream> consumer) throws IOException {
+                                     @NotNull Predicate<? super String> fileNameFilter,
+                                     @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     classPath.processResources(dir, fileNameFilter, consumer);
   }
 
   @Override
-  public @Nullable InputStream getResourceAsStream(String name) {
+  public @Nullable InputStream getResourceAsStream(@NotNull String name) {
     String normalizedName = toCanonicalPath(name);
-    Resource resource = classPath.getResource(normalizedName);
+    Resource resource = classPath.findResource(normalizedName);
     // compatibility with existing code, non-standard classloader behavior
     if (resource != null) {
       try {
@@ -325,7 +331,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  protected Enumeration<URL> findResources(String name) throws IOException {
+  protected @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
     return classPath.getResources(name);
   }
 
@@ -334,7 +340,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return classLoadingLocks == null ? this : classLoadingLocks.getOrCreateLock(className);
   }
 
-  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) {
+  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null) {
@@ -521,12 +527,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     boolean isBootstrapResourcesAllowed;
     boolean errorOnMissingJar = true;
     @Nullable CachePoolImpl cachePool;
-    @Nullable Predicate<Path> cachingCondition;
+    Predicate<? super Path> cachingCondition;
 
     Builder() { }
 
     /**
-     * @deprecated Use {@link #files(List)}. Using of {@link URL} is discouraged in favor of modern {@lin Path}.
+     * @deprecated Use {@link #files(List)}. Using of {@link URL} is discouraged in favor of modern {@link Path}.
      */
     @Deprecated
     public @NotNull UrlClassLoader.Builder urls(@NotNull List<URL> urls) {
@@ -600,7 +606,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * @param pool      cache pool
      * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
      */
-    public @NotNull UrlClassLoader.Builder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<Path> condition) {
+    public @NotNull UrlClassLoader.Builder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<? super Path> condition) {
       useCache = true;
       cachePool = (CachePoolImpl)pool;
       cachingCondition = condition;

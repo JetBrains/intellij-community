@@ -196,7 +196,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     }
     catch (Exception e) {
       LOG.warn(e);
-      throw new DiffRequestProducerException(e.getMessage());
+      throw new DiffRequestProducerException(e);
     }
   }
 

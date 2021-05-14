@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.bookmarks.Bookmark;
+import com.intellij.ide.bookmarks.BookmarkBundle;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.BookmarksListener;
 import com.intellij.internal.statistic.BookmarkCounterCollector;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -114,7 +114,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       popup.showInBestPositionFor(e.getDataContext());
     }
 
-    list.getEmptyText().setText(LangBundle.message("status.text.no.bookmarks"));
+    list.getEmptyText().setText(BookmarkBundle.message("status.text.no.bookmarks"));
     list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     project.getMessageBus().connect(popup).subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
@@ -157,7 +157,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
   @Override
   public String getTitle() {
-    return LangBundle.message("popup.title.bookmarks");
+    return BookmarkBundle.message("popup.title.bookmarks");
   }
 
   @Override

@@ -2,6 +2,8 @@
 package com.intellij.util.io.zip;
 
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -41,6 +43,7 @@ import java.util.zip.ZipException;
 public class JBZipFile implements Closeable {
   static final int SHORT = 2;
   static final int WORD = 4;
+  static final int DWORD = 8;
 
   private static final int HASH_SIZE = 509;
   private static final int NIBLET_MASK = 0x0f;
@@ -69,9 +72,12 @@ public class JBZipFile implements Closeable {
    */
   final RandomAccessFile archive;
 
+  private boolean myIsZip64;
+
   private JBZipOutputStream myOutputStream;
   private long currentCfdOffset;
   private final boolean myIsReadonly;
+
 
   /**
    * Opens the given file for reading, assuming the platform's
@@ -143,6 +149,10 @@ public class JBZipFile implements Closeable {
     this(f, encoding, false);
   }
 
+  boolean isZip64() {
+    return myIsZip64;
+  }
+
   /**
    * Opens the given file for reading, assuming the specified
    * encoding for file names.
@@ -152,15 +162,25 @@ public class JBZipFile implements Closeable {
    * @param readonly true to open file as readonly
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(@NotNull File f, @NotNull Charset encoding, boolean readonly) throws IOException {
+  public JBZipFile(@NotNull File f,
+                   @NotNull Charset encoding,
+                   boolean readonly) throws IOException {
+    this(f, encoding, readonly, ThreeState.NO);
+  }
+
+  public JBZipFile(@NotNull File f,
+                   @NotNull Charset encoding,
+                   boolean readonly,
+                   @NotNull ThreeState isZip64) throws IOException {
     this.encoding = encoding;
     myIsReadonly = readonly;
     archive = new RandomAccessFile(f, readonly ? "r" : "rw");
     try {
       if (archive.length() > 0) {
-        populateFromCentralDirectory();
+        populateFromCentralDirectory(isZip64);
       }
       else {
+        myIsZip64 = isZip64 == ThreeState.YES;
         getOutputStream(); // Ensure we'll write central directory when closed even if no single entry created.
       }
     }
@@ -267,8 +287,8 @@ public class JBZipFile implements Closeable {
    * the central directory alone, but not the data that requires the
    * local file header or additional data to be read.</p>
    */
-  private void populateFromCentralDirectory() throws IOException {
-    positionAtCentralDirectory();
+  private void populateFromCentralDirectory(@NotNull ThreeState isZip64) throws IOException {
+    positionAtCentralDirectory(isZip64);
 
     byte[] cfh = new byte[CFH_LEN];
 
@@ -335,7 +355,7 @@ public class JBZipFile implements Closeable {
       ze.setSize(uncompressedSize);
       ze.setInternalAttributes(internalAttributes);
       ze.setExternalAttributes(externalAttributes);
-      ze.setExtra(extra);
+      ze.readExtraFromCentralDirectoryBytes(extra);
       try {
         ze.setComment(comment);
       }
@@ -388,12 +408,43 @@ public class JBZipFile implements Closeable {
     /* the central dir                 */ + SHORT
     /* size of the central directory   */ + WORD;
 
+  private static final int ZIP64_EOCDL_LENGTH =
+    /* zip64 end of central dir locator sig */ WORD
+    /* number of the disk with the start    */
+    /* start of the zip64 end of            */
+    /* central directory                    */ + WORD
+    /* relative offset of the zip64         */
+    /* end of central directory record      */ + DWORD
+    /* total number of disks                */ + WORD;
+
+  private static final int ZIP64_EOCDL_LOCATOR_OFFSET =
+    /* zip64 end of central dir locator sig */ WORD
+    /* number of the disk with the start    */
+    /* start of the zip64 end of            */
+    /* central directory                    */ + WORD;
+
+  private static final int ZIP64_EOCD_CFD_LOCATOR_OFFSET =
+    /* zip64 end of central dir        */
+    /* signature                       */ WORD
+    /* size of zip64 end of central    */
+    /* directory record                */ + DWORD
+    /* version made by                 */ + SHORT
+    /* version needed to extract       */ + SHORT
+    /* number of this disk             */ + WORD
+    /* number of the disk with the     */
+    /* start of the central directory  */ + WORD
+    /* total number of entries in the  */
+    /* central directory on this disk  */ + DWORD
+    /* total number of entries in the  */
+    /* central directory               */ + DWORD
+    /* size of the central directory   */ + DWORD;
+
   /**
    * Searches for the &quot;End of central dir record&quot;, parses
    * it and positions the stream at the first central directory
    * record.
    */
-  private void positionAtCentralDirectory() throws IOException {
+  private void positionAtCentralDirectory(@NotNull ThreeState isZip64) throws IOException {
     boolean found = false;
     long off = archive.length() - MIN_EOCD_SIZE;
     if (off >= 0) {
@@ -421,11 +472,37 @@ public class JBZipFile implements Closeable {
     if (!found) {
       throw new ZipException("archive is not a ZIP archive");
     }
-    archive.seek(off + CFD_LOCATOR_OFFSET);
-    byte[] cfdOffset = new byte[WORD];
-    archive.readFully(cfdOffset);
-    currentCfdOffset = ZipLong.getValue(cfdOffset);
-    archive.seek(currentCfdOffset);
+
+    boolean searchForZip64EOCD = archive.getFilePointer() > ZIP64_EOCDL_LENGTH;
+    if (searchForZip64EOCD) {
+      archive.seek(archive.getFilePointer() - ZIP64_EOCDL_LENGTH - WORD);
+      myIsZip64 = Arrays.equals(readBytes(WORD), JBZipOutputStream.ZIP64_EOCD_LOC_SIG);
+    }
+
+    if (myIsZip64) {
+      assert !isZip64.equals(ThreeState.NO);
+
+      archive.skipBytes(ZIP64_EOCDL_LOCATOR_OFFSET - WORD);
+      archive.seek(ZipUInt64.getLongValue(readBytes(DWORD)));
+      if (!Arrays.equals(readBytes(WORD), JBZipOutputStream.ZIP64_EOCD_SIG)) {
+        throw new IOException("archive is not a ZIP64 archive");
+      }
+
+      archive.skipBytes(ZIP64_EOCD_CFD_LOCATOR_OFFSET
+                - WORD /* signature has already been read */);
+      long value = ZipUInt64.getLongValue(readBytes(DWORD));
+      currentCfdOffset = value;
+      archive.seek(value);
+    }
+    else {
+      assert !isZip64.equals(ThreeState.YES);
+
+      archive.seek(off + CFD_LOCATOR_OFFSET);
+      byte[] cfdOffset = new byte[WORD];
+      archive.readFully(cfdOffset);
+      currentCfdOffset = ZipLong.getValue(cfdOffset);
+      archive.seek(currentCfdOffset);
+    }
   }
 
   /**
@@ -492,7 +569,7 @@ public class JBZipFile implements Closeable {
       for (Map.Entry<JBZipEntry, byte[]> entry : existingEntries.entrySet()) {
         JBZipEntry zipEntry = getOrCreateEntry(entry.getKey().getName());
         zipEntry.setComment(entry.getKey().getComment());
-        zipEntry.setExtra(entry.getKey().getExtra());
+        zipEntry.setExtra(ContainerUtil.filter(entry.getKey().getExtra(), f -> !(f instanceof Zip64ExtraField)));
         zipEntry.setMethod(entry.getKey().getMethod());
         zipEntry.setTime(entry.getKey().getTime());
         zipEntry.setData(entry.getValue());

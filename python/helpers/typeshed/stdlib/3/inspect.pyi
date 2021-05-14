@@ -296,10 +296,14 @@ def getgeneratorlocals(generator: Generator[Any, Any, Any]) -> Dict[str, Any]: .
 # TODO can we be more specific than "object"?
 def getcoroutinelocals(coroutine: object) -> Dict[str, Any]: ...
 
+# Create private type alias to avoid conflict with symbol of same
+# name created in Attribute class.
+_Object = object
+
 class Attribute(NamedTuple):
     name: str
     kind: str
     defining_class: type
-    object: object
+    object: _Object
 
 def classify_class_attrs(cls: type) -> List[Attribute]: ...

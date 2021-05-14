@@ -497,8 +497,13 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       }
 
       @Override
-      protected Object @NotNull [] getAllElements() {
-        return ListSpeedSearch.getAllListElements(myComponent);
+      protected int getElementCount() {
+        return myComponent.getModel().getSize();
+      }
+
+      @Override
+      protected Object getElementAt(int viewIndex) {
+        return myComponent.getModel().getElementAt(viewIndex);
       }
 
       @Override

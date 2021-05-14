@@ -47,12 +47,12 @@ class ImportOldConfigsPanel extends JDialog {
   private ComboBox<Path> myComboBoxOldPaths;
 
   private final List<Path> myGuessedOldConfigDirs;
-  private final Function<Path, Pair<Path, Path>> myValidator;
+  private final Function<? super Path, ? extends Pair<Path, Path>> myValidator;
   private final String myProductName;
   private Path myLastSelection = null;
   private Pair<Path, Path> myResult;
 
-  ImportOldConfigsPanel(List<Path> guessedOldConfigDirs, Function<Path, Pair<Path, Path>> validator) {
+  ImportOldConfigsPanel(List<Path> guessedOldConfigDirs, Function<? super Path, ? extends Pair<Path, Path>> validator) {
     super((Dialog)null, true);
 
     myGuessedOldConfigDirs = guessedOldConfigDirs;

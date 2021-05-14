@@ -1452,4 +1452,36 @@ public class Test {
       """.trimIndent()
     )
   }
+
+  fun testIdea219194() {
+    doTextTest(
+      """
+      public class Test {
+          /**
+           * @implNote Some leading implNote sentence.
+           *
+           *     <p>That means that the the thing is like this.
+           *
+           *     <ol></ol>
+           */
+          void foo() {
+          }
+      }
+      """.trimIndent(),
+
+      """
+      public class Test {
+          /**
+           * @implNote Some leading implNote sentence.
+           *
+           * <p>That means that the the thing is like this.
+           *
+           * <ol></ol>
+           */
+          void foo() {
+          }
+      }
+      """.trimIndent()
+    )
+  }
 }

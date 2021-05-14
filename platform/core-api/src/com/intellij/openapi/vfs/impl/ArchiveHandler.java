@@ -11,7 +11,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.ByteArrayCharSequence;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,11 +20,10 @@ import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 public abstract class ArchiveHandler {
   public static final long DEFAULT_LENGTH = 0L;
@@ -128,7 +126,7 @@ public abstract class ArchiveHandler {
   }
 
   private AddonlyKeylessHash<EntryInfo, Object> createParentChildrenMap() {
-    THashMap<EntryInfo, List<EntryInfo>> map = new THashMap<>();
+    Map<EntryInfo, List<EntryInfo>> map = new HashMap<>();
     for (EntryInfo info : getEntriesMap().values()) {
       if (info.isDirectory && !map.containsKey(info)) map.put(info, new SmartList<>());
       if (info.parent != null) {
@@ -139,7 +137,7 @@ public abstract class ArchiveHandler {
     }
 
     AddonlyKeylessHash<EntryInfo, Object> result = new AddonlyKeylessHash<>(map.size(), ourKeyValueMapper);
-    map.forEachEntry((parent, children) -> {
+    for (List<EntryInfo> children : map.values()) {
       int numberOfChildren = children.size();
       if (numberOfChildren == 1) {
         result.add(children.get(0));
@@ -147,8 +145,7 @@ public abstract class ArchiveHandler {
       else if (numberOfChildren > 1) {
         result.add(children.toArray(new EntryInfo[numberOfChildren]));
       }
-      return true;
-    });
+    }
     return result;
   }
 
@@ -263,7 +260,7 @@ public abstract class ArchiveHandler {
     int p = normalizedName.lastIndexOf('/');
     String parentPath = p > 0 ? normalizedName.substring(0, p) : "";
     String shortName = p > 0 ? normalizedName.substring(p + 1) : normalizedName;
-    return pair(parentPath, shortName);
+    return new Pair<>(parentPath, shortName);
   }
 
   /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */

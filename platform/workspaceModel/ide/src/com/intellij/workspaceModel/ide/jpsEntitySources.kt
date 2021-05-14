@@ -45,7 +45,7 @@ sealed class JpsFileEntitySource : EntitySource {
    * Represents a specific xml file containing configuration of some entities of IntelliJ IDEA project.
    */
   data class ExactFile(val file: VirtualFileUrl, override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
-    override val virtualFileUrl: VirtualFileUrl?
+    override val virtualFileUrl: VirtualFileUrl
       get() = file
   }
 
@@ -64,7 +64,7 @@ sealed class JpsFileEntitySource : EntitySource {
       private val nextId = AtomicInteger()
     }
 
-    override val virtualFileUrl: VirtualFileUrl?
+    override val virtualFileUrl: VirtualFileUrl
       get() = directory
 
     override fun equals(other: Any?): Boolean {

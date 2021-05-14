@@ -148,6 +148,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   @Override
+  protected String getToolwindowTitle() {
+    return CodeInsightBundle.message("documentation.tool.window.title");
+  }
+
+  @Override
   protected DocumentationComponent createComponent() {
     return new DocumentationComponent(this);
   }
@@ -695,7 +700,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
-  protected void doShowJavaDocInfo(@NotNull CompletableFuture<PsiElement> elementFuture,
+  protected void doShowJavaDocInfo(@NotNull CompletableFuture<? extends PsiElement> elementFuture,
                                    boolean requestFocus,
                                    @NotNull PopupUpdateProcessor updateProcessor,
                                    PsiElement originalElement,
@@ -1349,14 +1354,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   @Override
-  protected void doUpdateComponent(@NotNull CompletableFuture<PsiElement> elementFuture,
+  protected void doUpdateComponent(@NotNull CompletableFuture<? extends PsiElement> elementFuture,
                                    PsiElement originalElement,
                                    DocumentationComponent component) {
     doUpdateComponent(elementFuture, originalElement, component, false);
   }
 
   @Override
-  protected void doUpdateComponent(@NotNull CompletableFuture<PsiElement> elementFuture,
+  protected void doUpdateComponent(@NotNull CompletableFuture<? extends PsiElement> elementFuture,
                                    PsiElement originalElement,
                                    DocumentationComponent component,
                                    boolean onAutoUpdate) {
@@ -1445,7 +1450,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   protected abstract static class DocumentationCollector {
-    private final CompletableFuture<PsiElement> myElementFuture;
+    private final CompletableFuture<? extends PsiElement> myElementFuture;
     final String ref;
     final boolean onAutoUpdate;
     final ActionCallback actionCallback;
@@ -1470,7 +1475,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       this(CompletableFuture.completedFuture(element), effectiveUrl, ref, actionCallback, provider, onAutoUpdate);
     }
 
-    DocumentationCollector(@NotNull CompletableFuture<PsiElement> elementFuture,
+    DocumentationCollector(@NotNull CompletableFuture<? extends PsiElement> elementFuture,
                            String effectiveUrl,
                            String ref,
                            ActionCallback actionCallback,
@@ -1524,7 +1529,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     MyCollector(@NotNull Project project,
-                @NotNull CompletableFuture<PsiElement> elementSupplier,
+                @NotNull CompletableFuture<? extends PsiElement> elementSupplier,
                 PsiElement originalElement,
                 String ref,
                 ActionCallback actionCallback,

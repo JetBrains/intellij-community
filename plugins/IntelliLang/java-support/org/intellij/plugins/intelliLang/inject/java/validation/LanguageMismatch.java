@@ -57,6 +57,7 @@ public class LanguageMismatch extends LocalInspectionTool {
 
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (expression.getParent() instanceof PsiMethodCallExpression) return;
         final PsiElement element = expression.resolve();
         if (!(element instanceof PsiModifierListOwner)) {
           return;

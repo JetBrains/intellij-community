@@ -39,6 +39,7 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
     return null != psiAnnotation.findAttributeValue("prefix");
   }
 
+  @Override
   protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
                                                    @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
     if (null == nameHint) {

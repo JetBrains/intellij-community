@@ -1,6 +1,0 @@
-buildscript {
-  apply from: 'a.gradle'
-  dependencies {
-    classpath ext.prop
-  }
-}

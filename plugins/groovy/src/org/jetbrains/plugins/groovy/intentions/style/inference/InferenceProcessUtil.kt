@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.lang.jvm.JvmParameter
@@ -9,6 +9,9 @@ import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OVERRIDE
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
@@ -93,7 +96,7 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
   val manager = resolve()?.manager ?: return this
   val factory = GroovyPsiElementFactory.getInstance(manager.project)
   return accept(object : PsiTypeMapper() {
-    override fun visitClassType(classType: PsiClassType): PsiType? {
+    override fun visitClassType(classType: PsiClassType): PsiType {
       val mappedParameters = classType.parameters.map {
         val accepted = it.accept(this)
         when {
@@ -123,7 +126,7 @@ fun PsiType?.isClosureTypeDeep(): Boolean {
 tailrec fun PsiSubstitutor.recursiveSubstitute(type: PsiType, recursionDepth: Int = 20): PsiType {
   if (recursionDepth == 0) {
     return type.accept(object : PsiTypeMapper() {
-      override fun visitClassType(classType: PsiClassType): PsiType? {
+      override fun visitClassType(classType: PsiClassType): PsiType {
         return classType.rawType()
       }
     })
@@ -310,7 +313,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
       return compress(intersectionType.conjuncts?.filterNotNull()?.mapNotNull { it.accept(this) })
     }
 
-    override fun visitWildcardType(wildcardType: PsiWildcardType): PsiType? {
+    override fun visitWildcardType(wildcardType: PsiWildcardType): PsiType {
       val bound = wildcardType.bound?.accept(this) ?: return wildcardType
       return when {
         wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, bound)
@@ -386,9 +389,21 @@ private fun locateMethod(file: GroovyFileBase, method: GrMethod): GrMethod? {
 @Suppress("RemoveExplicitTypeArguments")
 internal fun getOriginalMethod(method: GrMethod): GrMethod {
   return when (val originalFile = method.containingFile?.originalFile) {
-      null -> method
-      method.containingFile -> method
-      is GroovyFileBase -> locateMethod(originalFile, method) ?: method
-      else -> originalFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>()?.takeIf { it.name == method.name } ?: method
-    }
+    null -> method
+    method.containingFile -> method
+    is GroovyFileBase -> locateMethod(originalFile, method) ?: method
+    else -> originalFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>()?.takeIf { it.name == method.name } ?: method
+  }
+}
+
+private fun getFileScope(method: GrMethod): SearchScope? {
+  val originalMethod = getOriginalMethod(method)
+  return originalMethod.containingFile?.let { LocalSearchScope(arrayOf(it), null, true) }
+}
+
+fun getSearchScope(method: GrMethod, shouldUseReducedScope: Boolean): SearchScope? = if (shouldUseReducedScope) {
+  getFileScope(method)
+}
+else {
+  GlobalSearchScope.allScope(method.project)
 }

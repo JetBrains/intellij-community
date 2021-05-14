@@ -1,5 +1,0 @@
-repositories {
-  jcenter {
-    url "http://jcenter.bintray.com/"
-  }
-}

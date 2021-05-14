@@ -91,20 +91,20 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     invoke(project, null, descriptor.getPsiElement().getContainingFile());
   }
 
-  @Nullable
+  @NotNull
   public static List<LocalQuickFix> registerFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull PsiReference reference) {
     PsiElement psiElement = reference.getElement();
     String shortReferenceName = reference.getRangeInElement().substring(psiElement.getText());
 
     Project project = psiElement.getProject();
     PsiFile containingFile = psiElement.getContainingFile();
-    if (containingFile == null) return null;
+    if (containingFile == null) return Collections.emptyList();
     VirtualFile refVFile = containingFile.getVirtualFile();
-    if (refVFile == null) return null;
+    if (refVFile == null) return Collections.emptyList();
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module currentModule = fileIndex.getModuleForFile(refVFile);
-    if (currentModule == null) return null;
+    if (currentModule == null) return Collections.emptyList();
 
     DependencyScope scope = fileIndex.isInTestSourceContent(refVFile) ? DependencyScope.TEST : DependencyScope.COMPILE;
 

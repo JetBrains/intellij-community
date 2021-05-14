@@ -17,7 +17,7 @@ private const val DIALOGS = "ui.dialogs"
 
 class SettingsCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("ui.settings", 58)
+    private val GROUP = EventLogGroup("ui.settings", 59)
 
     val CONFIGURABLE_CLASS = EventFields.Class("configurable")
     val SELECT = GROUP.registerEvent("select", CONFIGURABLE_CLASS)
@@ -58,7 +58,7 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
   private fun logSettingsEvent(configurable: Configurable, event: EventId1<Class<*>?>) {
     val base: Any? = if (configurable is ConfigurableWrapper) configurable.configurable else configurable
     base?.let {
-      event.log(base::class.java)
+      event.log(if (configurable is ConfigurableWrapper) configurable.project else null, base::class.java)
     }
   }
 

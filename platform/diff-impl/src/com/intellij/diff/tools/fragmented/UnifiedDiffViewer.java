@@ -50,6 +50,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -391,19 +392,18 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     final DocumentContent content1 = getContent1();
     final DocumentContent content2 = getContent2();
 
-    EditorHighlighter highlighter = ReadAction.nonBlocking(() -> {
-      return buildHighlighter(myProject, myDocument, content1, content2,
-                              texts[0], texts[1], builder.getRanges(),
-                              builder.getText().length());
-    })
-      .cancelWith(indicator)
-      .executeSynchronously();
-
-    UnifiedEditorRangeHighlighter rangeHighlighter = ReadAction.nonBlocking(() -> {
-      return new UnifiedEditorRangeHighlighter(myProject, content1.getDocument(), content2.getDocument(), builder.getRanges());
-    })
-      .wrapProgress(indicator)
-      .executeSynchronously();
+    HighlightersData highlightersData = BackgroundTaskUtil.tryComputeFast(___ -> {
+      return ReadAction.compute(() -> {
+        EditorHighlighter highlighter =
+          buildHighlighter(myProject, myDocument, content1, content2,
+                           texts[0], texts[1], builder.getRanges(),
+                           builder.getText().length());
+        UnifiedEditorRangeHighlighter rangeHighlighter =
+          new UnifiedEditorRangeHighlighter(myProject, content1.getDocument(),
+                                            content2.getDocument(), builder.getRanges());
+        return new HighlightersData(highlighter, rangeHighlighter);
+      });
+    }, 500);
 
     LineNumberConvertor convertor1 = builder.getConvertor1();
     LineNumberConvertor convertor2 = builder.getConvertor2();
@@ -450,10 +450,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         }
       });
 
-      if (highlighter != null) myEditor.setHighlighter(highlighter);
       DiffUtil.setEditorCodeStyle(myProject, myEditor, getContent(myMasterSide));
-
-      if (rangeHighlighter != null) rangeHighlighter.apply(myProject, myDocument);
 
       List<RangeMarker> guarderRangeBlocks = new ArrayList<>();
       if (!myEditor.isViewer()) {
@@ -474,6 +471,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       myEditor.getCaretModel().moveToOffset(LineCol.toOffset(myDocument, newCaretLine, oldCaretPosition.column));
 
       myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
+
+      HighlightersData.apply(myProject, myEditor, highlightersData);
       myMarkupUpdater.resumeUpdate();
 
       myInitialScrollHelper.onRediff();
@@ -1351,13 +1350,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
             .finishOnUiThread(ModalityState.stateForComponent(myPanel), result -> {
               if (myStateIsOutOfDate || blockData != myModel.getData()) return;
 
-              EditorHighlighter highlighter = result.first;
-              UnifiedEditorRangeHighlighter rangeHighlighter = result.second;
-
-              if (highlighter != null) myEditor.setHighlighter(highlighter);
-
-              UnifiedEditorRangeHighlighter.erase(myProject, myDocument);
-              rangeHighlighter.apply(myProject, myDocument);
+              HighlightersData.apply(myProject, myEditor, result);
             })
             .withDocumentsCommitted(myProject)
             .wrapProgress(myUpdateIndicator)
@@ -1367,7 +1360,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @NotNull
-    private Pair<EditorHighlighter, UnifiedEditorRangeHighlighter> updateHighlighters(@NotNull ChangedBlockData blockData) {
+    private HighlightersData updateHighlighters(@NotNull ChangedBlockData blockData) {
       List<HighlightRange> ranges = blockData.getRanges();
       Document document1 = getContent1().getDocument();
       Document document2 = getContent2().getDocument();
@@ -1380,7 +1373,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       ProgressManager.checkCanceled();
       UnifiedEditorRangeHighlighter rangeHighlighter = new UnifiedEditorRangeHighlighter(myProject, document1, document2, ranges);
 
-      return Pair.create(highlighter, rangeHighlighter);
+      return new HighlightersData(highlighter, rangeHighlighter);
     }
 
     private class MyMarkupModelListener implements MarkupModelListener {
@@ -1397,6 +1390,34 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
         scheduleUpdate();
+      }
+    }
+  }
+
+  private static class HighlightersData {
+    @Nullable private final EditorHighlighter myHighlighter;
+    @Nullable private final UnifiedEditorRangeHighlighter myRangeHighlighter;
+
+    private HighlightersData(@Nullable EditorHighlighter highlighter,
+                             @Nullable UnifiedEditorRangeHighlighter rangeHighlighter) {
+      myHighlighter = highlighter;
+      myRangeHighlighter = rangeHighlighter;
+    }
+
+    public static void apply(@Nullable Project project, @NotNull EditorEx editor, @Nullable HighlightersData highlightersData) {
+      EditorHighlighter highlighter = highlightersData != null ? highlightersData.myHighlighter : null;
+      UnifiedEditorRangeHighlighter rangeHighlighter = highlightersData != null ? highlightersData.myRangeHighlighter : null;
+
+      if (highlighter != null) {
+        editor.setHighlighter(highlighter);
+      }
+      else {
+        editor.setHighlighter(DiffUtil.createEmptyEditorHighlighter());
+      }
+
+      UnifiedEditorRangeHighlighter.erase(project, editor.getDocument());
+      if (rangeHighlighter != null) {
+        rangeHighlighter.apply(project, editor.getDocument());
       }
     }
   }

@@ -635,7 +635,7 @@ interface TxANotAnno {}
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for 'Override/Implement methods...')")
   void testPreferAnnotationsToInterfaceKeyword() {
-    checkPreferredItems 0, 'Override/Implement methods...', 'Override', 'Deprecated'
+    checkPreferredItems 0, 'Deprecated', 'Override', 'SuppressWarnings'
   }
 
   @NeedsIndex.ForStandardLibrary

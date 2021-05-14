@@ -35,45 +35,10 @@ public interface Injection {
   /**
    * @return the ID of a tool which will provide UI utils to manage this injection.
    *
-   * If the <code>LanguageInjectionSupport</code> with such ID is registered it will be used
+   * If the {@code LanguageInjectionSupport} with such ID is registered it will be used
    * if {@link LanguageInjectionPerformer} will not force other implementation
    */
   @Nullable
   @NlsSafe String getSupportId();
-
-  class Data implements Injection {
-
-    private final String injectedId;
-    private final String prefix;
-    private final String suffix;
-    private final String supportId;
-
-    public Data(@NotNull String injectedId, @NotNull String prefix, @NotNull String suffix, @Nullable String supportId) {
-      this.injectedId = injectedId;
-      this.prefix = prefix;
-      this.suffix = suffix;
-      this.supportId = supportId;
-    }
-
-    @Override
-    public @NotNull @NlsSafe String getInjectedLanguageId() {
-      return injectedId;
-    }
-
-    @Override
-    public @NotNull String getPrefix() {
-      return prefix;
-    }
-
-    @Override
-    public @NotNull String getSuffix() {
-      return suffix;
-    }
-
-    @Override
-    public @Nullable @NlsSafe String getSupportId() {
-      return supportId;
-    }
-  }
 }
 

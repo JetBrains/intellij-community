@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -78,6 +78,7 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.IntSupplier;
 
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance(VariableInplaceRenamer.class);
@@ -407,7 +408,7 @@ public abstract class InplaceRefactoring {
     topLevelEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
 
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
-    restoreOldCaretPositionAndSelection(offset);
+    restoreOldCaretPositionAndSelection(myEditor, () -> restoreCaretOffset(offset), this::restoreSelection);
     highlightTemplateVariables(template, topLevelEditor);
 
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
@@ -441,15 +442,17 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  private void restoreOldCaretPositionAndSelection(final int offset) {
+  static void restoreOldCaretPositionAndSelection(@NotNull Editor editor,
+                                                  @NotNull IntSupplier restoreCaretOffset,
+                                                  @NotNull Runnable restoreSelection) {
     //move to old offset
     Runnable runnable = () -> {
-      myEditor.getCaretModel().moveToOffset(restoreCaretOffset(offset));
-      restoreSelection();
+      editor.getCaretModel().moveToOffset(restoreCaretOffset.getAsInt());
+      restoreSelection.run();
     };
 
-    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-    if (lookup != null && lookup.getLookupStart() <= (restoreCaretOffset(offset))) {
+    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+    if (lookup != null && lookup.getLookupStart() <= restoreCaretOffset.getAsInt()) {
       lookup.setLookupFocusDegree(LookupFocusDegree.UNFOCUSED);
       lookup.performGuardedChange(runnable);
     }

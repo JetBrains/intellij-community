@@ -1,4 +1,0 @@
-repositories {
-  jcenter()
-  mavenCentral()
-}

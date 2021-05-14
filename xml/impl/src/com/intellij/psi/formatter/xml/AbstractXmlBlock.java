@@ -2,10 +2,12 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XHtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.*;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -353,9 +355,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected boolean useMyFormatter(final Language myLanguage, final Language childLanguage, final PsiElement childPsi) {
     if (myLanguage == childLanguage ||
-        childLanguage == StdFileTypes.HTML.getLanguage() ||
-        childLanguage == StdFileTypes.XHTML.getLanguage() ||
-        childLanguage == StdFileTypes.XML.getLanguage()) {
+        childLanguage == HtmlFileType.INSTANCE.getLanguage() ||
+        childLanguage == XHtmlFileType.INSTANCE.getLanguage() ||
+        childLanguage == XmlFileType.INSTANCE.getLanguage()) {
       return true;
     }
     final FormattingModelBuilder childFormatter = LanguageFormatting.INSTANCE.forLanguage(childLanguage);

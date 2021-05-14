@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +58,7 @@ public interface ModelBranch extends UserDataHolder {
    * This may only be called for references which occur in {@link PsiElement#getReferences()},
    * and the corresponding document should be committed.
    */
-  <T extends PsiSymbolReference> @NotNull T obtainReferenceCopy(@NotNull T original);
+  <T extends PsiReference> @NotNull T obtainReferenceCopy(@NotNull T original);
 
   /**
    * @return a file in the branch copy corresponding to the given VFS URL
@@ -94,7 +94,8 @@ public interface ModelBranch extends UserDataHolder {
     if (element instanceof BranchableSyntheticPsiElement) {
       return ((BranchableSyntheticPsiElement)element).getModelBranch();
     }
-    PsiFile psiFile = element.getContainingFile();
+    // avoid isValid check in ClsFileImpl.getContainingFile() 
+    PsiFile psiFile = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
     return psiFile == null ? null : getFileBranch(psiFile.getViewProvider().getVirtualFile());
   }
 

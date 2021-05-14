@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +18,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFxDisposable;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
 import java.util.Collection;
@@ -82,7 +83,7 @@ public final class JavaFxModuleUtil {
 
       ReadAction.nonBlocking(() -> populateCachedJavaFxModules(project))
         .inSmartMode(project)
-        .expireWith(project)
+        .expireWith(JavaFxDisposable.getInstance(project))
         .submit(NonUrgentExecutor.getInstance());
     }
 

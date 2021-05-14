@@ -2,14 +2,15 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.properties.CommaSeparatedValues;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
@@ -18,6 +19,7 @@ import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -32,6 +34,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -51,12 +55,11 @@ public class CommonCodeStyleSettings {
 
   @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
 
-  private final Language myLanguage;
+  private final @NotNull Language myLanguage;
 
   private ArrangementSettings myArrangementSettings;
   private CodeStyleSettings   myRootSettings;
   private @Nullable IndentOptions       myIndentOptions;
-  private final FileType myFileType;
   private boolean             myForceArrangeMenuAvailable;
 
   private final SoftMargins mySoftMargins = new SoftMargins();
@@ -65,19 +68,15 @@ public class CommonCodeStyleSettings {
 
   private final static Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
 
-  public CommonCodeStyleSettings(Language language, FileType fileType) {
-    myLanguage = language;
-    myFileType = fileType;
-  }
-
-  public CommonCodeStyleSettings(Language language) {
-    this(language, language == null ? null : language.getAssociatedFileType());
+  public CommonCodeStyleSettings(@Nullable Language language) {
+    myLanguage = ObjectUtils.notNull(language, Language.ANY);
   }
 
   void setRootSettings(@NotNull CodeStyleSettings rootSettings) {
     myRootSettings = rootSettings;
   }
 
+  @NotNull
   public Language getLanguage() {
     return myLanguage;
   }
@@ -86,11 +85,6 @@ public class CommonCodeStyleSettings {
   public IndentOptions initIndentOptions() {
     myIndentOptions = new IndentOptions();
     return myIndentOptions;
-  }
-
-  @Nullable
-  public FileType getFileType() {
-    return myFileType;
   }
 
   @NotNull
@@ -121,7 +115,7 @@ public class CommonCodeStyleSettings {
   }
 
   public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
-    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
+    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage);
     copyPublicFields(this, commonSettings);
     commonSettings.setRootSettings(rootSettings);
     commonSettings.myForceArrangeMenuAvailable = myForceArrangeMenuAvailable;
@@ -159,6 +153,7 @@ public class CommonCodeStyleSettings {
   }
 
   public void readExternal(Element element) {
+    //noinspection deprecation
     DefaultJDOMExternalizer.readExternal(this, element);
     if (myIndentOptions != null) {
       Element indentOptionsElement = element.getChild(INDENT_OPTIONS_TAG);
@@ -183,6 +178,7 @@ public class CommonCodeStyleSettings {
     else {
       return;
     }
+    //noinspection deprecation
     DefaultJDOMExternalizer.write(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
     mySoftMargins.serializeInto(element);
     if (myIndentOptions != null) {
@@ -954,6 +950,31 @@ public class CommonCodeStyleSettings {
   //-------------------------Enums----------------------------------------------------------
   @WrapConstant
   public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
+
+  // region Chained Builder Method Calls
+  //----------------------------------------------------------------------------------------
+
+  public @NonNls @CommaSeparatedValues String BUILDER_METHODS = "";
+  public boolean KEEP_BUILDER_METHODS_INDENTS = false;
+
+  private final @NotNull Set<String> myBuilderMethodsNameCache = new HashSet<>();
+  private @NotNull String myCachedBuilderMethods = "";
+
+  public boolean isBuilderMethod(@NotNull String methodName) {
+    if (!StringUtil.equals(BUILDER_METHODS, myCachedBuilderMethods)) {
+      myCachedBuilderMethods = BUILDER_METHODS;
+      myBuilderMethodsNameCache.clear();
+      Arrays.stream(BUILDER_METHODS.split(","))
+        .filter(chunk -> !StringUtil.isEmptyOrSpaces(chunk))
+        .forEach(chunk -> {
+          myBuilderMethodsNameCache.add(chunk.trim());
+        });
+    }
+    return myBuilderMethodsNameCache.contains(methodName);
+  }
+
+
+  // endregion
 
   //-------------------------Force rearrange settings---------------------------------------
   public static final int REARRANGE_ACCORDIND_TO_DIALOG = 0;

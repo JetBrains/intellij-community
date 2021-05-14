@@ -3,9 +3,7 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -28,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -88,7 +84,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     return "UsageGrouping.Directory";
   }
 
-  private final class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
+  private final class DirectoryGroup implements UsageGroup, DataProvider {
     private final VirtualFile myDir;
     private Icon myIcon;
     private final @NlsSafe String relativePathText;
@@ -195,15 +191,17 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
       return myDir.hashCode();
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (!isValid()) return;
-      if (CommonDataKeys.VIRTUAL_FILE == key) {
-        sink.put(CommonDataKeys.VIRTUAL_FILE, myDir);
+    public Object getData(@NotNull String dataId) {
+      if (!isValid()) return null;
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        return myDir;
       }
-      if (CommonDataKeys.PSI_ELEMENT == key) {
-        sink.put(CommonDataKeys.PSI_ELEMENT, getDirectory());
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return getDirectory();
       }
+      return null;
     }
 
     @Override

@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -297,7 +298,7 @@ public final class PatternCompiler {
   }
 
   private static int @NotNull [] findAllTypedVarOffsets(final PsiFile file, final Pattern[] substitutionPatterns) {
-    final IntOpenHashSet result = new IntOpenHashSet();
+    final IntSet result = new IntOpenHashSet();
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
@@ -337,7 +338,7 @@ public final class PatternCompiler {
                                             final boolean strict) {
     final IntArrayList errorOffsets = new IntArrayList();
     final boolean[] containsErrorTail = {false};
-    final IntOpenHashSet varEndOffsetsSet = new IntOpenHashSet(varEndOffsets);
+    final IntSet varEndOffsetsSet = new IntOpenHashSet(varEndOffsets);
 
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override

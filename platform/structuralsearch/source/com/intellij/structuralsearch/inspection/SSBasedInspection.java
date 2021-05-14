@@ -96,18 +96,20 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     Configuration previous = null;
     boolean sorted = true;
     for (Configuration configuration : myConfigurations) {
-      if (previous != null) {
-        if (CONFIGURATION_COMPARATOR.compare(previous, configuration) >= 0 || configuration.getOrder() != 0) {
-          sorted = false;
-          break;
-        }
-        if (previous.getUuid().equals(configuration.getUuid())) {
-          configuration.setOrder(previous.getOrder() + 1);
-        }
+      if (configuration.getOrder() != 0 || previous != null && CONFIGURATION_COMPARATOR.compare(previous, configuration) > 0) {
+        sorted = false;
+        break;
       }
       previous = configuration;
     }
     if (sorted) {
+      previous = null;
+      for (Configuration configuration : myConfigurations) {
+        if (previous != null && previous.getUuid().equals(configuration.getUuid())) {
+          configuration.setOrder(previous.getOrder() + 1); // restore order
+        }
+        previous = configuration;
+      }
       myWriteSorted = true; // write sorted if already sorted
     }
   }

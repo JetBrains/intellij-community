@@ -6,6 +6,7 @@ import circlet.platform.client.ConnectionStatus
 import circlet.workspaces.Workspace
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -29,12 +30,13 @@ import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class SpaceMainToolBarAction : DumbAwareAction() {
+class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
   private val settings = SpaceSettings.getInstance()
 
   override fun update(e: AnActionEvent) {
     val isOnNavBar = e.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR
-    if (!isOnNavBar) {
+    val isOnMainBar = e.place == ActionPlaces.MAIN_TOOLBAR
+    if (!isOnNavBar && !isOnMainBar) {
       e.presentation.isEnabledAndVisible = false
       return
     }

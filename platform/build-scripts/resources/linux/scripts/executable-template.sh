@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 # ---------------------------------------------------------------------
 # __product_full__ startup script.
@@ -55,6 +55,7 @@ IDE_BIN_HOME=`pwd`
 IDE_HOME=`dirname "$IDE_BIN_HOME"`
 cd "$OLDPWD"
 
+CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 PRODUCT_VENDOR="__product_vendor__"
 PATHS_SELECTOR="__system_selector__"
 
@@ -66,11 +67,8 @@ if [ -n "$__product_uc___JDK" -a -x "$__product_uc___JDK/bin/java" ]; then
   JDK="$__product_uc___JDK"
 fi
 
-if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
-  USER_JRE=$("$CAT" "${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
-  if [ ! -d "$USER_JRE" ]; then
-    USER_JRE="$IDE_HOME/$USER_JRE"
-  fi
+if [ -z "$JDK" ] && [ -s "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
+  USER_JRE=$("$CAT" "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
   if [ -x "$USER_JRE/bin/java" ]; then
     JDK="$USER_JRE"
   fi

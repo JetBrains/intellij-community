@@ -1,4 +1,0 @@
-ext {
-  prop1 = [1, true]
-  prop2 = prop1
-}

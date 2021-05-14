@@ -1,12 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
@@ -135,8 +140,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   private final Map<String, Boolean> myDefaultBreadcrumbVisibility = new HashMap<>();
 
   private int myBlockIndent;
-  //private int myTabSize = 4;
-  //private boolean myUseTabCharacter = false;
 
   @NonNls public static final String STRIP_TRAILING_SPACES_NONE = "None";
   @NonNls public static final String STRIP_TRAILING_SPACES_CHANGED = "Changed";
@@ -163,12 +166,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     }
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener){
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
-  }
-
-  public void removePropertyChangeListener(PropertyChangeListener listener){
-    myPropertyChangeSupport.removePropertyChangeListener(listener);
+    Disposer.register(disposable, () -> myPropertyChangeSupport.removePropertyChangeListener(listener));
   }
 
   @NotNull
@@ -394,7 +394,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
       myPlacesToUseSoftWraps.remove(place);
     }
     storeRawSoftWraps();
-    if (place == SoftWrapAppliancePlaces.MAIN_EDITOR) setSoftWrapFileMasks(getSoftWrapFileMasks());
+    if (place == SoftWrapAppliancePlaces.MAIN_EDITOR) {
+      setSoftWrapFileMasks(getSoftWrapFileMasks());
+    }
   }
 
   public boolean isUseCustomSoftWrapIndent() {
@@ -701,7 +703,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @NotNull
   public String getSoftWrapFileMasks() {
     String storedValue = myOptions.SOFT_WRAP_FILE_MASKS;
-    if (storedValue != null) return storedValue;
+    if (storedValue != null) {
+      return storedValue;
+    }
     return isUseSoftWraps() ? SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT : SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT;
   }
 

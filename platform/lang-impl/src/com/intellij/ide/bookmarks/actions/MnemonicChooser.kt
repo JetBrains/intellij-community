@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions
 
-import com.intellij.ide.IdeBundle
+import com.intellij.ide.bookmarks.BookmarkBundle.message
 import com.intellij.ide.bookmarks.BookmarkManager
 import com.intellij.ide.bookmarks.BookmarkType
 import com.intellij.openapi.util.registry.Registry
@@ -19,54 +19,59 @@ import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.*
 
-private val ASSIGNED_BACKGROUND = namedColor("AssignedMnemonic.background", 0xF7C777, 0x665632)
 private val ASSIGNED_FOREGROUND = namedColor("AssignedMnemonic.foreground", 0x000000, 0xBBBBBB)
-private val CURRENT_BACKGROUND = namedColor("AssignedMnemonic.selectionBackground", 0x3875D6, 0x2F65CA)
-private val CURRENT_FOREGROUND = namedColor("AssignedMnemonic.selectionForeground", 0xFFFFFF, 0xFFFFFF)
+private val ASSIGNED_BACKGROUND = namedColor("AssignedMnemonic.background", 0xF7C777, 0x665632)
+private val ASSIGNED_BORDER = namedColor("AssignedMnemonic.borderColor", ASSIGNED_BACKGROUND)
+
+private val CURRENT_FOREGROUND = namedColor("CurrentMnemonic.foreground", 0xFFFFFF, 0xFEFEFE)
+private val CURRENT_BACKGROUND = namedColor("CurrentMnemonic.background", 0x389FD6, 0x345F85)
+private val CURRENT_BORDER = namedColor("CurrentMnemonic.borderColor", CURRENT_BACKGROUND)
 
 private val SHARED_CURSOR by lazy { Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) }
 private val SHARED_LAYOUT by lazy {
-  object : RowGridLayout(0, 4, 1, SwingConstants.CENTER) {
-    override fun getCellSize(sizes: List<Dimension>) = super.getCellSize(sizes).also { it.width = it.height }
+  object : RowGridLayout(0, 4, 2, SwingConstants.CENTER) {
+    override fun getCellSize(sizes: List<Dimension>) = Dimension(JBUI.scale(24), JBUI.scale(28))
   }
 }
 
-internal abstract class MnemonicChooser(
+internal class MnemonicChooser(
   private val manager: BookmarkManager,
-  private val current: BookmarkType
+  private val current: BookmarkType?,
+  private val onChosen: (BookmarkType) -> Unit
 ) : BorderLayoutPanel(), KeyListener {
 
   init {
     isFocusCycleRoot = true
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
-    addToLeft(createButtons { it.mnemonic.isDigit() })
-    addToRight(createButtons { it.mnemonic.isLetter() })
+    border = JBUI.Borders.empty(2, 6)
+    addToLeft(JPanel(SHARED_LAYOUT).apply {
+      border = JBUI.Borders.empty(5)
+      BookmarkType.values()
+        .filter { it.mnemonic.isDigit() }
+        .forEach { add(createButton(it)) }
+    })
+    addToRight(JPanel(SHARED_LAYOUT).apply {
+      border = JBUI.Borders.empty(5)
+      BookmarkType.values()
+        .filter { it.mnemonic.isLetter() }
+        .forEach { add(createButton(it)) }
+    })
     if (manager.hasBookmarksWithMnemonics()) {
       addToBottom(BorderLayoutPanel().apply {
-        border = JBUI.Borders.empty(0, 10)
+        border = JBUI.Borders.empty(5, 6, 1, 6)
         addToTop(JSeparator())
-        addToBottom(JPanel(HorizontalLayout(5)).apply {
-          border = JBUI.Borders.empty(5, 0)
-          add(HorizontalLayout.LEFT, createLegend(ASSIGNED_BACKGROUND, IdeBundle.message("mnemonic.chooser.legend.assigned.bookmark")))
-          if (current != BookmarkType.DEFAULT) {
-            add(HorizontalLayout.LEFT, createLegend(CURRENT_BACKGROUND, IdeBundle.message("mnemonic.chooser.legend.current.bookmark")))
+        addToBottom(JPanel(HorizontalLayout(12)).apply {
+          border = JBUI.Borders.empty(5, 1)
+          add(HorizontalLayout.LEFT, createLegend(ASSIGNED_BACKGROUND, message("mnemonic.chooser.legend.assigned.bookmark")))
+          if (current != null && current != BookmarkType.DEFAULT) {
+            add(HorizontalLayout.LEFT, createLegend(CURRENT_BACKGROUND, message("mnemonic.chooser.legend.current.bookmark")))
           }
         })
       })
     }
   }
 
-  private fun buttons() = UIUtil.uiTraverser(this).traverse().filter(JButton::class.java)
-
-  fun getPreferableFocusComponent() = buttons().first()
-
-  protected abstract fun onChosen(type: BookmarkType)
-  protected abstract fun onCancelled()
-
-  private fun createButtons(predicate: (BookmarkType) -> Boolean) = JPanel(SHARED_LAYOUT).apply {
-    border = JBUI.Borders.empty(5)
-    BookmarkType.values().filter(predicate).forEach { add(createButton(it)) }
-  }
+  fun buttons() = UIUtil.uiTraverser(this).traverse().filter(JButton::class.java)
 
   private fun createButton(type: BookmarkType) = JButton(type.mnemonic.toString()).apply {
     setMnemonic(type.mnemonic)
@@ -76,10 +81,17 @@ internal abstract class MnemonicChooser(
       type == current -> {
         putClientProperty("JButton.textColor", CURRENT_FOREGROUND)
         putClientProperty("JButton.backgroundColor", CURRENT_BACKGROUND)
+        putClientProperty("JButton.borderColor", CURRENT_BORDER)
       }
       manager.findBookmarkForMnemonic(type.mnemonic) != null -> {
         putClientProperty("JButton.textColor", ASSIGNED_FOREGROUND)
         putClientProperty("JButton.backgroundColor", ASSIGNED_BACKGROUND)
+        putClientProperty("JButton.borderColor", ASSIGNED_BORDER)
+      }
+      else -> {
+        putClientProperty("JButton.textColor", UIManager.getColor("AvailableMnemonic.foreground"))
+        putClientProperty("JButton.backgroundColor", UIManager.getColor("AvailableMnemonic.background"))
+        putClientProperty("JButton.borderColor", UIManager.getColor("AvailableMnemonic.borderColor"))
       }
     }
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")
@@ -128,7 +140,6 @@ internal abstract class MnemonicChooser(
   override fun keyPressed(event: KeyEvent) {
     if (event.modifiersEx == 0) {
       when (event.keyCode) {
-        KeyEvent.VK_ESCAPE -> onCancelled()
         KeyEvent.VK_UP, KeyEvent.VK_KP_UP -> next(event.component, 0, -1)?.requestFocus()
         KeyEvent.VK_DOWN, KeyEvent.VK_KP_DOWN -> next(event.component, 0, 1)?.requestFocus()
         KeyEvent.VK_LEFT, KeyEvent.VK_KP_LEFT -> next(event.component, -1, 0)?.requestFocus()

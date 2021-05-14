@@ -100,8 +100,10 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, packagesNotificationPanel);
     myPackagesPanel.setShowGrid(false);
 
-    final Pair<PyCustomSdkUiProvider, Disposable> customizer = buildCustomizer();
-    myDisposable = customizer == null ? null : customizer.second;
+    final PyCustomSdkUiProvider customUiProvider = PyCustomSdkUiProvider.getInstance();
+    myDisposable = customUiProvider == null ? null : Disposer.newDisposable();
+    final Pair<PyCustomSdkUiProvider, Disposable> customizer =
+      customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
     final JButton detailsButton = buildDetailsButton(mySdkCombo, this::onShowDetailsClicked);
 
@@ -134,12 +136,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     new ComboboxSpeedSearch(result);
     result.setPreferredSize(result.getPreferredSize()); // this line allows making `result` resizable
     return result;
-  }
-
-  @Nullable
-  private static Pair<PyCustomSdkUiProvider, Disposable> buildCustomizer() {
-    final PyCustomSdkUiProvider customUiProvider = PyCustomSdkUiProvider.getInstance();
-    return customUiProvider == null ? null : new Pair<>(customUiProvider, Disposer.newDisposable());
   }
 
   @NotNull

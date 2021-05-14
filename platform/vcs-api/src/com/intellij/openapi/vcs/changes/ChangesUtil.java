@@ -9,10 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -374,5 +371,18 @@ public final class ChangesUtil {
     return before == null
            ? Objects.requireNonNull(after).getIOFile()
            : after == null ? before.getIOFile() : FileUtil.findAncestor(before.getIOFile(), after.getIOFile());
+  }
+
+  public static byte @NotNull [] loadContentRevision(@NotNull ContentRevision revision) throws VcsException {
+    if (revision instanceof ByteBackedContentRevision) {
+      byte[] bytes = ((ByteBackedContentRevision)revision).getContentAsBytes();
+      if (bytes == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
+      return bytes;
+    }
+    else {
+      String content = revision.getContent();
+      if (content == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
+      return content.getBytes(revision.getFile().getCharset());
+    }
   }
 }

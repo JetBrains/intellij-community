@@ -23,6 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.CallerChooserBase;
@@ -204,6 +206,14 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
   }
 
   private static boolean usedOnlyIn(@NotNull PsiElement explored, @NotNull PsiMember place) {
+    if (explored instanceof PsiNamedElement) {
+      final String name = ((PsiNamedElement)explored).getName();
+      if (name != null && 
+          PsiSearchHelper.getInstance(explored.getProject())
+            .isCheapEnoughToSearch(name, GlobalSearchScope.projectScope(explored.getProject()), null, null) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+        return false;
+      }
+    }
     if (explored instanceof PsiClassOwner) {
       for (PsiClass aClass : ((PsiClassOwner)explored).getClasses()) {
         if (!usedOnlyIn(aClass, place)) return false;

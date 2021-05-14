@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,7 +71,7 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
         final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
         for (StatisticsEventLoggerProvider provider : providers) {
           if (provider.isRecordEnabled()) {
-            SensitiveDataValidator.getInstance(provider.getRecorderId()).update();
+            IntellijSensitiveDataValidator.getInstance(provider.getRecorderId()).update();
           }
         }
       }, 3, 180, TimeUnit.MINUTES);

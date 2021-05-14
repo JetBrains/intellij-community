@@ -71,7 +71,7 @@
     <registryKey key="completion.ml.reorder.without.duplicates" defaultValue="false"
                  description="Reorder only items with different names"/>
 
-    <registryKey key="completion.ml.show.arrows.notification" defaultValue="true"
+    <registryKey key="completion.ml.show.star.notification" defaultValue="true"
                  description="Show notification with question about ML completion arrows"/>
 
     <registryKey key="completion.ml.enable.session.factors" defaultValue="true"
@@ -98,7 +98,6 @@
       implementation="com.intellij.completion.ml.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.completion.ml.settings.MLCompletionSettingsCollector"/>
 
-    <preloadingActivity implementation="com.intellij.completion.ml.ranker.PreloadCatBoostModel" />
   </extensions>
 
   <projectListeners>
@@ -106,7 +105,7 @@
               topic="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentPlacesListener"/>
     <listener class="com.intellij.completion.ml.tracker.CompletionFactorsInitializer"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener" />
-    <listener class="com.intellij.completion.ml.sorting.PositionDiffArrowInitializer"
+    <listener class="com.intellij.completion.ml.sorting.ItemsDecoratorInitializer"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"
               activeInTestMode="false"/>
     <listener class="com.intellij.completion.ml.ngram.NGramFileListener"

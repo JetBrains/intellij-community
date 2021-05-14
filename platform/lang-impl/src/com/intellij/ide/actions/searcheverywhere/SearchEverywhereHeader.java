@@ -43,7 +43,7 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 public class SearchEverywhereHeader {
 
   private final @NotNull Runnable myScopeChangedCallback;
-  private final Function<String, String> myShortcutSupplier;
+  private final Function<? super String, String> myShortcutSupplier;
 
   private final List<SETab> myTabs;
   private SETab mySelectedTab;
@@ -56,7 +56,7 @@ public class SearchEverywhereHeader {
 
   public SearchEverywhereHeader(@Nullable Project project,
                                 Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
-                                @NotNull Runnable scopeChangedCallback, Function<String, String> shortcutSupplier,
+                                @NotNull Runnable scopeChangedCallback, Function<? super String, String> shortcutSupplier,
                                 AnAction showInFindToolWindowAction, SearchEverywhereUI ui) {
     myScopeChangedCallback = scopeChangedCallback;
     myProject = project;
@@ -123,7 +123,7 @@ public class SearchEverywhereHeader {
   }
 
   @NotNull
-  private static JPanel createTabsPanel(List<SETab> tabs) {
+  private static JPanel createTabsPanel(List<? extends SETab> tabs) {
     JPanel contributorsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     contributorsPanel.setOpaque(false);
     tabs.forEach(tab -> contributorsPanel.add(tab));

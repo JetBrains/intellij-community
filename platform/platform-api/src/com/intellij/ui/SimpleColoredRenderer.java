@@ -33,7 +33,7 @@ public class SimpleColoredRenderer extends SimpleColoredComponent {
   }
 
   @Override
-  void revalidateAndRepaint() {
+  protected void revalidateAndRepaint() {
     // no need for this in a renderer
   }
 

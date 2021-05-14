@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 
 public final class PyHierarchyUtils {
-  private static final Comparator<NodeDescriptor<?>> NODE_DESCRIPTOR_COMPARATOR = (first, second) -> first.getIndex() - second.getIndex();
+  private static final Comparator<NodeDescriptor<?>> NODE_DESCRIPTOR_COMPARATOR = Comparator.comparingInt(NodeDescriptor::getIndex);
 
   private PyHierarchyUtils() {
   }

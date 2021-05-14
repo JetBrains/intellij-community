@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -203,7 +202,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
 
   @Override
   @NotNull
-  public <T extends PsiSymbolReference> T obtainReferenceCopy(@NotNull T original) {
+  public <T extends PsiReference> T obtainReferenceCopy(@NotNull T original) {
     PsiElement psiCopy = obtainPsiCopy(original.getElement());
     TextRange range = original.getRangeInElement();
     PsiReference[] refs = psiCopy.getReferences();
@@ -327,7 +326,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
 
   private static boolean processModifiedFilesInScope(GlobalSearchScope scope,
                                                      Processor<? super VirtualFile> processor,
-                                                     Collection<ModelBranch> branches) {
+                                                     Collection<? extends ModelBranch> branches) {
     for (ModelBranch branch : branches) {
       for (VirtualFile file : ((ModelBranchImpl)branch).myAffectedFiles) {
         if (scope.contains(file) && !processor.process(file)) {

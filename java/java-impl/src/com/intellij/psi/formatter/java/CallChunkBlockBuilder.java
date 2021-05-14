@@ -45,16 +45,20 @@ public class CallChunkBlockBuilder {
   }
 
   @NotNull
-  public Block create(@NotNull final List<? extends ASTNode> subNodes, final Wrap wrap, @Nullable final Alignment alignment) {
+  public Block create(@NotNull final List<? extends ASTNode> subNodes,
+                      final Wrap wrap,
+                      @Nullable final Alignment alignment,
+                      int relativeIndentSize) {
     final ArrayList<Block> subBlocks = new ArrayList<>();
     final ASTNode firstNode = subNodes.get(0);
     if (firstNode.getElementType() == JavaTokenType.DOT) {
       AlignmentStrategy strategy = AlignmentStrategy.getNullStrategy();
-      Block block = newJavaBlock(firstNode, mySettings, myJavaSettings, Indent.getNoneIndent(), null, strategy, myFormattingMode);
+      Indent indent = relativeIndentSize > 0 ? Indent.getSpaceIndent(relativeIndentSize) : Indent.getNoneIndent();
+      Block block = newJavaBlock(firstNode, mySettings, myJavaSettings, indent, null, strategy, myFormattingMode);
       subBlocks.add(block);
       subNodes.remove(0);
       if (!subNodes.isEmpty()) {
-        subBlocks.add(create(subNodes, wrap, null));
+        subBlocks.add(create(subNodes, wrap, null, -1));
       }
       return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings, Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
     }
@@ -70,5 +74,4 @@ public class CallChunkBlockBuilder {
     }
     return result;
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
@@ -349,8 +349,12 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   private void assertFileTextEquals(String docInfo, String expectedFile) {
-    String actualText = replaceEnvironmentDependentContent(docInfo);
-    File htmlPath = new File(getTestDataPath() + TEST_DATA_FOLDER + expectedFile);
+    assertEqualsFileText(getTestDataPath() + TEST_DATA_FOLDER + expectedFile, docInfo);
+  }
+
+  static void assertEqualsFileText(@NotNull String expectedFile, @NotNull String actual) {
+    String actualText = replaceEnvironmentDependentContent(actual);
+    File htmlPath = new File(expectedFile);
     String expectedText = loadFile(htmlPath);
     if (!StringUtil.equals(expectedText, actualText)) {
       String message = "Text mismatch in file: " + htmlPath.getName();

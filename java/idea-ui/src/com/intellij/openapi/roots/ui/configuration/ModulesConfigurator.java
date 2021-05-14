@@ -41,6 +41,9 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,13 +73,30 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private ModifiableModuleModel myModuleModel;
   private boolean myModuleModelCommitted = false;
   private ProjectFacetsConfigurator myFacetsConfigurator;
+  private WorkspaceEntityStorageBuilder myWorkspaceEntityStorageBuilder;
 
   private StructureConfigurableContext myContext;
   private final List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<>();
 
   public ModulesConfigurator(Project project) {
     myProject = project;
-    myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+    initModuleModel();
+  }
+
+  private void initModuleModel() {
+    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    if (moduleManager instanceof ModuleManagerComponentBridge) {
+      myWorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
+      myModuleModel = ((ModuleManagerComponentBridge)moduleManager).getModifiableModel(myWorkspaceEntityStorageBuilder);
+    }
+    else {
+      myModuleModel = moduleManager.getModifiableModel();
+      myWorkspaceEntityStorageBuilder = null;
+    }
+  }
+
+  public @Nullable WorkspaceEntityStorageBuilder getWorkspaceEntityStorageBuilder() {
+    return myWorkspaceEntityStorageBuilder;
   }
 
   public void setContext(final StructureConfigurableContext context) {
@@ -96,6 +116,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       myModuleEditors.clear();
 
       myModuleModel.dispose();
+      myWorkspaceEntityStorageBuilder = null;
 
       if (myFacetsConfigurator != null) {
         myFacetsConfigurator.disposeEditors();
@@ -166,7 +187,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void resetModuleEditors() {
-    myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+    initModuleModel();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       if (!myModuleEditors.isEmpty()) {
@@ -310,7 +331,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
 
         myFacetsConfigurator = createFacetsConfigurator();
-        myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+        initModuleModel();
         myModuleModelCommitted = false;
       }
     });

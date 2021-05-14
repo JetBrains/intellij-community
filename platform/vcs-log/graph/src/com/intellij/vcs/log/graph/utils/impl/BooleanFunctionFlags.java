@@ -6,10 +6,10 @@ import com.intellij.vcs.log.graph.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
 public class BooleanFunctionFlags implements Flags {
-  @NotNull private final BooleanFunction<Integer> myVisible;
+  private final @NotNull BooleanFunction<? super Integer> myVisible;
   private final int mySize;
 
-  public BooleanFunctionFlags(@NotNull BooleanFunction<Integer> visible, int size) {
+  public BooleanFunctionFlags(@NotNull BooleanFunction<? super Integer> visible, int size) {
     myVisible = visible;
     mySize = size;
   }

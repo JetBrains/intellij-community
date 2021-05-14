@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.maddyhome.idea.copyright.ui;
 
@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.UIUtil;
@@ -91,7 +92,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   private final boolean allowBlock;
 
 
-  public TemplateCommentPanel(FileType fileType, TemplateCommentPanel parentPanel, String[] locations, Project project) {
+  public TemplateCommentPanel(FileType fileType, TemplateCommentPanel parentPanel, String @NlsContexts.RadioButton [] locations, Project project) {
     this.parentPanel = parentPanel;
     myProject = project;
 
@@ -143,7 +144,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     });
 
 
-    preview.setFont(EditorFontType.PLAIN.getGlobalFont());
+    preview.setFont(EditorFontType.getGlobalPlainFont());
 
     myUseDefaultSettingsRadioButton.setSelected(true);
 

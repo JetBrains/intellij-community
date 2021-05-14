@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -18,40 +18,28 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitBranch;
-import git4idea.GitLocalBranch;
-import git4idea.GitReference;
-import git4idea.GitRemoteBranch;
-import git4idea.GitTag;
-import git4idea.GitUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerListener;
+import git4idea.*;
+import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitBranchActionsUtilKt;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class GitBranchUtil {
 
@@ -278,14 +266,12 @@ public final class GitBranchUtil {
     return collectCommon(repositories.stream().map(repository -> repository.getBranches().getRemoteBranches()));
   }
 
-  @NotNull
-  public static <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups) {
-    return collectCommon(groups, ContainerUtil.canonicalStrategy());
+  public static @NotNull <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups) {
+    return collectCommon(groups, null);
   }
 
-  @NotNull
-  public static <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups,
-                                          @NotNull TObjectHashingStrategy<T> hashingStrategy) {
+  public static @NotNull <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups,
+                                                   Hash.@Nullable Strategy<? super T> hashingStrategy) {
     List<T> common = new ArrayList<>();
     boolean[] firstGroup = {true};
 
@@ -295,7 +281,7 @@ public final class GitBranchUtil {
         common.addAll(values);
       }
       else {
-        THashSet<T> c = new THashSet<>(values, hashingStrategy);
+        Set<T> c = hashingStrategy == null ? new HashSet<>(values) : new ObjectOpenCustomHashSet<>(values, hashingStrategy);
         common.retainAll(c);
       }
     });

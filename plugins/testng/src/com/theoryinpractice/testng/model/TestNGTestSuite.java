@@ -17,6 +17,8 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -29,6 +31,8 @@ import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import org.testng.xml.Parser;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -61,8 +65,13 @@ public class TestNGTestSuite extends TestNGTestObject {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     String suiteName = myConfig.getPersistantData().getSuiteName();
+    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(suiteName);
+    Document document = virtualFile != null ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
+    if (document == null) {
+      throw new RuntimeConfigurationException(TestngBundle.message("dialog.message.file.not.found", suiteName));
+    }
     try {
-      final Parser parser = new Parser(suiteName);
+      final Parser parser = new Parser(new ByteArrayInputStream(document.getText().getBytes(StandardCharsets.UTF_8)));
       parser.setLoadClasses(false);
       synchronized (PARSE_LOCK) {
         parser.parse();//try to parse suite.xml

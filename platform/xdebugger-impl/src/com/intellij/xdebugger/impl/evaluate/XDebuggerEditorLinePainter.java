@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorLinePainter;
 import com.intellij.openapi.editor.LineExtensionInfo;
@@ -9,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,6 +44,7 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class XDebuggerEditorLinePainter extends EditorLinePainter {
+  private static final Logger LOG = Logger.getInstance(XDebuggerEditorLinePainter.class);
   public static final Key<Map<Variable, VariableValue>> CACHE = Key.create("debug.inline.variables.cache");
   // we want to limit number of line extensions to avoid very slow painting
   // the constant is rather random (feel free to adjust it upon getting a new information)
@@ -194,6 +197,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       }
     }
     catch (Exception e) {
+      LOG.error(e);
       return null;
     }
     return text;
@@ -265,9 +269,12 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   }
 
   static class VariableValue {
-   private @NlsSafe String actual;
-   private @NlsSafe String old;
-   private int valueNodeHashCode;
+    // TODO: this have to be specified somewhere in XValuePresentation
+    private static final List<Couple<String>> ARRAYS_WRAPPERS = List.of(Couple.of("[", "]"), Couple.of("{", "}"));
+    private static final String ARRAY_DELIMITER = ", ";
+    private @NlsSafe String actual;
+    private @NlsSafe String old;
+    private int valueNodeHashCode;
 
     VariableValue(String actual, String old, int valueNodeHashCode) {
       this.actual = actual;
@@ -280,10 +287,12 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
 
     void produceChangedParts(List<? super LineExtensionInfo> result) {
-      if (isArray(actual) && isArray(old)) {
+      Couple<String> wrapperActual = getArrayWrapper(actual);
+      if (wrapperActual != null && getArrayWrapper(old) != null) {
         List<String> actualParts = getArrayParts(actual);
         List<String> oldParts = getArrayParts(old);
-        result.add(new LineExtensionInfo("{", getNormalAttributes()));
+        //noinspection HardCodedStringLiteral
+        result.add(new LineExtensionInfo(wrapperActual.first, getNormalAttributes()));
         for (int i = 0; i < actualParts.size(); i++) {
           if (i < oldParts.size() && StringUtil.equals(actualParts.get(i), oldParts.get(i))) {
             result.add(new LineExtensionInfo(actualParts.get(i), getNormalAttributes()));
@@ -291,22 +300,27 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
             result.add(new LineExtensionInfo(actualParts.get(i), getChangedAttributes()));
           }
           if (i != actualParts.size() - 1) {
-            result.add(new LineExtensionInfo(", ", getNormalAttributes()));
+            result.add(new LineExtensionInfo(ARRAY_DELIMITER, getNormalAttributes()));
           }
         }
-        result.add(new LineExtensionInfo("}", getNormalAttributes()));
+        //noinspection HardCodedStringLiteral
+        result.add(new LineExtensionInfo(wrapperActual.second, getNormalAttributes()));
         return;
       }
 
       result.add(new LineExtensionInfo(actual, getChangedAttributes()));
     }
 
-    private static boolean isArray(String s) {
-      return s != null && s.startsWith("{") && s.endsWith("}");
+    @Nullable
+    private static Couple<String> getArrayWrapper(@Nullable String s) {
+      if (s == null) {
+        return null;
+      }
+      return ContainerUtil.find(ARRAYS_WRAPPERS, w -> s.startsWith(w.first) && s.endsWith(w.second));
     }
 
     private static List<String> getArrayParts(String array) {
-      return StringUtil.split(array.substring(1, array.length() - 1), ", ");
+      return StringUtil.split(array.substring(1, array.length() - 1), ARRAY_DELIMITER);
     }
   }
 

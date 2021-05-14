@@ -1,5 +1,0 @@
-ext {
-  prop1 = "Good"
-  prop2 = "Evil"
-  prop3 = prop1
-}

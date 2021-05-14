@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -115,7 +115,7 @@ public class LoadingDecorator {
                    ? JBUI.Borders.emptyRight(8)
                    : JBUI.Borders.empty());
 
-    NonOpaquePanel result = new NonOpaquePanel(new VerticalLayout(JBUI.scale(6)));
+    NonOpaquePanel result = new NonOpaquePanel(new VerticalLayout(6));
     result.setBorder(JBUI.Borders.empty(10));
     result.add(icon);
     result.add(text);

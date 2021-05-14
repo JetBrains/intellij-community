@@ -117,11 +117,13 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       }
       else if (getPosition(editor, offset).beforeOptional(Whitespace).isAt(BlockClosingBrace)) {
         SemanticEditorPosition position = getPosition(editor, offset).beforeOptional(Whitespace).before();
+        boolean isOnNewLine = position.isAtMultiline(Whitespace);
         position.moveToLeftParenthesisBackwardsSkippingNested(BlockOpeningBrace, BlockClosingBrace);
         position.moveBefore();
         int statementStart = getStatementStartOffset(position, true);
         position = getPosition(editor, statementStart);
         if (!isStartOfStatementWithOptionalBlock(position)) {
+          if (!isOnNewLine) return null;
           return myFactory.createIndentCalculator(getBlockIndentType(editor, language), IndentCalculator.LINE_BEFORE);
         }
         else {

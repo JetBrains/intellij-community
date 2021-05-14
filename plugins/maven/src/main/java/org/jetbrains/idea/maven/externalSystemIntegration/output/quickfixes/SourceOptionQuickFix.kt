@@ -11,7 +11,7 @@ import com.intellij.compiler.progress.BuildIssueContributor
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -135,7 +135,7 @@ class JpsReleaseVersion5QuickFix : BuildIssueContributor {
 
 class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuickFix {
   override val id = ID + mavenProject.mavenId.displayString
-  override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> {
+  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
 
     val languageLevel = MavenModuleImporter.getLanguageLevel(mavenProject)
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_6)) {

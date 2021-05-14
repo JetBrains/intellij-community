@@ -15,16 +15,11 @@
  */
 package com.intellij.usageView;
 
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 
 public interface UsageTreeColors {
-  TextAttributesKey INVALID_PREFIX = TextAttributesKey.createTextAttributesKey("$INVALID_PREFIX");
-  TextAttributesKey READONLY_PREFIX = TextAttributesKey.createTextAttributesKey("$READ_ONLY_PREFIX");
-  TextAttributesKey HAS_READ_ONLY_CHILD = TextAttributesKey.createTextAttributesKey("$HAS_READ_ONLY_CHILD");
-  TextAttributesKey TEXT_NODE = TextAttributesKey.createTextAttributesKey("$TEXT_NODE");
-  TextAttributesKey NUMBER_OF_USAGES = TextAttributesKey.createTextAttributesKey("$NUMBER_OF_USAGES");
-  TextAttributesKey USAGE_LOCATION = TextAttributesKey.createTextAttributesKey("$NUMBER_OF_USAGES");
-  TextAttributesKey OCCURENCE = TextAttributesKey.createTextAttributesKey("$OCCURENCE");
-  TextAttributesKey SELECTED_OCCURENCE = TextAttributesKey.createTextAttributesKey("$SELECTED_OCCURENCE");
-  TextAttributesKey EXCLUDED_NODE = TextAttributesKey.createTextAttributesKey("$EXCLUDED_NODE");
+  SimpleTextAttributes NUMBER_OF_USAGES_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getInactiveTextColor());
+  SimpleTextAttributes INVALID_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getErrorForeground());
+  SimpleTextAttributes READ_ONLY_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getErrorForeground());
 }

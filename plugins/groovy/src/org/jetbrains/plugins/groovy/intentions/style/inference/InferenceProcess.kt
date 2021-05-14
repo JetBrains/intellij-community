@@ -1,18 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.search.LocalSearchScope
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.createGraphFromInferenceVariables
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.determineDependencies
-import org.jetbrains.plugins.groovy.intentions.style.inference.search.searchWithClosureAvoidance
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import kotlin.LazyThreadSafetyMode.NONE
 
 /**
  * Performs full substitution for non-typed parameters of [method]
@@ -27,14 +24,9 @@ fun runInferenceProcess(method: GrMethod, options: SignatureInferenceOptions): G
   if (overridableMethod != null) {
     return convertToGroovyMethod(overridableMethod) ?: method
   }
-  val newOptions = options.copy(calls = lazy(NONE) {
-    val restrictedScope = if (options.restrictScopeToLocal) {
-      LocalSearchScope(arrayOf(originalMethod.containingFile), null, true)
-    }
-    else options.searchScope
-    searchWithClosureAvoidance(originalMethod, restrictedScope).sortedBy { it.element.textOffset }
-  })
-  val driver = createDriver(originalMethod, newOptions)
+  val searchScope = getSearchScope(method, options.shouldUseReducedScope) ?: return method
+  val environment = SignatureInferenceEnvironment(originalMethod, searchScope, options.signatureInferenceContext)
+  val driver = createDriver(originalMethod, environment)
   val signatureSubstitutor = driver.collectSignatureSubstitutor().removeForeignTypeParameters(method)
   val virtualMethodPointer: SmartPsiElementPointer<GrMethod> = createVirtualMethod(method) ?: return method
   val parameterizedDriver = run {
@@ -57,10 +49,10 @@ private val forbiddenAnnotations =
 internal fun GrParameter.eligibleForExtendedInference(): Boolean =
   typeElement == null //|| (type.isClosureType() && (annotations.map { it.qualifiedName } intersect forbiddenAnnotations).isEmpty())
 
-private fun createDriver(method: GrMethod, options: SignatureInferenceOptions): InferenceDriver {
+private fun createDriver(method: GrMethod, environment: SignatureInferenceEnvironment): InferenceDriver {
   val virtualMethodPointer: SmartPsiElementPointer<GrMethod> = createVirtualMethod(method) ?: return EmptyDriver
   val generator = NameGenerator("_START" + method.hashCode(), context = method)
-  return CommonDriver.createFromMethod(method, virtualMethodPointer, generator, options)
+  return CommonDriver.createFromMethod(method, virtualMethodPointer, generator, environment)
 }
 
 private fun setUpGraph(virtualMethod: GrMethod,

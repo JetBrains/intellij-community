@@ -39,7 +39,7 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
     PsiDirectory directory = myPsiManager.findDirectory(root);
     assertNotNull(directory);
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      new OptimizeImportsProcessor(getProject(), directory, true).run();
+      new OptimizeImportsProcessor(getProject(), directory, true, false).run();
       PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       ApplicationManager.getApplication().saveAll();
@@ -56,7 +56,7 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
       PsiTestUtil.addSourceRoot(getModule(), root);
       PsiDirectory directory = myPsiManager.findDirectory(root);
       assertNotNull(directory);
-      new OptimizeImportsProcessor(getProject(), directory, true).run();
+      new OptimizeImportsProcessor(getProject(), directory, true, false).run();
       WriteCommandAction.runWriteCommandAction(null, () -> {
         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -79,7 +79,7 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
       PsiTestUtil.addSourceRoot(getModule(), root);
       PsiDirectory directory = myPsiManager.findDirectory(root);
       assertNotNull(directory);
-      new OptimizeImportsProcessor(getProject(), directory, true).run();
+      new OptimizeImportsProcessor(getProject(), directory, true, false).run();
       WriteCommandAction.runWriteCommandAction(null, () -> {
         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

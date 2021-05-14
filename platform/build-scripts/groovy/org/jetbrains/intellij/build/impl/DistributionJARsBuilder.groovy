@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -185,6 +186,7 @@ final class DistributionJARsBuilder {
       addModule("intellij.platform.statistics", "stats.jar")
       addModule("intellij.platform.statistics.uploader", "stats.jar")
       addModule("intellij.platform.statistics.config", "stats.jar")
+      addModule("intellij.platform.statistics.validator", "stats.jar")
       addModule("intellij.platform.statistics.devkit")
 
       addModule("intellij.relaxng", "intellij-xml.jar")
@@ -595,6 +597,48 @@ final class DistributionJARsBuilder {
     }
   }
 
+  /**
+   * @return predicate to test if a given plugin should ne auto-published
+   */
+  @NotNull
+  private Predicate<PluginLayout> loadPluginsAutoPublishList() {
+    Path configFile = buildContext.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")
+    String productCode = buildContext.applicationInfo.productCode
+    Collection<String> config = Files.lines(configFile)
+      .withCloseable { Stream<String> lines ->
+        lines
+          .map({ String line -> StringUtil.split(line, "//", true, false)[0] } as Function<String, String>)
+          .map({ String line -> StringUtil.split(line, "#", true, false)[0] } as Function<String, String>)
+          .map({ String line -> line.trim() } as Function<String, String>)
+          .filter({ String line -> !line.isEmpty() } as Predicate<String>)
+          .map({ String line -> line.toString() /*make sure there is no GString involved */} as Function<String, String>)
+          .collect(Collectors.toCollection({ new TreeSet<String>(String.CASE_INSENSITIVE_ORDER) } as Supplier<Collection<String>>))
+      }
+
+    return new Predicate<PluginLayout>() {
+      @Override
+      boolean test(PluginLayout plugin) {
+        if (plugin == null) return false
+
+        //see the specification in the plugins-autoupload.txt. Supported rules:
+        //   <plugin main module name> ## include the plugin
+        //   +<product code>:<plugin main module name> ## include the plugin
+        //   -<product code>:<plugin main module name> ## exclude the plugin
+
+        String module = plugin.mainModule
+        String excludeRule = "-${productCode}:${module}"
+        String includeRule = "+${productCode}:${module}"
+
+        if (config.contains(excludeRule)) {
+          //the exclude rule is the most powerful
+          return false
+        }
+
+        return config.contains(module) || config.contains(includeRule.toString())
+      }
+    }
+  }
+
   void buildNonBundledPlugins(boolean compressPluginArchive) {
     if (pluginsToPublish.isEmpty()) {
       return
@@ -612,21 +656,14 @@ final class DistributionJARsBuilder {
       String pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
       Path nonBundledPluginsArtifacts = Paths.get(buildContext.paths.artifacts, pluginsDirectoryName)
       List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
-      Set<String> whiteList = Files.lines(buildContext.paths.communityHomeDir.resolve("../build/plugins-autoupload-whitelist.txt"))
-        .withCloseable { Stream<String> lines ->
-          lines.map({ String line -> line.trim() } as Function<String, String>)
-            .filter({ String line -> !line.isEmpty() && !line.startsWith("//") } as Predicate<String>)
-            .collect(Collectors.toSet())
-        }
+      Predicate<PluginLayout> autoPublishPluginChecker = loadPluginsAutoPublishList()
 
       Path autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
       Path patchedPluginXmlDir = buildContext.paths.tempDir.resolve("patched-plugin-xml")
       List<Map.Entry<String, Path>> toArchive = new ArrayList<>()
       for (plugin in pluginsToPublish) {
         String directory = getActualPluginDirectoryName(plugin, buildContext)
-        Path targetDirectory = whiteList.contains(plugin.mainModule)
-          ? nonBundledPluginsArtifacts.resolve("auto-uploading")
-          : nonBundledPluginsArtifacts
+        Path targetDirectory = autoPublishPluginChecker.test(plugin) ? autoUploadingDir : nonBundledPluginsArtifacts
         Path destFile = targetDirectory.resolve("$directory-${pluginVersion}.zip")
 
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
@@ -661,6 +698,11 @@ final class DistributionJARsBuilder {
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts.toString())
         buildContext.notifyArtifactWasBuilt(nonBundledPluginsArtifacts.resolve("plugins.xml"))
+
+        def autoUploadingDirPath = autoUploadingDir.toString()
+        def autoUploadingPlugins = pluginsToIncludeInCustomRepository.findAll { it.pluginZip.startsWith(autoUploadingDirPath) }
+        new PluginRepositoryXmlGenerator(buildContext).generate(autoUploadingPlugins, autoUploadingDirPath)
+        buildContext.notifyArtifactWasBuilt(autoUploadingDir.resolve("plugins.xml"))
       }
     }
   }
@@ -1101,7 +1143,7 @@ final class DistributionJARsBuilder {
       if (copyFiles) {
         Files.createDirectories(libOutputDir)
         if (!removeVersionFromJarName && files.size() > 1) {
-          String mergedFilename = library.name.toLowerCase()
+          String mergedFilename = FileUtil.sanitizeFileName(library.name.toLowerCase(), false)
           if (mergedFilename == "gradle") {
             mergedFilename = "gradle-lib"
           }

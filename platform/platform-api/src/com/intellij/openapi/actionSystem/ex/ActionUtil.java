@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
@@ -22,7 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PausesStat;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -133,7 +133,6 @@ public final class ActionUtil {
     ud.averageUpdateDurationMs = Math.round(spentMs*smoothAlpha + ud.averageUpdateDurationMs*smoothCoAlpha);
   }
 
-  private static int insidePerformDumbAwareUpdate;
   /**
    * @param action action
    * @param e action event
@@ -164,20 +163,14 @@ public final class ActionUtil {
     boolean allowed = (!dumbMode || action.isDumbAware()) &&
                       (!Registry.is("actionSystem.honor.modal.context") || !isInModalContext || action.isEnabledInModalContext());
 
-    String presentationText = presentation.getText();
-    boolean edt = ApplicationManager.getApplication().isDispatchThread();
-    if (edt && insidePerformDumbAwareUpdate++ == 0) {
-      ActionPauses.STAT.started();
-    }
-
     action.applyTextOverride(e);
 
     try {
       if (beforeActionPerformed) {
-        action.beforeActionPerformedUpdate(e);
+        SlowOperations.allowSlowOperations(() -> action.beforeActionPerformedUpdate(e));
       }
       else {
-        action.update(e);
+        SlowOperations.allowSlowOperations(() -> action.update(e));
       }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled());
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible());
@@ -189,9 +182,6 @@ public final class ActionUtil {
       throw e1;
     }
     finally {
-      if (edt && --insidePerformDumbAwareUpdate == 0) {
-        ActionPauses.STAT.finished(presentationText + " action update (" + action.getClass() + ")");
-      }
       if (!allowed) {
         if (wasEnabledBefore == null) {
           presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate);
@@ -226,10 +216,6 @@ public final class ActionUtil {
     ThrowableComputable<T, RuntimeException> prioritizedRunnable = () -> ProgressManager.getInstance().computePrioritized(inReadAction);
     ThrowableComputable<T, RuntimeException> process = useAlternativeResolve ? () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable) : prioritizedRunnable;
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
-  }
-
-  public static final class ActionPauses {
-    public static final PausesStat STAT = new PausesStat("AnAction.update()");
   }
 
   /**
@@ -280,7 +266,7 @@ public final class ActionUtil {
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
     try {
-      action.actionPerformed(e);
+      SlowOperations.allowSlowOperations(() -> action.actionPerformed(e));
     }
     catch (IndexNotReadyException ex) {
       LOG.info(ex);

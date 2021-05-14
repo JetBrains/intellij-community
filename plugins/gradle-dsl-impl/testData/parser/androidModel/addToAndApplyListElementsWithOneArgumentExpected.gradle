@@ -1,3 +1,0 @@
-android {
-  flavorDimensions "abi", 'version'
-}

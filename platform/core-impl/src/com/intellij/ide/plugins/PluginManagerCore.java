@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.core.CoreBundle;
@@ -18,10 +18,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.reference.SoftReference;
@@ -36,6 +33,8 @@ import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.ref.Reference;
 import java.net.URL;
 import java.nio.file.*;
@@ -78,6 +77,7 @@ public final class PluginManagerCore {
   public static final @NonNls String EDIT = "edit";
 
   private static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
+  private static final MethodType HAS_LOADED_CLASS_METHOD_TYPE = MethodType.methodType(boolean.class, String.class);
 
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
@@ -314,7 +314,8 @@ public final class PluginManagerCore {
         className.startsWith("java.") ||
         className.startsWith("javax.") ||
         className.startsWith("kotlin.") ||
-        className.startsWith("groovy.")) {
+        className.startsWith("groovy.") ||
+        !className.contains(".")) {
       return null;
     }
 
@@ -343,25 +344,25 @@ public final class PluginManagerCore {
     }
 
     // otherwise we need to check plugins with use-idea-classloader="true"
-    String root = PathManager.getResourceRoot(result.getPluginClassLoader(), "/" + className.replace('.', '/') + ".class");
-    if (root == null) {
-      return null;
-    }
-
+    String root = null;
     for (IdeaPluginDescriptorImpl o : loadedPlugins) {
       if (!o.isUseIdeaClassLoader()) {
         continue;
       }
 
-      Path path = o.getPluginPath();
-      if (!root.startsWith(FileUtilRt.toSystemIndependentName(path.toString()))) {
-        continue;
+      if (root == null) {
+        root = PathManager.getResourceRoot(result.getPluginClassLoader(), className.replace('.', '/') + ".class");
+        if (root == null) {
+          return null;
+        }
       }
 
-      result = o;
-      break;
+      Path path = o.getPluginPath();
+      if (root.startsWith(FileUtilRt.toSystemIndependentName(path.toString()))) {
+        return o;
+      }
     }
-    return result;
+    return null;
   }
 
   private static boolean hasLoadedClass(@NotNull String className, @NotNull ClassLoader loader) {
@@ -370,24 +371,18 @@ public final class PluginManagerCore {
     }
 
     // it can be an UrlClassLoader loaded by another class loader, so instanceof doesn't work
-    Class<? extends ClassLoader> aClass = loader.getClass();
-    if (isInstanceofUrlClassLoader(aClass)) {
-      try {
-        return (Boolean)aClass.getMethod("hasLoadedClass", String.class).invoke(loader, className);
-      }
-      catch (Exception ignored) {
-      }
-    }
-    return false;
-  }
-
-  private static boolean isInstanceofUrlClassLoader(@NotNull Class<?> aClass) {
-    String urlClassLoaderName = UrlClassLoader.class.getName();
-    while (aClass != null) {
-      if (aClass.getName().equals(urlClassLoaderName)) {
-        return true;
-      }
+    Class<?> aClass = loader.getClass();
+    if (aClass.isAnonymousClass() || aClass.isMemberClass()) {
       aClass = aClass.getSuperclass();
+    }
+    try {
+      return (boolean)MethodHandles.publicLookup().findVirtual(aClass, "hasLoadedClass", HAS_LOADED_CLASS_METHOD_TYPE)
+        .invoke(loader, className);
+    }
+    catch (NoSuchMethodError | IllegalAccessError | IllegalAccessException ignore) {
+    }
+    catch (Throwable e) {
+      getLogger().error(e);
     }
     return false;
   }
@@ -663,6 +658,26 @@ public final class PluginManagerCore {
       }
       String pluginsString = component.stream().map(it -> "'" + it.getName() + "'").collect(Collectors.joining(", "));
       errors.add(message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginsString));
+
+      StringBuilder detailedMessage = new StringBuilder();
+      Function<IdeaPluginDescriptorImpl, String> pluginToString = plugin -> "id = " + plugin.getPluginId().getIdString() + " (" + plugin.getName() + ")";
+
+      detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n");
+      component.stream()
+        .map(p -> Pair.create(p, pluginToString.apply(p)))
+        .sorted(Comparator.comparing(p -> p.second, String.CASE_INSENSITIVE_ORDER))
+        .forEach(p -> {
+          detailedMessage.append("  ").append(p.getSecond()).append(" depends on:\n");
+
+          ContainerUtil.toCollection(() -> graph.getIn(p.first))
+            .stream()
+            .filter(dep -> component.contains(dep))
+            .map(pluginToString)
+            .sorted(String.CASE_INSENSITIVE_ORDER)
+            .forEach(dep -> detailedMessage.append("    ").append(dep).append("\n"));
+        });
+
+      getLogger().info(detailedMessage.toString());
     }
   }
 

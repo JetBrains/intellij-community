@@ -8,12 +8,14 @@ import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationPreferences;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckBoxList;
+import com.intellij.ui.CheckBoxListListener;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -106,8 +108,8 @@ public class FileTypeAssociationForm {
     });
     myFileTypesList = checkBoxList;
     if (!myFileTypesList.isEmpty()) myFileTypesList.setSelectedIndex(0);
-    // noinspection rawtypes,unchecked,unchecked
-    new ListSpeedSearch<>(myFileTypesList, (Function<Object, String>)o -> ((MyFileTypeItem)o).getText());
+    // noinspection rawtypes,unchecked
+    new ListSpeedSearch<>(myFileTypesList, o -> ((MyFileTypeItem)o).getText());
   }
 
   public JPanel getTopPanel() {

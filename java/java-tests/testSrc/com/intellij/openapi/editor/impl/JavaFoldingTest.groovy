@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.FoldingModelEx
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
@@ -382,6 +381,9 @@ class Test {
   }
 
   public void testCustomFolding() { doTest() }
+
+  public void testCustomFoldingIdea208441() {doTest()}
+
   public void testEmptyMethod() { doTest() }
 
   private doTest() {

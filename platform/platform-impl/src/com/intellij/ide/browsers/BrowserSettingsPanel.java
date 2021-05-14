@@ -203,7 +203,7 @@ final class BrowserSettingsPanel {
 
       @Override
       public void edit(@NotNull ConfigurableWebBrowser browser,
-                       @NotNull Function<ConfigurableWebBrowser, ConfigurableWebBrowser> mutator,
+                       @NotNull Function<? super ConfigurableWebBrowser, ? extends ConfigurableWebBrowser> mutator,
                        boolean isAdd) {
         BrowserSpecificSettings settings = cloneSettings(browser);
         if (settings != null && ShowSettingsUtil.getInstance().editConfigurable(browsersTable, settings.createConfigurable())) {

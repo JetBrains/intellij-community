@@ -1,6 +1,0 @@
-android {
-  signingConfigs {
-    create("config") {
-    }
-  }
-}

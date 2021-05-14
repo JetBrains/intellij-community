@@ -74,7 +74,7 @@ public class EditTaskDialog extends DialogWrapper {
     else {
       ChangeListManager changeListManager = ChangeListManager.getInstance(project);
       if (changeListManager.areChangeListsEnabled()) {
-        List<LocalChangeList> changeLists = changeListManager.getChangeLists();
+        List<LocalChangeList> changeLists = new ArrayList<>(changeListManager.getChangeLists());
         changeLists.add(null);
         myChangelist.setModel(new CollectionComboBoxModel<>(changeLists));
         final List<ChangeListInfo> lists = task.getChangeLists();

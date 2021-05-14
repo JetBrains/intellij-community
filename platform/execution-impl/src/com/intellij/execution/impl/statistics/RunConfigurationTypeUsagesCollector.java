@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -87,7 +88,9 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
           addOrIncrement(templates, template);
           collectRunConfigurationFeatures(runConfiguration, templates);
           if (runConfiguration instanceof FusAwareRunConfiguration) {
-            List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
+            List<EventPair<?>> additionalData = SlowOperations.allowSlowOperations(
+              () -> ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData()
+            );
             pairs.add(ADDITIONAL_FIELD.with(new ObjectEventData(additionalData)));
           }
           if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
@@ -179,10 +182,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
 
   private static final class Template {
     private final VarargEventId myEventId;
-    private final List<EventPair> myEventPairs;
+    private final List<? super EventPair> myEventPairs;
 
     private Template(VarargEventId id,
-                     List<EventPair> pairs) {
+                     List<? super EventPair> pairs) {
       myEventId = id;
       myEventPairs = pairs;
     }
@@ -233,7 +236,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
         final ConfigurationFactory factory = configurationAndFactory.getSecond();
         if (configuration != null && (StringUtil.isEmpty(factoryId) || factory != null)) {
           final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(configuration.getClass());
-          context.setPluginInfo(info);
+          context.setPayload(PLUGIN_INFO, info);
           return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
         }
       }

@@ -1,7 +1,7 @@
 JsonPathFile
   JsonPathRootSegmentImpl(ROOT_SEGMENT)
-    PsiElement(ROOT_CONTEXT)('$')
-  PsiElement(RECURSIVE_DESCENT)('..')
+    PsiElement($)('$')
+  PsiElement(..)('..')
   JsonPathIdSegmentImpl(ID_SEGMENT)
     JsonPathIdImpl(ID)
       PsiElement(IDENTIFIER)('author')

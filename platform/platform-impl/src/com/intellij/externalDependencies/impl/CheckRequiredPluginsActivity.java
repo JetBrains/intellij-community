@@ -170,7 +170,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
   }
 
   private static @NotNull NotificationListener createEnableNotificationListener(@NotNull Project project,
-                                                                                @NotNull List<IdeaPluginDescriptor> disabled) {
+                                                                                @NotNull List<? extends IdeaPluginDescriptor> disabled) {
     return (notification, event) -> {
       if (!isApplicable(event, ENABLE)) return;
 

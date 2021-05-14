@@ -20,6 +20,7 @@ from typing import (
     Union,
 )
 
+from .connection import Connection
 from .context import BaseContext
 
 if sys.version_info >= (3, 8):
@@ -85,7 +86,11 @@ class ValueProxy(BaseProxy, Generic[_T]):
 # Returned by BaseManager.get_server()
 class Server:
     address: Any
+    def __init__(
+        self, registry: Dict[str, Tuple[Callable[..., Any], Any, Any, Any]], address: Any, authkey: bytes, serializer: str
+    ) -> None: ...
     def serve_forever(self) -> None: ...
+    def accept_connection(self, c: Connection, name: str) -> None: ...
 
 class BaseManager(ContextManager[BaseManager]):
     def __init__(

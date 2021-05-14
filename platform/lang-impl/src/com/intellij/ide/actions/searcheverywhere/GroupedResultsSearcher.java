@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,9 +19,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.REPLACE;
-import static com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.SKIP;
 
 /**
  * @author msokolov
@@ -247,25 +245,6 @@ class GroupedResultsSearcher implements SESearcher {
       myProgressIndicator = progressIndicator;
     }
 
-    protected Map<SEResultsEqualityProvider.SEEqualElementsActionType, Collection<SearchEverywhereFoundElementInfo>> getActionsWithOtherElements(
-      SearchEverywhereFoundElementInfo newElement) {
-      Map<SEResultsEqualityProvider.SEEqualElementsActionType, Collection<SearchEverywhereFoundElementInfo>> res = new EnumMap<>(
-        SEResultsEqualityProvider.SEEqualElementsActionType.class);
-      res.put(REPLACE, new ArrayList<>());
-      res.put(SKIP, new ArrayList<>());
-      sections.values()
-        .stream()
-        .flatMap(Collection::stream)
-        .forEach(info -> {
-          SEResultsEqualityProvider.SEEqualElementsActionType action = myEqualityProvider.compareItems(newElement, info);
-          if (action != SEResultsEqualityProvider.SEEqualElementsActionType.DO_NOTHING) {
-            res.get(action).add(info);
-          }
-        });
-
-      return res;
-    }
-
     protected void runInNotificationExecutor(Runnable runnable) {
       myNotificationExecutor.execute(() -> {
         if (!myProgressIndicator.isCanceled()) {
@@ -302,8 +281,12 @@ class GroupedResultsSearcher implements SESearcher {
         return false;
       }
 
-      Map<SEResultsEqualityProvider.SEEqualElementsActionType, Collection<SearchEverywhereFoundElementInfo>> otherElementsMap = getActionsWithOtherElements(newElementInfo);
-      if (otherElementsMap.get(REPLACE).isEmpty() && !otherElementsMap.get(SKIP).isEmpty()) {
+      List<SearchEverywhereFoundElementInfo> alreadyFoundItems = sections.values()
+        .stream()
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+      SEEqualElementsActionType action = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
+      if (action == SEEqualElementsActionType.Skip.INSTANCE) {
         LOG.debug(String.format("Element %s for contributor %s was skipped", element.toString(), contributor.getSearchProviderId()));
         return true;
       }
@@ -311,7 +294,9 @@ class GroupedResultsSearcher implements SESearcher {
       section.add(newElementInfo);
       runInNotificationExecutor(() -> myListener.elementsAdded(Collections.singletonList(newElementInfo)));
 
-      List<SearchEverywhereFoundElementInfo> toRemove = new ArrayList<>(otherElementsMap.get(REPLACE));
+      List<SearchEverywhereFoundElementInfo> toRemove = action instanceof SEEqualElementsActionType.Replace
+                                                        ? ((SEEqualElementsActionType.Replace)action).getToBeReplaced()
+                                                        : Collections.emptyList();
       toRemove.forEach(info -> {
         Collection<SearchEverywhereFoundElementInfo> list = sections.get(info.getContributor());
         if (list != null) {
@@ -378,8 +363,12 @@ class GroupedResultsSearcher implements SESearcher {
           return false;
         }
 
-        Map<SEResultsEqualityProvider.SEEqualElementsActionType, Collection<SearchEverywhereFoundElementInfo>> otherElementsMap = getActionsWithOtherElements(newElementInfo);
-        if (otherElementsMap.get(REPLACE).isEmpty() && !otherElementsMap.get(SKIP).isEmpty()) {
+        List<SearchEverywhereFoundElementInfo> alreadyFoundItems = sections.values()
+          .stream()
+          .flatMap(Collection::stream)
+          .collect(Collectors.toList());
+        SEEqualElementsActionType type = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
+        if (type == SEEqualElementsActionType.Skip.INSTANCE) {
           LOG.debug(String.format("Element %s for contributor %s was skipped", element.toString(), contributor.getSearchProviderId()));
           return true;
         }
@@ -387,7 +376,9 @@ class GroupedResultsSearcher implements SESearcher {
         section.add(newElementInfo);
         runInNotificationExecutor(() -> myListener.elementsAdded(Collections.singletonList(newElementInfo)));
 
-        List<SearchEverywhereFoundElementInfo> toRemove = new ArrayList<>(otherElementsMap.get(REPLACE));
+        List<SearchEverywhereFoundElementInfo> toRemove = type instanceof SEEqualElementsActionType.Replace
+                                                          ? ((SEEqualElementsActionType.Replace)type).getToBeReplaced()
+                                                          : Collections.emptyList();
         toRemove.forEach(info -> {
           Collection<SearchEverywhereFoundElementInfo> list = sections.get(info.getContributor());
           Condition listCondition = conditionsMap.get(info.getContributor());

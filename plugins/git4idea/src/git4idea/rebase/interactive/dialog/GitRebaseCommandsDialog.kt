@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive.dialog
 
 import com.intellij.openapi.project.Project
@@ -22,7 +22,7 @@ internal class GitRebaseCommandsDialog(
   private val table = GitRebaseCommandsTable(entries)
 
   init {
-    title = GitBundle.getString("rebase.interactive.dialog.git.commands")
+    title = GitBundle.message("rebase.interactive.dialog.git.commands")
     init()
   }
 
@@ -57,9 +57,9 @@ private class GitRebaseCommandsTableModel(private val entries: List<GitRebaseEnt
   }
 
   override fun getColumnName(column: Int) = when (column) {
-    ACTION_COLUMN -> GitBundle.getString("rebase.interactive.dialog.git.commands.column.action")
-    HASH_COLUMN -> GitBundle.getString("rebase.interactive.dialog.git.commands.column.hash")
-    SUBJECT_COLUMN -> GitBundle.getString("rebase.interactive.dialog.git.commands.column.subject")
+    ACTION_COLUMN -> GitBundle.message("rebase.interactive.dialog.git.commands.column.action")
+    HASH_COLUMN -> GitBundle.message("rebase.interactive.dialog.git.commands.column.hash")
+    SUBJECT_COLUMN -> GitBundle.message("rebase.interactive.dialog.git.commands.column.subject")
     else -> throw IllegalArgumentException("Unsupported column index: $column")
   }
 

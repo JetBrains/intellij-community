@@ -138,7 +138,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   private static void installPlugins(@NotNull Project project,
                                      PluginAdvertiserExtensionsState pluginAdvertiserExtensionsState,
                                      String extensionOrFileName,
-                                     Set<PluginsAdvertiser.Plugin> pluginsToInstall) {
+                                     Set<? extends PluginsAdvertiser.Plugin> pluginsToInstall) {
     Set<PluginId> pluginIds = new HashSet<>();
     for (PluginsAdvertiser.Plugin plugin : pluginsToInstall) {
       pluginIds.add(PluginId.getId(plugin.myPluginId));

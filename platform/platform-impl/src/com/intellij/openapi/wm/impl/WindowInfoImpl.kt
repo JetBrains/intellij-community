@@ -32,6 +32,12 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
   override var anchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
 
+  @get:Attribute(converter = ToolWindowAnchorConverter::class)
+  override var largeStripeAnchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
+
+  @get:Attribute("visibleOnLargeStripe")
+  override var isVisibleOnLargeStripe by property(false)
+
   @get:Attribute("auto_hide")
   override var isAutoHide by property(false)
 

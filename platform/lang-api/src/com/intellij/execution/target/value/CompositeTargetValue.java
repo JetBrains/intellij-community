@@ -10,10 +10,10 @@ import org.jetbrains.concurrency.Promises;
 import java.util.Collection;
 
 class CompositeTargetValue<S, T> implements TargetValue<T> {
-  @NotNull private final Collection<TargetValue<S>> myValues;
+  private final @NotNull Collection<? extends TargetValue<S>> myValues;
   @NotNull private final Function<? super Collection<S>, ? extends T> myMapper;
 
-  CompositeTargetValue(@NotNull Collection<TargetValue<S>> values, @NotNull Function<? super Collection<S>, ? extends T> mapper) {
+  CompositeTargetValue(@NotNull Collection<? extends TargetValue<S>> values, @NotNull Function<? super Collection<S>, ? extends T> mapper) {
     myValues = values;
     myMapper = mapper;
   }

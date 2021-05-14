@@ -288,15 +288,15 @@ public final class JavaModuleGraphUtil {
       return processExports(module, (pkg, m) -> packageName.equals(pkg) ? m : null);
     }
 
-    private <T> @Nullable T processExports(PsiJavaModule start, BiFunction<String, PsiJavaModule, T> processor) {
+    private <T> @Nullable T processExports(PsiJavaModule start, BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
       return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, true, new HashSet<>(), processor) : null;
     }
 
     private <T> @Nullable T processExports(String name,
                                            PsiJavaModule module,
                                            boolean direct,
-                                           Set<PsiJavaModule> visited,
-                                           BiFunction<String, PsiJavaModule, T> processor) {
+                                           Set<? super PsiJavaModule> visited,
+                                           BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
       if (visited.add(module)) {
         if (!direct) {
           for (PsiPackageAccessibilityStatement statement : module.getExports()) {

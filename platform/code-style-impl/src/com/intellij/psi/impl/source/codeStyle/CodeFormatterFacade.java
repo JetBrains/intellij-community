@@ -195,7 +195,7 @@ public class CodeFormatterFacade {
 
   private static void invokePostponedFormatting(@NotNull PsiFile file,
                                                 Document document,
-                                                List<FormatTextRange> textRanges) {
+                                                List<? extends FormatTextRange> textRanges) {
     RangeMarker[] markers = new RangeMarker[textRanges.size()];
     int i = 0;
     for (FormatTextRange range : textRanges) {

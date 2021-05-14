@@ -36,7 +36,7 @@ import java.util.*;
 import java.util.function.Function;
 
 public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
-  private final ArrayList<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors = new ArrayList<>();
+  private final List<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors = new ArrayList<>();
   private final Map<ProgramRunner, List<SettingsEditor>> myRunner2UnwrappedEditors = new HashMap<>();
   private RunnersEditorComponent myRunnersComponent;
   private final RunConfiguration myConfiguration;
@@ -45,7 +45,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   private GroupSettingsBuilder<RunnerAndConfigurationSettings> myGroupSettingsBuilder;
 
   @Override
-  public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
+  public @NotNull CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
     init();
     myGroupSettingsBuilder = new GroupSettingsBuilder<>(myCompound);
     return myGroupSettingsBuilder;
@@ -84,15 +84,15 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
         myCompound.addEditor(getRunnersTabName(),
                              new CompositeSettingsEditor<>(getFactory()) {
                                @Override
-                               public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
+                               public @NotNull CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
                                  return new CompositeSettingsBuilder<>() {
                                    @Override
-                                   public Collection<SettingsEditor<RunnerAndConfigurationSettings>> getEditors() {
+                                   public @NotNull Collection<SettingsEditor<RunnerAndConfigurationSettings>> getEditors() {
                                      return myRunnerEditors;
                                    }
 
                                    @Override
-                                   public JComponent createCompoundEditor() {
+                                   public @NotNull JComponent createCompoundEditor() {
                                      return myRunnersComponent.getComponent();
                                    }
                                  };

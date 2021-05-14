@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.validator" exported=""/>
   </component>
 </module>

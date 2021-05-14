@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +51,4 @@ public abstract class FileStatusManager {
     FileStatus status = getStatus(file);
     return status != null ? status : FileStatus.NOT_CHANGED;
   }
-
-  public abstract void refreshFileStatusFromDocument(final VirtualFile file, final Document doc);
 }

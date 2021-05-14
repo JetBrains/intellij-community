@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -18,10 +18,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +32,7 @@ import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
  * @author Anna Kozlova
  */
 public class NavBarModel {
-  private List<Object> myModel = Collections.emptyList();
+  private List<Object> myModel;
   private int mySelectedIndex;
   private final Project myProject;
   private final NavBarModelListener myNotificator;
@@ -52,6 +49,7 @@ public class NavBarModel {
     myProject = project;
     myNotificator = notificator;
     myBuilder = builder;
+    myModel = Collections.singletonList(myProject);
   }
 
   public int getSelectedIndex() {
@@ -90,6 +88,10 @@ public class NavBarModel {
 
     if (PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
 
+    SlowOperations.allowSlowOperations(() -> doUpdateModel(dataContext));
+  }
+
+  private void doUpdateModel(DataContext dataContext) {
     NavBarModelExtension ownerExtension = null;
     PsiElement psiElement = null;
     for (NavBarModelExtension extension : NavBarModelExtension.EP_NAME.getExtensionList()) {
@@ -204,16 +206,21 @@ public class NavBarModel {
 
   protected void setModel(List<Object> model, boolean force) {
     if (!model.equals(TreeAnchorizer.retrieveList(myModel))) {
-      myModel = TreeAnchorizer.anchorizeList(model);
+      myModel = anchorizeList(model);
       myNotificator.modelChanged();
 
       mySelectedIndex = myModel.size() - 1;
       myNotificator.selectionChanged();
     }
     else if (force) {
-      myModel = TreeAnchorizer.anchorizeList(model);
+      myModel = anchorizeList(model);
       myNotificator.modelChanged();
     }
+  }
+
+  private @NotNull List<Object> anchorizeList(@NotNull List<Object> model) {
+    List<Object> list = TreeAnchorizer.anchorizeList(model);
+    return !list.isEmpty() ? list : Collections.singletonList(myProject);
   }
 
   public void updateModel(final Object object) {
@@ -281,7 +288,7 @@ public class NavBarModel {
     return processChildrenWithExtensions(object, (o, ext) -> processor.process(o));
   }
 
-  private boolean processChildrenWithExtensions(Object object, @NotNull PairProcessor<Object, NavBarModelExtension> pairProcessor) {
+  private boolean processChildrenWithExtensions(Object object, @NotNull PairProcessor<Object, ? super NavBarModelExtension> pairProcessor) {
     if (!isValid(object)) return true;
     final Object rootElement = size() > 1 ? getElement(1) : null;
     if (rootElement != null && !isValid(rootElement)) return true;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
@@ -264,7 +264,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static byte @NotNull [] adaptiveLoadBytes(@NotNull InputStream stream) throws IOException {
-    byte[] bytes = getThreadLocalBuffer();
+    byte[] bytes = new byte[StreamUtil.BUFFER_SIZE];
     List<byte[]> buffers = null;
     int count = 0;
     int total = 0;
@@ -440,7 +440,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void copy(@NotNull InputStream inputStream, long maxSize, @NotNull OutputStream outputStream) throws IOException {
-    final byte[] buffer = getThreadLocalBuffer();
+    byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
     long toRead = maxSize;
     while (toRead > 0) {
       int read = inputStream.read(buffer, 0, (int)Math.min(buffer.length, toRead));
@@ -1373,13 +1373,6 @@ public class FileUtil extends FileUtilRt {
         view.setPermissions(permissions);
       }
     }
-  }
-
-  /** @deprecated use {@link FileUtil#setExecutable(File)} or {@link File#setExecutable} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
-    FileUtilRt.setExecutableAttribute(path, executableFlag);
   }
 
   @NotNull

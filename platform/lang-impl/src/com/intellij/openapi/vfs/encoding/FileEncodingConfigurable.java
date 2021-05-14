@@ -23,6 +23,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.PerFileConfigurableBase;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +44,8 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   private HyperlinkLabel myExplanationLabel;
 
   private Charset myPropsCharset;
-  private final Trinity<String, Supplier<Charset>, Consumer<Charset>> myProjectMapping;
-  private final Trinity<String, Supplier<Charset>, Consumer<Charset>> myGlobalMapping;
+  private final Trinity<String, Supplier<? extends Charset>, Consumer<? super Charset>> myProjectMapping;
+  private final Trinity<String, Supplier<? extends Charset>, Consumer<? super Charset>> myGlobalMapping;
 
   FileEncodingConfigurable(@NotNull Project project) {
     super(project, createMappings(project));
@@ -62,12 +63,12 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   }
 
   @Override
-  protected boolean isGlobalMapping(Trinity<@NlsContexts.Label String, Supplier<Charset>, Consumer<Charset>> prop) {
+  protected boolean isGlobalMapping(Trinity<@NlsContexts.Label String, Supplier<? extends Charset>, Consumer<? super Charset>> prop) {
     return prop == myGlobalMapping || super.isGlobalMapping(prop);
   }
 
   @Override
-  protected boolean isProjectMapping(Trinity<@NlsContexts.Label String, Supplier<Charset>, Consumer<Charset>> prop) {
+  protected boolean isProjectMapping(Trinity<@NlsContexts.Label String, Supplier<? extends Charset>, Consumer<? super Charset>> prop) {
     return prop == myProjectMapping || super.isProjectMapping(prop);
   }
 
@@ -187,9 +188,8 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     return myPanel;
   }
 
-  @NotNull
   @Override
-  protected List<Trinity<String, Supplier<Charset>, Consumer<Charset>>> getDefaultMappings() {
+  protected @NotNull List<Trinity<@Nls String, Supplier<? extends Charset>, Consumer<? super Charset>>> getDefaultMappings() {
     return Arrays.asList(
       myProjectMapping,
       myGlobalMapping);

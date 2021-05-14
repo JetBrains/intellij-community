@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
@@ -371,5 +372,20 @@ class ReferencesInStorageTest {
     }
     Assert.assertNull(veryNewChild.optionalParent)
     assertEquals(emptyList<ChildWithOptionalParentEntity>(), newParent.optionalChildren.toList())
+  }
+
+  @Test
+  fun `removing one to one parent`() {
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val parentEntity = builder.addOoParentEntity()
+    builder.addOoChildEntity(parentEntity)
+
+    builder.removeEntity(parentEntity)
+
+    val parents = builder.entities(OoParentEntity::class.java).toList()
+    val children = builder.entities(OoChildEntity::class.java).toList()
+
+    assertEmpty(parents)
+    assertEmpty(children)
   }
 }

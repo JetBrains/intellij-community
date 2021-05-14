@@ -28,7 +28,7 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
 
   public void testCast() {
     doMemberTest("public void testThis(java.util.List l) {" +
-                 "  final String[][] ss = (String[][]) l.toArray(/*Array of type 'java.lang.String[][]' expected, 'java.lang.Number[]' found*/new Number[l.size()]/**/);" +
+                 "  final String[][] ss = (String[][]) l.toArray(new Number[l.size()]);" +
                  "}");
   }
 
@@ -120,6 +120,20 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
            "        return (A[]) cs.toArray(new CharSequence[0]);\n" +
            "    }\n" +
            "}");
+  }
+  
+  public void testCastNonRaw() {
+    doTest("import java.util.*;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  void test() {\n" +
+           "    List<Foo> list = new ArrayList<>();\n" +
+           "    Bar[] arr2 = (Bar[])list.toArray(new Foo[0]);\n" +
+           "  }\n" +
+           "}\n" +
+           "\n" +
+           "class Foo {}\n" +
+           "class Bar extends Foo {}");
   }
 
   @NotNull

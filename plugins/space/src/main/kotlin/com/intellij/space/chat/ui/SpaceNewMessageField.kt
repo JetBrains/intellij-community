@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui
 
 import circlet.m2.channel.M2ChannelVm
@@ -22,7 +22,8 @@ internal fun createNewMessageField(
   chatVM: M2ChannelVm,
   avatarType: SpaceChatAvatarType,
   pendingStateProvider: () -> Boolean = { false },
-  onCancel: (() -> Unit)? = null
+  onCancel: (() -> Unit)? = null,
+  onSend: (() -> Unit)? = null
 ): JComponent {
   val submittableModel = object : SubmittableTextFieldModelBase("") {
     override fun submit() {
@@ -30,6 +31,7 @@ internal fun createNewMessageField(
       runWriteAction {
         document.setText("")
       }
+      onSend?.invoke()
     }
   }
   return SpaceChatNewMessageWithAvatarComponent(chatVM.lifetime, avatarType, submittableModel, onCancel)

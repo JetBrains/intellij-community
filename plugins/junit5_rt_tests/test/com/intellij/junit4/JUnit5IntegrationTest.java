@@ -5,7 +5,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.idea.Bombed;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
-import java.util.Calendar;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,7 +45,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
      ModuleRootModificationUtil.updateModel(myModule,
                                            model -> model.addContentEntry(getTestContentRoot()).addSourceFolder(getTestContentRoot() + "/test1", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0"), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.7.0"), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
   }
 
@@ -180,7 +178,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     assertEmpty(processOutput.out);
     //ensure warning is ignored if started on java 11
-    processOutput.err.remove("Warning: Nashorn engine is planned to be removed from a future JDK release\n");
+    processOutput.err.remove("Warning: Nashorn engine is planned to be removed from a future JDK release");
     assertEmpty(processOutput.err);
     List<TestIgnored> ignoredTests = processOutput.messages.stream()
       .filter(TestIgnored.class::isInstance)
@@ -200,8 +198,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
   }
 
-  @Bombed(month = Calendar.AUGUST, day = 31, user = "Timur Yuldashev", description = "IDEA-174534")
-  public void testRunSpecificDisabledTestClass() throws Exception {
+  public void _testRunSpecificDisabledTestClass() throws Exception {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("disabled.DisabledClass", GlobalSearchScope.projectScope(myProject));
     RunConfiguration configuration = createConfiguration(aClass);
     ProcessOutput processOutput = doStartTestsProcess(configuration);
@@ -273,6 +270,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       .collect(Collectors.toList());
     assertSize(1, ignoredTests);
 
+    processOutputMethod.err.remove("Warning: Nashorn engine is planned to be removed from a future JDK release");
     assertNoIgnored(processOutputMethod);
 
     //assuming only suiteTreeNode/start/ignore/finish events

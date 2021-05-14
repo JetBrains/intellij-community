@@ -33,13 +33,11 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -187,37 +185,6 @@ public abstract class AbstractLayoutCodeProcessor {
    */
   @NotNull
   protected abstract FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException;
-
-  /**
-   * @deprecated This method incorrectly combines several {@link #prepareTask} results,
-   * so that some of them might get outdated after previous results are executed in write action.
-   * Use {@link #run()} or {@link #runWithoutProgress()} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public FutureTask<Boolean> preprocessFile(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException {
-    final FutureTask<Boolean> previousTask =
-      myPreviousCodeProcessor != null ? myPreviousCodeProcessor.preprocessFile(file, processChangedTextOnly)
-                                      : null;
-    final FutureTask<Boolean> currentTask = prepareTask(file, processChangedTextOnly);
-
-    return new FutureTask<>(() -> {
-      try {
-        if (previousTask != null) {
-          previousTask.run();
-          if (!previousTask.get() || previousTask.isCancelled()) return false;
-        }
-
-        ApplicationManager.getApplication().runWriteAction(currentTask);
-
-        return currentTask.get() && !currentTask.isCancelled();
-      }
-      catch (ExecutionException e) {
-        ExceptionUtil.rethrowUnchecked(e.getCause());
-        throw e;
-      }
-    });
-  }
 
   public void run() {
     if (myFile != null) {

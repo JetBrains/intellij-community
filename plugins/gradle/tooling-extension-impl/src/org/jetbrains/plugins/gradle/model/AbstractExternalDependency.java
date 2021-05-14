@@ -1,9 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
-import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
@@ -11,11 +8,9 @@ import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.tooling.util.BiFunction;
 import org.jetbrains.plugins.gradle.tooling.util.BooleanBiFunction;
 import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
-
+import org.gradle.internal.impldep.com.google.common.base.Objects;
 import java.io.File;
 import java.util.*;
-
-import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.reduce;
 
 /**
  * @author Vladislav.Soroka
@@ -180,7 +175,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
   }
 
   protected static int calcFilesPathsHashCode(@NotNull Iterable<File> iterable) {
-    return reduce(iterable, 0, new BiFunction<Integer, Integer, File>() {
+    return GradleContainerUtil.reduce(iterable, 0, new BiFunction<Integer, Integer, File>() {
       @Override
       public Integer fun(Integer currentResult, File item) {
         return 31 * currentResult + (item == null ? 0 : item.getPath().hashCode());
@@ -194,8 +189,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     private final LinkedList<Integer> myProcessedStructure;
 
     private DependenciesIterator(@NotNull Collection<ExternalDependency> dependencies) {
-      //noinspection unchecked
-      mySeenDependencies = new THashSet<AbstractExternalDependency>(TObjectHashingStrategy.IDENTITY);
+      mySeenDependencies = Collections.newSetFromMap(new IdentityHashMap<AbstractExternalDependency, Boolean>());
       myToProcess = new LinkedList<ExternalDependency>(dependencies);
       myProcessedStructure = new LinkedList<Integer>();
     }

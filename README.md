@@ -10,7 +10,7 @@ downloading a zip file (based on a branch) into `<IDEA_HOME>`. The default is th
 
 The master branch contains the source code which will be used to create the next major version of IntelliJ IDEA. The branch names
 and build numbers for older releases of IntelliJ IDEA can be found on the page of
-[Build Number Ranges](http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html).
+[Build Number Ranges](https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html).
 
 _**Speed Tip:**_ If the complete repository history isn't needed then using a shallow clone (`git clone --depth 1`) will save significant time.
 

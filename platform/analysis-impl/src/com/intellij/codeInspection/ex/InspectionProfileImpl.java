@@ -156,7 +156,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  private static @Nullable String convertToShortName(@Nullable String displayName, @NotNull List<InspectionToolWrapper<?, ?>> tools) {
+  private static @Nullable String convertToShortName(@Nullable String displayName, @NotNull List<? extends InspectionToolWrapper<?, ?>> tools) {
     if (displayName == null) return null;
     for (InspectionToolWrapper<?, ?> tool : tools) {
       if (displayName.equals(tool.getDisplayName())) {

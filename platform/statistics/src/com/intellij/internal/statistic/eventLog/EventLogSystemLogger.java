@@ -13,6 +13,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class EventLogSystemLogger {
+  public static final String DEFAULT_RECORDER = "FUS";
   public static final String GROUP = "event.log";
 
   public static void logMetadataLoad(@NotNull String recorderId, @Nullable String version) {
@@ -99,12 +100,21 @@ public final class EventLogSystemLogger {
   }
 
   private static void logEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull FeatureUsageData data) {
-    final StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
-    provider.getLogger().logAsync(new EventLogGroup(GROUP, provider.getVersion()), eventId, data.build(), false);
+    StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
+    String groupId = getGroupId(recorderId);
+    provider.getLogger().logAsync(new EventLogGroup(groupId, provider.getVersion()), eventId, data.build(), false);
   }
 
   private static void logEvent(@NotNull String recorderId, @NotNull String eventId) {
-    final StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
-    provider.getLogger().logAsync(new EventLogGroup(GROUP, provider.getVersion()), eventId, false);
+    StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
+    String groupId = getGroupId(recorderId);
+    provider.getLogger().logAsync(new EventLogGroup(groupId, provider.getVersion()), eventId, false);
+  }
+
+  private static String getGroupId(@NotNull String recorderId) {
+    if (DEFAULT_RECORDER.equals(recorderId)) {
+      return GROUP;
+    }
+    return StringUtil.toLowerCase(recorderId) + "." + GROUP;
   }
 }

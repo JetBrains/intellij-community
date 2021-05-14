@@ -34,11 +34,11 @@ public class PathsList  {
   private final Set<String> myPathSet = new HashSet<>();
 
   private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE =
-    (NullableFunction<String, VirtualFile>)path -> StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/'));
+    path -> StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/'));
 
   private static final Function<VirtualFile, String> LOCAL_PATH = file -> PathUtil.getLocalPath(file);
 
-  private static final Function<String, VirtualFile> PATH_TO_DIR = (NullableFunction<String, VirtualFile>)s -> {
+  private static final Function<String, VirtualFile> PATH_TO_DIR = s -> {
     VirtualFile file = PATH_TO_LOCAL_VFILE.fun(s);
     if (file == null) return null;
     if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {

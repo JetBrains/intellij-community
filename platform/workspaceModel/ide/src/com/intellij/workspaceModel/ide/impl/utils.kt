@@ -17,9 +17,8 @@ fun executeOrQueueOnDispatchThread(block: () -> Unit) {
   }
 }
 
-// TODO In the future it may be optimised by caching virtualFile in every trie node
 val VirtualFileUrl.virtualFile
-  get() = VirtualFileManager.getInstance().findFileByUrl(url)
+  get() = if (this is VirtualFileUrlBridge) file else VirtualFileManager.getInstance().findFileByUrl(url)
 
 // TODO: use segment names from virtualFiles?
 fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager) = virtualFileManager.fromUrl(this.url)

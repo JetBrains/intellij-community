@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -14,6 +12,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +25,8 @@ import java.util.Set;
  * @deprecated Use {@link CommittedChangesBrowser}
  */
 @Deprecated
-public class RepositoryChangesBrowser extends ChangesBrowser implements DataProvider {
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+public class RepositoryChangesBrowser extends ChangesBrowser {
   public RepositoryChangesBrowser(final Project project, final List<? extends CommittedChangeList> changeLists) {
     this(project, changeLists, null, null);
   }
@@ -58,9 +58,6 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
       if (abstractVcs.size() == 1) return Objects.requireNonNull(ContainerUtil.getFirstItem(abstractVcs)).getKeyInstanceMethod();
       return null;
     }
-    else {
-      final TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter(this);
-      return adapter.getData(dataId);
-    }
+    return super.getData(dataId);
   }
 }

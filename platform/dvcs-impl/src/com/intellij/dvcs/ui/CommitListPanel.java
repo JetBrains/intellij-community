@@ -3,9 +3,7 @@ package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -35,7 +33,7 @@ import java.util.ListIterator;
  *
  * @author Kirill Likhodedov
  */
-public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
+public class CommitListPanel extends JPanel implements DataProvider {
 
   private final List<VcsFullCommitDetails> myCommits;
   private final TableView<VcsFullCommitDetails> myTable;
@@ -97,19 +95,19 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
     diffAction.registerCustomShortcutSet(diffAction.getShortcutSet(), myTable);
   }
 
-  // Make changes available for diff action
+  @Nullable
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (VcsDataKeys.CHANGES.equals(key)) {
+  public Object getData(@NotNull String dataId) {
+    // Make changes available for diff action
+    if (VcsDataKeys.CHANGES.is(dataId)) {
       int[] rows = myTable.getSelectedRows();
-      if (rows.length != 1) return;
+      if (rows.length != 1) return null;
       int row = rows[0];
 
       VcsFullCommitDetails commit = myCommits.get(row);
-      // suppressing: inherited API
-      //noinspection unchecked
-      sink.put(key, commit.getChanges().toArray(new Change[0]));
+      return commit.getChanges().toArray(new Change[0]);
     }
+    return null;
   }
 
   @NotNull

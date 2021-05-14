@@ -2,21 +2,12 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.MultiHostInjector;
-import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lang.injection.general.Injection;
 import com.intellij.lang.injection.general.LanguageInjectionContributor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.lang.injection.general.SimpleInjection;
 import com.intellij.psi.*;
-import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Gregory.Shrago
@@ -37,10 +28,10 @@ public final class TemporaryPlacesInjector implements LanguageInjectionContribut
     Language language = injectedLanguage != null ? injectedLanguage.getLanguage() : null;
     if (language == null) return null;
 
-    return new Injection.Data(language.getID(),
-                              injectedLanguage.getPrefix(),
-                              injectedLanguage.getSuffix(),
-                              registry.getLanguageInjectionSupport().getId());
+    return new SimpleInjection(language.getID(),
+                               injectedLanguage.getPrefix(),
+                               injectedLanguage.getSuffix(),
+                               registry.getLanguageInjectionSupport().getId());
   }
 
 }

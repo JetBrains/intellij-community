@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.google.common.collect.Lists;
@@ -59,10 +59,7 @@ import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jdom.Parent;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -909,12 +906,12 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @RequiresEdt
-  public void shelveSilentlyUnderProgress(@NotNull List<? extends Change> changes) {
+  public void shelveSilentlyUnderProgress(@NotNull List<? extends Change> changes, boolean rollbackChanges) {
     final List<ShelvedChangeList> result = new ArrayList<>();
-    new Task.Backgroundable(myProject, VcsBundle.getString("shelve.changes.progress.title"), true) {
+    new Task.Backgroundable(myProject, VcsBundle.message("shelve.changes.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        result.addAll(shelveChangesInSeparatedLists(changes));
+        result.addAll(shelveChangesInSeparatedLists(changes, rollbackChanges));
       }
 
       @Override
@@ -944,7 +941,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @NotNull
-  private List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<? extends Change> changes) {
+  private List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<? extends Change> changes, boolean rollbackChanges) {
     List<String> failedChangeLists = new ArrayList<>();
     List<ShelvedChangeList> result = new ArrayList<>();
     List<Change> shelvedChanges = new ArrayList<>();
@@ -995,7 +992,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       notifyStateChanged();
     }
 
-    rollbackChangesAfterShelve(shelvedChanges, false);
+    if (rollbackChanges) {
+      rollbackChangesAfterShelve(shelvedChanges, false);
+    }
 
     if (!failedChangeLists.isEmpty()) {
       VcsNotifier.getInstance(myProject).notifyError(
@@ -1034,7 +1033,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                               @NotNull final List<ShelvedChange> selectedChanges,
                                               @NotNull final List<? extends ShelvedBinaryFile> selectedBinaryChanges,
                                               @Nullable final LocalChangeList forcePredefinedOneChangelist, boolean removeFilesFromShelf) {
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.getString("unshelve.changes.progress.title"), true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.message("unshelve.changes.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : selectedChangeLists) {

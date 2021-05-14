@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +48,8 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getVirtualFile
  * @deprecated Use {@link ChangesBrowserBase}
  */
 @Deprecated
-public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDataProvider, Disposable {
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+public abstract class OldChangesBrowserBase extends JPanel implements DataProvider, TypeSafeDataProvider, Disposable {
   protected final ChangesTreeList<Change> myViewer;
   protected final JScrollPane myViewerScrollPane;
   protected ChangeList mySelectedChangeList;
@@ -155,43 +158,50 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     return myViewerScrollPane;
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (key == VcsDataKeys.CHANGES) {
+  public Object getData(@NotNull String dataId) {
+    Object data = new TypeSafeDataProviderAdapter(this).getData(dataId);
+    if (data != null) return data;
+
+    if (VcsDataKeys.CHANGES.is(dataId)) {
       List<Change> list = getSelectedChanges();
       if (list.isEmpty()) list = myViewer.getChanges();
-      sink.put(VcsDataKeys.CHANGES, list.toArray(new Change[0]));
+      return list.toArray(new Change[0]);
     }
-    else if (key == VcsDataKeys.CHANGES_SELECTION) {
-      sink.put(VcsDataKeys.CHANGES_SELECTION, getChangesSelection());
+    else if (VcsDataKeys.CHANGES_SELECTION.is(dataId)) {
+      return getChangesSelection();
     }
-    else if (key == VcsDataKeys.CHANGE_LISTS) {
-      sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists());
+    else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
+      return getSelectedChangeLists();
     }
-    else if (key == VcsDataKeys.CHANGE_LEAD_SELECTION) {
+    else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       final Change highestSelection = myViewer.getHighestLeadSelection();
-      sink.put(VcsDataKeys.CHANGE_LEAD_SELECTION, (highestSelection == null) ? new Change[]{} : new Change[]{highestSelection});
+      return (highestSelection == null) ? new Change[]{} : new Change[]{highestSelection};
     }
-    else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
-      sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles().toArray(VirtualFile[]::new));
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      return getSelectedFiles().toArray(VirtualFile[]::new);
     }
-    else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getNavigatableFiles()));
+    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      return getNavigatableArray(myProject, getNavigatableFiles());
     }
-    else if (VcsDataKeys.IO_FILE_ARRAY.equals(key)) {
-      sink.put(VcsDataKeys.IO_FILE_ARRAY, getSelectedIoFiles());
+    else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {
+      return getSelectedIoFiles();
     }
-    else if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.equals(key)) {
+    else if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.is(dataId)) {
       final List<Change> selectedChanges = getSelectedChanges();
-      sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[0]));
+      return selectedChanges.toArray(new Change[0]);
     }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.equals(key)) {
-      sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      return myDeleteProvider;
     }
     else {
-      //noinspection unchecked
-      sink.put(key, myViewer.getData(key.getName()));
+      return myViewer.getData(dataId);
     }
+  }
+
+  @Override
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
   }
 
   public void select(List<Change> changes) {

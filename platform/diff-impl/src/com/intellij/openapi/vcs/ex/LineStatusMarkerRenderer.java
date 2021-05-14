@@ -3,6 +3,9 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DefaultFlagsProvider;
 import com.intellij.openapi.diff.DiffBundle;
@@ -49,19 +52,55 @@ public abstract class LineStatusMarkerRenderer {
 
   @NotNull private final MergingUpdateQueue myUpdateQueue;
   private boolean myDisposed;
-  @NotNull private final RangeHighlighter myHighlighter;
+  @NotNull private RangeHighlighter myHighlighter;
   @NotNull private final List<RangeHighlighter> myTooltipHighlighters = new ArrayList<>();
 
   LineStatusMarkerRenderer(@NotNull LineStatusTrackerI<?> tracker) {
     myTracker = tracker;
     myEditorFilter = getEditorFilter();
+    myUpdateQueue = new MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, ANY_COMPONENT, myTracker.getDisposable());
 
+    myHighlighter = createGutterHighlighter();
+
+    Disposer.register(myTracker.getDisposable(), () -> {
+      myDisposed = true;
+      destroyHighlighters();
+    });
+
+    ApplicationManager.getApplication().getMessageBus().connect(myTracker.getDisposable())
+      .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          scheduleValidateHighlighter();
+        }
+      });
+
+    scheduleUpdate();
+  }
+
+  public void scheduleUpdate() {
+    myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
+      updateHighlighters();
+    }));
+  }
+
+  public void scheduleValidateHighlighter() {
+    // IDEA-246614
+    myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "validate highlighter", () -> {
+      if (myDisposed || myHighlighter.isValid()) return;
+      disposeHighlighter(myHighlighter);
+      myHighlighter = createGutterHighlighter();
+    }));
+  }
+
+  @NotNull
+  private RangeHighlighter createGutterHighlighter() {
     Document document = myTracker.getDocument();
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myTracker.getProject(), true);
-    myHighlighter = markupModel.addRangeHighlighterAndChangeAttributes(null, 0, document.getTextLength(),
-                                                                       DiffDrawUtil.LST_LINE_MARKER_LAYER,
-                                                                       HighlighterTargetArea.LINES_IN_RANGE,
-                                                                       false, it -> {
+    return markupModel.addRangeHighlighterAndChangeAttributes(null, 0, document.getTextLength(),
+                                                              DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                              HighlighterTargetArea.LINES_IN_RANGE,
+                                                              false, it -> {
         it.setGreedyToLeft(true);
         it.setGreedyToRight(true);
 
@@ -71,21 +110,6 @@ public abstract class LineStatusMarkerRenderer {
         // ensure key is there in MarkupModelListener.afterAdded event
         it.putUserData(MAIN_KEY, true);
       });
-
-    myUpdateQueue = new MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, ANY_COMPONENT, myTracker.getDisposable());
-
-    Disposer.register(myTracker.getDisposable(), () -> {
-      myDisposed = true;
-      destroyHighlighters();
-    });
-
-    scheduleUpdate();
-  }
-
-  public void scheduleUpdate() {
-    myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
-      updateHighlighters();
-    }));
   }
 
   @RequiresEdt
@@ -163,6 +187,12 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   private void destroyHighlighters() {
+    if (!myHighlighter.isValid() ||
+        myHighlighter.getStartOffset() != 0 ||
+        myHighlighter.getEndOffset() != myTracker.getDocument().getTextLength()) {
+      LOG.warn(String.format("Highlighter is damaged for %s, isValid: %s", myTracker, myHighlighter.isValid()));
+    }
+
     disposeHighlighter(myHighlighter);
 
     for (RangeHighlighter highlighter : myTooltipHighlighters) {

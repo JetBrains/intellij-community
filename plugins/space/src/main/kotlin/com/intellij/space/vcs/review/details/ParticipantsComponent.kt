@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.englishFullName
@@ -20,11 +20,13 @@ import com.intellij.util.ui.WrapLayout
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.Property
 import runtime.reactive.SequentialLifetimes
+import java.awt.BorderLayout
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.SwingConstants
 
 internal class AuthorsComponent(
   detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
@@ -73,13 +75,9 @@ internal open class ParticipantsComponent(
   @NlsContexts.Label labelText: String
 ) : Lifetimed by detailsVm {
 
-
-  val panel: NonOpaquePanel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, JBUI.scale(5), JBUI.scale(5))).apply {
-    border = JBUI.Borders.empty(6, 0, 6, 0)
-  }
+  val panel: NonOpaquePanel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, 0, 0))
 
   private val avatarProvider = SpaceAvatarProvider(detailsVm.lifetime, panel, avatarSizeIntValue)
-
 
   val label: JLabel = JLabel(labelText).apply {
     foreground = UIUtil.getContextHelpForeground()
@@ -88,24 +86,34 @@ internal open class ParticipantsComponent(
 
   open fun additionalControls(): List<JComponent> = emptyList()
 
-
   init {
     participantsVm.forEach(detailsVm.lifetime) { users ->
       panel.removeAll()
 
-      users?.forEach { codeReviewParticipant ->
-        val memberProfile = codeReviewParticipant.user.resolve()
-        val fullName = memberProfile.englishFullName() // NON-NLS
-        val reviewerLabel = JLabel(avatarProvider.getIcon(memberProfile)).apply {
-          toolTipText = fullName
-          text = fullName
+      if (users?.size == 0) {
+        val additionalControls = additionalControls()
+        if (additionalControls.isNotEmpty()) {
+          val control = Wrapper(additionalControls[0]).apply {
+            border = JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP / 2)
+          }
+          panel.add(control)
         }
-        avatarProvider.getIcon(memberProfile)
-        panel.add(Wrapper(reviewerLabel))
       }
 
-      additionalControls().forEach {
-        panel.add(Wrapper(it))
+      users?.forEachIndexed { index, codeReviewParticipant ->
+        val memberProfile = codeReviewParticipant.user.resolve()
+        val fullName = memberProfile.englishFullName() // NON-NLS
+        val reviewerLabel = JLabel(fullName, avatarProvider.getIcon(memberProfile), SwingConstants.LEFT).apply {
+          border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
+          toolTipText = fullName
+        }
+        avatarProvider.getIcon(memberProfile)
+        val participantPanel = Wrapper(reviewerLabel)
+        val additionalControls = additionalControls()
+        if (index == users.lastIndex && additionalControls.isNotEmpty()) {
+          participantPanel.add(additionalControls[0], BorderLayout.LINE_END)
+        }
+        panel.add(participantPanel)
       }
 
       panel.validate()

@@ -48,6 +48,7 @@ public class ExpressionParser {
   private static final TokenSet ID_OR_SUPER = TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.SUPER_KEYWORD);
   private static final TokenSet TYPE_START = TokenSet.orSet(
     ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
+  private static final TokenSet PATTERN_MODIFIERS = TokenSet.create(JavaTokenType.FINAL_KEYWORD);
 
   private static final Key<Boolean> CASE_LABEL = Key.create("java.parser.case.label.expr");
 
@@ -176,22 +177,42 @@ public class ExpressionParser {
 
   @Nullable
   private PsiBuilder.Marker parsePattern(final PsiBuilder builder) {
+    PsiBuilder.Marker typeTestPattern = parseSimpleTypeTest(builder);
+    if (typeTestPattern != null) return typeTestPattern;
+
     PsiBuilder.Marker pattern = builder.mark();
     PsiBuilder.Marker patternVariable = builder.mark();
+    PsiBuilder.Marker modifiers = myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS).first;
+
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
     if (type == null) {
       patternVariable.drop();
       pattern.drop();
+      modifiers.drop();
       return null;
     }
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
       patternVariable.drop();
+      modifiers.drop();
     } else {
       patternVariable.done(JavaElementType.PATTERN_VARIABLE);
     }
     pattern.done(JavaElementType.TYPE_TEST_PATTERN);
     return pattern;
   }
+
+  @Nullable
+  private PsiBuilder.Marker parseSimpleTypeTest(final PsiBuilder builder) {
+    PsiBuilder.Marker pattern = builder.mark();
+    PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+    if (type == null || builder.getTokenType() == JavaTokenType.IDENTIFIER) {
+      pattern.rollbackTo();
+      return null;
+    }
+    pattern.done(JavaElementType.TYPE_TEST_PATTERN);
+    return pattern;
+  }
+
 
   @Nullable
   private PsiBuilder.Marker parseBinary(final PsiBuilder builder, final ExprType type, final TokenSet ops) {

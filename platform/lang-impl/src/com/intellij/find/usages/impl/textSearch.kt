@@ -1,19 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Internal
 
 package com.intellij.find.usages.impl
 
+import com.intellij.find.usages.api.PsiUsage
 import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.Usage
 import com.intellij.model.psi.impl.hasReferencesInElement
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.walkUp
-import com.intellij.usageView.UsageInfo
-import com.intellij.usages.Usage
-import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.util.Query
 import org.jetbrains.annotations.ApiStatus
 
@@ -25,12 +25,12 @@ internal fun buildTextQuery(project: Project, searchString: String, searchScope:
     .searchWord(project, searchString)
     .inContexts(SearchContext.IN_PLAIN_TEXT)
     .inScope(searchScope)
-    .buildQuery { _, start, offsetInStart ->
+    .buildQuery { (_, start, offsetInStart) ->
       if (hasReferences(start, offsetInStart)) {
         emptyList()
       }
       else {
-        listOf(UsageInfo2UsageAdapter(UsageInfo(start, offsetInStart, offsetInStart + length, true)))
+        listOf(PlainTextUsage(PsiUsage.textUsage(start, TextRange.from(offsetInStart, length))))
       }
     }
 }

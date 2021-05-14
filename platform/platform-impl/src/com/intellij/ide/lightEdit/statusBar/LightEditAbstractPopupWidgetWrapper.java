@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.statusBar;
 
-import com.intellij.ide.lightEdit.*;
+import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.ide.lightEdit.LightEditorInfo;
+import com.intellij.ide.lightEdit.LightEditorInfoImpl;
+import com.intellij.ide.lightEdit.LightEditorListener;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -32,7 +35,7 @@ public abstract class LightEditAbstractPopupWidgetWrapper
   }
 
   protected DataContext getEditorDataContext(@NotNull DataContext originalContext) {
-    return myEditor == null ? originalContext : SimpleDataContext.getSimpleContext(CommonDataKeys.EDITOR.getName(), myEditor, originalContext);
+    return myEditor == null ? originalContext : SimpleDataContext.getSimpleContext(CommonDataKeys.EDITOR, myEditor, originalContext);
   }
 
   @Nullable

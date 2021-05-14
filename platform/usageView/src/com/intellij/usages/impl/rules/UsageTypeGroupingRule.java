@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.vcs.FileStatus;
@@ -20,6 +20,10 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
   @Nullable
   @Override
   protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+    if (usage instanceof UsageWithType) {
+      UsageType usageType = ((UsageWithType)usage).getUsageType();
+      return usageType == null ? null : new UsageTypeGroup(usageType);
+    }
     if (usage instanceof PsiElementUsage) {
       PsiElementUsage elementUsage = (PsiElementUsage)usage;
 

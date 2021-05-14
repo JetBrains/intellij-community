@@ -20,14 +20,19 @@ import com.intellij.space.vcs.review.details.SpaceReviewDetailsVm
 import com.intellij.space.vcs.review.details.SpaceReviewParticipantsVm
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
-import runtime.reactive.*
+import runtime.reactive.MutableProperty
+import runtime.reactive.Property
+import runtime.reactive.flatten
+import runtime.reactive.property.map
+import runtime.reactive.property.mapInit
 
-internal class SpaceReviewersSelectorVm(override val lifetime: Lifetime,
-                                        val review: CodeReviewRecord,
-                                        val projectKey: ProjectKey,
-                                        val client: KCircletClient,
-                                        private val detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
-                                        private val participantsVm: SpaceReviewParticipantsVm
+internal class SpaceReviewersSelectorVm(
+  override val lifetime: Lifetime,
+  val review: CodeReviewRecord,
+  val projectKey: ProjectKey,
+  val client: KCircletClient,
+  private val detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
+  participantsVm: SpaceReviewParticipantsVm
 ) : Lifetimed {
 
   private val codeReviewService: CodeReviewService = client.codeReview

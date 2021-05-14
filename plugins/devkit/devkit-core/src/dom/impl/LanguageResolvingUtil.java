@@ -18,8 +18,8 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ProjectIconsAccessor;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.uast.UastModificationTracker;
 import com.intellij.ui.IconManager;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
@@ -64,12 +64,12 @@ final class LanguageResolvingUtil {
           languageClass = JavaPsiFacade.getInstance(project).findClass(Language.class.getName(), librariesScope);
         }
         if (languageClass == null) {
-          return Result.create(Collections.emptyList(), PsiModificationTracker.MODIFICATION_COUNT);
+          return Result.create(Collections.emptyList(), UastModificationTracker.getInstance(project));
         }
 
         GlobalSearchScope allScope = projectProductionScope.union(librariesScope);
         Collection<PsiClass> allInheritors = new HashSet<>(ClassInheritorsSearch.search(languageClass, allScope, true).findAll());
-        return Result.create(allInheritors, PsiModificationTracker.MODIFICATION_COUNT);
+        return Result.create(allInheritors, UastModificationTracker.getInstance(project));
       });
     if (allLanguages.isEmpty()) {
       return new SmartList<>();

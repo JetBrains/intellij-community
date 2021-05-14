@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -46,6 +46,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -74,7 +75,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   private final DataContext myDataContext;
 
   private final ActionManager myActionManager = ActionManager.getInstance();
-  private final ActionsGlobalSummaryManager myStatManager = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager.class);
+  private final GotoActionOrderStrategy myOrderStrategy = new GotoActionOrderStrategy();
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
@@ -302,10 +303,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return myActionManager.getId(anAction);
   }
 
-  private double getActionUsagesRatio(@Nullable String actionID) {
-    if (actionID == null) return .0;
-    ActionGlobalUsageInfo statistics = myStatManager.getActionStatistics(actionID);
-    return statistics != null ? statistics.getUsagesPerUserRatio() : .0;
+  private int compareActions(@Nullable AnAction first, @Nullable AnAction second) {
+    return myOrderStrategy.compare(first, second);
   }
 
   @NotNull
@@ -388,8 +387,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
     DataContext context = myProject == null ? DataContext.EMPTY_CONTEXT : SimpleDataContext.getProjectContext(myProject);
-    AnAction[] actions = group
-      .getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, context));
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, context);
+    AnAction[] actions = SlowOperations.allowSlowOperations(() -> group.getChildren(event));
 
     boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
     if (!hasMeaningfulChildren) {
@@ -681,12 +680,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       int compared = myMode.compareTo(o.getMode());
       if (compared != 0) return compared;
 
-      if (Registry.is("search.everywhere.consider.action.statistics")) {
-        double myRatio = myModel.getActionUsagesRatio(myModel.getActionId(getAction()));
-        double oRatio = myModel.getActionUsagesRatio(myModel.getActionId(o.getAction()));
-        int byStat = -Double.compare(myRatio, oRatio);
-        if (byStat != 0) return byStat;
-      }
+      int byStat = myModel.compareActions(getAction(), o.getAction());
+      if (byStat != 0) return byStat;
 
       Presentation myPresentation = myAction.getTemplatePresentation();
       Presentation oPresentation = o.getAction().getTemplatePresentation();
@@ -734,7 +729,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return ObjectUtils.notNull(myPresentation, myAction.getTemplatePresentation());
     }
 
-    private boolean hasPresentation() {
+    public boolean hasPresentation() {
       return myPresentation != null;
     }
 

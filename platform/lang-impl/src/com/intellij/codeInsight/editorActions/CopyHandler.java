@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
 
     final List<TextBlockTransferableData> transferableDataList = new ArrayList<>();
 
-    DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+    DumbService.getInstance(project).withAlternativeResolveEnabled(() -> SlowOperations.allowSlowOperations(() -> {
       for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : CopyPastePostProcessor.EP_NAME.getExtensionList()) {
         try {
           transferableDataList.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
@@ -109,7 +110,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
           LOG.error(e);
         }
       }
-    });
+    }));
 
     String text = editor.getCaretModel().supportsMultipleCarets()
                   ? EditorCopyPasteHelperImpl.getSelectedTextForClipboard(editor, transferableDataList)

@@ -3,6 +3,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,9 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public abstract class LanguageLevelProjectExtension {
+  public static final Topic<LanguageLevelChangeListener> LANGUAGE_LEVEL_CHANGED_TOPIC =
+    Topic.create("Java language level", LanguageLevelChangeListener.class);
+
   public static LanguageLevelProjectExtension getInstance(Project project) {
     return project.getService(LanguageLevelProjectExtension.class);
   }
@@ -39,5 +43,9 @@ public abstract class LanguageLevelProjectExtension {
   }
 
   public void languageLevelsChanged() {
+  }
+
+  public interface LanguageLevelChangeListener {
+    void onLanguageLevelsChanged();
   }
 }

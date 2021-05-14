@@ -42,7 +42,6 @@ class ExecutorAction private constructor(val origin: AnAction,
           }
         }
       if (createAction != null) {
-        result.add(Separator.getInstance())
         result.add(object : EmptyAction.MyDelegatingActionGroup(createAction as ActionGroup) {
           override fun update(e: AnActionEvent) {
             super.update(wrapEvent(e, order))

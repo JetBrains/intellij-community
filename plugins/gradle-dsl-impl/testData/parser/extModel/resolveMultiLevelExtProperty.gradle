@@ -1,8 +1,0 @@
-ext.SDK_VERSION = 21
-ext.COMPILE_SDK_VERSION = SDK_VERSION
-android {
-  compileSdkVersion COMPILE_SDK_VERSION
-  defaultConfig {
-    targetSdkVersion compileSdkVersion
-  }
-}

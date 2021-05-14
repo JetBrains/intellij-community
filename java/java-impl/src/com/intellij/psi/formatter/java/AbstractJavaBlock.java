@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -19,7 +19,8 @@ import com.intellij.psi.impl.source.codeStyle.ShiftIndentInsideHelper;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
-import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.jsp.JspClassLevelDeclarationStatementType;
+import com.intellij.psi.jsp.JspCodeBlockType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -344,8 +345,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private static Indent getChildIndent(@NotNull ASTNode parent, @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
     final IElementType parentType = parent.getElementType();
     if (parentType == JavaElementType.MODIFIER_LIST) return Indent.getNoneIndent();
-    if (parentType == JspElementType.JSP_CODE_BLOCK) return Indent.getNormalIndent();
-    if (parentType == JspElementType.JSP_CLASS_LEVEL_DECLARATION_STATEMENT) return Indent.getNormalIndent();
+    if (parentType instanceof JspCodeBlockType) return Indent.getNormalIndent();
+    if (parentType instanceof JspClassLevelDeclarationStatementType) return Indent.getNormalIndent();
     if (parentType == TokenType.DUMMY_HOLDER) return Indent.getNoneIndent();
     if (parentType == JavaElementType.CLASS) return Indent.getNoneIndent();
     if (parentType == JavaElementType.IF_STATEMENT) return Indent.getNoneIndent();

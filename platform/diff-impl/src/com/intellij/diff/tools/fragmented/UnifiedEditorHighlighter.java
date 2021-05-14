@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
@@ -40,6 +41,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
                     int textLength) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
+    int i = 0;
     int offset = 0;
 
     for (HighlightRange range : ranges) {
@@ -55,6 +57,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
 
       HighlighterIterator it = range.getSide().select(it1, it2);
       while (!it.atEnd() && changed.getStartOffset() >= it.getEnd()) {
+        if (i++ % 1024 == 0) ProgressManager.checkCanceled();
         it.advance();
       }
 
@@ -81,6 +84,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
           break;
         }
 
+        if (i++ % 1024 == 0) ProgressManager.checkCanceled();
         it.advance();
         if (it.atEnd()) {
           LOG.error("Unexpected end of highlighter");

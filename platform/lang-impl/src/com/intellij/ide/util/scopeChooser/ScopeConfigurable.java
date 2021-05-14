@@ -45,6 +45,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     mySharedContextHelp.setToolTipText(IdeBundle.message("share.scope.context.help"));
     mySharedContextHelp.setBorder(JBUI.Borders.empty(0, 5));
     myPanel = new ScopeEditorPanel(project, getHolder());
+    Disposer.register(myDisposable, myPanel);
     myIcon = getHolder(myShareScope).getIcon();
     mySharedCheckbox.addActionListener(e -> {
       myIcon = getHolder().getIcon();

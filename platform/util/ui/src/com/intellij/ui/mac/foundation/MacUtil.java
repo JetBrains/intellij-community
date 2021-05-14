@@ -149,27 +149,43 @@ public final class MacUtil {
     }
     if (SystemInfo.isJetBrainsJvm) {
       try {
+        Object cPlatformWindow = getPlatformWindow(w);
+        if (cPlatformWindow != null) {
+          Field ptr = cPlatformWindow.getClass().getSuperclass().getDeclaredField("ptr");
+          ptr.setAccessible(true);
+          return new ID(ptr.getLong(cPlatformWindow));
+        }
+      }
+      catch (IllegalAccessException | NoSuchFieldException e) {
+        LOG.debug(e);
+      }
+    }
+    return ID.NIL;
+  }
+
+  @Nullable
+  public static Object getPlatformWindow(@NotNull Window w) {
+    if (SystemInfo.isJetBrainsJvm) {
+      try {
         Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
         Object componentAccessor = awtAccessor.getMethod("getComponentAccessor").invoke(null);
         Method getPeer = componentAccessor.getClass().getMethod("getPeer", Component.class);
         getPeer.setAccessible(true);
         Object peer = getPeer.invoke(componentAccessor, w);
         if (peer != null) {
-          Class<?> cWindowPeerClass  = peer.getClass();
+          Class<?> cWindowPeerClass = peer.getClass();
           Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
           Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
           if (cPlatformWindow != null) {
-            Field ptr = cPlatformWindow.getClass().getSuperclass().getDeclaredField("ptr");
-            ptr.setAccessible(true);
-            return new ID(ptr.getLong(cPlatformWindow));
+            return cPlatformWindow;
           }
         }
       }
-      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException | NoSuchFieldException e) {
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
         LOG.debug(e);
       }
     }
-    return ID.NIL;
+    return null;
   }
 
   public static ID findWindowFromJavaWindow(final Window w) {

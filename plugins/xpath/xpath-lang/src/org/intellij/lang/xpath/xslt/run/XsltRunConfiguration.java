@@ -24,10 +24,11 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -82,7 +83,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     @NotNull private OutputType myOutputType = OutputType.CONSOLE;
     private boolean mySaveToFile = false;
     @NotNull private JdkChoice myJdkChoice = JdkChoice.FROM_MODULE;
-    @Nullable private FileType myFileType = StdFileTypes.XML;
+    @Nullable private FileType myFileType = XmlFileType.INSTANCE;
 
     public @NlsSafe String myOutputFile; // intentionally untracked. should it be?
     public boolean myOpenOutputFile;
@@ -509,9 +510,9 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         for (XmlTag output : outputs) {
             final String method = output.getAttributeValue("method");
             if ("xml".equals(method)) {
-                setFileType(StdFileTypes.XML);
+                setFileType(XmlFileType.INSTANCE);
             } else if ("html".equals(method)) {
-                setFileType(StdFileTypes.HTML);
+                setFileType(HtmlFileType.INSTANCE);
             } else if ("text".equals(method)) {
                 setFileType(FileTypes.PLAIN_TEXT);
             }

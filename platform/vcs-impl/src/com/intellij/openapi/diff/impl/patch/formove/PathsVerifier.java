@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.CommonBundle;
@@ -8,9 +8,11 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchFactory;
+import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -23,9 +25,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -184,11 +184,19 @@ public final class PathsVerifier {
     }
     FileType fileType = file.getFileType();
     if (fileType == FileTypes.UNKNOWN) {
-      fileType = FileTypeChooser.associateFileType(file.getName());
-      if (fileType == null) {
-        PatchApplier
-          .showError(myProject, VcsBundle.message("patch.apply.file.type.undefined.error", file.getPresentableName()));
-        return false;
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        ApplicationManager.getApplication().runWriteAction(
+          () -> FileTypeManagerEx.getInstanceEx().associate(FileTypes.PLAIN_TEXT, new ExactFileNameMatcher(file.getName()))
+        );
+        return true;
+      }
+      else {
+        fileType = FileTypeChooser.associateFileType(file.getName());
+        if (fileType == null) {
+          PatchApplier
+            .showError(myProject, VcsBundle.message("patch.apply.file.type.undefined.error", file.getPresentableName()));
+          return false;
+        }
       }
     }
     if (fileType.isBinary()) {
@@ -607,7 +615,7 @@ public final class PathsVerifier {
           List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
           Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
             files, title, VcsBundle.message("patch.apply.overwrite.existing.files.prompt"), title,
-            VcsBundle.getString("patch.apply.overwrite.existing.file.prompt"),
+            VcsBundle.message("patch.apply.overwrite.existing.file.prompt"),
             VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
             CommonBundle.message("button.overwrite"), IdeBundle.message("button.cancel"));
           if (selected != null) {

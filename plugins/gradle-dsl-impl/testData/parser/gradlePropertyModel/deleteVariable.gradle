@@ -1,3 +1,0 @@
-ext {
-  def prop1 = "Value"
-}

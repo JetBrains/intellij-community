@@ -49,6 +49,9 @@
       "blank_lines_before_package": 0,
       "block_brace_style": "end_of_line",
       "block_comment_at_first_column": true,
+      "builder_methods": [
+        ""
+      ],
       "call_parameters_new_line_after_left_paren": false,
       "call_parameters_right_paren_on_new_line": false,
       "call_parameters_wrap": "on_every_item",
@@ -111,6 +114,7 @@
       "keep_blank_lines_between_package_declaration_and_header": 2,
       "keep_blank_lines_in_code": 2,
       "keep_blank_lines_in_declarations": 2,
+      "keep_builder_methods_indents": false,
       "keep_control_statement_in_one_line": true,
       "keep_first_column_comment": true,
       "keep_indents_on_empty_lines": false,

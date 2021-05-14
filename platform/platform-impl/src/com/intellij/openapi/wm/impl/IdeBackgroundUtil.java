@@ -218,7 +218,7 @@ public final class IdeBackgroundUtil {
   private static final class MyGraphics extends Graphics2DDelegate {
     final PaintersHelper helper;
     final PaintersHelper.Offsets offsets;
-    Predicate<Color> preserved;
+    Predicate<? super Color> preserved;
 
     static Graphics2D wrap(Graphics g, PaintersHelper helper, JComponent component) {
       MyGraphics gg = g instanceof MyGraphics ? (MyGraphics)g : null;
@@ -229,7 +229,7 @@ public final class IdeBackgroundUtil {
       return g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
     }
 
-    MyGraphics(Graphics g, PaintersHelper helper, PaintersHelper.Offsets offsets, Predicate<Color> preserved) {
+    MyGraphics(Graphics g, PaintersHelper helper, PaintersHelper.Offsets offsets, Predicate<? super Color> preserved) {
       super((Graphics2D)g);
       this.helper = helper;
       this.offsets = offsets;

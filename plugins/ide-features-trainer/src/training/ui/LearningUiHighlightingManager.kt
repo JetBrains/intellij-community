@@ -15,21 +15,22 @@ import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 import kotlin.math.absoluteValue
 
+private const val pulsationSize = 20
+
 object LearningUiHighlightingManager {
   data class HighlightingOptions(
     val highlightBorder: Boolean = true,
     val highlightInside: Boolean = true,
+    val usePulsation: Boolean = false,
     val clearPreviousHighlights: Boolean = true,
   )
 
-  private val highlights: MutableList<RepaintByTimer<*>> = ArrayList()
+  private val highlights: MutableList<RepaintHighlighting<*>> = ArrayList()
 
   val highlightingComponents: List<Component> get() = highlights.map { it.original }
 
   fun highlightComponent(original: Component, options: HighlightingOptions = HighlightingOptions()) {
-    highlightComponent(original, options.clearPreviousHighlights) { glassPane ->
-      RepaintByTimer(original, glassPane, options)
-    }
+    highlightPartOfComponent(original, options) { Rectangle(Point(0, 0), it.size) }
   }
 
   fun highlightJListItem(list: JList<*>,
@@ -52,7 +53,7 @@ object LearningUiHighlightingManager {
 
   fun <T: Component> highlightPartOfComponent(component: T, options: HighlightingOptions = HighlightingOptions(), rectangle: (T) -> Rectangle?) {
     highlightComponent(component, options.clearPreviousHighlights) { glassPane ->
-      GeneralPartRepaint(component, glassPane, options, { rectangle(component) })
+      RepaintHighlighting(component, glassPane, options, { rectangle(component) })
     }
   }
 
@@ -65,7 +66,7 @@ object LearningUiHighlightingManager {
     }
   }
 
-  private fun highlightComponent(original: Component, clearPreviousHighlights: Boolean, init: (glassPane: JComponent) -> RepaintByTimer<*>) {
+  private fun highlightComponent(original: Component, clearPreviousHighlights: Boolean, init: (glassPane: JComponent) -> RepaintHighlighting<*>) {
     runInEdt {
       if (clearPreviousHighlights) clearHighlights()
       val glassPane = getGlassPane(original) ?: return@runInEdt
@@ -76,7 +77,7 @@ object LearningUiHighlightingManager {
     }
   }
 
-  internal fun removeIt(core: RepaintByTimer<*>) {
+  internal fun removeIt(core: RepaintHighlighting<*>) {
     core.removed = true
     core.cleanup()
   }
@@ -85,26 +86,18 @@ object LearningUiHighlightingManager {
     highlights.find { it.original == original }?.rectangle?.invoke()
 }
 
-internal open class RepaintByTimer<T : Component>(val original: T,
-                                                  val glassPane: JComponent,
-                                                  val options: LearningUiHighlightingManager.HighlightingOptions) {
+internal class RepaintHighlighting<T : Component>(val original: T,
+                                                  private val glassPane: JComponent,
+                                                  val options: LearningUiHighlightingManager.HighlightingOptions,
+                                                  val rectangle: () -> Rectangle?
+) {
   var removed = false
-  protected val startDate = Date()
 
-  protected var highlightComponent: GlassHighlightComponent? = null
-
-  open val rectangle: () -> Rectangle? = { Rectangle(0, 0, original.width, original.height) }
-
-  open fun reinitHighlightComponent() {
-    val newHighlightComponent = GlassHighlightComponent(startDate, options)
-
-    val pt = SwingUtilities.convertPoint(original, Point(0, 0), glassPane)
-    val bounds = Rectangle(pt.x, pt.y, original.width, original.height)
-
-    newHighlightComponent.bounds = bounds
-    glassPane.add(newHighlightComponent)
-    highlightComponent = newHighlightComponent
-  }
+  private val startDate = Date()
+  private var listLocationOnScreen: Point? = null
+  private var cellBoundsInList: Rectangle? = null
+  private var highlightComponent: GlassHighlightComponent? = null
+  private val pulsationOffset = if(options.usePulsation) pulsationSize else 0
 
   fun initTimer() {
     val timer = TimerUtil.createNamedTimer("IFT item", 50)
@@ -126,11 +119,6 @@ internal open class RepaintByTimer<T : Component>(val original: T,
     timer.start()
   }
 
-  protected open fun shouldReinit(): Boolean {
-    val component = highlightComponent
-    return component == null || original.locationOnScreen != component.locationOnScreen || original.size != component.size
-  }
-
   fun cleanup() {
     highlightComponent?.let { glassPane.remove(it) }
     if (glassPane.isValid) {
@@ -138,27 +126,18 @@ internal open class RepaintByTimer<T : Component>(val original: T,
       glassPane.repaint()
     }
   }
-}
 
-internal class GeneralPartRepaint<T : Component>(whole: T,
-                                                 glassPane: JComponent,
-                                                 options: LearningUiHighlightingManager.HighlightingOptions,
-                                                 override val rectangle: () -> Rectangle?
-) : RepaintByTimer<T>(whole, glassPane, options) {
-  private var listLocationOnScreen: Point? = null
-  private var cellBoundsInList: Rectangle? = null
-
-  override fun shouldReinit(): Boolean {
+  private fun shouldReinit(): Boolean {
     return highlightComponent == null || original.locationOnScreen != listLocationOnScreen || rectangle() != cellBoundsInList
   }
 
-  override fun reinitHighlightComponent() {
+  fun reinitHighlightComponent() {
     val cellBounds = rectangle() ?: return
 
     val newHighlightComponent = GlassHighlightComponent(startDate, options)
 
     val pt = SwingUtilities.convertPoint(original, cellBounds.location, glassPane)
-    val bounds = Rectangle(pt.x, pt.y, cellBounds.width, cellBounds.height)
+    val bounds = Rectangle(pt.x - pulsationOffset, pt.y - pulsationOffset, cellBounds.width + 2 * pulsationOffset, cellBounds.height + 2 * pulsationOffset)
 
     newHighlightComponent.bounds = bounds
     glassPane.add(newHighlightComponent)
@@ -171,6 +150,7 @@ internal class GeneralPartRepaint<T : Component>(whole: T,
 internal class GlassHighlightComponent(private val startDate: Date,
                                        private val options: LearningUiHighlightingManager.HighlightingOptions) : JComponent() {
 
+  private val pulsationOffset = if(options.usePulsation) pulsationSize else 0
   private var previous: Long = 0
 
   override fun paintComponent(g: Graphics) {
@@ -179,17 +159,25 @@ internal class GlassHighlightComponent(private val startDate: Date,
     val oldColor = g2d.color
     val time = Date().time
     val delta = time - startDate.time
-    //System.err.println("tik = ${time - previous}")
     previous = time
+    val shift = if (pulsationOffset != 0 && (delta/1000)%4 == 2.toLong()) {
+      (((delta/25 + 20)%40 - 20).absoluteValue).toInt()
+    }
+    else 0
     fun cyclicNumber(amplitude: Int, change: Long) = (change % (2 * amplitude) - amplitude).absoluteValue.toInt()
     val alphaCycle = cyclicNumber(1000, delta).toDouble() / 1000
     val magenta = ColorUtil.withAlpha(Color.magenta, 0.8)
     val orange = ColorUtil.withAlpha(Color.orange, 0.8)
-    val background = ColorUtil.withAlpha(JBColor(Color.black, Color.white), 0.3 * alphaCycle)
+    val background = ColorUtil.withAlpha(JBColor(Color(0, 0, shift*10), Color(255-shift*10, 255-shift*10, 255)), (0.3 + 0.7*shift/20.0) * alphaCycle)
     val gradientShift = (delta / 20).toFloat()
     val gp = GradientPaint(gradientShift + 0F, gradientShift + 0F, magenta,
                            gradientShift + r.height.toFloat(), gradientShift + r.height.toFloat(), orange, true)
-    RectanglePainter.paint(g2d, 0, 0, r.width, r.height, 2,
+
+    val x = pulsationOffset - shift
+    val y = pulsationOffset - shift
+    val width = r.width - (pulsationOffset - shift) * 2
+    val height = r.height - (pulsationOffset - shift) * 2
+    RectanglePainter.paint(g2d, x, y, width, height, 2,
                            if (options.highlightInside) background else null,
                            if (options.highlightBorder) gp else null)
     g2d.color = oldColor

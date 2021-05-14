@@ -48,7 +48,7 @@ import java.util.*;
  * @author Alexander Lobas
  */
 public class PluginUpdateDialog extends DialogWrapper {
-  private final Collection<PluginDownloader> myDownloaders;
+  private final Collection<? extends PluginDownloader> myDownloaders;
 
   private final MyPluginModel myPluginModel;
   private final PluginsGroupComponent myPluginsPanel;
@@ -61,8 +61,8 @@ public class PluginUpdateDialog extends DialogWrapper {
   private Runnable myFinishCallback;
 
   public PluginUpdateDialog(@Nullable Project project,
-                            @NotNull Collection<PluginDownloader> updatedPlugins,
-                            @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
+                            @NotNull Collection<? extends PluginDownloader> updatedPlugins,
+                            @Nullable Collection<? extends IdeaPluginDescriptor> customRepositoryPlugins) {
     super(true);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
 
@@ -82,7 +82,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       @Override
       @NotNull
       protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
-        return customRepositoryPlugins == null ? super.getCustomRepoPlugins() : customRepositoryPlugins;
+        return customRepositoryPlugins == null ? super.getCustomRepoPlugins() : Collections.unmodifiableCollection(customRepositoryPlugins);
       }
     };
 
@@ -301,7 +301,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     return myIgnoredPluginsWithVersions;
   }
 
-  static void ignorePlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
+  static void ignorePlugins(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
     Set<String> ignoredPlugins = getIgnoredPlugins();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {

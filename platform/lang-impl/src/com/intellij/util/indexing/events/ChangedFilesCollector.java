@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
@@ -64,7 +65,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   @Override
   protected void buildIndicesForFileRecursively(@NotNull VirtualFile file, boolean contentChange) {
-    FileBasedIndexImpl.cleanProcessedFlag(file);
+    IndexingFlag.cleanProcessedFlagRecursively(file);
     if (!contentChange) {
       myUpdatingFiles.incrementAndGet();
     }
@@ -182,6 +183,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       if (!extensions.isEmpty()) {
         myManager.removeDataFromIndicesForFile(fileId, file);
       }
+      IndexingFlag.cleanProcessingFlag(file);
     }
     else if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
       checkNotIndexedByContentBasedIndexes(file, fileId);

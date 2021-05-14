@@ -57,6 +57,13 @@ public final class IJSwingUtilities {
     return SwingUtilities.isDescendingFrom(focusedComponent, component);
   }
 
+  @NotNull
+  public static Component getFocusedComponentInWindowOrSelf(@NotNull Component component) {
+    Window window = UIUtil.getWindow(component);
+    Component focusedComponent = window == null ? null : WindowManagerEx.getInstanceEx().getFocusedComponent(window);
+    return focusedComponent != null ? focusedComponent : component;
+  }
+
   public static HyperlinkEvent createHyperlinkEvent(@Nullable String href, @NotNull Object source) {
     URL url = null;
     try {

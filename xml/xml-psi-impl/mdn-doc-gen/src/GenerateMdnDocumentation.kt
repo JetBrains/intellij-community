@@ -284,10 +284,29 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val url = getMdnDocsUrl(dir)
     val status = extractStatus(compatData)
     val description = extractDescription(indexDataProseValues)
-    return if (dir.name.let { it.startsWith('_') || it.startsWith('@') || it.endsWith("()") })
-      MdnCssBasicSymbolDocumentation(url, status, description, null)
-    else
-      MdnCssPropertySymbolDocumentation(url, status, description, extractPropertyValues(indexDataProseValues))
+    val dirName = dir.name
+    return when {
+      dirName.startsWith('_') || dirName.endsWith("()") ->
+        MdnCssBasicSymbolDocumentation(url, status, description, null)
+      dirName.startsWith('@') ->
+        MdnCssAtRuleSymbolDocumentation(
+          url, status, description, null,
+          extractInformationFull(dir,
+                                 { !it.contains('_') },
+                                 { docDir ->
+                                   try {
+                                     listOf(Pair(docDir.name, extractCssElementDocumentation(docDir) as MdnCssPropertySymbolDocumentation))
+                                   }
+                                   catch (e: Exception) {
+                                     System.err.println("Error for $docDir: ${e.message}")
+                                     throw e
+                                   }
+                                 }).takeIf { it.isNotEmpty() }
+        )
+      else ->
+        MdnCssPropertySymbolDocumentation(
+          url, status, description, extractPropertyValues(indexDataProseValues))
+    }
   }
 
   private fun extractDescription(indexDataProseValues: List<JsonObject>): String =

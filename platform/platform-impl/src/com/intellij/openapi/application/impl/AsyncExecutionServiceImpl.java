@@ -44,7 +44,7 @@ public class AsyncExecutionServiceImpl extends AsyncExecutionService {
 
   @NotNull
   @Override
-  public <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<T> computation) {
+  public <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<? extends T> computation) {
     return new NonBlockingReadActionImpl<>(computation);
   }
 

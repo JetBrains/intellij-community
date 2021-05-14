@@ -34,7 +34,7 @@ public class JsonCopyPointerAction extends CopyReferenceAction {
   }
 
   @Override
-  protected String getQualifiedName(Editor editor, List<PsiElement> elements) {
+  protected String getQualifiedName(Editor editor, List<? extends PsiElement> elements) {
     if (elements.size() != 1) return null;
     return JsonQualifiedNameProvider.generateQualifiedName(elements.get(0), JsonQualifiedNameKind.JsonPointer);
   }

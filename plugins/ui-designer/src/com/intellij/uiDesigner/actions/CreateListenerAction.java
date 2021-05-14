@@ -49,6 +49,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -81,7 +82,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
       return null;
     }
     EventSetDescriptor[] sortedDescriptors = eventSetDescriptors.clone();
-    Arrays.sort(sortedDescriptors, (o1, o2) -> o1.getListenerType().getName().compareTo(o2.getListenerType().getName()));
+    Arrays.sort(sortedDescriptors, Comparator.comparing(o -> o.getListenerType().getName()));
     for(EventSetDescriptor descriptor: sortedDescriptors) {
       actionGroup.add(new MyCreateListenerAction(selection, descriptor));
     }

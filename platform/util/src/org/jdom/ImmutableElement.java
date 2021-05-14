@@ -4,7 +4,6 @@ package org.jdom;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.filter.ElementFilter;
@@ -88,9 +87,9 @@ final class ImmutableElement extends Element {
 
     if (type == null) {
       return Collections.unmodifiableList(ContainerUtil.map(originAttributes,
-                                                            (Function<Attribute, Attribute>)attribute -> new ImmutableAttribute(interner.internString(attribute.getName()),
-                                                                                                                                                                                  interner.internString(attribute.getValue()),
-                                                                                                                                                                                  attribute.getAttributeType(), attribute.getNamespace())));
+                                                            attribute -> new ImmutableAttribute(interner.internString(attribute.getName()),
+                                                                                                interner.internString(attribute.getValue()),
+                                                                                                attribute.getAttributeType(), attribute.getNamespace())));
     }
     else {
       return new ImmutableSameTypeAttributeList(nameValues, type, namespace);

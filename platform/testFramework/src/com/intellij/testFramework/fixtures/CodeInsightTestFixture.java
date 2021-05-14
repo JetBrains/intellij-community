@@ -510,11 +510,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   LookupElement[] complete(@NotNull CompletionType type, int invocationCount);
 
-  void checkResult(@NotNull String text);
+  void checkResult(@NotNull String expectedText);
 
-  void checkResult(@NotNull String text, boolean stripTrailingSpaces);
+  void checkResult(@NotNull String expectedText, boolean stripTrailingSpaces);
 
-  void checkResult(@NotNull String filePath, @NotNull String text, boolean stripTrailingSpaces);
+  void checkResult(@NotNull String filePath, @NotNull String expectedText, boolean stripTrailingSpaces);
 
   Document getDocument(@NotNull PsiFile file);
 

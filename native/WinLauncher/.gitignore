@@ -1,6 +1,3 @@
-*.opensdf
-*.suo
-*.sdf
-Debug
-Release
-ipch
+/.idea/
+/cmake-build-*/
+/build-*/

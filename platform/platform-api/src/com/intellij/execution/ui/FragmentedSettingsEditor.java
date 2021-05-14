@@ -71,7 +71,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   }
 
   @Override
-  public CompositeSettingsBuilder<Settings> getBuilder() {
+  public @NotNull CompositeSettingsBuilder<Settings> getBuilder() {
     return new FragmentedSettingsBuilder<>(getFragments(), null);
   }
 
@@ -81,6 +81,6 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
     addSettingsEditorListener(editor -> SwingUtilities.invokeLater(() -> UIUtil.setupEnclosingDialogBounds(c)));
   }
 
-  protected void initFragments(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
+  protected void initFragments(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
   }
 }

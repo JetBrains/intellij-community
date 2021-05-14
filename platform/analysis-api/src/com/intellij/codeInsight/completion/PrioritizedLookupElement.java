@@ -54,6 +54,11 @@ public final class PrioritizedLookupElement<T extends LookupElement> extends Loo
     return myExplicitProximity;
   }
 
+  /**
+   * @param element element
+   * @param priority priority (higher priority puts the item closer to the beginning of the list)
+   * @return decorated lookup element
+   */
   public static LookupElement withPriority(LookupElement element, double priority) {
     PrioritizedLookupElement<?> prioritized = element.as(CLASS_CONDITION_KEY);
     LookupElement finalElement = prioritized != element ? element : prioritized.getDelegate();

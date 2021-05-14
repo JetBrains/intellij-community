@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import training.lang.LangManager
@@ -30,13 +31,13 @@ import training.learn.lesson.LessonStateManager
 import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.Desktop
+import java.awt.Dimension
 import java.net.URI
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import javax.swing.BoxLayout
-import javax.swing.JLabel
-import javax.swing.JPanel
+import javax.swing.*
 
 fun createNamedSingleThreadExecutor(name: String): ExecutorService =
   Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(name).build())
@@ -143,6 +144,17 @@ fun LinkLabel<Any>.wrapWithUrlPanel(): JPanel {
   jPanel.maximumSize = jPanel.preferredSize
   jPanel.alignmentX = JPanel.LEFT_ALIGNMENT
   return jPanel
+}
+
+fun rigid(width: Int, height: Int): Component {
+  return scaledRigid(JBUI.scale(width), JBUI.scale(height))
+}
+
+fun scaledRigid(width: Int, height: Int): Component {
+  return (Box.createRigidArea(Dimension(width, height)) as JComponent).apply {
+    alignmentX = Component.LEFT_ALIGNMENT
+    alignmentY = Component.TOP_ALIGNMENT
+  }
 }
 
 fun lessonOpenedInProject(project: Project?): Lesson? {

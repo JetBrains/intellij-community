@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.java
 
 import com.intellij.execution.ExecutionBundle
@@ -30,7 +30,7 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
   private val targetVolumeContributions = mutableMapOf<VolumeDescriptor, TargetSpecificVolumeContributionUI>()
 
   override fun createPanel(): DialogPanel {
-    val whole = DialogPanel(VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP)))
+    val whole = DialogPanel(VerticalLayout(UIUtil.DEFAULT_VGAP))
     mainPanel = panel {
       row(ExecutionBundle.message("java.language.runtime.jdk.home.path")) {
         val cellBuilder: CellBuilder<*>

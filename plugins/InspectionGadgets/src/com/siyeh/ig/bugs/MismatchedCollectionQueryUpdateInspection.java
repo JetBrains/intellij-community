@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class MismatchedCollectionQueryUpdateInspection
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet queryNames =
     new ExternalizableStringSet(
-      "contains", "copyInto", "equals", "forEach", "get", "hashCode", "iterator", "parallelStream", "propertyNames",
+      "contains", "copyInto", "equals", "forEach", "get", "hashCode", "iterator", "parallelStream", "peek", "propertyNames",
       "save", "size", "store", "stream", "toArray", "toString", "write");
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet updateNames =
@@ -308,6 +308,19 @@ public class MismatchedCollectionQueryUpdateInspection
                   break;
                 }
               }
+            }
+            if (call.getArgumentList().getExpressionCount() == 2 &&
+                ("poll".equals(name) || "pollFirst".equals(name) || "pollLast".equals(name)) &&
+                TypeUtils.variableHasTypeOrSubtype(variable, "java.util.concurrent.BlockingQueue")) {
+              // poll(timeout, unit) on a blocking queue/dequeue may be considered querying, even if the result is not used,
+              // because the thread will be blocked until a value is received (or a timeout happens).
+              makeQueried();
+            }
+            else if (("take".equals(name) || "takeFirst".equals(name) || "takeLast".equals(name)) &&
+                     TypeUtils.variableHasTypeOrSubtype(variable, "java.util.concurrent.BlockingQueue")) {
+              // take() on a blocking queue/dequeue may be considered querying, even if the result is not used.
+              // because the thread will be blocked until a value is received.
+              makeQueried();
             }
           }
         }

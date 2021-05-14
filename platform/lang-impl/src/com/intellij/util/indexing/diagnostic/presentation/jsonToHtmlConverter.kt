@@ -1,4 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("unused", "DuplicatedCode", "HardCodedStringLiteral")
+
 package com.intellij.util.indexing.diagnostic.presentation
 
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -8,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
 import org.jetbrains.annotations.Nls
 
-@Suppress("HardCodedStringLiteral")
 fun JsonIndexDiagnostic.generateHtml(): String {
   return html {
     body {
@@ -52,9 +53,28 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr { th("Name"); th("Time") }
         }
         tbody {
-          tr { td("Number of file providers"); td(projectIndexingHistory.numberOfFileProviders.toString()) }
-          tr { td("Number of files"); td(projectIndexingHistory.totalNumberOfFiles.toString()) }
-          tr { td("Number of up-to-date files"); td(projectIndexingHistory.totalNumberOfUpToDateFiles.toString()) }
+          tr { td("Number of file providers"); td(projectIndexingHistory.scanningStatistics.size.toString()) }
+          tr { td("Number of scanned files"); td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfScannedFiles }.toString()) }
+          tr {
+            td("Number of files indexed by infrastructure extensions during the scan (without loading content)")
+            td(projectIndexingHistory.scanningStatistics.map { it.numberOfFilesFullyIndexedByInfrastructureExtensions }.sum().toString())
+          }
+          tr {
+            td("Number of files sent to the indexing stage after scanning (to load file content and index)")
+            td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfFilesForIndexing }.toString())
+          }
+          tr {
+            td("Number of files indexed by infrastructure extensions during the indexing stage (with loading content)")
+            td(projectIndexingHistory.fileProviderStatistics.map { it.totalNumberOfFilesFullyIndexedByExtensions }.sum().toString())
+          }
+          tr {
+            td("Number of files indexed during the indexing stage with loading content (including indexed by infrastructure extension)")
+            td(projectIndexingHistory.fileProviderStatistics.map { it.totalNumberOfIndexedFiles }.sum().toString())
+          }
+          tr {
+            td("Number of too large for indexing files")
+            td(projectIndexingHistory.fileProviderStatistics.sumBy { it.numberOfTooLargeForIndexingFiles }.toString())
+          }
 
           val times = projectIndexingHistory.times
           tr { td("Total updating time"); td(times.totalUpdatingTime.presentableDuration()) }
@@ -136,14 +156,14 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr {
             th("Provider name")
             th("Number of scanned files")
-            th("Number of skipped files, which are already iterated for a different entity")
             th("Number of files scheduled for indexing")
-            th("Number of up-to-date files")
-            th("Number of files indexed by infrastructure extensions")
+            th("Number of files fully indexed by infrastructure extensions")
+            th("Number of double-scanned skipped files")
             th("Scanning time")
             th("Time processing up-to-date files")
             th("Time updating content-less indexes")
             th("Time indexing without content")
+            th("Scanned files")
           }
         }
         tbody {
@@ -151,14 +171,26 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             tr {
               td(scanningStats.providerName)
               td(scanningStats.numberOfScannedFiles.toString())
-              td(scanningStats.numberOfSkippedFiles.toString())
               td(scanningStats.numberOfFilesForIndexing.toString())
-              td(scanningStats.numberOfUpToDateFiles.toString())
               td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
+              td(scanningStats.numberOfSkippedFiles.toString())
               td(scanningStats.scanningTime.presentableDuration())
               td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
               td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
               td(scanningStats.timeIndexingWithoutContent.presentableDuration())
+              td {
+                textarea {
+                  rawText(
+                    scanningStats.scannedFiles.orEmpty().joinToString("\n") { file ->
+                      file.path.presentablePath + when {
+                        file.wasFullyIndexedByInfrastructureExtension -> " [by infrastructure]"
+                        file.isUpToDate -> " [up-to-date]"
+                        else -> ""
+                      }
+                    }
+                  )
+                }
+              }
             }
           }
         }
@@ -173,7 +205,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             th("Number of indexed files")
             th("Number of files indexed by infrastructure extensions")
             th("Number of too large for indexing files")
-            th("Files")
+            th("Indexed files")
           }
         }
         tbody {
@@ -181,15 +213,15 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             tr {
               td(providerStats.providerName)
               td(providerStats.totalIndexingTime.presentableDuration())
-              td(providerStats.totalNumberOfFiles.toString())
+              td(providerStats.totalNumberOfIndexedFiles.toString())
               td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
               td(providerStats.numberOfTooLargeForIndexingFiles.toString())
-              val indexedFiles = providerStats.indexedFiles
-              if (indexedFiles != null) {
-                td(indexedFiles.joinToString("\n") { it.presentablePath })
-              }
-              else {
-                td("<unknown>")
+              td {
+                textarea {
+                  rawText(providerStats.indexedFiles.orEmpty().joinToString("\n") { file ->
+                    file.path.presentablePath + if (file.wasFullyIndexedByExtensions) " [by infrastructure]" else ""
+                  })
+                }
               }
             }
           }
@@ -205,11 +237,10 @@ private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
   return tagBuilder.toFragment().wrapWith(tag)
 }
 
-private fun HtmlBuilder.text(@Nls text: String) {
-  append(text)
-}
+private fun HtmlBuilder.text(@Nls text: String) = append(text)
+private fun HtmlBuilder.rawText(@Nls text: String) = appendRaw(text)
 
-private infix operator fun HtmlBuilder.plus(@Nls text: String) = text(text)
+private infix operator fun HtmlBuilder.plus(@Nls text: String): HtmlBuilder = text(text)
 private fun HtmlBuilder.h1(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("h1")))
 
 private fun HtmlBuilder.table(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("table")))
@@ -220,6 +251,23 @@ private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit) = append(createTag(body
 private fun HtmlBuilder.th(@Nls text: String) = th { text(text) }
 private fun HtmlBuilder.td(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
 private fun HtmlBuilder.td(@Nls text: String) = td { text(text) }
+
+private fun HtmlBuilder.textarea(
+  columns: Int = 75,
+  rows: Int = 10,
+  body: HtmlBuilder.() -> Unit
+) = append(
+  createTag(
+    body,
+    tag("textarea")
+      .attr("cols", columns)
+      .attr("rows", rows)
+      .attr("readonly", "true")
+      .attr("placeholder", "empty")
+      .attr("style", "white-space: pre;")
+  ))
+
+private fun HtmlBuilder.textarea(@Nls text: String) = textarea { rawText(text) }
 
 private fun HtmlBuilder.div(body: HtmlBuilder.() -> Unit) = append(createTag(body, div()))
 private fun HtmlBuilder.body(body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))

@@ -20,8 +20,7 @@ import java.util.List;
 public class AnchorPathReferenceProvider implements PathReferenceProvider {
 
   @Override
-  public boolean createReferences(@NotNull final PsiElement psiElement, @NotNull final List<PsiReference> references, final boolean soft) {
-
+  public boolean createReferences(@NotNull final PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
     final TextRange range = ElementManipulators.getValueTextRange(psiElement);
     final String elementText = psiElement.getText();
     final int anchorOffset = elementText.indexOf('#');

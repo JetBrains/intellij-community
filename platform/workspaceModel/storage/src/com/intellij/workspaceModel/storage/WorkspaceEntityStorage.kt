@@ -166,8 +166,10 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntit
   fun toStorage(): WorkspaceEntityStorage
 
   companion object {
+    @JvmStatic
     fun create(): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.create()
 
+    @JvmStatic
     fun from(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.from(storage)
   }
 }
@@ -203,6 +205,7 @@ interface WorkspaceEntityStorageDiffBuilder {
   val modificationCount: Long
 
   companion object {
+    @JvmStatic
     fun create(underlyingStorage: WorkspaceEntityStorage): WorkspaceEntityStorageDiffBuilder = WorkspaceEntityStorageBuilder.from(underlyingStorage)
   }
 }

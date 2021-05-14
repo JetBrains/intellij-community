@@ -36,7 +36,7 @@ public class EditSdkDialog extends DialogWrapper {
   private final boolean myWasAssociated;
   private boolean myAssociationRemoved = false;
 
-  protected EditSdkDialog(Project project, SdkModificator sdk, final NullableFunction<String, String> nameValidator) {
+  protected EditSdkDialog(Project project, SdkModificator sdk, final NullableFunction<? super String, String> nameValidator) {
     super(project, true);
     setTitle(PyBundle.message("sdk.edit.dialog.title"));
     myNameTextField.setText(sdk.getName());

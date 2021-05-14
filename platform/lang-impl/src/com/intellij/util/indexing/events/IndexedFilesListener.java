@@ -5,8 +5,6 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -18,23 +16,32 @@ import com.intellij.util.CachedValueImpl;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
 public abstract class IndexedFilesListener implements AsyncFileListener {
+  public enum InvalidationCause {
+    REMOVED,
+    CHANGED,
+    RENAMED,
+    FORCE_REBUILD
+  }
+
   @NotNull
   private final VfsEventsMerger myEventMerger = new VfsEventsMerger();
 
   @NotNull
-  private final NullableLazyValue<VirtualFile> myConfig = AtomicNullableLazyValue.createValue(() -> {
-    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
+  private final CachedValue<VirtualFile> myConfig = new CachedValueImpl<>(() -> {
+    return new CachedValueProvider.Result<>(findVFileByPath(PathManager.getConfigPath()),
+                                            VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
   });
 
   @NotNull
-  private final NullableLazyValue<VirtualFile> myLog = AtomicNullableLazyValue.createValue(() -> {
-    return LocalFileSystem.getInstance().findFileByIoFile(new File(PathManager.getLogPath()));
+  private final CachedValue<VirtualFile> myLog = new CachedValueImpl<>(() -> {
+    return new CachedValueProvider.Result<>(findVFileByPath(PathManager.getLogPath()),
+                                            VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
   });
 
   @NotNull
@@ -65,19 +72,19 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
   }
 
   private boolean invalidateIndicesForFile(@NotNull VirtualFile file,
-                                           boolean contentChange,
-                                           boolean forceRebuildRequested,
+                                           @NotNull InvalidationCause cause,
                                            @NotNull VfsEventsMerger eventMerger) {
-    if (isUnderConfigOrSystem(file)) {
+    if (cause != InvalidationCause.REMOVED && isUnderConfigOrSystem(file)) {
+      // wipe eagerly indexes if they're built for system/config files anyway.
       return false;
     }
-    if (forceRebuildRequested) {
+    if (cause == InvalidationCause.FORCE_REBUILD) {
       file.putUserData(IndexingDataKeys.REBUILD_REQUESTED, Boolean.TRUE);
     }
     ProgressManager.checkCanceled();
-    eventMerger.recordBeforeFileEvent(file, contentChange);
+    eventMerger.recordBeforeFileEvent(file, cause != InvalidationCause.REMOVED && cause != InvalidationCause.RENAMED);
     if (VfsEventsMerger.LOG != null) {
-      VfsEventsMerger.LOG.info("Invalidating indexes for " + file + "; contentChange = " + contentChange + "; forceRebuildRequest = " + forceRebuildRequested);
+      VfsEventsMerger.LOG.info("Invalidating indexes for " + file + "; cause = " + cause);
     }
     return !file.isDirectory() || FileBasedIndexImpl.isMock(file) || ManagingFS.getInstance().wereChildrenAccessed(file);
   }
@@ -85,13 +92,12 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
   protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
 
   public void invalidateIndicesRecursively(@NotNull VirtualFile file,
-                                           boolean contentChange,
-                                           boolean forceRebuildRequested,
+                                           @NotNull InvalidationCause cause,
                                            @NotNull VfsEventsMerger eventMerger) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        return invalidateIndicesForFile(file, contentChange, forceRebuildRequested, eventMerger);
+        return invalidateIndicesForFile(file, cause, eventMerger);
       }
 
       @Override
@@ -107,10 +113,10 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     VfsEventsMerger tempMerger = new VfsEventsMerger();
     for (VFileEvent event : events) {
       if (event instanceof VFileContentChangeEvent) {
-        invalidateIndicesRecursively(((VFileContentChangeEvent)event).getFile(), true, false, tempMerger);
+        invalidateIndicesRecursively(((VFileContentChangeEvent)event).getFile(), InvalidationCause.CHANGED, tempMerger);
       }
       else if (event instanceof VFileDeleteEvent) {
-        invalidateIndicesRecursively(((VFileDeleteEvent)event).getFile(), false, false, tempMerger);
+        invalidateIndicesRecursively(((VFileDeleteEvent)event).getFile(), InvalidationCause.REMOVED, tempMerger);
       }
       else if (event instanceof VFilePropertyChangeEvent) {
         final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
@@ -119,10 +125,11 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
           // indexes may depend on file name
           // name change may lead to filetype change so the file might become not indexable
           // in general case have to 'unindex' the file and index it again if needed after the name has been changed
-          invalidateIndicesRecursively(pce.getFile(), false, false, tempMerger);
+          // TODO revise this code, looks suspicious
+          invalidateIndicesRecursively(pce.getFile(), InvalidationCause.RENAMED, tempMerger);
         }
         else if (propertyName.equals(VirtualFile.PROP_ENCODING)) {
-          invalidateIndicesRecursively(pce.getFile(), true, false, tempMerger);
+          invalidateIndicesRecursively(pce.getFile(), InvalidationCause.CHANGED, tempMerger);
         }
       }
     }
@@ -195,5 +202,10 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     if (configValue != null && VfsUtilCore.isAncestor(configValue, file, false)) return true;
 
     return false;
+  }
+
+  @Nullable
+  private static VirtualFile findVFileByPath(@NotNull String path) {
+    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
 }

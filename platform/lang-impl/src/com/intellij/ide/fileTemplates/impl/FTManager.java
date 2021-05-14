@@ -373,7 +373,7 @@ public class FTManager {
     }
   }
 
-  private static void processTemplate(Set<String> allNames, Map<String, FileTemplateBase> templatesToSave, FileTemplateBase template) {
+  private static void processTemplate(Set<? super String> allNames, Map<String, FileTemplateBase> templatesToSave, FileTemplateBase template) {
     if (template instanceof BundledFileTemplate && !((BundledFileTemplate)template).isTextModified()) {
       return;
     }

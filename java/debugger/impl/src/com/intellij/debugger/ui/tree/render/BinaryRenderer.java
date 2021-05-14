@@ -52,9 +52,7 @@ public class BinaryRenderer extends CompoundRendererProvider {
         // add leading zeros
         int remainder = valueStr.length() % 8;
         if (remainder != 0) {
-          for (int i = 0; i < 8 - remainder; i++) {
-            buf.append('0');
-          }
+          buf.append("0".repeat(8 - remainder));
         }
 
         buf.append(valueStr);

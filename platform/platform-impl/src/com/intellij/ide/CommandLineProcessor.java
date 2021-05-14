@@ -99,7 +99,7 @@ public final class CommandLineProcessor {
       Project project;
       if (LightEditUtil.isForceOpenInLightEditMode()) {
         project = LightEditService.getInstance().openFile(file);
-        LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
+        LightEditFeatureUsagesUtil.logFileOpen(project, CommandLine);
       }
       else {
         project = findBestProject(file, projects);

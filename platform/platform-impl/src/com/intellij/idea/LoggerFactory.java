@@ -52,7 +52,7 @@ public final class LoggerFactory implements Logger.Factory {
   }
 
   private static void configureFromXmlFile(@NotNull Path xmlFile) throws Exception {
-    String text = new String(Files.readAllBytes(xmlFile), StandardCharsets.UTF_8);
+    String text = Files.readString(xmlFile);
     text = text.replace(SYSTEM_MACRO, PathManager.getSystemPath().replace("\\", "\\\\"));
     text = text.replace(APPLICATION_MACRO, PathManager.getHomePath().replace("\\", "\\\\"));
     text = text.replace(LOG_DIR_MACRO, PathManager.getLogPath().replace("\\", "\\\\"));

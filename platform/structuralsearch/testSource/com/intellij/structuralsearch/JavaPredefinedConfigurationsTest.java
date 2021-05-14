@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 
@@ -141,7 +142,7 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "}",
            "<T> X(String s) {}", "<T extends U, V> X(int i) {}");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy")),
-           "class X {}", JavaFileType.INSTANCE,
+           "class X {}\ninterface I { void x(); }", JavaFileType.INSTANCE,
            PsiElement::getText,
            "registerNatives", "getClass", "hashCode", "equals", "clone", "toString", "notify", "notifyAll", "wait", "wait", "wait", "finalize");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.methods.with.final.parameters")),
@@ -277,11 +278,41 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "* one bug\n" +
            "*/",
            "// bug?");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.all.fields.of.the.class")),
+           "interface I {\n" +
+           "  public static final String S = \"\";\n" +
+           "}\n" +
+           "enum E { A, B }\n" +
+           "class C extends ThreadLocal {\n" +
+           "  private int i = 0;\n" +
+           "}\n",
+           "private int i = 0;",
+           "private final int threadLocalHashCode = nextHashCode();",
+           "private static AtomicInteger nextHashCode = new AtomicInteger();",
+           "private static final int HASH_INCREMENT = 1640531527;");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.fields.of.the.class")),
+           "interface I {\n" +
+           "  public static final String S = \"\";\n" +
+           "}\n" +
+           "enum E { A, B }\n" +
+           // can properly test when LanguageLevel.HIGHEST == LanguageLevel.JDK_16
+           //"record R(int i) {" +
+           //"  private static final int X = 1;" +
+           //"}" +
+           "class C extends ThreadLocal {\n" +
+           "  private int i = 0;\n" +
+           "}\n",
+           "private int i = 0;");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }
 
   protected void doTest(Configuration template, String source, String... results) {
     doTest(template, source, JavaFileType.INSTANCE, results);
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_16;
   }
 }

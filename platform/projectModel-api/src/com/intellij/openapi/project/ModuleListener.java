@@ -18,6 +18,6 @@ public interface ModuleListener extends EventListener {
   default void moduleRemoved(@NotNull Project project, @NotNull Module module) {
   }
 
-  default void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
+  default void modulesRenamed(@NotNull Project project, @NotNull List<? extends Module> modules, @NotNull Function<? super Module, String> oldNameProvider) {
   }
 }

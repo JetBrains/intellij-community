@@ -30,7 +30,6 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
@@ -128,8 +127,8 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
 
     FileUtil.copy(skeletonFile, new File(myFixture.getTempDirPath(), skeletonFile.getName()));
     if (myExpectedSkeletonFile != null) {
-      String actual = new String(Files.readAllBytes(skeletonFile.toPath()), StandardCharsets.UTF_8);
-      String skeletonText = new String(Files.readAllBytes(new File(getTestDataPath(), myExpectedSkeletonFile).toPath()), StandardCharsets.UTF_8);
+      String actual = Files.readString(skeletonFile.toPath());
+      String skeletonText = Files.readString(new File(getTestDataPath(), myExpectedSkeletonFile).toPath());
       Assert.assertThat("Wrong skeleton generated", removeComments(actual),
                         Matchers.equalToIgnoringCase(removeComments(skeletonText)));
     }

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet;
 
-import com.intellij.facet.autodetecting.FacetDetectorRegistry;
 import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
@@ -106,15 +105,6 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
 
   public final PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
-  }
-
-  /**
-   * @deprecated this method is not called by IDE core anymore. Use {@link com.intellij.framework.detection.FrameworkDetector} extension
-   * to provide automatic detection for facets
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public void registerDetectors(FacetDetectorRegistry<C> registry) {
   }
 
   /**

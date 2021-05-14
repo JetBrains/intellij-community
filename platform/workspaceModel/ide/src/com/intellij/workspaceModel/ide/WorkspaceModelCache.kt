@@ -2,13 +2,6 @@
 package com.intellij.workspaceModel.ide
 
 interface WorkspaceModelCache {
-
-  /**
-   * Returns true if there is a request for workspace model cache storing.
-   * Resets to false after cache storing (via alarm or [saveCacheNow].
-   */
-  val isCachingRequested: Boolean
-
   /**
    * Save workspace model caches
    */

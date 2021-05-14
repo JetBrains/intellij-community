@@ -18,12 +18,12 @@ package com.intellij.openapi.module.impl;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ModuleConfigurationStateImpl extends UserDataHolderBase implements ModuleConfigurationState {
   private final ModulesProvider myProvider;
@@ -45,8 +45,12 @@ public class ModuleConfigurationStateImpl extends UserDataHolderBase implements 
   }
 
   @Override
-  @Nullable
-  public ModifiableRootModel getRootModel() {
+  public ModifiableRootModel getModifiableRootModel() {
+    return null;
+  }
+
+  @Override
+  public ModuleRootModel getCurrentRootModel() {
     return null;
   }
 

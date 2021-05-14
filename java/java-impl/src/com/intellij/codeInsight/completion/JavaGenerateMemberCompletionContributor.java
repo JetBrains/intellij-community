@@ -99,19 +99,22 @@ public final class JavaGenerateMemberCompletionContributor {
   }
 
   @NotNull
-  private static LookupElementBuilder itemWithOverrideImplementDialog() {
-    return LookupElementBuilder.create(JavaBundle.message("completion.override.implement.methods")).withLookupString("Override")
-      .withInsertHandler((context, item) -> {
-        PsiAnnotation annotation = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(context.getStartOffset()), PsiAnnotation.class);
-        if (annotation != null) {
-          context.getDocument().deleteString(annotation.getTextRange().getStartOffset(), context.getTailOffset());
-          context.commitDocument();
-        }
-        context.setAddCompletionChar(false);
-        context.setLaterRunnable(() -> {
-          new OverrideMethodsHandler().invoke(context.getProject(), context.getEditor(), context.getFile());
+  private static LookupElement itemWithOverrideImplementDialog() {
+    LookupElementBuilder element =
+      LookupElementBuilder.create(JavaBundle.message("completion.override.implement.methods")).withLookupString("Override")
+        .withInsertHandler((context, item) -> {
+          PsiAnnotation annotation =
+            PsiTreeUtil.getParentOfType(context.getFile().findElementAt(context.getStartOffset()), PsiAnnotation.class);
+          if (annotation != null) {
+            context.getDocument().deleteString(annotation.getTextRange().getStartOffset(), context.getTailOffset());
+            context.commitDocument();
+          }
+          context.setAddCompletionChar(false);
+          context.setLaterRunnable(() -> {
+            new OverrideMethodsHandler().invoke(context.getProject(), context.getEditor(), context.getFile());
+          });
         });
-    });
+    return PrioritizedLookupElement.withPriority(element, -1);
   }
 
   private static void suggestGeneratedMethods(CompletionResultSet result, PsiElement position, @Nullable PsiModifierList modifierList) {

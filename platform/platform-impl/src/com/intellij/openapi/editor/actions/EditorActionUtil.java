@@ -3,14 +3,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -23,13 +16,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.EditorPopupHandler;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
 
 import static java.lang.Character.*;
 
@@ -827,51 +817,6 @@ public final class EditorActionUtil {
   private static Rectangle getVisibleArea(@NotNull Editor editor) {
     ScrollingModel model = editor.getScrollingModel();
     return EditorCoreUtil.isTrueSmoothScrollingEnabled() ? model.getVisibleAreaOnScrollingFinished() : model.getVisibleArea();
-  }
-
-  /**
-   * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
-   * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static EditorPopupHandler createEditorPopupHandler(@NotNull final String groupId) {
-    return new EditorPopupHandler() {
-      @Override
-      public void invokePopup(final EditorMouseEvent event) {
-        if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
-          showEditorPopup(event, group);
-        }
-      }
-    };
-  }
-
-  /**
-   * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
-   * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static EditorPopupHandler createEditorPopupHandler(@NotNull final ActionGroup group) {
-    return new EditorPopupHandler() {
-      @Override
-      public void invokePopup(final EditorMouseEvent event) {
-        showEditorPopup(event, group);
-      }
-    };
-  }
-
-  private static void showEditorPopup(final EditorMouseEvent event, @NotNull final ActionGroup group) {
-    if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
-      MouseEvent e = event.getMouseEvent();
-      final Component c = e.getComponent();
-      if (c != null && c.isShowing()) {
-        popupMenu.getComponent().show(c, e.getX(), e.getY());
-      }
-      e.consume();
-    }
   }
 
   private static boolean isBetweenWhitespaces(@NotNull CharSequence text, int offset) {

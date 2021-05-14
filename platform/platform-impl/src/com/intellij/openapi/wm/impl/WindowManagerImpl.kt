@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.configurationStore.deserializeInto
@@ -16,7 +16,6 @@ import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.util.*
 import java.util.function.Supplier
 import javax.swing.JDialog
 import javax.swing.JFrame
@@ -437,12 +435,6 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       val info = FrameInfo()
       frameElement.deserializeInto(info)
 
-      // backward compatibility - old name of extendedState attribute
-      if (info.extendedState == Frame.NORMAL) {
-        frameElement.getAttributeValue("extended-state")?.let {
-          info.extendedState = StringUtil.parseInt(it, Frame.NORMAL)
-        }
-      }
       if (info.extendedState and Frame.ICONIFIED > 0) {
         info.extendedState = Frame.NORMAL
       }

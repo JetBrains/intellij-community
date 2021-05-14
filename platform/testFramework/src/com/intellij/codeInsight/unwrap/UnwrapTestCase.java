@@ -79,7 +79,7 @@ public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
   protected static String indent(String code, int times) {
     StringBuilder result = new StringBuilder();
     for (String line : StringUtil.tokenize(code, "\n")) {
-      for (int i = 0; i < times; i++) result.append("    ");
+      result.append("    ".repeat(times));
       result.append(line).append('\n');
     }
     return result.toString();

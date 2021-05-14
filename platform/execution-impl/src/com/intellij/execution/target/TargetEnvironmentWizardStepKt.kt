@@ -2,13 +2,11 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.scale.JBUIScale
@@ -50,25 +48,23 @@ abstract class TargetEnvironmentWizardStepKt(@NlsContexts.DialogTitle title: Str
     val result = JPanel(BorderLayout(HGAP, LARGE_VGAP))
 
     val top = createTopPanel()
-    top.border = JBUI.Borders.merge(
-      JBUI.Borders.emptyBottom(LARGE_VGAP),
-      JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 1, 0),
-      true
-    )
-
     result.add(top, BorderLayout.NORTH)
 
-    val center = createMainPanel()
+    val mainPanel = createMainPanel()
+    val center = JPanel(BorderLayout())
+    center.add(mainPanel, BorderLayout.CENTER)
+    center.border = JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 1, 0, 1, 0)
     result.add(center, BorderLayout.CENTER)
-
-    result.add(SeparatorComponent(), BorderLayout.SOUTH)
 
     return result
   }
 
   protected fun createTopPanel(): JComponent {
     return JPanel(HorizontalLayout(ICON_GAP)).also {
-      it.border = JBUI.Borders.emptyBottom(VGAP)
+      val insets = TargetEnvironmentWizard.defaultDialogInsets()
+      it.border = JBUI.Borders.merge(JBUI.Borders.emptyBottom(VGAP),
+                                     JBUI.Borders.empty(insets.top, insets.left, 0, insets.right),
+                                     true)
       it.add(stepDescriptionLabel)
       spinningLabel.isVisible = false
       it.add(spinningLabel)

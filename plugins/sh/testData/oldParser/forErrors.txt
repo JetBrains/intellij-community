@@ -23,5 +23,5 @@ SHELL_SCRIPT
             PsiWhiteSpace(' ')
             LITERAL
               PsiElement(word)('done')
-          PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected
+          PsiErrorElement:'&', '&&', ';', '\n', '|', '|&' or '||' expected
             <empty list>

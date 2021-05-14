@@ -492,11 +492,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           checkNotNullable(memState, arg, NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.problem(methodRef, null));
         }
       }
-      if (instruction.getMutationSignature().mutatesArg(paramIndex) && Mutability.fromDfType(memState.getDfType(arg)).isUnmodifiable()) {
-        reportMutabilityViolation(false, anchor);
+      if (instruction.getMutationSignature().mutatesArg(paramIndex)) {
         DfType dfType = memState.getDfType(arg);
-        if (dfType instanceof DfReferenceType) {
-          memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
+        if (!Mutability.fromDfType(dfType).canBeModified() &&
+            // Empty array cannot be modified at all    
+            !memState.getDfType(SpecialField.ARRAY_LENGTH.createValue(factory, arg)).equals(intValue(0))) {
+          reportMutabilityViolation(false, anchor);
+          if (dfType instanceof DfReferenceType) {
+            memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
+          }
         }
       }
       if (argValues != null && (paramIndex < argValues.length - 1 || !varargCall)) {
@@ -518,7 +522,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       value = dereference(memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
     }
     DfType dfType = memState.getDfType(value);
-    if (instruction.getMutationSignature().mutatesThis() && Mutability.fromDfType(dfType).isUnmodifiable()) {
+    if (instruction.getMutationSignature().mutatesThis() && !Mutability.fromDfType(dfType).canBeModified()) {
       PsiMethod method = instruction.getTargetMethod();
       // Inferred mutation annotation may infer mutates="this" if invisible state is mutated (e.g. cached hashCode is stored).
       // So let's conservatively skip the warning here. Such contract is still useful because it assures that nothing else is mutated.

@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.util.idString
-import com.intellij.completion.ml.util.RelevanceUtil
 import com.intellij.completion.ml.storage.LookupStorage
+import com.intellij.completion.ml.util.RelevanceUtil
+import com.intellij.completion.ml.util.idString
 import com.intellij.stats.completion.LookupEntryInfo
 import com.intellij.stats.completion.LookupState
+import com.intellij.util.SlowOperations
 
 class LookupStateManager {
     private val elementToId = mutableMapOf<String, Int>()
@@ -16,7 +17,13 @@ class LookupStateManager {
     private val lookupStringToHash = mutableMapOf<String, Int>()
     private var currentSessionFactors: Map<String, String> = emptyMap()
 
-    fun update(lookup: LookupImpl, factorsUpdated: Boolean): LookupState {
+  fun update(lookup: LookupImpl, factorsUpdated: Boolean): LookupState {
+    return SlowOperations.allowSlowOperations<LookupState, Throwable> {
+      doUpdate(lookup, factorsUpdated)
+    }
+  }
+
+  private fun doUpdate(lookup: LookupImpl, factorsUpdated: Boolean): LookupState {
         val ids = mutableListOf<Int>()
         val newIds = mutableSetOf<Int>()
 

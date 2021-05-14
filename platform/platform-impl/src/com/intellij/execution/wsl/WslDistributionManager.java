@@ -39,6 +39,13 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   /**
+   * @return not-null if installed distribution list is up-to-date; otherwise, return null and initialize update in background.
+   */
+  public @Nullable List<WSLDistribution> getCachedInstalledDistributions() {
+    return getInstalledDistributionsFuture().getNow(null);
+  }
+
+  /**
    * @return list of installed WSL distributions by parsing output of `wsl.exe -l`. Please call it
    * on a pooled thread and outside of the read action as it runs a process under the hood.
    * @see #getInstalledDistributionsFuture
@@ -79,7 +86,7 @@ public abstract class WslDistributionManager implements Disposable {
 
   private @NotNull WSLDistribution getOrCreateDistributionByMsId(@NonNls @NotNull String msId, boolean overrideCaseInsensitively) {
     if (msId.isEmpty()) {
-      throw new IllegalStateException("WSL msId is empty");
+      throw new IllegalArgumentException("WSL msId is empty");
     }
     // reuse previously created WSLDistribution instances to avoid re-calculating Host IP / WSL IP
     WSLDistribution d = myMsIdToDistributionCache.get(msId);
@@ -137,7 +144,7 @@ public abstract class WslDistributionManager implements Disposable {
     private final long myExternalChangesCount;
 
     private CachedDistributions(@NotNull List<WSLDistribution> installedDistributions) {
-      myInstalledDistributions = installedDistributions;
+      myInstalledDistributions = List.copyOf(installedDistributions);
       myExternalChangesCount = getCurrentExternalChangesCount();
     }
 

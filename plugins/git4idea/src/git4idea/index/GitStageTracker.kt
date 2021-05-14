@@ -47,7 +47,8 @@ class GitStageTracker(val project: Project) : Disposable {
   val ignoredPaths: Map<VirtualFile, List<FilePath>>
     get() {
       return gitRoots().associateWith {
-        GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(it)?.ignoredFilesHolder?.ignoredFilePaths?.toList() ?: emptyList()
+        GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(it)?.ignoredFilesHolder?.ignoredFilePaths?.toList()
+        ?: emptyList()
       }
     }
 
@@ -253,7 +254,7 @@ interface GitStageTrackerListener : EventListener {
   fun update()
 }
 
-private fun getRoot(project: Project, file: VirtualFile): VirtualFile? {
+internal fun getRoot(project: Project, file: VirtualFile): VirtualFile? {
   return when {
     file is GitIndexVirtualFile -> file.root
     file.isInLocalFileSystem -> ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file)
@@ -267,6 +268,10 @@ private fun gitRoots(project: Project): List<VirtualFile> {
 
 fun GitStageTracker.status(file: VirtualFile): GitFileStatus? {
   val root = getRoot(project, file) ?: return null
+  return status(root, file)
+}
+
+fun GitStageTracker.status(root: VirtualFile, file: VirtualFile): GitFileStatus? {
   val filePath = file.filePath()
 
   if (GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root)?.ignoredFilesHolder?.containsFile(filePath) == true) {

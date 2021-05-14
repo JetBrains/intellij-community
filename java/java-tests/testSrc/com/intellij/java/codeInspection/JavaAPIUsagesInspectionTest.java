@@ -3,7 +3,6 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl.PreviewFeatureVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -96,8 +95,8 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
         final PsiFile file = PsiManager.getInstance(JavaAPIUsagesInspectionTest.this.getProject()).findFile(fileOrDir);
         PsiTreeUtil.findChildrenOfAnyType(file, PsiMember.class)
           .stream()
-          .filter(member -> member.hasAnnotation(PreviewFeatureVisitor.JDK_INTERNAL_PREVIEW_FEATURE) ||
-                            member.hasAnnotation(PreviewFeatureVisitor.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE))
+          .filter(member -> member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE) ||
+                            member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE))
           .filter(member -> getLanguageLevel(member) == LANGUAGE_LEVEL)
           .map(e -> Java15APIUsageInspection.getSignature(e))
           .forEach(previews::add);
@@ -106,7 +105,7 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
 
       @Nullable
       private LanguageLevel getLanguageLevel(@NotNull final PsiMember e) {
-        final PsiAnnotation annotation = PreviewFeatureVisitor.getPreviewFeatureAnnotation(e);
+        final PsiAnnotation annotation = HighlightingFeature.getPreviewFeatureAnnotation(e);
         if (annotation == null) return null;
 
         final HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);

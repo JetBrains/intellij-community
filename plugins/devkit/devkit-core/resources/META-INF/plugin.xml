@@ -6,7 +6,7 @@
   <description><![CDATA[
     Supports development of plugins for IntelliJ IDEA and other products based on the IntelliJ Platform.
     <br>
-    <a href="http://www.jetbrains.org/intellij/sdk/docs/">IntelliJ Platform SDK Docs</a>
+    <a href="https://plugins.jetbrains.com/docs/intellij/?from=DevkitPluginDescription">IntelliJ Platform SDK Docs</a>
   ]]></description>
 
   <category>Plugin Development</category>

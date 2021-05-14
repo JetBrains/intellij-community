@@ -51,6 +51,12 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     super(PsiField.class, supportedAnnotationClass);
   }
 
+  @Override
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint == null || nameHint.equals(getLoggerName(psiClass));
+  }
+
   @NotNull
   public static String getLoggerName(@NotNull PsiClass psiClass) {
     return ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.LOG_FIELDNAME, psiClass);
@@ -96,13 +102,14 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass,
+                                     @NotNull PsiAnnotation psiAnnotation,
+                                     @NotNull List<? super PsiElement> target) {
     target.add(createLoggerField(psiClass, psiAnnotation));
   }
 
   private LombokLightFieldBuilder createLoggerField(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     // called only after validation succeeded
-
     final Project project = psiClass.getProject();
     final PsiManager manager = psiClass.getContainingFile().getManager();
 
@@ -173,5 +180,4 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     }
     return false;
   }
-
 }

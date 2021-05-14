@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +71,7 @@ class UnifiedEditorRangeHighlighter {
 
       if (newEnd - newStart <= 0) return true;
 
+      if (myPieces.size() % 1014 == 0) ProgressManager.checkCanceled();
       myPieces.add(new Element(marker, newStart, newEnd));
 
       return true;

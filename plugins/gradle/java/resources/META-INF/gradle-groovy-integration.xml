@@ -53,6 +53,8 @@
                                  implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectReferenceProvider"/>
     <searcher forClass="com.intellij.model.search.PsiSymbolReferenceSearchParameters"
               implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectReferenceSearcher"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectUsageSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -11,7 +11,6 @@ import com.intellij.find.EditorSearchSession;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -474,7 +473,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return result;
   }
 
-  public static void collectHighlightRanges(@NotNull PsiSymbolReference ref, @NotNull Collection<? super TextRange> result) {
+  public static void collectHighlightRanges(@NotNull PsiReference ref, @NotNull Collection<? super TextRange> result) {
     for (TextRange relativeRange : ReferenceRange.getRanges(ref)) {
       collectHighlightRanges(ref.getElement(), relativeRange, result);
     }

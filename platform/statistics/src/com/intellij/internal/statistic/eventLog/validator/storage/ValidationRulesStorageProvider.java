@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ValidationRulesStorageProvider {
   @NotNull
-  public static ValidationRulesStorage newStorage(@NotNull String recorderId) {
-    final ValidationRulesStorage storage =
+  public static IntellijValidationRulesStorage newStorage(@NotNull String recorderId) {
+    final IntellijValidationRulesStorage storage =
       ApplicationManager.getApplication().isUnitTestMode() ? ValidationRulesInMemoryStorage.INSTANCE : new ValidationRulesPersistedStorage(recorderId);
     if (ApplicationManager.getApplication().isInternal()) {
       return new CompositeValidationRulesStorage(storage, new ValidationTestRulesPersistedStorage(recorderId));

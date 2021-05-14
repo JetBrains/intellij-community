@@ -17,7 +17,7 @@ import javax.swing.JOptionPane
 import javax.swing.KeyStroke
 
 object PerformActionUtil {
-  fun getInputEvent(actionName: String): InputEvent {
+  private fun getInputEvent(actionName: String): InputEvent {
     val shortcuts: Array<Shortcut> = KeymapManager.getInstance().activeKeymap.getShortcuts(actionName)
     var keyStroke: KeyStroke? = null
     for (each in shortcuts) {

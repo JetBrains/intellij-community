@@ -13,37 +13,25 @@ public class PreviewFeatureAnnotationTest extends LightJavaCodeInsightFixtureTes
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final String previewFeatureAnnotation = BASE_PATH + "/PreviewFeature.java";
-    final String previewFeatureAnnotationNew = BASE_PATH + "/JdkInternalJavacPreviewFeature.java";
-    final String packagePreview = BASE_PATH + "/packagepreview/package-info.java";
-    final String interfaceInPreviewPackage = BASE_PATH + "/packagepreview/FromPreview.java";
-    final String moduleInfo = BASE_PATH + "/packagepreview/module-info.java";
 
-    final String packagePreviewNew = BASE_PATH + "/jdk.internal.javac.packagepreview/package-info.java";
-    final String interfaceInPreviewPackageNew = BASE_PATH + "/jdk.internal.javac.packagepreview/FromPreview.java";
-    final String moduleInfoNew = BASE_PATH + "/jdk.internal.javac.packagepreview/module-info.java";
+    configureByFiles(BASE_PATH + "/PreviewFeature.java"
+      , BASE_PATH + "/JdkInternalJavacPreviewFeature.java"
+      , BASE_PATH + "/packagepreview/package-info.java"
+      , BASE_PATH + "/packagepreview/FromPreview.java"
+      , BASE_PATH + "/packagepreview/module-info.java"
+      , BASE_PATH + "/jdk.internal.javac.packagepreview/package-info.java"
+      , BASE_PATH + "/jdk.internal.javac.packagepreview/FromPreview.java"
+      , BASE_PATH + "/jdk.internal.javac.packagepreview/module-info.java"
+      , BASE_PATH + "/packagepreview/impl/package-info.java"
+      , BASE_PATH + "/packagepreview/impl/FromPreviewImpl.java"
+      , BASE_PATH + "/jdk.internal.javac.packagepreview/impl/package-info.java"
+      , BASE_PATH + "/jdk.internal.javac.packagepreview/impl/FromPreviewImpl.java");
+  }
 
-    myFixture.configureByFile(previewFeatureAnnotation);
-    myFixture.configureByFile(previewFeatureAnnotationNew);
-    myFixture.configureByFile(packagePreview);
-    myFixture.configureByFile(interfaceInPreviewPackage);
-    myFixture.configureByFile(moduleInfo);
-
-    myFixture.configureByFile(packagePreviewNew);
-    myFixture.configureByFile(interfaceInPreviewPackageNew);
-    myFixture.configureByFile(moduleInfoNew);
-
-    final String packagePreviewImpl = BASE_PATH + "/packagepreview/impl/package-info.java";
-    final String fromPreviewImpl = BASE_PATH + "/packagepreview/impl/FromPreviewImpl.java";
-
-    final String packagePreviewImplNew = BASE_PATH + "/jdk.internal.javac.packagepreview/impl/package-info.java";
-    final String fromPreviewImplNew = BASE_PATH + "/jdk.internal.javac.packagepreview/impl/FromPreviewImpl.java";
-
-    myFixture.configureByFile(packagePreviewImpl);
-    myFixture.configureByFile(fromPreviewImpl);
-
-    myFixture.configureByFile(packagePreviewImplNew);
-    myFixture.configureByFile(fromPreviewImplNew);
+  private void configureByFiles(String... files) {
+    for (String file : files) {
+      myFixture.configureByFile(file);
+    }
   }
 
   @Override
@@ -73,7 +61,7 @@ public class PreviewFeatureAnnotationTest extends LightJavaCodeInsightFixtureTes
 
   private void doTest() {
     String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
-    myFixture.configureByFile(filePath);
+    configureByFiles(filePath);
     myFixture.checkHighlighting();
   }
 

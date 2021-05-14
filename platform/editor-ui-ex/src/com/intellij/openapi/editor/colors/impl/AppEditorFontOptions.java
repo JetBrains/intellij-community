@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -18,15 +18,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @State(name = "DefaultFont", storages = @Storage("editor.xml"))
-public class AppEditorFontOptions implements PersistentStateComponent<AppEditorFontOptions.PersistentFontPreferences> {
-
+public final class AppEditorFontOptions implements PersistentStateComponent<AppEditorFontOptions.PersistentFontPreferences> {
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
 
   public AppEditorFontOptions() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
-      myFontPreferences.register(
-        FontPreferences.DEFAULT_FONT_NAME,
-        UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
+      myFontPreferences.register(FontPreferences.DEFAULT_FONT_NAME, UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
     }
   }
 
@@ -70,9 +67,8 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     return ApplicationManager.getApplication().getService(AppEditorFontOptions.class);
   }
 
-  @Nullable
   @Override
-  public PersistentFontPreferences getState() {
+  public @NotNull PersistentFontPreferences getState() {
     return new PersistentFontPreferences(myFontPreferences);
   }
 
@@ -111,8 +107,7 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     copyState(PersistentFontPreferences.getDefaultState(), fontPreferences);
   }
 
-  @NotNull
-  public FontPreferences getFontPreferences() {
+  public @NotNull FontPreferences getFontPreferences() {
     return myFontPreferences;
   }
 }

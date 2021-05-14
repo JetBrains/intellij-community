@@ -1,17 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.util.Pair
-import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
+import org.jetbrains.intellij.build.tasks.reorderJar
 import java.io.File
+import java.nio.file.DirectoryStream
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
@@ -41,26 +45,26 @@ class PluginBuilder(private val builder: DistributionJARsBuilder,
   }
 
   fun buildChanged(): String {
-    val dirtyPlugin = getDirtyPluginsAndClear()
-    if (dirtyPlugin.isEmpty()) {
+    val dirtyPlugins = getDirtyPluginsAndClear()
+    if (dirtyPlugins.isEmpty()) {
       return "All plugins are up to date"
     }
 
     val layoutBuilder = LayoutBuilder(buildContext, false)
-    for (plugin in dirtyPlugin) {
+    for (plugin in dirtyPlugins) {
       try {
         clearDirContent(plugin.dir)
         buildPlugin(plugin, buildContext, builder, layoutBuilder)
       }
       catch (e: Throwable) {
         // put back (that's ok to add already processed plugins - doesn't matter, no need to complicate)
-        dirtyPlugin.forEach {
-          addDirtyPluginDir(it, "<internal error>")
+        for (dirtyPlugin in dirtyPlugins) {
+          addDirtyPluginDir(dirtyPlugin, "<internal error>")
         }
         throw e
       }
     }
-    return "Plugins ${dirtyPlugin.joinToString { it.dir.fileName.toString() }} were updated"
+    return "Plugins ${dirtyPlugins.joinToString { it.dir.fileName.toString() }} were updated"
   }
 }
 
@@ -72,7 +76,7 @@ fun buildPlugins(@Suppress("SameParameterValue") parallelCount: Int,
     Executor(Runnable::run)
   }
   else {
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("Building Plugins", parallelCount, false)
+    Executors.newWorkStealingPool(parallelCount)
   }
   val errorRef = AtomicReference<Throwable>()
 
@@ -135,8 +139,23 @@ private fun buildPlugin(plugin: BuildItem,
     builder.checkOutputOfPluginModules(mainModule, plugin.layout.moduleJars, plugin.layout.moduleExcludes)
   }
 
-  val mapping = ProjectStructureMapping()
-  builder.processLayout(layoutBuilder, plugin.layout, plugin.dir, layoutBuilder.createLayoutSpec(mapping, true), plugin.layout.moduleJars, generatedResources)
+  val layoutSpec = layoutBuilder.createLayoutSpec(ProjectStructureMapping(), true)
+  builder.processLayout(layoutBuilder, plugin.layout, plugin.dir, layoutSpec, plugin.layout.moduleJars, generatedResources)
+  val stream: DirectoryStream<Path>
+  try {
+    stream = Files.newDirectoryStream(plugin.dir.resolve("lib"))
+  }
+  catch (ignore: NoSuchFileException) {
+    return
+  }
+
+  stream.use {
+    for (path in it) {
+      if (path.toString().endsWith(".jar")) {
+        reorderJar(path, emptyList(), path)
+      }
+    }
+  }
 }
 
 private fun getGeneratedResources(plugin: PluginLayout, buildContext: BuildContext): List<Pair<File, String>> {
@@ -147,7 +166,8 @@ private fun getGeneratedResources(plugin: PluginLayout, buildContext: BuildConte
   val generatedResources = ArrayList<Pair<File, String>>(plugin.resourceGenerators.size)
   for (resourceGenerator in plugin.resourceGenerators) {
     val className = resourceGenerator.first::class.java.name
-    if (className == "org.jetbrains.intellij.build.sharedIndexes.PreSharedIndexesGenerator" || className.endsWith("PrebuiltIndicesResourcesGenerator")) {
+    if (className == "org.jetbrains.intellij.build.sharedIndexes.PreSharedIndexesGenerator" ||
+        className.endsWith("PrebuiltIndicesResourcesGenerator")) {
       continue
     }
 

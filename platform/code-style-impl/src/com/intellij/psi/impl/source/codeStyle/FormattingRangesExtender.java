@@ -30,7 +30,7 @@ class FormattingRangesExtender {
     myFile = file;
   }
 
-  public List<TextRange> getExtendedRanges(@NotNull List<TextRange> ranges) {
+  public List<TextRange> getExtendedRanges(@NotNull List<? extends TextRange> ranges) {
     return ContainerUtil.map(ranges, range -> processRange(range));
   }
 

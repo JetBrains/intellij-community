@@ -1,15 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-class ClassMapCachingNulls<T> {
+final class ClassMapCachingNulls<T> {
   private final Map<Class<?>, T[]> myBackingMap;
   private final T[] myEmptyArray;
   private final List<? extends T> myOrderingArray;
@@ -21,7 +20,7 @@ class ClassMapCachingNulls<T> {
     myOrderingArray = orderingArray;
   }
 
-  T @Nullable [] get(Class<?> aClass) {
+  T @Nullable [] get(@NotNull Class<?> aClass) {
     T[] value = myMap.get(aClass);
     if (value != null) {
       if (value == myEmptyArray) {
@@ -32,11 +31,10 @@ class ClassMapCachingNulls<T> {
         return value;
       }
     }
-    List<T> result = getFromBackingMap(aClass);
-    return cache(aClass, result);
+    return cache(aClass, getFromBackingMap(aClass));
   }
 
-  private T[] cache(Class<?> aClass, List<T> result) {
+  private T[] cache(@NotNull Class<?> aClass, @Nullable List<T> result) {
     T[] value;
     if (result == null) {
       myMap.put(aClass, myEmptyArray);
@@ -50,22 +48,27 @@ class ClassMapCachingNulls<T> {
     return value;
   }
 
-  private @Nullable List<T> getFromBackingMap(Class<?> aClass) {
+  private @Nullable List<T> getFromBackingMap(@NotNull Class<?> aClass) {
     T[] value = myBackingMap.get(aClass);
     Set<T> result = null;
     if (value != null) {
       assert value.length != 0;
-      result = ContainerUtil.set(value);
-    }
-    for (Class<?> superclass : JBIterable.<Class<?>>of(aClass.getSuperclass()).append(aClass.getInterfaces())) {
-      result = addFromUpper(result, superclass);
+      result = new HashSet<>(value.length);
+      Collections.addAll(result, value);
     }
 
-    if (result == null) return null;
-    return ContainerUtil.filter(myOrderingArray, result::contains);
+    Class<?> superClass = aClass.getSuperclass();
+    if (superClass != null) {
+      result = addFromUpper(result, superClass);
+    }
+    for (Class<?> superInterface : aClass.getInterfaces()) {
+      result = addFromUpper(result, superInterface);
+    }
+
+    return result == null ? null : ContainerUtil.findAll(myOrderingArray, result::contains);
   }
 
-  private Set<T> addFromUpper(Set<T> value, Class<?> superclass) {
+  private @Nullable Set<T> addFromUpper(@Nullable Set<T> value, @NotNull Class<?> superclass) {
     T[] fromUpper = get(superclass);
     if (fromUpper != null) {
       assert fromUpper.length != 0;
@@ -78,8 +81,7 @@ class ClassMapCachingNulls<T> {
     return value;
   }
 
-  Map<Class<?>, T[]> getBackingMap() {
+  @NotNull Map<Class<?>, T[]> getBackingMap() {
     return myBackingMap;
   }
-
 }

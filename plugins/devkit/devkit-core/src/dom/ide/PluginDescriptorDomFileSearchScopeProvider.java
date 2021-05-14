@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.ide;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.*;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +33,9 @@ public class PluginDescriptorDomFileSearchScopeProvider implements SearchScopePr
   public List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
     if (DumbService.isDumb(project) || !PsiUtil.isIdeaProject(project)) return Collections.emptyList();
 
-    final Collection<VirtualFile> pluginDescriptorFiles =
-      DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, GlobalSearchScopesCore.projectProductionScope(project));
+    final Collection<VirtualFile> pluginDescriptorFiles = SlowOperations.allowSlowOperations(
+      () -> DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, GlobalSearchScopesCore.projectProductionScope(project))
+    );
     GlobalSearchScope scope = GlobalSearchScope.filesScope(project, pluginDescriptorFiles);
     return Collections.singletonList(new DelegatingGlobalSearchScope(scope) {
       @NotNull

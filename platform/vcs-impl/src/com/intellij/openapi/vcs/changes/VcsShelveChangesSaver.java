@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +43,7 @@ public class VcsShelveChangesSaver {
     LOG.info("save " + rootsToSave);
 
     String oldProgressTitle = myProgressIndicator.getText();
-    myProgressIndicator.setText(VcsBundle.getString("vcs.shelving.changes"));
+    myProgressIndicator.setText(VcsBundle.message("vcs.shelving.changes"));
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     Collection<Change> allChanges = changeListManager.getAllChanges();
@@ -75,13 +75,13 @@ public class VcsShelveChangesSaver {
   public void load() {
     LOG.info("load");
     String oldProgressTitle = myProgressIndicator.getText();
-    myProgressIndicator.setText(VcsBundle.getString("vcs.unshelving.changes"));
+    myProgressIndicator.setText(VcsBundle.message("vcs.unshelving.changes"));
     for (Map.Entry<String, ShelvedChangeList> listEntry : myShelvedLists.entrySet()) {
       VcsShelveUtils.doSystemUnshelve(project, listEntry.getValue(),
                                       ChangeListManager.getInstance(project).getChangeList(listEntry.getKey()),
                                       ShelveChangesManager.getInstance(project),
-                                      VcsBundle.getString("vcs.unshelving.conflict.left"),
-                                      VcsBundle.getString("vcs.unshelving.conflict.right"));
+                                      VcsBundle.message("vcs.unshelving.conflict.left"),
+                                      VcsBundle.message("vcs.unshelving.conflict.right"));
     }
     myProgressIndicator.setText(oldProgressTitle);
   }

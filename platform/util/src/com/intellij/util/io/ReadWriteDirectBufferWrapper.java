@@ -41,6 +41,14 @@ public final class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     }
   }
 
+  @Override
+  public void markDirty() throws IOException {
+    if (isReadOnly()) {
+      throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
+    }
+    super.markDirty();
+  }
+
   static class FileContext implements AutoCloseable {
     private final FileChannel myFile;
     private final boolean myReadOnly;
@@ -62,8 +70,11 @@ public final class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
           catch (NoSuchFileException ex) {
             Path parentFile = path.getParent();
             if (!Files.exists(parentFile)) {
+              if (!Files.isWritable(path)) {
+                throw ex;
+              }
               if (!parentWasCreated) {
-                FileUtil.createDirectory(parentFile.toFile());
+                Files.createDirectories(parentFile);
                 parentWasCreated = true;
               }
               else {

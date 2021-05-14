@@ -57,7 +57,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
 
   public GenericRepositoryEditor(final Project project,
                                  final T repository,
-                                 final Consumer<T> changeListener) {
+                                 final Consumer<? super T> changeListener) {
     super(project, repository, changeListener);
 
     myTest2Button.addActionListener(new ActionListener() {

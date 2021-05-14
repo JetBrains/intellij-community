@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,45 +44,63 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private final Long2ObjectMap<RefreshSessionImpl> mySessions = new Long2ObjectOpenHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
 
-  public void execute(@NotNull RefreshSessionImpl session) {
+  void execute(@NotNull RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
-      queueSession(session, session.getModality());
+      queueSessionAsync(session, session.getModality());
     }
     else {
       Application app = ApplicationManager.getApplication();
       if (app.isWriteThread()) {
-        ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
-        doScan(session);
-        session.fireEvents(session.getEvents(), null);
+        queueSessionSync(session);
       }
       else {
         if (((ApplicationEx)app).holdsReadLock() || EDT.isCurrentThreadEdt()) {
           LOG.error("Do not perform a synchronous refresh under read lock (except from EDT) - causes deadlocks if there are events to fire.");
           return;
         }
-        queueSession(session, ModalityState.defaultModalityState());
+        queueSessionAsync(session, ModalityState.defaultModalityState());
         session.waitFor();
       }
     }
   }
 
-  private void queueSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
-    myQueue.execute(() -> {
-      startRefreshActivity();
-      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted(IdeBundle.message("progress.title.doing.file.refresh.0", session), HeavyProcessLatch.Type.Syncing)) {
-        doScan(session);
-      }
-      finally {
-        finishRefreshActivity();
-        if (Registry.is("vfs.async.event.processing")) {
-          scheduleAsynchronousPreprocessing(session, modality);
-        }
-        else {
-          AppUIExecutor.onWriteThread(modality).later().submit(() -> session.fireEvents(session.getEvents(), null));
-        }
-      }
-    });
+  private void queueSessionSync(@NotNull RefreshSessionImpl session) {
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+    executeRefreshSession(session);
+    fireEventsSync(session);
+  }
+
+  private static void fireEventsSync(@NotNull RefreshSessionImpl session) {
+    session.fireEvents(ContainerUtil.map(session.getEvents(), e -> new DisclosedVfsEvent(e)), null);
+  }
+
+  private void queueSessionAsync(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
+    myQueue.execute(() -> executeSession(session, modality));
     myEventCounter.eventHappened(session);
+  }
+
+  private void executeSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
+    startRefreshActivity();
+    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted(IdeBundle.message("progress.title.doing.file.refresh.0", session), HeavyProcessLatch.Type.Syncing)) {
+      executeRefreshSession(session);
+    }
+    finally {
+      finishRefreshActivity();
+      fireEventsAsync(session, modality);
+    }
+  }
+
+  private void fireEventsAsync(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
+    if (isAsyncEventProcessingEnabled()) {
+      scheduleAsynchronousPreprocessing(session, modality);
+    }
+    else {
+      AppUIExecutor.onWriteThread(modality).later().submit(() -> fireEventsSync(session));
+    }
+  }
+
+  static boolean isAsyncEventProcessingEnabled() {
+    return Registry.is("vfs.async.event.processing");
   }
 
   private void scheduleAsynchronousPreprocessing(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
@@ -117,16 +136,25 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private static @NotNull Runnable runAsyncListeners(@NotNull RefreshSessionImpl session) {
-    List<VFileEvent> events = ContainerUtil.filter(session.getEvents(), e -> {
+    List<DisclosedVfsEvent> events = ContainerUtil.mapNotNull(session.getEvents(), e -> {
       VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
-      return file == null || file.isValid();
+      if (file == null || file.isValid()) {
+        return new DisclosedVfsEvent(e);
+      }
+      return null;
     });
 
-    List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(events);
+    List<VFileEvent> allEvents = ContainerUtil.flatMap(events, e -> {
+      SmartList<VFileEvent> toMap = new SmartList<>(e.getNestedFsFileEvents());
+      toMap.add(e.getFileEvent());
+      return toMap;
+    });
+
+    List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(allEvents);
     return () -> session.fireEvents(events, appliers);
   }
 
-  private void doScan(@NotNull RefreshSessionImpl session) {
+  private void executeRefreshSession(@NotNull RefreshSessionImpl session) {
     try {
       updateSessionMap(session, true);
       session.scan();

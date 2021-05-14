@@ -59,6 +59,6 @@ public class FileDrop {
   public interface Target {
     FileChooserDescriptor getDescriptor();
     boolean isHiddenShown();
-    void dropFiles(List<VirtualFile> files);
+    void dropFiles(List<? extends VirtualFile> files);
   }
 }

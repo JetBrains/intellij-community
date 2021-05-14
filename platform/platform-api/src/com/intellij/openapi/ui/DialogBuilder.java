@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -165,6 +165,10 @@ public class DialogBuilder implements Disposable {
     Disposer.register(this, disposable);
   }
 
+  /**
+   * @deprecated Dialog action buttons should be right-aligned.
+   */
+  @Deprecated
   public void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
     myDialogWrapper.setButtonsAlignment(alignment);
   }
@@ -214,7 +218,7 @@ public class DialogBuilder implements Disposable {
     return get(getActionDescriptors(), OkActionDescriptor.class);
   }
 
-  private static CustomizableAction get(final ArrayList<ActionDescriptor> actionDescriptors, final Class aClass) {
+  private static CustomizableAction get(final java.util.List<? extends ActionDescriptor> actionDescriptors, final Class aClass) {
     for (ActionDescriptor actionDescriptor : actionDescriptors) {
       if (actionDescriptor.getClass().isAssignableFrom(aClass)) return (CustomizableAction)actionDescriptor;
     }

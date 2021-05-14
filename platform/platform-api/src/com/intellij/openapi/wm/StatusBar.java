@@ -130,15 +130,6 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   @Nullable
   Project getProject();
 
-  /**
-   * @deprecated use {@link #createChild(IdeFrame)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  default StatusBar createChild() {
-    return this;
-  }
-
   final class Anchors {
     public static final String DEFAULT_ANCHOR = after(StandardWidgets.COLUMN_SELECTION_MODE_PANEL);
 

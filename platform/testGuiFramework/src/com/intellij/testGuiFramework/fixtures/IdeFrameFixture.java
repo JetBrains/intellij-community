@@ -855,9 +855,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     if (builder.length() > 0) {
       builder.append(System.lineSeparator());
     }
-    for (int i = 0; i < level * numIndentSpaces; ++i) {
-      builder.append(' ');
-    }
+    builder.append(" ".repeat(level * numIndentSpaces));
     builder.append(node.getText().toString());
     Enumeration<XDebuggerTreeNode> children = node.children();
     while (children.hasMoreElements()) {

@@ -20,6 +20,7 @@ public class ShListTerminatorImpl extends ShCompositeElementImpl implements ShLi
     visitor.visitListTerminator(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

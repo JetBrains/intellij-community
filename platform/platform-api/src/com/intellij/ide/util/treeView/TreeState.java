@@ -127,7 +127,7 @@ public final class TreeState implements JDOMExternalizable {
     readExternal(element, mySelectedPaths, SELECT_TAG);
   }
 
-  private static void readExternal(@NotNull Element root, List<List<PathElement>> list, @NotNull String name) {
+  private static void readExternal(@NotNull Element root, List<? super List<PathElement>> list, @NotNull String name) {
     list.clear();
     for (Element element : root.getChildren(name)) {
       for (Element child : element.getChildren(PATH_TAG)) {
@@ -150,7 +150,18 @@ public final class TreeState implements JDOMExternalizable {
 
   @NotNull
   public static TreeState createOn(@NotNull JTree tree) {
-    return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree)), new ArrayList<>());
+    return createOn(tree, true, false);
+  }
+
+  @NotNull
+  public static TreeState createOn(@NotNull JTree tree, boolean persistExpand, boolean persistSelect) {
+    List<List<PathElement>> expandedPaths = persistExpand
+      ? createPaths(tree, TreeUtil.collectExpandedPaths(tree))
+      : new ArrayList<>();
+    List<List<PathElement>> selectedPaths = persistSelect
+      ? createPaths(tree, TreeUtil.collectSelectedPaths(tree))
+      : new ArrayList<>();
+    return new TreeState(expandedPaths, selectedPaths);
   }
 
   @NotNull

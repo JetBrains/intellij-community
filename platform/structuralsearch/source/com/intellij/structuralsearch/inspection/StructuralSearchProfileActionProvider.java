@@ -200,7 +200,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       myProblemDescriptorTextField = new JTextField(configuration.getProblemDescriptor());
       myDescriptionTextArea = new EditorTextField(ObjectUtils.notNull(configuration.getDescription(), ""), project, HtmlFileType.INSTANCE);
       myDescriptionTextArea.setOneLineMode(false);
-      myDescriptionTextArea.setFont(EditorFontType.PLAIN.getGlobalFont());
+      myDescriptionTextArea.setFont(EditorFontType.getGlobalPlainFont());
       myDescriptionTextArea.setPreferredSize(new Dimension(375, 125));
       myDescriptionTextArea.setMinimumSize(new Dimension(200, 50));
       mySuppressIdTextField = new JTextField(configuration.getSuppressId());

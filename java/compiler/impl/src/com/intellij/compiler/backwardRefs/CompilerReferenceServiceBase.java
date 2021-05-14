@@ -84,7 +84,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   public CompilerReferenceServiceBase(Project project,
                                       CompilerReferenceReaderFactory<? extends Reader> readerFactory,
-                                      BiConsumer<MessageBusConnection, Set<String>> compilationAffectedModulesSubscription) {
+                                      BiConsumer<? super MessageBusConnection, ? super Set<String>> compilationAffectedModulesSubscription) {
     myProject = project;
     myReaderFactory = readerFactory;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();

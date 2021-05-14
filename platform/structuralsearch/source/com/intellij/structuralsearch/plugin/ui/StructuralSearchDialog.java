@@ -260,7 +260,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     document.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, (myPatternContext == null) ? "" : myPatternContext.getId());
 
     final EditorTextField textField = new MyEditorTextField(document, replace);
-    textField.setFont(EditorFontType.PLAIN.getGlobalFont());
+    textField.setFont(EditorFontType.getGlobalPlainFont());
     textField.setPreferredSize(new Dimension(550, 150));
     textField.setMinimumSize(new Dimension(200, 50));
     return textField;
@@ -291,6 +291,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       return (template == null) ? new ReplaceConfiguration(getUserDefined(), getUserDefined()) : new ReplaceConfiguration(template);
     }
     return (template == null) ? new SearchConfiguration(getUserDefined(), getUserDefined()) : new SearchConfiguration(template);
+  }
+
+  static @Nls(capitalization = Nls.Capitalization.Sentence) String getUserDefined() {
+    return SSRBundle.message("new.template.defaultname");
   }
 
   private void setTextFromContext() {
@@ -554,6 +558,15 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final ActionToolbar historyToolbar = actionManager.createActionToolbar("StructuralSearchDialog", historyActionGroup, true);
 
     final CheckboxAction injected = new CheckboxAction(SSRBundle.message("search.in.injected.checkbox")) {
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if (myEditConfigOnly) {
+          e.getPresentation().setVisible(false);
+        }
+        super.update(e);
+      }
+
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myConfiguration.getMatchOptions().isSearchInjectedCode();
@@ -663,6 +676,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
           }
           final Configuration[] configurations = dialog.getSelectedConfigurations();
           if (configurations.length == 1) {
+            final MatchOptions source = myConfiguration.getMatchOptions();
+            final MatchOptions sink = configurations[0].getMatchOptions();
+            sink.setSearchInjectedCode(source.isSearchInjectedCode());
+            sink.setRecursiveSearch(source.isRecursiveSearch());
+            sink.setCaseSensitiveMatch(source.isCaseSensitiveMatch());
             loadConfiguration(configurations[0]);
           }
         }
@@ -920,6 +938,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @Override
   protected boolean continuousValidation() {
     return false;
+  }
+
+  @Override
+  protected @NotNull Alarm.ThreadToUse getValidationThreadToUse() {
+    return Alarm.ThreadToUse.POOLED_THREAD;
   }
 
   @Override
@@ -1326,10 +1349,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
       }
     }
-  }
-
-  public static @Nls(capitalization = Nls.Capitalization.Sentence) String getUserDefined() {
-    return SSRBundle.message("new.template.defaultname");
   }
 
   private class MyEditorTextField extends EditorTextField {

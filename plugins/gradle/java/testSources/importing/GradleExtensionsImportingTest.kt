@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.assertMapsEqual
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.junit.Test
 
@@ -27,10 +26,8 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
 
     val extensionsMap = extensions.extensions.mapValues { entry -> entry.value.typeFqn }
 
-
-    val baseVer = GradleVersion.version(gradleVersion).baseVersion
     val expectedExtensions = when {
-      baseVer <= GradleVersion.version("2.7") ->
+      isGradleOlderOrSameAs("2.7") ->
         mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
                                "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
                                "sources" to "org.gradle.language.base.internal.DefaultProjectSourceSet",
@@ -38,20 +35,20 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
                                "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
                                "reporting" to "org.gradle.api.reporting.ReportingExtension")
 
-      baseVer <= GradleVersion.version("2.8") ->
+      isGradleOlderOrSameAs("2.8") ->
         mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
                                "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
                                "binaries" to "org.gradle.platform.base.internal.DefaultBinaryContainer",
                                "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
                                "reporting" to "org.gradle.api.reporting.ReportingExtension")
 
-      baseVer <= GradleVersion.version("4.9") ->
+      isGradleOlderOrSameAs("4.9") ->
         mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
                                "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
                                "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
                                "reporting" to "org.gradle.api.reporting.ReportingExtension")
 
-      baseVer < GradleVersion.version("4.10.3") ->
+      isGradleOlderThan("4.10.3") ->
         mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
                                "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
                                "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
@@ -59,13 +56,22 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
                                "sourceSets" to "org.gradle.api.internal.tasks.DefaultSourceSetContainer",
                                "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension")
 
-      baseVer < GradleVersion.version("6.2") ->
+      isGradleOlderThan("6.2") ->
         mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
                                "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
                                "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
                                "reporting" to "org.gradle.api.reporting.ReportingExtension",
                                "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
                                "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension")
+
+      isGradleOlderThan("6.8") ->
+        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
+                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
+                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
+                               "reporting" to "org.gradle.api.reporting.ReportingExtension",
+                               "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
+                               "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension",
+                               "javaInstalls" to "org.gradle.jvm.toolchain.internal.DefaultJavaInstallationRegistry")
 
       else ->
         mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
@@ -74,7 +80,8 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
                                "reporting" to "org.gradle.api.reporting.ReportingExtension",
                                "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
                                "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension",
-                               "javaInstalls" to "org.gradle.jvm.toolchain.internal.DefaultJavaInstallationRegistry")
+                               "javaInstalls" to "org.gradle.jvm.toolchain.internal.DefaultJavaInstallationRegistry",
+                               "javaToolchains" to "org.gradle.jvm.toolchain.internal.DefaultJavaToolchainService")
     }
 
     assertMapsEqual(expectedExtensions, extensionsMap)

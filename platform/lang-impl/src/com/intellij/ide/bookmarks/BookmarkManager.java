@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,11 +37,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
@@ -140,10 +139,10 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     }
   }
 
-  public void editDescription(@NotNull Bookmark bookmark, @NotNull JComponent popup) {
+  public void editDescription(@NotNull Bookmark bookmark, @NotNull Component popup) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    String description = Messages.showInputDialog(popup, IdeBundle.message("action.bookmark.edit.description.dialog.message"),
-                       IdeBundle.message("action.bookmark.edit.description.dialog.title"), Messages.getQuestionIcon(),
+    String description = Messages.showInputDialog(popup, BookmarkBundle.message("action.bookmark.edit.description.dialog.message"),
+                       BookmarkBundle.message("action.bookmark.edit.description.dialog.title"), Messages.getQuestionIcon(),
                        bookmark.getDescription(), null);
     if (description != null) {
       setDescription(bookmark, description);
@@ -222,12 +221,17 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   public Bookmark findEditorBookmark(@NotNull Document document, int line) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return null;
+    return findBookmark(file, line);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Bookmark findBookmark(@NotNull VirtualFile file, int line) {
     return ContainerUtil.find(myBookmarks.get(file), bookmark -> bookmark.getLine() == line);
   }
 
   @Nullable
   public Bookmark findFileBookmark(@NotNull VirtualFile file) {
-    return ContainerUtil.find(myBookmarks.get(file), bookmark -> bookmark.getLine() == -1);
+    return findBookmark(file, -1);
   }
 
   @Nullable
@@ -439,6 +443,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
 
     bookmark.setMnemonic(c);
     getPublisher().bookmarkChanged(bookmark);
+    bookmark.updateHighlighter();
   }
 
   public void setDescription(@NotNull Bookmark bookmark, @NotNull @NlsSafe String description) {

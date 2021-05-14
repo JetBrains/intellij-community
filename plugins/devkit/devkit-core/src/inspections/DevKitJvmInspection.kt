@@ -4,12 +4,11 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.jvm.inspection.JvmLocalInspection
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase.isAllowed
 
 abstract class DevKitJvmInspection : JvmLocalInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    if (!isAllowed(holder)) return PsiElementVisitor.EMPTY_VISITOR
+    if (!DevKitInspectionBase.isAllowed(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
     return super.buildVisitor(holder, isOnTheFly)
   }
 }

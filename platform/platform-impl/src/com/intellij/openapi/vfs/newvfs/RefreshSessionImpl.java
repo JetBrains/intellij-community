@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 final class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
+  private static final int RETRY_LIMIT = SystemProperties.getIntProperty("refresh.session.retry.limit", 3);
   private static final long DURATION_REPORT_THRESHOLD_MS =
     SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", -1) * 1_000L;
 
@@ -164,7 +165,7 @@ final class RefreshSessionImpl extends RefreshSession {
         count++;
         if (LOG.isTraceEnabled()) LOG.trace("events=" + myEvents.size());
       }
-      while (!myCancelled && myIsRecursive && count < 3 && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
+      while (!myCancelled && myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
 
       t = System.currentTimeMillis() - t;
       if (LOG.isTraceEnabled()) {
@@ -189,7 +190,7 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  void fireEvents(@NotNull List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  void fireEvents(@NotNull List<? extends DisclosedVfsEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     try {
       ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
@@ -217,7 +218,7 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  private void fireEventsInWriteAction(@NotNull List<? extends VFileEvent> events,
+  private void fireEventsInWriteAction(@NotNull List<? extends DisclosedVfsEvent> events,
                                        @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 

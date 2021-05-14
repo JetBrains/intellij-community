@@ -35,22 +35,6 @@ public class HighlightDisplayKey {
     return null;
   }
 
-
-  /**
-   * @deprecated Use {@link #register(String, String, String)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Nullable
-  public static HighlightDisplayKey register(@NonNls @NotNull final String name) {
-    final HighlightDisplayKey key = find(name);
-    if (key != null) {
-      LOG.error("Key with name '" + name + "' already registered with display name: " + getDisplayNameByKey(key));
-      return null;
-    }
-    return new HighlightDisplayKey(name, name);
-  }
-
   /**
    * @see #register(String, Computable, String)
    */

@@ -1,4 +1,0 @@
-android.defaultConfig {
-  testInstrumentationRunnerArgument "key1", "value1"
-  testInstrumentationRunnerArguments key2: "value2", key3: "value3"
-}

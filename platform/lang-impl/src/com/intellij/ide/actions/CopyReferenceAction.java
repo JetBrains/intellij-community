@@ -106,7 +106,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     highlight(editor, project, elements);
   }
 
-  protected String getQualifiedName(Editor editor, List<PsiElement> elements) {
+  protected String getQualifiedName(Editor editor, List<? extends PsiElement> elements) {
     return CopyReferenceUtil.doCopy(elements, editor);
   }
 

@@ -615,7 +615,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     LOG.debug { "activateToolWindow($entry)" }
 
     if (source != null) {
-      ToolWindowCollector.getInstance().recordActivation(entry.id, info, source)
+      ToolWindowCollector.getInstance().recordActivation(project, entry.id, info, source)
     }
 
     recentToolWindows.remove(entry.id)
@@ -679,7 +679,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun setHiddenState(info: WindowInfoImpl, entry: ToolWindowEntry, source: ToolWindowEventSource?) {
-    ToolWindowCollector.getInstance().recordHidden(info, source)
+    ToolWindowCollector.getInstance().recordHidden(project, info, source)
 
     info.isActiveOnStart = false
     info.isVisible = false
@@ -835,6 +835,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     updateStateAndRemoveDecorator(info, entry, dirtyMode = false)
     entry.applyWindowInfo(info.copy())
 
+    if (Registry.`is`("ide.new.stripes.ui")) {
+      toolWindowPane?.onStripeButtonRemoved(project, entry.toolWindow)
+    }
+
     fireStateChanged()
   }
 
@@ -923,7 +927,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return false
     }
 
-    ToolWindowCollector.getInstance().recordShown(toBeShownInfo, source)
+    ToolWindowCollector.getInstance().recordShown(project, source, toBeShownInfo)
     toBeShownInfo.isVisible = true
     toBeShownInfo.isShowStripeButton = true
 
@@ -1049,8 +1053,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     button.isSelected = windowInfoSnapshot.isVisible
     button.updatePresentation()
     addStripeButton(button, toolWindowPane.getStripeFor((contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor))
-    toolWindowPane.onStripeButtonAdded(project, button)
-
+    val comparator = Comparator<ToolWindow> { o1, o2 ->
+      windowInfoComparator.compare((o1 as? ToolWindowImpl)?.windowInfo, (o2 as? ToolWindowImpl)?.windowInfo)
+    }
+    toolWindowPane.onStripeButtonAdded(project, button.toolWindow, button.toolWindow.largeStripeAnchor, comparator)
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
     // mode. But if tool window was active but its mode doesn't allow to activate it again
@@ -1398,6 +1404,20 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     fireStateChanged()
   }
 
+  fun setLargeStripeAnchor(id: String, largeStripeAnchor: ToolWindowAnchor) {
+    val info = getRegisteredMutableInfoOrLogError(id)
+    info.largeStripeAnchor = largeStripeAnchor
+    idToEntry[info.id]!!.applyWindowInfo(info.copy())
+    fireStateChanged()
+  }
+
+  fun setVisibleOnLargeStripe(id: String, visible: Boolean) {
+    val info = getRegisteredMutableInfoOrLogError(id)
+    info.isVisibleOnLargeStripe = visible
+    idToEntry[info.id]!!.applyWindowInfo(info.copy())
+    fireStateChanged()
+  }
+
   private fun setToolWindowAnchorImpl(entry: ToolWindowEntry,
                                       currentInfo: WindowInfo,
                                       layoutInfo: WindowInfoImpl,
@@ -1502,7 +1522,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     task()
 
     if (wasVisible) {
-      ToolWindowCollector.getInstance().recordShown(info, source)
+      ToolWindowCollector.getInstance().recordShown(project, source, info)
       info.isVisible = true
       val infoSnapshot = info.copy()
       entry.applyWindowInfo(infoSnapshot)
@@ -2130,7 +2150,7 @@ interface RegisterToolWindowTaskProvider {
 
 //Adding or removing items? Don't forget to increment the version in ToolWindowEventLogGroup.GROUP
 enum class ToolWindowEventSource {
-  StripeButton, ToolWindowHeader, ToolWindowHeaderAltClick, Content, Switcher, SwitcherSearch,
+  StripeButton, SquareStripeButton, ToolWindowHeader, ToolWindowHeaderAltClick, Content, Switcher, SwitcherSearch,
   ToolWindowsWidget, RemoveStripeButtonAction,
   HideOnShowOther, HideSide, CloseFromSwitcher,
   ActivateActionMenu, ActivateActionKeyboardShortcut, ActivateActionGotoAction, ActivateActionOther,

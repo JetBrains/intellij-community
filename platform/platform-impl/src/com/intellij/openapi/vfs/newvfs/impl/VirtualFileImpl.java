@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
@@ -130,11 +129,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
       // use getByFile() to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
       FileType fileType = ObjectUtils.notNull(((FileTypeManagerImpl)FileTypeManager.getInstance()).getByFile(this), UnknownFileType.INSTANCE);
 
-      FileType.CharsetHint charsetHint = fileType.getCharsetHint();
-      if (charsetHint instanceof ForcedCharset) {
-        setCharset(((ForcedCharset)charsetHint).getCharset());
-      }
-      else if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary() && bytes.length != 0) {
+      if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary() && bytes.length != 0) {
         try {
           // execute in impatient mode to not deadlock when the indexing process waits under write action for the queue to load contents in other threads
           // and that other thread asks JspManager for encoding which requires read action for PSI

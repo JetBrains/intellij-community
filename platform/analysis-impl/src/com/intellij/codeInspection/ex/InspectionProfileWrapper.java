@@ -49,7 +49,7 @@ public class InspectionProfileWrapper {
     return myProfileManager;
   }
 
-  public static void checkInspectionsDuplicates(@NotNull List<InspectionToolWrapper<?, ?>> toolWrappers) {
+  public static void checkInspectionsDuplicates(@NotNull List<? extends InspectionToolWrapper<?, ?>> toolWrappers) {
     if (alreadyChecked) {
       return;
     }

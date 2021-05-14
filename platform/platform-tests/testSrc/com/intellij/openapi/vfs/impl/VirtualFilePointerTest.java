@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -1161,5 +1162,109 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals(VfsUtilCore.pathToUrl(file.getPath()), p1.getUrl());
     VirtualFilePointer p2 = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(_83Abomination.getPath()), disposable, null);
     assertEquals(VfsUtilCore.pathToUrl(file.getPath()), p2.getUrl());
+  }
+
+  @Test
+  public void testRecursivePointersForSubdirectories() {
+    VirtualFilePointer parentPointer = createRecursivePointer("parent");
+    VirtualFilePointer dirPointer = createRecursivePointer("parent/dir");
+    VirtualFilePointer subdirPointer = createRecursivePointer("parent/dir/subdir");
+    VirtualFilePointer filePointer = createPointer("parent/dir/subdir/file.txt");
+    VirtualFile root = myDir();
+    VirtualFileSystemEntry parent = createChildDirectory(root, "parent");
+    VirtualFileSystemEntry dir = createChildDirectory(parent, "dir");
+    VirtualFileSystemEntry subdir = createChildDirectory(dir, "subdir");
+    assertPointersUnder(subdir, "xxx.txt", parentPointer, dirPointer, subdirPointer);
+    assertPointersUnder(subdir.getParent(), subdir.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
+    assertPointersUnder(dir.getParent(), dir.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
+    assertPointersUnder(parent.getParent(), parent.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
+  }
+
+  @Test
+  public void testRecursivePointersForDirectoriesWithCommonPrefix() {
+    VirtualFilePointer parentPointer = createRecursivePointer("parent");
+    VirtualFilePointer dir1Pointer = createRecursivePointer("parent/dir1");
+    VirtualFilePointer dir2Pointer = createRecursivePointer("parent/dir2");
+    VirtualFilePointer subdirPointer = createRecursivePointer("parent/dir1/subdir");
+    VirtualFilePointer filePointer = createPointer("parent/dir1/subdir/file.txt");
+    VirtualFile root = myDir();
+    VirtualFileSystemEntry parent = createChildDirectory(root, "parent");
+    VirtualFileSystemEntry dir1 = createChildDirectory(parent, "dir1");
+    VirtualFileSystemEntry dir2 = createChildDirectory(parent, "dir2");
+    VirtualFileSystemEntry subdir = createChildDirectory(dir1, "subdir");
+    assertPointersUnder(subdir, "xxx.txt", parentPointer, dir1Pointer, subdirPointer);
+    assertPointersUnder(subdir.getParent(), subdir.getName(), parentPointer, dir1Pointer, subdirPointer, filePointer);
+    assertPointersUnder(dir1.getParent(), dir1.getName(), parentPointer, dir1Pointer, subdirPointer, filePointer);
+    assertPointersUnder(parent.getParent(), parent.getName(), parentPointer, dir1Pointer, dir2Pointer, subdirPointer, filePointer);
+    assertPointersUnder(dir2.getParent(), dir2.getName(), parentPointer, dir2Pointer);
+  }
+
+  @Test
+  public void testRecursivePointersUnderSiblingDirectory() {
+    VirtualFilePointer innerPointer = createRecursivePointer("parent/dir/subdir1/inner/subinner");
+    createPointer("parent/anotherDir");
+    VirtualFile root = myDir();
+    VirtualFile parent = HeavyPlatformTestCase.createChildDirectory(root, "parent");
+    VirtualFile dir = HeavyPlatformTestCase.createChildDirectory(parent, "dir");
+    VirtualFileSystemEntry subdir1 = createChildDirectory(dir, "subdir1");
+    VirtualFileSystemEntry subdir2 = createChildDirectory(dir, "subdir2");
+    assertPointersUnder(subdir1, "inner", innerPointer);
+    assertPointersUnder(subdir2, "xxx.txt");
+  }
+
+  @Test
+  public void testRecursivePointersUnderDisparateDirectoriesNearRoot() {
+    VirtualFilePointer innerPointer = createRecursivePointer("temp/res/ext-resources");
+    VirtualFile root = myDir();
+    VirtualFile parent = HeavyPlatformTestCase.createChildDirectory(root, "parent");
+    VirtualFileSystemEntry dir = createChildDirectory(parent, "dir");
+    assertPointersUnder(dir, "inner");
+    assertTrue(((VirtualFilePointerImpl)innerPointer).isRecursive());
+  }
+
+  @Test
+  public void testUrlsHavingOnlyStartingSlashInCommon() {
+    VirtualFilePointer p1 = createPointer("a/p1");
+    VirtualFilePointer p2 = createPointer("b/p2");
+    VirtualFile root = myDir();
+    VirtualFileSystemEntry a = createChildDirectory(root, "a");
+    VirtualFileSystemEntry b = createChildDirectory(root, "b");
+    UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
+    UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
+  }
+
+  @Test
+  public void testUrlsHavingOnlyStartingSlashInCommonAndInvalidUrlBetweenThem() {
+    VirtualFilePointer p1 = createPointer("a/p1");
+    createPointer("invalid/path");
+    VirtualFilePointer p2 = createPointer("b/p2");
+    VirtualFile root = myDir();
+    VirtualFileSystemEntry a = createChildDirectory(root, "a");
+    VirtualFileSystemEntry b = createChildDirectory(root, "b");
+    UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
+    UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
+  }
+
+  @NotNull
+  private static VirtualFileSystemEntry createChildDirectory(VirtualFile root, String childName) {
+    return (VirtualFileSystemEntry)HeavyPlatformTestCase.createChildDirectory(root, childName);
+  }
+
+  private void assertPointersUnder(@NotNull VirtualFileSystemEntry file, @NotNull String childName, VirtualFilePointer @NotNull ... pointers) {
+    UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(file, childName), pointers);
+  }
+
+  @NotNull
+  private VirtualFilePointer createPointer(String relativePath) {
+    return myVirtualFilePointerManager.create(myDir().getUrl()+"/"+relativePath, disposable, null);
+  }
+
+  @NotNull
+  private VirtualFilePointer createRecursivePointer(@NotNull String relativePath) {
+    return myVirtualFilePointerManager.createDirectoryPointer(myDir().getUrl()+"/"+relativePath, true, disposable, new VirtualFilePointerListener() {
+    });
+  }
+  private VirtualFile myDir() {
+    return tempDir.getVirtualFileRoot();
   }
 }

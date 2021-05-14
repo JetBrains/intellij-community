@@ -112,7 +112,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   @Override
   protected ModifiableRootModel getModel() {
-    return myState.getRootModel();
+    return myState.getModifiableRootModel();
   }
 
   @Override

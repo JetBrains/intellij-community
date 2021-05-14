@@ -171,7 +171,7 @@ public class SdkDownloadTracker {
    * Performs synchronous SDK download. Must not run on EDT thread.
    */
   public void downloadSdk(@NotNull SdkDownloadTask task,
-                          @NotNull List<Sdk> sdks,
+                          @NotNull List<? extends Sdk> sdks,
                           @NotNull ProgressIndicator indicator) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 

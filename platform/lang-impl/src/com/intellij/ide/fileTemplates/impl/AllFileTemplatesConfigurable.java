@@ -676,6 +676,28 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     });
   }
 
+  public static void editOtherTemplate(@NotNull String templateFileName, Project project) {
+    ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+    AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable(project);
+    util.editConfigurable(project, configurable, () -> {
+      FileTemplateTab otherTemplatesList = configurable.myOtherTemplatesList;
+      if (otherTemplatesList == null) return;
+
+      configurable.myTabbedPane.setSelectedIndex(ArrayUtil.indexOf(configurable.myTabs, otherTemplatesList));
+      for (FileTemplate template : otherTemplatesList.getTemplates()) {
+        String fileName = template.getName();
+        if (!template.getExtension().isEmpty()) {
+          fileName += "." + template.getExtension();
+        }
+
+        if (Objects.equals(templateFileName, fileName)) {
+          otherTemplatesList.selectTemplate(template);
+          break;
+        }
+      }
+    });
+  }
+
   void changeScheme(@NotNull FileTemplatesScheme scheme) {
     if (myEditor != null && myEditor.isModified()) {
       myModified = true;

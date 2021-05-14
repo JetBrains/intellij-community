@@ -1,1 +1,0 @@
-val prop by extra(listOf(1))

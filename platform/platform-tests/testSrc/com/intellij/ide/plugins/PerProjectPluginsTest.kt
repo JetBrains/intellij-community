@@ -7,6 +7,7 @@ import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertFalse
@@ -15,24 +16,20 @@ import kotlin.test.assertTrue
 @RunsInEdt
 class PerProjectPluginsTest {
 
-  companion object {
-    @JvmField
-    val projectRule = ProjectRule()
-  }
-
-  private val inMemoryFs = InMemoryFsRule()
+  private val inMemoryFsRule = InMemoryFsRule()
+  private val projectRule = ProjectRule()
 
   @Rule
   @JvmField
   val chain = RuleChain(
-    inMemoryFs,
-    ProjectRule(),
+    inMemoryFsRule,
+    projectRule,
     EdtRule(),
   )
 
   @Test
   fun enabledAndDisablePerProject() {
-    val path = inMemoryFs.fs.getPath("/plugin")
+    val path = inMemoryFsRule.fs.getPath("/plugin")
     PluginBuilder()
       .randomId("enabledAndDisablePerProject")
       .build(path)

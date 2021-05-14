@@ -12,11 +12,11 @@ import java.util.List;
 
 public class LinuxFileTypeAssociator implements SystemFileTypeAssociator {
   @Override
-  public void associateFileTypes(@NotNull List<FileType> fileTypes) throws OSFileAssociationException {
+  public void associateFileTypes(@NotNull List<? extends FileType> fileTypes) throws OSFileAssociationException {
     LinuxMimeTypeUpdater.updateMimeTypes(convertToMimeTypes(fileTypes));
   }
 
-  private static List<MimeTypeDescription> convertToMimeTypes(@NotNull List<FileType> fileTypes) {
+  private static List<MimeTypeDescription> convertToMimeTypes(@NotNull List<? extends FileType> fileTypes) {
     List<MimeTypeDescription> mimeTypeDescriptions =
       ContainerUtil.map(fileTypes, fileType -> new MimeTypeDescription(fileType));
     mimeTypeDescriptions.sort(Comparator.comparing(description -> description.getType()));

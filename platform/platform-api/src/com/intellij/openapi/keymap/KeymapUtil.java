@@ -2,6 +2,7 @@
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -504,7 +505,7 @@ public final class KeymapUtil {
         public void afterValueChanged(@NotNull RegistryValue value) {
           updateTooltipRequestKey(value);
         }
-      }, Disposer.get("ui"));
+      }, ApplicationManager.getApplication());
 
       updateTooltipRequestKey(ourTooltipKeysProperty);
     }

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction, Iconable {
+public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityAction, Iconable {
   private final String myID;
   private final String myProperty;
   private final @IntentionName String myMessage;

@@ -1,21 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.panels;
 
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 
-import javax.swing.SwingConstants;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.LayoutManager2;
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is intended to lay out added components horizontally.
  * It allows to add them into the LEFT, CENTER, or RIGHT group, which are aligned separately.
  * Every group can contain any amount of components. The specified gap is added between components,
- * and the double gap is added between groups of components.
+ * and the double gap is added between groups of components. The gap will be scaled automatically.
  * <p><b>NB!: this class must be modified together with the {@code VerticalLayout} class accordingly</b></p>
  *
  * @see VerticalLayout
@@ -35,6 +33,7 @@ public final class HorizontalLayout implements LayoutManager2 {
    * Creates a layout with the specified gap.
    * All components will have preferred widths,
    * but their heights will be set according to the container.
+   * The gap will be scaled automatically.
    *
    * @param gap horizontal gap between components
    */
@@ -46,6 +45,7 @@ public final class HorizontalLayout implements LayoutManager2 {
   /**
    * Creates a layout with the specified gap and vertical alignment.
    * All components will have preferred sizes.
+   * The gap will be scaled automatically.
    *
    * @param gap       horizontal gap between components
    * @param alignment vertical alignment for components
@@ -133,6 +133,7 @@ public final class HorizontalLayout implements LayoutManager2 {
 
   @Override
   public void layoutContainer(Container container) {
+    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
     synchronized (container.getTreeLock()) {
       Dimension left = getPreferredSize(myLeft);
       Dimension right = getPreferredSize(myRight);
@@ -144,7 +145,7 @@ public final class HorizontalLayout implements LayoutManager2 {
 
       int leftX = 0;
       if (left != null) {
-        leftX = myGap + layout(myLeft, 0, height, insets);
+        leftX = gap + layout(myLeft, 0, height, insets);
       }
       int rightX = width;
       if (right != null) {
@@ -156,15 +157,15 @@ public final class HorizontalLayout implements LayoutManager2 {
       if (center != null) {
         int centerX = (width - center.width) / 2;
         if (centerX > leftX) {
-          int centerRightX = centerX + center.width + myGap + myGap;
+          int centerRightX = centerX + center.width + gap + gap;
           if (centerRightX > rightX) {
-            centerX = rightX - center.width - myGap - myGap;
+            centerX = rightX - center.width - gap - gap;
           }
         }
         if (centerX < leftX) {
           centerX = leftX;
         }
-        centerX = myGap + layout(myCenter, centerX, height, insets);
+        centerX = gap + layout(myCenter, centerX, height, insets);
         if (rightX < centerX) {
           rightX = centerX;
         }
@@ -175,7 +176,8 @@ public final class HorizontalLayout implements LayoutManager2 {
     }
   }
 
-  private int layout(ArrayList<Component> list, int x, int height, Insets insets) {
+  private int layout(List<? extends Component> list, int x, int height, Insets insets) {
+    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
     for (Component component : list) {
       if (component.isVisible()) {
         Dimension size = component.getPreferredSize();
@@ -190,7 +192,7 @@ public final class HorizontalLayout implements LayoutManager2 {
           }
         }
         component.setBounds(x + insets.left, y + insets.top, size.width, size.height);
-        x += size.width + myGap;
+        x += size.width + gap;
       }
     }
     return x;
@@ -210,22 +212,24 @@ public final class HorizontalLayout implements LayoutManager2 {
     return result;
   }
 
-  private Dimension getPreferredSize(ArrayList<Component> list) {
+  private Dimension getPreferredSize(List<? extends Component> list) {
+    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
     Dimension result = null;
     for (Component component : list) {
       if (component.isVisible()) {
-        result = join(result, myGap, component.getPreferredSize());
+        result = join(result, gap, component.getPreferredSize());
       }
     }
     return result;
   }
 
   private Dimension getPreferredSize(Container container, boolean aligned) {
+    int gap2 = myGap <= 0 ? 0 : 2 * JBUI.scale(myGap);
     synchronized (container.getTreeLock()) {
       Dimension left = getPreferredSize(myLeft);
       Dimension right = getPreferredSize(myRight);
       Dimension center = getPreferredSize(myCenter);
-      Dimension result = join(join(join(null, myGap + myGap, left), myGap + myGap, center), myGap + myGap, right);
+      Dimension result = join(join(join(null, gap2, left), gap2, center), gap2, right);
       if (result == null) {
         result = new Dimension();
       }

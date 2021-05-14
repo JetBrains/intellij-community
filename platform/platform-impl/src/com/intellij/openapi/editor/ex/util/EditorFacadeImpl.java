@@ -54,7 +54,7 @@ public class EditorFacadeImpl extends EditorFacade {
                                        @NotNull Document document,
                                        int startOffset,
                                        int endOffset,
-                                       List<TextRange> enabledRanges,
+                                       List<? extends TextRange> enabledRanges,
                                        int rightMargin) {
     final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
     if ((vFile == null || vFile instanceof LightVirtualFile) && !ApplicationManager.getApplication().isUnitTestMode()) {

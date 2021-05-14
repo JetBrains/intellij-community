@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
@@ -11,14 +10,12 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
@@ -179,7 +176,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       if (event.getInputEvent() instanceof MouseEvent) {
         ToolbarClicksCollector.record(myAction, myPlace, e, dataContext);
       }
-      ActionToolbar toolbar = getActionToolbar();
+      ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
       if (toolbar != null) {
         toolbar.updateActionsImmediately();
       }
@@ -187,12 +184,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected DataContext getDataContext() {
-    ActionToolbar actionToolbar = getActionToolbar();
-    return actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext();
-  }
-
-  private ActionToolbar getActionToolbar() {
-    return ComponentUtil.getParentOfType((Class<? extends ActionToolbar>)ActionToolbar.class, (Component)this);
+    return ActionToolbar.getDataContextFor(this);
   }
 
   protected void actionPerformed(final AnActionEvent event) {
@@ -378,9 +370,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
-      HelpTooltip.dispose(this);
+      HelpTooltip ht = HelpTooltip.getOrCreate(this).clear();
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
-        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
+        ht.setTitle(text).setShortcut(getShortcutText());
         if (myAction instanceof TooltipLinkProvider) {
           TooltipLinkProvider.TooltipLink link = ((TooltipLinkProvider)myAction).getTooltipLink(this);
           if (link != null) {
@@ -394,6 +386,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         ht.installOn(this);
       }
     } else {
+      HelpTooltip.dispose(this);
       setToolTipText(text == null ? description : text);
     }
   }

@@ -140,7 +140,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   }
 
   @Override
-  public void runConcurrentlyIfPossible(List<Runnable> tasks) {
+  public void runConcurrentlyIfPossible(List<? extends Runnable> tasks) {
     invokeConcurrentlyIfPossible(tasks);
   }
 

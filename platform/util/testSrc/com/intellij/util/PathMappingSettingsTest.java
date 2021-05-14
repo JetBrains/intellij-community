@@ -21,6 +21,12 @@ public class PathMappingSettingsTest {
   }
 
   @Test
+  public void testNoSlashBetweenParts() {
+    myMappingSettings.addMapping("//wsl$/Debian", "/");
+    Assert.assertEquals("//wsl$/Debian/home/link/my.py", myMappingSettings.convertToLocal("/home/link/my.py"));
+  }
+
+  @Test
   public void testTrailingSlashes() {
     myMappingSettings.addMapping("C:\\PythonSources\\src\\", "/home/testPrj");
 

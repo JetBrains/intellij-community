@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class EventLogConfigVersions {
   @Nullable
-  public EventLogMajorVersion majorBuildVersionBorders;
+  public EventLogMajorVersionBorders majorBuildVersionBorders;
 
   @Nullable
   public Map<String, String> endpoints;

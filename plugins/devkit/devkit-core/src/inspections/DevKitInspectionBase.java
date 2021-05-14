@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -23,34 +24,33 @@ public abstract class DevKitInspectionBase extends AbstractBaseJavaLocalInspecti
   @NotNull
   @Override
   public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiElementVisitor.EMPTY_VISITOR;
+    return isAllowed(holder.getFile()) ? buildInternalVisitor(holder, isOnTheFly) : PsiElementVisitor.EMPTY_VISITOR;
   }
 
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return super.buildVisitor(holder, isOnTheFly);
   }
 
-  static boolean isAllowed(@NotNull ProblemsHolder holder) {
-    return isAllowed(holder, h -> true);
+  static boolean isAllowed(@NotNull PsiFile file) {
+    return isAllowed(file, __ -> true);
   }
 
-  static boolean isAllowedInPluginsOnly(@NotNull ProblemsHolder holder) {
-    return isAllowed(holder, DevKitInspectionBase::isPluginFile);
+  static boolean isAllowedInPluginsOnly(@NotNull PsiFile file) {
+    return isAllowed(file, DevKitInspectionBase::isPluginFile);
   }
 
-  static boolean isAllowed(@NotNull ProblemsHolder holder,
-                           @NotNull Predicate<? super ProblemsHolder> predicate) {
+  private static boolean isAllowed(@NotNull PsiFile file, @NotNull Predicate<? super PsiFile> predicate) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;  /* always run in tests */
-    if (PsiUtil.isIdeaProject(holder.getProject())) {
-      return predicate.test(holder);
+    if (PsiUtil.isIdeaProject(file.getProject())) {
+      return predicate.test(file);
     }
     else {
-      return isInPluginModule(holder);
+      return isInPluginModule(file);
     }
   }
 
-  private static boolean isInPluginModule(@NotNull ProblemsHolder holder) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(holder.getFile());
+  private static boolean isInPluginModule(@NotNull PsiFile file) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) {
       return false;
     }
@@ -60,11 +60,7 @@ public abstract class DevKitInspectionBase extends AbstractBaseJavaLocalInspecti
   }
 
   // TODO expand this check
-  private static boolean isPluginFile(@NotNull ProblemsHolder holder) {
-    return !holder
-      .getFile()
-      .getVirtualFile()
-      .getPath()
-      .contains("/platform/");
+  private static boolean isPluginFile(@NotNull PsiFile file) {
+    return !file.getVirtualFile().getPath().contains("/platform/");
   }
 }

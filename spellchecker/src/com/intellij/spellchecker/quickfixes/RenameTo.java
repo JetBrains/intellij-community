@@ -2,12 +2,15 @@
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
@@ -23,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
 
 import static com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.findInjectionHost;
 
@@ -56,28 +58,27 @@ public class RenameTo extends LazySuggestions implements SpellCheckerQuickFix {
       provider.setActive(true);
     }
 
-    HashMap<String, Object> map = new HashMap<>();
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null) return;
     final Editor editor = getEditor(psiElement, project);
     if (editor == null) return;
 
+    SimpleDataContext.Builder builder = SimpleDataContext.builder();
     if (editor instanceof EditorWindow) {
-      map.put(CommonDataKeys.EDITOR.getName(), editor);
-      map.put(CommonDataKeys.PSI_ELEMENT.getName(), psiElement);
+      builder.add(CommonDataKeys.EDITOR, editor);
+      builder.add(CommonDataKeys.PSI_ELEMENT, psiElement);
     }
     else if (ApplicationManager.getApplication().isUnitTestMode()) {
       // TextEditorComponent / FiledEditorManagerImpl give away the data in real life
-      map.put(
-        CommonDataKeys.PSI_ELEMENT.getName(),
-        new TextEditorPsiDataProvider().getData(CommonDataKeys.PSI_ELEMENT.getName(), editor, editor.getCaretModel().getCurrentCaret())
-      );
+      PsiElement data = (PsiElement)new TextEditorPsiDataProvider()
+        .getData(CommonDataKeys.PSI_ELEMENT.getName(), editor, editor.getCaretModel().getCurrentCaret());
+      builder.add(CommonDataKeys.PSI_ELEMENT, data);
     }
 
     final Boolean selectAll = editor.getUserData(RenameHandlerRegistry.SELECT_ALL);
     try {
       editor.putUserData(RenameHandlerRegistry.SELECT_ALL, true);
-      DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext(editor.getComponent()));
+      DataContext dataContext = builder.setParent(((EditorEx)editor).getDataContext()).build();
       AnAction action = new RenameElementAction();
       AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", dataContext);
       action.actionPerformed(event);

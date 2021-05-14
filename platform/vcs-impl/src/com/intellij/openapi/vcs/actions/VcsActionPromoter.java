@@ -19,7 +19,7 @@ import static com.intellij.util.containers.ContainerUtil.filter;
 
 public class VcsActionPromoter implements ActionPromoter {
   @Override
-  public List<AnAction> promote(@NotNull List<AnAction> actions, @NotNull DataContext context) {
+  public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     ActionManager am = ActionManager.getInstance();
     List<AnAction> reorderedActions = new ArrayList<>(actions);
     List<String> reorderedIds = ContainerUtil.map(reorderedActions, it -> am.getId(it));

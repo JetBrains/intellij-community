@@ -28,7 +28,7 @@ class FollowingCommentBinder implements WhitespacesAndCommentsBinder {
   static final FollowingCommentBinder INSTANCE = new FollowingCommentBinder();
 
   @Override
-  public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+  public int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
     if (tokens.size() <= 1) return 0;
     int pos = 0;
     // TODO[yole] handle more cases?

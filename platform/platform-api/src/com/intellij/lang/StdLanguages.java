@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -25,13 +25,6 @@ public final class StdLanguages {
   @Deprecated public static final Language DTD = StdFileTypes.DTD.getLanguage();
 
   /**
-   * The definition for the JSP language.
-   *
-   * @deprecated use {@linkplain com.intellij.lang.jsp.NewJspLanguage#INSTANCE} instead.
-   */
-  @Deprecated public static final Language JSP = StdFileTypes.JSP.getLanguage();
-
-  /**
    * The definition for the XML language.
    *
    * @deprecated use {@linkplain com.intellij.lang.xml.XMLLanguage#INSTANCE} instead.
@@ -44,13 +37,6 @@ public final class StdLanguages {
    * @deprecated use {@linkplain com.intellij.lang.html.HTMLLanguage#INSTANCE} instead.
    */
   @Deprecated public static final Language HTML = StdFileTypes.HTML.getLanguage();
-
-  /**
-   * The definition for the JSPX language (JSP with XML syntax).
-   *
-   * @deprecated use {@linkplain com.intellij.lang.jspx.JSPXLanguage#INSTANCE} instead.
-   */
-  @Deprecated public static final Language JSPX = StdFileTypes.JSPX.getLanguage();
 
   /**
    * The definition for the Text language

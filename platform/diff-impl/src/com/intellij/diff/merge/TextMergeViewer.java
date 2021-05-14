@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -71,7 +71,8 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -775,9 +776,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
                                        @NotNull Runnable task) {
       myContentModified = true;
 
-      TIntArrayList affectedIndexes = null;
+      IntList affectedIndexes = null;
       if (affected != null) {
-        affectedIndexes = new TIntArrayList(affected.size());
+        affectedIndexes = new IntArrayList(affected.size());
         for (TextMergeChange change : affected) {
           affectedIndexes.add(change.getIndex());
         }

@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
@@ -19,20 +21,21 @@ public final class JBCefStartup {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-    if (JBCefApp.isSupported() && RegistryManager.getInstance().is("ide.browser.jcef.preinit")) {
+
+    if (RegistryManager.getInstance().is("ide.browser.jcef.preinit") && JBCefApp.isSupported()) {
       try {
         STARTUP_CLIENT = JBCefApp.getInstance().createClient();
       }
       catch (IllegalStateException ignore) {
       }
-    } else {
+    }
+    else {
       //todo[tav] remove when JavaFX + JCEF co-exist is fixed on macOS, or when JavaFX is deprecated
       //This code enables pre initialization of JCEF on macOS if and only if JavaFX Runtime plugin is installed
       PluginManager pluginManager = PluginManager.getInstance();
       String id = "com.intellij.javafx";
       PluginId javaFX = PluginId.findId(id);
-
-      if ( javaFX == null || pluginManager.findEnabledPlugin(javaFX) == null) {
+      if (javaFX == null || pluginManager.findEnabledPlugin(javaFX) == null) {
         ApplicationManager.getApplication().getMessageBus().connect()
           .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
             @Override

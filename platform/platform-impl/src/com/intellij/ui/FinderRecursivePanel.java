@@ -26,7 +26,6 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -330,7 +329,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   private void installSpeedSearch(JBList list) {
     //noinspection unchecked
-    final ListSpeedSearch search = new ListSpeedSearch(list, (Function<Object, String>)o -> getItemText((T)o));
+    final ListSpeedSearch search = new ListSpeedSearch(list, o -> getItemText((T)o));
     search.setComparator(new SpeedSearchComparator(false));
   }
 

@@ -1,36 +1,68 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.IntFunction;
+
 /**
  * Specialized memory saving map implementation for UrlClassLoader to avoid extra dependencies.
  */
-final class IntObjectHashMap {
+final class IntObjectHashMap<T> {
+  private final IntFunction<T[]> arrayFactory;
   private int size;
   private int[] keys;
-  private Object[] values;
-  private Object specialZeroValue;
+  private T[] values;
+  private T specialZeroValue;
   private boolean hasZeroValue;
 
-  IntObjectHashMap() {
-    keys = new int[4];
-    values = new Object[keys.length];
+  IntObjectHashMap(IntFunction<T[]> arrayFactory) {
+    this.arrayFactory = arrayFactory;
+    keys = new int[16];
+    values = arrayFactory.apply(keys.length);
+  }
+
+  IntObjectHashMap(IntObjectHashMap<T> original) {
+    arrayFactory = original.arrayFactory;
+    keys = original.keys.clone();
+    values = original.values.clone();
+    size = original.size;
+    specialZeroValue = original.specialZeroValue;
+    hasZeroValue = original.hasZeroValue;
   }
 
   int size() {
     return size + (hasZeroValue ? 1 : 0);
   }
 
-  void clear() {
-    size = 0;
-    keys = new int[4];
-    values = new Object[keys.length];
-    specialZeroValue = null;
-    hasZeroValue = false;
+  void replaceByIndex(int index, int key, @NotNull T value) {
+    if (key == 0) {
+      specialZeroValue = value;
+      hasZeroValue = true;
+    }
+    else {
+      values[index] = value;
+    }
   }
 
-  void put(int key, @NotNull Object value) {
+  void addByIndex(int index, int key, @NotNull T value) {
+    if (key == 0) {
+      specialZeroValue = value;
+      hasZeroValue = true;
+      return;
+    }
+
+    if (size >= (2 * values.length) / 3) {
+      rehash();
+      index = hashIndex(keys, key);
+    }
+
+    size++;
+    values[index] = value;
+    keys[index] = key;
+  }
+
+  void put(int key, @NotNull T value) {
     if (key == 0) {
       specialZeroValue = value;
       hasZeroValue = true;
@@ -40,18 +72,18 @@ final class IntObjectHashMap {
     if (size >= (2 * values.length) / 3) {
       rehash();
     }
-    Object previousValue = doPut(keys, values, key, value);
-    if (previousValue == null) {
-      ++size;
+    int index = hashIndex(keys, key);
+    if (values[index] == null) {
+      size++;
+    }
+    values[index] = value;
+    if (keys[index] == 0) {
+      keys[index] = key;
     }
   }
 
-  private static Object doPut(int @NotNull [] keys, Object @NotNull [] values, int key, @NotNull Object value) {
-    int index = hashIndex(keys, key);
-    Object obj = values[index];
-    values[index] = value;
-    if (keys[index] == 0) keys[index] = key;
-    return obj;
+  int index(int key) {
+    return key == 0 ? Integer.MIN_VALUE : hashIndex(keys, key);
   }
 
   private static int hashIndex(int @NotNull [] keys, int key) {
@@ -74,12 +106,16 @@ final class IntObjectHashMap {
 
   private void rehash() {
     int[] newKeys = new int[keys.length << 1];
-    Object[] newValues = new Object[newKeys.length];
+    T[] newValues = arrayFactory.apply(newKeys.length);
 
     for (int i = keys.length - 1; i >= 0; i--) {
       int key = keys[i];
       if (key != 0) {
-        doPut(newKeys, newValues, key, values[i]);
+        int index = hashIndex(newKeys, key);
+        newValues[index] = values[i];
+        if (newKeys[index] == 0) {
+          newKeys[index] = key;
+        }
       }
     }
 
@@ -87,7 +123,11 @@ final class IntObjectHashMap {
     values = newValues;
   }
 
-  public Object get(int key) {
+  public T get(int key) {
     return key == 0 ? specialZeroValue : values[hashIndex(keys, key)];
+  }
+
+  public T getByIndex(int index, int key) {
+    return key == 0 ? specialZeroValue : values[index];
   }
 }

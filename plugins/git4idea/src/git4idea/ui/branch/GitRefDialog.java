@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -34,7 +34,7 @@ import git4idea.GitTag;
 import git4idea.branch.GitBranchUtil;
 import git4idea.log.GitRefManager;
 import git4idea.repo.GitRepository;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +46,7 @@ import java.util.stream.Stream;
 import static com.intellij.util.ui.UI.PanelFactory.grid;
 import static com.intellij.util.ui.UI.PanelFactory.panel;
 
-public class GitRefDialog extends DialogWrapper {
+public final class GitRefDialog extends DialogWrapper {
   private final TextFieldWithCompletion myTextField;
   private final JComponent myCenterPanel;
 
@@ -55,12 +55,9 @@ public class GitRefDialog extends DialogWrapper {
                       @NotNull @NlsContexts.DialogTitle String title,
                       @NotNull @NlsContexts.Label String message) {
     super(project);
-
     setTitle(title);
-    setButtonsAlignment(SwingConstants.CENTER);
 
     TextCompletionProvider completionProvider = getCompletionProvider(project, repositories, getDisposable());
-
     myTextField = new TextFieldWithCompletion(project, completionProvider, "", true, true, false);
 
     myCenterPanel = grid()
@@ -123,7 +120,6 @@ public class GitRefDialog extends DialogWrapper {
     return myTextField;
   }
 
-
   @NotNull
   private static Collection<VcsRef> collectCommonVcsRefs(@NotNull Stream<? extends VcsRef> stream) {
     MultiMap<VirtualFile, VcsRef> map = MultiMap.create();
@@ -133,7 +129,7 @@ public class GitRefDialog extends DialogWrapper {
     return GitBranchUtil.collectCommon(groups, new NameAndTypeHashingStrategy());
   }
 
-  private static class MyVcsRefCompletionProvider extends VcsRefCompletionProvider {
+  private static final class MyVcsRefCompletionProvider extends VcsRefCompletionProvider {
     MyVcsRefCompletionProvider(@NotNull VcsLogRefs refs,
                                       @NotNull Collection<? extends VirtualFile> roots,
                                       @NotNull Comparator<? super VcsRef> comparator) {
@@ -153,7 +149,7 @@ public class GitRefDialog extends DialogWrapper {
     }
   }
 
-  private static class MySimpleCompletionListProvider extends TwoStepCompletionProvider<GitReference> {
+  private static final class MySimpleCompletionListProvider extends TwoStepCompletionProvider<GitReference> {
     @NotNull private final List<? extends GitBranch> myBranches;
     @NotNull private final FutureResult<? extends Collection<GitTag>> myTagsFuture;
 
@@ -203,20 +199,20 @@ public class GitRefDialog extends DialogWrapper {
     }
   }
 
-  private static class NameAndTypeHashingStrategy implements TObjectHashingStrategy<VcsRef> {
+  private static final class NameAndTypeHashingStrategy implements Hash.Strategy<VcsRef> {
     @Override
-    public int computeHashCode(VcsRef object) {
-      return Comparing.hashcode(object.getName(), object.getType());
+    public int hashCode(VcsRef object) {
+      return object == null ? 0 : Comparing.hashcode(object.getName(), object.getType());
     }
 
     @Override
     public boolean equals(VcsRef o1, VcsRef o2) {
-      return Objects.equals(o1.getName(), o2.getName()) &&
-             Comparing.equal(o1.getType(), o2.getType());
+      return o1 == o2 || (o1 != null && o2 != null && Objects.equals(o1.getName(), o2.getName()) &&
+                          Objects.equals(o1.getType(), o2.getType()));
     }
   }
 
-  private static class GitReferenceDescriptor extends DefaultTextCompletionValueDescriptor<GitReference> {
+  private static final class GitReferenceDescriptor extends DefaultTextCompletionValueDescriptor<GitReference> {
     @NotNull
     @Override
     public String getLookupString(@NotNull GitReference item) {

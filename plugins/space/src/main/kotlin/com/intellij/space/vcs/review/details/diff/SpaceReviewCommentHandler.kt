@@ -46,6 +46,9 @@ internal abstract class SpaceDiffCommentsHandler {
   abstract fun insertRight(line: Int, component: JComponent): Disposable?
 
   protected fun insert(manager: EditorComponentInlaysManager, line: Int, component: JComponent): Disposable? {
+    val lineCount = manager.editor.document.lineCount
+    if (lineCount < line) return null
+
     return manager.insertAfter(line, component)
   }
 }

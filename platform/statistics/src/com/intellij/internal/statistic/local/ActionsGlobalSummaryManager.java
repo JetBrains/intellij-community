@@ -23,9 +23,11 @@ public class ActionsGlobalSummaryManager {
   private static final @NotNull CharFilter QUOTE_FILTER = ch -> ch != '"';
 
   private final Map<String, ActionGlobalUsageInfo> myStatisticsMap;
+  private final ActionsGlobalTotalSummary mySummary;
 
   public ActionsGlobalSummaryManager() {
     myStatisticsMap = loadStatistics();
+    mySummary = calculateTotalSummary(myStatisticsMap);
   }
 
   @Nullable
@@ -33,7 +35,24 @@ public class ActionsGlobalSummaryManager {
     return myStatisticsMap.get(actionID);
   }
 
+  @NotNull
+  public ActionsGlobalTotalSummary getTotalSummary() {
+    return mySummary;
+  }
+
   private final static String DEFAULT_SEPARATOR = ",";
+
+  private static ActionsGlobalTotalSummary calculateTotalSummary(Map<String, ActionGlobalUsageInfo> statistics) {
+    long maxCount = 0;
+    long minCount = Long.MAX_VALUE;
+    for (ActionGlobalUsageInfo value : statistics.values()) {
+      long count = value.getUsagesCount();
+      maxCount = Math.max(count, maxCount);
+      minCount = Math.min(count, minCount);
+    }
+    return new ActionsGlobalTotalSummary(maxCount, minCount);
+  }
+
   private Map<String, ActionGlobalUsageInfo> loadStatistics() {
     Map<String, ActionGlobalUsageInfo> res = new HashMap<>();
     try (InputStream stream = getClass().getResourceAsStream("/statistics/actionsUsages.csv");
@@ -58,4 +77,21 @@ public class ActionsGlobalSummaryManager {
     return res;
   }
 
+  public static class ActionsGlobalTotalSummary {
+    private final long maxUsageCount;
+    private final long minUsageCount;
+
+    public ActionsGlobalTotalSummary(long maxUsageCount, long minUsageCount) {
+      this.maxUsageCount = maxUsageCount;
+      this.minUsageCount = minUsageCount;
+    }
+
+    public long getMaxUsageCount() {
+      return maxUsageCount;
+    }
+
+    public long getMinUsageCount() {
+      return minUsageCount;
+    }
+  }
 }

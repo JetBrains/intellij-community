@@ -146,10 +146,7 @@ public class PyRenameElementQuickFixTest extends PyQuickFixTestCase {
    * Python is injected into string literal before running test code.
    */
   private void testInInjectedLanguageFragment(@NotNull Runnable runnable) {
-    Disposable testDisposable = new Disposable() {
-      @Override
-      public void dispose() {}
-    };
+    Disposable testDisposable = Disposer.newDisposable();
     injectPythonLanguage(testDisposable);
     runnable.run();
     Disposer.dispose(testDisposable);

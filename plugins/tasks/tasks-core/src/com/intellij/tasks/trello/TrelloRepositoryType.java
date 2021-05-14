@@ -56,7 +56,7 @@ public class TrelloRepositoryType extends BaseRepositoryType<TrelloRepository> {
 
   @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(TrelloRepository repository, Project project, Consumer<TrelloRepository> changeListener) {
+  public TaskRepositoryEditor createEditor(TrelloRepository repository, Project project, Consumer<? super TrelloRepository> changeListener) {
     return new TrelloRepositoryEditor(project, repository, changeListener);
   }
 

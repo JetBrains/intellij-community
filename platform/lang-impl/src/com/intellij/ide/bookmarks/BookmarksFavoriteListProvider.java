@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.AbstractFavoritesListProvider;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.projectView.PresentationData;
@@ -98,9 +97,9 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
   public String getCustomName(@NotNull CommonActionsPanel.Buttons type) {
     switch (type) {
       case EDIT:
-        return IdeBundle.message("action.bookmark.edit.description");
+        return BookmarkBundle.message("action.bookmark.edit.description");
       case REMOVE:
-        return IdeBundle.message("action.bookmark.delete");
+        return BookmarkBundle.message("action.bookmark.delete");
       default:
         return null;
     }

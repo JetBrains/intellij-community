@@ -1,7 +1,0 @@
-def parentVar1 = true
-
-ext {
-  parentProperty1 = "hello"
-}
-
-def parentVar2 = parentVar1

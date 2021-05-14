@@ -132,6 +132,10 @@ def main():
             flags.append("--no-implicit-optional")
             flags.append("--disallow-any-generics")
             flags.append("--disallow-subclassing-any")
+            # Setting custom typeshed dir prevents mypy from falling back to its bundled typeshed in
+            # case of stub deletions
+            flags.append("--custom-typeshed-dir")
+            flags.append(os.path.dirname(os.path.dirname(__file__)))
             if args.warn_unused_ignores:
                 flags.append("--warn-unused-ignores")
             if args.platform:

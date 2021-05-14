@@ -137,11 +137,8 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
         if (args.size() < 2) continue;
         for (int i = 0; i < args.size(); i++) {
           PsiExpression arg = args.get(i);
-          LocalQuickFix fix = null;
-          if (myHolder.isOnTheFly()) {
-            PsiExpression nextArg = args.get((i + 1) % args.size());
-            fix = new NavigateToDuplicateFix(nextArg);
-          }
+          PsiExpression nextArg = args.get((i + 1) % args.size());
+          LocalQuickFix fix = new NavigateToDuplicateFix(nextArg);
           myHolder.registerProblem(arg, message, fix);
         }
       }
@@ -163,7 +160,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
   }
 
-  private static class NavigateToDuplicateFix implements LocalQuickFix {
+  private static class NavigateToDuplicateFix implements OnTheFlyLocalFix {
     private final SmartPsiElementPointer<PsiExpression> myPointer;
 
     NavigateToDuplicateFix(PsiExpression arg) {

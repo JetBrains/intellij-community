@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -128,8 +128,8 @@ public class GitPreservingProcess {
       @Override
       public String getLeftPanelTitle(@NotNull VirtualFile file) {
         return saveMethod.selectBundleMessage(
-          GitBundle.getString("restore.conflict.diff.dialog.left.stash.title"),
-          GitBundle.getString("restore.conflict.diff.dialog.left.shelf.title")
+          GitBundle.message("restore.conflict.diff.dialog.left.stash.title"),
+          GitBundle.message("restore.conflict.diff.dialog.left.shelf.title")
         );
       }
 
@@ -159,7 +159,7 @@ public class GitPreservingProcess {
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
       VcsNotifier.getInstance(myProject).notifyError(
-        COULD_NOT_SAVE_UNCOMMITTED_CHANGES, GitBundle.getString("save.notification.failed.title"),
+        COULD_NOT_SAVE_UNCOMMITTED_CHANGES, GitBundle.message("save.notification.failed.title"),
         mySaver.getSaveMethod().selectBundleMessage(
           GitBundle.message("save.notification.failed.stash.text", myOperationTitle, join(e.getMessages())),
           GitBundle.message("save.notification.failed.shelf.text", myOperationTitle, join(e.getMessages()))

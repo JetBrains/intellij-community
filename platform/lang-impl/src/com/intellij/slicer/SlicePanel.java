@@ -44,7 +44,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider, Disposable {
+public abstract class SlicePanel extends JPanel implements DataProvider, Disposable {
   private final SliceTreeBuilder myBuilder;
   private final JTree myTree;
 
@@ -306,14 +306,14 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     return result;
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
+  public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       List<Navigatable> navigatables = getNavigatables();
-      if (!navigatables.isEmpty()) {
-        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[0]));
-      }
+      return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
     }
+    return null;
   }
 
   @NotNull

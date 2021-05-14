@@ -1,5 +1,5 @@
 import sys
-from typing import IO, Any, Dict as DictT, Mapping, MutableMapping, Optional, Text, Type, TypeVar, Union, overload
+from typing import IO, Any, Dict as DictT, Mapping, MutableMapping, Optional, Text, Type, Union
 
 if sys.version_info >= (3,):
     from enum import Enum

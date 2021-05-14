@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogSorter;
@@ -44,8 +43,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,18 +53,21 @@ import java.util.*;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 
-public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
+public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
   public static final Function<VcsRef, String> GET_TAG_NAME = ref -> ref.getType() == GitRefManager.TAG ? ref.getName() : null;
-  public static final TObjectHashingStrategy<VcsRef> DONT_CONSIDER_SHA = new TObjectHashingStrategy<>() {
+  public static final it.unimi.dsi.fastutil.Hash.Strategy<VcsRef> DONT_CONSIDER_SHA = new it.unimi.dsi.fastutil.Hash.Strategy<>() {
     @Override
-    public int computeHashCode(@NotNull VcsRef ref) {
+    public int hashCode(@Nullable VcsRef ref) {
+      if (ref == null) {
+        return 0;
+      }
       return 31 * ref.getName().hashCode() + ref.getType().hashCode();
     }
 
     @Override
-    public boolean equals(@NotNull VcsRef ref1, @NotNull VcsRef ref2) {
-      return ref1.getName().equals(ref2.getName()) && ref1.getType().equals(ref2.getType());
+    public boolean equals(@Nullable VcsRef ref1, @Nullable VcsRef ref2) {
+      return ref1 == ref2 || (ref1 != null && ref2 != null && ref1.getName().equals(ref2.getName()) && ref1.getType().equals(ref2.getType()));
     }
   };
 
@@ -104,7 +105,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     DetailedLogData data = GitLogUtil.collectMetadata(myProject, root, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
-    Set<VcsRef> allRefs = new OpenTHashSet<>(safeRefs, DONT_CONSIDER_SHA);
+    Set<VcsRef> allRefs = new ObjectOpenCustomHashSet<>(safeRefs, DONT_CONSIDER_SHA);
     Set<VcsRef> branches = readBranches(repository);
     addNewElements(allRefs, branches);
 
@@ -122,10 +123,10 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       currentTagNames = readCurrentTagNames(root);
       addOldStillExistingTags(allRefs, currentTagNames, rex.getPreviousRefs());
 
-      allDetails = newHashSet(data.getCommits());
+      allDetails = new HashSet<>(data.getCommits());
 
-      Set<String> previousTags = newHashSet(ContainerUtil.mapNotNull(rex.getPreviousRefs(), GET_TAG_NAME));
-      Set<String> safeTags = newHashSet(ContainerUtil.mapNotNull(safeRefs, GET_TAG_NAME));
+      Set<String> previousTags = new HashSet<>(ContainerUtil.mapNotNull(rex.getPreviousRefs(), GET_TAG_NAME));
+      Set<String> safeTags = new HashSet<>(ContainerUtil.mapNotNull(safeRefs, GET_TAG_NAME));
       Set<String> newUnmatchedTags = remove(currentTagNames, previousTags, safeTags);
 
       if (!newUnmatchedTags.isEmpty()) {
@@ -255,7 +256,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   @NotNull
   private Set<String> readCurrentTagNames(@NotNull VirtualFile root) throws VcsException {
     StopWatch sw = StopWatch.start("reading tags in " + root.getName());
-    Set<String> tags = newHashSet();
+    Set<String> tags = new HashSet<>();
     tags.addAll(GitBranchUtil.getAllTags(myProject, root));
     sw.report();
     return tags;
@@ -263,7 +264,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
 
   @NotNull
   private static <T> Set<T> remove(@NotNull Set<? extends T> original, Set<T> @NotNull ... toRemove) {
-    Set<T> result = newHashSet(original);
+    Set<T> result = new HashSet<>(original);
     for (Set<T> set : toRemove) {
       result.removeAll(set);
     }
@@ -311,8 +312,8 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     parameters.add("--date-order");
 
     final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(myProject, root);
-    Set<VcsUser> userRegistry = newHashSet();
-    Set<VcsRef> refs = newHashSet();
+    Set<VcsUser> userRegistry = new HashSet<>();
+    Set<VcsRef> refs = new HashSet<>();
     GitLogUtil.readTimedCommits(myProject, root, parameters, new CollectConsumer<>(userRegistry), new CollectConsumer<>(refs),
                                 commit -> commitConsumer.consume(parentFixer.fixCommit(commit)));
     return new LogDataImpl(refs, userRegistry);
@@ -354,7 +355,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     GitBranchesCollection branches = repository.getBranches();
     Collection<GitLocalBranch> localBranches = branches.getLocalBranches();
     Collection<GitRemoteBranch> remoteBranches = branches.getRemoteBranches();
-    Set<VcsRef> refs = new THashSet<>(localBranches.size() + remoteBranches.size());
+    Set<VcsRef> refs = new HashSet<>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
       Hash hash = branches.getHash(localBranch);
       assert hash != null;
@@ -573,15 +574,13 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     return currentBranchName;
   }
 
-  @Nullable
   @Override
-  public VcsLogDiffHandler getDiffHandler() {
+  public @NotNull VcsLogDiffHandler getDiffHandler() {
     return new GitLogDiffHandler(myProject);
   }
 
-  @Nullable
   @Override
-  public VcsLogFileHistoryHandler getFileHistoryHandler() {
+  public @NotNull VcsLogFileHistoryHandler getFileHistoryHandler() {
     return new GitLogHistoryHandler(myProject);
   }
 
@@ -593,9 +592,8 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     return Git.getInstance().resolveReference(repository, ref);
   }
 
-  @Nullable
   @Override
-  public VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath path) {
+  public @NotNull VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath path) {
     if (detectedRoot.equals(path.getVirtualFile())) {
       GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(detectedRoot);
       if (repository != null) {
@@ -660,15 +658,5 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       return false;
     }
     return true;
-  }
-
-  @NotNull
-  private static <T> Set<T> newHashSet() {
-    return new THashSet<>();
-  }
-
-  @NotNull
-  private static <T> Set<T> newHashSet(@NotNull Collection<? extends T> initialCollection) {
-    return new THashSet<>(initialCollection);
   }
 }

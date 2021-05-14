@@ -13,10 +13,16 @@ import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.util.Side
 import com.intellij.openapi.util.Disposer
 import com.intellij.space.components.SpaceWorkspaceComponent
+import com.intellij.space.settings.SpaceSettingsPanel
 import libraries.coroutines.extra.Lifetime
+import libraries.klogging.logger
 import runtime.reactive.LoadingValue
 
 class SpaceReviewCommentDiffExtension : DiffExtension() {
+  companion object {
+    val log = logger<SpaceSettingsPanel>()
+  }
+
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer,
                                context: DiffContext,
                                request: DiffRequest) {
@@ -58,16 +64,28 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
       override fun onAfterRediff() {
         if (!viewerIsReady) {
           discussions.values.forEach { propagatedCodeDiscussion ->
-            addCommentToDiff(chatPanelFactory, propagatedCodeDiscussion, lifetime, handler)
+            addCommentWithExceptionHandling(chatPanelFactory, propagatedCodeDiscussion, lifetime, handler)
           }
 
           discussions.change.forEach(lifetime) { (_, _, newValue) ->
-            newValue?.let { addCommentToDiff(chatPanelFactory, it, lifetime, handler) }
+            newValue?.let { addCommentWithExceptionHandling(chatPanelFactory, it, lifetime, handler) }
           }
         }
         viewerIsReady = true
       }
     })
+  }
+
+  private fun addCommentWithExceptionHandling(chatPanelFactory: SpaceReviewCommentPanelFactory,
+                                              propagatedCodeDiscussion: PropagatedCodeDiscussion,
+                                              lifetime: Lifetime,
+                                              handler: SpaceDiffCommentsHandler) {
+    try {
+      addCommentToDiff(chatPanelFactory, propagatedCodeDiscussion, lifetime, handler)
+    }
+    catch (e: Exception) {
+      log.error(e, "Unable to add comment panel")
+    }
   }
 
   private fun addCommentToDiff(commentPanelFactory: SpaceReviewCommentPanelFactory,

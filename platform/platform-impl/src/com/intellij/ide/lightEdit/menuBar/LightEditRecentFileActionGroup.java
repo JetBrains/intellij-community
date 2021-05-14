@@ -89,7 +89,7 @@ class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, A
       Project project = e.getProject();
       if (project != null) {
         LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, myFile);
-        LightEditFeatureUsagesUtil.logFileOpen(RecentFiles);
+        LightEditFeatureUsagesUtil.logFileOpen(project, RecentFiles);
         new OpenFileDescriptor(project, myFile).navigate(true);
       }
     }

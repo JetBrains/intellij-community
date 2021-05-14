@@ -229,6 +229,11 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     modifierList.setModifierProperty(PsiModifier.STATIC, true);
     modifierList.setModifierProperty(PsiModifier.FINAL, false);
     modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
+
+    PsiReceiverParameter receiverParameter = PsiTreeUtil.getChildOfType(member.getParameterList(), PsiReceiverParameter.class);
+    if (receiverParameter != null) {
+      receiverParameter.delete();
+    }
   }
 
   @Override

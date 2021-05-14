@@ -271,6 +271,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, parentDisposab
    */
   fun assignTo(presentation: Presentation, pointProvider: (Component) -> Point) {
     presentation.putClientProperty(PRESENTATION_KEY, ActionContext(this, pointProvider))
+    Disposer.register(this, Disposable { presentation.putClientProperty(PRESENTATION_KEY, null) })
   }
 
   private fun showImpl(component: JComponent, pointProvider: (Component) -> Point) {

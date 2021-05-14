@@ -243,9 +243,10 @@ final class BuildContextImpl extends BuildContext {
   @Override
   void signExeFile(String path) {
     if (proprietaryBuildTools.signTool != null) {
-      messages.progress("Signing $path")
-      proprietaryBuildTools.signTool.signExeFile(path, this)
-      messages.info("Signed $path")
+      executeStep("Signing $path", BuildOptions.WIN_SIGN_STEP) {
+        proprietaryBuildTools.signTool.signExeFile(path, this)
+        messages.info("Signed $path")
+      }
     }
     else {
       messages.warning("Sign tool isn't defined, $path won't be signed")

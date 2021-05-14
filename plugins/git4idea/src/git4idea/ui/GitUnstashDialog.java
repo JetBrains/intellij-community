@@ -109,7 +109,7 @@ public class GitUnstashDialog extends DialogWrapper {
     myViewButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        GitStashOperations.viewStash(project, getSelectedStash());
+        GitStashOperations.viewStash(project, getSelectedStash(), true);
       }
     });
     init();

@@ -53,7 +53,7 @@ final class GitQuickActionsToolbarPopup extends VcsQuickActionsToolbarPopup {
     GitRepository repo = GitBranchUtil.getCurrentRepository(project);
 
     if (repo == null) {
-      presentation.setText(VcsBundle.message("version.control.main.configurable.name"));
+      presentation.setText(VcsBundle.message("version.control.main.configurable.name") + " ");
       presentation.setIcon(AllIcons.Vcs.BranchNode);
     }
     else {

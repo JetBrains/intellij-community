@@ -23,13 +23,10 @@ public class ApplicationManager {
   }
 
   public static void setApplication(@NotNull Application instance, @NotNull Disposable parent) {
-    final Application old = ourApplication;
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        if (old != null) { // to prevent NPEs in threads still running
-          setApplication(old);
-        }
+    Application old = ourApplication;
+    Disposer.register(parent, () -> {
+      if (old != null) { // to prevent NPEs in threads still running
+        setApplication(old);
       }
     });
     setApplication(instance);

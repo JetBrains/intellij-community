@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -372,7 +372,7 @@ public final class MadTestingUtil {
     }
     String suffix = StringUtil.shortenTextWithEllipsis(document.getText(new TextRange(offset, end)), 30, 0);
     String text = prefix + "|" + suffix;
-    return offset + "(" + line + ":" + column + ") [" + text + "]";
+    return offset + "(" + (line + 1) + ":" + (column + 1) + ") [" + text + "]";
   }
 
   @NotNull

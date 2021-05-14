@@ -41,7 +41,7 @@ public class FindVariableUsagesDialog extends JavaFindUsagesDialog<JavaVariableF
 
     options.isReadAccess = true;
     options.isWriteAccess = true;
-    FUCounterUsageLogger.getInstance().logEvent(EVENT_LOG_GROUP, "find.variable.started", createFeatureUsageData(options));
+    FUCounterUsageLogger.getInstance().logEvent(myPsiElement.getProject(), EVENT_LOG_GROUP, "find.variable.started", createFeatureUsageData(options));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.usages.api
 
 import com.intellij.model.Pointer
@@ -30,8 +30,8 @@ interface SearchTarget {
   /**
    * @return presentation to be displayed in the disambiguation popup
    * when several [different][equals] targets exist to choose from,
-   * or in the Usage View (only [icon][TargetPopupPresentation.getIcon]
-   * and [presentable text][TargetPopupPresentation.getPresentableText] are used)
+   * or in the Usage View (only [icon][TargetPopupPresentation.icon]
+   * and [presentable text][TargetPopupPresentation.presentableText] are used)
    */
   val presentation: TargetPopupPresentation
 

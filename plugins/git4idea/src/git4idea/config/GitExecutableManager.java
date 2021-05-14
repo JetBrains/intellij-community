@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -24,9 +23,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.nio.file.NoSuchFileException;
@@ -214,13 +211,13 @@ public class GitExecutableManager {
         throw new ProcessCanceledException();
       }
       return version;
-    }, GitBundle.getString("git.executable.version.progress.title"), true, project);
+    }, GitBundle.message("git.executable.version.progress.title"), true, project);
   }
 
   @CalledInAny
   @Nullable
   public GitVersion tryGetVersion(@NotNull Project project) {
-    return runUnderProgressIfNeeded(project, GitBundle.getString("git.executable.version.progress.title"), () -> {
+    return runUnderProgressIfNeeded(project, GitBundle.message("git.executable.version.progress.title"), () -> {
       try {
         GitExecutable executable = getExecutable(project);
         return identifyVersion(executable);

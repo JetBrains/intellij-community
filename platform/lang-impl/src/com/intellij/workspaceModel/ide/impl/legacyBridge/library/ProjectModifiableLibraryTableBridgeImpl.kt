@@ -104,7 +104,16 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   override fun prepareForCommit() {
     assertModelIsLive()
     modelIsCommittedOrDisposed = true
-    myAddedLibraries.forEach { library -> library.clearTargetBuilder() }
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    myAddedLibraries.forEach { library ->
+      if (storage.resolve(library.libraryId) != null) {
+        // it may happen that actual library table already has a library with such name (e.g. when multiple projects are imported in parallel)
+        // in such case we need to skip the new library to avoid exceptions.
+        diff.removeEntity(diff.libraryMap.getEntities(library).first())
+        Disposer.dispose(library)
+      }
+      library.clearTargetBuilder()
+    }
   }
 
   override fun getLibraryIterator(): Iterator<Library> = librariesArray.iterator()

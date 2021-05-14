@@ -32,7 +32,7 @@ public final class MacUIUtil {
   public static Cursor getInvertedTextCursor() {
     if (INVERTED_TEXT_CURSOR == null) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      Image cursorImage = toolkit.getImage(MacUIUtil.class.getClassLoader().getResource("/mac/text.png")); // will also load text@2x.png
+      Image cursorImage = toolkit.getImage(MacUIUtil.class.getClassLoader().getResource("mac/text.png")); // will also load text@2x.png
       INVERTED_TEXT_CURSOR = toolkit.createCustomCursor(cursorImage, new Point(15, 13), "InvertedTextCursor");
     }
     return INVERTED_TEXT_CURSOR;

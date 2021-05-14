@@ -92,8 +92,8 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
                                       final Editor editor,
                                       final RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<Boolean> indented,
-                                      final List<FoldingTransferableData> values) {
+                                      Ref<? super Boolean> indented,
+                                      final List<? extends FoldingTransferableData> values) {
     assert values.size() == 1;
     final FoldingTransferableData value = values.get(0);
     if (value.getData().length == 0) return;

@@ -19,6 +19,7 @@ import com.intellij.formatting.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class WrapProcessor {
   private LeafBlockWrapper myFirstWrappedBlockOnLine = null;
@@ -78,7 +79,7 @@ public class WrapProcessor {
 
 
   @Nullable
-  private WrapImpl getWrapToBeUsed(final ArrayList<WrapImpl> wraps, LeafBlockWrapper currentBlock) {
+  private WrapImpl getWrapToBeUsed(final List<? extends WrapImpl> wraps, LeafBlockWrapper currentBlock) {
     if (wraps.isEmpty()) {
       return null;
     }

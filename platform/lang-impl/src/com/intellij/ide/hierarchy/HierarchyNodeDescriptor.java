@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,11 +73,11 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
   }
 
   protected static TextAttributes getInvalidPrefixAttributes() {
-    return UsageTreeColorsScheme.getInstance().getScheme().getAttributes(UsageTreeColors.INVALID_PREFIX);
+    return UsageTreeColors.INVALID_ATTRIBUTES.toTextAttributes();
   }
 
   protected static TextAttributes getUsageCountPrefixAttributes() {
-    return UsageTreeColorsScheme.getInstance().getScheme().getAttributes(UsageTreeColors.NUMBER_OF_USAGES);
+    return UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes();
   }
 
   protected static TextAttributes getPackageNameAttributes() {

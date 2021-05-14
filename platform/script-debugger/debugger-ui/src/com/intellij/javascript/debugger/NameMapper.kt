@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javascript.debugger
 
 import com.google.common.base.CharMatcher
@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SyntaxTraverser
-import gnu.trove.THashMap
 import org.jetbrains.debugger.sourcemap.MappingEntry
 import org.jetbrains.debugger.sourcemap.Mappings
 import org.jetbrains.debugger.sourcemap.MappingsProcessorInLine
@@ -123,7 +122,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
 
   fun addMapping(generatedName: String, sourceName: String) {
     if (rawNameToSource == null) {
-      rawNameToSource = THashMap<String, String>()
+      rawNameToSource = HashMap<String, String>()
     }
     rawNameToSource!!.put(generatedName, sourceName)
   }
@@ -149,7 +148,6 @@ open class NameMapper(private val document: Document, private val transpiledDocu
     }
     return document.immutableCharSequence.subSequence(lineStartOffset + sourceEntry.generatedColumn, endOffset)
   }
-
 }
 
 fun warnSeveralMapping(element: PsiElement) {

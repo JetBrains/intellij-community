@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.actions.searcheverywhere.*;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -18,6 +19,8 @@ public class JavaClassAndFileEqualityProvider extends AbstractEqualityProvider {
     PsiElement alreadyFoundPsi = PsiElementsEqualityProvider.toPsi(alreadyFoundItemInfo.getElement());
 
     return newElementPsi != null && alreadyFoundPsi != null
+           && newElementPsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)
+           && alreadyFoundPsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)
            && isClassAndFile(newItemInfo, alreadyFoundItemInfo)
            && isSameFile(newElementPsi, alreadyFoundPsi);
   }

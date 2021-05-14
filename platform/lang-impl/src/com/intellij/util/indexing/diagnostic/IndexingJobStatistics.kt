@@ -25,7 +25,9 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
 
   val statsPerFileType = hashMapOf<String /* File type name */, StatsPerFileType>()
 
-  val indexedFiles = arrayListOf<PortableFilePath>()
+  val indexedFiles = arrayListOf<IndexedFile>()
+
+  data class IndexedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByExtensions: Boolean)
 
   data class StatsPerIndexer(
     val indexingTime: TimeStats,
@@ -71,7 +73,7 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += getIndexedFilePath(file)
+      indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
     }
   }
 
@@ -79,7 +81,7 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     numberOfIndexedFiles++
     numberOfTooLargeForIndexingFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += getIndexedFilePath(file)
+      indexedFiles += IndexedFile(getIndexedFilePath(file), false)
     }
   }
 

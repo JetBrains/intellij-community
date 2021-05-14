@@ -101,7 +101,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   }
 
   @Override
-  public void postProcessUsages(UsageInfo[] usages, Function<PsiDirectory, PsiDirectory> newDirMapper) {
+  public void postProcessUsages(UsageInfo[] usages, Function<? super PsiDirectory, ? extends PsiDirectory> newDirMapper) {
     for (UsageInfo usage : usages) {
       if (usage instanceof RemoveOnDemandImportStatementsUsageInfo) {
         final PsiElement element = usage.getElement();

@@ -16,7 +16,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
-import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -35,7 +34,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -383,18 +381,6 @@ public final class PsiClassImplUtil {
       return true;
     }
     return false;
-  }
-
-  /**
-   * @deprecated synthetic enum methods are included into {@link PsiClass#getMethods()}
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static boolean processDeclarationsInEnum(@NotNull PsiScopeProcessor processor,
-                                                  @NotNull ResolveState state,
-                                                  @NotNull ClassInnerStuffCache innerStuffCache) {
-    return true;
   }
 
   public static boolean processDeclarationsInClass(@NotNull PsiClass aClass,

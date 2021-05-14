@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -8,9 +8,10 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.HintAction;
-import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -18,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
@@ -85,6 +85,10 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
     if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
 
+    SlowOperations.allowSlowOperations(() -> doShowImports());
+  }
+
+  private void doShowImports() {
     int caretOffset = myEditor.getCaretModel().getOffset();
     importUnambiguousImports(caretOffset);
     if (isImportHintEnabled()) {
@@ -200,41 +204,28 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       return Collections.emptyList();
     }
 
-    DaemonProgressIndicator progress = new DaemonProgressIndicator();
-    AtomicReference<List<HighlightInfo>> infos = new AtomicReference<>(Collections.emptyList());
-    ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() ->
-      ProgressManager.getInstance().executeProcessUnderProgress(() -> infos.set(runGeneralHighlightingPass(file)), progress));
-
-    List<HintAction> result = new ArrayList<>(infos.get().size());
-    for (HighlightInfo info : infos.get()) {
-      for (HintAction action : extractHints(info)) {
-        if (action.isAvailable(project, null, file)) {
-          result.add(action);
+    List<HintAction> result = new ArrayList<>();
+    HighlightInfo fakeInfo = new HighlightInfo(null, null, HighlightInfoType.ERROR, 0, 0,
+                                           null, null, HighlightSeverity.ERROR, false,
+                                           null, false, 0, null,
+                                           null, null, -1);
+    QuickFixActionRegistrarImpl registrar = new QuickFixActionRegistrarImpl(fakeInfo);
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        ProgressManager.checkCanceled();
+        if (element instanceof PsiReference && ((PsiReference)element).resolve() == null) {
+          UnresolvedReferenceQuickFixProvider.registerReferenceFixes((PsiReference)element, registrar);
         }
+        super.visitElement(element);
       }
-    }
-    return result;
-  }
-
-  @NotNull
-  private static List<HighlightInfo> runGeneralHighlightingPass(@NotNull PsiFile file) {
-    Project project = file.getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) return Collections.emptyList();
-    ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
-    GlobalInspectionContextBase.assertUnderDaemonProgress();
-
-    TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
-    List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
-    List<GeneralHighlightingPass> gpasses = ContainerUtil.filterIsInstance(passes, GeneralHighlightingPass.class);
-
-    List<HighlightInfo> result = new ArrayList<>();
-    for (TextEditorHighlightingPass pass : gpasses) {
-      pass.doCollectInformation(progress);
-      List<HighlightInfo> infos = pass.getInfos();
-      for (HighlightInfo info : infos) {
-        if (info != null && info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
-          result.add(info);
+    });
+    if (fakeInfo.quickFixActionRanges != null) {
+      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> marker : fakeInfo.quickFixActionRanges) {
+        ProgressManager.checkCanceled();
+        IntentionAction action = marker.first.getAction();
+        if (action instanceof HintAction && action.isAvailable(project, null, file)) {
+          result.add((HintAction)action);
         }
       }
     }

@@ -10,7 +10,7 @@ import java.util.List;
 
 public class MacOSFileTypeAssociator implements SystemFileTypeAssociator {
   @Override
-  public void associateFileTypes(@NotNull List<FileType> fileTypes) throws OSFileAssociationException {
+  public void associateFileTypes(@NotNull List<? extends FileType> fileTypes) throws OSFileAssociationException {
     LaunchServiceUpdater updater = new LaunchServiceUpdater(getAppBundleIdentifier());
     updater.addFileTypes(fileTypes);
     updater.update();

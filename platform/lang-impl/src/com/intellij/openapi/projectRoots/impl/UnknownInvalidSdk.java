@@ -10,14 +10,15 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.roots.ui.configuration.*;
+import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class UnknownInvalidSdk implements UnknownSdk {
   private static final Logger LOG = Logger.getInstance(UnknownInvalidSdk.class);
@@ -61,7 +62,7 @@ public class UnknownInvalidSdk implements UnknownSdk {
   }
 
   @NotNull
-  static List<UnknownInvalidSdk> resolveInvalidSdks(@NotNull List<Sdk> usedSdks) {
+  static List<UnknownInvalidSdk> resolveInvalidSdks(@NotNull List<? extends Sdk> usedSdks) {
     List<UnknownInvalidSdk> result = new ArrayList<>();
     for (Sdk sdk : usedSdks) {
       if (SdkDownloadTracker.getInstance().isDownloading(sdk)) continue;

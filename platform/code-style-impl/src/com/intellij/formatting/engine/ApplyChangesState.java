@@ -67,7 +67,7 @@ public class ApplyChangesState extends State {
    * @param model          current formatting model
    */
   @SuppressWarnings({"deprecation"})
-  private void applyChangesAtRewriteMode(@NotNull final List<LeafBlockWrapper> blocksToModify,
+  private void applyChangesAtRewriteMode(final @NotNull List<? extends LeafBlockWrapper> blocksToModify,
                                          @NotNull final FormattingModel model) {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();

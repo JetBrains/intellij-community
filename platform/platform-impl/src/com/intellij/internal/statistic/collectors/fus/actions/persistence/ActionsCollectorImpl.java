@@ -32,8 +32,12 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
+    recordCustomActionInvoked(null, actionId, event, context);
+  }
+
+  public static void recordCustomActionInvoked(@Nullable Project project, @Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     String recorded = StringUtil.isNotEmpty(actionId) && ourWhitelist.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
-    ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(recorded, new FusInputEvent(event, null));
+    ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(project, recorded, new FusInputEvent(event, null));
   }
 
   @Override

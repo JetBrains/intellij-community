@@ -230,7 +230,7 @@ public class ExternalSystemTaskActivator {
     return projectSettings != null ? projectSettings.getExternalProjectPath() : null;
   }
 
-  private boolean runTasksQueue(final Queue<Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue) {
+  private boolean runTasksQueue(final Queue<? extends Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue) {
     final Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings> pair = tasksQueue.poll();
     if (pair == null) {
       return true;
