@@ -650,10 +650,14 @@
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
-    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode"
-            use-shortcut-of="ForceStepInto">
-      <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
+    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode">
+      <add-to-group group-id="DebuggingActionsGroup" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+
+      <keyboard-shortcut keymap="$default" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="macOS System Shortcuts" first-keystroke="alt shift SEMICOLON" second-keystroke="alt shift F7" replace-all="true"/>
     </action>
 
     <action id="SetNextStatement" class="com.jetbrains.python.debugger.PySetNextStatementAction">
