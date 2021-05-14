@@ -117,13 +117,13 @@ class MoveConflictChecker(
                 else -> null
             }
 
-            is KotlinDirectoryBasedMoveTarget -> {
+            is KotlinDirectoryMoveTarget, is KotlinMoveTargetForDeferredFile -> {
                 val packageFqName = targetContainerFqName ?: return null
-                val targetModuleDescriptor = targetScope?.let { getModuleDescriptor(it) ?: return null }
+                val targetModuleDescriptor = targetFileOrDir?.let { getModuleDescriptor(it) ?: return null }
                     ?: resolutionFacade.moduleDescriptor
                 MutablePackageFragmentDescriptor(targetModuleDescriptor, packageFqName).withSource(fakeFile)
-            }
 
+            }
             else -> null
         }
     }
@@ -233,7 +233,7 @@ class MoveConflictChecker(
 
     private fun checkModuleConflictsInUsages(externalUsages: MutableSet<UsageInfo>, conflicts: MultiMap<PsiElement, String>) {
         val newConflicts = MultiMap<PsiElement, String>()
-        val targetScope = moveTarget.targetScope ?: return
+        val targetScope = moveTarget.targetFileOrDir ?: return
 
         analyzeModuleConflictsInUsages(project, externalUsages, targetScope, newConflicts)
         if (!newConflicts.isEmpty) {
@@ -276,7 +276,7 @@ class MoveConflictChecker(
         internalUsages: MutableSet<UsageInfo>,
         conflicts: MultiMap<PsiElement, String>
     ) {
-        val targetScope = moveTarget.targetScope ?: return
+        val targetScope = moveTarget.targetFileOrDir ?: return
         val targetModule = targetScope.getModule(project) ?: return
         val resolveScope = targetModule.getScopeWithPlatformAwareDependencies()
 

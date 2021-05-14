@@ -474,7 +474,7 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
         val conflictChecker = MoveConflictChecker(
             sourceData.project,
             sourceData.elementsToCopy,
-            KotlinDirectoryMoveTarget(FqName.ROOT, targetSourceRootPsi),
+            KotlinDirectoryMoveTarget(FqName.ROOT, targetSourceRootPsi.virtualFile),
             sourceData.originalFile
         )
 

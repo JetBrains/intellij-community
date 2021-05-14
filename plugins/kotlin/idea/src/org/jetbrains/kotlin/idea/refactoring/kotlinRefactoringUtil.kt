@@ -108,8 +108,8 @@ fun getOrCreateKotlinFile(
     fileName: String,
     targetDir: PsiDirectory,
     packageName: String? = targetDir.getFqNameWithImplicitPrefix()?.asString()
-): KtFile? =
-    (targetDir.findFile(fileName) ?: createKotlinFile(fileName, targetDir, packageName)) as? KtFile
+): KtFile =
+    (targetDir.findFile(fileName) ?: createKotlinFile(fileName, targetDir, packageName)) as KtFile
 
 fun createKotlinFile(
     fileName: String,

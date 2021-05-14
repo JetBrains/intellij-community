@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.core.getOrCreateCompanionObject
@@ -14,34 +13,25 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.utils.getOrPutNullable
+import java.util.*
 
 interface KotlinMoveTarget {
     val targetContainerFqName: FqName?
-    val targetFile: VirtualFile?
+    val targetFileOrDir: VirtualFile?
 
-    fun getOrCreateTargetPsi(originalPsi: PsiElement): KtElement?
+    fun getOrCreateTargetPsi(originalPsi: PsiElement): KtElement
     fun getTargetPsiIfExists(originalPsi: PsiElement): KtElement?
 
     // Check possible errors and return corresponding message, or null if no errors are detected
     fun verify(file: PsiFile): String?
 
-    val targetScope: VirtualFile?
-        get() = targetFile
-}
-
-interface KotlinDirectoryBasedMoveTarget : KotlinMoveTarget {
-    val directory: PsiDirectory?
-
-    override val targetScope: VirtualFile?
-        get() = super.targetScope ?: directory?.virtualFile
 }
 
 object EmptyKotlinMoveTarget : KotlinMoveTarget {
     override val targetContainerFqName: FqName? = null
-    override val targetFile: VirtualFile? = null
+    override val targetFileOrDir: VirtualFile? = null
 
-    override fun getOrCreateTargetPsi(originalPsi: PsiElement): KtElement? = null
+    override fun getOrCreateTargetPsi(originalPsi: PsiElement): KtElement = throw UnsupportedOperationException()
     override fun getTargetPsiIfExists(originalPsi: PsiElement): KtElement? = null
     override fun verify(file: PsiFile): String? = null
 }
@@ -49,7 +39,7 @@ object EmptyKotlinMoveTarget : KotlinMoveTarget {
 class KotlinMoveTargetForExistingElement(val targetElement: KtElement) : KotlinMoveTarget {
     override val targetContainerFqName = targetElement.containingKtFile.packageFqName
 
-    override val targetFile: VirtualFile? = targetElement.containingKtFile.virtualFile
+    override val targetFileOrDir: VirtualFile = targetElement.containingKtFile.virtualFile
 
     override fun getOrCreateTargetPsi(originalPsi: PsiElement) = targetElement
 
@@ -63,7 +53,7 @@ class KotlinMoveTargetForCompanion(val targetClass: KtClass) : KotlinMoveTarget 
     override val targetContainerFqName = targetClass.companionObjects.firstOrNull()?.fqName
         ?: targetClass.fqName!!.child(SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT)
 
-    override val targetFile: VirtualFile? = targetClass.containingKtFile.virtualFile
+    override val targetFileOrDir: VirtualFile = targetClass.containingKtFile.virtualFile
 
     override fun getOrCreateTargetPsi(originalPsi: PsiElement) = targetClass.getOrCreateCompanionObject()
 
@@ -73,17 +63,26 @@ class KotlinMoveTargetForCompanion(val targetClass: KtClass) : KotlinMoveTarget 
     override fun verify(file: PsiFile): String? = null
 }
 
+/**
+ * Assumes that a target of move is another file (existent or not).
+ * @param targetDir directory where a target file exists or to be created, used for various checks
+ * @param targetFileProvider is called to get a target file (new or existing). Original file is available as an argument.
+ * Result of the call is cached.
+ */
 class KotlinMoveTargetForDeferredFile(
-    override val targetContainerFqName: FqName,
-    override val directory: PsiDirectory?,
-    override val targetFile: VirtualFile? = directory?.virtualFile,
-    private val createFile: (KtFile) -> KtFile?
-) : KotlinDirectoryBasedMoveTarget {
-    private val createdFiles = HashMap<KtFile, KtFile?>()
+    targetPackageFqName: FqName,
+    targetDir: VirtualFile?,
+    private val targetFileProvider: (KtFile) -> KtFile = { it }
+) : KotlinMoveTarget {
+    override val targetFileOrDir: VirtualFile? = targetDir
+    override val targetContainerFqName: FqName = targetPackageFqName
 
-    override fun getOrCreateTargetPsi(originalPsi: PsiElement): KtElement? {
-        val originalFile = originalPsi.containingFile as? KtFile ?: return null
-        return createdFiles.getOrPutNullable(originalFile) { createFile(originalFile) }
+    private val createdFiles = HashMap<KtFile, KtFile>()
+
+    override fun getOrCreateTargetPsi(originalPsi: PsiElement): KtElement {
+        val file = originalPsi.containingFile ?: error("PSI element in not contained in any file: $originalPsi")
+        val originalFile = file as KtFile
+        return createdFiles.getOrPut(originalFile) { targetFileProvider(originalFile) }
     }
 
     override fun getTargetPsiIfExists(originalPsi: PsiElement): KtElement? = null
@@ -93,16 +92,20 @@ class KotlinMoveTargetForDeferredFile(
 }
 
 class KotlinDirectoryMoveTarget(
-    override val targetContainerFqName: FqName,
-    override val directory: PsiDirectory
-) : KotlinDirectoryBasedMoveTarget {
-    override val targetFile: VirtualFile? = directory.virtualFile
+    targetPackageFqName: FqName,
+    override val targetFileOrDir: VirtualFile
+) : KotlinMoveTarget {
 
-    override fun getOrCreateTargetPsi(originalPsi: PsiElement) = originalPsi.containingFile as? KtFile
+    override val targetContainerFqName = targetPackageFqName
+
+    override fun getOrCreateTargetPsi(originalPsi: PsiElement): KtFile {
+        val file = originalPsi.containingFile ?: error("PSI element in not contained in any file: $originalPsi")
+        return file as KtFile
+    }
 
     override fun getTargetPsiIfExists(originalPsi: PsiElement): KtElement? = null
 
     override fun verify(file: PsiFile): String? = null
 }
 
-fun KotlinMoveTarget.getTargetModule(project: Project) = targetScope?.getModule(project)
+fun KotlinMoveTarget.getTargetModule(project: Project) = targetFileOrDir?.getModule(project)

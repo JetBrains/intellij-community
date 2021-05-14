@@ -69,7 +69,7 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
         conflicts: MultiMap<PsiElement, String>
     ) {
         val psiPackage = directory?.getPackage() ?: return
-        val moveTarget = KotlinDirectoryMoveTarget(FqName(psiPackage.qualifiedName), directory)
+        val moveTarget = KotlinDirectoryMoveTarget(FqName(psiPackage.qualifiedName), directory.virtualFile)
         for ((index, usageInfo) in infos.withIndex()) {
             if (usageInfo !is FileUsagesWrapper) continue
 

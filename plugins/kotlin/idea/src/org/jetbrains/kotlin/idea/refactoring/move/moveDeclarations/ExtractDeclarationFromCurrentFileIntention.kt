@@ -97,7 +97,7 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
             return
         }
 
-        val moveTarget = KotlinMoveTargetForDeferredFile(packageName, directory, targetFile = null) {
+        val moveTarget = KotlinMoveTargetForDeferredFile(packageName, directory.virtualFile) {
             createKotlinFile(targetFileName, directory, packageName.asString())
         }
 
