@@ -172,6 +172,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   @Nullable
   private static BrowserFamily readFamily(String value) {
     try {
+      if ("OPERA".equals(value)) return BrowserFamily.CHROME;
       return BrowserFamily.valueOf(value);
     }
     catch (RuntimeException e) {
