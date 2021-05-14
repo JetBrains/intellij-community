@@ -12,16 +12,19 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -30,8 +33,8 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.StandardDataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH;
 
-public class JvmDataFlowInterpreter implements DataFlowInterpreter {
-  private static final Logger LOG = Logger.getInstance(JvmDataFlowInterpreter.class);
+public class StandardDataFlowInterpreter implements DataFlowInterpreter {
+  private static final Logger LOG = Logger.getInstance(StandardDataFlowInterpreter.class);
   private final @NotNull ControlFlow myFlow;
   private final Instruction @NotNull [] myInstructions;
   private final @NotNull DfaListener myListener;
@@ -42,13 +45,13 @@ public class JvmDataFlowInterpreter implements DataFlowInterpreter {
   private boolean myCancelled = false;
   private boolean myWasForciblyMerged = false;
 
-  public JvmDataFlowInterpreter(@NotNull ControlFlow flow, @NotNull DfaListener listener) {
+  public StandardDataFlowInterpreter(@NotNull ControlFlow flow, @NotNull DfaListener listener) {
     this(flow, listener, false);
   }
 
-  public JvmDataFlowInterpreter(@NotNull ControlFlow flow,
-                                @NotNull DfaListener listener,
-                                boolean stopOnNull) { 
+  public StandardDataFlowInterpreter(@NotNull ControlFlow flow,
+                                     @NotNull DfaListener listener,
+                                     boolean stopOnNull) {
     myFlow = flow;
     myInstructions = flow.getInstructions();
     myListener = listener;
@@ -137,7 +140,7 @@ public class JvmDataFlowInterpreter implements DataFlowInterpreter {
               if (!(topValue instanceof DfaControlTransferValue || myPsiAnchor instanceof PsiCodeFragment && memoryState.isEmptyStack())) {
                 // push back so error report includes this entry
                 memoryState.push(topValue);
-                StandardDataFlowRunner.reportDfaProblem(myPsiAnchor, myFlow, instructionState, new RuntimeException("Stack is corrupted"));
+                reportDfaProblem(instructionState, new RuntimeException("Stack is corrupted"));
               }
             }
           }
@@ -177,7 +180,7 @@ public class JvmDataFlowInterpreter implements DataFlowInterpreter {
       throw ex;
     }
     catch (RuntimeException | AssertionError e) {
-      StandardDataFlowRunner.reportDfaProblem(myPsiAnchor, myFlow, lastInstructionState, e);
+      reportDfaProblem(lastInstructionState, e);
       return RunnerResult.ABORTED;
     }
   }
@@ -328,10 +331,35 @@ public class JvmDataFlowInterpreter implements DataFlowInterpreter {
   }
 
   /**
-   * @return true if analysis should stop when null is dereferenced. 
+   * @return true if analysis should stop when null is dereferenced.
    * If false, the analysis will be continued under assumption that null value is not null anymore.
    */
   public boolean stopOnNull() {
     return myStopOnNull;
+  }
+
+  private void reportDfaProblem(@Nullable DfaInstructionState lastInstructionState, @NotNull Throwable e) {
+    Attachment[] attachments = {new Attachment("method_body.txt", myPsiAnchor.getText())};
+    String flowText = myFlow.toString();
+    if (lastInstructionState != null) {
+      int index = lastInstructionState.getInstruction().getIndex();
+      flowText = flowText.replaceAll("(?m)^", "  ");
+      flowText = flowText.replaceFirst("(?m)^ {2}" + index + ": ", "* " + index + ": ");
+    }
+    attachments = ArrayUtil.append(attachments, new Attachment("flow.txt", flowText));
+    if (lastInstructionState != null) {
+      DfaMemoryState memoryState = lastInstructionState.getMemoryState();
+      String memStateText = null;
+      try {
+        memStateText = memoryState.toString();
+      }
+      catch (RuntimeException second) {
+        e.addSuppressed(second);
+      }
+      if (memStateText != null) {
+        attachments = ArrayUtil.append(attachments, new Attachment("memory_state.txt", memStateText));
+      }
+    }
+    LOG.error("Dataflow interpretation error", e, attachments);
   }
 }

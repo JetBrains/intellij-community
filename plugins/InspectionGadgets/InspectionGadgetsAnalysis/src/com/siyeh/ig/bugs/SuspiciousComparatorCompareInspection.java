@@ -16,8 +16,8 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
@@ -132,7 +132,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       DfaVariableValue var2 = PlainDescriptor.createVariableValue(factory, parameters[1]);
       state.applyCondition(var1.eq(var2));
       var interceptor = new ComparatorListener(owner);
-      if (new JvmDataFlowInterpreter(flow, interceptor).interpret(state) != RunnerResult.OK) return;
+      if (new StandardDataFlowInterpreter(flow, interceptor).interpret(state) != RunnerResult.OK) return;
       if (interceptor.myRange.contains(0) || interceptor.myContexts.isEmpty()) return;
       PsiElement context = null;
       if (interceptor.myContexts.size() == 1) {

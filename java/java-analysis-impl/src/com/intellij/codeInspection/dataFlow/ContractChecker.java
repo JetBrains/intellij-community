@@ -116,7 +116,7 @@ final class ContractChecker {
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
     if (flow == null) return Collections.emptyMap();
     ContractCheckListener interceptor = new ContractCheckListener(method, contract, ownContract);
-    JvmDataFlowInterpreter interpreter = new JvmDataFlowInterpreter(flow, interceptor, true) {
+    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(flow, interceptor, true) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();

@@ -98,7 +98,7 @@ final class NullParameterConstraintChecker {
     }
   }
 
-  private static class NullParameterCheckerInterpreter extends JvmDataFlowInterpreter {
+  private static class NullParameterCheckerInterpreter extends StandardDataFlowInterpreter {
     final Set<PsiParameter> myPossiblyViolatedParameters;
     final Set<PsiParameter> myUsedParameters;
     final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;

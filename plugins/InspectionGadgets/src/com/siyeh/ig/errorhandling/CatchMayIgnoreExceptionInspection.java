@@ -7,7 +7,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
@@ -189,7 +189,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     };
   }
 
-  private static class CatchDataFlowInterpreter extends JvmDataFlowInterpreter {
+  private static class CatchDataFlowInterpreter extends StandardDataFlowInterpreter {
     final DfaVariableValue myExceptionVar;
     final @NotNull List<PsiMethod> myMethods;
     final @NotNull PsiParameter myParameter;

@@ -6,7 +6,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
@@ -161,7 +161,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         values.put(expression, old == null || old == result ? result : ThreeState.UNSURE);
       }
     };
-    var runner = new JvmDataFlowInterpreter(flow, interceptor) {
+    var runner = new StandardDataFlowInterpreter(flow, interceptor) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();

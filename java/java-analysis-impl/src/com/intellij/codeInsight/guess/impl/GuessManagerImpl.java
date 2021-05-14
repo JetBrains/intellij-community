@@ -193,8 +193,8 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    protected @NotNull JvmDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
-      return new JvmDataFlowInterpreter(flow, listener) {
+    protected @NotNull StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
+      return new StandardDataFlowInterpreter(flow, listener) {
         @Override
         public int getComplexityLimit() {
           // Limit analysis complexity for completion as it could be relaunched many times

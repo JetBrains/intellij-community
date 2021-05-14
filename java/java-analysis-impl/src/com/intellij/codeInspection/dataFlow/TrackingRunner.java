@@ -80,9 +80,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @Override
-  protected @NotNull JvmDataFlowInterpreter createInterpreter(@NotNull DfaListener listener,
-                                                              @NotNull ControlFlow flow) {
-    return new JvmDataFlowInterpreter(flow, listener, true) {
+  protected @NotNull StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener,
+                                                                   @NotNull ControlFlow flow) {
+    return new StandardDataFlowInterpreter(flow, listener, true) {
       @Override
       protected void beforeInstruction(Instruction instruction) {
         afterStates.clear();
