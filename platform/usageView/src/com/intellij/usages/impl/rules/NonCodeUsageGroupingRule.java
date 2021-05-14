@@ -26,7 +26,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
       if (view == null) return UsageViewBundle.message("node.group.code.usages");
 
       UsageViewPresentation presentation = view.getPresentation();
-      return UsageViewBundle.message("usage.view.results.node.scope", presentation.getCodeUsagesString(), presentation.getScopeText());
+      return UsageViewBundle.message("usage.view.results.node.scope", presentation.getCodeUsagesString(), presentation.getScopeText()).stripTrailing();
     }
 
     public String toString() {
@@ -47,7 +47,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
       if (view == null) return UsageViewBundle.message("node.non.code.usages");
 
       UsageViewPresentation presentation = view.getPresentation();
-      return UsageViewBundle.message("usage.view.results.node.scope", presentation.getNonCodeUsagesString(), presentation.getScopeText());
+      return UsageViewBundle.message("usage.view.results.node.scope", presentation.getNonCodeUsagesString(), presentation.getScopeText()).stripTrailing();
     }
 
     public String toString() {
