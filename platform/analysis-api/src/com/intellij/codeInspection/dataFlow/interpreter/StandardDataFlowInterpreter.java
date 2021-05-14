@@ -1,9 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.dataFlow;
+package com.intellij.codeInspection.dataFlow.interpreter;
 
-import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
-import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -30,9 +27,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.StandardDataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH;
-
+/**
+ * Standard interpreter implementation
+ */
 public class StandardDataFlowInterpreter implements DataFlowInterpreter {
+  /**
+   * Default complexity limit (maximum allowed attempts to process instruction).
+   * Fail as too complex to process if certain instruction is executed more than this limit times.
+   * Also used to calculate a threshold when states are forcibly merged.
+   */
+  public static final int DEFAULT_MAX_STATES_PER_BRANCH = 300;
   private static final Logger LOG = Logger.getInstance(StandardDataFlowInterpreter.class);
   private final @NotNull ControlFlow myFlow;
   private final Instruction @NotNull [] myInstructions;
@@ -64,10 +68,12 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
     return myValueFactory;
   }
 
+  @Override
   public final @NotNull RunnerResult interpret(@NotNull DfaMemoryState startingState) {
     return interpret(List.of(new DfaInstructionState(getInstruction(0), startingState)));
   }
 
+  @Override
   public final @NotNull RunnerResult interpret(@NotNull List<DfaInstructionState> startingStates) {
     int endOffset = myFlow.getInstructionCount();
     DfaInstructionState lastInstructionState = null;
@@ -294,7 +300,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
     DfaMemoryStateImpl curState = (DfaMemoryStateImpl)instructionState.getMemoryState();
     Object key = curState.getMergeabilityKey();
     DfaMemoryStateImpl mergedState =
-      StreamEx.of(processed).select(JvmDfaMemoryStateImpl.class).filterBy(DfaMemoryStateImpl::getMergeabilityKey, key)
+      StreamEx.of(processed).filterBy(DfaMemoryState::getMergeabilityKey, key)
         .foldLeft(curState, (s1, s2) -> {
           s1.merge(s2);
           return s1;
@@ -317,7 +323,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
 
   }
 
-  boolean wasForciblyMerged() {
+  public boolean wasForciblyMerged() {
     return myWasForciblyMerged;
   }
 

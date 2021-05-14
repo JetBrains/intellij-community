@@ -3,8 +3,8 @@ package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;

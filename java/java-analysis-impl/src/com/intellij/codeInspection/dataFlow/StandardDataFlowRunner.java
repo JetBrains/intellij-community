@@ -3,6 +3,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.interpreter.StateQueue;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
@@ -40,10 +42,6 @@ import java.util.function.BiConsumer;
  */
 public class StandardDataFlowRunner {
   private static final Logger LOG = Logger.getInstance(StandardDataFlowRunner.class);
-  // Default complexity limit (maximum allowed attempts to process instruction).
-  // Fail as too complex to process if certain instruction is executed more than this limit times.
-  // Also used to calculate a threshold when states are forcibly merged.
-  protected static final int DEFAULT_MAX_STATES_PER_BRANCH = 300;
 
   private final @NotNull DfaValueFactory myValueFactory;
   private final @NotNull ThreeState myIgnoreAssertions;
