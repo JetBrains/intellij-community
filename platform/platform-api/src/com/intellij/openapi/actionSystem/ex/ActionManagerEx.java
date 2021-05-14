@@ -1,17 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.TriConsumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.InputEvent;
 import java.util.Comparator;
 
 public abstract class ActionManagerEx extends ActionManager {
@@ -97,27 +94,6 @@ public abstract class ActionManagerEx extends ActionManager {
   public abstract String @NotNull [] getPluginActions(@NotNull PluginId pluginId);
 
   public abstract boolean isActionPopupStackEmpty();
-
-  public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
-    fireActionPerformed(actionId, event, place, (action, dataContext, event1) -> fireBeforeActionPerformed(action, event1));
-  }
-
-  public void fireAfterActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
-    fireActionPerformed(actionId, event, place, (action, dataContext, event1) -> fireAfterActionPerformed(action, event1));
-  }
-
-  private void fireActionPerformed(@NotNull String actionId,
-                                   @NotNull InputEvent event,
-                                   @NotNull String place,
-                                   TriConsumer<? super AnAction, ? super DataContext, ? super AnActionEvent> firingFunction) {
-    DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(dataContext -> {
-      final AnAction action = getAction(actionId);
-      if (action != null) {
-        AnActionEvent e = AnActionEvent.createFromAnAction(action, event, place, dataContext);
-        firingFunction.accept(action, dataContext, e);
-      }
-    });
-  }
 
   /**
    * Allows to receive notifications when popup menus created from action groups are shown and hidden.
