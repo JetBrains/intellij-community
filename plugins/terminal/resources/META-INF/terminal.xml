@@ -31,8 +31,6 @@
     <terminal.shellCommandHandler implementation="com.intellij.ide.actions.runAnything.RunAnythingTerminalBridge"/>
     <notificationGroup id="Terminal" displayType="TOOL_WINDOW" toolWindowId="Terminal"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
-    <advancedSetting id="terminal.buffer.max.lines.count" default="5000" groupKey="advanced.settings.terminal"/>
-    <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="advanced.settings.terminal"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
