@@ -167,8 +167,10 @@ class ImmediatePainter {
     final Rectangle2D caretRectangle = new Rectangle2D.Float(p2x + width2 - caretShift, p2y - topOverhang,
                                                              caretWidth, lineHeight + topOverhang + bottomOverhang);
 
+    final float rectangle2Start = (float)PaintUtil.alignToInt(p2x, g, PaintUtil.RoundingMode.FLOOR);
+    final float rectangle2End = (float)PaintUtil.alignToInt(p2x + width2 + caretWidth - caretShift, g, PaintUtil.RoundingMode.CEIL);
     final Rectangle2D rectangle1 = new Rectangle2D.Float(p2x - width1, p2y, width1, lineHeight);
-    final Rectangle2D rectangle2 = new Rectangle2D.Float(p2x, p2y, width2 + caretWidth - caretShift, lineHeight);
+    final Rectangle2D rectangle2 = new Rectangle2D.Float(rectangle2Start, p2y, rectangle2End - rectangle2Start, lineHeight);
 
     final Consumer<Graphics2D> painter = graphics -> {
       EditorUIUtil.setupAntialiasing(graphics);
