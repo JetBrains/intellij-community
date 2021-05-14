@@ -84,6 +84,8 @@
       <runConfigurationProducer
           implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationProducer"/>
       <externalSystem.runConfigurationImporter implementation="com.theoryinpractice.testng.configuration.TestNGRunConfigurationImporter"/>
+
+      <dependencySupport kind="java" coordinate="org.testng:testng" displayName="TestNG"/>
     </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="com.intellij.rt.testng.TestNGTestDiscoveryListener"/>
