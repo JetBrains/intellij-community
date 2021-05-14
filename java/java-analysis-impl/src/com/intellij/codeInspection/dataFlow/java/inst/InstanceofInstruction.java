@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
-import com.intellij.codeInspection.dataFlow.lang.ir.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -30,7 +29,7 @@ import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
 /**
  * @author peter
  */
-public class InstanceofInstruction extends ExpressionPushingInstruction implements BranchingInstruction {
+public class InstanceofInstruction extends ExpressionPushingInstruction {
   @Nullable private final PsiExpression myLeft;
   @Nullable private final PsiType myCastType;
 

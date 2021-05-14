@@ -81,8 +81,8 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
       queue.offer(state);
     }
 
-    MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
-    MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
+    MultiMap<Instruction, DfaMemoryState> processedStates = MultiMap.createSet();
+    MultiMap<Instruction, DfaMemoryState> incomingStates = MultiMap.createSet();
     try {
       Set<Instruction> joinInstructions = getJoinInstructions();
       int[] loopNumber = myFlow.getLoopNumbers();
@@ -110,9 +110,8 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
             LOG.trace(instructionState.toString());
           }
 
-          if (instruction instanceof BranchingInstruction) {
-            BranchingInstruction branching = (BranchingInstruction)instruction;
-            Collection<DfaMemoryState> processed = processedStates.get(branching);
+          if (!instruction.isLinear()) {
+            Collection<DfaMemoryState> processed = processedStates.get(instruction);
             if (containsState(processed, instructionState)) {
               continue;
             }
@@ -126,8 +125,8 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
               LOG.trace("Too complex because too many different possible states");
               return RunnerResult.TOO_COMPLEX;
             }
-            if (loopNumber[branching.getIndex()] != 0) {
-              processedStates.putValue(branching, instructionState.getMemoryState().createCopy());
+            if (loopNumber[instruction.getIndex()] != 0) {
+              processedStates.putValue(instruction, instructionState.getMemoryState().createCopy());
             }
           }
 
@@ -150,14 +149,13 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
               continue;
             }
             handleStepOutOfLoop(instruction, nextInstruction, loopNumber, processedStates, incomingStates, states, after, queue);
-            if (nextInstruction instanceof BranchingInstruction) {
-              BranchingInstruction branching = (BranchingInstruction)nextInstruction;
-              if (containsState(processedStates.get(branching), state) ||
-                  containsState(incomingStates.get(branching), state)) {
+            if (!nextInstruction.isLinear()) {
+              if (containsState(processedStates.get(nextInstruction), state) ||
+                  containsState(incomingStates.get(nextInstruction), state)) {
                 continue;
               }
-              if (loopNumber[branching.getIndex()] != 0) {
-                incomingStates.putValue(branching, state.getMemoryState().createCopy());
+              if (loopNumber[nextInstruction.getIndex()] != 0) {
+                incomingStates.putValue(nextInstruction, state.getMemoryState().createCopy());
               }
             }
             if (nextInstruction.getIndex() < instruction.getIndex() &&
@@ -252,8 +250,8 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
   private void handleStepOutOfLoop(@NotNull Instruction prevInstruction,
                                    @NotNull Instruction nextInstruction,
                                    int @NotNull [] loopNumber,
-                                   @NotNull MultiMap<BranchingInstruction, DfaMemoryState> processedStates,
-                                   @NotNull MultiMap<BranchingInstruction, DfaMemoryState> incomingStates,
+                                   @NotNull MultiMap<Instruction, DfaMemoryState> processedStates,
+                                   @NotNull MultiMap<Instruction, DfaMemoryState> incomingStates,
                                    @NotNull List<DfaInstructionState> inFlightStates,
                                    DfaInstructionState @NotNull [] afterStates,
                                    @NotNull StateQueue queue) {
@@ -282,14 +280,14 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
     })) return;
 
     // now remove obsolete memory states
-    final Set<BranchingInstruction> mayRemoveStatesFor = new HashSet<>();
+    final Set<Instruction> mayRemoveStatesFor = new HashSet<>();
     for (Instruction instruction : myInstructions) {
-      if (inSameLoop(prevInstruction, instruction, loopNumber) && instruction instanceof BranchingInstruction) {
-        mayRemoveStatesFor.add((BranchingInstruction)instruction);
+      if (inSameLoop(prevInstruction, instruction, loopNumber) && !instruction.isLinear()) {
+        mayRemoveStatesFor.add(instruction);
       }
     }
 
-    for (BranchingInstruction instruction : mayRemoveStatesFor) {
+    for (Instruction instruction : mayRemoveStatesFor) {
       processedStates.remove(instruction);
       incomingStates.remove(instruction);
     }

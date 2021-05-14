@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
-import com.intellij.codeInspection.dataFlow.lang.ir.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -26,7 +25,7 @@ import java.util.List;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
 import static com.intellij.psi.JavaTokenType.*;
 
-public class BooleanBinaryInstruction extends ExpressionPushingInstruction implements BranchingInstruction {
+public class BooleanBinaryInstruction extends ExpressionPushingInstruction {
   // AND and OR for boolean arguments only
   private static final TokenSet ourSignificantOperations = TokenSet.create(EQ, EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, AND, OR);
 

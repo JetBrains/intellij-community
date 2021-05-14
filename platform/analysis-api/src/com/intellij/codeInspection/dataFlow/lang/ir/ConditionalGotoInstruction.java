@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * Conditionally jump if the value on stack top is equal to the specified value (top-of-stack value is being popped)
  */
-public class ConditionalGotoInstruction extends Instruction implements BranchingInstruction {
+public class ConditionalGotoInstruction extends Instruction {
   private ControlFlow.ControlFlowOffset myOffset;
   private final @NotNull DfType myCompareTo;
   private final PsiElement myAnchor;
