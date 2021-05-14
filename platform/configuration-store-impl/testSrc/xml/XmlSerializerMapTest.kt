@@ -6,9 +6,9 @@ package com.intellij.configurationStore.xml
 import com.intellij.configurationStore.deserialize
 import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.ide.plugins.advertiser.FeaturePluginData
-import com.intellij.ide.plugins.advertiser.KnownExtensions
-import com.intellij.ide.plugins.advertiser.KnownExtensionsService
 import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
+import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.xmlb.annotations.Property
@@ -285,19 +285,19 @@ internal class XmlSerializerMapTest {
           <option name="extensionsMap" />
         </extensions>
       """.trimIndent())
-    val result = element.deserialize(KnownExtensions::class.java)
-    assertThat(result.extensionsMap).isNotNull()
+    val result = element.deserialize(PluginFeatureMap::class.java)
+    assertThat(result.featureMap).isNotNull()
   }
 
   @Test
   fun `knownExtensions serialization`() {
     val pluginData = PluginData("foo", "Foo")
-    val extensions = KnownExtensions(mapOf("foo" to setOf(pluginData)))
+    val extensions = PluginFeatureMap(mapOf("foo" to setOf(pluginData)))
 
     testSerializer(
       """
-        <extensions>
-          <extensionsMap>
+        <features>
+          <featureMap>
             <entry key="foo">
               <plugins>
                 <dataSet>
@@ -305,25 +305,27 @@ internal class XmlSerializerMapTest {
                 </dataSet>
               </plugins>
             </entry>
-          </extensionsMap>
-        </extensions>
+          </featureMap>
+        </features>
       """.trimIndent(),
       extensions,
     )
   }
 
   @Test
-  fun `knownExtensionsService serialization`() {
-    val state = KnownExtensionsService.State()
-    state.extensions = KnownExtensions(mapOf())
+  fun `PluginFeatureCacheService serialization`() {
+    val state = PluginFeatureCacheService.State()
+    state.extensions = PluginFeatureMap(mapOf())
 
     testSerializer(
       """
-        <knownExtensions>
-          <extensions>
-            <extensionsMap />
-          </extensions>
-        </knownExtensions>
+        <State>
+          <option name="extensions">
+            <features>
+              <featureMap />
+            </features>
+          </option>
+        </State>
       """.trimIndent(),
       state,
     )

@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
@@ -36,6 +37,7 @@ open class PluginAdvertiserService {
     val disabledPlugins = HashMap<PluginData, IdeaPluginDescriptor>()
 
     val ids = mutableMapOf<PluginId, PluginData>()
+    val dependencies = PluginFeatureCacheService.instance.dependencies
     unknownFeatures.forEach { feature ->
       ProgressManager.checkCanceled()
       val featureType = feature.featureType
@@ -52,6 +54,9 @@ open class PluginAdvertiserService {
 
       if (installedPluginData != null) {
         putFeature(installedPluginData)
+      }
+      else if (featureType == DEPENDENCY_SUPPORT_FEATURE && dependencies != null) {
+        dependencies[implementationName].forEach { putFeature(it) }
       }
       else {
         MarketplaceRequests.Instance

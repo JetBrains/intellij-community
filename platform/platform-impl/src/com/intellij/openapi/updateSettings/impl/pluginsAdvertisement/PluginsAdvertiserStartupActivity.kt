@@ -4,9 +4,9 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
 import com.intellij.ide.plugins.DependencyCollector
-import com.intellij.ide.plugins.advertiser.KnownExtensions
-import com.intellij.ide.plugins.advertiser.KnownExtensionsService
 import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
+import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeFactory
@@ -28,7 +28,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
       return
     }
 
-    val extensionsService = KnownExtensionsService.instance
+    val extensionsService = PluginFeatureCacheService.instance
     val extensions = extensionsService.extensions
 
     val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures.toMutableList()
@@ -40,12 +40,18 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
 
     try {
       if (extensions == null) {
-        val extensionsMap = getExtensionsFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet())
-        extensionsService.extensions = KnownExtensions(extensionsMap)
+        @Suppress("DEPRECATION")
+        val extensionsMap = getFeatureMapFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet(),
+                                                         FileTypeFactory.FILE_TYPE_FACTORY_EP.name)
+        extensionsService.extensions = PluginFeatureMap(extensionsMap)
         if (project.isDisposed) {
           return
         }
         EditorNotifications.getInstance(project).updateAllNotifications()
+      }
+      if (extensionsService.dependencies == null) {
+        val dependencyMap = getFeatureMapFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet(), DEPENDENCY_SUPPORT_FEATURE)
+        extensionsService.dependencies = PluginFeatureMap(dependencyMap)
       }
       PluginAdvertiserService.instance.run(
         project,
@@ -61,8 +67,8 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
   companion object {
 
     @JvmStatic
-    private fun getExtensionsFromMarketPlace(customPluginIds: Set<String>): Map<String, Set<PluginData>> {
-      @Suppress("DEPRECATION") val params = mapOf("featureType" to FileTypeFactory.FILE_TYPE_FACTORY_EP.name)
+    private fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, Set<PluginData>> {
+      val params = mapOf("featureType" to featureType)
       return MarketplaceRequests.Instance
         .getFeatures(params)
         .groupBy(
