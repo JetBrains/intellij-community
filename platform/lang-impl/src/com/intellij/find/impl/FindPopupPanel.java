@@ -14,8 +14,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.scratch.ScratchImplUtil;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -202,7 +200,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     initComponents();
     initByModel();
 
-    FindUtil.triggerUsedOptionsStats(myProject, FIND_TYPE, myHelper.getModel());
+    FindUsagesCollector.triggerUsedOptionsStats(myProject, FIND_TYPE, myHelper.getModel());
   }
 
   @Override
@@ -644,15 +642,15 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
      mySearchTextArea.setMultilineEnabled(Registry.is("ide.find.as.popup.allow.multiline"));
     myReplaceTextArea.setMultilineEnabled(Registry.is("ide.find.as.popup.allow.multiline"));
     myCaseSensitiveAction =
-      new MySwitchStateToggleAction("find.popup.case.sensitive", "CaseSensitive",
+      new MySwitchStateToggleAction("find.popup.case.sensitive", ToggleOptionName.CaseSensitive,
                                     AllIcons.Actions.MatchCase, AllIcons.Actions.MatchCaseHovered, AllIcons.Actions.MatchCaseSelected,
                                     myCaseSensitiveState, () -> !myHelper.getModel().isReplaceState() || !myPreserveCaseState.get());
     myWholeWordsAction =
-      new MySwitchStateToggleAction("find.whole.words", "WholeWords",
+      new MySwitchStateToggleAction("find.whole.words", ToggleOptionName.WholeWords,
                                     AllIcons.Actions.Words, AllIcons.Actions.WordsHovered, AllIcons.Actions.WordsSelected,
                                     myWholeWordsState, () -> !myRegexState.get());
     myRegexAction =
-      new MySwitchStateToggleAction("find.regex", "Regex",
+      new MySwitchStateToggleAction("find.regex", ToggleOptionName.Regex,
                                     AllIcons.Actions.Regex, AllIcons.Actions.RegexHovered, AllIcons.Actions.RegexSelected,
                                     myRegexState, () -> !myHelper.getModel().isReplaceState() || !myPreserveCaseState.get(),
                                     new TooltipLinkProvider.TooltipLink(FindBundle.message("find.regex.help.link"),
@@ -660,7 +658,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     List<Component> searchExtraButtons =
       mySearchTextArea.setExtraActions(myCaseSensitiveAction, myWholeWordsAction, myRegexAction);
     AnAction preserveCaseAction =
-      new MySwitchStateToggleAction("find.options.replace.preserve.case", "PreserveCase",
+      new MySwitchStateToggleAction("find.options.replace.preserve.case", ToggleOptionName.PreserveCase,
                      AllIcons.Actions.PreserveCase, AllIcons.Actions.PreserveCaseHover, AllIcons.Actions.PreserveCaseSelected,
                      myPreserveCaseState, () -> !myRegexState.get() && !myCaseSensitiveState.get());
     List<Component> replaceExtraButtons = myReplaceTextArea.setExtraActions(
@@ -1030,12 +1028,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private static StateRestoringCheckBox createCheckBox(@NotNull Project project) {
     StateRestoringCheckBox checkBox = new StateRestoringCheckBox(FindBundle.message("find.popup.filemask"));
     checkBox.addActionListener(
-      __ -> FUCounterUsageLogger.getInstance().logEvent(project,
-        "find", "check.box.toggled", new FeatureUsageData().
-          addData("type", FIND_TYPE).
-          addData("option_name", "FileFilter").
-          addData("option_value", checkBox.isSelected())
-      )
+      __ -> FindUsagesCollector.CHECK_BOX_TOGGLED.log(project, FIND_TYPE, ToggleOptionName.FileFilter, checkBox.isSelected())
     );
     return checkBox;
   }
@@ -1749,14 +1742,16 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       .filter(c -> c instanceof JComboBox || c instanceof AbstractButton || c instanceof JTextComponent);
   }
 
+  public enum ToggleOptionName {CaseSensitive, PreserveCase, WholeWords, Regex, FileFilter}
+
   private final class MySwitchStateToggleAction extends DumbAwareToggleAction implements TooltipLinkProvider, TooltipDescriptionProvider {
-    private final String myOptionName;
+    private final ToggleOptionName myOptionName;
     private final AtomicBoolean myState;
     private final Producer<Boolean> myEnableStateProvider;
     private final TooltipLink myTooltipLink;
 
     private MySwitchStateToggleAction(@NotNull String message,
-                                      @NotNull String optionName,
+                                      @NotNull FindPopupPanel.ToggleOptionName optionName,
                                       @NotNull Icon icon, @NotNull Icon hoveredIcon, @NotNull Icon selectedIcon,
                                       @NotNull AtomicBoolean state,
                                       @NotNull Producer<Boolean> enableStateProvider) {
@@ -1764,7 +1759,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
 
     private MySwitchStateToggleAction(@NotNull String message,
-                                      @NotNull String optionName,
+                                      @NotNull FindPopupPanel.ToggleOptionName optionName,
                                       @NotNull Icon icon, @NotNull Icon hoveredIcon, @NotNull Icon selectedIcon,
                                       @NotNull AtomicBoolean state,
                                       @NotNull Producer<Boolean> enableStateProvider,
@@ -1801,12 +1796,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean selected) {
-      FUCounterUsageLogger.getInstance().logEvent(
-        "find", "check.box.toggled", new FeatureUsageData().
-          addData("type", FIND_TYPE).
-          addData("option_name", myOptionName).
-          addData("option_value", selected)
-      );
+      FindUsagesCollector.CHECK_BOX_TOGGLED.log(FIND_TYPE, myOptionName, selected);
       myState.set(selected);
       if (myState == myRegexState) {
         mySuggestRegexHintForEmptyResults = false;
@@ -2014,10 +2004,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myIsPinned.set(state);
       UISettings.getInstance().setPinFindInPath(state);
-      FUCounterUsageLogger.getInstance().logEvent(e.getProject(),
-        "find", "pin.toggled", new FeatureUsageData().
-          addData("option_value", state)
-      );
+      FindUsagesCollector.PIN_TOGGLED.log(state);
     }
   }
 

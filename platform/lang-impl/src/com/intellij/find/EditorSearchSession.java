@@ -195,7 +195,7 @@ public class EditorSearchSession implements SearchSession,
 
     myEditor.getSelectionModel().addSelectionListener(this, myDisposable);
 
-    FindUtil.triggerUsedOptionsStats(project, FIND_TYPE, findModel);
+    FindUsagesCollector.triggerUsedOptionsStats(project, FIND_TYPE, findModel);
   }
 
   @NotNull
