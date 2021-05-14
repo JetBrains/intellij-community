@@ -188,6 +188,23 @@ public interface DfType {
   }
 
   /**
+   * @param otherType other type
+   * @return true if values qualified by this value might be affected by values qualified by otherType.
+   * For example, if both this and otherType are pointer types that may refer to the same memory location.
+   */
+  default boolean mayAlias(DfType otherType) {
+    return false;
+  }
+
+  /**
+   * @return true if values immediately qualified by this type, never change, 
+   * as long as qualifier never changes.
+   */
+  default boolean isImmutableQualifier() {
+    return false;
+  }
+
+  /**
    * @param constant
    * @return true given constant value may be contained by this supertype
    */
@@ -353,15 +370,6 @@ public interface DfType {
    */
   default @NotNull DfType getDerivedValue(@NotNull DerivedVariableDescriptor derivedDescriptor) {
     return TOP;
-  }
-
-  /**
-   * @param otherType other type
-   * @return true if values qualified by this value might be affected by values qualified by otherType.
-   * For example, if both this and otherType are pointer types that may refer to the same memory location.
-   */
-  default boolean mayAlias(DfType otherType) {
-    return false;
   }
 
   /**

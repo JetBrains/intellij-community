@@ -186,5 +186,10 @@ public interface DfReferenceType extends DfType {
   }
 
   @Override
+  default boolean isImmutableQualifier() {
+    return getMutability() == Mutability.UNMODIFIABLE;
+  }
+
+  @Override
   @NlsSafe @NotNull String toString();
 }
