@@ -129,15 +129,6 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return this;
   }
 
-  /**
-   * @deprecated use {{@link #addMessageFilter(Filter)}} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public void addMessageFilter(Project project, Filter filter) {
-    myTerminalWidget.addMessageFilter(filter);
-  }
-
   @Override
   public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
     // Convert line separators to CRLF to behave like ConsoleViewImpl.

@@ -1163,14 +1163,5 @@ public class FileUtilRt {
     }
   };
 
-  /** @deprecated please use {@code FileFilters#DIRECTORIES} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
-    @Override
-    public boolean accept(File file) {
-      return file.isDirectory();
-    }
-  };
   //</editor-fold>
 }
