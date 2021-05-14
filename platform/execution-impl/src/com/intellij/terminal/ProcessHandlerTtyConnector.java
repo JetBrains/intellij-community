@@ -3,6 +3,7 @@ package com.intellij.terminal;
 
 import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ObjectUtils;
 import com.jediterm.terminal.Questioner;
@@ -39,8 +40,8 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
       return null;
     }
     Process process = ((BaseProcessHandler<?>)processHandler).getProcess();
-    //noinspection InstanceofIncompatibleInterface
-    if (!(process instanceof PtyProcess) && !(process instanceof PtyBasedProcess)) {
+    if (!(process instanceof PtyProcess) &&
+        (!(process instanceof PtyBasedProcess) || !((PtyBasedProcess)process).supportsWindowResizing())) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Process doesn't support terminal window resizing: " + process.getClass());
       }
@@ -67,8 +68,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
       }
     }
     else {
-      //noinspection InstanceofIncompatibleInterface
-      if (myPtyProcess instanceof PtyBasedProcess) {
+      if (myPtyProcess instanceof PtyBasedProcess && ((PtyBasedProcess)myPtyProcess).supportsWindowResizing()) {
         ((PtyBasedProcess)myPtyProcess).setWindowSize(termSize.width, termSize.height);
       }
     }
