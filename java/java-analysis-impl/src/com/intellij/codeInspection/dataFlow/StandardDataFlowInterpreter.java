@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
@@ -185,19 +184,13 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
 
   private @NotNull Set<Instruction> getJoinInstructions() {
     Set<Instruction> joinInstructions = new HashSet<>();
+    StreamEx.of(myInstructions)
+      .remove(Instruction::isLinear)
+      .flatMap(inst -> IntStreamEx.of(inst.getSuccessorIndexes()).elements(myInstructions))
+      .into(joinInstructions);
     for (int index = 0; index < myInstructions.length; index++) {
       Instruction instruction = myInstructions[index];
-      if (instruction instanceof GotoInstruction) {
-        joinInstructions.add(myInstructions[((GotoInstruction)instruction).getOffset()]);
-      } else if (instruction instanceof ConditionalGotoInstruction) {
-        joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
-      } else if (instruction instanceof ControlTransferInstruction) {
-        IntStreamEx.of(instruction.getSuccessorIndexes()).elements(myInstructions)
-          .into(joinInstructions);
-      } else if (instruction instanceof MethodCallInstruction && !((MethodCallInstruction)instruction).getContracts().isEmpty()) {
-        joinInstructions.add(myInstructions[index + 1]);
-      }
-      else if (instruction instanceof FinishElementInstruction && !((FinishElementInstruction)instruction).getVarsToFlush().isEmpty()) {
+      if (instruction instanceof FinishElementInstruction && !((FinishElementInstruction)instruction).getVarsToFlush().isEmpty()) {
         // Good chances to squash something after some vars are flushed
         joinInstructions.add(myInstructions[index + 1]);
       }
