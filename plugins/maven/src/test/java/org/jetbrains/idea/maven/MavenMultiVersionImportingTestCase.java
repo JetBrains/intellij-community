@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @RunWith(Parameterized.class)
 public abstract class MavenMultiVersionImportingTestCase extends MavenImportingTestCase {
 
-  public static final String[] MAVEN_VERSIONS = new String[]{"3.8.1", "3.6.3", "3.6.1", "3.5.3", "3.3.9", "3.0.1", "3.0"};
+  public static final String[] MAVEN_VERSIONS = new String[]{"3.8.1", "3.6.3", "3.6.1", "3.5.3", "3.3.9", "3.1.0", "3.0.1", "3.0"};
 
   @Parameterized.Parameters(name = "with Maven-{0}")
   public static List<String[]> getMavenVersions() {
