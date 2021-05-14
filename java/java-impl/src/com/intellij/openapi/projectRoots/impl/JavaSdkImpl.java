@@ -412,11 +412,6 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public @Nullable JavaSdkVersion getVersion(@NotNull String versionString) {
-    return JavaSdkVersion.fromVersionString(versionString);
-  }
-
-  @Override
   public boolean isOfVersionOrHigher(@NotNull Sdk sdk, @NotNull JavaSdkVersion version) {
     JavaSdkVersion sdkVersion = getVersion(sdk);
     return sdkVersion != null && sdkVersion.isAtLeast(version);
