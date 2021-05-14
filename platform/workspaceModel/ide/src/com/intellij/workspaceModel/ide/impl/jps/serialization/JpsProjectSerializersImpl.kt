@@ -39,9 +39,14 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ForkJoinTask
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
+import kotlin.collections.LinkedHashSet
 import kotlin.streams.toList
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
@@ -294,7 +299,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       if (enableExternalStorage) {
         builder.entities(ModuleEntity::class.java).forEach { module ->
           val moduleId = module.persistentId()
-          modules.getOrPut(moduleId.name.toLowerCase()) { ArrayList() }.add(Triple(moduleId, builder, serializers[i]))
+          modules.getOrPut(moduleId.name.toLowerCase(Locale.US)) { ArrayList() }.add(Triple(moduleId, builder, serializers[i]))
         }
       }
       builder.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }.forEach { library ->
