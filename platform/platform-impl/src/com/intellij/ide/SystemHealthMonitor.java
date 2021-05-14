@@ -30,6 +30,8 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.IoErrorText;
 import com.sun.jna.*;
+import com.sun.jna.platform.mac.SystemB;
+import com.sun.jna.ptr.IntByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -100,6 +102,10 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
+    if (isUnderRosetta()) {
+      showNotification("bundled.jre.m1.arch.message", null);
+    }
+
     String jreHome = SystemProperties.getJavaHome();
     if (!(PathManager.isUnderHomeDirectory(jreHome) || isModernJBR())) {
       // the JRE is non-bundled and is either non-JB or older than bundled
@@ -148,6 +154,27 @@ final class SystemHealthMonitor extends PreloadingActivity {
       catch (ExecutionException e) {
         LOG.debug(e);
       }
+    }
+
+    return false;
+  }
+
+  private static boolean isUnderRosetta() {
+    // Use "sysctl.proc_translated" to check if running in Rosetta
+    // See https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment#Determine-Whether-Your-App-Is-Running-as-a-Translated-Binary
+    // for more details
+
+    if (!SystemInfo.isMac || !CpuArch.isIntel64()) {
+      return false;
+    }
+
+    IntByReference size = new IntByReference(SystemB.INT_SIZE);
+    Pointer p = new Memory(size.getValue());
+
+    if (SystemB.INSTANCE.sysctlbyname(
+      "sysctl.proc_translated", p, size, null, 0) != -1)
+    {
+      return p.getInt(0) == 1;
     }
 
     return false;
