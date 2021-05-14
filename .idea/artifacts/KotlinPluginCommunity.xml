@@ -211,6 +211,9 @@
         <element id="archive" name="parcelize-compiler-plugin-for-ide.jar">
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/1.5.10-release-896/parcelize-compiler-plugin-for-ide-1.5.10-release-896.jar" path-in-jar="/" />
         </element>
+        <element id="archive" name="kotlin-uast-kotlin-base.jar">
+          <element id="module-output" name="kotlin.uast.uast-kotlin-base" />
+        </element>
         <element id="archive" name="kotlin-i18n.jar">
           <element id="module-output" name="kotlin.i18n" />
         </element>
