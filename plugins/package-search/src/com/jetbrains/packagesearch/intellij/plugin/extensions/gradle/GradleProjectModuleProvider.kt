@@ -18,28 +18,32 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 private val logger by lazy { Logger.getInstance(GradleProjectModuleProvider::class.java) }
 
+private fun PsiFile.firstElementContaining(text: String): @NotNull PsiElement? {
+    return this.text.indexOf(text).takeIf { it >= 0 }?.let { getElementAtOffsetOrNull(it) }
+}
+
+private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
+    PsiUtil.getElementAtOffset(this, index).takeIf { it != this }
+
 internal open class GradleProjectModuleProvider : ProjectModuleProvider {
 
     companion object {
 
         fun findDependencyElement(file: PsiFile, groupId: String, artifactId: String): PsiElement? {
-            var index = file.text.indexOf(groupId)
-            while (index >= 0) {
-                PsiUtil.getElementAtOffset(file, index).apply {
-                    if (text.contains(groupId) && text.contains(artifactId)) {
-                        return this
-                    }
-                }
-                index = file.text.indexOf(groupId, index + 1)
-            }
-            return null
+            val isKotlinDependency = file.language::class.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
+                && groupId == "org.jetbrains.kotlin" && artifactId.startsWith("kotlin-")
+            val kotlinDependencyImport = "kotlin(\"${artifactId.removePrefix("kotlin-")}\")"
+            return file.takeIf { isKotlinDependency }?.firstElementContaining(kotlinDependencyImport)
+                ?: file.firstElementContaining("$groupId:$artifactId")
         }
+
     }
 
     override fun obtainAllProjectModulesFor(project: Project): Sequence<ProjectModule> = sequence {
