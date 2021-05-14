@@ -750,6 +750,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun loadState(parentNode: Element) {
+    config.migrateToRegistry()
     val oldSelectedConfigurationId: String?
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
     if (isFirstLoadState) {
