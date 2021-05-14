@@ -45,7 +45,7 @@ public class RemoveExternalSystemRunConfigurationAction extends ExternalSystemAc
                                        ExternalSystemBundle.message("confirmation"), Messages.getQuestionIcon());
     if (res == Messages.YES) {
       RunManager.getInstance(project).removeConfiguration(settings);
-      RunConfigurationOptionUsagesCollector.logRemove(project, settings.getConfiguration().getId(), e.getPlace());
+      RunConfigurationOptionUsagesCollector.logRemove(project, settings.getFactory().getType().getId(), e.getPlace());
     }
   }
 }
