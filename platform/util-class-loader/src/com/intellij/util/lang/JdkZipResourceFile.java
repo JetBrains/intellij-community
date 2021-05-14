@@ -93,29 +93,31 @@ final class JdkZipResourceFile implements ResourceFile {
   public @Nullable Class<?> findClass(@NotNull String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException {
     ZipFile zipFile = getZipFile();
-    ZipEntry entry = zipFile.getEntry(fileName);
-    if (entry == null) {
-      return null;
-    }
+    try {
+      ZipEntry entry = zipFile.getEntry(fileName);
+      if (entry == null) {
+        return null;
+      }
 
-    byte[] bytes;
-    try (InputStream stream = zipFile.getInputStream(entry)) {
-      bytes = loadBytes(stream, (int)entry.getSize());
+      byte[] bytes;
+      try (InputStream stream = zipFile.getInputStream(entry)) {
+        bytes = loadBytes(stream, (int)entry.getSize());
+      }
+
+      ProtectionDomain protectionDomain;
+      if (jarLoader instanceof SecureJarLoader) {
+        protectionDomain = ((SecureJarLoader)jarLoader).getProtectionDomain((JarEntry)entry, new URL(jarLoader.url, entry.getName()));
+      }
+      else {
+        protectionDomain = null;
+      }
+      return classConsumer.consumeClassData(className, bytes, jarLoader, protectionDomain);
     }
     finally {
       if (!lockJars) {
-        close();
+        zipFile.close();
       }
     }
-
-    ProtectionDomain protectionDomain;
-    if (jarLoader instanceof SecureJarLoader) {
-      protectionDomain = ((SecureJarLoader)jarLoader).getProtectionDomain((JarEntry)entry, new URL(jarLoader.url, entry.getName()));
-    }
-    else {
-      protectionDomain = null;
-    }
-    return classConsumer.consumeClassData(className, bytes, jarLoader, protectionDomain);
   }
 
   @Override
@@ -126,8 +128,9 @@ final class JdkZipResourceFile implements ResourceFile {
 
   @Override
   public @Nullable Resource getResource(@NotNull String name, @NotNull JarLoader jarLoader) throws IOException {
+    ZipFile zipFile = getZipFile();
     try {
-      ZipEntry entry = getZipFile().getEntry(name);
+      ZipEntry entry = zipFile.getEntry(name);
       if (entry == null) {
         return null;
       }
@@ -140,7 +143,7 @@ final class JdkZipResourceFile implements ResourceFile {
     }
     finally {
       if (!lockJars) {
-        close();
+        zipFile.close();
       }
     }
   }
@@ -148,24 +151,31 @@ final class JdkZipResourceFile implements ResourceFile {
   @Override
   public @Nullable Attributes loadManifestAttributes() throws IOException {
     ZipFile zipFile = getZipFile();
-    ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-    if (entry == null) {
-      return null;
-    }
+    try {
+      ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+      if (entry == null) {
+        return null;
+      }
 
-    try (InputStream stream = zipFile.getInputStream(entry)) {
-      return new Manifest(stream).getMainAttributes();
+      try (InputStream stream = zipFile.getInputStream(entry)) {
+        return new Manifest(stream).getMainAttributes();
+      }
+      catch (Exception ignored) {
+      }
+      return null;
+    } finally {
+      if (!lockJars){
+        zipFile.close();
+      }
     }
-    catch (Exception ignored) {
-    }
-    return null;
   }
 
   @Override
   public @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() throws IOException {
+    ZipFile zipFile = getZipFile();
     try {
       ClasspathCache.LoaderDataBuilder builder = new ClasspathCache.LoaderDataBuilder(true);
-      Enumeration<? extends ZipEntry> entries = getZipFile().entries();
+      Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
         String name = entry.getName();
@@ -182,7 +192,7 @@ final class JdkZipResourceFile implements ResourceFile {
     }
     finally {
       if (!lockJars) {
-        close();
+        zipFile.close();
       }
     }
   }
@@ -226,12 +236,13 @@ final class JdkZipResourceFile implements ResourceFile {
 
     @Override
     public byte @NotNull [] getBytes() throws IOException {
-      try (InputStream stream = file.getZipFile().getInputStream(entry)) {
+      ZipFile zipFile = file.getZipFile();
+      try (InputStream stream = zipFile.getInputStream(entry)) {
         return loadBytes(stream, (int)entry.getSize());
       }
       finally {
         if (!file.lockJars) {
-          file.close();
+          zipFile.close();
         }
       }
     }
@@ -244,12 +255,13 @@ final class JdkZipResourceFile implements ResourceFile {
 
     @Override
     public byte @NotNull [] getBytes() throws IOException {
-      try (InputStream stream = file.getZipFile().getInputStream(entry)) {
+      ZipFile zipFile = file.getZipFile();
+      try (InputStream stream = zipFile.getInputStream(entry)) {
         return loadBytes(stream, (int)entry.getSize());
       }
       finally {
         if (!file.lockJars) {
-          file.close();
+          zipFile.close();
         }
       }
     }
