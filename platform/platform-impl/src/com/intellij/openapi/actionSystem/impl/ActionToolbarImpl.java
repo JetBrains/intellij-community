@@ -328,7 +328,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (action instanceof Separator) {
         if (isLastElementSeparator) continue;
         if (i > 0 && i < actions.size() - 1) {
-          add(SEPARATOR_CONSTRAINT, new MySeparator(myShowSeparatorTitles ? ((Separator) action).getText() : null));
+          add(SEPARATOR_CONSTRAINT, new MySeparator(myShowSeparatorTitles ? ((Separator)action).getText() : null));
           isLastElementSeparator = true;
           continue;
         }
@@ -383,7 +383,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (clickable != null) {
       class ToolbarClicksCollectorListener extends MouseAdapter {
         @Override
-        public void mouseClicked(MouseEvent e) {ToolbarClicksCollector.record(action, myPlace, e, getDataContext());}
+        public void mouseClicked(MouseEvent e) { ToolbarClicksCollector.record(action, myPlace, e, getDataContext()); }
       }
       if (!ContainerUtil.exists(clickable.getMouseListeners(), o -> o instanceof ToolbarClicksCollectorListener)) {
         clickable.addMouseListener(new ToolbarClicksCollectorListener());
@@ -458,7 +458,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         @Override
         public void paintBorder(Graphics g, JComponent c, int state) {
           g.setColor(JBColor.border());
-          g.drawLine(c.getWidth()-1, 0, c.getWidth()-1, c.getHeight());
+          g.drawLine(c.getWidth() - 1, 0, c.getWidth() - 1, c.getHeight());
         }
 
         @Override
@@ -646,7 +646,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           r.y += (maxHeight - r.height) / 2;
         }
       }
-
     }
     else {
       int eachY = 0;
@@ -682,7 +681,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         bounds.get(i).setBounds(eachBound);
       }
     }
-
   }
 
   private void calculateBoundsWrapImpl(@NotNull Dimension sizeToFit, @NotNull List<? extends Rectangle> bounds) {
@@ -922,8 +920,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   /**
-   *  By default minimum size is to show chevron only.
-   *  If this option is {@code true} toolbar shows at least one (the first) component plus chevron (if need)
+   * By default minimum size is to show chevron only.
+   * If this option is {@code true} toolbar shows at least one (the first) component plus chevron (if need)
    */
   public void setForceShowFirstComponent(boolean showFirstComponent) {
     myForceShowFirstComponent = showFirstComponent;
@@ -1113,8 +1111,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
       else if (component instanceof JLabel && LOADING_LABEL.equals(component.getName())) {
         Dimension dimension = new Dimension();
-        dimension.width = myMinimumButtonSize.width != 0 ? myMinimumButtonSize.width : ((JLabel)component).getIcon().getIconWidth();
-        dimension.height = myMinimumButtonSize.height != 0 ? myMinimumButtonSize.height : ((JLabel)component).getIcon().getIconHeight();
+        dimension.width = Math.max(myMinimumButtonSize.width, ((JLabel)component).getIcon().getIconWidth());
+        dimension.height = Math.max(myMinimumButtonSize.height, ((JLabel)component).getIcon().getIconHeight());
         JBInsets.addTo(dimension, ((JLabel)component).getInsets());
         component.setPreferredSize(dimension);
       }
