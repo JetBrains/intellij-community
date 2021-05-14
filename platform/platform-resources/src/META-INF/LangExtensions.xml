@@ -1038,7 +1038,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.ui.RefactoringDialogUsageCollector"/>
     <statistics.counterUsagesCollector groupId="project.view.pane.changes" version="1"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector"/>
-    <statistics.counterUsagesCollector groupId="intentions" version="57"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.IntentionsCollector"/>
     <statistics.counterUsagesCollector groupId="completion.postfix" version="57"/>
 
     <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageLanguageExtension"/>
