@@ -219,6 +219,12 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
     }
   }
 
+  /**
+   * {@link #myCachedData} contains
+   * - {@code null} for data keys for which the corresponding {@link #getData(String)} was never called (E.g. for {@link DataKey}s created dynamically during other {@link #getData(String)} execution);
+   * - {@link NullResult#Initial} for data keys which returned {@code null} from the corresponding {@link #getData(String)} during {@link #PreCachedDataContext(Component)} execution;
+   * - {@link NullResult#Final} for data keys which returned {@code null} from both {@link #getData(String)} invocations: in constructor and after all data rules execution
+   */
   private enum NullResult {
     Initial, Final
   }
