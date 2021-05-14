@@ -1316,13 +1316,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       doFlush(value, true);
     }
     myStack.replaceAll(val -> {
-      if (val instanceof DfaVariableValue) {
-        DfType type = getDfType(val);
-        if (ContainerUtil.or(type.getDerivedVariables(), 
-                             dv -> type.getDerivedValue(dv) != DfType.TOP && !dv.isStable() && 
-                                   qualifierStatusMap.shouldFlush((DfaVariableValue)val, dv.isCall()))) {
-          return myFactory.fromDfType(type.getBasicType());
-        }
+      DfType type = getDfType(val);
+      if (ContainerUtil.or(type.getDerivedVariables(), dv -> type.getDerivedValue(dv) != DfType.TOP &&
+                                                             !dv.isStable() && qualifierStatusMap.shouldFlush(val, dv.isCall()))) {
+        return myFactory.fromDfType(type.getBasicType());
       }
       return val;
     });
@@ -1602,15 +1599,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       myQualifiersToFlush = qualifiersToFlush;
     }
 
-    boolean shouldFlush(@Nullable DfaVariableValue qualifier, boolean hasCall) {
+    boolean shouldFlush(@Nullable DfaValue qualifier, boolean hasCall) {
       if (qualifier == null) return true;
       QualifierStatus status = myMap.get(qualifier.getID());
       if (status == null) {
         status = calculate(qualifier);
-        if (status != QualifierStatus.SHOULD_FLUSH_ALWAYS) {
-          if (qualifier.isFlushableByCalls()) {
-            DfaVariableValue qualifierQualifier = qualifier.getQualifier();
-            if (shouldFlush(qualifierQualifier, qualifier.containsCalls())) {
+        if (status != QualifierStatus.SHOULD_FLUSH_ALWAYS && qualifier instanceof DfaVariableValue) {
+          DfaVariableValue qualifierVar = (DfaVariableValue)qualifier;
+          if (qualifierVar.isFlushableByCalls()) {
+            DfaVariableValue qualifierQualifier = qualifierVar.getQualifier();
+            if (shouldFlush(qualifierQualifier, qualifierVar.containsCalls())) {
               status = QualifierStatus.SHOULD_FLUSH_ALWAYS;
             }
           }
@@ -1620,7 +1618,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return status == QualifierStatus.SHOULD_FLUSH_ALWAYS || (hasCall && status == QualifierStatus.SHOULD_FLUSH_CALLS);
     }
 
-    private @NotNull QualifierStatus calculate(@NotNull DfaVariableValue qualifier) {
+    private @NotNull QualifierStatus calculate(@NotNull DfaValue qualifier) {
       final DfType dfType = getDfType(qualifier);
       if (dfType.isImmutableQualifier()) return QualifierStatus.SHOULD_NOT_FLUSH;
       if (dfType.isLocal()) {
