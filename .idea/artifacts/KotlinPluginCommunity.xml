@@ -214,6 +214,9 @@
         <element id="archive" name="kotlin-uast-kotlin-base.jar">
           <element id="module-output" name="kotlin.uast.uast-kotlin-base" />
         </element>
+        <element id="archive" name="kotlin-base-compiler-plugins-ide-support.jar">
+          <element id="module-output" name="kotlin.compiler-plugins.base-compiler-plugins-ide-support" />
+        </element>
         <element id="archive" name="kotlin-i18n.jar">
           <element id="module-output" name="kotlin.i18n" />
         </element>
