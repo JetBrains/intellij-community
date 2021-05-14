@@ -4,4 +4,4 @@ class A {
     }
 }
 
-// REF: (in JavaClass).JavaClass(String)
+// REF: of JavaClass.JavaClass(String)

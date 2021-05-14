@@ -4,4 +4,4 @@ open class KotlinBase {
   open fun <caret>test() {}
 }
 
-// REF: (in testing.jj.JavaBase).test()
+// REF: of testing.jj.JavaBase.test()
