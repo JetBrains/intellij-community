@@ -118,7 +118,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
         //noinspection deprecation
         return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(e, caret, getPsiFile(e, file));
       }
-      return e;
+      return null;
     }
     if (InjectedDataKeys.CARET.is(dataId)) {
       return querySlowInjectedCaret(e, caret);
