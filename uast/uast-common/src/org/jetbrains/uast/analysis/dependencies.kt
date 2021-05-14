@@ -70,7 +70,6 @@ sealed class Dependency : UserDataHolderBase() {
   }
 
   data class PotentialSideEffectDependency(
-    val currentReference: USimpleNameReferenceExpression,
     val candidates: CandidatesTree,
     override val referenceInfo: DependencyOfReference.ReferenceInfo? = null
   ) : Dependency(), DependencyOfReference {

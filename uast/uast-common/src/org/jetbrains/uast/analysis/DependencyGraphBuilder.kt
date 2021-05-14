@@ -5,24 +5,26 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiElement
 import com.intellij.util.castSafelyTo
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
-import kotlin.collections.HashSet
 
 internal class DependencyGraphBuilder private constructor(
   private val currentScope: LocalScopeContext = LocalScopeContext(null),
   private var currentDepth: Int,
   val dependents: MutableMap<UElement, MutableSet<Dependent>> = mutableMapOf(),
   val dependencies: MutableMap<UElement, MutableSet<Dependency>> = mutableMapOf(),
+  private val implicitReceivers: MutableMap<UCallExpression, UThisExpression> = mutableMapOf(),
+  val scopesStates: MutableMap<UExpression, UScopeObjectsState> = mutableMapOf()
 ) : AbstractUastVisitor() {
 
   constructor() : this(currentDepth = 0)
 
-  private val elementsProcessedAsReceiver: MutableSet<UExpression> = HashSet()
+  private val elementsProcessedAsReceiver: MutableSet<UExpression> = mutableSetOf()
 
   private fun createVisitor(scope: LocalScopeContext) =
-    DependencyGraphBuilder(scope, currentDepth, dependents, dependencies)
+    DependencyGraphBuilder(scope, currentDepth, dependents, dependencies, implicitReceivers, scopesStates)
 
   inline fun checkedDepthCall(node: UElement, body: () -> Boolean): Boolean {
     currentDepth++
@@ -42,6 +44,11 @@ internal class DependencyGraphBuilder private constructor(
   override fun visitLambdaExpression(node: ULambdaExpression): Boolean = checkedDepthCall(node) {
     ProgressManager.checkCanceled()
     val child = currentScope.createChild()
+    for (parameter in node.parameters) {
+      child.declareFakeVariable(parameter, parameter.name)
+      child[parameter.name] = setOf(parameter)
+    }
+
     val parent = (node.uastParent as? UCallExpression)
     parent
       ?.takeIf { KotlinExtensionConstants.isExtensionFunctionToIgnore(it) }
@@ -50,11 +57,12 @@ internal class DependencyGraphBuilder private constructor(
         it.valueParameters.getOrNull(0)?.name ?: KotlinExtensionConstants.DEFAULT_LAMBDA_ARGUMENT_NAME
       }?.let {
         parent.receiver?.let { receiver ->
-          child.declareFakeVariable(parent, it)
+          //child.declareFakeVariable(parent, it)
           child[it] = setOf(receiver)
         }
       }
     node.body.accept(createVisitor(child))
+    scopesStates[node] = child.toUScopeObjectsState()
     return@checkedDepthCall true
   }
 
@@ -84,8 +92,17 @@ internal class DependencyGraphBuilder private constructor(
       else {
         registerDependency(Dependent.CallExpression(i, node, parameter.type), Dependency.ArgumentDependency(argument, node))
       }
-
+      // TODO: implicit this as receiver argument
       argument.takeIf { it == receiver }?.let { elementsProcessedAsReceiver.add(it) }
+    }
+
+    node.getImplicitReceiver()?.let { implicitReceiver ->
+      registerDependency(Dependent.CommonDependent(node), Dependency.CommonDependency(implicitReceiver))
+      implicitReceiver.accept(this)
+
+      if (node.uastParent !is UReferenceExpression) {
+        currentScope.setLastPotentialUpdate(THIS_PARAMETER_NAME, node)
+      }
     }
 
     return@checkedDepthCall super.visitCallExpression(node)
@@ -104,7 +121,7 @@ internal class DependencyGraphBuilder private constructor(
     registerDependency(Dependent.CommonDependent(node), Dependency.CommonDependency(node.selector))
     node.receiver.accept(this)
     if (node.getOutermostQualified() == node) {
-      (node.getQualifiedChain().first() as? USimpleNameReferenceExpression)?.identifier?.takeIf { it in currentScope }?.let {
+      node.getQualifiedChainWithImplicits().first().referenceOrThisIdentifier?.takeIf { it in currentScope }?.let {
         currentScope.setLastPotentialUpdate(it, node)
       }
     }
@@ -142,9 +159,32 @@ internal class DependencyGraphBuilder private constructor(
 
     val potentialDependenciesCandidates = currentScope.getLastPotentialUpdate(node.identifier)
     if (potentialDependenciesCandidates != null) {
-      registerDependency(Dependent.CommonDependent(node), Dependency.PotentialSideEffectDependency(node, potentialDependenciesCandidates, referenceInfo))
+      registerDependency(Dependent.CommonDependent(node),
+                         Dependency.PotentialSideEffectDependency(potentialDependenciesCandidates, referenceInfo))
     }
     return@checkedDepthCall super.visitSimpleNameReferenceExpression(node)
+  }
+
+  override fun visitThisExpression(node: UThisExpression): Boolean = checkedDepthCall(node) {
+    ProgressManager.checkCanceled()
+
+    val referenceInfo = DependencyOfReference.ReferenceInfo(THIS_PARAMETER_NAME, currentScope.getReferencedValues(THIS_PARAMETER_NAME))
+    currentScope[THIS_PARAMETER_NAME]?.let {
+      registerDependency(
+        Dependent.CommonDependent(node),
+        Dependency.BranchingDependency(
+          it,
+          referenceInfo
+        ).unwrapIfSingle()
+      )
+    }
+
+    val potentialDependenciesCandidates = currentScope.getLastPotentialUpdate(THIS_PARAMETER_NAME)
+    if (potentialDependenciesCandidates != null) {
+      registerDependency(Dependent.CommonDependent(node),
+                         Dependency.PotentialSideEffectDependency(potentialDependenciesCandidates, referenceInfo))
+    }
+    return@checkedDepthCall super.visitThisExpression(node)
   }
 
   override fun visitLocalVariable(node: ULocalVariable): Boolean = checkedDepthCall(node) {
@@ -318,11 +358,23 @@ internal class DependencyGraphBuilder private constructor(
 
   private fun updatePotentialEqualReferences(name: String, initElements: Set<UElement>) {
     currentScope.clearPotentialReferences(TEMP_VAR_NAME)
+
+    fun identToReferenceInfo(identifier: String): Pair<String, UReferenceExpression?>? {
+      return identifier.takeIf { id -> id in this.currentScope }?.let { id -> id to null } // simple reference => same references
+    }
+
     val potentialEqualReferences = initElements
       .mapNotNull {
         when (it) {
-          is UQualifiedReferenceExpression -> (it.receiver as? USimpleNameReferenceExpression)?.identifier?.takeIf { id -> id in currentScope }?.let { id -> id to it }
-          is USimpleNameReferenceExpression -> it.identifier.takeIf { id -> id in currentScope }?.let { id -> id to null } // simple reference => same references
+          is UQualifiedReferenceExpression -> it.getQualifiedChainWithImplicits().firstOrNull()?.referenceOrThisIdentifier
+            ?.takeIf { id -> id in currentScope }
+            ?.let { id -> id to it }
+          is USimpleNameReferenceExpression -> identToReferenceInfo(it.identifier)
+          is UThisExpression -> identToReferenceInfo(THIS_PARAMETER_NAME)
+          is UCallExpression -> it.getImplicitReceiver()?.takeIf { THIS_PARAMETER_NAME in currentScope }
+            ?.let { implicitThis ->
+              THIS_PARAMETER_NAME to UFakeQualifiedReferenceExpression(implicitThis, it, it.uastParent)
+            }
           else -> null
         }
       }
@@ -337,10 +389,30 @@ internal class DependencyGraphBuilder private constructor(
   private fun registerDependency(dependent: Dependent, dependency: Dependency) {
     if (dependency !is Dependency.PotentialSideEffectDependency) {
       for (el in dependency.elements) {
-        dependents.getOrPut(el) { HashSet() }.add(dependent)
+        dependents.getOrPut(el) { mutableSetOf() }.add(dependent)
       }
     }
-    dependencies.getOrPut(dependent.element) { HashSet() }.add(dependency)
+    dependencies.getOrPut(dependent.element) { mutableSetOf() }.add(dependency)
+  }
+
+  private fun UCallExpression.getImplicitReceiver(): UExpression? {
+    return if (hasImplicitReceiver(this) && THIS_PARAMETER_NAME in currentScope) {
+      implicitReceivers.getOrPut(this) { UFakeThisExpression(uastParent) }
+    }
+    else {
+      null
+    }
+  }
+
+  private fun UQualifiedReferenceExpression.getQualifiedChainWithImplicits(): List<UExpression> {
+    val chain = getQualifiedChain()
+    val firstElement = chain.firstOrNull()
+    return if (firstElement is UCallExpression) {
+      listOfNotNull(firstElement.getImplicitReceiver()) + chain
+    }
+    else {
+      chain
+    }
   }
 
   companion object {
@@ -354,9 +426,9 @@ private typealias SideEffectChangeCandidate = Dependency.PotentialSideEffectDepe
 private typealias DependencyEvidence = Dependency.PotentialSideEffectDependency.DependencyEvidence
 private typealias CandidatesTree = Dependency.PotentialSideEffectDependency.CandidatesTree
 
-class LocalScopeContext(private val parent: LocalScopeContext?) {
-  private val definedInScopeVariables = HashSet<UElement>()
-  private val definedInScopeVariablesNames = HashSet<String>()
+private class LocalScopeContext(private val parent: LocalScopeContext?) {
+  private val definedInScopeVariables = mutableSetOf<UElement>()
+  private val definedInScopeVariablesNames = mutableSetOf<String>()
 
   private val lastAssignmentOf = mutableMapOf<UElement, Set<UElement>>()
   private val lastDeclarationOf = mutableMapOf<String?, UElement>()
@@ -388,6 +460,7 @@ class LocalScopeContext(private val parent: LocalScopeContext?) {
 
   fun declareFakeVariable(element: UElement, name: String) {
     definedInScopeVariablesNames.add(name)
+    referencesModel.assignValueIfNotAssigned(name)
     lastDeclarationOf[name] = element
   }
 
@@ -415,8 +488,8 @@ class LocalScopeContext(private val parent: LocalScopeContext?) {
       lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(
         SideEffectChangeCandidate(
           updateElements.first(),
-                                  DependencyEvidence(),
-                                  dependencyWitnessValues = referencesModel.getAllTargetsForReference(variable))
+          DependencyEvidence(),
+          dependencyWitnessValues = referencesModel.getAllTargetsForReference(variable))
       )
     }
     else {
@@ -453,7 +526,7 @@ class LocalScopeContext(private val parent: LocalScopeContext?) {
 
   fun mergeWith(others: Iterable<LocalScopeContext>) {
     for (variable in variables) {
-      this[variable] = HashSet<UElement>().apply {
+      this[variable] = mutableSetOf<UElement>().apply {
         for (other in others) {
           other[variable]?.let { addAll(it) }
         }
@@ -484,6 +557,12 @@ class LocalScopeContext(private val parent: LocalScopeContext?) {
 
   fun getReferencedValues(identifier: String): Collection<UValueMark> {
     return referencesModel.getAllTargetsForReference(identifier)
+  }
+
+  fun toUScopeObjectsState(): UScopeObjectsState {
+    val variableValueMarks = definedInScopeVariablesNames.associateWith { referencesModel.getAllTargetsForReference(it) }
+    val lastUpdates = definedInScopeVariablesNames.mapNotNull { getLastPotentialUpdate(it)?.let { tree -> it to tree } }.toMap()
+    return UScopeObjectsState(lastUpdates, variableValueMarks)
   }
 
   private class ReferencesModel(private val parent: ReferencesModel?) {
@@ -569,3 +648,47 @@ private fun combineEvidences(ownEvidence: DependencyEvidence, otherEvidence: Dep
 private const val UAST_KT_ELVIS_NAME = "elvis"
 
 private const val TEMP_VAR_NAME = "@$,()"
+
+private const val THIS_PARAMETER_NAME = "<this>"
+
+private fun hasImplicitReceiver(callExpression: UCallExpression): Boolean =
+  callExpression.receiver == null && callExpression.receiverType != null
+
+private val UExpression?.referenceOrThisIdentifier: String?
+  get() = when (this) {
+    is USimpleNameReferenceExpression -> identifier
+    is UThisExpression -> THIS_PARAMETER_NAME
+    else -> null
+  }
+
+private class UFakeThisExpression(override val uastParent: UElement?) : UThisExpression, UFakeExpression {
+  override val label: String?
+    get() = null
+
+  override val labelIdentifier: UIdentifier?
+    get() = null
+}
+
+private class UFakeQualifiedReferenceExpression(
+  override val receiver: UExpression,
+  override val selector: UExpression,
+  override val uastParent: UElement?
+) : UQualifiedReferenceExpression, UFakeExpression {
+  override val accessType: UastQualifiedExpressionAccessType
+    get() = UastQualifiedExpressionAccessType.SIMPLE
+
+  override val resolvedName: String?
+    get() = null
+}
+
+private interface UFakeExpression : UExpression, UResolvable {
+  @Suppress("OverridingDeprecatedMember")
+  override val psi: PsiElement?
+    get() = null
+
+  @JvmDefault
+  override val uAnnotations: List<UAnnotation>
+    get() = emptyList()
+
+  override fun resolve(): PsiElement? = null
+}

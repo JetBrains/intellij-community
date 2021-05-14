@@ -8,14 +8,20 @@ import com.intellij.patterns.uast.callExpression
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UReferenceExpression
-import org.jetbrains.uast.USimpleNameReferenceExpression
-import org.jetbrains.uast.getQualifiedChain
+import org.jetbrains.uast.*
 
 object UStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator<PartiallyKnownString?> {
   override val buildMethod: ElementPattern<PsiMethod>
     get() = PsiJavaPatterns.psiMethod().withName("toString").definedInClass("java.lang.StringBuilder")
+
+  override val dslBuildMethodDescriptor: UStringEvaluator.DslMethodDescriptor<PartiallyKnownString?>
+    get() = UStringEvaluator.DslMethodDescriptor(
+      PsiJavaPatterns.psiMethod().withName("buildString").definedInClass("kotlin.text.StringsKt__StringBuilderKt"),
+      UStringEvaluator.DslLambdaDescriptor(
+        UStringEvaluator.LambdaPlace.Last,
+        0
+      ) { PartiallyKnownString("") }
+    )
 
   override val allowSideEffects: Boolean
     get() = true
@@ -23,19 +29,22 @@ object UStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator
   override fun isExpressionReturnSelf(expression: UReferenceExpression): Boolean {
     val qualifiedChain = expression.getQualifiedChain()
     val callPattern = callExpression().withAnyResolvedMethod(PsiJavaPatterns.psiMethod().definedInClass("java.lang.StringBuilder"))
-    return qualifiedChain.firstOrNull() is USimpleNameReferenceExpression && qualifiedChain.drop(1).all { callPattern.accepts(it) }
+    return qualifiedChain.firstOrNull().let { it is USimpleNameReferenceExpression || it is UThisExpression } &&
+           qualifiedChain.drop(1).all { callPattern.accepts(it) }
   }
 
   override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration, Boolean) -> PartiallyKnownString?>
     get() = mapOf(
-      PsiJavaPatterns.psiMethod().withName("append").definedInClass("java.lang.StringBuilder") to { call, currentResult, stringEvaluator, config, isStrict ->
+      PsiJavaPatterns.psiMethod().withName("append").definedInClass(
+        "java.lang.StringBuilder") to { call, currentResult, stringEvaluator, config, isStrict ->
         val entries = currentResult?.segments?.toMutableList()
                       ?: mutableListOf<StringEntry>(StringEntry.Unknown(call.sourcePsi!!, TextRange(0, 1)))
         val argument = call.getArgumentForParameter(0)?.let { argument -> stringEvaluator.calculateValue(argument, config) }
         if (argument != null) {
           if (isStrict) {
             entries.addAll(argument.segments)
-          } else {
+          }
+          else {
             entries.add(StringEntry.Unknown(
               call.sourcePsi!!,
               TextRange(0, call.sourcePsi!!.textLength),

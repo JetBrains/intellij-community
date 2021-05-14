@@ -82,6 +82,11 @@ class UStringEvaluator {
       if (builderEvaluator != null) {
         return calculateBuilder(graph, element, configuration, builderEvaluator, null, null)
       }
+      val dslEvaluator = configuration.getDslEvaluatorForCall(element)
+      if (dslEvaluator != null) {
+        val (builderLikeEvaluator, methodDescriptor) = dslEvaluator
+        return calculateDsl(graph, element, configuration, builderLikeEvaluator, methodDescriptor)
+      }
       if (element.resolve()?.let { configuration.methodsToAnalyzePattern.accepts(it) } == true) {
         return PartiallyKnownString(
           StringEntry.Unknown(element.sourcePsi, element.ownTextRange,
@@ -174,14 +179,48 @@ class UStringEvaluator {
     return results
   }
 
+  private fun calculateDsl(
+    graph: UastLocalUsageDependencyGraph,
+    element: UCallExpression,
+    configuration: Configuration,
+    builderEvaluator: BuilderLikeExpressionEvaluator<PartiallyKnownString?>,
+    dslMethodDescriptor: DslMethodDescriptor<PartiallyKnownString?>
+  ): PartiallyKnownString? {
+    val lambda = dslMethodDescriptor.lambdaDescriptor.lambdaPlace.getLambda(element) ?: return null
+    val parameter = dslMethodDescriptor.lambdaDescriptor.getLambdaParameter(lambda) ?: return null
+    val (lastVariablesUpdates, variableToValueMarks) = graph.scopesObjectsStates[lambda] ?: return null
+    val marks = variableToValueMarks[parameter.name]
+    val candidates = lastVariablesUpdates[parameter.name]?.selectPotentialCandidates {
+      (marks == null || marks.intersect(it.dependencyWitnessValues).isNotEmpty()) &&
+      provePossibleDependency(it.dependencyEvidence, builderEvaluator)
+    } ?: return null
+
+    return candidates.mapNotNull {
+      calculateBuilder(graph, it.updateElement, configuration, builderEvaluator, it.dependencyWitnessValues, marks) { declaration ->
+        if (declaration == parameter) {
+          dslMethodDescriptor.lambdaDescriptor.lambdaArgumentValueProvider()
+        }
+        else {
+          null
+        }
+      }
+    }.collapse(element)
+  }
+
   private fun calculateBuilder(
     graph: UastLocalUsageDependencyGraph,
     element: UElement,
     configuration: Configuration,
     builderEvaluator: BuilderLikeExpressionEvaluator<PartiallyKnownString?>,
     currentObjectsToAnalyze: Collection<UValueMark>?,
-    originalObjectsToAnalyze: Collection<UValueMark>?
+    originalObjectsToAnalyze: Collection<UValueMark>?,
+    declarationEvaluator: (UDeclaration) -> PartiallyKnownString? = { null }
   ): PartiallyKnownString? {
+    if (element is UDeclaration) {
+      val value = declarationEvaluator(element)
+      if (value != null) return value
+    }
+
     if (element is UCallExpression) {
       val methodEvaluator = builderEvaluator.methodDescriptions.entries.firstOrNull { (pattern, _) -> pattern.accepts(element.resolve()) }
       if (methodEvaluator != null) {
@@ -193,7 +232,7 @@ class UStringEvaluator {
         ) {
           is Dependency.BranchingDependency -> {
             val branchResult = dependency.elements.mapNotNull {
-              calculateBuilder(graph, it, configuration, builderEvaluator, currentObjectsToAnalyze, originalObjectsToAnalyze)
+              calculateBuilder(graph, it, configuration, builderEvaluator, currentObjectsToAnalyze, originalObjectsToAnalyze, declarationEvaluator)
             }.collapse(element)
             methodEvaluator.value(element, branchResult, this, configuration, isStrict)
           }
@@ -204,7 +243,8 @@ class UStringEvaluator {
               configuration,
               builderEvaluator,
               currentObjectsToAnalyze,
-              originalObjectsToAnalyze
+              originalObjectsToAnalyze,
+              declarationEvaluator
             )
             methodEvaluator.value(element, result, this, configuration, isStrict)
           }
@@ -237,7 +277,8 @@ class UStringEvaluator {
 
         if (variants?.size == 1) {
           variants.single()
-        } else {
+        }
+        else {
           PartiallyKnownString(StringEntry.Unknown(
             element.sourcePsi!!,
             element.ownTextRange,
@@ -251,7 +292,8 @@ class UStringEvaluator {
         configuration,
         builderEvaluator,
         currentObjectsToAnalyze,
-        originalObjectsToAnalyze
+        originalObjectsToAnalyze,
+        declarationEvaluator
       )
       is Dependency.PotentialSideEffectDependency -> if (!builderEvaluator.allowSideEffects) null
       else {
@@ -263,7 +305,8 @@ class UStringEvaluator {
               configuration,
               builderEvaluator,
               candidate.dependencyWitnessValues,
-              originalObjectsToAnalyze ?: dependency.referenceInfo?.possibleReferencedValues
+              originalObjectsToAnalyze ?: dependency.referenceInfo?.possibleReferencedValues,
+              declarationEvaluator
             )
           }
           .collapse(element)
@@ -281,7 +324,7 @@ class UStringEvaluator {
     visitedEvidences += evidence
 
     val result = (evidence.evidenceElement == null || builderEvaluator.isExpressionReturnSelf(evidence.evidenceElement)) &&
-            (evidence.requires.isEmpty() || evidence.requires.all { provePossibleDependency(it, builderEvaluator, visitedEvidences) })
+                 (evidence.requires.isEmpty() || evidence.requires.all { provePossibleDependency(it, builderEvaluator, visitedEvidences) })
 
     visitedEvidences -= evidence
     return result
@@ -316,11 +359,42 @@ class UStringEvaluator {
   interface BuilderLikeExpressionEvaluator<T> {
     val buildMethod: ElementPattern<PsiMethod>
 
+    val dslBuildMethodDescriptor: DslMethodDescriptor<T>?
+
     val allowSideEffects: Boolean
 
     val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, T, UStringEvaluator, Configuration, isStrict: Boolean) -> T>
 
     fun isExpressionReturnSelf(expression: UReferenceExpression): Boolean = false
+  }
+
+  data class DslMethodDescriptor<T>(
+    val methodPattern: ElementPattern<PsiMethod>,
+    val lambdaDescriptor: DslLambdaDescriptor<T>
+  ) {
+    fun accepts(method: PsiMethod?) = methodPattern.accepts(method)
+  }
+
+  data class DslLambdaDescriptor<T>(
+    val lambdaPlace: LambdaPlace,
+    val lambdaArgumentIndex: Int,
+    val lambdaArgumentValueProvider: () -> T?
+  ) {
+    internal fun getLambdaParameter(lambda: ULambdaExpression): UParameter? {
+      return lambda.parameters.getOrNull(lambdaArgumentIndex)
+    }
+  }
+
+  sealed class LambdaPlace {
+    internal abstract fun getLambda(callExpression: UCallExpression): ULambdaExpression?
+
+    object Last : LambdaPlace() {
+      override fun getLambda(callExpression: UCallExpression): ULambdaExpression? {
+        val method = callExpression.resolve() ?: return null
+        val lastIndex = method.parameters.lastIndex
+        return callExpression.getArgumentForParameter(lastIndex) as? ULambdaExpression
+      }
+    }
   }
 
   data class Configuration(
@@ -338,6 +412,15 @@ class UStringEvaluator {
 
     internal fun getBuilderEvaluatorForCall(callExpression: UCallExpression): BuilderLikeExpressionEvaluator<PartiallyKnownString?>? {
       return builderEvaluators.firstOrNull { it.buildMethod.accepts(callExpression.resolve()) }
+    }
+
+    internal fun getDslEvaluatorForCall(
+      callExpression: UCallExpression
+    ): Pair<BuilderLikeExpressionEvaluator<PartiallyKnownString?>, DslMethodDescriptor<PartiallyKnownString?>>? {
+      return builderEvaluators.firstOrNull { it.dslBuildMethodDescriptor?.accepts(callExpression.resolve()) == true }
+        ?.let { evaluator ->
+          evaluator.dslBuildMethodDescriptor?.let { evaluator to it }
+        }
     }
   }
 }
