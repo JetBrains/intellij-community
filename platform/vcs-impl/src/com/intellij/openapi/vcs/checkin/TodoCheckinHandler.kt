@@ -157,7 +157,7 @@ private class FindTodoItemsTask(project: Project, changes: Collection<Change>, t
   }
 
   override fun run(indicator: ProgressIndicator) {
-    indicator.isIndeterminate = true
+    indicator.isIndeterminate = false
     worker.execute()
   }
 
