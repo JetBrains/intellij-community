@@ -33,7 +33,8 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
   default <T> Promise<T> prepareTargetToCommandExecution(@NotNull ExecutionEnvironment env,
                                                          @NotNull Logger logger,
                                                          @NonNls String logFailureMessage,
-                                                         @NotNull ThrowableComputable<? extends T, ? extends Throwable> afterPreparation) throws ExecutionException {
+                                                         @NotNull ThrowableComputable<? extends T, ? extends ExecutionException> afterPreparation)
+    throws ExecutionException {
     Promise<Object> preparationTasks;
     if (((TargetEnvironmentAwareRunProfile)env.getRunProfile()).needPrepareTarget()) {
       preparationTasks = ExecutionManager.getInstance(env.getProject()).executePreparationTasks(env, this);
@@ -51,8 +52,12 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
         catch (ProcessCanceledException e) {
           promise.setError(StringUtil.notNullize(e.getLocalizedMessage()));
         }
-        catch (Throwable t) {
+        catch (ExecutionException t) {
           logger.warn(logFailureMessage, t);
+          promise.setError(t);
+        }
+        catch (Throwable t) {
+          logger.error(logFailureMessage, t);
           promise.setError(t);
         }
       });
