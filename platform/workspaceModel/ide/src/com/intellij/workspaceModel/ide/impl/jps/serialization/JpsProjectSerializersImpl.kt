@@ -288,12 +288,13 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   private fun removeDuplicatingEntities(builders: List<WorkspaceEntityStorageBuilder>, serializers: List<JpsFileEntitiesSerializer<*>>, project: Project?): List<EntitySource> {
     if (project == null) return emptyList()
 
-    val modules = mutableMapOf<ModuleId, MutableList<Pair<WorkspaceEntityStorageBuilder, JpsFileEntitiesSerializer<*>>>>()
+    val modules = mutableMapOf<String, MutableList<Triple<ModuleId, WorkspaceEntityStorageBuilder, JpsFileEntitiesSerializer<*>>>>()
     val libraries = mutableMapOf<LibraryId, MutableList<Pair<WorkspaceEntityStorageBuilder, JpsFileEntitiesSerializer<*>>>>()
     builders.forEachIndexed { i, builder ->
       if (enableExternalStorage) {
         builder.entities(ModuleEntity::class.java).forEach { module ->
-          modules.getOrPut(module.persistentId()) { ArrayList() }.add(builder to serializers.get(i))
+          val moduleId = module.persistentId()
+          modules.getOrPut(moduleId.name.toLowerCase()) { ArrayList() }.add(Triple(moduleId, builder, serializers[i]))
         }
       }
       builder.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }.forEach { library ->
@@ -302,7 +303,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     val sourcesToUpdate = mutableListOf<EntitySource>()
-    for ((moduleId, buildersWithModule) in modules) {
+    for ((_, buildersWithModule) in modules) {
       if (buildersWithModule.size <= 1) continue
 
       var correctModuleFound = false
@@ -311,7 +312,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
       // Leave only first module with "correct" entity source
       // If there is no such module, leave the last one
-      buildersWithModule.forEachIndexed { index, (builder, ser) ->
+      buildersWithModule.forEachIndexed { index, (moduleId, builder, ser) ->
         val originalExternal = moduleSerializerToExternalSourceBool[ser] ?: return@forEachIndexed
         val moduleEntity = builder.resolve(moduleId)!!
         if (index != buildersWithModule.lastIndex) {
@@ -334,7 +335,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           }
         }
       }
-      reportIssue(project, moduleId, buildersWithModule.map { it.second }, leftModuleId)
+      reportIssue(project, buildersWithModule.mapTo(HashSet()) { it.first }, buildersWithModule.map { it.third }, leftModuleId)
     }
     for ((libraryId, buildersWithSerializers) in libraries) {
       if (buildersWithSerializers.size <= 1) continue
@@ -365,7 +366,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     return sourcesToUpdate
   }
 
-  private fun reportIssue(project: Project, moduleId: ModuleId, serializers: List<JpsFileEntitiesSerializer<*>>, leftModuleId: Int) {
+  private fun reportIssue(project: Project, moduleIds: Set<ModuleId>, serializers: List<JpsFileEntitiesSerializer<*>>, leftModuleId: Int) {
     var serializerCounter = -1
     val attachments = mutableMapOf<String, Attachment>()
     val serializersInfo = serializers.joinToString(separator = "\n\n") {
@@ -408,7 +409,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       |Trying to load multiple modules with the same name.
       |
       |Project: ${project.name}
-      |Module: ${moduleId.name}
+      |Module: ${moduleIds.map { it.name }}
       |Amount of modules: ${serializers.size}
       |Leave module of nth serializer: $leftModuleId
       |

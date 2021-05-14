@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -43,6 +44,7 @@ import com.intellij.packaging.impl.elements.ArchivePackagingElement
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
+import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
@@ -54,6 +56,7 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
@@ -618,6 +621,28 @@ class ExternalSystemStorageTest {
     loadModifySaveAndCheck("multipleLibrariesInInternalStorage", "multipleLibrariesInInternalStorageFixed") {
       val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(it).libraries
       assertThat(libraries.size).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun `multiple modules with the same name`() {
+    suppressLogs {
+      loadModifySaveAndCheck("multipleModulesWithSameName", "multipleModulesWithSameNameFixed") {
+        val modules = ModuleManager.getInstance(it).modules
+        assertThat(modules.size).isEqualTo(1)
+      }
+    }
+  }
+
+  @Test
+  fun `multiple modules with the same name but different case`() {
+    assumeFalse(SystemInfo.isFileSystemCaseSensitive)
+    suppressLogs {
+      loadModifySaveAndCheck("multipleModulesWithSameNameDifferentCase", "multipleModulesWithSameNameDifferentCaseFixed") {
+        val modules = ModuleManager.getInstance(it).modules
+        val module = assertOneElement(modules)
+        assertEquals("test", module.name)
+      }
     }
   }
 
