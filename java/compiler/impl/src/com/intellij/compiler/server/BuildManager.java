@@ -1341,7 +1341,19 @@ public final class BuildManager implements Disposable {
           throw new IOException("Performance Plugin is missing or disabled");
         }
         yourKitProfilerService.copyYKLibraries(hostWorkingDirectory);
-        cmdLine.addParameter("-agentpath:" + cmdLine.getYjpAgentPath(yourKitProfilerService) + "=disablealloc,delay=10000,sessionname=ExternalBuild");
+        String buildSnapshotPath = System.getProperty("build.snapshots.path");
+        String parameters;
+        if (buildSnapshotPath != null) {
+          parameters = "-agentpath:" +
+                       cmdLine.getYjpAgentPath(yourKitProfilerService) +
+                       "=disablealloc,delay=10000,sessionname=ExternalBuild,dir=" +
+                       buildSnapshotPath;
+        }
+        else {
+          parameters =
+            "-agentpath:" + cmdLine.getYjpAgentPath(yourKitProfilerService) + "=disablealloc,delay=10000,sessionname=ExternalBuild";
+        }
+        cmdLine.addParameter(parameters);
         showSnapshotNotificationAfterFinish(project);
       }
       catch (IOException e) {
