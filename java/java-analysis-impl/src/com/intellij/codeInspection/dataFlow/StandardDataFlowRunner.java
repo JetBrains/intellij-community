@@ -275,11 +275,11 @@ public class StandardDataFlowRunner {
         .filter(var -> var.getPsiVariable() instanceof PsiVariable &&
                        !VariableAccessUtils.variableIsUsed((PsiVariable)var.getPsiVariable(), closure))
         .toList();
-      Collection<? extends DfaMemoryState> states = closures.get(closure);
+      Collection<DfaMemoryState> states = closures.get(closure);
       if (!unusedVars.isEmpty()) {
-        List<DfaMemoryStateImpl> stateList = StreamEx.of(states)
+        List<DfaMemoryState> stateList = StreamEx.of(states)
           .peek(state -> unusedVars.forEach(state::flushVariable))
-          .map(state -> (DfaMemoryStateImpl)state).distinct().toList();
+          .distinct().toList();
         states = StateQueue.squash(stateList);
       }
       consumer.accept(closure, states);

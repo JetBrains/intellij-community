@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.codeInspection.dataFlow;
+package com.intellij.codeInspection.dataFlow.memory;
 
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
-import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.memory.EqClass;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
@@ -44,7 +42,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   // dfa value id -> indices in myEqClasses list of the classes which contain the id
   protected final Int2IntMap myIdToEqClassesIndices;
   protected final Stack<DfaValue> myStack;
-  protected final DistinctPairSet myDistinctClasses;
+  private final DistinctPairSet myDistinctClasses;
   private final LinkedHashMap<DfaVariableValue,DfType> myVariableTypes;
   private boolean myEphemeral;
 
@@ -109,12 +107,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
            myVariableTypes.equals(that.myVariableTypes);
   }
 
-  DistinctPairSet getDistinctClassPairs() {
+  protected DistinctPairSet getDistinctClassPairs() {
     return myDistinctClasses;
   }
 
   private LinkedHashSet<EqClass> myCachedNonTrivialEqClasses;
-  LinkedHashSet<EqClass> getNonTrivialEqClasses() {
+  protected LinkedHashSet<EqClass> getNonTrivialEqClasses() {
     if (myCachedNonTrivialEqClasses != null) return myCachedNonTrivialEqClasses;
 
     LinkedHashSet<EqClass> result = new LinkedHashSet<>();
@@ -274,7 +272,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return resultIndex;
   }
 
-  public @Nullable DfaMemoryStateImpl tryJoinExactly(DfaMemoryStateImpl that) {
+  @Override
+  public @Nullable DfaMemoryState tryJoinExactly(DfaMemoryState other) {
+    DfaMemoryStateImpl that = (DfaMemoryStateImpl)other;
     StateMerger merger = new StateMerger(this, that);
     if (!merger.update(that.myEphemeral || !myEphemeral, myEphemeral || !that.myEphemeral)) return null;
     if (myStack.size() != that.myStack.size()) return null;
@@ -497,13 +497,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
   }
 
-  /**
-   * Returns true if current state describes all possible concrete program states described by {@code that} state.
-   *
-   * @param that a sub-state candidate
-   * @return true if current state is a super-state of the supplied state.
-   */
-  public boolean isSuperStateOf(DfaMemoryStateImpl that) {
+  @Override
+  public boolean isSuperStateOf(@NotNull DfaMemoryState other) {
+    if (!(other instanceof DfaMemoryStateImpl)) return false;
+    DfaMemoryStateImpl that = (DfaMemoryStateImpl)other;
     if (myEphemeral && !that.myEphemeral) return false;
     if (myStack.size() != that.myStack.size()) return false;
     for (int i = 0; i < myStack.size(); i++) {
@@ -1216,7 +1213,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return value.getDfType();
   }
 
-  void recordVariableType(@NotNull DfaVariableValue dfaVar, @NotNull DfType type) {
+  protected void recordVariableType(@NotNull DfaVariableValue dfaVar, @NotNull DfType type) {
     dfaVar = canonicalize(dfaVar);
     type = type.getBasicType();
     if (type.equals(dfaVar.getInherentType())) {
@@ -1427,10 +1424,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myCachedHash = null;
   }
 
-  /**
-   * @return a mergeability key. If two states return the same key, then states could be merged via {@link #merge(DfaMemoryStateImpl)}.
-   */
-  Object getMergeabilityKey() {
+  @Override
+  public Object getMergeabilityKey() {
     /*
       States are mergeable if:
       - Ephemeral flag is the same
@@ -1443,12 +1438,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       .append(isEphemeral()).toImmutableList();
   }
 
-  /**
-   * Updates this DfaMemoryState so that it becomes a minimal superstate which covers the other state as well
-   *
-   * @param other other state which has equal {@link #getMergeabilityKey()}
-   */
-  void merge(DfaMemoryStateImpl other) {
+  @Override
+  public void merge(@NotNull DfaMemoryState that) {
+    DfaMemoryStateImpl other = (DfaMemoryStateImpl)that;
     assert other.isEphemeral() == isEphemeral();
     assert other.myStack.size() == myStack.size();
     ProgressManager.checkCanceled();
@@ -1461,11 +1453,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     afterMerge(other);
   }
 
-  /**
-   * Custom logic to be implemented by subclasses
-   * @param other other memory start this one was merged with
-   */
-  protected void afterMerge(DfaMemoryStateImpl other) {
+  @Override
+  public void afterMerge(@NotNull DfaMemoryState other) {
 
   }
 

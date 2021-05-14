@@ -12,27 +12,27 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class StateQueue {
+public class StateQueue {
   private static final int FORCE_MERGE_THRESHOLD = 100;
   private boolean myWasForciblyMerged;
   private final PriorityQueue<DfaInstructionState> myQueue = new PriorityQueue<>();
   private final Map<DfaInstructionState, DfaInstructionState> myMap = new HashMap<>();
 
-  void offer(DfaInstructionState state) {
+  public void offer(DfaInstructionState state) {
     DfaInstructionState otherState = myMap.putIfAbsent(state, state);
     if (otherState == null) {
       myQueue.offer(state);
     }
-    else if (otherState.getMemoryState() instanceof TrackingDfaMemoryState) {
-      ((TrackingDfaMemoryState)otherState.getMemoryState()).afterMerge((TrackingDfaMemoryState)state.getMemoryState());
+    else {
+      otherState.getMemoryState().afterMerge(state.getMemoryState());
     }
   }
 
-  boolean isEmpty() {
+  public boolean isEmpty() {
     return myQueue.isEmpty();
   }
 
-  boolean processAll(@NotNull Processor<? super DfaInstructionState> processor) {
+  public boolean processAll(@NotNull Processor<? super DfaInstructionState> processor) {
     for (DfaInstructionState state : myQueue) {
       if (!processor.process(state)) return false;
     }
@@ -40,7 +40,7 @@ class StateQueue {
   }
 
   @NotNull
-  List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
+  public List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
     DfaInstructionState state = myQueue.remove();
     final Instruction instruction = state.getInstruction();
     myMap.remove(state);
@@ -48,13 +48,12 @@ class StateQueue {
     DfaInstructionState next = myQueue.peek();
     if (next == null || next.compareTo(state) != 0) return Collections.singletonList(state);
 
-    List<DfaMemoryStateImpl> memoryStates = new ArrayList<>();
-    memoryStates.add((DfaMemoryStateImpl)state.getMemoryState());
+    List<DfaMemoryState> memoryStates = new ArrayList<>();
+    memoryStates.add(state.getMemoryState());
     while (!myQueue.isEmpty() && myQueue.peek().compareTo(state) == 0) {
       DfaInstructionState anotherInstructionState = myQueue.poll();
       myMap.remove(anotherInstructionState);
-      DfaMemoryState anotherState = anotherInstructionState.getMemoryState();
-      memoryStates.add((DfaMemoryStateImpl)anotherState);
+      memoryStates.add(anotherInstructionState.getMemoryState());
     }
 
     memoryStates = forceMerge(memoryStates);
@@ -66,15 +65,15 @@ class StateQueue {
   }
 
   @NotNull
-  static List<DfaMemoryStateImpl> squash(List<DfaMemoryStateImpl> states) {
+  public static List<DfaMemoryState> squash(List<DfaMemoryState> states) {
     for (int i = 1; i < states.size(); i++) {
-      DfaMemoryStateImpl left = states.get(i);
+      DfaMemoryState left = states.get(i);
       if (left == null) continue;
       for (int j = 0; j < i; j++) {
         ProgressManager.checkCanceled();
-        DfaMemoryStateImpl right = states.get(j);
+        DfaMemoryState right = states.get(j);
         if (right == null) continue;
-        DfaMemoryStateImpl result = left.tryJoinExactly(right);
+        DfaMemoryState result = left.tryJoinExactly(right);
         if (result == left) {
           states.set(j, null);
         } else if (result == right) {
@@ -92,10 +91,10 @@ class StateQueue {
     return states;
   }
 
-  private List<DfaMemoryStateImpl> forceMerge(List<DfaMemoryStateImpl> states) {
+  private List<DfaMemoryState> forceMerge(List<DfaMemoryState> states) {
     if (states.size() < FORCE_MERGE_THRESHOLD) return states;
     myWasForciblyMerged = true;
-    Collection<List<DfaMemoryStateImpl>> groups = StreamEx.of(states).groupingBy(DfaMemoryStateImpl::getMergeabilityKey).values();
+    Collection<List<DfaMemoryState>> groups = StreamEx.of(states).groupingBy(DfaMemoryState::getMergeabilityKey).values();
     return StreamEx.of(groups)
       .flatMap(group -> StreamEx.ofSubLists(group, 2)
         .map(pair -> {
@@ -106,7 +105,7 @@ class StateQueue {
         })).distinct().toListAndThen(StateQueue::squash);
   }
 
-  boolean wasForciblyMerged() {
+  public boolean wasForciblyMerged() {
     return myWasForciblyMerged;
   }
 }

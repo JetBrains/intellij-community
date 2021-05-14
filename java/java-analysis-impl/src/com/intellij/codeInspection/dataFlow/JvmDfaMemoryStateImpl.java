@@ -2,6 +2,8 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.memory.DistinctPairSet;
 import com.intellij.codeInspection.dataFlow.memory.EqClass;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -55,7 +57,7 @@ public class JvmDfaMemoryStateImpl extends DfaMemoryStateImpl {
     int id = canonicalize(value).getID();
     int index = myIdToEqClassesIndices.getOrDefault(id, -1);
     if (index == -1) return;
-    for (Iterator<DistinctPairSet.DistinctPair> iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
+    for (Iterator<DistinctPairSet.DistinctPair> iterator = getDistinctClassPairs().iterator(); iterator.hasNext(); ) {
       DistinctPairSet.DistinctPair pair = iterator.next();
       EqClass otherClass = pair.getOtherClass(index);
       if (otherClass != null && getDfType(otherClass.getVariable(0)) != DfTypes.NULL) {
