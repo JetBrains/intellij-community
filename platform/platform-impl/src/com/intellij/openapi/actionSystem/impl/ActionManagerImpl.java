@@ -1512,13 +1512,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
     myPrevPerformedActionId = myLastPreformedActionId;
     myLastPreformedActionId = getId(action);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
     try (AccessToken ignore = ProhibitAWTEvents.start("fireAfterActionPerformed")) {
-      ActionsCollectorImpl.onAfterActionInvoked(action, event);
+      ActionsCollectorImpl.onAfterActionInvoked(action, event, result);
       for (AnActionListener listener : myActionListeners) {
         //noinspection deprecation
         listener.afterActionPerformed(action, event.getDataContext(), event);

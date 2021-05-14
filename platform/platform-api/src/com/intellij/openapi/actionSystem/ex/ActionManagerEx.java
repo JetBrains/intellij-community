@@ -25,21 +25,21 @@ public abstract class ActionManagerEx extends ActionManager {
 
   /** Do not call directly, prefer {@link ActionUtil} methods. */
   @ApiStatus.Internal
-  public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event);
+  public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result);
 
 
-  /** @deprecated implement {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead */
+  /** @deprecated use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     fireBeforeActionPerformed(action, event);
   }
 
-  /** @deprecated implement {@link #fireAfterActionPerformed(AnAction, AnActionEvent)} instead */
+  /** @deprecated use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-    fireAfterActionPerformed(action, event);
+    fireAfterActionPerformed(action, event, AnActionResult.PERFORMED);
   }
 
   public abstract void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext);

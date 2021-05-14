@@ -42,6 +42,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
     recordCustomActionInvoked(null, actionId, event, context);
   }
 
+  /** @noinspection unused*/
   public static void recordCustomActionInvoked(@Nullable Project project, @Nullable String actionId, @Nullable InputEvent event, @NotNull Class<?> context) {
     String recorded = StringUtil.isNotEmpty(actionId) && ourWhitelist.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
     ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(project, recorded, new FusInputEvent(event, null));
@@ -157,6 +158,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
     ourWhitelist.registerDynamicActionId(action, actionId);
   }
 
+  /** @noinspection unused*/
   public static void onActionLoadedFromXml(@NotNull AnAction action, @NotNull String actionId, @Nullable IdeaPluginDescriptor plugin) {
     ourWhitelist.addActionLoadedFromXml(actionId, plugin);
   }
@@ -165,15 +167,17 @@ public class ActionsCollectorImpl extends ActionsCollector {
     ourWhitelist.addActionsLoadedFromKeymapXml(keymap, actionIds);
   }
 
+  /** @noinspection unused*/
   public static void onBeforeActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event) {
     Stats stats = new Stats();
     stats.projectRef = new WeakReference<>(event.getProject());
     ourStats.put(event, stats);
   }
 
-  public static void onAfterActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event) {
-    Stats stats = ourStats.get(event);
-    if (stats == null) return;
+  /** @noinspection unused*/
+  public static void onAfterActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
+    Stats stats = ourStats.remove(event);
+    if (stats == null || !result.isPerformed()) return;
     long durationMillis = TimeoutUtil.getDurationMillis(stats.start);
     final List<EventPair<?>> customData = new ArrayList<>();
     Project project = stats.projectRef.get();
