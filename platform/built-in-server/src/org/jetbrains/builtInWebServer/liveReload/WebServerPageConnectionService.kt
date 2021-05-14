@@ -2,28 +2,38 @@
 package org.jetbrains.builtInWebServer.liveReload
 
 import com.google.common.net.HttpHeaders
+import com.intellij.CommonBundle
 import com.intellij.concurrency.JobScheduler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.GotItTooltip
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
+import com.intellij.xml.XmlBundle
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.util.CharsetUtil
+import org.jetbrains.ide.BuiltInServerBundle
 import org.jetbrains.io.jsonRpc.Client
 import org.jetbrains.io.jsonRpc.ClientManager
 import org.jetbrains.io.jsonRpc.JsonRpcServer
 import org.jetbrains.io.jsonRpc.MessageServer
 import org.jetbrains.io.webSocket.WebSocketClient
 import org.jetbrains.io.webSocket.WebSocketHandshakeHandler
+import java.awt.Point
 import java.net.URI
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -51,13 +61,6 @@ class WebServerPageConnectionService {
   private var myServer: ClientManager? = null
   private var myRpcServer: JsonRpcServer? = null
   private val myState = RequestedPagesState()
-  private val RELOAD_ALL: AsyncFileListener.ChangeApplier = object : AsyncFileListener.ChangeApplier {
-    override fun afterVfsChange() {
-      myState.clear()
-      val server = myServer
-      server?.send<Any>(-1, RELOAD_PAGE_MESSAGE.retainedDuplicate(), null)
-    }
-  }
 
   /**
    * @return suffix to add to requested file in response
@@ -121,13 +124,21 @@ class WebServerPageConnectionService {
   fun reloadRelatedClients(modifiedFiles: List<VirtualFile>): AsyncFileListener.ChangeApplier? {
     myServer ?: return null
     if (myState.isRequestedFileWithoutReferrerModified(modifiedFiles)) {
-      return RELOAD_ALL
+      return object : AsyncFileListener.ChangeApplier {
+        override fun afterVfsChange() {
+          showGotItTooltip(modifiedFiles)
+          myState.clear()
+          val server = myServer
+          server?.send<Any>(-1, RELOAD_PAGE_MESSAGE.retainedDuplicate(), null)
+        }
+      }
     }
 
     val affectedClients = myState.collectAffectedPages(modifiedFiles)
     return if (affectedClients.isEmpty()) null
     else object : AsyncFileListener.ChangeApplier {
       override fun afterVfsChange() {
+        showGotItTooltip(modifiedFiles)
         for ((clientFuture, affectedFiles) in affectedClients) {
           if (affectedFiles.isEmpty()) {
             clientFuture.thenAccept { client: WebSocketClient? -> client!!.send(RELOAD_PAGE_MESSAGE.retainedDuplicate()) }
@@ -158,6 +169,29 @@ class WebServerPageConnectionService {
 
   private fun clientDisconnected(client: WebSocketClient) {
     myState.clientDisconnected(client)
+  }
+
+  private fun showGotItTooltip(modifiedFiles: List<VirtualFile>) {
+    val gotItTooltip = GotItTooltip("builtin.web.server.reload.on.save", BuiltInServerBundle.message("reload.on.save.got.it.content"), myServer!!)
+    if (!gotItTooltip.canShow()) return
+
+    gotItTooltip
+      .withHeader(BuiltInServerBundle.message("reload.on.save.got.it.title"))
+      .withPosition(Balloon.Position.above)
+
+    val editorComponent = IdeFocusManager.getGlobalInstance().focusOwner as? EditorComponentImpl ?: return
+    val editorFile = FileDocumentManager.getInstance().getFile(editorComponent.editor.document)
+    if (!modifiedFiles.contains(editorFile)) return
+
+    gotItTooltip.withLink(CommonBundle.message("action.text.configure.ellipsis")) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(editorComponent.editor.project,
+                                                        XmlBundle.message("setting.builtin.server.category.label"))
+    }
+
+    gotItTooltip.show(editorComponent) { component, _ ->
+      val editor = (component as? EditorComponentImpl)?.editor ?: return@show Point(0,0)
+      editor.visualPositionToXY(editor.caretModel.currentCaret.visualPosition)
+    }
   }
 
   internal class WebServerPageRequestHandler : WebSocketHandshakeHandler() {
