@@ -1,13 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public class FreezeDetector {
+  private static final Logger LOG = Logger.getInstance(FreezeDetector.class);
+  
   private static final long SLEEP_INTERVAL_MS = 5 * 1000L; // 5 seconds
   private static final long EXPECTED_DELTA_MS = SLEEP_INTERVAL_MS + 2 * 1000L;
   
@@ -71,6 +77,7 @@ public class FreezeDetector {
     final long previous = myPeriodBegin;
     if (previous > 0L && current - previous > EXPECTED_DELTA_MS) {
       myPeriods.add(new TimeRange(previous, current));
+      LOG.info("System sleep/hibernate detected from " + new Date(previous) + " till " + new Date(current) + "; " + StringUtil.formatDuration(current - previous));
     }
     myPeriodBegin = current;
     return SLEEP_INTERVAL_MS - (System.currentTimeMillis() - current);
