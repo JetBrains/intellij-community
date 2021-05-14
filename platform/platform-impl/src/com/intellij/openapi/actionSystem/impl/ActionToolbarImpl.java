@@ -1588,7 +1588,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     @Override
-    public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
       if (!hasVisibleAction(action)) {
         onOtherActionPerformed();
       }

@@ -12,6 +12,7 @@ import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.PopupAction;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -281,7 +282,7 @@ public final class NavBarListener
     }
   }
   @Override
-  public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+  public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
     if (shouldSkipAction(action)) return;
 
     if (myPanel.isInFloatingMode()) {

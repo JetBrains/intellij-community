@@ -118,7 +118,7 @@ class CompletionLoggerInitializer : LookupTracker() {
 
     var listener: CompletionPopupListener = CompletionPopupListener.DISABLED
 
-    override fun afterActionPerformed(action: AnAction, event: AnActionEvent) {
+    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
       LOG.runAndLogException {
         when (action) {
           down -> listener.downPressed()

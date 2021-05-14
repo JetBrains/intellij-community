@@ -1502,11 +1502,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
     try (AccessToken ignore = ProhibitAWTEvents.start("fireBeforeActionPerformed")) {
       for (AnActionListener listener : myActionListeners) {
-        //noinspection deprecation
-        listener.beforeActionPerformed(action, event.getDataContext(), event);
+        listener.beforeActionPerformed(action, event);
       }
-      //noinspection deprecation
-      publisher().beforeActionPerformed(action, event.getDataContext(), event);
+      publisher().beforeActionPerformed(action, event);
       ActionsCollectorImpl.onBeforeActionInvoked(action, event);
     }
   }
@@ -1520,11 +1518,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     try (AccessToken ignore = ProhibitAWTEvents.start("fireAfterActionPerformed")) {
       ActionsCollectorImpl.onAfterActionInvoked(action, event, result);
       for (AnActionListener listener : myActionListeners) {
-        //noinspection deprecation
-        listener.afterActionPerformed(action, event.getDataContext(), event);
+        listener.afterActionPerformed(action, event, result);
       }
-      //noinspection deprecation
-      publisher().afterActionPerformed(action, event.getDataContext(), event);
+      publisher().afterActionPerformed(action, event, result);
     }
   }
 

@@ -3,10 +3,7 @@ package training.learn
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandEvent
@@ -70,8 +67,8 @@ class ActionsRecorder(private val project: Project,
         actionListeners.forEach { it.beforeActionPerformed(action, event) }
       }
 
-      override fun afterActionPerformed(action: AnAction, event: AnActionEvent) {
-        actionListeners.forEach { it.afterActionPerformed(action, event) }
+      override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
+        actionListeners.forEach { it.afterActionPerformed(action, event, result) }
       }
 
       override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
@@ -157,7 +154,7 @@ class ActionsRecorder(private val project: Project,
         }
       }
 
-      override fun afterActionPerformed(action: AnAction, event: AnActionEvent) {
+      override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
         if (actionId == ActionManager.getInstance().getId(action)) {
           val complete = checkComplete()
           if (!complete) {
@@ -214,7 +211,7 @@ class ActionsRecorder(private val project: Project,
     document?.addDocumentListener(createDocumentListener { check() })
     addSimpleCommandListener(check)
     actionListeners.add(object : AnActionListener {
-      override fun afterActionPerformed(action: AnAction, event: AnActionEvent) {
+      override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
         check()
       }
     })

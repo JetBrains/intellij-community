@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -151,7 +152,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   @Override
-  public final void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+  public final void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
     requestUpdate();
   }
 
