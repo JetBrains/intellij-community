@@ -634,8 +634,8 @@ public final class IdeEventQueue extends EventQueue {
       ExceptionUtil.rethrow(t);
     }
 
-    if (t instanceof ControlFlowException) {
-      // make sure the exception is reported
+    if (t instanceof ControlFlowException && Boolean.getBoolean("report.control.flow.exceptions.in.edt")) {
+      // 'bare' ControlFlowException-s are not reported
       t = new RuntimeException(t);
     }
     StartupAbortedException.processException(t);
