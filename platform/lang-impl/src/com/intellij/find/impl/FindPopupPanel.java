@@ -1685,6 +1685,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true);
     toolbar.setForceMinimumSize(true);
+    toolbar.setTargetComponent(toolbar);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     return toolbar;
   }
