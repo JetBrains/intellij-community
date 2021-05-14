@@ -43,7 +43,7 @@ internal object FusStatesRecorder {
 
         CompletableFuture.allOf(logApplicationStatesFuture, logProjectStatesFuture, settingsFuture)
           .thenCompose { FeatureUsageLogger.flush() }
-          .get(10, TimeUnit.SECONDS)
+          .get(30, TimeUnit.SECONDS)
       }
       catch (e: Exception) {
         log.warn("Failed recording state collectors to log", e)
