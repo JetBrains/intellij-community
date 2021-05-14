@@ -40,7 +40,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected final Object myLock = new Object();
+  private final Object myLock = new Object();
   private final ReadWriteLock myScalableLock = new ReentrantReadWriteLock();
   private final boolean myUseScalableLock;
 
