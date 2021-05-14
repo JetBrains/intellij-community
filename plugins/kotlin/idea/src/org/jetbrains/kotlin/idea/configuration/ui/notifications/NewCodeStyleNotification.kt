@@ -6,24 +6,20 @@
 package org.jetbrains.kotlin.idea.configuration.ui.notifications
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.facet.ProjectFacetManager
 import com.intellij.notification.*
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
+import org.jetbrains.kotlin.idea.search.containsKotlinFile
 
 private const val KOTLIN_UPDATE_CODE_STYLE_GROUP_ID = "Update Kotlin code style"
 
 fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
-    val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
-    if (modulesWithFacet.isEmpty()) return
+    if (!project.containsKotlinFile()) return
 
     if (CodeStyle.getSettings(project).kotlinCodeStyleDefaults() == KotlinStyleGuideCodeStyle.CODE_STYLE_ID) return
     if (SuppressKotlinCodeStyleComponent.getInstance(project).state.disableForAll) {
@@ -41,10 +37,12 @@ fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
 }
 
 private fun createNotification(): Notification =
-    Notification(KOTLIN_UPDATE_CODE_STYLE_GROUP_ID,
-                 KotlinBundle.message("configuration.kotlin.code.style"),
-                 KotlinBundle.htmlMessage("configuration.notification.update.code.style.to.official"),
-                 NotificationType.WARNING)
+    Notification(
+        KOTLIN_UPDATE_CODE_STYLE_GROUP_ID,
+        KotlinBundle.message("configuration.kotlin.code.style"),
+        KotlinBundle.htmlMessage("configuration.notification.update.code.style.to.official"),
+        NotificationType.WARNING
+    )
         .addAction(NotificationAction.createExpiring(KotlinBundle.message("configuration.apply.new.code.style")) { e, _ ->
             e.project?.takeIf { !it.isDisposed }?.let { project ->
                 runWriteAction {
