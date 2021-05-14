@@ -400,7 +400,7 @@ class ReferencesInStorageTest {
   }
 
   @Test
-  fun `test replace by source for entities with same persistent Id but different entity source`() {
+  fun `test replace by source one to one nullable ref with parent persistent Id and child without it`() {
     val builder = createEmptyBuilder()
     var parentEntity = builder.addOoParentWithPidEntity("parent")
     builder.addOoChildForParentWithPidEntity(parentEntity, "child")
@@ -414,21 +414,97 @@ class ReferencesInStorageTest {
     builder.replaceBySource({ it is AnotherSource }, newBuilder)
     builder.checkConsistency()
 
-    val listOfParents = builder.entities(OoParentWithPidEntity::class.java).toList()
-    val listOfChildren = builder.entities(OoChildForParentWithPidEntity::class.java).toList()
-    assertEquals(1, listOfParents.size)
-    assertEquals(1, listOfChildren.size)
-    parentEntity = listOfParents[0]
-    val child = listOfChildren[0]
-    assertEquals(AnotherSource, parentEntity.entitySource)
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val child = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
     assertEquals(AnotherSource, child.entitySource)
-    assertEquals(child, parentEntity.child)
+    assertEquals(child, parent.childOne)
   }
 
   @Test
-  fun `test replace by source for entities with same persistent Id but different entity source without child`() {
+  fun `test replace by source one to one not null ref with parent persistent Id and child without it`() {
     val builder = createEmptyBuilder()
     var parentEntity = builder.addOoParentWithPidEntity("parent")
+    builder.addOoChildForParentWithPidNotNullRefEntity(parentEntity, "child")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildForParentWithPidNotNullRefEntity(parentEntity, "child", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val child = builder.entities(OoChildForParentWithPidNotNullRefEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, child.entitySource)
+    assertEquals(child, parent.childTwo)
+  }
+
+  @Test
+  fun `test replace by source two different one to one refs with parent persistent Id and child without it`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithPidEntity("parent")
+    builder.addOoChildForParentWithPidEntity(parentEntity, "childOne", AnotherSource)
+    builder.addOoChildForParentWithPidNotNullRefEntity(parentEntity, "childTwo")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildForParentWithPidEntity(parentEntity, "childOneOne", source = AnotherSource)
+    newBuilder.addOoChildForParentWithPidNotNullRefEntity(parentEntity, "childTwo", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val firstChild = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    val secondChild = builder.entities(OoChildForParentWithPidNotNullRefEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, firstChild.entitySource)
+    assertEquals(AnotherSource, secondChild.entitySource)
+    assertEquals("childOneOne", firstChild.childProperty)
+    assertEquals(parent, firstChild.parent)
+    assertEquals("childTwo", secondChild.childProperty)
+    assertEquals(parent, secondChild.parent)
+  }
+
+  @Test
+  fun `test replace by source one to one ref with parent persistent Id and child with persistent Id`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithPidEntity("parent")
+    builder.addOoChildForParentWithPidEntity(parentEntity, "childOne")
+    builder.addOoChildAlsoWithPidEntity(parentEntity, "childTwo")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildForParentWithPidEntity(parentEntity, "childOneOne", source = AnotherSource)
+    newBuilder.addOoChildAlsoWithPidEntity(parentEntity, "childTwo", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val firstChild = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    val secondChild = builder.entities(OoChildAlsoWithPidEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, firstChild.entitySource)
+    assertEquals(AnotherSource, secondChild.entitySource)
+    assertEquals("childOneOne", firstChild.childProperty)
+    assertEquals(parent, firstChild.parent)
+    assertEquals("childTwo", secondChild.childProperty)
+    assertEquals(parent, secondChild.parent)
+  }
+
+  @Test
+  fun `test replace by source with parent persistent Id and without children`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addOoParentWithPidEntity("parent")
     builder.addOoChildForParentWithPidEntity(parentEntity, "child")
     builder.checkConsistency()
 
@@ -438,13 +514,133 @@ class ReferencesInStorageTest {
 
     builder.replaceBySource({ it is AnotherSource }, newBuilder)
     builder.checkConsistency()
-    val listOfParents = builder.entities(OoParentWithPidEntity::class.java).toList()
-    val listOfChildren = builder.entities(OoChildForParentWithPidEntity::class.java).toList()
-    assertEquals(1, listOfParents.size)
-    assertTrue(listOfChildren.isEmpty())
-    parentEntity = listOfParents[0]
-    assertEquals(AnotherSource, parentEntity.entitySource)
-    assertNull(parentEntity.child)
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val child = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(MySource, child.entitySource)
+    assertEquals(child, parent.childOne)
+  }
+
+  @Test
+  fun `test replace by source one to one ref with parent persistent Id and child without it and parent entity source intersection`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithPidEntity("parent", AnotherSource)
+    builder.addOoChildForParentWithPidEntity(parentEntity, "child")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildForParentWithPidEntity(parentEntity, "child", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val child = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, child.entitySource)
+    assertEquals(child, parent.childOne)
+  }
+
+  @Test
+  fun `test replace by source one to one ref with parent persistent Id and child without it and child entity source intersection`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithPidEntity("parent")
+    builder.addOoChildForParentWithPidEntity(parentEntity, "child", AnotherSource)
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildForParentWithPidEntity(parentEntity, "child", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val child = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, child.entitySource)
+    assertEquals(child, parent.childOne)
+  }
+
+  @Test
+  fun `test replace by source one to one nullable ref with child persistent Id and parent without it`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithoutPidEntity("parent")
+    builder.addOoChildWithPidEntity(parentEntity, "child")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithoutPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildWithPidEntity(parentEntity, "child", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+
+    val listOfParent = builder.entities(OoParentWithoutPidEntity::class.java).toList()
+    val child = builder.entities(OoChildWithPidEntity::class.java).single()
+    assertEquals(2, listOfParent.size)
+    assertEquals(MySource, listOfParent[0].entitySource)
+    assertEquals(AnotherSource, listOfParent[1].entitySource)
+    assertEquals(AnotherSource, child.entitySource)
+    assertEquals("child", child.childProperty)
+    assertEquals(listOfParent[1], child.parent)
+  }
+
+  @Test
+  fun `test replace by source one to one not null ref with child persistent Id and parent without it`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithoutPidEntity("parent")
+    builder.addOoChildWithPidNotNullRefEntity(parentEntity, "child")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithoutPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildWithPidNotNullRefEntity(parentEntity, "child", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+
+    val parent = builder.entities(OoParentWithoutPidEntity::class.java).single()
+    val firstChild = builder.entities(OoChildWithPidNotNullRefEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, firstChild.entitySource)
+    assertEquals("child" +
+                 "", firstChild.childProperty)
+    assertEquals(parent, firstChild.parent)
+  }
+
+  @Test
+  fun `test replace by source with two different one to one refs with child persistent Id and parent without it`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithoutPidEntity("parent")
+    builder.addOoChildWithPidEntity(parentEntity, "childOne")
+    builder.addOoChildWithPidNotNullRefEntity(parentEntity, "childTwo", source = AnotherSource)
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithoutPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildWithPidEntity(parentEntity, "childOne", source = AnotherSource)
+    newBuilder.addOoChildWithPidNotNullRefEntity(parentEntity, "childTwo", "childTwoTwo", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+
+    val parent = builder.entities(OoParentWithoutPidEntity::class.java).single()
+    val firstChild = builder.entities(OoChildWithPidEntity::class.java).single()
+    val secondChild = builder.entities(OoChildWithPidNotNullRefEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, firstChild.entitySource)
+    assertEquals(AnotherSource, secondChild.entitySource)
+    assertEquals("childOne", firstChild.childProperty)
+    assertEquals(parent, firstChild.parent)
+    assertEquals("childTwoTwo", secondChild.childField
+
+    )
+    assertEquals(parent, secondChild.parent)
   }
 
   @Test

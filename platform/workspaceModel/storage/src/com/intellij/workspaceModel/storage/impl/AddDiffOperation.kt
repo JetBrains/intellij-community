@@ -65,7 +65,6 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
             if (target.entityDataById(sourceEntityId) != null) {
               target.removeEntity(sourceEntityId)
             }
-            target.changeLog.addRemoveEvent(sourceEntityId)
           }
         }
         is ChangeEntry.ReplaceEntity<out WorkspaceEntity> -> {

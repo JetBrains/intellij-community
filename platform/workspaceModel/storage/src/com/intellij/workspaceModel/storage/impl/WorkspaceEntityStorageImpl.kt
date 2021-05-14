@@ -262,12 +262,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
       LOG.debug { "Removing ${e.javaClass}..." }
       e as WorkspaceEntityBase
-      val removedEntities = removeEntity(e.id)
-
-      removedEntities.forEach {
-        LOG.debug { "Cascade removing: ${ClassToIntConverter.getClassOrDie(it.clazz)}-${it.arrayId}" }
-        this.changeLog.addRemoveEvent(it)
-      }
+      removeEntity(e.id)
     }
     finally {
       unlockWrite()
@@ -398,6 +393,11 @@ internal class WorkspaceEntityStorageBuilderImpl(
               replaceOperation(matchedEntityData, replaceWith, localNode, matchedEntityId, dataDiffersByProperties, dataDiffersByEntitySource)
             }
 
+          // To make a store consistent in such case, we will clean up all refer to this entity
+          if (localNode.entitySource !is DummyParentEntitySource && matchedEntityData.entitySource !is DummyParentEntitySource) {
+            removeEntitiesByOneToOneRef(sourceFilter, replaceWith, replaceMap, matchedEntityId, localNodeEntityId)
+              .forEach { removedEntityData -> localUnmatchedReferencedNodes.removeAll(removedEntityData.identificator(this)) }
+          }
 
             if (localNode == matchedEntityData) {
               this.indexes.updateExternalMappingForEntityId(matchedEntityId, localNodeEntityId, replaceWith.indexes)
@@ -425,9 +425,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
                 replaceOperation(matchedEntityData, replaceWith, localNode, matchedEntityId, dataDiffersByProperties,
                                  dataDiffersByEntitySource)
 
-                // To make a store consistent in such case, we will clean up all refer to this entity
-              this.refs.getChildrenRefsOfParentBy(existingEntityId).flatMapTo(mutableSetOf()) { it.value }
-                .forEach { childId -> removeEntity(childId) }
+              // To make a store consistent in such case, we will clean up all refer to this entity
+              removeEntitiesByOneToOneRef(sourceFilter, replaceWith, replaceMap, matchedEntityId, existingEntityId)
+                .forEach { removedEntityData -> localUnmatchedReferencedNodes.removeAll(removedEntityData.identificator(this)) }
 
               replaceMap[existingEntityId] = matchedEntityId
                 continue
@@ -623,6 +623,54 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
+  /**
+   * The goal of this method is to help to keep the store in at the consistent state at replaceBySource operation. It's responsible
+   * for handling 1-1 references where entity source of the record is changed and we know the persistent Id of one of the elements
+   * at this relationship.How this method works: we try to find all 1-1 references where current entity is parent or child.
+   * We check that such reference also exist at the replacing store. And if such reference exist at the second store we can safely
+   * delete related by the reference entity because we sure that the reference will be restored and entity from the second store
+   * will be added to the main.
+   * One important notes of the entity remove: we make it only if the second store contains entity which matched by source filter,
+   * we don't remove entity which already was replaced and we don't remove the the object itself.
+   */
+  private fun removeEntitiesByOneToOneRef(sourceFilter: (EntitySource) -> Boolean,
+                                          replaceWith: AbstractEntityStorage,
+                                          replaceMap: Map<EntityId, EntityId>,
+                                          matchedEntityId: EntityId,
+                                          localEntityId: EntityId): Set<WorkspaceEntityData<out WorkspaceEntity>> {
+    val replacingChildrenOneToOneConnections = replaceWith.refs.getChildrenOneToOneRefsOfParentBy(matchedEntityId)
+      .filter { !it.key.isParentNullable }
+    val result = this.refs.getChildrenOneToOneRefsOfParentBy(localEntityId)
+      .asSequence()
+      .filter { !it.key.isParentNullable }
+      .mapNotNull { (connectionId, entityId) ->
+        val suggestedNewChildEntityId = replacingChildrenOneToOneConnections[connectionId] ?: return@mapNotNull null
+        val suggestedNewChildEntityData = replaceWith.entityDataByIdOrDie(suggestedNewChildEntityId)
+        if (sourceFilter(suggestedNewChildEntityData.entitySource)) {
+          val childEntityData = this.entityDataByIdOrDie(entityId)
+          removeEntity(entityId) { it != localEntityId && !replaceMap.containsKey(it) }
+          return@mapNotNull childEntityData
+        }
+        return@mapNotNull null
+      }.toMutableSet()
+
+    val replacingParentOneToOneConnections = replaceWith.refs.getParentOneToOneRefsOfChild(matchedEntityId)
+      .filter { !it.key.isChildNullable }
+    this.refs.getParentOneToOneRefsOfChild(localEntityId)
+      .asSequence()
+      .filter { !it.key.isChildNullable }
+      .forEach { (connectionId, entityId) ->
+        val suggestedNewChildEntityId = replacingParentOneToOneConnections[connectionId] ?: return@forEach
+        val suggestedNewChildEntityData = replaceWith.entityDataByIdOrDie(suggestedNewChildEntityId)
+        if (sourceFilter(suggestedNewChildEntityData.entitySource)) {
+          val childEntityData = this.entityDataByIdOrDie(entityId)
+          removeEntity(entityId) { it != localEntityId && !replaceMap.containsKey(it) }
+          result.add(childEntityData)
+        }
+      }
+    return result
+  }
+
   private fun rbsFailedAndReport(message: String,
                                  sourceFilter: (EntitySource) -> Boolean,
                                  left: WorkspaceEntityStorage?,
@@ -741,10 +789,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   // modificationCount is not incremented
-  internal fun removeEntity(idx: EntityId): Collection<EntityId> {
+  internal fun removeEntity(idx: EntityId, entityFilter: (EntityId) -> Boolean = { true }) {
     val accumulator: MutableSet<EntityId> = mutableSetOf(idx)
 
-    accumulateEntitiesToRemove(idx, accumulator)
+    accumulateEntitiesToRemove(idx, accumulator, entityFilter)
 
     for (id in accumulator) {
       val entityData = entityDataById(id)
@@ -756,7 +804,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
     //   Please don't join it with the previous loop
     for (id in accumulator) indexes.removeFromIndices(id)
 
-    return accumulator
+    accumulator.forEach {
+      LOG.debug { "Cascade removing: ${ClassToIntConverter.getClassOrDie(it.clazz)}-${it.arrayId}" }
+      this.changeLog.addRemoveEvent(it)
+    }
   }
 
   private fun lockWrite() {
@@ -795,13 +846,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
   /**
    * Cleanup references and accumulate hard linked entities in [accumulator]
    */
-  private fun accumulateEntitiesToRemove(id: EntityId, accumulator: MutableSet<EntityId>) {
+  private fun accumulateEntitiesToRemove(id: EntityId, accumulator: MutableSet<EntityId>, entityFilter: (EntityId) -> Boolean) {
     val children = refs.getChildrenRefsOfParentBy(id)
     for ((connectionId, childrenIds) in children) {
       for (childId in childrenIds) {
         if (childId in accumulator) continue
+        if (!entityFilter(childId)) continue
         accumulator.add(childId)
-        accumulateEntitiesToRemove(childId, accumulator)
+        accumulateEntitiesToRemove(childId, accumulator, entityFilter)
         refs.removeRefsByParent(connectionId, id)
       }
     }
