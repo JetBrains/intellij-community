@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 
+// Note: this code assumes that UnifiedCoordinates are never code references, only "hardcoded" values.
+// If you ever wanted to support code references here, you'd need to make UnifiedCoordinates aware of
+// the difference.
 class GradleDependencyModificator(private val myProject: Project) : ExternalDependencyModificator {
   override fun supports(module: Module): Boolean =
     ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId() == SYSTEM_ID.id
@@ -56,10 +59,20 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
       if (artifactModel.group().valueAsString() == oldDescriptor.coordinates.groupId
           && artifactModel.name().valueAsString() == oldDescriptor.coordinates.artifactId
           && artifactModel.version().valueAsString() == oldDescriptor.coordinates.version
+          && artifactModel.configurationName() == oldDescriptor.scope
       ) {
-        updateVariableOrValue(artifactModel.group(), newDescriptor.coordinates.groupId!!)
-        updateVariableOrValue(artifactModel.name(), newDescriptor.coordinates.artifactId!!)
-        updateVariableOrValue(artifactModel.version(), newDescriptor.coordinates.version!!)
+        if (oldDescriptor.coordinates.groupId != newDescriptor.coordinates.groupId) {
+          updateVariableOrValue(artifactModel.group(), newDescriptor.coordinates.groupId!!)
+        }
+        if (oldDescriptor.coordinates.artifactId != newDescriptor.coordinates.artifactId) {
+          updateVariableOrValue(artifactModel.group(), newDescriptor.coordinates.artifactId!!)
+        }
+        if (oldDescriptor.coordinates.version != newDescriptor.coordinates.version) {
+          updateVariableOrValue(artifactModel.version(), newDescriptor.coordinates.version!!)
+        }
+        if (oldDescriptor.scope != newDescriptor.scope && newDescriptor.scope != null) {
+          artifactModel.setConfigurationName(newDescriptor.scope!!)
+        }
       }
     }
     return applyChanges(model)
@@ -130,16 +143,12 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
   override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency> {
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
     return model.dependencies().artifacts().map {
-      val dataContext = object : DataContext {
-        override fun getData(dataId: String): Any? {
-          if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) {
-            return it.psiElement
-          }
-          return null
-        }
+      val dataContext = DataContext { dataId ->
+        if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) it.psiElement else null
       }
-      DeclaredDependency(it.group().valueAsString(), it.name().valueAsString(), it.version().valueAsString(), it.configurationName(),
-                         dataContext)
+      DeclaredDependency(groupId = it.group().valueAsString(), artifactId = it.name().valueAsString(),
+                         version = it.version().valueAsString(), configuration = it.configurationName(),
+                         dataContext = dataContext)
     }
   }
 

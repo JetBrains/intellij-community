@@ -10,6 +10,7 @@ import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
@@ -42,10 +43,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -115,7 +114,7 @@ internal class PackagesTable(
         require(columnWeights.sum() == 1.0f) { "The column weights must sum to 1.0" }
 
         model = PackagesTableModel(
-            onlyStable = false,
+            onlyStable = PackageSearchGeneralConfiguration.getInstance(project).onlyStable,
             columns = arrayOf(nameColumn, scopeColumn, versionColumn, actionsColumn)
         )
 

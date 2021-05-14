@@ -15,6 +15,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
 
 internal class ModuleOperationExecutor(private val project: Project) {
 
+    /** This **MUST** run on EDT */
     fun doOperation(operation: PackageSearchOperation<*>) = try {
         when (operation) {
             is PackageSearchOperation.Package.Install -> installPackage(operation)

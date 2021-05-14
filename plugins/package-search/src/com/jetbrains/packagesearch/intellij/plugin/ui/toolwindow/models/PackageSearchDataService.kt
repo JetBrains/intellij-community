@@ -14,7 +14,6 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtil
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
@@ -29,6 +28,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDeclaration
+import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.ModuleOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.OperationFailureRenderer
@@ -64,6 +64,9 @@ import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
 import java.net.URI
 import java.util.Locale
+
+private val MAVEN_CENTRAL_UNIFIED_REPOSITORY =
+    UnifiedDependencyRepository("central", "Central Repository", "https://repo.maven.apache.org/maven2")
 
 private const val API_TIMEOUT_MILLIS = 10_000L
 private const val DATA_DEBOUNCE_MILLIS = 100L
@@ -493,10 +496,18 @@ internal class PackageSearchDataService(
     }
 
     private fun ProjectModule.declaredRepositories(): List<UnifiedDependencyRepository> = runReadAction {
-        ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+        val declaredRepositories = (ProjectModuleOperationProvider.forProjectModuleType(moduleType)
             ?.listRepositoriesInProject(project, buildFile)
             ?.toList()
-            ?: emptyList()
+            ?: emptyList())
+
+        // This is a (sad) workaround for IDEA-267229 — when that's sorted, we shouldn't need this anymore.
+        if (moduleType == MavenProjectModuleType && declaredRepositories.none { it.id == "central" }) {
+            declaredRepositories + MAVEN_CENTRAL_UNIFIED_REPOSITORY
+        } else {
+            declaredRepositories
+        }
+
     }
 
     private fun computeHeaderData(
@@ -565,7 +576,6 @@ internal class PackageSearchDataService(
         logDebug(traceInfo, "PKGSDataService#setStatusAsync()") { "Status changed: $newStatus" }
     }
 
-    @RequiresBackgroundThread
     private fun rerunHighlightingOnOpenBuildFiles() {
         val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
         val psiManager = PsiManager.getInstance(project)
@@ -658,7 +668,7 @@ internal class PackageSearchDataService(
             .notify(project)
     }
 
-    override fun setSearchQuery(query: String)  {
+    override fun setSearchQuery(query: String) {
         val normalizedQuery = StringUtils.normalizeSpace(query).trim()
         if (normalizedQuery == searchQueryProperty.value) {
             logDebug("PKGSDataService#setSearchQuery()") { "Ignoring search query update as it has not changed" }
@@ -680,7 +690,7 @@ internal class PackageSearchDataService(
         launch { _filterOptionsProperty.setWithAppUiDispatcher(_filterOptionsProperty.value.copy(onlyStable = onlyStable)) }
     }
 
-    override fun setOnlyKotlinMultiplatform(onlyKotlinMultiplatform: Boolean)  {
+    override fun setOnlyKotlinMultiplatform(onlyKotlinMultiplatform: Boolean) {
         if (onlyKotlinMultiplatform == _filterOptionsProperty.value.onlyKotlinMultiplatform) {
             logDebug("PKGSDataService#setOnlyKotlinMultiplatform()") {
                 "Ignoring onlyKotlinMultiplatform change as it is the same we already have"
