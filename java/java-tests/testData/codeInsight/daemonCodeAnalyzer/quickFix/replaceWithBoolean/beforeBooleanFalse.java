@@ -7,6 +7,6 @@ class Test {
   public boolean c;
 
   boolean test(@Nullable Boolean flag) {
-    return c ? b && !<caret>flag : c;
+    return c ? b && !/*a*/(/*b*/(/*c*/<caret>flag)) : c;
   }
 }

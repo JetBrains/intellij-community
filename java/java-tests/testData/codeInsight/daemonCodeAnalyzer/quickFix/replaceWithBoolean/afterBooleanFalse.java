@@ -7,6 +7,9 @@ class Test {
   public boolean c;
 
   boolean test(@Nullable Boolean flag) {
-    return c ? b && Boolean.FALSE.equals(flag) : c;
+      /*a*/
+      /*b*/
+      /*c*/
+      return c ? b && Boolean.FALSE.equals(flag) : c;
   }
 }

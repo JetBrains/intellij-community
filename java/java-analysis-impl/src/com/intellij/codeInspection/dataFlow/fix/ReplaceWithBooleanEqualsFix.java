@@ -6,22 +6,24 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithBooleanEqualsFix implements LocalQuickFix {
-  private final String myNewExprText;
+  private final String myOldExprText;
   private final boolean myFalseIsAcceptable;
-  private final SmartPsiElementPointer<PsiExpression> myExprToReplacePointer;
 
-  public ReplaceWithBooleanEqualsFix(@NotNull PsiExpression exprToReplace) {
-    myNewExprText = exprToReplace.getText();
-    PsiPrefixExpression parent = ObjectUtils.tryCast(exprToReplace.getParent(), PsiPrefixExpression.class);
+  public ReplaceWithBooleanEqualsFix(@NotNull PsiExpression qualifier) {
+    myOldExprText = qualifier.getText();
+    PsiPrefixExpression parent = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(qualifier.getParent()), PsiPrefixExpression.class);
     myFalseIsAcceptable = parent != null && parent.getOperationTokenType() == JavaTokenType.EXCL;
-    myExprToReplacePointer = SmartPointerManager.getInstance(exprToReplace.getProject())
-      .createSmartPsiElementPointer(myFalseIsAcceptable ? parent : exprToReplace);
   }
 
   @Override
@@ -36,14 +38,18 @@ public class ReplaceWithBooleanEqualsFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiExpression exprToReplace = myExprToReplacePointer.getElement();
-    if (exprToReplace == null) return;
-    PsiExpression newExpr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(createNewExprText(), exprToReplace);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(exprToReplace.replace(newExpr));
+    PsiElement qualifier = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiExpression.class);
+    if (qualifier == null) return;
+    if (myFalseIsAcceptable) {
+      qualifier = qualifier.getParent();
+    }
+    PsiExpression oldExpr = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(qualifier), PsiExpression.class);
+    if (oldExpr == null) return;
+    PsiReplacementUtil.replaceExpression(oldExpr, createNewExprText(), new CommentTracker());
   }
 
   @NotNull
   private String createNewExprText() {
-    return "Boolean." + (myFalseIsAcceptable ? "FALSE" : "TRUE") + ".equals(" + myNewExprText + ")";
+    return "Boolean." + (myFalseIsAcceptable ? "FALSE" : "TRUE") + ".equals(" + myOldExprText + ")";
   }
 }

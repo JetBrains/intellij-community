@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 class Test {
   boolean test(@Nullable Boolean flag) {
-    if (<caret>flag) {
+    if (/*a*/<caret>flag/*b*/) {
       System.out.println("ok");
     }
     return true;
