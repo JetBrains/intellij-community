@@ -20,26 +20,13 @@ public class FreezeDetector {
     myFuture = executor.submit(() -> runDetectLoop());
   }
 
-  public interface TimeRange {
-    long begin();
-    long end();
+  public static final class TimeRange {
+    public final long begin;
+    public final long end;
 
-    default long duration() {
-      return end() - begin();
-    }
-
-    static TimeRange create(final long begin, final long end) {
-      return new TimeRange() {
-        @Override
-        public long begin() {
-          return begin;
-        }
-
-        @Override
-        public long end() {
-          return end;
-        }
-      };
+    public TimeRange(long begin, long end) {
+      this.begin = begin;
+      this.end = end;
     }
   }
 
@@ -48,18 +35,13 @@ public class FreezeDetector {
     myFuture.cancel(true);
   }
 
-  public long getAdjustedDuration(long begin, long end) {
-    return getAdjustedDuration(TimeRange.create(begin, end));
-  }
-  
-  public long getAdjustedDuration(TimeRange range) {
-    long duration = range.duration();
+  public long getAdjustedDuration(final long begin, final long end) {
+    long duration = end - begin;
     synchronized (myPeriods) {
       for (TimeRange freeze : myPeriods) {
-        final long freezeStart = freeze.begin();
-        if (freezeStart > range.begin()  && freezeStart < range.end()) {
-          long end = Math.min(range.end(), freeze.end());
-          duration -= (end - freezeStart);
+        final long freezeStart = freeze.begin;
+        if (freezeStart > begin  && freezeStart < end) {
+          duration -= (Math.min(end, freeze.end) - freezeStart);
         }
       }
     }
@@ -88,7 +70,7 @@ public class FreezeDetector {
     final long current = System.currentTimeMillis();
     final long previous = myPeriodBegin;
     if (previous > 0L && current - previous > EXPECTED_DELTA_MS) {
-      myPeriods.add(TimeRange.create(previous, current));
+      myPeriods.add(new TimeRange(previous, current));
     }
     myPeriodBegin = current;
     return SLEEP_INTERVAL_MS - (System.currentTimeMillis() - current);
