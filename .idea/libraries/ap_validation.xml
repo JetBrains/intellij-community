@@ -13,6 +13,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ap-validation/0.0.5/ap-validation-0.0.5.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ap-validation/0.0.5/ap-validation-0.0.5-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
