@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.Project
@@ -19,12 +20,42 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
-class ModuleModelProxy(private val diff: WorkspaceEntityStorageBuilder,
-                       private val project: Project) {
+interface ModuleModelProxy {
+  fun disposeModule(module: Module)
+  fun findModuleByName(name: String): Module?
+  fun newModule(path: String, moduleTypeId: String): Module
+  fun setModuleGroupPath(module: Module, groupPath: Array<String>?)
+  val modules: Array<Module>
+}
+
+class ModuleModelProxyWrapper(val delegate: ModifiableModuleModel) : ModuleModelProxy {
+  override fun disposeModule(module: Module) {
+    delegate.disposeModule(module)
+  }
+
+  override fun findModuleByName(name: String): Module? {
+    return delegate.findModuleByName(name)
+  }
+
+  override fun newModule(path: String, moduleTypeId: String): Module {
+    return delegate.newModule(path, moduleTypeId)
+  }
+
+  override fun setModuleGroupPath(module: Module, groupPath: Array<String>?) {
+    delegate.setModuleGroupPath(module, groupPath)
+  }
+
+  override val modules: Array<Module>
+    get() = delegate.modules
+
+}
+
+class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
+                           private val project: Project) : ModuleModelProxy {
   private val virtualFileManager: VirtualFileUrlManager = project.getService(VirtualFileUrlManager::class.java)
   private val versionedStorage: VersionedEntityStorage
 
-  fun disposeModule(module: Module) {
+  override fun disposeModule(module: Module) {
     if (module.project.isDisposed) {
       //if the project is being disposed now, removing module won't work because WorkspaceModelImpl won't fire events and the module won't be disposed
       //it looks like this may happen in tests only so it's ok to skip removal of the module since the project will be disposed anyway
@@ -35,7 +66,7 @@ class ModuleModelProxy(private val diff: WorkspaceEntityStorageBuilder,
     diff.removeEntity(moduleEntity)
   }
 
-  val modules: Array<Module>
+  override val modules: Array<Module>
     get() = diff.entities(ModuleEntity::class.java)
       .map { diff.findModuleByEntity(it) }
       .filterNotNull()
@@ -43,12 +74,12 @@ class ModuleModelProxy(private val diff: WorkspaceEntityStorageBuilder,
       .map2Array { it }
 
 
-  fun findModuleByName(name: String): Module? {
+  override fun findModuleByName(name: String): Module? {
     val entity = diff.resolve(ModuleId(name)) ?: return null
     return diff.findModuleByEntity(entity)
   }
 
-  fun newModule(path: String, moduleTypeId: String): Module {
+  override fun newModule(path: String, moduleTypeId: String): Module {
     val systemIndependentPath = FileUtil.toSystemIndependentName(path)
     val modulePath = ModulePath(systemIndependentPath, null)
     val name = modulePath.moduleName
@@ -68,7 +99,7 @@ class ModuleModelProxy(private val diff: WorkspaceEntityStorageBuilder,
     return module
   }
 
-  fun setModuleGroupPath(module: Module, groupPath: Array<String>?) {
+  override fun setModuleGroupPath(module: Module, groupPath: Array<String>?) {
     if (module !is ModuleBridge) return
 
     val moduleEntity = diff.findModuleEntity(module) ?: error("Could not resolve module entity for $module")

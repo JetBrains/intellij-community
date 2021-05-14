@@ -64,10 +64,10 @@ public class MavenProjectImporter {
   private volatile Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
   private volatile Set<MavenProject> myAllProjects;
   private final boolean myImportModuleGroupsRequired;
-  private final IdeModifiableModelsProvider myModelsProvider;
   private final MavenImportingSettings myImportingSettings;
 
-  private final ModuleModelProxy myModuleModel;
+  private IdeModifiableModelsProvider myModelsProvider;
+  private ModuleModelProxy myModuleModel = null;
   private final Module myDummyModule;
 
   private final List<Module> myCreatedModules = new ArrayList<>();
@@ -91,23 +91,19 @@ public class MavenProjectImporter {
     myImportModuleGroupsRequired = importModuleGroupsRequired;
     myModelsProvider = modelsProvider;
     myImportingSettings = importingSettings;
-
-    WorkspaceEntityStorageBuilder diff = ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder();
-
-    myModuleModel = new ModuleModelProxy(diff, myProject);
-    modelsProvider.getModifiableModuleModel(); // call this so that modifiable
+    myModuleModel = new ModuleModelProxyWrapper(myModelsProvider.getModifiableModuleModel());
     myDummyModule = dummyModule;
   }
 
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
     if (MavenUtil.newModelEnabled(myProject)) {
-      //return importProjectAsWorkspaceModel();
-      return Collections.emptyList();
+      WorkspaceEntityStorageBuilder diff = ((IdeModifiableModelsProviderImpl)myModelsProvider).getActualStorageBuilder();
+      myModuleModel = new ModuleModelProxyImpl(diff, myProject);
+      myModelsProvider.getModifiableModuleModel();
+      myModelsProvider = new IdeModifiableModelsWrapper(myModelsProvider, myModuleModel);
     }
-    else {
-      return importProjectOldWay();
-    }
+    return importProjectOldWay();
   }
 
   private <T extends WorkspaceEntity> T findFirst(WorkspaceEntityStorage storage, Class<T> klass, Predicate<? super T> filter) {
