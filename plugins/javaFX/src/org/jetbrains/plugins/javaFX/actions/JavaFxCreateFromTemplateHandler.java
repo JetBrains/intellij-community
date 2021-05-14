@@ -5,6 +5,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
@@ -24,6 +25,8 @@ final class JavaFxCreateFromTemplateHandler extends JavaCreateFromTemplateHandle
   public boolean canCreate(PsiDirectory @NotNull [] dirs) {
     if (dirs.length > 0) {
       Project project = dirs[0].getProject();
+      if (DumbService.isDumb(project)) return false;
+
       Module module = ModuleUtilCore.findModuleForFile(dirs[0].getVirtualFile(), project);
       return module != null && hasJavaFxDependency(module);
     }
