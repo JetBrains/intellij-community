@@ -111,6 +111,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
+  private final Throwable myCreationTrace = new Throwable("toolbar creation trace");
+
   /** @see #calculateBounds(Dimension, List) */
   private final List<Rectangle> myComponentBounds = new ArrayList<>();
   private JBDimension myMinimumButtonSize = JBUI.emptySize();
@@ -161,6 +163,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            boolean horizontal,
                            boolean decorateButtons) {
     super(null);
+    if (ActionPlaces.UNKNOWN.equals(place)) {
+      LOG.warn("Please use specific place, instead of ActionPlaces.UNKNOWN. " +
+               "Any string unique enough to deduct the toolbar purpose out of it will do.", myCreationTrace);
+    }
 
     myPlace = place;
     myActionGroup = actionGroup;
@@ -1141,7 +1147,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (getParent() == null && myTargetComponent == null && !isTestMode && !includeInvisible) {
       LOG.warn(new Throwable("'" + myPlace + "' toolbar manual update is ignored. " +
-                             "Newly created toolbars are updated automatically on `addNotify`."));
+                             "Newly created toolbars are updated automatically on `addNotify`.", myCreationTrace));
       return;
     }
     if (!isTestMode && myCachedImage == null && getComponentCount() == 0 && isShowing()) {
@@ -1385,7 +1391,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       putClientProperty(SUPPRESS_TARGET_COMPONENT_WARNING, true);
       LOG.warn("'" + myPlace + "' toolbar by default uses any focused component to update its actions. " +
                "Toolbar actions that need local UI context would be incorrectly disabled. " +
-               "Please call toolbar.setTargetComponent() explicitly.");
+               "Please call toolbar.setTargetComponent() explicitly.", myCreationTrace);
     }
     Component target = myTargetComponent != null ? myTargetComponent : getFocusedComponentInWindowOrSelf(this);
     return DataManager.getInstance().getDataContext(target);
