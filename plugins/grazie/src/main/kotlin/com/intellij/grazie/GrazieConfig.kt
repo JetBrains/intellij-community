@@ -13,7 +13,8 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
+import java.util.*
+import kotlin.collections.HashSet
 
 @State(name = "GraziConfig", presentableName = GrazieConfig.PresentableNameGetter::class, storages = [
   Storage("grazie_global.xml"),
@@ -26,6 +27,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
 
     //Since commit abc7e5f5
     OLD_UI {
+      @Suppress("DEPRECATION")
       override fun migrate(state: State) = state.copy(
         checkingContext = CheckingContext(
           isCheckInCommitMessagesEnabled = state.enabledCommitIntegration
@@ -52,7 +54,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
    */
   data class State(
     @Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
-    @Property val enabledGrammarStrategies: Set<String> = defaultEnabledStrategies,
+    @Property val enabledGrammarStrategies: Set<String> = HashSet(defaultEnabledStrategies),
     @Property val disabledGrammarStrategies: Set<String> = HashSet(),
     @Deprecated("Moved to checkingContext in version 2") @Property val enabledCommitIntegration: Boolean = false,
     @Property val userDisabledRules: Set<String> = HashSet(),
@@ -88,7 +90,8 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   }
 
   companion object {
-    private val defaultEnabledStrategies = hashSetOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc")
+    private val defaultEnabledStrategies =
+      Collections.unmodifiableSet(hashSetOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc"))
 
     private val instance by lazy { service<GrazieConfig>() }
 
