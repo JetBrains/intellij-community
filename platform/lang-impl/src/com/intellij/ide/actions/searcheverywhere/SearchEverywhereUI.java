@@ -10,12 +10,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLCache;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereSessionService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
@@ -114,6 +116,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final SearchFieldTypingListener mySearchTypingListener;
   private final SearchEverywhereMLStatisticsCollector myMLStatisticsCollector;
   private final HintHelper myHintHelper;
+  private final int mySessionId = ApplicationManager.getApplication().getService(SearchEverywhereSessionService.class).incAndGet();
 
   public SearchEverywhereUI(@Nullable Project project,
                             Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
@@ -272,6 +275,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   public void dispose() {
     stopSearching();
     myListModel.clear();
+    SearchEverywhereMLCache.removeCache(mySessionId);
   }
 
   @Nullable
@@ -786,7 +790,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     myMLStatisticsCollector.recordSelectedItem(indexes, closePopup, () -> myListModel.getFoundElementsInfo(),
                                                mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
-                                               mySearchField.getText().length(), myHeader.getSelectedTab().getID());
+                                               mySearchField.getText().length(), myHeader.getSelectedTab().getID(), mySessionId);
 
     if (closePopup) {
       closePopup();
@@ -839,7 +843,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       myMLStatisticsCollector.recordPopupClosed(
         () -> myListModel.getFoundElementsInfo(),
         mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
-        mySearchField.getText().length(), myHeader.getSelectedTab().getID());
+        mySearchField.getText().length(), myHeader.getSelectedTab().getID(), mySessionId);
     }
     closePopup();
   }

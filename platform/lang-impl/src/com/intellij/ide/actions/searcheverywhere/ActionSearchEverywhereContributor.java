@@ -4,11 +4,13 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLCache;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
+import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereSessionService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Processor;
@@ -97,18 +100,24 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     myProvider.filterElements(pattern, element -> {
       if (progressIndicator.isCanceled()) return false;
 
-      if (!myDisabledActions &&
-          element.value instanceof GotoActionModel.ActionWrapper &&
-          !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
-        return true;
-      }
-
       if (element == null) {
         LOG.error("Null action has been returned from model");
         return true;
       }
 
-      FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
+      final boolean isActionWrapper = element.value instanceof GotoActionModel.ActionWrapper;
+      if (!myDisabledActions && isActionWrapper && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
+        return true;
+      }
+
+      final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
+      if (Registry.is("mlse.enable.ranking") /*&& TODO flag should be here &&*/ && isActionWrapper) {
+        descriptor = getMLWeightedItemDescriptor(element, this.getSearchProviderId());
+      }
+      else {
+        descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
+      }
+
       return consumer.process(descriptor);
     });
   }
@@ -221,6 +230,14 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
       KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), activeKeymap, window);
     });
+  }
+  
+  private static FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull GotoActionModel.MatchedValue element,
+                                                                                        @NotNull String contributorId) {
+    final GotoActionModel.ActionWrapper wrapper = (GotoActionModel.ActionWrapper)element.value;
+    final SearchEverywhereSessionService service = ApplicationManager.getApplication().getService(SearchEverywhereSessionService.class);
+    final double mlWeight = SearchEverywhereMLCache.getCache(service.getCurrentSessionId()).getMLWeight(wrapper, contributorId);
+    return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<GotoActionModel.MatchedValue> {

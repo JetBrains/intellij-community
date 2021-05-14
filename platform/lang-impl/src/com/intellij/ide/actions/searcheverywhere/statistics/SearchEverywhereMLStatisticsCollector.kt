@@ -7,8 +7,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger.log
-import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereSessionService
-import com.intellij.internal.statistic.local.ActionSummary
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
@@ -24,7 +22,6 @@ import kotlin.math.round
 
 
 internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
-  private val mySessionId = ApplicationManager.getApplication().getService(SearchEverywhereSessionService::class.java).incAndGet()
   private val myIsReporting: Boolean
 
   init {
@@ -48,11 +45,12 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              backspacesTyped: Int,
                              symbolsInQuery: Int,
                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                             tabId: String) {
+                             tabId: String,
+                             seSessionId: Int) {
     if (myIsReporting && isActionOrAllTab(tabId)) {
       val foundElements = elementsProvider.invoke()
       NonUrgentExecutor.getInstance().execute {
-        reportElements(indexes, closePopup, keysTyped, backspacesTyped, symbolsInQuery, foundElements, tabId)
+        reportElements(indexes, closePopup, keysTyped, backspacesTyped, symbolsInQuery, foundElements, tabId, seSessionId)
       }
     }
   }
@@ -62,9 +60,10 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              symbolsTyped: Int, backspacesTyped: Int,
                              symbolsInQuery: Int,
                              elements: List<SearchEverywhereFoundElementInfo>,
-                             tabId: String) {
+                             tabId: String,
+                             seSessionId: Int) {
     val data = hashMapOf<String, Any>()
-    data[SESSION_ID_LOG_DATA_KEY] = mySessionId
+    data[SESSION_ID_LOG_DATA_KEY] = seSessionId
     if (indexes.isNotEmpty()) {
       data[SELECTED_INDEXES_DATA_KEY] = indexes.map { it.toString() }
     }
@@ -75,10 +74,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     data[TOTAL_SYMBOLS_AMOUNT_DATA_KEY] = symbolsInQuery
     data[SE_TAB_ID_KEY] = tabId
 
-    val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
     val globalTotalStats = globalSummary.totalSummary
-    val localSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
-    val localActionsStats = localSummary.getActionsStats()
     val localTotalStats = localSummary.getTotalStats()
     data[LOCAL_MAX_USAGE_COUNT_KEY] = localTotalStats.maxUsageCount
     data[LOCAL_MIN_USAGE_COUNT_KEY] = localTotalStats.minUsageCount
@@ -99,7 +95,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
 
     val currentTime = System.currentTimeMillis()
     data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
-      getListItemsNames(it, currentTime, globalSummary, localActionsStats).toMap()
+      getListItemsNames(it, currentTime).toMap()
     }
 
     log(SESSION_FINISHED, data)
@@ -111,22 +107,22 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                          keysTyped: Int,
                          backspacesTyped: Int,
                          textLength: Int,
-                         tabId: String) {
-    reportElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elementsProvider, tabId)
+                         tabId: String, 
+                         seSessionId: Int) {
+    reportElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elementsProvider, tabId, seSessionId)
   }
 
   fun recordPopupClosed(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                         keysTyped: Int,
                         backspacesTyped: Int,
                         textLength: Int,
-                        tabId: String) {
-    reportElements(EMPTY, true, keysTyped, backspacesTyped, textLength, elementsProvider, tabId)
+                        tabId: String,
+                        seSessionId: Int) {
+    reportElements(EMPTY, true, keysTyped, backspacesTyped, textLength, elementsProvider, tabId, seSessionId)
   }
 
   private fun getListItemsNames(item: SearchEverywhereFoundElementInfo,
-                                currentTime: Long,
-                                globalSummaryManager: ActionsGlobalSummaryManager,
-                                localSummary: Map<String, ActionSummary>): ItemInfo {
+                                currentTime: Long): ItemInfo {
     val element = item.getElement()
     val contributorId = item.getContributor()?.searchProviderId ?: "undefined"
     if (element !is MatchedValue) { // not an action/option
@@ -135,51 +131,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     if (element.value !is GotoActionModel.ActionWrapper) { // an option (OptionDescriptor)
       return ItemInfo(null, contributorId, hashMapOf(IS_ACTION_DATA_KEY to false))
     }
-    return fillActionItemInfo(item, currentTime, element.value, globalSummaryManager, localSummary, contributorId)
-  }
-
-  private fun fillActionItemInfo(item: SearchEverywhereFoundElementInfo,
-                                 currentTime: Long,
-                                 element: GotoActionModel.ActionWrapper,
-                                 globalSummaryManager: ActionsGlobalSummaryManager,
-                                 localSummary: Map<String, ActionSummary>,
-                                 contributorId: String): ItemInfo {
-    val action = element.action
-    val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
-
-    val data = mutableMapOf(
-      IS_ACTION_DATA_KEY to true,
-      PRIORITY_DATA_KEY to item.getPriority(),
-      IS_TOGGLE_ACTION_DATA_KEY to (action is ToggleAction),
-      MATCH_MODE_KEY to element.mode,
-      IS_GROUP_KEY to element.isGroupAction
-    )
-
-    element.actionText?.let {
-      data[TEXT_LENGTH_KEY] = withUpperBound(it.length)
-    }
-
-    element.groupName?.let {
-      data[GROUP_LENGTH_KEY] = withUpperBound(it.length)
-    }
-
-    val presentation = if (element.hasPresentation()) element.presentation else action.templatePresentation
-    data[HAS_ICON_KEY] = presentation.icon != null
-    data[IS_ENABLED_KEY] = presentation.isEnabled
-    data[WEIGHT_KEY] = presentation.weight
-
-    localSummary[actionId]?.let {
-      data[TIME_SINCE_LAST_USAGE_DATA_KEY] = currentTime - it.lastUsedTimestamp
-      data[LOCAL_USAGE_COUNT_DATA_KEY] = it.usageCount
-    }
-
-    val globalSummary = globalSummaryManager.getActionStatistics(actionId)
-    globalSummary?.let {
-      data[GLOBAL_USAGE_COUNT_KEY] = it.usagesCount
-      data[USERS_RATIO_DATA_KEY] = roundDouble(it.usersRatio)
-      data[USAGES_PER_USER_RATIO_DATA_KEY] = roundDouble(it.usagesPerUserRatio)
-    }
-    return ItemInfo(actionId, contributorId, data)
+    return fillActionItemInfo(item.getPriority(), currentTime, element.value, contributorId)
   }
 
   data class ItemInfo(val id: String?, val contributorId: String, val additionalData: Map<String, Any>) {
@@ -199,6 +151,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
 
   companion object {
     private val isExperimentModeEnabled: Boolean = ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()
+    val localSummary: ActionsLocalSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
+    val globalSummary: ActionsGlobalSummaryManager = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
 
     private val EMPTY: IntArray = IntArray(0)
 
@@ -249,6 +203,50 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private fun roundDouble(value: Double): Double {
       if (!value.isFinite()) return -1.0
       return round(value * 100000) / 100000
+    }
+
+    @JvmStatic
+    fun fillActionItemInfo(priority: Int,
+                           currentTime: Long,
+                           element: GotoActionModel.ActionWrapper,
+                           contributorId: String): ItemInfo {
+      val action = element.action
+      val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
+  
+      val data = mutableMapOf(
+        IS_ACTION_DATA_KEY to true,
+        PRIORITY_DATA_KEY to priority,
+        IS_TOGGLE_ACTION_DATA_KEY to (action is ToggleAction),
+        MATCH_MODE_KEY to element.mode,
+        IS_GROUP_KEY to element.isGroupAction
+      )
+  
+      element.actionText?.let {
+        data[TEXT_LENGTH_KEY] = withUpperBound(it.length)
+      }
+  
+      element.groupName?.let {
+        data[GROUP_LENGTH_KEY] = withUpperBound(it.length)
+      }
+  
+      val presentation = if (element.hasPresentation()) element.presentation else action.templatePresentation
+      data[HAS_ICON_KEY] = presentation.icon != null
+      data[IS_ENABLED_KEY] = presentation.isEnabled
+      data[WEIGHT_KEY] = presentation.weight
+
+
+      localSummary.getActionsStats()[actionId]?.let {
+        data[TIME_SINCE_LAST_USAGE_DATA_KEY] = currentTime - it.lastUsedTimestamp
+        data[LOCAL_USAGE_COUNT_DATA_KEY] = it.usageCount
+      }
+  
+      val globalSummary = globalSummary.getActionStatistics(actionId)
+      globalSummary?.let {
+        data[GLOBAL_USAGE_COUNT_KEY] = it.usagesCount
+        data[USERS_RATIO_DATA_KEY] = roundDouble(it.usersRatio)
+        data[USAGES_PER_USER_RATIO_DATA_KEY] = roundDouble(it.usagesPerUserRatio)
+      }
+      return ItemInfo(actionId, contributorId, data)
     }
   }
 }

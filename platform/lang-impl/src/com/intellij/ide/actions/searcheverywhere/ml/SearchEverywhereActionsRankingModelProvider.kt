@@ -10,7 +10,7 @@ import com.intellij.internal.ml.ResourcesModelMetadataReader
 import com.intellij.searchEverywhere.model.PredictionModel
 
 
-class SearchEverywhereActionsRankingModelProvider(private val resourceDirectory: String) : SearchEverywhereMLRankingModelProvider {
+class SearchEverywhereActionsRankingModelProvider(private val resourceDirectory: String = "features") : SearchEverywhereMLRankingModelProvider {
   override val model: DecisionFunction
     get() {
       val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, resourceDirectory))

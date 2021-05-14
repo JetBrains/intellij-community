@@ -6,7 +6,10 @@ import java.util.concurrent.atomic.AtomicInteger
 class SearchEverywhereSessionService {
   private val counter = AtomicInteger()
 
-  fun getSessionId() = counter.get()
+  /**
+   * Current id is always the last opened session id
+   */
+  fun getCurrentSessionId() = counter.get()
 
   fun incAndGet() = counter.incrementAndGet()
 }
