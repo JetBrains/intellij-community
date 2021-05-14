@@ -64,12 +64,14 @@ object TestGenerator {
     private fun write(file: File, content: String) {
         val oldContent = file.takeIf { it.isFile }?.readText() ?: ""
 
-        if (content != oldContent) {
+        if (normalizeContent(content) != normalizeContent(oldContent)) {
             file.writeText(content)
             val path = file.toRelativeStringSystemIndependent(KotlinRoot.DIR)
             println("Updated $path")
         }
     }
+
+    private fun normalizeContent(content: String): String = content.replace(Regex("\\R"), "\n")
 
     private fun getImports(suite: TSuite): List<String> {
         val imports = (commonImports + suite.imports).toMutableList()
