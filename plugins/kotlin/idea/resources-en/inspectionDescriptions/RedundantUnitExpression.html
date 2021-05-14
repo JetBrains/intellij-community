@@ -1,5 +1,20 @@
 <html>
 <body>
-This inspection reports a redundant <b>Unit</b> type specification which can be omitted.
+Reports redundant 'Unit' expression which can be omitted.
+<p>Examples:</p>
+<pre><code>
+    fun redundantUnitExp(b: Boolean): Unit = if (b) {
+        class A
+        Unit // <= is redundant here
+    } else {
+    }
+
+    fun neededUnitExp(b: Boolean): Unit = if (b) {
+        1
+        Unit // <= while here it's needed
+    } else {
+    }
+
+</code></pre>
 </body>
 </html>
