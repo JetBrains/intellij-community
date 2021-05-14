@@ -29,6 +29,8 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
 import java.nio.file.Path
 
 class ExtractModuleFromPackageAction : AnAction() {
@@ -58,7 +60,8 @@ class ExtractModuleFromPackageAction : AnAction() {
     private fun analyzeDependenciesAndCreateModule(directory: PsiDirectory,
                                                    module: Module,
                                                    moduleName: @NlsSafe String,
-                                                   targetSourceRootPath: String?) {
+                                                   targetSourceRootPath: String?): Promise<Unit> {
+      val promise = AsyncPromise<Unit>()
       val dependenciesBuilder = ForwardDependenciesBuilder(module.project, AnalysisScope(directory))
       object : Task.Backgroundable(module.project,
                                    JavaUiBundle.message("progress.title.extract.module.analyzing.dependencies", directory.name)) {
@@ -91,16 +94,19 @@ class ExtractModuleFromPackageAction : AnAction() {
               runWriteAction {
                 extractModule(directory, module, moduleName, usedModules, usedLibraries, targetSourceRootPath)
               }
+              ModuleDependenciesCleaner(module, usedModules).startInBackground(promise)
             }
             catch (e: Throwable) {
               if (e !is ControlFlowException) {
                 LOG.info(e)
                 Messages.showErrorDialog(project, JavaUiBundle.message("dialog.message.failed.to.extract.module", e), CommonBundle.getErrorTitle())
               }
+              promise.setError(e)
             }
           }
         }
       }.queue()
+      return promise
     }
 
     private fun extractModule(directory: PsiDirectory, module: Module, moduleName: @NlsSafe String,
@@ -142,8 +148,8 @@ class ExtractModuleFromPackageAction : AnAction() {
     }
 
     @TestOnly
-    fun extractModuleFromDirectory(directory: PsiDirectory, module: Module, moduleName: @NlsSafe String) {
-      analyzeDependenciesAndCreateModule(directory, module, moduleName, null)
+    fun extractModuleFromDirectory(directory: PsiDirectory, module: Module, moduleName: @NlsSafe String, targetSourceRoot: String?): Promise<Unit> {
+      return analyzeDependenciesAndCreateModule(directory, module, moduleName, targetSourceRoot)
     }
   }
 }
