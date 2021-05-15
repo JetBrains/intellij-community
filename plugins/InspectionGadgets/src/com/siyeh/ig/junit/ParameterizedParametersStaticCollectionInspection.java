@@ -4,7 +4,10 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -19,16 +22,29 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class ParameterizedParametersStaticCollectionInspection extends BaseInspection {
 
   protected static final String PARAMETERS_FQN = "org.junit.runners.Parameterized.Parameters";
 
   @Override
   protected InspectionGadgetsFix buildFix(final Object... infos) {
+    if (infos.length == 0) return null;
     if (infos[0] instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)infos[0];
       final String signature = "@" + PARAMETERS_FQN + " public static java.lang.Iterable<java.lang.Object[]> parameters()";
-      return new DelegatingFix(CreateMethodQuickFix.createFix(aClass, signature, ""));
+      return new DelegatingFix(CreateMethodQuickFix.createFix(aClass, signature, "")) {
+        @Override
+        public @NotNull String getName() {
+          return getFamilyName();
+        }
+
+        @Override
+        public @NotNull String getFamilyName() {
+          return InspectionGadgetsBundle.message("fix.data.provider.create.method.fix.name");
+        }
+      };
     }
     return new InspectionGadgetsFix() {
 
@@ -44,6 +60,13 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
           return;
         }
         final PsiMethod method = (PsiMethod)element;
+        WriteAction.run(() -> {
+          final VirtualFile vFile = method.getContainingFile().getVirtualFile();
+          if (ReadonlyStatusHandler.getInstance(method.getProject()).ensureFilesWritable(List.of(vFile)).hasReadonlyFiles()) {
+            return;
+          }
+          method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+        });
         final PsiType type = (PsiType)infos[1];
         final ChangeSignatureProcessor csp =
           new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), type, new ParameterInfoImpl[0]);
@@ -67,6 +90,9 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
+    if (infos.length == 0) {
+      return InspectionGadgetsBundle.message("fix.data.provider.multiple.methods.problem");
+    }
     return infos.length > 1
            ? InspectionGadgetsBundle.message("fix.data.provider.signature.incorrect.problem")
            : InspectionGadgetsBundle.message("fix.data.provider.signature.missing.method.problem");
@@ -86,12 +112,12 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
         if (iterableClass == null) {
           return;
         }
-        boolean methodFound = false;
+        int methodFound = 0;
         for (PsiMethod method : aClass.getMethods()) {
           if (!AnnotationUtil.isAnnotated(method, PARAMETERS_FQN, 0)) {
             continue;
           }
-          methodFound = true;
+          methodFound++;
           final boolean notPublic = !method.hasModifierProperty(PsiModifier.PUBLIC);
           final boolean notStatic = !method.hasModifierProperty(PsiModifier.STATIC);
 
@@ -113,8 +139,11 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
             registerMethodError(method, signatureText, returnType);
           }
         }
-        if (!methodFound) {
+        if (methodFound == 0) {
           registerClassError(aClass, aClass);
+        }
+        else if (methodFound > 1) {
+          registerClassError(aClass);
         }
       }
     };
