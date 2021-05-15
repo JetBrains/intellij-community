@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.SuperUserStatus;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
@@ -152,6 +154,11 @@ public final class IoTestUtil {
 
   public static void assumeWslPresence() throws AssumptionViolatedException {
     assumeTrue("'wsl.exe' not found in %Path%", WSLDistribution.findWslExe() != null);
+  }
+
+  public static @NotNull Path createWslTempDir(@NotNull String wsl, @NotNull String testName) throws IOException {
+    return Files.createTempDirectory(Paths.get("\\\\wsl$\\" + wsl + "\\tmp"),
+                                     UsefulTestCase.TEMP_DIR_MARKER + testName + "_");
   }
 
   @NotNull

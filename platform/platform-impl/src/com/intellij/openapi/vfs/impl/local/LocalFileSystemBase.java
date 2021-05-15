@@ -44,7 +44,7 @@ import java.util.List;
  */
 public abstract class LocalFileSystemBase extends LocalFileSystem {
   @ApiStatus.Internal
-  static final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
+  public static final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.pluggableContentLoader");
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
