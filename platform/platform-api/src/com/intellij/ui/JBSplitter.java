@@ -77,6 +77,13 @@ public class JBSplitter extends Splitter {
     myDefaultProportion = proportion;
   }
 
+  public JBSplitter(boolean vertical, @NotNull @NonNls String proportionKey, float minProp, float maxProp) {
+    super(vertical, PropertiesComponent.getInstance().getFloat(proportionKey, 0.5f), minProp, maxProp);
+
+    mySplitterProportionKey = proportionKey;
+    myDefaultProportion = 0.5f;
+  }
+
   /**
    * Splitter proportion unique key.
    *
