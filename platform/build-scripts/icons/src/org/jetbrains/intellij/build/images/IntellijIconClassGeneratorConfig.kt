@@ -25,7 +25,7 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
       "intellij.properties.psi" -> IntellijIconClassGeneratorModuleConfig(className = "PropertiesIcons", packageName = "com.intellij.lang.properties",
                                                                           iconDirectory = "icons")
       // default name 'com.goide.GOIcons' clashes with existing 'com.goide.GoIcons'
-      "intellij.go" -> IntellijIconClassGeneratorModuleConfig(className = "GoGeneratedIcons")
+      "intellij.go.impl" -> IntellijIconClassGeneratorModuleConfig(className = "GoGeneratedIcons", packageName = "com.goide")
       else -> super.getConfigForModule(moduleName)
     }
   }
