@@ -19,8 +19,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 
 internal class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
-    indexHelper: IndexHelper
-) : FirContextCompletionContributorBase<FirNameReferencePositionContext>(basicContext, indexHelper) {
+) : FirContextCompletionContributorBase<FirNameReferencePositionContext>(basicContext) {
     private val typeNamesProvider = TypeNamesProvider(indexHelper)
 
     private val shouldCompleteTopLevelCallablesFromIndex: Boolean
