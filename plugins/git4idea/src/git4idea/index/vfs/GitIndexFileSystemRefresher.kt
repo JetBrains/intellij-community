@@ -1,15 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.vfs
 
+import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -23,7 +25,11 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
-  private val cache = GitIndexVirtualFileCache(project)
+  private val cache = Caffeine.newBuilder()
+    .weakValues()
+    .build<Key, GitIndexVirtualFile>(CacheLoader { key ->
+      GitIndexVirtualFile(project, key.root, key.filePath)
+    })
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
@@ -34,11 +40,20 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   fun getFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile {
-    return cache.get(root, filePath)
+    try {
+      return cache.get(Key(root, filePath))!!
+    }
+    catch (e: Exception) {
+      val cause = e.cause
+      if (cause is ProcessCanceledException) {
+        throw cause
+      }
+      throw e
+    }
   }
 
   fun refresh(condition: (GitIndexVirtualFile) -> Boolean) {
-    val filesToRefresh = cache.filesMatching(condition)
+    val filesToRefresh = cache.asMap().values.filter(condition)
     if (filesToRefresh.isEmpty()) return
     refresh(filesToRefresh)
   }
@@ -81,7 +96,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   override fun dispose() {
-    Disposer.dispose(cache)
+    cache.invalidateAll()
   }
 
   companion object {
@@ -139,6 +154,8 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
       postRunnable?.run()
     }
   }
+
+  private data class Key(val root: VirtualFile, val filePath: FilePath)
 }
 
 fun writeInEdt(action: () -> Unit) {
