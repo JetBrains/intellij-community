@@ -28,9 +28,18 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldShowWarningIfBadJDK() {
+    val oldLogger = LoggedErrorProcessor.getInstance()
     val projectSdk = ProjectRootManager.getInstance(myProject).projectSdk
     val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
     try {
+      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+          if (message!=null && message.contains("Maven server exception for tests")){
+            return false
+          }
+          return super.processError(category, message, t, details)
+        }
+      });
       MavenWorkspaceSettingsComponent.getInstance(
         myProject).settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
@@ -40,6 +49,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     finally {
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = projectSdk }
       MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter = jdkForImporter
+      LoggedErrorProcessor.setNewInstance(oldLogger)
     }
   }
 
