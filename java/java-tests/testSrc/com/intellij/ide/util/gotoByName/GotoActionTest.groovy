@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
@@ -469,10 +469,9 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   static SearchEverywhereContributor<?> createActionContributor(Project project, Disposable parentDisposable) {
-    def res = new TestActionContributor(project, null, null)
+    TestActionContributor res = new TestActionContributor(project, null, null)
     res.setShowDisabled(true)
     Disposer.register(parentDisposable, res)
-
     return res
   }
 

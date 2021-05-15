@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion.builder
 
 import org.jetbrains.plugins.groovy.completion.CompletionResult
@@ -40,7 +26,7 @@ public class Pojo {
   }
 
   void 'test no prefix'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -53,7 +39,7 @@ new PojoBuilder().<caret>
 
 
   void 'test empty prefix'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -65,7 +51,7 @@ new PojoBuilder().<caret>
   }
 
   void 'test custom prefix'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -77,7 +63,7 @@ new PojoBuilder().<caret>
   }
 
   void 'test spaces prefix'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -89,7 +75,7 @@ new PojoBuilder().<caret>
   }
 
   void 'test null prefix'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -101,7 +87,7 @@ new PojoBuilder().<caret>
   }
 
   void 'test custom build method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -113,7 +99,7 @@ new PojoBuilder().<caret>
   }
 
   void 'test null build method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -125,7 +111,7 @@ new PojoBuilder().<caret>
   }
 
   void 'test empty build method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -137,7 +123,7 @@ new PojoBuilder().<caret>
   }
 
   void 'test spaces build method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -149,7 +135,7 @@ new PojoBuilder().<caret>
   }
 
   void 'test next setter'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -161,7 +147,7 @@ new PojoBuilder().counter(1).<caret>
   }
 
   void 'test one more setter further'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -173,7 +159,7 @@ new PojoBuilder().counter(1).name("Janet").<caret>
   }
 
   void 'test only java bean properties'() {
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
@@ -201,8 +187,8 @@ class PojoBuilder {}
 
 new PojoBuilder().<caret>
 '''
-    doVariantableTest code, CompletionResult.contain, 'secondName'
-    doVariantableTest code, CompletionResult.notContain, 'name', 'dynamic', 'counter', 'withoutField'
+    doCompletionTest code, CompletionResult.contain, 'secondName'
+    doCompletionTest code, CompletionResult.notContain, 'name', 'dynamic', 'counter', 'withoutField'
   }
 
   void 'test include super properties'() {
@@ -213,7 +199,7 @@ class Child extends Pojo {
 }
 ''')
 
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy
 
