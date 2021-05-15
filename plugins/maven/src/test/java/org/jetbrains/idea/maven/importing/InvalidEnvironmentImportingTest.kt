@@ -5,6 +5,7 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.testFramework.LoggedErrorProcessor
 import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
@@ -31,7 +32,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
     try {
       MavenWorkspaceSettingsComponent.getInstance(
-        myProject).settings.importingSettings.jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
+        myProject).settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
       createAndImportProject()
       assertEvent { it.message.startsWith("Project JDK is not specified") }
@@ -43,12 +44,22 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test fun testShouldShowLogsOfMavenServerIfNotStarted() {
+    val oldLogger = LoggedErrorProcessor.getInstance()
     try {
+      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+          if (message!=null && message.contains("Maven server exception for tests")){
+            return false
+          }
+          return super.processError(category, message, t, details)
+        }
+      });
       MavenServerCMDState.setThrowExceptionOnNextServerStart()
       createAndImportProject()
       assertEvent { it.message.contains("Maven server exception for tests") }
     } finally {
       MavenServerCMDState.resetThrowExceptionOnNextServerStart()
+      LoggedErrorProcessor.setNewInstance(oldLogger)
     }
   }
 
