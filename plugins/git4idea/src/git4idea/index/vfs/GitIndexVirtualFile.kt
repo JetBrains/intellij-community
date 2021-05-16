@@ -33,8 +33,6 @@ import java.util.*
 class GitIndexVirtualFile(private val project: Project,
                           val root: VirtualFile,
                           val filePath: FilePath) : VirtualFile(), VirtualFilePathWrapper {
-  private val refresher: GitIndexFileSystemRefresher get() = GitIndexFileSystemRefresher.getInstance(project)
-
   @Volatile
   private var hash: Hash? = null
   @Volatile
@@ -77,7 +75,7 @@ class GitIndexVirtualFile(private val project: Project,
   override fun getModificationStamp(): Long = modificationStamp
   override fun getFileType(): FileType = filePath.virtualFile?.fileType ?: super.getFileType()
   override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {
-    refresher.refresh(listOf(this), asynchronous, postRunnable)
+    LOG.error("Refreshing index files is not supported (called for $this). Use GitIndexFileSystemRefresher to refresh.")
   }
 
   internal fun getRefresh(): Refresh? {

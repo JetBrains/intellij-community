@@ -56,28 +56,15 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     refresh(filesToRefresh)
   }
 
-  internal fun refresh(filesToRefresh: List<GitIndexVirtualFile>, async: Boolean = true, postRunnable: Runnable? = null) {
-    LOG.debug("Creating ${if (async) "async" else "sync"} refresh session for ${filesToRefresh.joinToString { it.path }}")
-    val session = RefreshSession(filesToRefresh, postRunnable)
-    if (async || !ApplicationManager.getApplication().isDispatchThread) {
-      val refresh = AppExecutorUtil.getAppExecutorService().submit {
-        session.read()
-        writeInEdt {
-          session.apply()
-        }
+  private fun refresh(filesToRefresh: List<GitIndexVirtualFile>) {
+    LOG.debug("Creating async refresh session for ${filesToRefresh.joinToString { it.path }}")
+
+    val session = RefreshSession(filesToRefresh)
+    AppExecutorUtil.getAppExecutorService().submit {
+      session.read()
+      writeInEdt {
+        session.apply()
       }
-      if (!async) refresh.get()
-    }
-    else if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-      PotemkinProgress(GitBundle.message("stage.vfs.refresh.process"), project, null, null).runInBackground {
-        session.read()
-      }
-      session.apply()
-    }
-    else {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously({ session.read() }, GitBundle.message("stage.vfs.refresh.process"),
-                                                                        false, project)
-      ApplicationManager.getApplication().runWriteAction { session.apply() }
     }
   }
 
@@ -117,7 +104,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
   }
 
-  private class RefreshSession(private val filesToRefresh: List<GitIndexVirtualFile>, private val postRunnable: Runnable?) {
+  private class RefreshSession(private val filesToRefresh: List<GitIndexVirtualFile>) {
     private val refreshList = mutableListOf<GitIndexVirtualFile.Refresh>()
 
     fun read() {
@@ -129,15 +116,12 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
     fun apply() {
       ApplicationManager.getApplication().assertWriteAccessAllowed()
-      if (refreshList.isEmpty()) {
-        postRunnable?.run()
-        return
-      }
+      if (refreshList.isEmpty()) return
+
       val events = refreshList.map { it.event }
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
       refreshList.forEach { it.run() }
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
-      postRunnable?.run()
     }
   }
 
