@@ -22,6 +22,8 @@ import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,24 +42,26 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
+        List<ClientId> clientIdsToRemove = new ArrayList<>();
         for (ClientId clientId : clientId2Holders.keySet()) {
           CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator(clientId);
           if (indicator != null && indicator.getProject() == project) {
             indicator.closeAndFinish(true);
-            setCompletionPhase(clientId, CompletionPhase.NoCompletion);
+            clientIdsToRemove.add(clientId);
           }
           else if (indicator == null) {
-            setCompletionPhase(clientId, CompletionPhase.NoCompletion);
+            clientIdsToRemove.add(clientId);
           }
+        }
+        for (ClientId clientId : clientIdsToRemove) {
+          clientId2Holders.remove(clientId);
         }
       }
     });
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        for (ClientId clientId : clientId2Holders.keySet()) {
-          setCompletionPhase(clientId, CompletionPhase.NoCompletion);
-        }
+        clientId2Holders.clear();
       }
     });
   }
