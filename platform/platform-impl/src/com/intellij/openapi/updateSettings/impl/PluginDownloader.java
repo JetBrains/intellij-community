@@ -188,11 +188,13 @@ public final class PluginDownloader {
     boolean isFromMarketplace = myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
     String previousVersion = (descriptor == null) ? null : descriptor.getVersion();
 
-    PluginManagerUsageCollector.pluginInstallationStarted(
-      myDescriptor,
-      isFromMarketplace ? InstallationSourceEnum.MARKETPLACE : InstallationSourceEnum.CUSTOM_REPOSITORY,
-      previousVersion
-    );
+    if (ApplicationManager.getApplication() != null) {
+      PluginManagerUsageCollector.pluginInstallationStarted(
+        myDescriptor,
+        isFromMarketplace ? InstallationSourceEnum.MARKETPLACE : InstallationSourceEnum.CUSTOM_REPOSITORY,
+        previousVersion
+      );
+    }
 
     // download plugin
     myFile = tryDownloadPlugin(indicator, showMessageOnError);
