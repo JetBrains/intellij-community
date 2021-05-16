@@ -68,6 +68,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.Reference;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,7 +85,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   @NonNls private static final String PINNED = "pinned";
   private static final String CURRENT_IN_TAB = "current-in-tab";
 
-  private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
   private static final Key<Boolean> OPENED_IN_BULK = Key.create("EditorSplitters.opened.in.bulk");
   @NonNls public static final String SPLITTER_KEY = "EditorsSplitters";
 
@@ -977,12 +977,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
 
             fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
-            if (document != null) {
-              // This is just to make sure document reference is kept on stack till this point
-              // so that document is available for folding state deserialization in HistoryEntry constructor
-              // and that document will be created only once during file opening
-              document.putUserData(DUMMY_KEY, null);
-            }
+            // This is just to make sure document reference is kept on stack till this point
+            // so that document is available for folding state deserialization in HistoryEntry constructor
+            // and that document will be created only once during file opening
+            Reference.reachabilityFence(document);
             if (isCurrentTab) {
               focusedFile = virtualFile;
             }
