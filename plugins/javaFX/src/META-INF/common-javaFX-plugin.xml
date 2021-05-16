@@ -104,9 +104,13 @@
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </action>
-    <action class="org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction" id="NewFxmlFile">
+
+    <group id="JavaFxCreateActions">
+      <action class="org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction" id="NewFxmlFile"/>
+      <action class="org.jetbrains.plugins.javaFX.actions.CreateJavaFxApplicationAction" id="NewJavaFXApplication"/>
+
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
-    </action>
+    </group>
   </actions>
   <resource-bundle>messages.JavaFXBundle</resource-bundle>
 </idea-plugin>
