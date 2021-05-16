@@ -36,7 +36,6 @@ application {
   mainModule = '${context.rootPackage}'
   mainClass = '${context.rootPackage}.HelloApplication'
 }
-
 #if ($context.hasLanguage("kotlin"))
 
 [compileKotlin, compileTestKotlin].forEach {

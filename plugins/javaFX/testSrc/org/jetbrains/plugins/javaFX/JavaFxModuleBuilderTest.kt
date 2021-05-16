@@ -175,8 +175,12 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       tasks.withType(JavaCompile) {
           options.encoding = 'UTF-8'
       }
-      mainClassName = 'com.example.demo.HelloApplication'
-      
+
+      application {
+          mainModule = 'com.example.demo'
+          mainClass = 'com.example.demo.HelloApplication'
+      }
+
       javafx {
           version = '11.0.2'
           modules = ['javafx.controls', 'javafx.fxml']
