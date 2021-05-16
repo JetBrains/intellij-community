@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinF
 import org.jetbrains.kotlin.idea.search.containsKotlinFile
 
 class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
+    override fun requiresReadAccess() = true
+
     override fun getGroup(): EventLogGroup = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
