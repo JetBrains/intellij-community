@@ -9,8 +9,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 
@@ -57,13 +54,19 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   private fun refresh(filesToRefresh: List<GitIndexVirtualFile>) {
-    LOG.debug("Creating async refresh session for ${filesToRefresh.joinToString { it.path }}")
+    LOG.debug("Starting async refresh for ${filesToRefresh.joinToString { it.path }}")
 
-    val session = RefreshSession(filesToRefresh)
     AppExecutorUtil.getAppExecutorService().submit {
-      session.read()
+      val refreshList = mutableListOf<GitIndexVirtualFile.Refresh>()
+      for (file in filesToRefresh) {
+        file.getRefresh()?.let { refreshList.add(it) }
+      }
+      if (refreshList.isEmpty()) return@submit
       writeInEdt {
-        session.apply()
+        val events = refreshList.map { it.event }
+        ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
+        refreshList.forEach { it.run() }
+        ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
       }
     }
   }
@@ -101,27 +104,6 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
       project.serviceIfCreated<GitIndexFileSystemRefresher>()?.refresh {
         roots.contains(it.root)
       }
-    }
-  }
-
-  private class RefreshSession(private val filesToRefresh: List<GitIndexVirtualFile>) {
-    private val refreshList = mutableListOf<GitIndexVirtualFile.Refresh>()
-
-    fun read() {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
-      for (file in filesToRefresh) {
-        file.getRefresh()?.let { refreshList.add(it) }
-      }
-    }
-
-    fun apply() {
-      ApplicationManager.getApplication().assertWriteAccessAllowed()
-      if (refreshList.isEmpty()) return
-
-      val events = refreshList.map { it.event }
-      ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
-      refreshList.forEach { it.run() }
-      ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
     }
   }
 
