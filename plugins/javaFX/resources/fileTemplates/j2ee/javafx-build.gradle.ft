@@ -31,7 +31,12 @@ targetCompatibility = ${context.sdkFeatureVersion}
 tasks.withType(JavaCompile) {
   options.encoding = 'UTF-8'
 }
-mainClassName = '${context.rootPackage}.HelloApplication'
+
+application {
+  mainModule = '${context.rootPackage}'
+  mainClass = '${context.rootPackage}.HelloApplication'
+}
+
 #if ($context.hasLanguage("kotlin"))
 
 [compileKotlin, compileTestKotlin].forEach {
@@ -57,7 +62,9 @@ dependencies {
   implementation('com.dlsc.formsfx:formsfx-core:${context.getVersion("com.dlsc.formsfx", "formsfx-core")}')
 #end
 #if ($context.hasLibrary("validatorfx"))
-  implementation('net.synedra:validatorfx:${context.getVersion("net.synedra", "validatorfx")}')
+  implementation('net.synedra:validatorfx:${context.getVersion("net.synedra", "validatorfx")}') {
+    exclude(group: 'org.openjfx')
+  }
 #end
 #if ($context.hasLibrary("ikonli"))
   implementation('org.kordamp.ikonli:ikonli-javafx:${context.getVersion("org.kordamp.ikonli", "ikonli-javafx")}')
