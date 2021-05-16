@@ -188,7 +188,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
       dependencies {
 
-          testImplementation('org.testng:testng:7.1.0')
+          testImplementation('org.testng:testng:7.4.0')
       }
 
       test {
