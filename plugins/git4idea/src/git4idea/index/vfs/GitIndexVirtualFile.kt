@@ -95,7 +95,7 @@ class GitIndexVirtualFile(private val project: Project,
   private fun write(requestor: Any?, newContent: ByteArray, newModificationStamp: Long) {
     try {
       val newModStamp = if (newModificationStamp > 0) newModificationStamp else LocalTimeCounter.currentTime()
-      refresher.changeContent(this, requestor, modificationStamp) {
+      refresher.changeContent(this, requestor, newModStamp) {
         val oldCachedData = cachedData.get()
         if (oldCachedData != readCachedData()) {
           // TODO
