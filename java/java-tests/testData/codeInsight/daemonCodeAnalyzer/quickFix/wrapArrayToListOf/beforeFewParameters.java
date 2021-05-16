@@ -1,5 +1,4 @@
-// "Wrap 4th argument using 'Arrays.asList()'" "true"
-import java.util.Arrays;
+// "Wrap 4th argument using 'List.of()'" "true"
 import java.util.List;
 
 public class Test {
@@ -9,6 +8,6 @@ public class Test {
   }
 
   void m(String[] a) {
-    list(1, 2, 3, Arrays.asList(a), "asd");
+    list(1, 2, 3, a<caret>, "asd");
   }
 }

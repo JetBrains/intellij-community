@@ -5,19 +5,17 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_9;
 
-/**
- * @author Dmitry Batkovich
- */
-public class WrapArrayToArraysAsListFixTest extends LightQuickFixParameterizedTestCase {
+public class WrapArrayToArraysListOfFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/wrapArrayToArraysAsList";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/wrapArrayToListOf";
   }
 
+  @NotNull
   @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9;
   }
 }
