@@ -57,15 +57,15 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     LOG.debug("Starting async refresh for ${filesToRefresh.joinToString { it.path }}")
 
     AppExecutorUtil.getAppExecutorService().submit {
-      val refreshList = mutableListOf<GitIndexVirtualFile.Refresh>()
+      val fileDataList = mutableListOf<GitIndexVirtualFile.IndexFileData>()
       for (file in filesToRefresh) {
-        file.getRefresh()?.let { refreshList.add(it) }
+        file.readFromGit()?.let { fileDataList.add(it) }
       }
-      if (refreshList.isEmpty()) return@submit
+      if (fileDataList.isEmpty()) return@submit
       writeInEdt {
-        val events = refreshList.map { it.event }
+        val events = fileDataList.map { it.event }
         ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
-        refreshList.forEach { it.run() }
+        fileDataList.forEach { it.apply() }
         ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
       }
     }

@@ -78,14 +78,14 @@ class GitIndexVirtualFile(private val project: Project,
     LOG.error("Refreshing index files is not supported (called for $this). Use GitIndexFileSystemRefresher to refresh.")
   }
 
-  internal fun getRefresh(): Refresh? {
+  internal fun readFromGit(): IndexFileData? {
     val oldHash = hash
     val stagedFile = readMetadataFromGit()
     val newHash = stagedFile?.hash()
     if (oldHash != newHash) {
       val newLength = if (stagedFile != null) readLengthFromGit(stagedFile.blobHash) else 0
       LOG.debug("Preparing refresh for $this")
-      return Refresh(oldHash, newHash, length, newLength, stagedFile?.isExecutable ?: false, modificationStamp)
+      return IndexFileData(oldHash, newHash, length, newLength, stagedFile?.isExecutable ?: false, modificationStamp)
     }
     return null
   }
@@ -203,17 +203,17 @@ class GitIndexVirtualFile(private val project: Project,
     return "GitIndexVirtualFile: [${root.name}]/${VcsFileUtil.relativePath(root, filePath)}"
   }
 
-  internal inner class Refresh internal constructor(private val oldHash: Hash?,
-                                                    private val newHash: Hash?,
-                                                    oldLength: Long,
-                                                    private val newLength: Long,
-                                                    private val newExecutable: Boolean,
-                                                    oldModificationStamp: Long) {
+  internal inner class IndexFileData internal constructor(private val oldHash: Hash?,
+                                                          private val newHash: Hash?,
+                                                          oldLength: Long,
+                                                          private val newLength: Long,
+                                                          private val newExecutable: Boolean,
+                                                          oldModificationStamp: Long) {
     val event: VFileContentChangeEvent = VFileContentChangeEvent(null, this@GitIndexVirtualFile, oldModificationStamp, -1,
                                                                  0, 0,
                                                                  oldLength, newLength, true)
 
-    fun run(): Boolean {
+    fun apply(): Boolean {
       LOG.debug("Refreshing ${this@GitIndexVirtualFile}")
       if (hash != oldHash) return false
       hash = newHash
@@ -223,7 +223,7 @@ class GitIndexVirtualFile(private val project: Project,
     }
 
     override fun toString(): @NonNls String {
-      return "GitIndexVirtualFile.Refresh: ${this@GitIndexVirtualFile}"
+      return "IndexFileData: ${this@GitIndexVirtualFile}"
     }
   }
 
