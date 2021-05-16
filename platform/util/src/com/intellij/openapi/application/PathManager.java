@@ -30,6 +30,7 @@ public final class PathManager {
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
   public static final String PROPERTY_LOG_CONFIG_FILE = "idea.log.config.file";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
+  public static final String PROPERTY_COMMUNITY_HOME = "idea.community.home";
 
   public static final String OPTIONS_DIRECTORY = "options";
   public static final String DEFAULT_EXT = ".xml";
@@ -161,11 +162,11 @@ public final class PathManager {
   private static List<Path> getBinDirectories(Path root) {
     List<Path> binDirs = new ArrayList<>();
 
-    String[] subDirs = {BIN_DIRECTORY, "community/bin", "ultimate/community/bin"};
+    Path[] candidates = {root.resolve(BIN_DIRECTORY), Paths.get(getCommunityHomePath(root.toString()), "bin")};
     String osSuffix = SystemInfoRt.isWindows ? "win" : SystemInfoRt.isMac ? "mac" : "linux";
 
-    for (String subDir : subDirs) {
-      Path dir = root.resolve(subDir);
+    for (Path dir : candidates) {
+      if (binDirs.contains(dir)) continue;
       if (Files.isDirectory(dir)) {
         binDirs.add(dir);
         dir = dir.resolve(osSuffix);
@@ -613,14 +614,24 @@ public final class PathManager {
    * @return path to 'community' project home irrespective of current project
    */
   public static @NotNull String getCommunityHomePath() {
-    String path = getHomePath();
-    if (Files.isDirectory(Paths.get(path, "community/.idea"))) {
-      return path + "/community";
+    return getCommunityHomePath(getHomePath());
+  }
+
+  private static @NotNull String getCommunityHomePath(@NotNull String homePath) {
+    boolean isRunningFromSources = Files.isDirectory(Paths.get(homePath, ".idea"));
+    if (!isRunningFromSources) return homePath;
+
+    String path = System.getProperty(PROPERTY_COMMUNITY_HOME);
+    if (path != null && Files.isDirectory(Paths.get(homePath, path, ".idea"))) {
+      return Paths.get(homePath, path).toString();
     }
-    if (Files.isDirectory(Paths.get(path, "ultimate/community/.idea"))) {
-      return path + "/ultimate/community";
+    if (Files.isDirectory(Paths.get(homePath, "community/.idea"))) {
+      return homePath + "/community";
     }
-    return path;
+    if (Files.isDirectory(Paths.get(homePath, "ultimate/community/.idea"))) {
+      return homePath + "/ultimate/community";
+    }
+    return homePath;
   }
 
   public static @Nullable String getJarPathForClass(@NotNull Class<?> aClass) {
