@@ -50,6 +50,11 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
   }
 
   @Override
+  protected @Nullable ActionGroup createLeftToolbarActionGroup() {
+    return (ActionGroup)ActionManager.getInstance().getAction("Markdown.Toolbar.Left");
+  }
+
+  @Override
   protected @Nullable ActionGroup createRightToolbarActionGroup() {
     return (ActionGroup)ActionManager.getInstance().getAction("Markdown.Toolbar.Right");
   }
