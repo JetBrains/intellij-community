@@ -10,7 +10,10 @@ import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
+
+import java.util.Set;
 
 import static org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction.isJavaFxTemplateAvailable;
 
@@ -20,7 +23,7 @@ public final class CreateJavaFxApplicationAction extends CreateFromTemplateActio
 
   public CreateJavaFxApplicationAction() {
     super(JavaFXBundle.message("javafx.create.new.application.title"), JavaFXBundle.message("javafx.create.new.application.description"),
-          AllIcons.FileTypes.JavaClass);
+          AllIcons.Nodes.Class);
   }
 
   @Override
@@ -30,6 +33,6 @@ public final class CreateJavaFxApplicationAction extends CreateFromTemplateActio
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(isJavaFxTemplateAvailable(e.getDataContext()));
+    e.getPresentation().setEnabledAndVisible(isJavaFxTemplateAvailable(e.getDataContext(), Set.of(JavaSourceRootType.SOURCE)));
   }
 }

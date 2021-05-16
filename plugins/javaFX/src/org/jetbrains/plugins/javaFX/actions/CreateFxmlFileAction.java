@@ -39,12 +39,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
 import static org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION;
@@ -122,10 +124,10 @@ public final class CreateFxmlFileAction extends CreateFromTemplateActionBase imp
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 
-    presentation.setEnabledAndVisible(isJavaFxTemplateAvailable(dataContext));
+    presentation.setEnabledAndVisible(isJavaFxTemplateAvailable(dataContext, JavaModuleSourceRootTypes.PRODUCTION));
   }
 
-  static boolean isJavaFxTemplateAvailable(DataContext dataContext) {
+  static boolean isJavaFxTemplateAvailable(DataContext dataContext, Set<? extends JpsModuleSourceRootType<?>> requiredRootTypes) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || view == null) {
@@ -145,7 +147,7 @@ public final class CreateFxmlFileAction extends CreateFromTemplateActionBase imp
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     return Arrays.stream(directories)
       .map(PsiDirectory::getVirtualFile)
-      .anyMatch(virtualFile -> index.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION));
+      .anyMatch(virtualFile -> index.isUnderSourceRootOfType(virtualFile, requiredRootTypes));
   }
 
   private static boolean hasJavaFxDependency(@Nullable Module module) {
