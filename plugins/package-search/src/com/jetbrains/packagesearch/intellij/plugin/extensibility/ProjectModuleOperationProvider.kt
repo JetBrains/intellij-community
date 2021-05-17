@@ -120,11 +120,4 @@ interface ProjectModuleOperationProvider {
         project: Project,
         virtualFile: VirtualFile
     ): Collection<UnifiedDependencyRepository>
-
-    /**
-     * Refreshes the project by triggering the build system sync with IntelliJ.
-     */
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-    @Deprecated("Not used anymore")
-    fun refreshProject(project: Project, virtualFile: VirtualFile)
 }

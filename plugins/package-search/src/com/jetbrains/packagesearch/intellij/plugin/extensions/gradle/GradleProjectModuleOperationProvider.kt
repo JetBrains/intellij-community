@@ -2,11 +2,6 @@ package com.jetbrains.packagesearch.intellij.plugin.extensions.gradle
 
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -15,7 +10,6 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractProject
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.packageSearchGradleConfigurationForProject
-import org.jetbrains.plugins.gradle.util.GradleConstants
 
 private const val EXTENSION_GRADLE = "gradle"
 private const val FILENAME_GRADLE_PROPERTIES = "gradle.properties"
@@ -58,17 +52,6 @@ internal open class GradleProjectModuleOperationProvider : AbstractProjectModule
             PackageSearchBundle.getMessage("packagesearch.packageoperation.error.gradle.missing.configuration")
         }
         return super.removeDependencyFromProject(operationMetadata, project, virtualFile)
-    }
-
-    override fun refreshProject(project: Project, virtualFile: VirtualFile) {
-        val module = runReadAction { ModuleUtilCore.findModuleForFile(virtualFile, project) }
-        val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
-        if (rootProjectPath != null) {
-            ExternalSystemUtil.refreshProject(
-                project, GradleConstants.SYSTEM_ID, rootProjectPath,
-                false, ProgressExecutionMode.IN_BACKGROUND_ASYNC
-            )
-        }
     }
 
     private fun saveAdditionalScopeToConfigurationIfNeeded(project: Project, scopeName: String) {
