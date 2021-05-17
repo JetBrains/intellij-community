@@ -168,6 +168,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     return null;
   }
 
+  // here there's a convention that query* methods below can call getSlowData() whereas get* methods can't
   private EditorWindow querySlowInjectedEditor(@NotNull Editor e, @NotNull Caret caret) {
     Object editor = getSlowData(InjectedDataKeys.EDITOR.getName(), e, caret);
     return editor instanceof EditorWindow ? (EditorWindow)editor : null;
