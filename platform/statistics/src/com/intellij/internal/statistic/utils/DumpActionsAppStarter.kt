@@ -42,15 +42,20 @@ class DumpActionsAppStarter : ApplicationStarter {
 
   private fun collectMainMenuActions(groups: HashMap<String, String>, action: AnAction, parentName: String?) {
     if (action is Separator) return
-    val path = appendName(action, parentName)
-    if (action is ActionGroup) {
-      for (child in action.getChildren(null)) {
-        collectMainMenuActions(groups, child, path)
+    try {
+      val path = appendName(action, parentName)
+      if (action is ActionGroup) {
+        for (child in action.getChildren(null)) {
+          collectMainMenuActions(groups, child, path)
+        }
+      }
+      else {
+        val id = ActionManager.getInstance().getId(action) ?: action.javaClass.name
+        groups[id] = path
       }
     }
-    else {
-      val id = ActionManager.getInstance().getId(action) ?: action.javaClass.name
-      groups[id] = path
+    catch (e: Exception) {
+      e.printStackTrace()
     }
   }
 
@@ -60,26 +65,31 @@ class DumpActionsAppStarter : ApplicationStarter {
                             actionsDescriptions: HashSet<ActionDescription>) {
 
     if (action is Separator) return
-    val id = actionId ?: ActionManager.getInstance().getId(action) ?: action.javaClass.name
-    if (visitedActions.contains(id)) {
-      return
-    }
-    visitedActions.add(id)
-    val templatePresentation = action.templatePresentation
-    val name = templatePresentation.text ?: ""
+    try {
+      val id = actionId ?: ActionManager.getInstance().getId(action) ?: action.javaClass.name
+      if (visitedActions.contains(id)) {
+        return
+      }
+      visitedActions.add(id)
+      val templatePresentation = action.templatePresentation
+      val name = templatePresentation.text ?: ""
 
-    if (action is ActionGroup) {
-      val children = action.getChildren(null)
-      for (child in children) {
-        processAction(child, null, visitedActions, actionsDescriptions)
+      if (action is ActionGroup) {
+        val children = action.getChildren(null)
+        for (child in children) {
+          processAction(child, null, visitedActions, actionsDescriptions)
+        }
+      }
+      else {
+        if (!id.startsWith("<anonymous-group")) {
+          val description = templatePresentation.description ?: ""
+
+          actionsDescriptions.add(ActionDescription(id, name, description))
+        }
       }
     }
-    else {
-      if (!id.startsWith("<anonymous-group")) {
-        val description = templatePresentation.description ?: ""
-
-        actionsDescriptions.add(ActionDescription(id, name, description))
-      }
+    catch (e: Exception) {
+      e.printStackTrace()
     }
   }
 
