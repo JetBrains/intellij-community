@@ -21,11 +21,15 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 class RemoveEmptyClassBodyInspection : IntentionBasedInspection<KtClassBody>(RemoveEmptyClassBodyIntention::class),
                                        CleanupLocalInspectionTool {
     override fun problemHighlightType(element: KtClassBody): ProblemHighlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL
+
+    override fun inspectionProblemText(element: KtClassBody): String {
+        return KotlinBundle.message("redundant.empty.class.body")
+    }
 }
 
 class RemoveEmptyClassBodyIntention : SelfTargetingOffsetIndependentIntention<KtClassBody>(
     KtClassBody::class.java,
-    KotlinBundle.lazyMessage("redundant.empty.class.body")
+    KotlinBundle.lazyMessage("remove.redundant.empty.class.body")
 ) {
     override fun applyTo(element: KtClassBody, editor: Editor?) {
         val parent = element.parent
