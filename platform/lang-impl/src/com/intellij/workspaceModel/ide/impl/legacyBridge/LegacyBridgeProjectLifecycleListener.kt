@@ -30,6 +30,8 @@ import org.jetbrains.annotations.ApiStatus
 class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   companion object {
     private val LOG = logger<LegacyBridgeProjectLifecycleListener>()
+
+    fun enabled(project: Project) = ModuleManager.getInstance(project) is ModuleManagerComponentBridge
   }
 
   override fun serviceRegistered(project: Project) {
