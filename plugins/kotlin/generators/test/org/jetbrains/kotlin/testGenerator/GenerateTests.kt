@@ -203,10 +203,7 @@ import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginBytecodeLi
 import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginDiagnosticTest
 import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationPluginIdeDiagnosticTest
 import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationQuickFixTest
-import org.jetbrains.uast.test.kotlin.AbstractFE1LegacyUastDeclarationTest
-import org.jetbrains.uast.test.kotlin.AbstractFE1UastDeclarationTest
-import org.jetbrains.uast.test.kotlin.AbstractFirLegacyUastDeclarationTest
-import org.jetbrains.uast.test.kotlin.AbstractFirUastDeclarationTest
+import org.jetbrains.uast.test.kotlin.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     System.setProperty("java.awt.headless", "true")
@@ -1582,6 +1579,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirLegacyUastDeclarationTest> {
             model("")
         }
+
+        testClass<AbstractFirLegacyUastIdentifiersTest> {
+            model("")
+        }
     }
 
     testGroup("uast/uast-kotlin-fir") {
@@ -1593,6 +1594,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/testData") {
         testClass<AbstractFE1LegacyUastDeclarationTest> {
+            model("")
+        }
+
+        testClass<AbstractFE1LegacyUastIdentifiersTest> {
             model("")
         }
     }
