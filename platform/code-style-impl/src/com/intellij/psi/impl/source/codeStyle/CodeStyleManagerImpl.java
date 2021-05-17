@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedIndentAdj
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -687,6 +688,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     if (document != null) {
       documentManager.commitDocument(document);
     }
-    PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> reformat(file));
+    PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> reformat(ensureValid(file)));
+  }
+
+  @NotNull
+  private PsiFile ensureValid(@NotNull PsiFile file) {
+    if (!file.isValid()) {
+      return PsiUtilCore.getPsiFile(myProject, file.getViewProvider().getVirtualFile());
+    }
+    return file;
   }
 }
