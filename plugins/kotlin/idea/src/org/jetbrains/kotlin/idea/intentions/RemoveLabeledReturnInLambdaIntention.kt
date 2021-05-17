@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2000-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -22,7 +22,7 @@ class RemoveLabeledReturnInLambdaIntention : SelfTargetingIntention<KtReturnExpr
         if (block.statements.lastOrNull() != element) return false
         val callName = block.getParentLambdaLabelName() ?: return false
         if (labelName != callName) return false
-        text = KotlinBundle.message("remove.return.0", labelName)
+        setTextGetter { KotlinBundle.message("remove.return.0", labelName) }
         return true
     }
 
