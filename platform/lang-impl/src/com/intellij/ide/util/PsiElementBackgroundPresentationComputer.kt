@@ -18,11 +18,9 @@ import com.intellij.util.ui.UIUtil.runWhenHidden
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.future.asCompletableFuture
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
-import java.util.concurrent.Future
 import javax.swing.AbstractListModel
 import javax.swing.JList
 import javax.swing.event.ListDataEvent
@@ -54,7 +52,7 @@ internal class PsiElementBackgroundPresentationComputer(list: JList<*>) {
 
   private val myCoroutineScope = CoroutineScope(Job())
   private val myRepaintQueue = myCoroutineScope.repaintQueue(list)
-  private val myPresentationMap: MutableMap<RendererAndElement, Future<TargetPresentation>> = HashMap()
+  private val myPresentationMap: MutableMap<RendererAndElement, Deferred<TargetPresentation>> = HashMap()
 
   fun dispose() {
     myCoroutineScope.cancel()
@@ -63,11 +61,11 @@ internal class PsiElementBackgroundPresentationComputer(list: JList<*>) {
   }
 
   @RequiresEdt
-  fun computePresentationAsync(renderer: PsiElementListCellRenderer<*>, element: PsiElement): Future<TargetPresentation> {
+  fun computePresentationAsync(renderer: PsiElementListCellRenderer<*>, element: PsiElement): Deferred<TargetPresentation> {
     return myPresentationMap.computeIfAbsent(RendererAndElement(renderer, element), ::doComputePresentationAsync)
   }
 
-  private fun doComputePresentationAsync(rendererAndElement: RendererAndElement): Future<TargetPresentation> {
+  private fun doComputePresentationAsync(rendererAndElement: RendererAndElement): Deferred<TargetPresentation> {
     val result = myCoroutineScope.async {
       //delay((Math.random() * 3000 + 2000).toLong()) // uncomment to add artificial delay to check out how it looks in UI
       readAction { progress ->
@@ -81,7 +79,7 @@ internal class PsiElementBackgroundPresentationComputer(list: JList<*>) {
       result.join()
       myRepaintQueue.send(Unit) // repaint _after_ the resulting future is done
     }
-    return result.asCompletableFuture()
+    return result
   }
 }
 
