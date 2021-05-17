@@ -31,9 +31,4 @@ internal class FirPackageCompletionContributor(
                 result.addElement(lookupElementFactory.createPackageLookupElement(packageSymbol.fqName))
             }
     }
-
-    private fun KtExpression.reference() = when (this) {
-        is KtDotQualifiedExpression -> selectorExpression?.mainReference
-        else -> mainReference
-    }
 }
