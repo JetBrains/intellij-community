@@ -35,7 +35,7 @@ internal class PsiElementBackgroundListCellRenderer(
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    val future: Future<TargetPresentation> = getComputer(list, renderer).computePresentationAsync(value)
+    val future: Future<TargetPresentation> = getComputer(list).computePresentationAsync(renderer, value)
     if (!future.isDone) {
       return myLoadingComponentRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     }

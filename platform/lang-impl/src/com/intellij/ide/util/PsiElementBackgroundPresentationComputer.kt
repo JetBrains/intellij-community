@@ -27,62 +27,52 @@ import javax.swing.AbstractListModel
 import javax.swing.JList
 import javax.swing.event.ListDataEvent
 
-internal fun getComputer(list: JList<*>, renderer: PsiElementListCellRenderer<*>): PsiElementBackgroundPresentationComputer {
-  return computers(list).computeIfAbsent(renderer) {
-    PsiElementBackgroundPresentationComputer(list, renderer)
-  }
-}
-
-private typealias Computers = HashMap<PsiElementListCellRenderer<*>, PsiElementBackgroundPresentationComputer>
-
-private val computersKey = ObjectUtils.sentinel("renderer computers")
-
-private fun computers(list: JList<*>): Computers {
-  val existing = list.getClientProperty(computersKey)
+internal fun getComputer(list: JList<*>): PsiElementBackgroundPresentationComputer {
+  val existing = list.getClientProperty(computerKey)
   if (existing != null) {
     @Suppress("UNCHECKED_CAST")
-    return existing as Computers
+    return existing as PsiElementBackgroundPresentationComputer
   }
-  val computers = Computers()
-  list.putClientProperty(computersKey, computers)
+  val computer = PsiElementBackgroundPresentationComputer(list)
+  list.putClientProperty(computerKey, computer)
   list.putClientProperty(ANIMATION_IN_RENDERER_ALLOWED, true)
   fun cleanUp() {
-    list.putClientProperty(computersKey, null)
+    list.putClientProperty(computerKey, null)
     list.putClientProperty(ANIMATION_IN_RENDERER_ALLOWED, null)
-    for (computer in computers.values) {
-      computer.dispose()
-    }
+    computer.dispose()
   }
   runWhenHidden(list, ::cleanUp)
   runWhenChanged(list, "cellRenderer", ::cleanUp)
-  return computers
+  return computer
 }
 
-internal class PsiElementBackgroundPresentationComputer(
-  list: JList<*>,
-  private val renderer: PsiElementListCellRenderer<*>,
-) {
+private val computerKey = ObjectUtils.sentinel("PsiElementBackgroundPresentationComputer")
+
+private typealias RendererAndElement = Pair<PsiElementListCellRenderer<*>, PsiElement>
+
+internal class PsiElementBackgroundPresentationComputer(list: JList<*>) {
 
   private val myCoroutineScope = CoroutineScope(Job())
   private val myRepaintQueue = myCoroutineScope.repaintQueue(list)
-  private val myComponentsMap: MutableMap<PsiElement, Future<TargetPresentation>> = HashMap()
+  private val myPresentationMap: MutableMap<RendererAndElement, Future<TargetPresentation>> = HashMap()
 
   fun dispose() {
     myCoroutineScope.cancel()
     myRepaintQueue.close()
-    myComponentsMap.clear()
+    myPresentationMap.clear()
   }
 
   @RequiresEdt
-  fun computePresentationAsync(element: PsiElement): Future<TargetPresentation> {
-    return myComponentsMap.computeIfAbsent(element, ::doComputePresentationAsync)
+  fun computePresentationAsync(renderer: PsiElementListCellRenderer<*>, element: PsiElement): Future<TargetPresentation> {
+    return myPresentationMap.computeIfAbsent(RendererAndElement(renderer, element), ::doComputePresentationAsync)
   }
 
-  private fun doComputePresentationAsync(element: PsiElement): Future<TargetPresentation> {
+  private fun doComputePresentationAsync(rendererAndElement: RendererAndElement): Future<TargetPresentation> {
     val result = myCoroutineScope.async {
       //delay((Math.random() * 3000 + 2000).toLong()) // uncomment to add artificial delay to check out how it looks in UI
       readAction { progress ->
         runUnderIndicator(progress) {
+          val (renderer, element) = rendererAndElement
           renderer.computePresentation(element)
         }
       }
