@@ -28,7 +28,7 @@ interface ProjectModuleOperationProvider {
          * Retrieves the first provider for given [project] and [psiFile].
          * @return The first compatible provider or `null` if none is found.
          */
-        fun forProjectPsiFile(project: Project, psiFile: PsiFile?): ProjectModuleOperationProvider? =
+        fun forProjectPsiFileOrNull(project: Project, psiFile: PsiFile?): ProjectModuleOperationProvider? =
             extensionPointName.extensions
                 .firstOrNull { it.hasSupportFor(project, psiFile) }
 

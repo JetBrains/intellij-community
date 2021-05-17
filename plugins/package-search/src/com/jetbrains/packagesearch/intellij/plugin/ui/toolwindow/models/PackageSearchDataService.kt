@@ -584,7 +584,7 @@ internal class PackageSearchDataService(
             FileEditorManager.getInstance(project).openFiles.asSequence()
                 .filter { virtualFile ->
                     val file = PsiUtil.getPsiFile(project, virtualFile)
-                    ProjectModuleOperationProvider.forProjectPsiFile(project, file)
+                    ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
                         ?.hasSupportFor(project, file)
                         ?: false
                 }
