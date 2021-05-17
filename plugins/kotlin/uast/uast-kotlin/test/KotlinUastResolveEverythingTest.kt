@@ -45,4 +45,6 @@ class KotlinUastResolveEverythingTest : AbstractKotlinUastTest(), ResolveEveryth
     @Test
     fun testPropertyReferences() = doTest("PropertyReferences")
 
+    @Test
+    fun testTypeAliasConstructorReference() = doTest("TypeAliasConstructorReference")
 }
