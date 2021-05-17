@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.options.SimpleConfigurable
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
@@ -26,6 +27,8 @@ import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.util.CharsetUtil
+import org.jetbrains.builtInWebServer.BuiltInServerConfigurableUi
+import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.ide.BuiltInServerBundle
 import org.jetbrains.io.jsonRpc.Client
 import org.jetbrains.io.jsonRpc.ClientManager
@@ -184,8 +187,12 @@ class WebServerPageConnectionService {
     if (!modifiedFiles.contains(editorFile)) return
 
     gotItTooltip.withLink(CommonBundle.message("action.text.configure.ellipsis")) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(editorComponent.editor.project,
-                                                        XmlBundle.message("setting.builtin.server.category.label"))
+      ShowSettingsUtil.getInstance().editConfigurable(
+        editorComponent.editor.project, SimpleConfigurable.create(
+        "builtInServer",
+        XmlBundle.message("setting.builtin.server.category.label"),
+        BuiltInServerConfigurableUi::class.java
+      ) { BuiltInServerOptions.getInstance() })
     }
 
     gotItTooltip.show(editorComponent) { component, _ ->
