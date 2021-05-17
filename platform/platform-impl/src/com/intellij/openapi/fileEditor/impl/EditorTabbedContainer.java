@@ -461,7 +461,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         areAllToolWindowsHidden = event.getPresentation().getClientProperty(MaximizeEditorInSplitAction.Companion.getCURRENT_STATE_IS_MAXIMIZED_KEY());
       }
     }
-    Runnable runnable = AdvancedSettings.getBoolean("editor.position.mouse.cursor.on.doubleclicked.tab")
+    Runnable runnable = Registry.is("editor.position.mouse.cursor.on.doubleclicked.tab")
                         ? createKeepMousePositionRunnable(e)
                         : null;
     if (areAllToolWindowsHidden != null && (isEditorMaximized == null || isEditorMaximized == areAllToolWindowsHidden)) {
