@@ -13,7 +13,6 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JdkCommandLineSetup
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.pom.Navigatable
@@ -115,9 +114,6 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
 
     languageRuntime.homePath = wslPath ?: "/usr"
     request.configuration.addLanguageRuntime(languageRuntime)
-    val setup = JdkCommandLineSetup(request)
-    setup.setupCommandLine(wslParams)
-    setup.setupJavaExePath(wslParams)
 
     val builder = wslParams.toCommandLine(request)
     builder.setWorkingDirectory(workingDirectory)
