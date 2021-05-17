@@ -21,10 +21,13 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Url;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrowserRequest;
 
@@ -48,7 +51,10 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
       if (browserRequest == null) return;
       Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(browserRequest, preferLocalFileUrl);
       if (!urls.isEmpty()) {
-        BaseOpenInBrowserActionKt.chooseUrl(urls).onSuccess((url) -> {
+        //hack to disable reload
+        List<Url> processedUrls = ContainerUtil.map(urls, el -> el.removeParameter("_ij_reload"));
+        
+        BaseOpenInBrowserActionKt.chooseUrl(processedUrls).onSuccess((url) -> {
           WebPreviewVirtualFile file = new WebPreviewVirtualFile(virtualFile, url);
           if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
             OpenInRightSplitAction.Companion.openInRightSplit(
