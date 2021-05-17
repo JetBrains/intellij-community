@@ -900,7 +900,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                                                  @NotNull VirtualFile file,
                                                                  boolean focusEditor,
                                                                  @Nullable HistoryEntry entry) {
-    return openFileImpl4(window, file, entry, new FileEditorOpenOptions().withCurrentTab(true).withFocusEditor(focusEditor));
+    return openFileImpl4(window, file, entry, new FileEditorOpenOptions().withSelectAsCurrent().withRequestFocus(focusEditor));
   }
 
   /**
@@ -916,7 +916,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     VirtualFile file = BackedVirtualFile.getOriginFileIfBacked(_file);
     Ref<EditorWithProviderComposite> compositeRef = new Ref<>();
 
-    if (!options.isReopeningEditorsOnStartup()) {
+    if (!options.isReopeningOnStartup()) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> compositeRef.set(window.findFileComposite(file)));
     }
 
@@ -1019,7 +1019,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     FileEditor[] editors = composite.getEditors();
     FileEditorProvider[] providers = composite.getProviders();
 
-    window.setEditor(composite, options.isCurrentTab(), options.isFocusEditor());
+    window.setEditor(composite, options.getSelectAsCurrent(), options.getRequestFocus());
 
     for (int i = 0; i < editors.length; i++) {
       restoreEditorState(file, providers[i], editors[i], entry, newEditor, options.isExactState());
@@ -1046,7 +1046,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     // Notify editors about selection changes
     EditorsSplitters splitters = window.getOwner();
-    splitters.setCurrentWindow(window, options.isFocusEditor());
+    splitters.setCurrentWindow(window, options.getRequestFocus());
     splitters.afterFileOpen(file);
     addSelectionRecord(file, window);
 
@@ -1054,7 +1054,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     selectedEditor.selectNotify();
 
     // transfer focus into editor
-    if (!ApplicationManager.getApplication().isUnitTestMode() && options.isFocusEditor()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && options.getRequestFocus()) {
       EditorWithProviderComposite finalComposite = composite;
       Runnable focusRunnable = () -> {
         if (splitters.getCurrentWindow() != window || window.getSelectedEditor() != finalComposite) {

@@ -179,8 +179,8 @@ public final class EditorWindow {
     if (file != null) {
       getManager().openFileImpl4(this, file, null,
                                  info.getSecond().clone()
-                                   .withCurrentTab(true)
-                                   .withFocusEditor(true));
+                                   .withSelectAsCurrent()
+                                   .withRequestFocus());
     }
   }
 
@@ -669,9 +669,9 @@ public final class EditorWindow {
       VirtualFile currentStateFile = currentState.getFile();
       if (currentStateFile == null || !currentStateFile.equals(nextFile)) currentState = null;
       FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState,
-                                                                   new FileEditorOpenOptions()
-                                                                     .withCurrentTab(true)
-                                                                     .withFocusEditor(focusNew)
+                                                             new FileEditorOpenOptions()
+                                                               .withSelectAsCurrent()
+                                                               .withRequestFocus(focusNew)
                                                                      .withExactState()).first;
       syncCaretIfPossible(editors);
       if (isFileOpen(nextFile)) {

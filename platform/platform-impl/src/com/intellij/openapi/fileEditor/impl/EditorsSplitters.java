@@ -967,7 +967,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
             .withPin(Boolean.valueOf(file.getAttributeValue(PINNED)))
             .withIndex(i)
-            .withReopeningEditorsOnStartup();
+            .withReopeningOnStartup();
           try {
             virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
             Document document = ReadAction.compute(() -> {
