@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.advertiser.PluginData;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -57,7 +58,10 @@ public final class PluginAdvertiserEditorNotificationProvider extends EditorNoti
           shouldUpdateNotifications = extensionsStateService.updateCache(fullExtension) || shouldUpdateNotifications;
         }
         if (shouldUpdateNotifications) {
-          EditorNotifications.getInstance(project).updateNotifications(file);
+          ApplicationManager.getApplication().invokeLater(
+            () -> EditorNotifications.getInstance(project).updateNotifications(file),
+            project.getDisposed()
+          );
         }
         LOG.debug(String.format("Tried to update extensions cache for file '%s'. shouldUpdateNotifications=%s", file.getName(),
                                 shouldUpdateNotifications));
