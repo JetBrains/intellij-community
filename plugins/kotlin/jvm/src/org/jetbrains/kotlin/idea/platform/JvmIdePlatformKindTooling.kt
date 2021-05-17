@@ -73,7 +73,7 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
         val (urls, framework) = calculateUrlsToFramework(declaration) ?: return null
 
         framework?.let {
-            return getTestStateIcon(urls, declaration, defaultIcon = it.icon)
+            return getTestStateIcon(urls, declaration)
         }
 
         descriptorProvider()?.takeIf { it.isKotlinTestDeclaration() } ?: return null

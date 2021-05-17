@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
-import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -31,14 +30,10 @@ import javax.swing.Icon
 
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     companion object {
-        fun getTestStateIcon(
-            urls: List<String>,
-            declaration: KtNamedDeclaration,
-            defaultIcon: Icon = AllIcons.RunConfigurations.TestState.Run,
-        ): Icon? {
+        fun getTestStateIcon(urls: List<String>, declaration: KtNamedDeclaration): Icon {
             val testStateStorage = TestStateStorage.getInstance(declaration.project)
             val isClass = declaration is KtClass
-            var state: TestStateStorage.Record? = run {
+            val state: TestStateStorage.Record? = run {
                 for (url in urls) {
                     testStateStorage.getState(url)?.let { return@run it }
                 }
