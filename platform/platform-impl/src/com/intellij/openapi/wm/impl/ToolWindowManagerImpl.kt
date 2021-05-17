@@ -2006,7 +2006,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    * Spies on IdeToolWindow properties and applies them to the window
    * state.
    */
-  internal fun toolWindowPropertyChanged(toolWindow: ToolWindowImpl, property: ToolWindowProperty) {
+  @ApiStatus.Internal
+  open fun toolWindowPropertyChanged(toolWindow: ToolWindow, property: ToolWindowProperty) {
     val entry = idToEntry[toolWindow.id]
 
     if (property == ToolWindowProperty.AVAILABLE && !toolWindow.isAvailable && entry?.readOnlyWindowInfo?.isVisible == true) {
@@ -2246,7 +2247,7 @@ private const val ACTIVE_ATTR_VALUE = "active"
 private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 private const val RECENT_TW_TAG = "recentWindows"
 
-internal enum class ToolWindowProperty {
+enum class ToolWindowProperty {
   TITLE, ICON, AVAILABLE, STRIPE_TITLE
 }
 
