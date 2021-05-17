@@ -2,16 +2,27 @@
 package com.intellij.collaboration.ui.codereview.timeline.comment
 
 import com.intellij.collaboration.ui.codereview.SimpleEventListener
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.lang.Language
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
+import com.intellij.ui.LanguageTextField
 import com.intellij.util.EventDispatcher
 
-abstract class SubmittableTextFieldModelBase(initialText: String) : SubmittableTextFieldModel {
-  override val project: Project? = null
+abstract class SubmittableTextFieldModelBase(
+  final override val project: Project?,
+  initialText: String,
+  language: Language = PlainTextLanguage.INSTANCE,
+) : SubmittableTextFieldModel {
 
   private val listeners = EventDispatcher.create(SimpleEventListener::class.java)
 
-  override val document = EditorFactory.getInstance().createDocument(initialText)
+  override val document: Document = LanguageTextField.createDocument(
+    initialText,
+    language,
+    project,
+    LanguageTextField.SimpleDocumentCreator()
+  )
 
   override var isBusy = false
     set(value) {

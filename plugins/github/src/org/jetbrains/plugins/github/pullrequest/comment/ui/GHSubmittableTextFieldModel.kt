@@ -6,26 +6,17 @@ import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
-import com.intellij.ui.LanguageTextField
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import java.util.concurrent.CompletableFuture
 
 open class GHSubmittableTextFieldModel(
-  final override val project: Project,
+  project: Project,
   initialText: String,
   private val submitter: (String) -> CompletableFuture<*>
-) : SubmittableTextFieldModelBase(initialText) {
+) : SubmittableTextFieldModelBase(project, initialText, MarkdownLanguage.INSTANCE) {
 
   constructor(project: Project, submitter: (String) -> CompletableFuture<*>) : this(project, "", submitter)
-
-  override val document: Document = LanguageTextField.createDocument(
-    initialText,
-    MarkdownLanguage.INSTANCE,
-    project,
-    LanguageTextField.SimpleDocumentCreator()
-  )
 
   override fun submit() {
     if (isBusy) return
