@@ -187,7 +187,7 @@ public class PushDownConflicts {
 
   public void checkMemberPlacementInTargetClassConflict(final PsiClass targetClass, final PsiMember movedMember) {
     if (movedMember instanceof PsiField) {
-      String name = movedMember.getName();
+      String name = ((PsiField)movedMember).getName();
       final PsiField field = targetClass.findFieldByName(name, false);
       if (field != null) {
         String message = JavaRefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), 
@@ -215,7 +215,7 @@ public class PushDownConflicts {
       for (PsiClass innerClass : allInnerClasses) {
         if (innerClass.equals(movedMember)) continue;
 
-        if (name.equals(innerClass.getName())) {
+        if (Objects.requireNonNull(name).equals(innerClass.getName())) {
           String message = JavaRefactoringBundle.message("0.already.contains.inner.class.named.1", RefactoringUIUtil.getDescription(targetClass, false),
                                                 CommonRefactoringUtil.htmlEmphasize(name));
           myConflicts.putValue(innerClass, message);
