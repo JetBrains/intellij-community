@@ -2,8 +2,8 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
+import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -26,7 +26,7 @@ abstract class CodeProcessorCheckinHandler(
     val processor = createCodeProcessor()
 
     withContext(Dispatchers.Default) {
-      processor.processFilesUnderProgress(EmptyProgressIndicator())
+      processor.processFilesUnderProgress(NoTextIndicator(indicator))
     }
     FileDocumentManager.getInstance().saveAllDocuments()
 
@@ -36,4 +36,8 @@ abstract class CodeProcessorCheckinHandler(
   override fun showDetails(problem: CommitProblem) = Unit
 
   override fun runCheckinHandlers(runnable: Runnable) = Unit
+}
+
+private class NoTextIndicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
+  override fun setText(text: String?) = Unit
 }

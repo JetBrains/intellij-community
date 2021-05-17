@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.status.InlineProgressIndicator
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
@@ -204,14 +205,23 @@ private class CommitChecksProgressIndicator : InlineProgressIndicator(true, Comm
   }
 
   override fun createCompactTextAndProgress(component: JPanel) {
-    val textPanel = NonOpaquePanel(BorderLayout())
-    textPanel.border = emptyTop(5)
-    textPanel.add(myText, BorderLayout.CENTER)
+    val detailsPanel = NonOpaquePanel(HorizontalLayout(6)).apply {
+      border = emptyTop(5)
+
+      add(myText)
+      add(myText2)
+    }
 
     component.add(myProgress, BorderLayout.CENTER)
-    component.add(textPanel, BorderLayout.SOUTH)
+    component.add(detailsPanel, BorderLayout.SOUTH)
 
     myText.recomputeSize()
+    myText2.recomputeSize()
+  }
+
+  override fun updateProgressNow() {
+    super.updateProgressNow()
+    setText2Enabled(false) // to set "gray" color
   }
 }
 

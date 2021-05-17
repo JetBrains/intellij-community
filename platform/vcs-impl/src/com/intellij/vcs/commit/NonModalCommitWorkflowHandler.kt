@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -158,7 +159,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       workflow.executeDefault {
         if (isSkipCommitChecks()) return@executeDefault ReturnResult.COMMIT
 
-        val indicator = ui.commitProgressUi.startProgress()
+        val indicator = IndeterminateIndicator(ui.commitProgressUi.startProgress())
         try {
           runAllHandlers(executor, indicator)
         }
@@ -249,4 +250,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       updateDefaultCommitActionName()
     }
   }
+}
+
+private class IndeterminateIndicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
+  override fun setIndeterminate(indeterminate: Boolean) = Unit
+  override fun setFraction(fraction: Double) = Unit
 }
