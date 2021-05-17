@@ -117,7 +117,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                               <!-- Default configuration for running with: mvn clean javafx:run -->
                               <id>default-cli</id>
                               <configuration>
-                                  <mainClass>com.example.demo.HelloApplication</mainClass>
+                                  <mainClass>com.example.demo/com.example.demo.HelloApplication</mainClass>
                               </configuration>
                           </execution>
                       </executions>
