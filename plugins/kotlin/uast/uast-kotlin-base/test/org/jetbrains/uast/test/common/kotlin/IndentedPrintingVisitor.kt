@@ -3,7 +3,6 @@ package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import org.jetbrains.uast.UFile
 import kotlin.reflect.KClass
 
