@@ -168,7 +168,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> res = new HashMap<>();
     res.put(new TopHitSEContributor(project, contextComponent, s -> mySearchEverywhereUI.getSearchField().setText(s)),
             SearchEverywhereTabDescriptor.IDE);
-    res.put(new RecentFilesSEContributor(initEvent), SearchEverywhereTabDescriptor.PROJECT);
+    res.put(PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent)), SearchEverywhereTabDescriptor.PROJECT);
     res.put(new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText()),
             SearchEverywhereTabDescriptor.IDE);
 

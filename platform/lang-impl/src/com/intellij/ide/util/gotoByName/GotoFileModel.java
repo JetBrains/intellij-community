@@ -137,7 +137,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     return new GotoFileCellRenderer(myMaxSize) {
       @NotNull
       @Override
-      protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+      public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
         ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
         if (!(value instanceof PsiFileSystemItem)) return defaultMatchers;
 

@@ -85,7 +85,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     return new SearchEverywherePsiRenderer(this) {
       @NotNull
       @Override
-      protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+      public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
         ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
         if (!(value instanceof PsiFileSystemItem) || myModelForRenderer == null) {
           return defaultMatchers;
@@ -140,7 +140,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     @NotNull
     @Override
     public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
-      return new FileSearchEverywhereContributor(initEvent);
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new FileSearchEverywhereContributor(initEvent));
     }
   }
 

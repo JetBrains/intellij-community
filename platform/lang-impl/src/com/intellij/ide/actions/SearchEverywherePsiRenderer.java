@@ -44,21 +44,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   private EditorColorsScheme scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
 
   public SearchEverywherePsiRenderer(Disposable parent) {
-    setLayout(new BorderLayout() {
-      @Override
-      public void layoutContainer(Container target) {
-        super.layoutContainer(target);
-        final Component right = getLayoutComponent(EAST);
-        final Component left = getLayoutComponent(WEST);
-
-        //IDEA-140824
-        if (right != null && left != null && left.getBounds().x + left.getBounds().width > right.getBounds().x) {
-          final Rectangle bounds = right.getBounds();
-          final int newX = left.getBounds().x + left.getBounds().width;
-          right.setBounds(newX, bounds.y, bounds.width - (newX - bounds.x), bounds.height);
-        }
-      }
-    });
+    setLayout(new SELayout());
 
     ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(LafManagerListener.TOPIC, __ -> {
       scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
@@ -186,5 +172,21 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   @Override
   protected int getIconFlags() {
     return Iconable.ICON_FLAG_READ_STATUS;
+  }
+
+  public static class SELayout extends BorderLayout {
+    @Override
+    public void layoutContainer(Container target) {
+      super.layoutContainer(target);
+      final Component right = getLayoutComponent(EAST);
+      final Component left = getLayoutComponent(WEST);
+
+      //IDEA-140824
+      if (right != null && left != null && left.getBounds().x + left.getBounds().width > right.getBounds().x) {
+        final Rectangle bounds = right.getBounds();
+        final int newX = left.getBounds().x + left.getBounds().width;
+        right.setBounds(newX, bounds.y, bounds.width - (newX - bounds.x), bounds.height);
+      }
+    }
   }
 }

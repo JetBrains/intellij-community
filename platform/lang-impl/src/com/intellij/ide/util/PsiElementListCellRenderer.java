@@ -89,7 +89,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   public static class ItemMatchers {
     @Nullable public final Matcher nameMatcher;
-    @Nullable final Matcher locationMatcher;
+    @Nullable public final Matcher locationMatcher;
 
     public ItemMatchers(@Nullable Matcher nameMatcher, @Nullable Matcher locationMatcher) {
       this.nameMatcher = nameMatcher;
@@ -255,7 +255,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   @NotNull
-  protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+  public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
     return new ItemMatchers(MatcherHolder.getAssociatedMatcher(list), null);
   }
 
@@ -407,15 +407,19 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
 
     TextAttributes presentableAttributes = getNavigationItemAttributes(element);
-    if (presentableAttributes != null) {
-      builder = builder.presentableTextAttributes(presentableAttributes);
-    }
-    else {
+    if (presentableAttributes == null) {
       Color color = vFile == null ? null : FileStatusManager.getInstance(project).getStatus(vFile).getColor();
       if (color != null) {
-        builder = builder.presentableTextAttributes(new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color).toTextAttributes());
+        presentableAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color).toTextAttributes();
       }
     }
+    boolean isProblemFile = vFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(vFile);
+    if (isProblemFile) {
+      TextAttributes errorAttributes = getErrorAttributes().toTextAttributes();
+      presentableAttributes = presentableAttributes == null ? errorAttributes
+                                                            : TextAttributes.merge(errorAttributes, presentableAttributes);
+    }
+    builder = builder.presentableTextAttributes(presentableAttributes);
 
     if (vFile != null) {
       builder = builder.backgroundColor(getFileBackgroundColor(project, vFile));
@@ -424,7 +428,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     String containerText = getContainerText(element, name);
     if (containerText != null) {
       var matcher = CONTAINER_PATTERN.matcher(containerText);
-      boolean isProblemFile = vFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(vFile);
       builder = builder.containerText(
         matcher.matches() ? matcher.group(2) : containerText,
         isProblemFile ? getErrorAttributes().toTextAttributes() : null
