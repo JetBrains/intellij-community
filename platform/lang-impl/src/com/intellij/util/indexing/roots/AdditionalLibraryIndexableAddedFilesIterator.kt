@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nls
 
 internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibraryName: @Nls String,
                                                             val rootsToIndex: Iterable<VirtualFile>) : IndexableFilesIterator {
-  override fun getDebugName(): String = "Additional library change reindexing iterator"
+  override fun getDebugName(): String = "Additional library change reindexing iterator for $presentableLibraryName"
 
   override fun getIndexingProgressText(): String =
     IndexingBundle.message("progress.text.additional.library.indexing.added.files", presentableLibraryName)
