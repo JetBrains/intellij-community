@@ -59,13 +59,13 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
       if (artifactModel.group().valueAsString() == oldDescriptor.coordinates.groupId
           && artifactModel.name().valueAsString() == oldDescriptor.coordinates.artifactId
           && artifactModel.version().valueAsString() == oldDescriptor.coordinates.version
-          && artifactModel.configurationName() == oldDescriptor.scope
+          //&& artifactModel.configurationName() == oldDescriptor.scope
       ) {
         if (oldDescriptor.coordinates.groupId != newDescriptor.coordinates.groupId) {
           updateVariableOrValue(artifactModel.group(), newDescriptor.coordinates.groupId!!)
         }
         if (oldDescriptor.coordinates.artifactId != newDescriptor.coordinates.artifactId) {
-          updateVariableOrValue(artifactModel.group(), newDescriptor.coordinates.artifactId!!)
+          updateVariableOrValue(artifactModel.name(), newDescriptor.coordinates.artifactId!!)
         }
         if (oldDescriptor.coordinates.version != newDescriptor.coordinates.version) {
           updateVariableOrValue(artifactModel.version(), newDescriptor.coordinates.version!!)
