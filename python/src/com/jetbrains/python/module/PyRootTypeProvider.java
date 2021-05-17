@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,21 +92,10 @@ public abstract class PyRootTypeProvider {
   }
 
   /**
-   * @deprecated Use {@link #getRootsGroupColor()}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
-  public Color getColor() {
-    throw new AbstractMethodError(getClass().getSimpleName() + " should override getRootsGroupColor()");
-  }
-
-  /**
    * Returns the color of the list of paths to the corresponding directories in "Project Structure".
    */
   @NotNull
-  public Color getRootsGroupColor() {
-    return getColor();
-  }
+  public abstract Color getRootsGroupColor();
 
   /**
    * Returns an optional shortcut for the action for marking a directory with this root type in "Project Structure".

@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.module.Module;
@@ -35,9 +34,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.target.GradleTargetUtil;
 import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware;
 import org.jetbrains.plugins.gradle.service.execution.LocalBuildLayoutParameters;
 import org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -202,19 +201,6 @@ public class GradleInstallationManager implements Disposable {
     BuildLayoutParameters buildLayoutParameters = guessBuildLayoutParameters(project, linkedProjectPath);
     String gradleHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleHome());
     return gradleHome != null ? new File(gradleHome) : null;
-  }
-
-  /**
-   * @deprecated use {@link GradleInstallationManager#getGradleJvmPath(Project, String)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public @Nullable Sdk getGradleJdk(@Nullable Project project, @NotNull String linkedProjectPath) {
-    if (project == null) return null;
-    String homePath = getGradleJvmPath(project, linkedProjectPath);
-    if (homePath == null) return null;
-    ExternalSystemJdkProvider jdkProvider = ExternalSystemJdkProvider.getInstance();
-    return jdkProvider.createJdk(null, homePath);
   }
 
   public @Nullable String getGradleJvmPath(@NotNull Project project, @NotNull String linkedProjectPath) {

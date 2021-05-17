@@ -69,7 +69,7 @@ class PyNamespacePackageRootProvider: PyRootTypeProvider() {
     return PyBundle.message("python.namespace.packages.description")
   }
 
-  override fun getColor(): Color {
+  override fun getRootsGroupColor(): Color {
     return EASTERN_BLUE
   }
 
