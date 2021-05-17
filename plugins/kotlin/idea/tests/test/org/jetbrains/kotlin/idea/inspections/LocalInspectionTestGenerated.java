@@ -4443,6 +4443,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/dfa")
+    public static class Dfa extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("andRange.kt")
+        public void testAndRange() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/andRange.kt");
+        }
+
+        @TestMetadata("basicRange.kt")
+        public void testBasicRange() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicRange.kt");
+        }
+
+        @TestMetadata("orRange.kt")
+        public void testOrRange() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/orRange.kt");
+        }
+
+        @TestMetadata("plusRange.kt")
+        public void testPlusRange() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/plusRange.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/doubleNegation")
     public static class DoubleNegation extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
