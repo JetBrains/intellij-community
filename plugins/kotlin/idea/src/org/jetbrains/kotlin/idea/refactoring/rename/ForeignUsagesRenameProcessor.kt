@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
 
 abstract class ForeignUsagesRenameProcessor {
@@ -24,7 +25,13 @@ abstract class ForeignUsagesRenameProcessor {
                 languageInfos.forEach(fallbackHandler)
             }
         }
+
+        @JvmStatic
+        fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
+            EP_NAME.extensions.forEach { it.prepare(element, newName, allRenames, scope) }
+        }
     }
 
     abstract fun process(element: PsiElement, newName: String, language: Language, allUsages: Collection<UsageInfo>): Boolean
+    abstract fun prepare(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope)
 }

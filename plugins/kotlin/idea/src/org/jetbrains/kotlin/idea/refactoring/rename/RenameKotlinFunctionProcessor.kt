@@ -212,6 +212,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                 }
             }
         }
+        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {
