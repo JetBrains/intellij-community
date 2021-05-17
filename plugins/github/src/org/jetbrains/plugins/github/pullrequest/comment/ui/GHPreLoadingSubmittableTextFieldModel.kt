@@ -4,8 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import java.util.concurrent.CompletableFuture
 
@@ -17,15 +15,12 @@ class GHPreLoadingSubmittableTextFieldModel(
 ) : GHSubmittableTextFieldModel(project, initialText, submitter) {
 
   init {
-    document as DocumentImpl
-    document.setAcceptSlashR(true)
-    document.setReadOnly(true)
+    content.isAcceptSlashR = true
+    content.isReadOnly = true
     isBusy = true
     preLoader.successOnEdt {
-      document.setReadOnly(false)
-      runWriteAction {
-        document.setText(it)
-      }
+      content.isReadOnly = false
+      content.text = it
     }.errorOnEdt {
       error = it
     }.completionOnEdt {

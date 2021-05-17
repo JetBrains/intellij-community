@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import java.util.concurrent.CompletableFuture
@@ -22,14 +21,12 @@ open class GHSubmittableTextFieldModel(
     if (isBusy) return
 
     isBusy = true
-    document.setReadOnly(true)
-    submitter(document.text).successOnEdt {
-      document.setReadOnly(false)
-      runWriteAction {
-        document.setText("")
-      }
+    content.isReadOnly = true
+    submitter(content.text).successOnEdt {
+      content.isReadOnly = false
+      content.text = ""
     }.errorOnEdt {
-      document.setReadOnly(false)
+      content.isReadOnly = false
       error = it
     }.completionOnEdt {
       isBusy = false
