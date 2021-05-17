@@ -62,7 +62,6 @@ public class EditorSearchSession implements SearchSession,
                                             SelectionListener,
                                             SearchResults.SearchResultsListener,
                                             SearchReplaceComponent.Listener {
-  private static final String FIND_TYPE = "FindInFile";
   public static final DataKey<EditorSearchSession> SESSION_KEY = DataKey.create("EditorSearchSession");
   public static final Logger SELECTION_UPDATE_LOGGER = Logger.getInstance("com.intellij.find.selection");
 
@@ -194,7 +193,7 @@ public class EditorSearchSession implements SearchSession,
 
     myEditor.getSelectionModel().addSelectionListener(this, myDisposable);
 
-    FindUsagesCollector.triggerUsedOptionsStats(project, FIND_TYPE, findModel);
+    FindUsagesCollector.triggerUsedOptionsStats(project, FindUsagesCollector.FIND_IN_FILE, findModel);
   }
 
   @NotNull

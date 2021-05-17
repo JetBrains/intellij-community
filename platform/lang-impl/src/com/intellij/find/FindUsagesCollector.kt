@@ -11,11 +11,16 @@ import com.intellij.openapi.util.text.StringUtil
 class FindUsagesCollector : CounterUsagesCollector() {
 
   companion object {
-    private val GROUP = EventLogGroup("find", 5)
+    private val GROUP = EventLogGroup("find", 6)
 
-    private val TYPE = EventFields.String("type", listOf("FindInFile", "FindInPath", "Unknown"))
+    const val FIND_IN_FILE = "FindInFile"
 
-    private val REGEXP_HELP_CLICKED = GROUP.registerEvent("regexp.help.clicked", TYPE)
+    const val FIND_IN_PATH = "FindInPath"
+
+    const val UNKNOWN = "Unknown"
+
+    private val REGEXP_HELP_CLICKED = GROUP.registerEvent("regexp.help.clicked",
+                                                          EventFields.String("type", listOf(FIND_IN_FILE, UNKNOWN)))
 
     private val CASE_SENSITIVE = EventFields.Boolean("case_sensitive")
 
@@ -26,6 +31,8 @@ class FindUsagesCollector : CounterUsagesCollector() {
     private val WITH_FILE_FILTER = EventFields.Boolean("with_file_filter")
 
     private val CONTEXT = EventFields.Enum("context", FindModel.SearchContext::class.java)
+
+    private val TYPE = EventFields.String("type", listOf(FIND_IN_FILE, FIND_IN_PATH))
 
     private val SEARCH_SESSION_STARTED = GROUP.registerVarargEvent("search.session.started",
                                                                    TYPE,
@@ -40,7 +47,7 @@ class FindUsagesCollector : CounterUsagesCollector() {
 
     @JvmField
     val CHECK_BOX_TOGGLED = GROUP.registerEvent("check.box.toggled",
-                                                TYPE,
+                                                EventFields.String("type", listOf(FIND_IN_PATH)),
                                                 EventFields.Enum("option_name", FindPopupPanel.ToggleOptionName::class.java),
                                                 OPTION_VALUE
     )
@@ -64,7 +71,7 @@ class FindUsagesCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun triggerRegexHelpClicked(type: String?) {
-      REGEXP_HELP_CLICKED.log(StringUtil.notNullize(type, "Unknown"))
+      REGEXP_HELP_CLICKED.log(StringUtil.notNullize(type, UNKNOWN))
     }
   }
 

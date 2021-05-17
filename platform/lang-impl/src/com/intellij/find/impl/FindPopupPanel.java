@@ -114,7 +114,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private static final KeyStroke REPLACE_ALL = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke RESET_FILTERS = KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_DOWN_MASK);
 
-  private static final String FIND_TYPE = "FindInPath";
   private static final String SERVICE_KEY = "find.popup";
   private static final String SPLITTER_SERVICE_KEY = "find.popup.splitter";
   @NotNull private final FindUIHelper myHelper;
@@ -200,7 +199,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     initComponents();
     initByModel();
 
-    FindUsagesCollector.triggerUsedOptionsStats(myProject, FIND_TYPE, myHelper.getModel());
+    FindUsagesCollector.triggerUsedOptionsStats(myProject, FindUsagesCollector.FIND_IN_PATH, myHelper.getModel());
   }
 
   @Override
@@ -1028,7 +1027,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private static StateRestoringCheckBox createCheckBox(@NotNull Project project) {
     StateRestoringCheckBox checkBox = new StateRestoringCheckBox(FindBundle.message("find.popup.filemask"));
     checkBox.addActionListener(
-      __ -> FindUsagesCollector.CHECK_BOX_TOGGLED.log(project, FIND_TYPE, ToggleOptionName.FileFilter, checkBox.isSelected())
+      __ -> FindUsagesCollector.CHECK_BOX_TOGGLED.log(project, FindUsagesCollector.FIND_IN_PATH, ToggleOptionName.FileFilter, checkBox.isSelected())
     );
     return checkBox;
   }
@@ -1796,7 +1795,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean selected) {
-      FindUsagesCollector.CHECK_BOX_TOGGLED.log(FIND_TYPE, myOptionName, selected);
+      FindUsagesCollector.CHECK_BOX_TOGGLED.log(FindUsagesCollector.FIND_IN_PATH, myOptionName, selected);
       myState.set(selected);
       if (myState == myRegexState) {
         mySuggestRegexHintForEmptyResults = false;
