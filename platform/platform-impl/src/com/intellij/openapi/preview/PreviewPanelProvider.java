@@ -17,7 +17,10 @@ package com.intellij.openapi.preview;
 
 import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * @deprecated this class isn't used by the platform anymore
+ */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class PreviewPanelProvider<V, C> {
 }
