@@ -16,7 +16,7 @@ abstract class AbstractHighlightInfoHolderHighlightingVisitor protected construc
     override fun createInfoAnnotation(textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
         HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
             .range(textRange)
-            .also { builder -> message?.let { builder.description(it) } }
+            .also { builder -> message?.let { builder.descriptionAndTooltip(it) } }
             .also { builder ->
                 textAttributes?.let {
                     builder.textAttributes(it)
