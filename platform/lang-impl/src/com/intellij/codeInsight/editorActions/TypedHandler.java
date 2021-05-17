@@ -648,7 +648,6 @@ public final class TypedHandler extends TypedActionHandlerBase {
         ApplicationManager.getApplication().runWriteAction(() -> {
           final TypingActionsExtension extension = TypingActionsExtension.findForContext(project, editor);
           try{
-            extension.startSmartBrace(project, editor);
             RangeMarker marker = document.createRangeMarker(offset, offset + 1);
             if (finalLBraceOffset != -1) {
               extension.format(project,
@@ -675,9 +674,6 @@ public final class TypedHandler extends TypedActionHandlerBase {
           }
           catch(IncorrectOperationException e){
             LOG.error(e);
-          }
-          finally {
-            extension.endSmartBrace(project, editor);
           }
         });
       }

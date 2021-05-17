@@ -83,20 +83,4 @@ public interface TypingActionsExtension {
    * @param editor  target editor
    */
   default void endCopy(@NotNull Project project, @NotNull Editor editor) {}
-
-   /**
-   * Entry point for implementing formatting hints before smart brace action.
-   *
-   * @param project current project
-   * @param editor  target editor
-   */
-  default void startSmartBrace(@NotNull Project project, @NotNull Editor editor) {}
-
-  /**
-   * The entry point for postponed post-smart brace operations.
-   *
-   * @param project current project
-   * @param editor  target editor
-   */
-  default void endSmartBrace(@NotNull Project project, @NotNull Editor editor) {}
 }
