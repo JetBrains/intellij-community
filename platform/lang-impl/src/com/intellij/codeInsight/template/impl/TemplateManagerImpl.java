@@ -544,15 +544,6 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return false;
   }
 
-  /**
-   * @deprecated use {@link #listApplicableTemplates(TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset, boolean selectionOnly) {
-    return listApplicableTemplates(TemplateActionContext.create(file, null, offset, offset, selectionOnly));
-  }
-
   public static List<TemplateImpl> listApplicableTemplates(@NotNull TemplateActionContext templateActionContext) {
     Set<TemplateContextType> contextTypes = getApplicableContextTypes(templateActionContext);
 

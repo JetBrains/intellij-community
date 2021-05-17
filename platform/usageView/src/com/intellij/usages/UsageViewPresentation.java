@@ -72,15 +72,6 @@ public class UsageViewPresentation {
   }
 
   /**
-   * @deprecated use {@link #getSearchString}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public String getUsagesString() {
-    return myUsagesString;
-  }
-
-  /**
    * @deprecated use {@link #setSearchString}
    */
   @Deprecated

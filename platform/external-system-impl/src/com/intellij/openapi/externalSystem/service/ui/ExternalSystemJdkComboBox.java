@@ -173,21 +173,6 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
   }
 
 
-  /**
-   * @deprecated because it do nothing
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public @NotNull ExternalSystemJdkComboBox withoutJre() {
-    return this;
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public boolean isHighlightInternalJdk() {
-    return myHighlightInternalJdk;
-  }
-
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public void setHighlightInternalJdk(boolean highlightInternalJdk) {

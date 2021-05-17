@@ -754,15 +754,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return myWindows.contains(window);
   }
 
-  /**
-   * @deprecated Use {@link #getEditorComposites()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public EditorWithProviderComposite @NotNull [] getEditorsComposites() {
-    return getEditorComposites().toArray(new EditorWithProviderComposite[0]);
-  }
-
   public @NotNull List<EditorWithProviderComposite> getEditorComposites() {
     List<EditorWithProviderComposite> result = new ArrayList<>();
     for (EditorWindow myWindow : myWindows) {

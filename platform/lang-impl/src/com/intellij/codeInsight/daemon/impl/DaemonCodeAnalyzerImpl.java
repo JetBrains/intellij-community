@@ -1019,16 +1019,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   /**
-   * @deprecated Use {@link DaemonCodeAnalyzerImpl#serializeCodeInsightPasses(boolean)} instead
-   */
-  @Deprecated
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(boolean flag) {
-    serializeCodeInsightPasses(flag);
-  }
-
-  /**
    * This API is made {@code Internal} intentionally as it could lead to unpredictable highlighting performance behaviour.
    *
    * @param flag if {@code true}: enables code insight passes serialization:

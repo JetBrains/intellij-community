@@ -59,14 +59,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   val animateWindows: Boolean
     get() = Registry.`is`("ide.animate.toolwindows", false)
 
-  @get:Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
-  @get:ScheduledForRemoval(inVersion = "2021.2")
-  var showMemoryIndicator: Boolean
-    get() = state.showMemoryIndicator
-    set(value) {
-      state.showMemoryIndicator = value
-    }
-
   var colorBlindness: ColorBlindness?
     get() = state.colorBlindness
     set(value) {

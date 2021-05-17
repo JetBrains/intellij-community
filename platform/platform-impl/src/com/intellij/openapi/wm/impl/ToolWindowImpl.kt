@@ -195,10 +195,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowFocusWatcher?.setFocusedComponentImpl(component)
   }
 
-  @Deprecated(message = "Do not use.", level = DeprecationLevel.ERROR)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  fun getContentUI() = contentUi
-
   override fun getDisposable() = parentDisposable
 
   override fun remove() {

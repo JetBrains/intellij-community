@@ -226,11 +226,6 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
   protected static abstract class MyRunProfile extends RunConfigurationBase<Element> implements ModuleRunProfile,
                                                                                                 WrappingRunConfiguration<RunConfigurationBase<?>>,
                                                                                                 ConsolePropertiesProvider {
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-    public RunConfigurationBase<?> getConfiguration() {
-      return getPeer();
-    }
 
     @Override
     public @NotNull RunConfigurationBase<?> getPeer() {

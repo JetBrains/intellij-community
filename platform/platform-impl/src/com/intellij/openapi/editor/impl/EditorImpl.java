@@ -3822,19 +3822,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDragStarted = false;
       clearDnDContext();
 
-      boolean forceProcessing = false;
       myMousePressedEvent = e;
 
       myExpectedCaretOffset = event.getOffset();
       try {
         for (EditorMouseListener mouseListener : myMouseListeners) {
-          boolean wasConsumed = event.isConsumed();
           mouseListener.mousePressed(event);
-          //noinspection deprecation
-          if (!wasConsumed && event.isConsumed() && mouseListener instanceof com.intellij.util.EditorPopupHandler) {
-            // compatibility with legacy code, this logic should be removed along with EditorPopupHandler
-            forceProcessing = true;
-          }
           if (isReleased) return;
         }
       }
@@ -3854,7 +3847,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
       }
 
-      if (event.isConsumed() && !forceProcessing) return;
+      if (event.isConsumed()) return;
 
       if (myCommandProcessor != null) {
         Runnable runnable = () -> {

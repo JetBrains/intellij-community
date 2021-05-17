@@ -7,15 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 public interface ModalityStateListener extends EventListener {
-  /**
-   * @deprecated Use the overload accepting modalEntity
-   * {@link #beforeModalityStateChanged(boolean, Object)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default void beforeModalityStateChanged(boolean entering) {}
-
   default void beforeModalityStateChanged(boolean entering, @NotNull Object modalEntity) {
-    beforeModalityStateChanged(entering);
   }
 }

@@ -6,15 +6,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.pty4j.windows.WinPtyProcess;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
 import org.jvnet.winp.WinpException;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public final class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
@@ -161,16 +156,5 @@ public final class OSProcessUtil {
       ourPid = String.valueOf(getCurrentProcessId());
     }
     return ourPid;
-  }
-
-  /** @deprecated trivial, use {@link #getProcessList()} directly */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static List<String> getCommandLinesOfRunningProcesses() {
-    List<String> result = new ArrayList<>();
-    for (ProcessInfo each : getProcessList()) {
-      result.add(each.getCommandLine());
-    }
-    return Collections.unmodifiableList(result);
   }
 }

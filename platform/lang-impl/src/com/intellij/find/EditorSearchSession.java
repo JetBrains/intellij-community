@@ -41,7 +41,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,16 +212,6 @@ public class EditorSearchSession implements SearchSession,
       new ToggleSelectionOnlyAction(),
       new ShowFilterPopupGroup()
     };
-  }
-
-  /**
-   * @deprecated Won't be used anymore
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  @NotNull
-  protected AnAction[] createSecondarySearchActions() {
-    return AnAction.EMPTY_ARRAY;
   }
 
   private void saveInitialSelection() {

@@ -164,19 +164,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
-    @ApiStatus.Internal
-    @JvmStatic
-    @Deprecated(message = "If project base dir differs from project store base dir, specify it as contentRoot in the options", level = DeprecationLevel.ERROR)
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-    fun openExistingProject(file: Path, projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
-      if (file == projectStoreBaseDir) {
-        return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir, options)
-      }
-      else {
-        return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir, options.copy(projectName = file.fileName.toString()))
-      }
-    }
-
     @JvmStatic
     fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean): Module {
       project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)

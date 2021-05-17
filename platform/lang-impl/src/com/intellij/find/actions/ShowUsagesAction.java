@@ -1125,18 +1125,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     return project.getService(ShowUsagesActionState.class);
   }
 
-  /**
-   * @deprecated please use {@link #startFindUsages(PsiElement, RelativePoint, Editor)} overload
-   */
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.3")
-  public void startFindUsages(@NotNull PsiElement element,
-                              @NotNull RelativePoint popupPosition,
-                              @Nullable Editor editor,
-                              int maxUsages) {
-    startFindUsages(element, popupPosition, editor);
-  }
-
   @TestOnly
   public static void setPopupDelayTimeout(int timeout) {
     ourPopupDelayTimeout = timeout;

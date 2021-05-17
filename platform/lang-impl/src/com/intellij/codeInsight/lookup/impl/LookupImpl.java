@@ -186,17 +186,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return getLookupFocusDegree() == LookupFocusDegree.FOCUSED;
   }
 
-  /**
-   * @deprecated Use {@link #setLookupFocusDegree(LookupFocusDegree)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public void setFocusDegree(FocusDegree focusDegree) {
-    if (focusDegree != null) {
-      setLookupFocusDegree(convertToLookupFocusDegree(focusDegree));
-    }
-  }
-
   @NotNull
   @Override
   public LookupFocusDegree getLookupFocusDegree() {
@@ -1226,25 +1215,4 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   FontPreferences getFontPreferences() {
     return myFontPreferences;
   }
-
-  @NotNull
-  private static LookupFocusDegree convertToLookupFocusDegree(@NotNull FocusDegree focusDegree) {
-    switch (focusDegree) {
-      case FOCUSED:
-        return LookupFocusDegree.FOCUSED;
-      case SEMI_FOCUSED:
-        return LookupFocusDegree.SEMI_FOCUSED;
-      case UNFOCUSED:
-        return LookupFocusDegree.UNFOCUSED;
-      default:
-        throw new IllegalStateException("Unknown focusDegree " + focusDegree);
-    }
-  }
-
-  /**
-   * @deprecated Use {@link LookupFocusDegree}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public enum FocusDegree { FOCUSED, SEMI_FOCUSED, UNFOCUSED }
 }

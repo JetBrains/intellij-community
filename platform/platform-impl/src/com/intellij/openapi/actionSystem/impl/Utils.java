@@ -54,12 +54,6 @@ import java.util.function.Function;
 public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
 
-  /** @deprecated use {@code EMPTY_MENU_FILLER.getTemplateText()} instead
-   * @noinspection SSBasedInspection*/
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
-  public static final String NOTHING_HERE = CommonBundle.message("empty.menu.filler");
-
   public static final AnAction EMPTY_MENU_FILLER = new EmptyAction();
   static {
     EMPTY_MENU_FILLER.getTemplatePresentation().setText(CommonBundle.messagePointer("empty.menu.filler"));

@@ -45,16 +45,6 @@ public class IdeUICustomization {
   }
 
   /**
-   * @deprecated use {@code projectMessage("action.close.project.text")} instead
-   */
-  @Deprecated
-  @Nls
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public String getCloseProjectActionText() {
-    return projectMessage("action.close.project.text");
-  }
-
-  /**
    * Returns the title of the Project view toolwindow.
    */
   @Nls
@@ -69,15 +59,6 @@ public class IdeUICustomization {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String getProjectViewSelectInTitle() {
     return projectMessage("select.in.item.project.view");
-  }
-
-  /**
-   * @deprecated use {@code projectMessage("scope.name.non.project.files")} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public String getNonProjectFilesScopeTitle() {
-    return projectMessage("scope.name.non.project.files");
   }
 
   public @Nls String getSelectAutopopupByCharsText() {

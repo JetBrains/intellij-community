@@ -75,11 +75,6 @@ public class ReferenceProviderType {
     }
 
 
-    @Override
-    public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
-      throw new UnsupportedOperationException("Modifying shared reference provider is not supported");
-    }
-
     @Nullable
     @Override
     public Map<CustomizationKey, Object> getOptions() {

@@ -226,15 +226,6 @@ public class JBTabsImpl extends JComponent
     this(project, IdeFocusManager.getInstance(project), parent);
   }
 
-  /**
-   * @deprecated Do not pass ActionManager.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public JBTabsImpl(@Nullable Project project, @SuppressWarnings("unused") @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
-    this(project, focusManager, parent);
-  }
-
   public JBTabsImpl(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
     myProject = project;
     myFocusManager = focusManager == null ? getGlobalInstance() : focusManager;
