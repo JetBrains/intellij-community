@@ -15,7 +15,7 @@ import kotlin.concurrent.withLock
 
 
 class JdkSettingsActionRegistryState: BaseState() {
-  val knownActions by list<String>()
+  var knownActions by list<String>()
 }
 
 @Service(Service.Level.APP)
@@ -39,9 +39,13 @@ class JdkUpdaterNotifications : SimplePersistentStateComponent<JdkSettingsAction
           state.intIncrementModificationCount()
         }
 
-        val ids = pendingNotifications.values.map { it.persistentId }.toSortedSet()
-        val iconState = if (!state.knownActions.containsAll(ids)) {
-          state.knownActions.addAll(ids)
+        val newIds = pendingNotifications.values
+          .map { it.persistentId }
+          .filter { it !in state.knownActions }
+          .toSortedSet()
+
+        val iconState = if (newIds.isNotEmpty()) {
+          state.knownActions.addAll(newIds)
           state.intIncrementModificationCount()
 
           SettingsEntryPointAction.IconState.ApplicationComponentUpdate

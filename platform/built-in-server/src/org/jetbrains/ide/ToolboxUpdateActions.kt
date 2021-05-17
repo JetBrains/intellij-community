@@ -14,7 +14,7 @@ import com.intellij.util.ui.update.Update
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ToolboxSettingsActionRegistryState: BaseState() {
-  val knownActions by list<String>()
+  var knownActions by list<String>()
 }
 
 @Service(Service.Level.APP)
@@ -37,9 +37,9 @@ internal class ToolboxSettingsActionRegistry : SimplePersistentStateComponent<To
           state.intIncrementModificationCount()
         }
 
-        val ids = pendingActions.keys.toSortedSet()
-        val iconState = if (!state.knownActions.containsAll(ids)) {
-          state.knownActions.addAll(ids)
+        val newIds = pendingActions.keys.filter { it !in state.knownActions }
+        val iconState = if (newIds.isNotEmpty()) {
+          state.knownActions.addAll(newIds)
           state.intIncrementModificationCount()
 
           SettingsEntryPointAction.IconState.ApplicationUpdate
