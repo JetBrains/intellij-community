@@ -123,7 +123,7 @@ internal class ToolboxRestService : RestService() {
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate") //NON-NLS
     response.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED)
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
-    channel.write(response)
+    channel.writeAndFlush(response)
 
     val heartbeatDelay = requestJson.castSafelyTo<JsonObject>()?.get("heartbeatMillis")?.asLong
                          ?: System.getProperty("toolbox.heartbeat.millis", "5000").toLong()
@@ -160,6 +160,10 @@ internal class ToolboxRestService : RestService() {
     val callback = CompletableFuture<JsonElement?>()
     AppExecutorUtil.getAppExecutorService().submit {
       toolboxRequest.handleToolboxRequest(lifetime) { r -> callback.complete(r) }
+    }
+
+    channel.closeFuture().addListener {
+      Disposer.dispose(lifetime)
     }
 
     callback
