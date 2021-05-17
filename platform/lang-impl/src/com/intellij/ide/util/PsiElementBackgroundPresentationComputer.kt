@@ -17,6 +17,7 @@ import com.intellij.util.ui.UIUtil.runWhenChanged
 import com.intellij.util.ui.UIUtil.runWhenHidden
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.asCompletableFuture
 import java.awt.Dimension
 import java.awt.Point
@@ -58,26 +59,13 @@ private fun computers(list: JList<*>): Computers {
 }
 
 internal class PsiElementBackgroundPresentationComputer(
-  private val list: JList<*>,
+  list: JList<*>,
   private val renderer: PsiElementListCellRenderer<*>,
 ) {
 
   private val myCoroutineScope = CoroutineScope(Job())
-  private val myRepaintQueue = Channel<Unit>(Channel.CONFLATED)
-  private val uiDispatcher = AppUIExecutor.onUiThread().later().coroutineDispatchingContext()
+  private val myRepaintQueue = myCoroutineScope.repaintQueue(list)
   private val myComponentsMap: MutableMap<PsiElement, Future<TargetPresentation>> = HashMap()
-
-  init {
-    myCoroutineScope.launch(uiDispatcher) {
-      // A tick happens when an element has finished computing.
-      // Several elements are also merged into a single tick because the Channel is CONFLATED.
-      for (tick in myRepaintQueue) {
-        notifyModelChanged(list)
-        redrawListAndContainer(list)
-        delay(100) // update UI no more often that once in 100ms
-      }
-    }
-  }
 
   fun dispose() {
     myCoroutineScope.cancel()
@@ -105,6 +93,20 @@ internal class PsiElementBackgroundPresentationComputer(
     }
     return result.asCompletableFuture()
   }
+}
+
+private fun CoroutineScope.repaintQueue(list: JList<*>): SendChannel<Unit> {
+  val repaintQueue = Channel<Unit>(Channel.CONFLATED)
+  launch(AppUIExecutor.onUiThread().later().coroutineDispatchingContext()) {
+    // A tick happens when an element has finished computing.
+    // Several elements are also merged into a single tick because the Channel is CONFLATED.
+    for (tick in repaintQueue) {
+      notifyModelChanged(list)
+      redrawListAndContainer(list)
+      delay(100) // update UI no more often that once in 100ms
+    }
+  }
+  return repaintQueue
 }
 
 /**
