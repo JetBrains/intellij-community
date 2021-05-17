@@ -106,7 +106,8 @@ import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -121,6 +122,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -1016,9 +1018,7 @@ public final class BuildManager implements Disposable {
                 runCommand(() -> {
                   if (!myPreloadedBuilds.containsKey(projectPath)) {
                     try {
-                      final Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> preloadResult =
-                        launchPreloadedBuildProcess(project, projectTaskQueue);
-                      myPreloadedBuilds.put(projectPath, preloadResult);
+                      myPreloadedBuilds.put(projectPath, launchPreloadedBuildProcess(project, projectTaskQueue));
                     }
                     catch (Throwable e) {
                       LOG.info("Error pre-loading build process for project " + projectPath, e);
@@ -1113,35 +1113,52 @@ public final class BuildManager implements Disposable {
   }
 
   private static @NotNull Pair<Sdk, JavaSdkVersion> getRuntimeSdk(@NotNull Project project, int oldestPossibleVersion) {
-    final Set<Sdk> candidates = new LinkedHashSet<>();
-    final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdkType) {
-      candidates.add(defaultSdk);
-    }
-
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    final Map<Sdk, Integer> candidates = new HashMap<>();
+    Consumer<Sdk> addSdk = sdk -> {
       if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-        candidates.add(sdk);
+        final Integer count = candidates.putIfAbsent(sdk, 1);
+        if (count != null) {
+          candidates.put(sdk, count + 1);
+        }
       }
+    };
+
+    addSdk.accept(ProjectRootManager.getInstance(project).getProjectSdk());
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      addSdk.accept(ModuleRootManager.getInstance(module).getSdk());
     }
 
-    // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
     final JavaSdk javaSdkType = JavaSdk.getInstance();
-    return candidates.stream()
-      .map(sdk -> new Pair<>(sdk, JavaVersion.tryParse(sdk.getVersionString())))
+
+    final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
+    if (configuration.getJavacCompiler().equals(configuration.getDefaultCompiler()) && JavacConfiguration.getOptions(project, JavacConfiguration.class).PREFER_TARGET_JDK_COMPILER) {
+      // for javac, if compiler from associated SDK instead of cross-compilation is preferred, use a different policy:
+      // select the most frequently used jdk from the sdks that are associated with the project, but not older than <oldestPossibleVersion>
+      // this policy attempts to compile as much modules as possible without spawning a separate javac process
+      return candidates.entrySet().stream()
+        .sorted(Map.Entry.<Sdk, Integer>comparingByValue().reversed())
+        .map(entry -> Pair.create(entry.getKey(), JavaVersion.tryParse(entry.getKey().getVersionString())))
+        .filter(p -> p.second != null && p.second.isAtLeast(oldestPossibleVersion))
+        .map(p -> Pair.create(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
+        .findFirst().orElseGet(() -> {
+          Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+          return Pair.create(internalJdk, javaSdkType.getVersion(internalJdk));
+        });
+    }
+
+    // now select the latest version from the sdks that are used in the project, but not older than <oldestPossibleVersion>
+    return candidates.keySet().stream()
+      .map(sdk -> Pair.create(sdk, JavaVersion.tryParse(sdk.getVersionString())))
       .filter(p -> p.second != null && p.second.isAtLeast(oldestPossibleVersion))
       .max(Pair.comparingBySecond())
-      .map(p -> new Pair<>(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
+      .map(p -> Pair.create(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
       .orElseGet(() -> {
         Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-        return new Pair<>(internalJdk, javaSdkType.getVersion(internalJdk));
+        return Pair.create(internalJdk, javaSdkType.getVersion(internalJdk));
       });
   }
 
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) {
-    WSLDistribution wslDistribution = findWSLDistributionForBuild(project);
-    ensureListening(wslDistribution != null ? wslDistribution.getHostIpAddress() : InetAddress.getLoopbackAddress());
 
     // launching build process from projectTaskQueue ensures that no other build process for this project is currently running
     return projectTaskQueue.submit(() -> {
@@ -1176,8 +1193,7 @@ public final class BuildManager implements Disposable {
     return WslPath.getDistributionByWindowsUncPath(projectJdkType.getVMExecutablePath(projectJdk));
   }
 
-  private OSProcessHandler launchBuildProcess(@NotNull Project project, @NotNull UUID sessionId, boolean requestProjectPreload,
-                                              @Nullable ProgressIndicator progressIndicator) throws ExecutionException {
+  private OSProcessHandler launchBuildProcess(@NotNull Project project, @NotNull UUID sessionId, boolean requestProjectPreload, @Nullable ProgressIndicator progressIndicator) throws ExecutionException {
     String compilerPath = null;
     final String vmExecutablePath;
     JavaSdkVersion sdkVersion = null;
@@ -1190,11 +1206,11 @@ public final class BuildManager implements Disposable {
       final Sdk projectJdk = pair.first;
       sdkVersion = pair.second;
 
-      final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       final JavaSdkType projectJdkType = (JavaSdkType)projectJdk.getSdkType();
 
       // validate tools.jar presence for jdk8 and older
       if (!JavaSdkUtil.isJdkAtLeast(projectJdk, JavaSdkVersion.JDK_1_9)) {
+        final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
         if (FileUtil.pathsEqual(projectJdk.getHomePath(), internalJdk.getHomePath())) {
           // important: because internal JDK can be either JDK or JRE,
           // this is the most universal way to obtain tools.jar path in this particular case
