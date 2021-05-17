@@ -36,6 +36,7 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
@@ -183,7 +184,8 @@ public class ExpectedHighlightingData {
       LineMarkerInfo<?> value = entry.getValue();
       TextRange range = new TextRange(startOffset, endOffset);
       String tooltip = value.getLineMarkerTooltip();
-      MyLineMarkerInfo markerInfo = new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip);
+      Icon icon = value.getIcon();
+      MyLineMarkerInfo markerInfo = new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip, icon != null ? icon.toString() : null);
       entry.setValue(markerInfo);
     }
   }
@@ -191,7 +193,7 @@ public class ExpectedHighlightingData {
   private void extractExpectedLineMarkerSet(Document document) {
     String text = document.getText();
 
-    String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?>)(.*)";
+    String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: icon=\"((?:[^\"\\\\]|\\\\\")*)\")?>)(.*)";
     Pattern openingTagRx = Pattern.compile(pat, Pattern.DOTALL);
     Pattern closingTagRx = Pattern.compile("(.*?)(</" + LINE_MARKER + ">)(.*)", Pattern.DOTALL);
 
@@ -201,7 +203,8 @@ public class ExpectedHighlightingData {
 
       int startOffset = opening.start(1);
       String descr = opening.group(3) != null ? opening.group(3) : ANY_TEXT;
-      String rest = opening.group(4);
+      String icon = opening.group(4) != null ? opening.group(4) : ANY_TEXT;
+      String rest = opening.group(5);
 
       Matcher closing = closingTagRx.matcher(rest);
       if (!closing.matches()) {
@@ -220,7 +223,7 @@ public class ExpectedHighlightingData {
       TextRange range = new TextRange(startOffset, endOffset);
       String tooltip = StringUtil.unescapeStringCharacters(descr);
       LineMarkerInfo<PsiElement> markerInfo =
-        new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip);
+        new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip, icon);
       myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
 
       text = document.getText();
@@ -412,6 +415,10 @@ public class ExpectedHighlightingData {
         failMessage.append(fileName).append("extra ")
           .append(rangeString(text, info.startOffset, info.endOffset))
           .append(": '").append(info.getLineMarkerTooltip()).append('\'');
+        Icon icon = info.getIcon();
+        if (icon != null && !icon.toString().equals(ANY_TEXT)) {
+          failMessage.append(" icon='").append(icon).append('\'');
+        }
       }
     }
 
@@ -421,6 +428,10 @@ public class ExpectedHighlightingData {
         failMessage.append(fileName).append("missing ")
           .append(rangeString(text, expectedLineMarker.startOffset, expectedLineMarker.endOffset))
           .append(": '").append(expectedLineMarker.getLineMarkerTooltip()).append('\'');
+        Icon icon = expectedLineMarker.getIcon();
+        if (icon != null && !icon.toString().equals(ANY_TEXT)) {
+          failMessage.append(" icon='").append(icon).append('\'');
+        }
       }
     }
 
@@ -466,15 +477,24 @@ public class ExpectedHighlightingData {
 
   private static boolean containsLineMarker(LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
     String infoTooltip = info.getLineMarkerTooltip();
+    Icon icon = info.getIcon();
     for (LineMarkerInfo markerInfo : where) {
       if (markerInfo.startOffset == info.startOffset &&
           markerInfo.endOffset == info.endOffset &&
-          matchDescriptions(false, infoTooltip, markerInfo.getLineMarkerTooltip())) {
+          matchDescriptions(false, infoTooltip, markerInfo.getLineMarkerTooltip()) &&
+          matchIcons(icon, markerInfo.getIcon())) {
         return true;
       }
     }
 
     return false;
+  }
+
+  private static boolean matchIcons(Icon icon1, Icon icon2) {
+    String s1 = String.valueOf(icon1);
+    String s2 = String.valueOf(icon2);
+    if (Comparing.strEqual(s1, s2)) return true;
+    return Comparing.strEqual(ANY_TEXT, s1) || Comparing.strEqual(ANY_TEXT, s2);
   }
 
   public void checkResult(@Nullable PsiFile psiFile, Collection<? extends HighlightInfo> infos, String text) {
@@ -863,11 +883,47 @@ public class ExpectedHighlightingData {
       return null;
     }
   };
+  private static class PathIcon implements Icon {
+    private final String path;
+
+    private PathIcon(@NotNull String path) {
+      this.path = path;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+    }
+
+    @Override
+    public int getIconWidth() {
+      return 16;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return 16;
+    }
+
+    @Override
+    public int hashCode() {
+      return path.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj || (obj instanceof PathIcon && ((PathIcon)obj).path == path);
+    }
+
+    @Override
+    public String toString() {
+      return path;
+    }
+  }
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final String myTooltip;
 
-    MyLineMarkerInfo(TextRange range, GutterIconRenderer.Alignment alignment, String tooltip) {
-      super(NULL_POINTER, range, null, null, null, null, alignment);
+    MyLineMarkerInfo(TextRange range, GutterIconRenderer.Alignment alignment, String tooltip, String iconPath) {
+      super(NULL_POINTER, range, new PathIcon(iconPath), null, null, null, alignment);
       myTooltip = tooltip;
     }
 
