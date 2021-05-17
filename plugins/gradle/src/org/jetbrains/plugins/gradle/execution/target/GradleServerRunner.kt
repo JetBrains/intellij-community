@@ -173,12 +173,6 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
                       resultHandler: ResultHandler<Any?>,
                       buildEventConsumer: BuildEventConsumer) {
       val inetAddress = InetAddress.getByName(hostName.host)
-      //val inetAddress = InetAddress.getByName("0.0.0.0")
-      //val inetAddress = InetAddress.getLocalHost()
-      //val localBindingAddress = InetAddress.getAllByName("localhost") //InetAddressFactory().localBindingAddress
-      //val address: Address = MultiChoiceAddress(UUIDGenerator().generateId(), hostName.port, localBindingAddress.toMutableList().drop(1))
-      //log.debug("Connecting to $address.")
-      //val connectCompletion = TcpOutgoingConnector().connect(address/*SocketInetAddress(inetAddress, hostName.port)*/)
       val connectCompletion = TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostName.port))
       val serializer = DaemonMessageSerializer.create(BuildActionSerializer.create())
       val connection = connectCompletion.create(Serializers.stateful(serializer))
