@@ -16,7 +16,6 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -324,7 +323,7 @@ public class CFGBuilder {
   }
 
   /**
-   * Generate instructions to compare two values on top of stack with given relation operation (e.g. {@link JavaTokenType#GT}).
+   * Generate instructions to compare two values on top of stack with given relation.
    * <p>
    * Stack before: ... val1 val2
    * <p>
@@ -333,8 +332,8 @@ public class CFGBuilder {
    * @param relation relation to use for comparison
    * @return this builder
    */
-  CFGBuilder compare(IElementType relation) {
-    return add(new BooleanBinaryInstruction(relation, null));
+  CFGBuilder compare(RelationType relation) {
+    return add(new BooleanBinaryInstruction(relation, false, null));
   }
 
   /**
@@ -370,7 +369,7 @@ public class CFGBuilder {
    * @param relation a relation to use to compare two stack values. Conditional block will be executed if "val1 relation val2" is true.
    * @return this builder
    */
-  public CFGBuilder ifCondition(IElementType relation) {
+  public CFGBuilder ifCondition(RelationType relation) {
     return compare(relation).ifConditionIs(true);
   }
 
@@ -405,7 +404,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder ifNull() {
-    return pushNull().ifCondition(JavaTokenType.EQEQ);
+    return pushNull().ifCondition(RelationType.EQ);
   }
 
   /**
@@ -420,7 +419,7 @@ public class CFGBuilder {
 
   /**
    * Generate instructions to finish a "then-branch" and start an "else-branch" of a conditional block started
-   * with {@link #ifCondition(IElementType)}, {@link #ifConditionIs(boolean)}, {@link #ifNull()} or {@link #ifNotNull()}.
+   * with {@link #ifCondition(RelationType)}, {@link #ifConditionIs(boolean)}, {@link #ifNull()} or {@link #ifNotNull()}.
    * Stack is unchanged.
    *
    * @return this builder
@@ -900,7 +899,7 @@ public class CFGBuilder {
       add(new SpliceInstruction(expressions.length, IntStreamEx.ofIndices(expressions).toArray()));
       GotoInstruction gotoInstruction = new GotoInstruction(null, false);
       gotoInstruction.setOffset(myAnalyzer.getInstructionCount());
-      dup().push(factory.getSentinel()).compare(JavaTokenType.EQEQ);
+      dup().push(factory.getSentinel()).compare(RelationType.EQ);
       ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, DfTypes.TRUE);
       add(condGoto);
       assignTo(targetVariable);

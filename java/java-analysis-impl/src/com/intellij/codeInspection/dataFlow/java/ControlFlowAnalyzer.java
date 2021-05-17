@@ -690,7 +690,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (loop.mayOverflow()) return false;
       new CFGBuilder(this).assign(loopVar, DfType.TOP)
                           .push(origin)
-                          .compare(JavaTokenType.LE);
+                          .compare(RelationType.LE);
       addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), DfTypes.TRUE, null));
     }
     addInstruction(new GotoInstruction(startOffset));
@@ -906,9 +906,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression selector = PsiUtil.skipParenthesizedExprDown(switchBlock.getExpression());
     DfaVariableValue expressionValue = null;
     boolean syntheticVar = true;
-    PsiType targetType = null;
     if (selector != null) {
-      targetType = selector.getType();
+      PsiType targetType = selector.getType();
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(targetType);
       if (unboxedType != null) {
         targetType = unboxedType;
@@ -955,9 +954,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   if (caseValue != null && expressionValue != null && (enumConstant || PsiUtil.isConstantExpression(caseValue))) {
                     addInstruction(new JvmPushInstruction(expressionValue, null));
                     caseValue.accept(this);
-                    addInstruction(new BooleanBinaryInstruction(
-                      TypeUtils.isJavaLangString(targetType) ? BooleanBinaryInstruction.STRING_EQUALITY_BY_CONTENT :
-                      JavaTokenType.EQEQ, new JavaSwitchLabelTakenAnchor(caseValue)));
+                    addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(caseValue)));
                   }
                   else {
                     pushUnknown();
@@ -1403,7 +1400,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       inst = new StringConcatInstruction(anchor, resType);
     }
     else if (PsiType.BOOLEAN.equals(resType)) {
-      inst = new BooleanBinaryInstruction(op, anchor);
+      if (op.equals(JavaTokenType.AND)) {
+        inst = new BooleanAndOrInstruction(false, anchor);
+      }
+      else if (op.equals(JavaTokenType.OR)) {
+        inst = new BooleanAndOrInstruction(true, anchor);
+      }
+      else {
+        RelationType relation = op == JavaTokenType.XOR ? RelationType.NE : DfaPsiUtil.getRelationByToken(op);
+        inst = relation != null ? new BooleanBinaryInstruction(relation, false, anchor) :
+               new EvalUnknownInstruction(anchor, 2);
+      }
     }
     else {
       inst = new NumericBinaryInstruction(JvmPsiRangeSetUtil.binOpFromToken(op), anchor);
