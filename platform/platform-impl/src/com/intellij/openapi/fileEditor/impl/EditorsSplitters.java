@@ -965,6 +965,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
         else {
           FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+            .withSelectAsCurrent(false)
             .withPin(Boolean.valueOf(file.getAttributeValue(PINNED)))
             .withIndex(i)
             .withReopeningOnStartup();

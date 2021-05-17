@@ -668,11 +668,10 @@ public final class EditorWindow {
       HistoryEntry currentState = selectedEditor.currentStateAsHistoryEntry();
       VirtualFile currentStateFile = currentState.getFile();
       if (currentStateFile == null || !currentStateFile.equals(nextFile)) currentState = null;
-      FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState,
-                                                             new FileEditorOpenOptions()
-                                                               .withSelectAsCurrent()
-                                                               .withRequestFocus(focusNew)
-                                                                     .withExactState()).first;
+      FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+        .withRequestFocus(focusNew)
+        .withExactState();
+      FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState, openOptions).first;
       syncCaretIfPossible(editors);
       if (isFileOpen(nextFile)) {
         res.setFilePinned(nextFile, isFilePinned(nextFile));

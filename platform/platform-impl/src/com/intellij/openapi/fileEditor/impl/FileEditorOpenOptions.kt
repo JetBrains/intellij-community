@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 data class FileEditorOpenOptions(
-  var selectAsCurrent: Boolean = false,
+  var selectAsCurrent: Boolean = true,
   var requestFocus: Boolean = false,
   var pin: Boolean? = null,
   var index: Int = -1,

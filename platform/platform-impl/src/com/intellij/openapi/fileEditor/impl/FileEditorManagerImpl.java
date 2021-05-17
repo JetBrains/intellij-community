@@ -900,7 +900,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                                                  @NotNull VirtualFile file,
                                                                  boolean focusEditor,
                                                                  @Nullable HistoryEntry entry) {
-    return openFileImpl4(window, file, entry, new FileEditorOpenOptions().withSelectAsCurrent().withRequestFocus(focusEditor));
+    return openFileImpl4(window, file, entry, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
 
   /**
