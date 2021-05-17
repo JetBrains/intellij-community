@@ -847,18 +847,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon WebFolder = load("nodes/webFolder.svg", 2222154280104242723L, 0);
     /** 16x16 */ public static final @NotNull Icon Weblistener = load("nodes/weblistener.svg", -7166837522849889039L, 0);
     /** 16x16 */ public static final @NotNull Icon WriteAccess = load("nodes/write-access.svg", 5767645715036234832L, 0);
-
-    /** @deprecated to be removed in IDEA 2021.1 - use AllIcons.General.ArrowDown */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public static final @NotNull Icon TreeDownArrow = load("nodes/treeDownArrow.png", 0L, 0);
-
-    /** @deprecated to be removed in IDEA 2021.1 - use AllIcons.General.ArrowRight */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public static final @NotNull Icon TreeRightArrow = load("nodes/treeRightArrow.png", 0L, 0);
   }
 
   public static final class ObjectBrowser {
