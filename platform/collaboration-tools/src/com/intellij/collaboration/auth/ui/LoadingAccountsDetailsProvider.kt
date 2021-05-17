@@ -18,7 +18,7 @@ abstract class LoadingAccountsDetailsProvider<in A : Account, D : AccountDetails
 ) : AccountsDetailsProvider<A, D> {
 
   private val detailsMap = mutableMapOf<A, CompletableFuture<DetailsLoadingResult<D>>>()
-  val loadingStateModel = SingleValueModelImpl(false)
+  override val loadingStateModel = SingleValueModelImpl(false)
 
   private var runningProcesses = 0
 

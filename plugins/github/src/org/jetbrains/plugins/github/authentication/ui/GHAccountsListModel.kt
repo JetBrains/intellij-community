@@ -21,7 +21,6 @@ class GHAccountsListModel(private val project: Project)
   : AccountsListModelBase<GithubAccount, String>(), GHAccountsHost {
 
   private val actionManager = ActionManager.getInstance()
-  private val tokenChangeEventDispatcher = EventDispatcher.create(TokenChangeEventListener::class.java)
 
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
     val group = actionManager.getAction("Github.Accounts.AddAccount") as ActionGroup
@@ -41,7 +40,7 @@ class GHAccountsListModel(private val project: Project)
 
     account.name = authData.login
     newCredentials[account] = authData.token
-    tokenChangeEventDispatcher.multicaster.onTokenChanged(account)
+    notifyCredentialsChanged(account)
     accountsListModel.contentsChanged(account)
   }
 
@@ -49,22 +48,10 @@ class GHAccountsListModel(private val project: Project)
     val account = GHAccountManager.createAccount(login, server)
     accountsListModel.add(account)
     newCredentials[account] = token
-    tokenChangeEventDispatcher.multicaster.onTokenChanged(account)
+    notifyCredentialsChanged(account)
     accountsListModel.contentsChanged(account)
   }
 
   override fun isAccountUnique(login: String, server: GithubServerPath): Boolean =
     accountsListModel.items.none { it.name == login && it.server.equals(server, true) }
-
-  fun addTokenChangeListener(listener: (GithubAccount) -> Unit) {
-    tokenChangeEventDispatcher.addListener(object : TokenChangeEventListener {
-      override fun onTokenChanged(account: GithubAccount) {
-        listener(account)
-      }
-    })
-  }
-
-  private interface TokenChangeEventListener : EventListener {
-    fun onTokenChanged(account: GithubAccount)
-  }
 }

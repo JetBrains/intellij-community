@@ -21,4 +21,6 @@ interface AccountsListModel<A: Account, Cred> {
   fun addAccount(parentComponent: JComponent, point: RelativePoint? = null)
   fun editAccount(parentComponent: JComponent, account: A)
   fun clearNewCredentials()
+
+  fun addCredentialsChangeListener(listener: (A) -> Unit)
 }

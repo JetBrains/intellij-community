@@ -4,6 +4,7 @@ package com.intellij.collaboration.auth.ui
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.ui.codereview.SingleValueModelImpl
 import com.intellij.ui.CollectionListModel
+import java.util.concurrent.CopyOnWriteArrayList
 
 abstract class AccountsListModelBase<A : Account, Cred> : AccountsListModel<A, Cred> {
   override var accounts: Set<A>
@@ -18,5 +19,15 @@ abstract class AccountsListModelBase<A : Account, Cred> : AccountsListModel<A, C
   override val accountsListModel = CollectionListModel<A>()
   override val busyStateModel = SingleValueModelImpl(false)
 
+  private val credentialsChangesListeners = CopyOnWriteArrayList<(A) -> Unit>()
+
   override fun clearNewCredentials() = newCredentials.clear()
+
+  protected fun notifyCredentialsChanged(account: A) {
+    credentialsChangesListeners.forEach { it(account) }
+  }
+
+  final override fun addCredentialsChangeListener(listener: (A) -> Unit) {
+    credentialsChangesListeners.add(listener)
+  }
 }

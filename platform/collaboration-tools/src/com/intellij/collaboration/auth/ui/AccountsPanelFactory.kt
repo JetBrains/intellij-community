@@ -2,17 +2,21 @@
 package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
+import com.intellij.collaboration.auth.AccountManager
+import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
+import com.intellij.ui.layout.*
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
@@ -67,5 +71,53 @@ object AccountsPanelFactory {
         }
       })
       .createPanel()
+  }
+
+  fun <A : Account, Cred> Row.accountsPanel(accountManager: AccountManager<A, Cred>,
+                                            defaultAccountHolder: PersistentDefaultAccountHolder<A>,
+                                            accountsModel: AccountsListModel<A, Cred>,
+                                            detailsProvider: AccountsDetailsProvider<A, *>,
+                                            disposable: Disposable): CellBuilder<JComponent> {
+
+    accountsModel.addCredentialsChangeListener(detailsProvider::reset)
+    detailsProvider.loadingStateModel.addInvokeListener {
+      accountsModel.busyStateModel.value = it
+    }
+
+    fun isModified() = accountsModel.newCredentials.isNotEmpty()
+                       || accountsModel.accounts != accountManager.accounts
+                       || accountsModel.defaultAccount != defaultAccountHolder.account
+
+    fun reset() {
+      accountsModel.accounts = accountManager.accounts
+      accountsModel.defaultAccount = defaultAccountHolder.account
+      accountsModel.clearNewCredentials()
+      detailsProvider.resetAll()
+    }
+
+    fun apply() {
+      val newTokensMap = mutableMapOf<A, Cred?>()
+      newTokensMap.putAll(accountsModel.newCredentials)
+      for (account in accountsModel.accounts) {
+        newTokensMap.putIfAbsent(account, null)
+      }
+      val defaultAccount = accountsModel.defaultAccount
+      accountManager.updateAccounts(newTokensMap)
+      defaultAccountHolder.account = defaultAccount
+      accountsModel.clearNewCredentials()
+    }
+
+    accountManager.addListener(disposable, object : AccountsListener<A> {
+      override fun onAccountCredentialsChanged(account: A) {
+        if (!isModified()) reset()
+      }
+    })
+
+    return create(accountsModel) {
+      SimpleAccountsListCellRenderer(accountsModel, detailsProvider)
+    }(grow, push)
+      .onIsModified(::isModified)
+      .onReset(::reset)
+      .onApply(::apply)
   }
 }
