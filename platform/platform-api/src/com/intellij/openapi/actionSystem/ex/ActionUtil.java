@@ -228,12 +228,21 @@ public final class ActionUtil {
   public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
                                                    @NotNull AnActionEvent event,
                                                    @NotNull Runnable performRunnable) {
+    performDumbAwareWithCallbacks(action, event, performRunnable, true);
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
+                                                   @NotNull AnActionEvent event,
+                                                   @NotNull Runnable performRunnable,
+                                                   Boolean checkVisibility) {
     Project project = event.getProject();
     IndexNotReadyException indexError = null;
     ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, event);
     Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    if (component != null && !component.isShowing() &&
+    if (checkVisibility && component != null && !component.isShowing() &&
         !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
         !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
