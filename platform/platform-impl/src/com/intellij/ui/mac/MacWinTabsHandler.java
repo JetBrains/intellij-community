@@ -113,18 +113,28 @@ public class MacWinTabsHandler {
   }
 
   public void enteringFullScreen() {
-    updateTabBar(myFrame, getFullScreenFillerHeight(true));
+    enterFullScreen();
   }
 
   public void enterFullScreen() {
-    updateTabBar(myFrame, getFullScreenFillerHeight(true));
-  }
-
-  public void exitFullScreen() {
     if (!myFrameAllowed) {
       return;
     }
+    if (isTransparentTitleBar()) {
+      updateTabBar();
+    }
+    else {
+      updateTabBar(myFrame, 0);
+    }
+  }
 
+  public void exitFullScreen() {
+    if (myFrameAllowed) {
+      updateTabBar();
+    }
+  }
+
+  private void updateTabBar() {
     Foundation.executeOnMainThread(true, false, () -> {
       ID window = MacUtil.getWindowFromJavaWindow(myFrame);
       int visibleAndHeight = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
@@ -167,7 +177,7 @@ public class MacWinTabsHandler {
       return;
     }
 
-    int fullScreenHeight = getFullScreenFillerHeight(false);
+    boolean isTransparentTitleBar = isTransparentTitleBar();
 
     ApplicationManager.getApplication().invokeLater(() -> {
       Integer[] visibleAndHeights = new Integer[frames.length];
@@ -183,8 +193,8 @@ public class MacWinTabsHandler {
         if (newFrame == helper.getFrame()) {
           newIndex = i;
         }
-        if (helper.isInFullScreen()) {
-          visibleAndHeights[i] = fullScreenHeight;
+        if (!isTransparentTitleBar && helper.isInFullScreen()) {
+          visibleAndHeights[i] = 0;
         }
         else {
           callInAppkit = true;
@@ -201,9 +211,9 @@ public class MacWinTabsHandler {
           for (int i = 0; i < frames.length; i++) {
             if (visibleAndHeights[i] == null) {
               ID window = MacUtil.getWindowFromJavaWindow(((ProjectFrameHelper)frames[i]).getFrame());
-              int styleMask = Foundation.invoke(window, "styleMask").intValue();
+              int styleMask = isTransparentTitleBar ? 0 : Foundation.invoke(window, "styleMask").intValue();
               if ((styleMask & (1 << 14)) != 0) { // NSWindowStyleMaskFullScreen
-                visibleAndHeights[i] = fullScreenHeight;
+                visibleAndHeights[i] = 0;
               }
               else {
                 visibleAndHeights[i] = (int)Foundation.invoke_fpret(window, "getTabBarVisibleAndHeight");
@@ -306,13 +316,6 @@ public class MacWinTabsHandler {
 
   private static boolean isTransparentTitleBar() {
     return Registry.is("ide.mac.transparentTitleBarAppearance", false);
-  }
-
-  private static int getFullScreenFillerHeight(boolean checkFrames) {
-    if (isTransparentTitleBar()) {
-      return checkFrames && WindowManager.getInstance().getAllProjectFrames().length < 2 ? 0 : 28;
-    }
-    return 0;
   }
 
   private static int DEFAULT_WIN_TAB_HEIGHT() {
