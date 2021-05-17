@@ -20,4 +20,9 @@ abstract public class RemoteSshProcess extends RemoteProcess implements SelfKill
       return false;
     }
   }
+
+  @Override
+  public void setWindowSize(int columns, int rows) {
+    //not implemented yet; see IJ-MR-9216 && PY-40900
+  }
 }

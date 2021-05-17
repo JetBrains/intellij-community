@@ -5,11 +5,5 @@ public interface PtyBasedProcess {
 
   boolean hasPty();
 
-  default boolean supportsWindowResizing() {
-    return false;
-  }
-
-  default void setWindowSize(int columns, int rows) {
-    throw new IllegalStateException("See com.intellij.execution.process.PtyBasedProcess.supportsWindowResizing");
-  }
+  void setWindowSize(int columns, int rows);
 }

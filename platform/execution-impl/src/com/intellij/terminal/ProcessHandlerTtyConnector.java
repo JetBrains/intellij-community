@@ -40,8 +40,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
       return null;
     }
     Process process = ((BaseProcessHandler<?>)processHandler).getProcess();
-    if (!(process instanceof PtyProcess) &&
-        (!(process instanceof PtyBasedProcess) || !((PtyBasedProcess)process).supportsWindowResizing())) {
+    if (!(process instanceof PtyProcess) && !(process instanceof PtyBasedProcess)) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Process doesn't support terminal window resizing: " + process.getClass());
       }
@@ -68,7 +67,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
       }
     }
     else {
-      if (myPtyProcess instanceof PtyBasedProcess && ((PtyBasedProcess)myPtyProcess).supportsWindowResizing()) {
+      if (myPtyProcess instanceof PtyBasedProcess) {
         ((PtyBasedProcess)myPtyProcess).setWindowSize(termSize.width, termSize.height);
       }
     }
