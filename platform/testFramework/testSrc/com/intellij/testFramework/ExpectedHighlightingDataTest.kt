@@ -152,7 +152,7 @@ class ExpectedHighlightingDataTest {
 
 
   private fun doTest(original: String, highlighting: Collection<HighlightInfo>, expected: String, vararg bundles: ResourceBundle) =
-    assertEquals(expected, ExpectedHighlightingData.composeText(TYPES, highlighting, original, *bundles))
+    assertEquals(expected, ExpectedHighlightingData.composeText(TYPES, highlighting, original, false, *bundles))
 
   private fun error(start: Int, end: Int, description: String) =
     HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description).createUnconditionally()

@@ -29,6 +29,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.JdkConstants;
@@ -244,6 +245,7 @@ public class ExpectedHighlightingData {
                                 "(?:\\s+fonttype=\"([0-9]+)\")?" +
                                 "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
                                 "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
+                                "(?:\\s+tooltip=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
                                 "(/)?>";
 
     Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
@@ -269,6 +271,7 @@ public class ExpectedHighlightingData {
     String fontType = matcher.group(groupIdx++);
     String attrKey = matcher.group(groupIdx++);
     String bundleMessage = matcher.group(groupIdx++);
+    String tooltip = matcher.group(groupIdx++);
     boolean closed = matcher.group(groupIdx) != null;
 
     if (descr == null) {
@@ -280,6 +283,17 @@ public class ExpectedHighlightingData {
     if (descr != null) {
       descr = descr.replaceAll("\\\\\\\\\"", "\"");  // replace: \\" to ", doesn't check symbol before sequence \\"
       descr = descr.replaceAll("\\\\\"", "\"");
+    }
+
+    if (tooltip == null) {
+      tooltip = ANY_TEXT;  // no tooltip any string by default
+    }
+    else if (tooltip.equals("null")) {
+      tooltip = null;  // explicit "null" tooltip
+    }
+    if (tooltip != null) {
+      tooltip = tooltip.replaceAll("\\\\\\\\\"", "\"");  // replace: \\" to ", doesn't check symbol before sequence \\"
+      tooltip = tooltip.replaceAll("\\\\\"", "\"");
     }
 
     HighlightInfoType type = WHATEVER;
@@ -343,7 +357,9 @@ public class ExpectedHighlightingData {
       }
       if (descr != null) {
         builder.description(descr);
-        builder.unescapedToolTip(descr);
+      }
+      if (tooltip != null) {
+        builder.unescapedToolTip(tooltip);
       }
       if (expectedHighlightingSet.endOfLine) builder.endOfLine();
       HighlightInfo highlightInfo = builder.createUnconditionally();
@@ -570,7 +586,7 @@ public class ExpectedHighlightingData {
   }
 
   private void compareTexts(Collection<? extends HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
-    String actual = composeText(myHighlightingTypes, infos, text, myMessageBundles);
+    String actual = composeText(myHighlightingTypes, infos, text, true, myMessageBundles);
     if (filePath != null && !myText.equals(actual)) {
       // uncomment to overwrite, don't forget to revert on commit!
       //VfsTestUtil.overwriteTestData(filePath, actual);
@@ -592,6 +608,7 @@ public class ExpectedHighlightingData {
   public static String composeText(@NotNull Map<String, ExpectedHighlightingSet> types,
                                    @NotNull Collection<? extends HighlightInfo> infos,
                                    @NotNull String text,
+                                   boolean showTooltips,
                                    ResourceBundle @NotNull ... messageBundles) {
     // filter highlighting data and map each highlighting to a tag name
     List<Pair<String, ? extends HighlightInfo>> list = infos.stream()
@@ -626,7 +643,7 @@ public class ExpectedHighlightingData {
 
     // combine highlighting data with original text
     StringBuilder sb = new StringBuilder();
-    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, messageBundles);
+    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, showTooltips, messageBundles);
     sb.insert(0, text.substring(0, offsets[1]));
     return sb.toString();
   }
@@ -653,6 +670,7 @@ public class ExpectedHighlightingData {
                                    List<? extends Pair<String, ? extends HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
                                    boolean showAttributesKeys,
+                                   boolean showTooltip,
                                    ResourceBundle... messageBundles) {
     int i = index;
     while (i < list.size()) {
@@ -669,25 +687,30 @@ public class ExpectedHighlightingData {
       sb.insert(0, "</" + severity + '>');
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
-        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, messageBundles);
+        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, showTooltip, messageBundles);
         i = offsets[0] - 1;
         endPos = offsets[1];
       }
       sb.insert(0, text.substring(info.startOffset, endPos));
 
-      String str = '<' + severity;
+      StringBuilder str = new StringBuilder().append('<').append(severity);
 
       String bundleMsg = composeBundleMsg(info, messageBundles);
       if (bundleMsg != null) {
-        str += " bundleMsg=\"" + StringUtil.escapeQuotes(bundleMsg) + '"';
+        str.append(" bundleMsg=\"").append(StringUtil.escapeQuotes(bundleMsg)).append('"');
       }
       else if (info.getSeverity() != HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY) {
-        str += " descr=\"" + StringUtil.escapeQuotes(String.valueOf(info.getDescription())) + '"';
+        String description = info.getDescription();
+        String toolTip = info.getToolTip();
+        str.append(" descr=\"").append(StringUtil.escapeQuotes(String.valueOf(description))).append('"');
+        if (showTooltip) {
+          str.append(" tooltip=\"").append(StringUtil.escapeQuotes(String.valueOf(toolTip != null ? XmlStringUtil.stripHtml(toolTip) : null))).append('"');
+        }
       }
       if (showAttributesKeys) {
-        str += " textAttributesKey=\"" + info.forcedTextAttributesKey + '"';
+        str.append(" textAttributesKey=\"").append(info.forcedTextAttributesKey).append('"');
       }
-      str += '>';
+      str.append('>');
       sb.insert(0, str);
 
       endPos = info.startOffset;
@@ -766,7 +789,8 @@ public class ExpectedHighlightingData {
     return info1.startOffset == info2.startOffset &&
            info1.endOffset == info2.endOffset &&
            info1.isAfterEndOfLine() == info2.isAfterEndOfLine() &&
-           matchDescriptions(strictMatch, info1.getDescription(), info2.getDescription());
+           matchDescriptions(strictMatch, info1.getDescription(), info2.getDescription()) &&
+           matchTooltips(strictMatch, info1.getToolTip(), info2.getToolTip());
   }
 
   private static boolean matchDescriptions(boolean strictMatch, String d1, String d2) {
@@ -782,6 +806,14 @@ public class ExpectedHighlightingData {
       }
     }
     return false;
+  }
+
+  private static boolean matchTooltips(boolean strictMatch, String t1, String t2) {
+    if (Comparing.strEqual(t1, t2)) return true;
+    if (strictMatch) return false;
+    t1 = t1 != null ? XmlStringUtil.stripHtml(t1) : null;
+    t2 = t2 != null ? XmlStringUtil.stripHtml(t2) : null;
+    return matchDescriptions(false, t1, t2);
   }
 
   private static String rangeString(String text, int startOffset, int endOffset) {
