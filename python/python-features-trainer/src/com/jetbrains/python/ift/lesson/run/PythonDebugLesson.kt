@@ -19,7 +19,7 @@ class PythonDebugLesson : CommonDebugLesson("python.debug.workflow") {
   override val expressionToBeEvaluated = "result/len(value)"
   override val debuggingMethodName = "find_average"
   override val methodForStepInto = "extract_number"
-  override val stepIntoDirection = "←"
+  override val stepIntoDirectionToRight = false
 
   override fun LessonContext.applyProgramChangeTasks() {
     highlightButtonById("Rerun")

@@ -258,7 +258,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
           MessagePart.MessageType.TEXT_REGULAR -> insertText(part.text, REGULAR)
           MessagePart.MessageType.TEXT_BOLD -> insertText(part.text, BOLD)
           MessagePart.MessageType.SHORTCUT -> appendShortcut(part)?.let { ranges.add(it) }
-          MessagePart.MessageType.CODE -> insertText(" ${part.text} ", CODE)
+          MessagePart.MessageType.CODE -> insertText(part.text, CODE)
           MessagePart.MessageType.CHECK -> insertText(part.text, ROBOTO)
           MessagePart.MessageType.LINK -> appendLink(part)?.let { ranges.add(it) }
           MessagePart.MessageType.ICON_IDX -> LearningUiManager.iconMap[part.text]?.let { addPlaceholderForIcon(it) }
@@ -318,7 +318,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   private fun appendShortcut(messagePart: MessagePart): RangeData? {
-    val range = appendClickableRange(" ${messagePart.text} ", SHORTCUT)
+    val range = appendClickableRange(messagePart.text, SHORTCUT)
     val actionId = messagePart.link ?: return null
     val clickRange = IntRange(range.first + 1, range.last - 1) // exclude around spaces
     return RangeData(clickRange) { p, h -> showShortcutBalloon(p, h, actionId) }
@@ -466,8 +466,11 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
           MessagePart.MessageType.SHORTCUT -> {
             val bg = UISettings.instance.shortcutBackgroundColor
             val needColor = if (lessonMessage.state == MessageState.INACTIVE) Color(bg.red, bg.green, bg.blue, 255 * 3 / 10) else bg
-            drawRectangleAroundText(myMessage, g2d, needColor) { r2d ->
-              g2d.fill(r2d)
+
+            for (part in myMessage.splitMe()) {
+              drawRectangleAroundText(part, g2d, needColor) { r2d ->
+                g2d.fill(r2d)
+              }
             }
           }
           MessagePart.MessageType.CODE -> {
@@ -509,8 +512,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
                                       draw: (r2d: RoundRectangle2D) -> Unit) {
     val startOffset = myMessage.startOffset
     val endOffset = myMessage.endOffset
-    val rectangleStart = modelToView2D(startOffset + 1)
-    val rectangleEnd = modelToView2D(endOffset - 1)
+    val rectangleStart = modelToView2D(startOffset)
+    val rectangleEnd = modelToView2D(endOffset)
     val color = g2d.color
     val fontSize = UISettings.instance.fontSize
 
