@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleType {
+public class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleType {
   DfDoubleConstantType(double value) {
     super(value);
   }

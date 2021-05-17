@@ -21,7 +21,7 @@ import java.util.Iterator;
  */
 public class JvmDfaMemoryStateImpl extends DfaMemoryStateImpl {
 
-  public JvmDfaMemoryStateImpl(final DfaValueFactory factory) {
+  public JvmDfaMemoryStateImpl(@NotNull DfaValueFactory factory) {
     super(factory);
   }
 

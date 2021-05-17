@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-class DfFloatConstantType extends DfConstantType<Float> implements DfFloatType {
+public class DfFloatConstantType extends DfConstantType<Float> implements DfFloatType {
   DfFloatConstantType(float value) {
     super(value);
   }

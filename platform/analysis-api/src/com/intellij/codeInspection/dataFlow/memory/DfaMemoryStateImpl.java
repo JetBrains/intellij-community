@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 public class DfaMemoryStateImpl implements DfaMemoryState {
   private static final Logger LOG = Logger.getInstance(DfaMemoryStateImpl.class);
 
-  private final DfaValueFactory myFactory;
+  private final @NotNull DfaValueFactory myFactory;
 
   private final List<EqClass> myEqClasses;
   // dfa value id -> indices in myEqClasses list of the classes which contain the id
@@ -46,7 +46,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final LinkedHashMap<DfaVariableValue,DfType> myVariableTypes;
   private boolean myEphemeral;
 
-  public DfaMemoryStateImpl(final DfaValueFactory factory) {
+  public DfaMemoryStateImpl(@NotNull DfaValueFactory factory) {
     myFactory = factory;
     myEqClasses = new ArrayList<>();
     myVariableTypes = new LinkedHashMap<>();

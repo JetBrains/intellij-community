@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow.types;
 import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
-final class DfBooleanConstantType extends DfConstantType<Boolean> implements DfBooleanType {
+public final class DfBooleanConstantType extends DfConstantType<Boolean> implements DfBooleanType {
   DfBooleanConstantType(boolean value) {
     super(value);
   }
