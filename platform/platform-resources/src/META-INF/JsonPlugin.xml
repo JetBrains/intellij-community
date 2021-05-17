@@ -6,7 +6,7 @@
     <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyReference"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CopyReference"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Copy.Paste.Special"/>
     </action>
 
     <action id="JsonPathEvaluateAction" class="com.intellij.jsonpath.ui.JsonPathEvaluateAction" icon="AllIcons.FileTypes.Json">
