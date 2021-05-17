@@ -11,6 +11,7 @@
 
     <action id="JsonPathEvaluateAction" class="com.intellij.jsonpath.ui.JsonPathEvaluateAction" icon="AllIcons.FileTypes.Json">
       <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchActions" />
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </action>
 
     <action id="JsonPathExportEvaluateResultAction" class="com.intellij.jsonpath.ui.JsonPathExportEvaluateResultAction"
