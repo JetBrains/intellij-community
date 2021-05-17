@@ -30,7 +30,6 @@ import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,12 +40,6 @@ import java.util.*;
  */
 public class JavaFindUsagesHandler extends FindUsagesHandler{
   private static final Logger LOG = Logger.getInstance(JavaFindUsagesHandler.class);
-  /**
-   * @deprecated Use {@link #getActionString()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  protected static  final String ACTION_STRING = "to find usages of";
 
   private final PsiElement[] myElementsToSearch;
   private final JavaFindUsagesHandlerFactory myFactory;
