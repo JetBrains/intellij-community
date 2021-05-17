@@ -12,6 +12,8 @@ data class FileEditorOpenOptions(
   var isExactState: Boolean = false,
   var isReopeningEditorsOnStartup: Boolean = false,
 ) {
+  fun clone() = copy()  // no arg copying for Java
+
   // @formatter:off
   fun withCurrentTab(value: Boolean)    = apply { isCurrentTab = value }
   fun withFocusEditor(value: Boolean)   = apply { isFocusEditor = value }

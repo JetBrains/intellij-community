@@ -178,11 +178,9 @@ public final class EditorWindow {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
     if (file != null) {
       getManager().openFileImpl4(this, file, null,
-                                 new FileEditorOpenOptions()
-                                   .withPin(info.getSecond().getPin())
+                                 info.getSecond().clone()
                                    .withCurrentTab(true)
-                                   .withFocusEditor(true)
-                                   .withIndex(info.getSecond().getIndex()));
+                                   .withFocusEditor(true));
     }
   }
 
