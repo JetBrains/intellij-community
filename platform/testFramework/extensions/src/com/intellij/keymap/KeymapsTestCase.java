@@ -61,7 +61,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control alt K",            "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
     { "control alt E",            "Console.History.Browse", "PerforceDirect.Edit", "ToggleFindInSelection"},
     { "control alt DOWN",         "NextOccurence", "Console.TableResult.NextPage"},
-    { "control alt G",            "DatabaseView.SqlGenerator", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget", "GoGenerateFileAction"},
+    { "control alt G",            "DatabaseView.SqlGenerator", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
     { "control alt I",             "AutoIndentLines", "RMarkdownNewChunk"},
     { "control alt R",            "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction", "Django.RunManageTaskAction"},
     { "control alt UP",           "PreviousOccurence", "Console.TableResult.PreviousPage"},
@@ -102,8 +102,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control UP",         "ResizeToolWindowUp", "MoveStatementUp"},
     { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},
     { "shift control alt D",      "UML.ShowChanges", "Console.TableResult.CloneColumn"},
-    { "shift control alt P",      "IntroduceFunctionalParameter", "ReformatWithPrettierAction", "GoFmtProjectAction" },
-    { "shift control alt S",      "GoShareInPlaygroundAction", "ShowProjectStructureSettings"},
+    { "shift control alt P",      "IntroduceFunctionalParameter", "ReformatWithPrettierAction" },
     { "shift control alt ENTER",  "Console.Jpa.GenerateDDL", "Console.TableResult.SubmitAndCommit", "Console.Transaction.Commit", "NotebookRunAllAction", "org.jetbrains.r.actions.RDebugAction"},
     { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
@@ -451,6 +450,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow", "RiderBackendAction-EncapsulateField",
     "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction", "RebuildSolutionAction",
     "ActivateInspectionResultsToolWindow",
+    "GoFmtProjectAction", "GoGenerateFileAction", "GoShareInPlaygroundAction",
     ""
   );
 
