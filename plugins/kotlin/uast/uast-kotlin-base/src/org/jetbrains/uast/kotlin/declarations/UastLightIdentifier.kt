@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.uast.kotlin.declarations
+package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
@@ -14,12 +14,15 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.kotlin.createKDocNameSimpleNameReference
-import org.jetbrains.uast.kotlin.unwrapFakeFileForLightClass
 import org.jetbrains.uast.toUElement
 
-class UastLightIdentifier(lightOwner: PsiNameIdentifierOwner, ktDeclaration: KtDeclaration?) :
-    KtLightIdentifier(lightOwner, ktDeclaration) {
-    override fun getContainingFile(): PsiFile = unwrapFakeFileForLightClass(super.getContainingFile())
+class UastLightIdentifier(
+    lightOwner: PsiNameIdentifierOwner,
+    ktDeclaration: KtDeclaration?
+) : KtLightIdentifier(lightOwner, ktDeclaration) {
+    override fun getContainingFile(): PsiFile {
+        return unwrapFakeFileForLightClass(super.getContainingFile())
+    }
 }
 
 class KotlinUIdentifier constructor(
