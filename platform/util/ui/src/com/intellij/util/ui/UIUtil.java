@@ -356,13 +356,6 @@ public final class UIUtil {
     }
   }
 
-  /** @deprecated use {@link JBUIScale} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isAppleRetina() {
-    return false;
-  }
-
   public static @NotNull Couple<Color> getCellColors(@NotNull JTable table, boolean isSel, int row, int column) {
     return Couple.of(isSel ? table.getSelectionForeground() : table.getForeground(),
                      isSel ? table.getSelectionBackground() : table.getBackground());
@@ -2303,15 +2296,6 @@ public final class UIUtil {
     editor.reshape(x, y, width, height);
   }
 
-  /**
-   * @deprecated the method was used to fix Aqua Look-n-Feel problems. Now it does not make sense
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public static int fixComboBoxHeight(final int height) {
-    return height;
-  }
-
   public static final int LIST_FIXED_CELL_HEIGHT = 20;
 
   /**
@@ -3332,25 +3316,6 @@ public final class UIUtil {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean isJreHiDPIEnabled() {
     return JreHiDpiUtil.isJreHiDPIEnabled();
-  }
-
-  /**
-   * @deprecated use {@link JreHiDpiUtil#isJreHiDPI(Graphics2D)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static boolean isJreHiDPI(@Nullable Graphics2D g) {
-    return JreHiDpiUtil.isJreHiDPI(g);
-  }
-
-  /**
-   * @deprecated use {@link UIUtil#getPanelBackground()} instead
-   */
-  @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @NotNull Color getPanelBackgound() {
-    return getPanelBackground();
   }
 
   public static void doNotScrollToCaret(@NotNull JTextComponent textComponent) {

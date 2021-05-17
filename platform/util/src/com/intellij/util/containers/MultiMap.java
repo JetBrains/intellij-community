@@ -19,11 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 @ApiStatus.NonExtendable
 public class MultiMap<K, V> implements Serializable {
-  /**
-   * @deprecated Use {@link #empty()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   private static final MultiMap<?,?> EMPTY = new EmptyMap();
 
   private static final long serialVersionUID = -2632269270151455493L;

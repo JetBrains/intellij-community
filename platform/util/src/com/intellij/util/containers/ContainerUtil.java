@@ -314,17 +314,6 @@ public final class ContainerUtil {
     return collection;
   }
 
-  /**
-   * @deprecated Use {@link LinkedHashSet#LinkedHashSet(Collection)} instead
-   */
-  @Deprecated
-  @Contract(pure = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Collection<? extends T> elements) {
-    DeprecatedMethodException.report("Use `new LinkedHashSet(Collection)` instead. "+elements.getClass());
-    return new LinkedHashSet<>(elements);
-  }
-
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(T @NotNull ... elements) {
