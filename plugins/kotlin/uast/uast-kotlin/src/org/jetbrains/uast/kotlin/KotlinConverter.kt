@@ -61,12 +61,6 @@ object KotlinConverter {
         else -> element
     }
 
-    private val identifiersTokens = setOf(
-        KtTokens.IDENTIFIER, KtTokens.CONSTRUCTOR_KEYWORD, KtTokens.OBJECT_KEYWORD,
-        KtTokens.THIS_KEYWORD, KtTokens.SUPER_KEYWORD,
-        KtTokens.GET_KEYWORD, KtTokens.SET_KEYWORD
-    )
-
     internal fun convertPsiElement(
         element: PsiElement?,
         givenParent: UElement?,
