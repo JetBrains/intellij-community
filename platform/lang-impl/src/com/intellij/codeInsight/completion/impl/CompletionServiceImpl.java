@@ -241,7 +241,12 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     Disposer.dispose(oldPhase);
     Throwable phaseTrace = new Throwable();
     CompletionPhaseHolder holder = new CompletionPhaseHolder(phase, phaseTrace);
-    clientId2Holders.put(clientId, holder);
+    CompletionPhaseHolder previous = clientId2Holders.put(clientId, holder);
+    if (previous == null) {
+      Disposer.register(ClientId.toDisposable(clientId), () -> {
+        clientId2Holders.remove(clientId);
+      });
+    }
   }
 
   private static boolean isRunningPhase(@NotNull CompletionPhase phase) {
