@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.uast.DEFAULT_EXPRESSION_TYPES_LIST
 import org.jetbrains.uast.DEFAULT_TYPES_LIST
 import org.jetbrains.uast.UElement
@@ -25,3 +26,9 @@ inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.expr(f: (
 }
 
 fun Array<out Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
+
+val identifiersTokens = setOf(
+    KtTokens.IDENTIFIER, KtTokens.CONSTRUCTOR_KEYWORD, KtTokens.OBJECT_KEYWORD,
+    KtTokens.THIS_KEYWORD, KtTokens.SUPER_KEYWORD,
+    KtTokens.GET_KEYWORD, KtTokens.SET_KEYWORD
+)
