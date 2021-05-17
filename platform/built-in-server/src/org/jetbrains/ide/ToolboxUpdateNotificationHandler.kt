@@ -40,8 +40,9 @@ internal class ToolboxUpdateNotificationHandler : ToolboxServiceHandler<UpdateNo
       onResult(JsonObject().apply { addProperty("status", "accepted") })
     }
 
-    val title = IdeBundle.message("toolbox.updates.download.update.action.text", request.build, request.version, ApplicationNamesInfo.getInstance().fullProductName)
-    val description = IdeBundle.message("toolbox.updates.download.update.action.description", request.build, request.version)
+    val fullProductName = ApplicationNamesInfo.getInstance().fullProductName
+    val title = IdeBundle.message("toolbox.updates.download.update.action.text", request.build, request.version, fullProductName)
+    val description = IdeBundle.message("toolbox.updates.download.update.action.description", request.build, request.version, fullProductName)
     val action = DumbAwareAction.create(title, actionHandler)
     action.templatePresentation.description = description
     action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.ICON_KEY,
@@ -78,8 +79,9 @@ internal class ToolboxRestartNotificationHandler : ToolboxServiceHandler<UpdateN
       })
     }
 
-    val title = IdeBundle.message("toolbox.updates.download.ready.action.text", request.build, request.version, ApplicationNamesInfo.getInstance().fullProductName)
-    val description = IdeBundle.message("toolbox.updates.download.ready.action.description", request.build, request.version)
+    val fullProductName = ApplicationNamesInfo.getInstance().fullProductName
+    val title = IdeBundle.message("toolbox.updates.download.ready.action.text", request.build, request.version, fullProductName)
+    val description = IdeBundle.message("toolbox.updates.download.ready.action.description", request.build, request.version, fullProductName)
     val action = DumbAwareAction.create(title, actionHandler)
     action.templatePresentation.description = description
     action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.ICON_KEY,
