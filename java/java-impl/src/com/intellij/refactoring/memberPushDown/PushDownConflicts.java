@@ -181,7 +181,8 @@ public class PushDownConflicts {
         }
       }
     }
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(myMovedMembers, targetClass, myConflicts, null, context, myAbstractMembers);
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(myMovedMembers, targetClass, myConflicts, null, context, myAbstractMembers, 
+                                                           ref -> !InheritanceUtil.hasEnclosingInstanceInScope(myClass, ref.getElement(), true, false));
 
   }
 
