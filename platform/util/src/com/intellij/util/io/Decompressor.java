@@ -4,7 +4,6 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -232,7 +231,7 @@ public abstract class Decompressor {
   private @Nullable List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
   private boolean myErrorOnOutsideSymlinkTarget = false;
-  private @Nullable Consumer<Pair<? super Entry, ? super Path>> myPostProcessor;
+  private @Nullable Consumer<Pair<EntryInfo, Path>> myPostProcessor;
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
@@ -251,11 +250,11 @@ public abstract class Decompressor {
   }
 
   public Decompressor postProcessor(@Nullable Consumer<? super Path> consumer) {
-    myPostProcessor = consumer != null ? pair -> consumer.accept((Path)pair.second) : null;
+    myPostProcessor = consumer != null ? pair -> consumer.accept(pair.second) : null;
     return this;
   }
 
-  public Decompressor postProcessorWithEntry(@Nullable Consumer<Pair<? super Entry, ? super Path>> consumer) {
+  public Decompressor postProcessorWithEntry(@Nullable Consumer<Pair<EntryInfo, Path>> consumer) {
     myPostProcessor = consumer;
     return this;
   }
@@ -321,7 +320,13 @@ public abstract class Decompressor {
             break;
 
           case SYMLINK:
-            verifySymlinkTarget(entry, outputDir, outputFile);
+            if (Strings.isEmpty(entry.linkTarget)) {
+              throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
+            }
+
+            if (myErrorOnOutsideSymlinkTarget) {
+              verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
+            }
 
             if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
               try {
@@ -347,23 +352,20 @@ public abstract class Decompressor {
     }
   }
 
-  private static void verifySymlinkTarget(Entry entry, Path outputDir, Path outputFile) throws IOException {
+  private static void verifySymlinkTarget(String entryName, @NotNull String linkTarget, Path outputDir, Path outputFile) throws IOException {
     try {
-      if (Strings.isEmpty(entry.linkTarget)) {
-        throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
-      }
-
-      Path outputTarget = Paths.get(entry.linkTarget);
+      Path outputTarget = Paths.get(linkTarget);
       if (outputTarget.isAbsolute()) {
-        throw new IOException("Invalid symlink (absolute path): " + entry.name + " -> " + entry.linkTarget);
+        throw new IOException("Invalid symlink (absolute path): " + entryName + " -> " + linkTarget);
       }
 
-      if (!FileUtil.isAncestor(outputDir.toString(), outputFile.getParent().resolve(entry.linkTarget).toString(), true)) {
-        throw new IOException("Invalid symlink (points outside of output directory): " + entry.name + " -> " + entry.linkTarget);
+      Path linkTargetNormalized = outputFile.getParent().resolve(linkTarget).normalize();
+      if (!linkTargetNormalized.startsWith(outputDir.normalize())) {
+        throw new IOException("Invalid symlink (points outside of output directory): " + entryName + " -> " + linkTarget);
       }
     }
     catch (InvalidPathException e) {
-      throw new IOException("Failed to verify symlink entry scope: " + entry.name + " -> " + entry.linkTarget, e);
+      throw new IOException("Failed to verify symlink entry scope: " + entryName + " -> " + linkTarget, e);
     }
   }
 
@@ -412,9 +414,17 @@ public abstract class Decompressor {
   //<editor-fold desc="Internal interface">
   protected Decompressor() { }
 
-  public static final class Entry {
-    public enum Type {FILE, DIR, SYMLINK}
+  public interface EntryInfo {
+    enum Type {FILE, DIR, SYMLINK}
 
+    String getName();
+    @Nullable String getLinkTarget();
+    Type getType();
+    int getMode();
+    long getSize();
+  }
+
+  protected static final class Entry implements EntryInfo {
     static final int DOS_READ_ONLY = 0b01;
     static final int DOS_HIDDEN = 0b010;
 
@@ -434,6 +444,31 @@ public abstract class Decompressor {
       this.mode = mode;
       this.size = size;
       this.linkTarget = linkTarget;
+    }
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
+    @Override
+    public @Nullable String getLinkTarget() {
+      return linkTarget;
+    }
+
+    @Override
+    public Type getType() {
+      return type;
+    }
+
+    @Override
+    public int getMode() {
+      return mode;
+    }
+
+    @Override
+    public long getSize() {
+      return size;
     }
   }
 

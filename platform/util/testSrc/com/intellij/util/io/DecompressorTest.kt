@@ -3,7 +3,6 @@ package com.intellij.util.io
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported
-import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
 import com.intellij.testFramework.rules.TempDirectory
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
@@ -189,45 +188,55 @@ class DecompressorTest {
   @Test fun tarSymlinks() {
     assumeNioSymLinkCreationIsSupported()
 
+    val rogueTarget = tempDir.newFile("rogue_f", "123789".toByteArray(Charsets.UTF_8))
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use {
       writeEntry(it, "f")
       writeEntry(it, "links/ok", link = "../f")
+      writeEntry(it, "rogue", link = "../rogue_f")
     }
     val dir = tempDir.newDirectory("unpacked").toPath()
     Decompressor.Tar(tar).extract(dir)
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
+    assertThat(dir.resolve("rogue")).isSymbolicLink().hasSameBinaryContentAs(rogueTarget.toPath())
   }
 
   @Test fun zipSymlinks() {
     assumeNioSymLinkCreationIsSupported()
 
+    val rogueTarget = tempDir.newFile("rogue_f", "123789".toByteArray(Charsets.UTF_8))
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use {
       writeEntry(it, "f")
       writeEntry(it, "links/ok", link = "../f")
+      writeEntry(it, "rogue", link = "../rogue_f")
     }
     val dir = tempDir.newDirectory("unpacked").toPath()
     Decompressor.Zip(zip).withZipExtensions().extract(dir)
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
-  }
-
-  @Test fun tarRogueSymlinks() {
-    assumeSymLinkCreationIsSupported()
-
-    val tar = tempDir.newFile("test.tar")
-    TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "rogue", link = "../f") }
-    val dir = tempDir.newDirectory("unpacked").toPath()
-    testNoTraversal(Decompressor.Tar(tar).errorOnOutsideSymlinkTarget(true), dir, dir.resolve("rogue"))
+    assertThat(dir.resolve("rogue")).isSymbolicLink().hasSameBinaryContentAs(rogueTarget.toPath())
   }
 
   @Test fun zipRogueSymlinks() {
-    assumeSymLinkCreationIsSupported()
+    assumeNioSymLinkCreationIsSupported()
 
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "rogue", link = "../f") }
+
+    val decompressor = Decompressor.Zip(zip).withZipExtensions().errorOnOutsideSymlinkTarget(true)
     val dir = tempDir.newDirectory("unpacked").toPath()
-    testNoTraversal(Decompressor.Zip(zip).withZipExtensions().errorOnOutsideSymlinkTarget(true), dir, dir.resolve("rogue"))
+    testNoTraversal(decompressor, dir, dir.resolve("rogue"))
+  }
+
+  @Test fun tarRogueSymlinks() {
+    assumeNioSymLinkCreationIsSupported()
+
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "rogue", link = "../f") }
+
+    val decompressor = Decompressor.Tar(tar).errorOnOutsideSymlinkTarget(true)
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
 
   @Test fun prefixPathsFilesInZip() {
@@ -377,13 +386,26 @@ class DecompressorTest {
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
   }
 
-  @Test fun prefixPathRogueSymlinks() {
-    assumeSymLinkCreationIsSupported()
+  @Test fun prefixPathTarRogueSymlinks() {
+    assumeNioSymLinkCreationIsSupported()
 
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
+
+    val decompressor = Decompressor.Tar(tar).errorOnOutsideSymlinkTarget(true).removePrefixPath("a/b/c")
     val dir = tempDir.newDirectory("unpacked").toPath()
-    testNoTraversal(Decompressor.Tar(tar).errorOnOutsideSymlinkTarget(true).removePrefixPath("a/b/c"), dir, dir.resolve("rogue"))
+    testNoTraversal(decompressor, dir, dir.resolve("rogue"))
+  }
+
+  @Test fun prefixPathZipRogueSymlinks() {
+    assumeNioSymLinkCreationIsSupported()
+
+    val zip = tempDir.newFile("test.zip")
+    ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
+
+    val decompressor = Decompressor.Zip(zip).withZipExtensions().errorOnOutsideSymlinkTarget(true).removePrefixPath("a/b/c")
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
 
   @Test fun prefixPathSkipsTooShortPaths() {
