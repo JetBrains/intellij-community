@@ -13,12 +13,24 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
 public class StatsRequestBuilder {
   private static final int SUCCESS_CODE = 200;
+  private static final List<Integer> CAN_RETRY_CODES = Arrays.asList(
+    // Standard status codes
+    408, // Request Timeout
+    429, // Too Many Requests (RFC 6585)
+    500, // Internal Server Error
+    502, // Bad Gateway
+    503, // Service Unavailable
+    504, // Gateway Timeout
+    // Unofficial codes
+    598 // Some HTTP Proxies timeout
+  );
+  private static final int MAX_RETRIES = 1;
+  private static final int RETRY_INTERVAL = 500;
 
   private final String myUserAgent;
   private final StatsProxyInfo myProxyInfo;
@@ -77,19 +89,32 @@ public class StatsRequestBuilder {
     HttpClient client = newClient();
     HttpRequest request = newRequest();
 
+    HttpResponse<String> response = trySend(client, request);
+    int code = response.statusCode();
+    if (code == SUCCESS_CODE) {
+      T result = processor.onSucceed(new StatsHttpResponse(response, code));
+      return StatsRequestResult.succeed(result);
+    }
+    else {
+      if (onFail != null) {
+        onFail.handle(new StatsHttpResponse(response, code), code);
+      }
+      return StatsRequestResult.error(code);
+    }
+  }
+
+  private HttpResponse<String> trySend(HttpClient client, HttpRequest request) throws IOException, StatsResponseException {
+    return trySend(client, request, 0);
+  }
+
+  private HttpResponse<String> trySend(HttpClient client, HttpRequest request, int retryCounter) throws IOException, StatsResponseException {
     try {
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      int code = response.statusCode();
-      if (code == SUCCESS_CODE) {
-        T result = processor.onSucceed(new StatsHttpResponse(response, code));
-        return StatsRequestResult.succeed(result);
+      if (CAN_RETRY_CODES.contains(response.statusCode()) && retryCounter < MAX_RETRIES) {
+        Thread.sleep(RETRY_INTERVAL);
+        response = trySend(client, request, ++retryCounter);
       }
-      else {
-        if (onFail != null) {
-          onFail.handle(new StatsHttpResponse(response, code), code);
-        }
-        return StatsRequestResult.error(code);
-      }
+      return response;
     }
     catch (InterruptedException e) {
       throw new StatsResponseException(e);
