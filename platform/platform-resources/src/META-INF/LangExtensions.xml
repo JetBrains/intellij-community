@@ -353,9 +353,6 @@
     <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"
                     serviceImplementation="com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.util.LogicalRootsManager"
-                    serviceImplementation="com.intellij.util.LogicalRootsManagerImpl"/>
-
     <projectService serviceImplementation="com.intellij.codeEditor.printing.ExportToHTMLSettings"/>
 
     <projectService serviceImplementation="com.intellij.diagnostic.logging.LogConsolePreferences"/>
