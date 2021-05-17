@@ -120,6 +120,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private boolean myFinishing;
   boolean myUpdating;
   private LookupUi myUi;
+  private final ClientId myClientId = ClientId.getCurrent();
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
 
@@ -1083,6 +1084,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private void doHide(final boolean fireCanceled, final boolean explicitly) {
     if (isLookupDisposed()) {
       LOG.error(formatDisposeTrace());
+    }
+    if (!myClientId.equals(ClientId.getCurrent())) {
+      LOG.error(ClientId.getCurrent() + " tries to hide lookup of " + myClientId);
     }
     else {
       myHidden = true;
