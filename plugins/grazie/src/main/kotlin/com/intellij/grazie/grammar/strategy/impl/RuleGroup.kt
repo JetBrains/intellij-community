@@ -2,14 +2,16 @@
 package com.intellij.grazie.grammar.strategy.impl
 
 import com.intellij.grazie.utils.LinkedSet
+import org.jetbrains.annotations.ApiStatus
 
-/**
- * A group of Grazie grammar rules.
- *
- * This class represent a user-defined set of rules.
- */
-data class RuleGroup(val rules: LinkedSet<String>) {
-  constructor(vararg rules: String) : this(LinkedSet(rules.toSet()))
+@Suppress("DEPRECATION")
+@Deprecated(
+  replaceWith = ReplaceWith("com.intellij.grazie.text.RuleGroup"),
+  message = "Use a non-impl class"
+)
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+class RuleGroup(rules: LinkedSet<String>): com.intellij.grazie.text.RuleGroup(rules) {
+  constructor(vararg rules: String) : this(LinkedSet<String>(rules.toSet()))
 
   companion object {
     val EMPTY = RuleGroup()
