@@ -69,7 +69,6 @@ public class TableLayout extends TabLayout implements MorePopupAware {
         }
         myTabs.layout(eachLabel, eachX, eachY, width, myTabs.myHeaderFitSize.height);
         data.bounds.put(eachInfo, eachLabel.getBounds());
-        eachX += width + hGap;
       }
       else {
         if ((!scrollable && eachX + width + hGap > maxX && !singleRow) || (showPinnedTabsSeparately && eachLabel.isNextToLastPinned())) {
@@ -94,8 +93,8 @@ public class TableLayout extends TabLayout implements MorePopupAware {
         if (scrollable && intersection < eachLabel.getBounds().width) {
           data.invisible.add(eachInfo);
         }
-        eachX += width + hGap;
       }
+      eachX += width + hGap;
     }
     if (requiredRowsPinned > 0 && requiredRowsUnpinned > 0) data.moreRect.y += myTabs.myHeaderFitSize.height /*+ myTabs.getSeparatorWidth()*/;
 

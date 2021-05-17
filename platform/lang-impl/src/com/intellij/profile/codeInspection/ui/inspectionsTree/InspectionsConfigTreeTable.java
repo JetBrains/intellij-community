@@ -463,12 +463,9 @@ public final class InspectionsConfigTreeTable extends TreeTable {
           continue;
         }
         final HighlightSeverity currentSeverity = currentSeverityAndOccurrences.getPrimarySeverity();
-        if (currentSeverity == ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY ||
-            currentSeverityAndOccurrences.getOccurrencesSize() == allInspectionsCount ||
-            myDefaultScopeName.equals(currentScope)) {
-          result.put(currentScope, currentSeverity);
-        }
-        else {
+        if (currentSeverity != ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY &&
+            currentSeverityAndOccurrences.getOccurrencesSize() != allInspectionsCount &&
+            !myDefaultScopeName.equals(currentScope)) {
           Set<String> toolsToCheck = new HashSet<>(allScopes.keySet());
           toolsToCheck.removeAll(currentSeverityAndOccurrences.getOccurrences().keySet());
           boolean doContinue = false;
@@ -486,8 +483,8 @@ public final class InspectionsConfigTreeTable extends TreeTable {
           if (doContinue) {
             continue;
           }
-          result.put(currentScope, currentSeverity);
         }
+        result.put(currentScope, currentSeverity);
       }
 
       return result;
