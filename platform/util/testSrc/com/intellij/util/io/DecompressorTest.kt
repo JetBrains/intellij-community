@@ -223,7 +223,7 @@ class DecompressorTest {
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "rogue", link = "../f") }
 
-    val decompressor = Decompressor.Zip(zip).withZipExtensions().errorOnOutsideSymlinkTarget(true)
+    val decompressor = Decompressor.Zip(zip).withZipExtensions().allowEscapingSymlinks(false)
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -234,7 +234,7 @@ class DecompressorTest {
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "rogue", link = "../f") }
 
-    val decompressor = Decompressor.Tar(tar).errorOnOutsideSymlinkTarget(true)
+    val decompressor = Decompressor.Tar(tar).allowEscapingSymlinks(false)
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -392,7 +392,7 @@ class DecompressorTest {
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
 
-    val decompressor = Decompressor.Tar(tar).errorOnOutsideSymlinkTarget(true).removePrefixPath("a/b/c")
+    val decompressor = Decompressor.Tar(tar).allowEscapingSymlinks(false).removePrefixPath("a/b/c")
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -403,7 +403,7 @@ class DecompressorTest {
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
 
-    val decompressor = Decompressor.Zip(zip).withZipExtensions().errorOnOutsideSymlinkTarget(true).removePrefixPath("a/b/c")
+    val decompressor = Decompressor.Zip(zip).withZipExtensions().allowEscapingSymlinks(false).removePrefixPath("a/b/c")
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }

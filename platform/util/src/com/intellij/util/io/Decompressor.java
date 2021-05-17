@@ -230,7 +230,7 @@ public abstract class Decompressor {
   private @Nullable Predicate<? super String> myFilter = null;
   private @Nullable List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
-  private boolean myErrorOnOutsideSymlinkTarget = false;
+  private boolean myAllowEscapingSymlinks = true;
   private @Nullable Consumer<Pair<EntryInfo, Path>> myPostProcessor;
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
@@ -244,8 +244,8 @@ public abstract class Decompressor {
     return this;
   }
 
-  public Decompressor errorOnOutsideSymlinkTarget(boolean errorOnOutsideSymlinkTarget) {
-    myErrorOnOutsideSymlinkTarget = errorOnOutsideSymlinkTarget;
+  public Decompressor allowEscapingSymlinks(boolean allowEscapingSymlinks) {
+    myAllowEscapingSymlinks = allowEscapingSymlinks;
     return this;
   }
 
@@ -324,7 +324,7 @@ public abstract class Decompressor {
               throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
             }
 
-            if (myErrorOnOutsideSymlinkTarget) {
+            if (!myAllowEscapingSymlinks) {
               verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
             }
 
