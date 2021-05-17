@@ -163,6 +163,7 @@ class SubmittableTextField(
     }
   }
 
+  @Suppress("DialogTitleCapitalization")
   private fun createSubmitButton(@NlsActions.ActionText actionName: String) =
     InlineIconButton(
       CollaborationToolsIcons.Send, CollaborationToolsIcons.SendHovered,
