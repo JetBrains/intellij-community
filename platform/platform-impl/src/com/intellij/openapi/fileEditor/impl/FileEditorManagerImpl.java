@@ -900,9 +900,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                                                  @NotNull VirtualFile file,
                                                                  boolean focusEditor,
                                                                  @Nullable HistoryEntry entry) {
-    if (file instanceof BackedVirtualFile) {
-      file = ((BackedVirtualFile)file).getOriginFile();
-    }
     return openFileImpl4(window, file, entry, new FileEditorOpenOptions().withCurrentTab(true).withFocusEditor(focusEditor));
   }
 
@@ -910,11 +907,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    * This method can be invoked from background thread. Of course, UI for returned editors should be accessed from EDT in any case.
    */
   protected @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> openFileImpl4(@NotNull EditorWindow window,
-                                                                                                @NotNull VirtualFile file,
+                                                                                                @NotNull VirtualFile _file,
                                                                                                 @Nullable HistoryEntry entry,
                                                                                                 @NotNull FileEditorOpenOptions options) {
-    assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed() : "must not open files under read action since we are doing a lot of invokeAndWaits here";
+    assert ApplicationManager.getApplication().isDispatchThread() ||
+           !ApplicationManager.getApplication().isReadAccessAllowed() : "must not attempt opening files under read action";
 
+    VirtualFile file = BackedVirtualFile.getOriginFileIfBacked(_file);
     Ref<EditorWithProviderComposite> compositeRef = new Ref<>();
 
     if (!options.isReopeningEditorsOnStartup()) {
