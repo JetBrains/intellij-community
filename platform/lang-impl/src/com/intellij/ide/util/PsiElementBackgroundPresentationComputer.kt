@@ -26,13 +26,13 @@ import javax.swing.AbstractListModel
 import javax.swing.JList
 import javax.swing.event.ListDataEvent
 
-internal fun getComputer(list: JList<*>, renderer: PsiElementListCellRenderer<*>): PsiElementBackgroundListCellRendererComputer {
+internal fun getComputer(list: JList<*>, renderer: PsiElementListCellRenderer<*>): PsiElementBackgroundPresentationComputer {
   return computers(list).computeIfAbsent(renderer) {
-    PsiElementBackgroundListCellRendererComputer(list, renderer)
+    PsiElementBackgroundPresentationComputer(list, renderer)
   }
 }
 
-private typealias Computers = HashMap<PsiElementListCellRenderer<*>, PsiElementBackgroundListCellRendererComputer>
+private typealias Computers = HashMap<PsiElementListCellRenderer<*>, PsiElementBackgroundPresentationComputer>
 
 private val computersKey = ObjectUtils.sentinel("renderer computers")
 
@@ -57,7 +57,7 @@ private fun computers(list: JList<*>): Computers {
   return computers
 }
 
-internal class PsiElementBackgroundListCellRendererComputer(
+internal class PsiElementBackgroundPresentationComputer(
   private val list: JList<*>,
   private val renderer: PsiElementListCellRenderer<*>,
 ) {
