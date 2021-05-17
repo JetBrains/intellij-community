@@ -812,4 +812,37 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/WrongNumberOfTypeArgumentsInSupertype.kt");
         }
     }
+
+    @TestMetadata("idea/testData/resolve/references/packageReference")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class PackageReference extends AbstractReferenceResolveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInPackageReference() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/resolve/references/packageReference"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+        }
+
+        @TestMetadata("javaPackageFirstQualifier.kt")
+        public void testJavaPackageFirstQualifier() throws Exception {
+            runTest("idea/testData/resolve/references/packageReference/javaPackageFirstQualifier.kt");
+        }
+
+        @TestMetadata("javaPackageSecondQualifier.kt")
+        public void testJavaPackageSecondQualifier() throws Exception {
+            runTest("idea/testData/resolve/references/packageReference/javaPackageSecondQualifier.kt");
+        }
+
+        @TestMetadata("kotlinPackageFirstQualifier.kt")
+        public void testKotlinPackageFirstQualifier() throws Exception {
+            runTest("idea/testData/resolve/references/packageReference/kotlinPackageFirstQualifier.kt");
+        }
+
+        @TestMetadata("kotlinPackageSecondQualifier.kt")
+        public void testKotlinPackageSecondQualifier() throws Exception {
+            runTest("idea/testData/resolve/references/packageReference/kotlinPackageSecondQualifier.kt");
+        }
+    }
 }
