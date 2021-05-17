@@ -649,6 +649,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
               push = push.getPrevious();
             }
           }
+          if (push != null) {
+            push = push.getNonMerge();
+          }
           if (push != null && push.myInstruction instanceof ConditionalGotoInstruction) {
             push = push.getPrevious();
           }
