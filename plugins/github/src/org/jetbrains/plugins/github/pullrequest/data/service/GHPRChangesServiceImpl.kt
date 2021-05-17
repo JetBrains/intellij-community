@@ -5,6 +5,8 @@ import com.google.common.graph.Graph
 import com.google.common.graph.GraphBuilder
 import com.google.common.graph.ImmutableGraph
 import com.google.common.graph.Traverser
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
@@ -26,8 +28,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
@@ -102,8 +102,8 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
         throw ProcessCanceledException(e)
       }
       catch (e: CompletionException) {
-        if (GithubAsyncUtil.isCancellation(e)) throw ProcessCanceledException(e)
-        throw GithubAsyncUtil.extractError(e)
+        if (CompletableFutureUtil.isCancellation(e)) throw ProcessCanceledException(e)
+        throw CompletableFutureUtil.extractError(e)
       }
     }
 

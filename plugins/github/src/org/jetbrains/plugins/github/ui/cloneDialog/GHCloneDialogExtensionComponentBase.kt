@@ -297,7 +297,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
                                                                          pagination = GithubRequestPagination.DEFAULT)
         val pageItemsConsumer: (List<GithubRepo>) -> Unit = {
           runInEdt {
-            repositoriesByAccount.getOrPut(account, { UpdateOrderLinkedHashSet() }).addAll(it)
+            repositoriesByAccount.getOrPut(account) { UpdateOrderLinkedHashSet() }.addAll(it)
             refillRepositories()
           }
         }

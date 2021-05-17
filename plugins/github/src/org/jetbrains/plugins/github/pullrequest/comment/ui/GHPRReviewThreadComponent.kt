@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.codereview.InlineIconButton
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.icons.AllIcons
@@ -29,8 +31,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWind
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.handleOnEdt
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Cursor
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
