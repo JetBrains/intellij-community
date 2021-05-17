@@ -247,11 +247,11 @@ class XDebugSessionTab3(
     toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
 
     // reversed because it was like this in the original tab
-    for (action in session.restartActions.reversed()) {
+    for (action in session.restartActions.asReversed()) {
       toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
     }
 
-    for (action in session.extraActions.reversed()) {
+    for (action in session.extraActions.asReversed()) {
       toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
     }
 
