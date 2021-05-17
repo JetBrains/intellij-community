@@ -26,7 +26,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 private val logger by lazy { Logger.getInstance(GradleProjectModuleProvider::class.java) }
 
 private fun PsiFile.firstElementContaining(text: String): @NotNull PsiElement? {
-    return this.text.indexOf(text).takeIf { it >= 0 }?.let { getElementAtOffsetOrNull(it) }
+    val index = this.text.indexOf(text)
+    return if (index >= 0) getElementAtOffsetOrNull(index) else null
 }
 
 private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
@@ -40,10 +41,9 @@ internal open class GradleProjectModuleProvider : ProjectModuleProvider {
             val isKotlinDependency = file.language::class.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
                 && groupId == "org.jetbrains.kotlin" && artifactId.startsWith("kotlin-")
             val kotlinDependencyImport = "kotlin(\"${artifactId.removePrefix("kotlin-")}\")"
-            return file.takeIf { isKotlinDependency }?.firstElementContaining(kotlinDependencyImport)
-                ?: file.firstElementContaining("$groupId:$artifactId")
+            val searchableText = if (isKotlinDependency) kotlinDependencyImport else "$groupId:$artifactId"
+            return file.firstElementContaining(searchableText)
         }
-
     }
 
     override fun obtainAllProjectModulesFor(project: Project): Sequence<ProjectModule> = sequence {

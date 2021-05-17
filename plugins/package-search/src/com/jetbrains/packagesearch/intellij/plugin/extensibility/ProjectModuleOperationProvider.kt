@@ -10,10 +10,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleOperationProvider
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Extension point that allows to modify the dependencies of a specific project.
- * For an implementation examples check out [GradleProjectModuleOperationProvider]
+ * For implementation examples check out [GradleProjectModuleOperationProvider]
  * or [MavenProjectModuleOperationProvider].
  */
 interface ProjectModuleOperationProvider {
@@ -84,7 +85,7 @@ interface ProjectModuleOperationProvider {
 
     /**
      * Lists all dependencies in the given [virtualFile] in the given [project].
-     * @return A [Collection]<[UnifiedDependency]> found the project.
+     * @return A [Collection]<[UnifiedDependency]> found in the project.
      */
     fun listDependenciesInProject(
         project: Project,
@@ -123,5 +124,7 @@ interface ProjectModuleOperationProvider {
     /**
      * Refreshes the project by triggering the build system sync with IntelliJ.
      */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+    @Deprecated("Not used anymore")
     fun refreshProject(project: Project, virtualFile: VirtualFile)
 }
