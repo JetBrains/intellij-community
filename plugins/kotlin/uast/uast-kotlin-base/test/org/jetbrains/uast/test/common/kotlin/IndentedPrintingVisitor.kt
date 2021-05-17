@@ -3,7 +3,6 @@ package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import org.jetbrains.uast.UFile
 import kotlin.reflect.KClass
 
@@ -33,9 +32,9 @@ abstract class IndentedPrintingVisitor(val shouldIndent: (PsiElement) -> Boolean
 
     val result: String
         get() = builder.toString()
-}
 
-fun IndentedPrintingVisitor.visitUFileAndGetResult(uFile: UFile): String {
-    (uFile.sourcePsi as PsiFile).accept(this)
-    return result
+    fun visitUFileAndGetResult(uFile: UFile): String {
+        uFile.sourcePsi.accept(this)
+        return result
+    }
 }
