@@ -8,8 +8,6 @@ import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequ
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpResponse;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestBuilder;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
-import org.apache.http.Consts;
-import org.apache.http.entity.ContentType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +16,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +26,6 @@ import static com.intellij.internal.statistic.StatisticsStringUtil.isEmpty;
 
 @ApiStatus.Internal
 public class EventLogStatisticsService implements StatisticsService {
-  private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
 
   private static final int MAX_FILES_TO_SEND = 5;
 
@@ -131,7 +129,7 @@ public class EventLogStatisticsService implements StatisticsService {
 
         try {
           StatsHttpRequests.post(serviceUrl, connectionSettings).
-            withBody(LogEventSerializer.INSTANCE.toString(recordRequest), APPLICATION_JSON).
+            withBody(LogEventSerializer.INSTANCE.toString(recordRequest), "application/json", StandardCharsets.UTF_8).
             succeed((r, code) -> {
               toRemove.add(file);
               decorator.onSucceed(recordRequest, loadAndLogResponse(logger, r, file), file.getAbsolutePath());
