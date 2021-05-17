@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.checkers.AbstractKotlinHighlightingPassTest
+import org.jetbrains.kotlin.checkers.AbstractKotlinHighlightVisitorTest
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.io.File
 
-abstract class AbstractCodeFragmentHighlightingTest : AbstractKotlinHighlightingPassTest() {
+abstract class AbstractCodeFragmentHighlightingTest : AbstractKotlinHighlightVisitorTest() {
     override fun doTest(filePath: String) {
         myFixture.configureByCodeFragment(filePath)
         checkHighlighting(filePath)

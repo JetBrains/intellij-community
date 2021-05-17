@@ -273,7 +273,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/resolveModeComparison")
         }
 
-        testClass<AbstractKotlinHighlightingPassTest> {
+        testClass<AbstractKotlinHighlightVisitorTest> {
             model("checker", isRecursive = false)
             model("checker/regression")
             model("checker/recovery")

@@ -20,10 +20,10 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlinHighlightingPassTest {
+public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlinHighlightVisitorTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker")
-    public static class Checker extends AbstractKotlinHighlightingPassTest {
+    public static class Checker extends AbstractKotlinHighlightVisitorTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -366,7 +366,7 @@ public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/regression")
-    public static class Regression extends AbstractKotlinHighlightingPassTest {
+    public static class Regression extends AbstractKotlinHighlightVisitorTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -604,7 +604,7 @@ public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/recovery")
-    public static class Recovery extends AbstractKotlinHighlightingPassTest {
+    public static class Recovery extends AbstractKotlinHighlightVisitorTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -627,7 +627,7 @@ public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/rendering")
-    public static class Rendering extends AbstractKotlinHighlightingPassTest {
+    public static class Rendering extends AbstractKotlinHighlightVisitorTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -640,7 +640,7 @@ public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/scripts")
-    public static class Scripts extends AbstractKotlinHighlightingPassTest {
+    public static class Scripts extends AbstractKotlinHighlightVisitorTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -668,10 +668,10 @@ public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/duplicateJvmSignature")
-    public abstract static class DuplicateJvmSignature extends AbstractKotlinHighlightingPassTest {
+    public abstract static class DuplicateJvmSignature extends AbstractKotlinHighlightVisitorTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/duplicateJvmSignature/fields")
-        public static class Fields extends AbstractKotlinHighlightingPassTest {
+        public static class Fields extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -684,7 +684,7 @@ public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlin
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/duplicateJvmSignature/functionAndProperty")
-        public static class FunctionAndProperty extends AbstractKotlinHighlightingPassTest {
+        public static class FunctionAndProperty extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -742,7 +742,7 @@ public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlin
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/duplicateJvmSignature/traitImpl")
-        public static class TraitImpl extends AbstractKotlinHighlightingPassTest {
+        public static class TraitImpl extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -756,7 +756,7 @@ public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/infos")
-    public static class Infos extends AbstractKotlinHighlightingPassTest {
+    public static class Infos extends AbstractKotlinHighlightVisitorTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestWithInfos, this, testDataFilePath);
         }
@@ -844,7 +844,7 @@ public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/diagnosticsMessage")
-    public static class DiagnosticsMessage extends AbstractKotlinHighlightingPassTest {
+    public static class DiagnosticsMessage extends AbstractKotlinHighlightVisitorTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
