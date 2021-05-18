@@ -402,26 +402,24 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     TargetPresentationBuilder builder = TargetPresentation.builder(name);
     builder = builder.icon(getIcon(element));
 
-    Project project = element.getProject();
-
+    TextAttributes elementAttributes = getNavigationItemAttributes(element);
     VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
-
-    TextAttributes presentableAttributes = getNavigationItemAttributes(element);
-    if (presentableAttributes == null) {
-      Color color = vFile == null ? null : FileStatusManager.getInstance(project).getStatus(vFile).getColor();
-      if (color != null) {
-        presentableAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color).toTextAttributes();
+    if (vFile == null) {
+      builder = builder.presentableTextAttributes(elementAttributes);
+    }
+    else {
+      Project project = element.getProject();
+      TextAttributes presentableAttributes = elementAttributes;
+      if (presentableAttributes == null) {
+        Color color = FileStatusManager.getInstance(project).getStatus(vFile).getColor();
+        if (color != null) {
+          presentableAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color).toTextAttributes();
+        }
       }
-    }
-    boolean isProblemFile = vFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(vFile);
-    if (isProblemFile) {
-      TextAttributes errorAttributes = getErrorAttributes().toTextAttributes();
-      presentableAttributes = presentableAttributes == null ? errorAttributes
-                                                            : TextAttributes.merge(errorAttributes, presentableAttributes);
-    }
-    builder = builder.presentableTextAttributes(presentableAttributes);
-
-    if (vFile != null) {
+      if (WolfTheProblemSolver.getInstance(project).isProblemFile(vFile)) {
+        presentableAttributes = TextAttributes.merge(getErrorAttributes().toTextAttributes(), presentableAttributes);
+      }
+      builder = builder.presentableTextAttributes(presentableAttributes);
       builder = builder.backgroundColor(getFileBackgroundColor(project, vFile));
     }
 
