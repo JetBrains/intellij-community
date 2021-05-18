@@ -967,6 +967,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @TestOnly
   @Deprecated
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public Promise<TreePath> promisePathToElement(@NotNull Object element) {
     AbstractTreeBuilder builder = getTreeBuilder();
     if (builder != null) {

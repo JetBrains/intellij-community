@@ -310,6 +310,7 @@ public class GradleInstallationManager implements Disposable {
    */
   @Nullable
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public VirtualFile getGradleHome(@Nullable Module module) {
     if (module == null) {
       return null;
@@ -333,6 +334,7 @@ public class GradleInstallationManager implements Disposable {
    */
   @Nullable
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public VirtualFile getGradleHome(@Nullable Module module, @Nullable Project project, @NotNull String linkedProjectPath) {
     final VirtualFile result = getGradleHome(module);
     if (result != null) {

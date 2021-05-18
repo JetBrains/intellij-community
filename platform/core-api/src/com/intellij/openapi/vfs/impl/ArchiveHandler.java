@@ -268,6 +268,7 @@ public abstract class ArchiveHandler {
 
   /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   protected @NotNull EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
     EntryInfo entry = map.get(entryName);
     if (entry == null) {
