@@ -6,6 +6,8 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.lang.Language
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
   override fun getGroupId(): String = "grazie.state"
@@ -28,11 +30,11 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     }
 
 
-    for (id in state.enabledGrammarStrategies) {
-      metrics.add(newMetric("strategy", FeatureUsageData().addData("id", id).addData("enabled", true)))
-    }
-    for (id in state.disabledGrammarStrategies) {
-      metrics.add(newMetric("strategy", FeatureUsageData().addData("id", id).addData("enabled", false)))
+    for (id in state.checkingContext.disabledLanguages) {
+      val language = Language.findLanguageByID(id) ?: continue
+      if (!getPluginInfo(language.javaClass).isSafeToReport()) continue
+
+      metrics.add(newMetric("checkingContext", FeatureUsageData().addData("disabled_language", id)))
     }
 
     return metrics

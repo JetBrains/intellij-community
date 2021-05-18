@@ -27,8 +27,8 @@ private class GrazieSearchableOptionContributor : SearchableOptionContributor() 
     for (lang in Lang.values()) {
       processor.addProofreadOptions("${lang.displayName} ${lang.nativeName}", hit = msg("grazie.settings.proofreading.languages.text"))
     }
-    for (name in LanguageGrammarChecking.getStrategies().map { it.getName() }) {
-      processor.addGrammarOptions(name, hit = msg("grazie.settings.grammar.scope.file-types.text"))
+    for (language in LanguageGrammarChecking.getEnabledLanguages()) {
+      processor.addGrammarOptions(language.displayName, hit = msg("grazie.settings.grammar.scope.file-types.text"))
     }
     processor.addGrammarOptions("grazie", null, null)
   }

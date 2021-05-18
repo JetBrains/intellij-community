@@ -25,22 +25,15 @@ import com.intellij.psi.util.elementType
 
 class GrazieInspection : LocalInspectionTool() {
   companion object : GrazieStateLifecycle {
-    private var enabledStrategiesIDs: Set<String> by lazyConfig(this::init)
-    private var disabledStrategiesIDs: Set<String> by lazyConfig(this::init)
-
     private var suppression: SuppressingContext by lazyConfig(this::init)
     private var checking: CheckingContext by lazyConfig(this::init)
 
     override fun init(state: GrazieConfig.State) {
-      enabledStrategiesIDs = state.enabledGrammarStrategies
-      disabledStrategiesIDs = state.disabledGrammarStrategies
       suppression = state.suppressingContext
       checking = state.checkingContext
     }
 
     override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-      enabledStrategiesIDs = newState.enabledGrammarStrategies
-      disabledStrategiesIDs = newState.disabledGrammarStrategies
       suppression = newState.suppressingContext
       checking = newState.checkingContext
     }
@@ -66,7 +59,7 @@ class GrazieInspection : LocalInspectionTool() {
       override fun visitElement(element: PsiElement) {
         if (element is PsiWhiteSpace) return super.visitElement(element)
 
-        for (strategy in LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)) {
+        for (strategy in LanguageGrammarChecking.getEnabledStrategiesForElement(element)) {
           val domain = strategy.getContextRootTextDomain(element)
           if (!isCheckInElementTextDomainEnabled(domain)) continue
 
