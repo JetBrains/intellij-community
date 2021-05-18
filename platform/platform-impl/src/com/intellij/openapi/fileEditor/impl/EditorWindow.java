@@ -78,7 +78,6 @@ public final class EditorWindow {
   @NotNull
   private final EditorsSplitters myOwner;
 
-  private boolean alwaysHideTabs;
   private boolean myIsDisposed;
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
   // Metadata to support editor tab drag&drop process: initial index
@@ -127,9 +126,13 @@ public final class EditorWindow {
 
   void updateTabsVisibility(@NotNull UISettings settings) {
     myTabbedPane.getTabs().getPresentation()
-      .setHideTabs(myOwner.isFloating() && alwaysHideTabs
+      .setHideTabs(myOwner.isFloating() && shouldHideTabs(getSelectedEditor())
                    || settings.getEditorTabPlacement() == UISettings.TABS_NONE
                    || settings.getPresentationMode());
+  }
+
+  private static boolean shouldHideTabs(@Nullable EditorWithProviderComposite selectedEditor) {
+    return selectedEditor != null && ContainerUtil.exists(selectedEditor.getEditors(), e -> HIDE_TABS.get(e, false));
   }
 
   public boolean isShowing() {
@@ -559,25 +562,9 @@ public final class EditorWindow {
     if (options.getSelectAsCurrent()) {
       setSelectedEditor(editor, options.getRequestFocus());
     }
+    updateTabsVisibility();
     myOwner.setCurrentWindow(this, false);
-    hideTabsIfNeeded(editor);
     myOwner.validate();
-  }
-
-  private void hideTabsIfNeeded(@NotNull EditorWithProviderComposite editor) {
-    alwaysHideTabs = false; //default state
-
-    if (myOwner.isFloating()) {
-      boolean hideTabs = needHideTabs(editor.getEditors());
-      if (hideTabs) {
-        alwaysHideTabs = true;
-        updateTabsVisibility();
-      }
-    }
-  }
-
-  private static boolean needHideTabs(@NotNull FileEditor @NotNull [] editors) {
-    return ContainerUtil.exists(editors, e -> HIDE_TABS.isIn(e) && HIDE_TABS.get(e).booleanValue());
   }
 
   private boolean splitAvailable() {
