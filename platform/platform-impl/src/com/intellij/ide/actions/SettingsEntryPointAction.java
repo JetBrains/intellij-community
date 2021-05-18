@@ -33,7 +33,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -72,27 +74,31 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   @NotNull
   private static ListPopup createMainPopup(@NotNull DataContext context, @NotNull Runnable disposeCallback) {
-    DefaultActionGroup group = new DefaultActionGroup();
+    List<AnAction> appActions = new ArrayList<>();
+    List<AnAction> pluginActions = new ArrayList<>();
 
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-      Collection<AnAction> actions = provider.getUpdateActions(context);
-      if (!actions.isEmpty()) {
-        for (AnAction action : actions) {
-          Presentation presentation = action.getTemplatePresentation();
-          if (presentation.getClientProperty(ActionProvider.ICON_KEY) == IconState.ApplicationUpdate) {
-            presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
-          }
-          else {
-            presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
-          }
-          group.add(action);
+      for (AnAction action : provider.getUpdateActions(context)) {
+        Presentation presentation = action.getTemplatePresentation();
+        if (presentation.getClientProperty(ActionProvider.APPLICATION_ICON) == null) {
+          presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
+          pluginActions.add(action);
         }
-        group.addSeparator();
+        else {
+          presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
+          appActions.add(action);
+        }
       }
     }
 
+    DefaultActionGroup group = new DefaultActionGroup(appActions);
+    group.addAll(pluginActions);
+
     if (group.getChildrenCount() == 0) {
       resetActionIcon();
+    }
+    else {
+      group.addSeparator();
     }
 
     for (AnAction child : getTemplateActions()) {
@@ -134,13 +140,24 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   private static boolean myShowPlatformUpdateIcon;
   private static boolean myShowPluginsUpdateIcon;
 
-  public static void updateState(IconState state) {
-    if (state == IconState.ApplicationUpdate) {
-      myShowPlatformUpdateIcon = true;
+  public static void updateState() {
+    resetActionIcon();
+
+    loop:
+    for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
+      for (AnAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
+        if (action.getTemplatePresentation().getClientProperty(ActionProvider.APPLICATION_ICON) == null) {
+          myShowPluginsUpdateIcon = true;
+        }
+        else {
+          myShowPlatformUpdateIcon = true;
+        }
+        if (myShowPlatformUpdateIcon && myShowPluginsUpdateIcon) {
+          break loop;
+        }
+      }
     }
-    else if (state == IconState.ApplicationComponentUpdate) {
-      myShowPluginsUpdateIcon = true;
-    }
+
     if (isAvailableInStatusBar()) {
       updateWidgets();
     }
@@ -292,14 +309,10 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     public void dispose() { }
   }
 
-  public enum IconState {
-    Current, ApplicationUpdate, ApplicationComponentUpdate
-  }
-
   public interface ActionProvider {
     ExtensionPointName<ActionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.settingsEntryPointActionProvider");
 
-    String ICON_KEY = "Update_Type_Icon_Key";
+    String APPLICATION_ICON = "Application_Type_Icon";
 
     @NotNull Collection<AnAction> getUpdateActions(@NotNull DataContext context);
   }

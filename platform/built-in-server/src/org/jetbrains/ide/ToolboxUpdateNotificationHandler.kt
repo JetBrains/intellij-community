@@ -15,7 +15,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.AppExecutorUtil
+import java.lang.Boolean
 import java.util.concurrent.TimeUnit
+import kotlin.String
+import kotlin.Unit
+import kotlin.apply
+import kotlin.require
 
 internal data class UpdateNotification(val version: String, val build: String)
 
@@ -45,8 +50,7 @@ internal class ToolboxUpdateNotificationHandler : ToolboxServiceHandler<UpdateNo
     val description = IdeBundle.message("toolbox.updates.download.update.action.description", request.build, request.version, fullProductName)
     val action = DumbAwareAction.create(title, actionHandler)
     action.templatePresentation.description = description
-    action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.ICON_KEY,
-                                                  SettingsEntryPointAction.IconState.ApplicationUpdate)
+    action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.APPLICATION_ICON, Boolean.TRUE)
     service<ToolboxSettingsActionRegistry>().registerUpdateAction(lifetime, "toolbox-02-update-${request.build}", action)
   }
 }
@@ -84,8 +88,7 @@ internal class ToolboxRestartNotificationHandler : ToolboxServiceHandler<UpdateN
     val description = IdeBundle.message("toolbox.updates.download.ready.action.description", request.build, request.version, fullProductName)
     val action = DumbAwareAction.create(title, actionHandler)
     action.templatePresentation.description = description
-    action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.ICON_KEY,
-                                                  SettingsEntryPointAction.IconState.ApplicationUpdate)
+    action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.APPLICATION_ICON, Boolean.TRUE)
 
     service<ToolboxSettingsActionRegistry>().registerUpdateAction(lifetime, "toolbox-01-restart-${request.build}", action)
   }

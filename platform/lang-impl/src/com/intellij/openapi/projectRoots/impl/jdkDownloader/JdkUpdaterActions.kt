@@ -44,18 +44,14 @@ class JdkUpdaterNotifications : SimplePersistentStateComponent<JdkSettingsAction
           .filter { it !in state.knownActions }
           .toSortedSet()
 
-        val iconState = if (newIds.isNotEmpty()) {
+        if (newIds.isNotEmpty()) {
           state.knownActions.addAll(newIds)
           state.intIncrementModificationCount()
-
-          SettingsEntryPointAction.IconState.ApplicationComponentUpdate
-        } else {
-          SettingsEntryPointAction.IconState.Current
         }
 
         invokeLater {
           pendingActionsCopy = pendingNotifications.values.sortedBy { it.persistentId }.map { it.updateAction }
-          SettingsEntryPointAction.updateState(iconState)
+          SettingsEntryPointAction.updateState()
         }
       }
     })

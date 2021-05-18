@@ -4,7 +4,6 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SettingsEntryPointAction;
-import com.intellij.ide.actions.SettingsEntryPointAction.IconState;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.util.PropertiesComponent;
@@ -65,7 +64,7 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
         myNextRunPlatformUpdateVersion = properties.getValue(NEXT_RUN_KEY_VERSION);
 
         if (myNextRunPlatformUpdateVersion != null) {
-          SettingsEntryPointAction.updateState(IconState.ApplicationUpdate);
+          SettingsEntryPointAction.updateState();
         }
         else {
           properties.unsetValue(NEXT_RUN_KEY_BUILD);
@@ -123,7 +122,7 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
   private static void newPlatformUpdate() {
     setPlatformUpdateInfo(null);
     newPlatformUpdate(null, null, (String)null);
-    SettingsEntryPointAction.updateState(IconState.Current);
+    SettingsEntryPointAction.updateState();
   }
 
   public static void newPlatformUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo,
@@ -131,7 +130,7 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
                                        @NotNull Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     setPlatformUpdateInfo(platformUpdateInfo);
     newPlatformUpdate(updatedPlugins, incompatiblePlugins, null);
-    SettingsEntryPointAction.updateState(IconState.ApplicationUpdate);
+    SettingsEntryPointAction.updateState();
   }
 
   private static void setPlatformUpdateInfo(@Nullable PlatformUpdates.Loaded platformUpdateInfo) {
@@ -161,12 +160,12 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
                                       @NotNull Collection<PluginNode> customRepositoryPlugins) {
     myUpdatedPlugins = updatedPlugins;
     myCustomRepositoryPlugins = customRepositoryPlugins;
-    SettingsEntryPointAction.updateState(IconState.ApplicationComponentUpdate);
+    SettingsEntryPointAction.updateState();
   }
 
   private static void newUpdatedPlugins(@Nullable Collection<PluginDownloader> updatedPlugins) {
     myUpdatedPlugins = updatedPlugins == null || updatedPlugins.isEmpty() ? null : updatedPlugins;
-    SettingsEntryPointAction.updateState(IconState.Current);
+    SettingsEntryPointAction.updateState();
   }
 
   static void removePluginsUpdate(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
@@ -194,7 +193,7 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
                                                         ApplicationNamesInfo.getInstance().getFullProductName(),
                                                         myNextRunPlatformUpdateVersion)) {
         {
-          getTemplatePresentation().putClientProperty(ICON_KEY, IconState.ApplicationUpdate);
+          getTemplatePresentation().putClientProperty(APPLICATION_ICON, Boolean.TRUE);
         }
 
         @Override
@@ -256,7 +255,7 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
                                                         ApplicationNamesInfo.getInstance().getFullProductName(),
                                                         myPlatformUpdateInfo.getNewBuild().getVersion())) {
         {
-          getTemplatePresentation().putClientProperty(ICON_KEY, IconState.ApplicationUpdate);
+          getTemplatePresentation().putClientProperty(APPLICATION_ICON, Boolean.TRUE);
         }
 
         @Override

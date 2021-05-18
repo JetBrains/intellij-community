@@ -38,17 +38,13 @@ internal class ToolboxSettingsActionRegistry : SimplePersistentStateComponent<To
         }
 
         val newIds = pendingActions.keys.filter { it !in state.knownActions }
-        val iconState = if (newIds.isNotEmpty()) {
+        if (newIds.isNotEmpty()) {
           state.knownActions.addAll(newIds)
           state.intIncrementModificationCount()
-
-          SettingsEntryPointAction.IconState.ApplicationUpdate
-        } else {
-          SettingsEntryPointAction.IconState.Current
         }
 
         invokeLater {
-          SettingsEntryPointAction.updateState(iconState)
+          SettingsEntryPointAction.updateState()
         }
       }
     })
