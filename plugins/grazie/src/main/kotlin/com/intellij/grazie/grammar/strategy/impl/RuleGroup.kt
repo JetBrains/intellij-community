@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus
   replaceWith = ReplaceWith("com.intellij.grazie.text.RuleGroup"),
   message = "Use a non-impl class"
 )
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 class RuleGroup(rules: LinkedSet<String>): com.intellij.grazie.text.RuleGroup(rules) {
   constructor(vararg rules: String) : this(LinkedSet<String>(rules.toSet()))
 
