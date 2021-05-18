@@ -39,8 +39,11 @@ import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.target.PySdkTargetPaths;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -65,6 +68,10 @@ public interface PydevConsoleRunner {
   static PyRemotePathMapper getPathMapper(@NotNull Project project,
                                           Sdk sdk,
                                           PyConsoleOptions.PyConsoleSettings consoleSettings) {
+    if (PySdkExtKt.isTargetBased(sdk)) {
+      PyTargetAwareAdditionalData data = (PyTargetAwareAdditionalData)sdk.getSdkAdditionalData();
+      return PySdkTargetPaths.getPathMapper(project, consoleSettings, data);
+    }
     if (PythonSdkUtil.isRemote(sdk)) {
       PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
       return getPathMapper(project, consoleSettings, remoteSdkAdditionalData);
