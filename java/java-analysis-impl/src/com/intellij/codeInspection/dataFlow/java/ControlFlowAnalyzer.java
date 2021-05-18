@@ -209,16 +209,33 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     IElementType op = expression.getOperationTokenType();
     PsiType type = expression.getType();
     PsiExpression lExpr = expression.getLExpression();
-    if (op == JavaTokenType.EQ) {
+    PsiArrayAccessExpression arrayStore = ObjectUtils.tryCast(lExpr, PsiArrayAccessExpression.class);
+    if (arrayStore != null) {
+      arrayStore.getArrayExpression().accept(this);
+      PsiExpression index = arrayStore.getIndexExpression();
+      if (index != null) {
+        index.accept(this);
+      } else {
+        pushUnknown();
+      }
+    } else {
       lExpr.accept(this);
+    }
+    if (op == JavaTokenType.EQ) {
       rExpr.accept(this);
       generateBoxingUnboxingInstructionFor(rExpr, type);
     }
     else {
+      if (arrayStore != null) {
+        // duplicate array and index on the stack
+        addInstruction(new SpliceInstruction(2, 1, 0, 1, 0));
+        DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
+        addInstruction(new ArrayAccessInstruction(arrayStore, transfer));
+      } else {
+        addInstruction(new DupInstruction());
+      }
       IElementType sign = TypeConversionUtil.convertEQtoOperation(op);
       PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lExpr.getType(), rExpr.getType(), sign, true);
-      lExpr.accept(this);
-      addInstruction(new DupInstruction());
       generateBoxingUnboxingInstructionFor(lExpr, resType);
       rExpr.accept(this);
       generateBoxingUnboxingInstructionFor(rExpr, resType);
@@ -226,7 +243,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(rExpr, resType, type, false);
     }
 
-    addInstruction(new AssignInstruction(rExpr, JavaDfaValueFactory.getExpressionDfaValue(myFactory, lExpr)));
+    if (arrayStore != null) {
+      DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
+      addInstruction(new ArrayStoreInstruction(arrayStore, rExpr, transfer));
+    } else {
+      addInstruction(new AssignInstruction(rExpr, JavaDfaValueFactory.getExpressionDfaValue(myFactory, lExpr)));
+    }
     addNullCheck(expression);
 
     finishElement(expression);
@@ -1235,12 +1257,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       pushUnknown();
     }
 
-    DfaValue toPush = JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression);
-    if (toPush == null) {
-      toPush = myFactory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.UNKNOWN));
-    }
     DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
-    addInstruction(new ArrayAccessInstruction(toPush, expression, transfer));
+    addInstruction(new ArrayAccessInstruction(expression, transfer));
     addNullCheck(expression);
     finishElement(expression);
   }

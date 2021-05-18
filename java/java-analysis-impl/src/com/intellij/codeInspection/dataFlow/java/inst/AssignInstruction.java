@@ -3,12 +3,9 @@
 package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
-import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayStoreProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
@@ -21,12 +18,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +77,6 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     interpreter.getListener().beforeAssignment(dfaSource, dfaDest, stateBefore, getDfaAnchor());
     if (dfaSource == dfaDest) {
       stateBefore.push(dfaDest);
-      this.flushArrayOnUnknownAssignment(interpreter.getFactory(), dfaDest, stateBefore);
       return nextStates(interpreter, stateBefore);
     }
     if (!(dfaDest instanceof DfaVariableValue &&
@@ -94,12 +85,6 @@ public class AssignInstruction extends ExpressionPushingInstruction {
           (ControlFlow.isTempVariable((DfaVariableValue)dfaSource) ||
            ((DfaVariableValue)dfaSource).getDescriptor().isCall()))) {
       JavaDfaHelpers.dropLocality(dfaSource, stateBefore);
-    }
-
-    PsiExpression lValue = PsiUtil.skipParenthesizedExprDown(getLExpression());
-    PsiExpression rValue = getRExpression();
-    if (lValue instanceof PsiArrayAccessExpression) {
-      checkArrayElementAssignability(interpreter, stateBefore, dfaSource, dfaDest, lValue, rValue);
     }
 
     if (dfaDest instanceof DfaVariableValue) {
@@ -124,8 +109,6 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     }
 
     pushResult(interpreter, stateBefore, dfaDest);
-    this.flushArrayOnUnknownAssignment(interpreter.getFactory(), dfaDest, stateBefore);
-
     return nextStates(interpreter, stateBefore);
   }
 
@@ -158,54 +141,8 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     return null;
   }
 
-  private static void checkArrayElementAssignability(@NotNull DataFlowInterpreter runner,
-                                                     @NotNull DfaMemoryState memState,
-                                                     @NotNull DfaValue dfaSource,
-                                                     @NotNull DfaValue dfaDest,
-                                                     @NotNull PsiExpression lValue,
-                                                     @Nullable PsiExpression rValue) {
-    if (rValue == null) return;
-    PsiType rCodeType = rValue.getType();
-    PsiType lCodeType = lValue.getType();
-    // If types known from source are not convertible, a compilation error is displayed, additional warning is unnecessary
-    if (rCodeType == null || lCodeType == null || !TypeConversionUtil.areTypesConvertible(rCodeType, lCodeType)) return;
-    if (!(dfaDest instanceof DfaVariableValue)) return;
-    DfaVariableValue qualifier = ((DfaVariableValue)dfaDest).getQualifier();
-    if (qualifier == null) return;
-    DfType toType = TypeConstraint.fromDfType(memState.getDfType(qualifier)).getArrayComponentType();
-    if (toType == DfType.BOTTOM) return;
-    DfType fromType = memState.getDfType(dfaSource);
-    DfType meet = fromType.meet(toType);
-    Project project = lValue.getProject();
-    PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(rValue, PsiAssignmentExpression.class);
-    PsiType psiFromType = TypeConstraint.fromDfType(fromType).getPsiType(project);
-    PsiType psiToType = TypeConstraint.fromDfType(toType).getPsiType(project);
-    if (assignmentExpression == null || psiFromType == null || psiToType == null) return;
-    runner.getListener().onCondition(new ArrayStoreProblem(assignmentExpression, psiFromType, psiToType), dfaSource,
-                                        meet == DfType.BOTTOM ? ThreeState.YES : ThreeState.UNSURE, memState);
-  }
-
   @Override
   public String toString() {
     return "ASSIGN";
-  }
-
-  private void flushArrayOnUnknownAssignment(@NotNull DfaValueFactory factory,
-                                             @NotNull DfaValue dest,
-                                             @NotNull DfaMemoryState memState) {
-    if (dest instanceof DfaVariableValue) return;
-    PsiArrayAccessExpression arrayAccess =
-      tryCast(PsiUtil.skipParenthesizedExprDown(myLExpression), PsiArrayAccessExpression.class);
-    if (arrayAccess != null) {
-      PsiExpression array = arrayAccess.getArrayExpression();
-      DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(factory, array);
-      if (value instanceof DfaVariableValue) {
-        for (DfaVariableValue qualified : ((DfaVariableValue)value).getDependentVariables().toArray(new DfaVariableValue[0])) {
-          if (qualified.isFlushableByCalls()) {
-            memState.flushVariable(qualified);
-          }
-        }
-      }
-    }
   }
 }
