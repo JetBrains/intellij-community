@@ -42,6 +42,7 @@ fun createAggregateHtml(
                 th("Scanning time")
                 th("Indexing time")
                 th("Content loading time")
+                th("Cancelled?")
                 th(TITLE_NUMBER_OF_FILE_PROVIDERS)
                 th(TITLE_NUMBER_OF_SCANNED_FILES)
                 th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
@@ -63,6 +64,7 @@ fun createAggregateHtml(
                   td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
                   td(diagnostic.indexingTimes.indexingTime.presentableDuration())
                   td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
+                  td(if (diagnostic.indexingTimes.wasInterrupted) "Yes" else "No")
 
                   val fileCount = diagnostic.fileCount
                   td(fileCount?.numberOfFileProviders?.toString() ?: NOT_APPLICABLE)
