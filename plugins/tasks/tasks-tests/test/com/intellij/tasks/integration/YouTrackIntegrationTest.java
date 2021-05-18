@@ -144,13 +144,13 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
 
   public void testUpdatingIssueState() throws Exception {
     Task task = myRepository.findTask(Issues.FOR_STATE_UPDATING);
-    assertEquals(TaskState.OPEN, task.getState());
-
-    Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
-    CustomTaskState fixedState = ContainerUtil.find(states, s -> s.getPresentableName().equals("Fixed"));
-    assertNotNull(fixedState);
-
     try {
+      assertEquals(TaskState.OPEN, task.getState());
+
+      Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
+      CustomTaskState fixedState = ContainerUtil.find(states, s -> s.getPresentableName().equals("Fixed"));
+      assertNotNull(fixedState);
+
       myRepository.setTaskState(task, fixedState);
 
       task = myRepository.findTask(Issues.FOR_STATE_UPDATING);
@@ -163,13 +163,13 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
 
   public void testWrappingErrors() throws Exception {
     Task task = myRepository.findTask(Issues.FOR_STATE_UPDATING);
-    assertEquals(TaskState.OPEN, task.getState());
-
-    Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
-    CustomTaskState fixedState = ContainerUtil.find(states, s -> s.getPresentableName().equals("Duplicate"));
-    assertNotNull(fixedState);
-
     try {
+      assertEquals(TaskState.OPEN, task.getState());
+
+      Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
+      CustomTaskState fixedState = ContainerUtil.find(states, s -> s.getPresentableName().equals("Duplicate"));
+      assertNotNull(fixedState);
+
       myRepository.setTaskState(task, fixedState);
       fail("Setting 'Duplicate' state without an issue ID should fail");
     }
