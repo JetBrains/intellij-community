@@ -196,8 +196,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myEastButtons.forEach(b -> b.updateAction.run());
   }
 
-  @Nullable
-  protected String getTextValue() {
+  protected @Nullable String getTextValue() {
     return myText.getText();
   }
 
@@ -207,6 +206,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   protected void setTextEnabled(boolean value) {
     myText.setEnabled(value);
+  }
+
+  protected @Nullable String getText2Value() {
+    return myText2.getText();
   }
 
   protected void setText2Value(@NlsContexts.ProgressDetails @NotNull String text) {

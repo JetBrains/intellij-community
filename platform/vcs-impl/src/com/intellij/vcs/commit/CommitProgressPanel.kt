@@ -15,6 +15,8 @@ import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil.ELLIPSIS
+import com.intellij.openapi.util.text.StringUtil.THREE_DOTS
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.wm.ex.StatusBarEx
@@ -223,6 +225,28 @@ private class CommitChecksProgressIndicator : InlineProgressIndicator(true, Comm
     super.updateProgressNow()
     setText2Enabled(false) // to set "gray" color
   }
+
+  override fun setTextValue(text: String) {
+    super.setTextValue(text)
+    fixDoubleEllipsis()
+  }
+
+  override fun setText2Value(text: String) {
+    super.setText2Value(text)
+    fixDoubleEllipsis()
+  }
+
+  private fun fixDoubleEllipsis() {
+    val text = textValue ?: return
+    val text2 = text2Value ?: return
+
+    if (text.endsWithEllipsis() && text2.startsWithEllipsis()) {
+      setTextValue(text.removeEllipsisSuffix())
+    }
+  }
+
+  private fun String.endsWithEllipsis(): Boolean = endsWith(ELLIPSIS) || endsWith(THREE_DOTS)
+  private fun String.startsWithEllipsis(): Boolean = startsWith(ELLIPSIS) || startsWith(THREE_DOTS)
 }
 
 private class CommitChecksTaskInfo : TaskInfo {
