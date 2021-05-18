@@ -314,7 +314,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         if (myReplace) {
           setTextForEditor(text, myReplaceCriteriaEdit);
         }
-        myScopePanel.setScopesFromContext();
+        myScopePanel.setScopesFromContext(null);
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
       }
@@ -1142,9 +1142,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     setSearchTargets(matchOptions);
     if (!myEditConfigOnly) {
-      myScopePanel.setScopesFromContext();
       final SearchScope scope = matchOptions.getScope();
-      if (scope != null) myScopePanel.setScope(scope);
+      myScopePanel.setScopesFromContext(scope);
     }
 
 
