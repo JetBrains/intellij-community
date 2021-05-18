@@ -312,6 +312,8 @@
 
     <extensionPoint name="typeDeclarationProvider" interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider" dynamic="true"/>
     <extensionPoint name="gotoTargetRendererProvider" interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider" dynamic="true"/>
+    <extensionPoint name="gotoTargetPresentationProvider" dynamic="true"
+                    interface="com.intellij.codeInsight.navigation.GotoTargetPresentationProvider"/>
 
     <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension" dynamic="true"/>
 
