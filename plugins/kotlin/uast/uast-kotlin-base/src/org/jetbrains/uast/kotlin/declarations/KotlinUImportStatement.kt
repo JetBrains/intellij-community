@@ -47,7 +47,7 @@ class KotlinUImportStatement(
 
         override fun resolve(): PsiElement? {
             val reference = sourcePsi.getQualifiedElementSelector() as? KtReferenceExpression ?: return null
-            return baseResolveProviderService?.resolveToDeclaration(reference)
+            return baseResolveProviderService.resolveToDeclaration(reference)
         }
     }
 }
