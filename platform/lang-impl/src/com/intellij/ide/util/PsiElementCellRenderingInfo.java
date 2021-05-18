@@ -22,19 +22,14 @@ public interface PsiElementCellRenderingInfo<T extends PsiElement> {
 
   String getContainerText(T element, final String name);
 
-  default Comparator<T> getComparator() {
-    //noinspection unchecked,rawtypes
-    return Comparator.comparing(element -> (Comparable)getComparingObject(element));
-  }
-
-  @NotNull
-  default Comparable<?> getComparingObject(T element) {
-    return ReadAction.compute(() -> {
-      String elementText = getElementText(element);
-      String containerText = getContainerText(element, elementText);
+  static <@NotNull T extends PsiElement>
+  @NotNull Comparator<T> getComparator(@NotNull PsiElementCellRenderingInfo<? super T> renderingInfo) {
+    return Comparator.comparing(element -> ReadAction.compute(() -> {
+      String elementText = renderingInfo.getElementText(element);
+      String containerText = renderingInfo.getContainerText(element, elementText);
       TextWithIcon moduleTextWithIcon = PsiElementListCellRenderer.getModuleTextWithIcon(element);
       return (containerText == null ? elementText : elementText + " " + containerText) +
              (moduleTextWithIcon != null ? moduleTextWithIcon.getText() : "");
-    });
+    }));
   }
 }

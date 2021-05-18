@@ -174,7 +174,7 @@ public class ImplementAbstractMethodHandler {
     private final PsiElementCellRenderingInfo<PsiClass> myInfo = PsiClassRenderingInfo.INSTANCE;
 
     void sort(PsiElement[] result) {
-      final Comparator<PsiClass> comparator = myInfo.getComparator();
+      final Comparator<PsiClass> comparator = PsiElementCellRenderingInfo.getComparator(myInfo);
       Arrays.sort(result, (o1, o2) -> {
         if (o1 instanceof PsiEnumConstant && o2 instanceof PsiEnumConstant) {
           return ((PsiEnumConstant)o1).getName().compareTo(((PsiEnumConstant)o2).getName());
