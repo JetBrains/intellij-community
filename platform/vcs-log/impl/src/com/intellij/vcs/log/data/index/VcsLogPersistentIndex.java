@@ -33,7 +33,7 @@ import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.*;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +78,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
   @NotNull private final List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private Map<VirtualFile, TIntHashSet> myCommitsToIndex = new HashMap<>();
+  @NotNull private Map<VirtualFile, IntSet> myCommitsToIndex = new HashMap<>();
 
   public VcsLogPersistentIndex(@NotNull Project project,
                                @NotNull VcsLogStorage storage,
@@ -151,13 +151,13 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     // for fresh index, wait for complete log to load and index everything in one command
     if (myIndexStorage.isFresh() && !full) return;
 
-    Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
+    Map<VirtualFile, IntSet> commitsToIndex = myCommitsToIndex;
     myCommitsToIndex = new HashMap<>();
 
     boolean isFull = full && myIndexStorage.isFresh();
     if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh, scheduling full reindex");
     for (VirtualFile root : commitsToIndex.keySet()) {
-      TIntHashSet commits = commitsToIndex.get(root);
+      IntSet commits = commitsToIndex.get(root);
       if (commits.isEmpty()) continue;
 
       if (myBigRepositoriesList.isBig(root)) {
@@ -476,7 +476,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private static final int LOGGED_ERRORS_COUNT = 10;
     private static final int STOPPING_ERROR_COUNT = 100;
     @NotNull private final VirtualFile myRoot;
-    @NotNull private final TIntHashSet myCommits;
+    @NotNull private final IntSet myCommits;
     @NotNull private final VcsLogIndexer.PathsEncoder myPathsEncoder;
     private final boolean myFull;
 
@@ -486,7 +486,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     IndexingRequest(@NotNull VirtualFile root,
                     @NotNull VcsLogIndexer.PathsEncoder encoder,
-                    @NotNull TIntHashSet commits,
+                    @NotNull IntSet commits,
                     boolean full) {
       myRoot = root;
       myPathsEncoder = encoder;
@@ -602,7 +602,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private void markCommits() {
       myCommits.forEach(value -> {
         markForIndexing(value, myRoot);
-        return true;
       });
     }
 

@@ -28,10 +28,7 @@ import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
-import gnu.trove.TIntHashSet;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,7 +121,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
                                @NotNull Consumer<? super Throwable> errorConsumer,
                                @Nullable ProgressIndicator indicator) {
     final List<T> result = new ArrayList<>();
-    final TIntHashSet toLoad = new TIntHashSet();
+    final IntSet toLoad = new IntOpenHashSet();
 
     long taskNumber = myCurrentTaskIndex++;
 
@@ -230,7 +227,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private void runLoadCommitsData(@NotNull Iterable<Integer> hashes) {
     long taskNumber = myCurrentTaskIndex++;
     Int2IntMap commits = getCommitsMap(hashes);
-    TIntHashSet toLoad = new TIntHashSet();
+    IntSet toLoad = new IntOpenHashSet();
 
     IntIterator iterator = commits.keySet().iterator();
     while (iterator.hasNext()) {
@@ -267,14 +264,13 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     return commits;
   }
 
-  protected void preLoadCommitData(@NotNull TIntHashSet commits, @NotNull Consumer<? super T> consumer) throws VcsException {
+  protected void preLoadCommitData(@NotNull IntSet commits, @NotNull Consumer<? super T> consumer) throws VcsException {
     final MultiMap<VirtualFile, String> rootsAndHashes = MultiMap.create();
     commits.forEach(commit -> {
       CommitId commitId = myStorage.getCommitId(commit);
       if (commitId != null) {
         rootsAndHashes.putValue(commitId.getRoot(), commitId.getHash().asString());
       }
-      return true;
     });
 
     for (Map.Entry<VirtualFile, Collection<String>> entry : rootsAndHashes.entrySet()) {
@@ -324,9 +320,9 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   private static final class TaskDescriptor {
-    @NotNull private final TIntHashSet myCommits;
+    @NotNull private final IntSet myCommits;
 
-    private TaskDescriptor(@NotNull TIntHashSet commits) {
+    private TaskDescriptor(@NotNull IntSet commits) {
       myCommits = commits;
     }
   }

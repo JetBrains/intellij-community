@@ -4,11 +4,8 @@ package com.intellij.vcs.log.util;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThrowableConsumer;
-import gnu.trove.*;
-import it.unimi.dsi.fastutil.ints.IntCollection;
-import it.unimi.dsi.fastutil.ints.IntIterator;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,31 +16,20 @@ import java.util.function.IntFunction;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public final class TroveUtil {
   @NotNull
-  public static <T> Stream<T> streamValues(@NotNull TIntObjectHashMap<? extends T> map) {
-    TIntObjectIterator<? extends T> it = map.iterator();
-    return Stream.<T>generate(() -> {
-      it.advance();
-      return it.value();
-    }).limit(map.size());
-  }
-
-  @NotNull
-  public static IntStream streamKeys(@NotNull TIntObjectHashMap<?> map) {
-    TIntObjectIterator<?> it = map.iterator();
+  public static IntStream streamKeys(@NotNull Int2ObjectMap<?> map) {
+    ObjectIterator<? extends Int2ObjectMap.Entry<?>> it = map.int2ObjectEntrySet().iterator();
     return IntStream.generate(() -> {
-      it.advance();
-      return it.key();
+      return it.next().getIntKey();
     }).limit(map.size());
   }
 
   @NotNull
-  public static IntStream stream(@NotNull TIntArrayList list) {
+  public static IntStream stream(@NotNull IntList list) {
     if (list.isEmpty()) return IntStream.empty();
-    return IntStream.range(0, list.size()).map(list::get);
+    return IntStream.range(0, list.size()).map(list::getInt);
   }
 
   @Nullable
@@ -75,24 +61,6 @@ public final class TroveUtil {
 
   @Contract("null, null -> null; !null, _ -> !null; _, !null -> !null")
   @Nullable
-  public static TIntHashSet intersect(@Nullable TIntHashSet set1, @Nullable TIntHashSet set2) {
-    if (set1 == null) return set2;
-    if (set2 == null) return set1;
-
-    TIntHashSet result = new TIntHashSet();
-
-    if (set1.size() < set2.size()) {
-      intersectTo(set1, set2, result);
-    }
-    else {
-      intersectTo(set2, set1, result);
-    }
-
-    return result;
-  }
-
-  @Contract("null, null -> null; !null, _ -> !null; _, !null -> !null")
-  @Nullable
   public static IntSet intersect(@Nullable IntSet set1, @Nullable IntSet set2) {
     if (set1 == null) return set2;
     if (set2 == null) return set1;
@@ -108,15 +76,6 @@ public final class TroveUtil {
     return result;
   }
 
-  private static void intersectTo(@NotNull TIntHashSet small, @NotNull TIntHashSet big, @NotNull TIntHashSet result) {
-    small.forEach(value -> {
-      if (big.contains(value)) {
-        result.add(value);
-      }
-      return true;
-    });
-  }
-
   private static void intersectTo(@NotNull IntSet small, @NotNull IntSet big, @NotNull IntSet result) {
     for (IntIterator iterator = small.iterator(); iterator.hasNext(); ) {
       int value = iterator.nextInt();
@@ -124,28 +83,6 @@ public final class TroveUtil {
         result.add(value);
       }
     }
-  }
-
-  public static void addAll(@NotNull TIntHashSet where, @NotNull TIntHashSet what) {
-    what.forEach(value -> {
-      where.add(value);
-      return true;
-    });
-  }
-
-  public static void addAll(@NotNull TIntHashSet where, @NotNull Collection<Integer> what) {
-    what.forEach(value -> where.add(value));
-  }
-
-  public static void addAll(@NotNull Collection<? super Integer> where, @NotNull TIntHashSet what) {
-    what.forEach(value -> where.add(value));
-  }
-
-  public static <V> void putAll(@NotNull TIntObjectHashMap<? super V> where, @NotNull TIntObjectHashMap<? extends V> what) {
-    what.forEachEntry((index, value) -> {
-      where.put(index, value);
-      return true;
-    });
   }
 
   @NotNull
@@ -158,27 +95,14 @@ public final class TroveUtil {
   }
 
   @NotNull
-  public static IntStream stream(@NotNull TIntHashSet set) {
-    TIntIterator it = set.iterator();
-    return IntStream.generate(it::next).limit(set.size());
+  public static IntStream stream(@NotNull IntSet set) {
+    IntIterator iterator = set.intIterator();
+    return IntStream.generate(iterator::nextInt).limit(set.size());
   }
 
   @NotNull
-  public static <T> List<T> map2List(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
+  public static <T> List<T> map2List(@NotNull IntSet set, @NotNull IntFunction<? extends T> function) {
     return stream(set).mapToObj(function).collect(Collectors.toList());
-  }
-
-  @NotNull
-  public static <T> TIntObjectHashMap<T> map2MapNotNull(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
-    TIntObjectHashMap<T> result = new TIntObjectHashMap<>();
-    set.forEach(it -> {
-      T value = function.apply(it);
-      if (value != null) {
-        result.put(it, value);
-      }
-      return true;
-    });
-    return result;
   }
 
   @NotNull
@@ -207,9 +131,9 @@ public final class TroveUtil {
 
   public static void processBatches(@NotNull IntStream stream,
                                     int batchSize,
-                                    @NotNull ThrowableConsumer<? super TIntHashSet, ? extends VcsException> consumer)
+                                    @NotNull ThrowableConsumer<? super IntSet, ? extends VcsException> consumer)
     throws VcsException {
-    Ref<TIntHashSet> batch = new Ref<>(new TIntHashSet());
+    Ref<IntSet> batch = new Ref<>(new IntOpenHashSet());
     Ref<VcsException> exception = new Ref<>();
     stream.forEach(commit -> {
       batch.get().add(commit);
@@ -221,7 +145,7 @@ public final class TroveUtil {
           exception.set(e);
         }
         finally {
-          batch.set(new TIntHashSet());
+          batch.set(new IntOpenHashSet());
         }
       }
     });
@@ -233,26 +157,8 @@ public final class TroveUtil {
     if (!exception.isNull()) throw exception.get();
   }
 
-  @NotNull
-  public static TIntHashSet singleton(@NotNull Integer elements) {
-    TIntHashSet commits = new TIntHashSet();
-    commits.add(elements);
-    return commits;
-  }
-
-  public static <T> void add(@NotNull Map<? super T, TIntHashSet> targetMap, @NotNull T key, int value) {
-    TIntHashSet set = targetMap.computeIfAbsent(key, __ -> new TIntHashSet());
+  public static <T> void add(@NotNull Map<? super T, IntSet> targetMap, @NotNull T key, int value) {
+    IntSet set = targetMap.computeIfAbsent(key, __ -> new IntOpenHashSet());
     set.add(value);
-  }
-
-  public static boolean removeAll(@NotNull TIntHashSet fromWhere, @NotNull TIntHashSet what) {
-    Ref<Boolean> result = new Ref<>(false);
-    what.forEach(it -> {
-      if (fromWhere.remove(it)) {
-        result.set(true);
-      }
-      return true;
-    });
-    return result.get();
   }
 }

@@ -12,7 +12,8 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.util.StopWatch;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +61,7 @@ public class DataPack extends DataPackBase {
 
   @NotNull
   private static Set<Integer> getHeads(@NotNull List<? extends GraphCommit<Integer>> commits) {
-    TIntHashSet parents = new TIntHashSet();
+    IntSet parents = new IntOpenHashSet();
     for (GraphCommit<Integer> commit : commits) {
       for (int parent : commit.getParents()) {
         parents.add(parent);
@@ -69,7 +70,7 @@ public class DataPack extends DataPackBase {
 
     Set<Integer> heads = new HashSet<>();
     for (GraphCommit<Integer> commit : commits) {
-      if (!parents.contains(commit.getId())) {
+      if (!parents.contains((int)commit.getId())) {
         heads.add(commit.getId());
       }
     }
