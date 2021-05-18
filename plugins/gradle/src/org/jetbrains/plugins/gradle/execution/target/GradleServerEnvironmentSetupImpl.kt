@@ -322,16 +322,16 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     fun supplyEnvironmentAndRunHandlers(targetEnvironment: TargetEnvironment,
                                         progressIndicator: GradleServerRunner.GradleServerProgressIndicator) {
       environmentPromise.setResult(targetEnvironment to progressIndicator)
-      for (upload in uploads) {
-        progressIndicator.checkCanceled()
-        upload.volume.upload(upload.relativePath, progressIndicator)
-      }
-      uploads.clear()
       for (promise in dependingOnEnvironmentPromise) {
         progressIndicator.checkCanceled()
         promise.blockingGet(0)  // Just rethrows errors.
       }
       dependingOnEnvironmentPromise.clear()
+      for (upload in uploads) {
+        progressIndicator.checkCanceled()
+        upload.volume.upload(upload.relativePath, progressIndicator)
+      }
+      uploads.clear()
     }
 
     fun upload(uploadRoot: TargetEnvironment.UploadRoot,
