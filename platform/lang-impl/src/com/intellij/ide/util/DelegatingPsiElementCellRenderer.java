@@ -6,9 +6,10 @@ import com.intellij.psi.PsiElement;
 import javax.swing.*;
 
 public class DelegatingPsiElementCellRenderer<T extends PsiElement> extends PsiElementListCellRenderer<T> {
-  private final PsiElementCellRenderingInfo<T> myRenderingInfo;
 
-  public DelegatingPsiElementCellRenderer(PsiElementCellRenderingInfo<T> info) {
+  private final PsiElementCellRenderingInfo<? super T> myRenderingInfo;
+
+  public DelegatingPsiElementCellRenderer(PsiElementCellRenderingInfo<? super T> info) {
     myRenderingInfo = info;
   }
 
@@ -18,12 +19,12 @@ public class DelegatingPsiElementCellRenderer<T extends PsiElement> extends PsiE
   }
 
   @Override
-  public String getElementText(T element){
+  public String getElementText(T element) {
     return myRenderingInfo.getElementText(element);
   }
 
   @Override
-  protected String getContainerText(T element, final String name){
+  protected String getContainerText(T element, final String name) {
     return myRenderingInfo.getContainerText(element, name);
   }
 
