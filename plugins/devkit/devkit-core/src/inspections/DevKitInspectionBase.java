@@ -61,6 +61,8 @@ public abstract class DevKitInspectionBase extends AbstractBaseJavaLocalInspecti
 
   // TODO expand this check
   private static boolean isPluginFile(@NotNull PsiFile file) {
-    return !file.getVirtualFile().getPath().contains("/platform/");
+    String path = file.getVirtualFile().getPath();
+    boolean isPlatform = path.contains("/platform/") && !path.contains("/platform/cwm-") && !path.contains("/platform/rd-");
+    return !isPlatform;
   }
 }
