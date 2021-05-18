@@ -160,16 +160,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     myDockManager = DockManager.getInstance(myProject);
     myListenerList = new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-    if (FileEditorAssociateFinder.EP_NAME.hasAnyExtensions()) {
-      myListenerList.add(new FileEditorManagerListener() {
-        @Override
-        public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-          EditorsSplitters splitters = getSplitters();
-          openAssociatedFile(event.getNewFile(), splitters.getCurrentWindow(), splitters);
-        }
-      });
-    }
-
     myQueue.setTrackUiActivity(true);
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
@@ -740,7 +730,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     if (windowToOpenIn == null) {
       windowToOpenIn = getOrCreateCurrentWindow(file);
     }
-    openAssociatedFile(file, windowToOpenIn, windowToOpenIn.getOwner());
     return openFileImpl2(windowToOpenIn, file, options);
   }
 
@@ -846,28 +835,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     return OpenMode.DEFAULT;
-  }
-
-  private void openAssociatedFile(VirtualFile file, EditorWindow wndToOpenIn, @NotNull EditorsSplitters splitters) {
-    EditorWindow[] windows = splitters.getWindows();
-
-    if (file != null && windows.length == 2) {
-      for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
-        VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, file);
-
-        if (associatedFile != null) {
-          EditorWindow currentWindow = splitters.getCurrentWindow();
-          int idx = windows[0] == wndToOpenIn ? 1 : 0;
-          openFileImpl2(windows[idx], associatedFile, false);
-
-          if (currentWindow != null) {
-            splitters.setCurrentWindow(currentWindow, false);
-          }
-
-          break;
-        }
-      }
-    }
   }
 
   public static boolean forbidSplitFor(@NotNull VirtualFile file) {
@@ -1694,16 +1661,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     boolean filesEqual = Objects.equals(oldData.first, newData.first);
     boolean editorsEqual = Objects.equals(oldData.second, newData.second);
     if (!filesEqual || !editorsEqual) {
-      if (oldData.first != null && newData.first != null) {
-        for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
-          VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, oldData.first);
-
-          if (Comparing.equal(associatedFile, newData.first)) {
-            return;
-          }
-        }
-      }
-
       FileEditorManagerEvent event =
         new FileEditorManagerEvent(this, oldData.first, oldData.second, oldData.third, newData.first, newData.second, newData.third);
       FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);

@@ -653,17 +653,6 @@ public final class EditorWindow {
       }
       // open only selected file in the new splitter instead of opening all tabs
       VirtualFile file = selectedEditor.getFile();
-      if (virtualFile == null) {
-        for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
-          VirtualFile associatedFile = finder.getAssociatedFileToOpen(fileEditorManager.getProject(), file);
-
-          if (associatedFile != null) {
-            virtualFile = associatedFile;
-            break;
-          }
-        }
-      }
-
       VirtualFile nextFile = virtualFile == null ? file : virtualFile;
       HistoryEntry currentState = selectedEditor.currentStateAsHistoryEntry();
       VirtualFile currentStateFile = currentState.getFile();
