@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -133,7 +132,9 @@ public class TextMateSyntaxTable {
     if (result.isEmpty()) {
       return null;
     }
-    CollectionFactory.trimMap(result);
+    if (result instanceof Int2ObjectOpenHashMap) {
+      ((Int2ObjectOpenHashMap<CharSequence>)result).trim();
+    }
     return result;
   }
 

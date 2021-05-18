@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -9,8 +8,13 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 public class ShellVariablesRegistry {
-  @NotNull private final MultiMap<String, TextMateShellVariable> myVariables = MultiMap.create();
+  @NotNull private final Map<String, Collection<TextMateShellVariable>> myVariables = new HashMap<>();
 
   /**
    * Append table with new variables
@@ -23,7 +27,7 @@ public class ShellVariablesRegistry {
         String name = variablePlist.getPlistValue(Constants.NAME_KEY, "").getString();
         String value = variablePlist.getPlistValue(Constants.VALUE_KEY, "").getString();
         if (!name.isEmpty()) {
-          myVariables.putValue(name, new TextMateShellVariable(scopeName, name, value));
+          myVariables.computeIfAbsent(name, (key) -> new ArrayList<>()).add(new TextMateShellVariable(scopeName, name, value));
         }
       }
     }

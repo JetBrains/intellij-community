@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.plist;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +97,7 @@ public class XmlPlistReader implements PlistReader {
   @Nullable
   private static PListValue readBasicValue(@NotNull String type, @NotNull Element valueElement) throws IOException {
     if ("string".equals(type)) {
-      return value(StringUtil.unescapeXmlEntities(valueElement.getValue()), PlistValueType.STRING);
+      return value(Strings.unescapeXmlEntities(valueElement.getValue()), PlistValueType.STRING);
     }
     else if ("true".equals(type)) {
       return value(Boolean.TRUE, PlistValueType.BOOLEAN);

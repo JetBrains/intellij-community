@@ -1,7 +1,8 @@
 package org.jetbrains.plugins.textmate.regex;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +13,7 @@ import org.joni.exception.JOniException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public final class RegexFacade {
   private static final Regex FAILED_REGEX = new Regex("^$", UTF8Encoding.INSTANCE);
@@ -86,11 +88,11 @@ public final class RegexFacade {
     return new Searcher(stringBytes, myRegex.matcher(stringBytes, 0, stringBytes.length));
   }
 
-  private static final Map<String, RegexFacade> REGEX_CACHE = ContainerUtil.createConcurrentSoftKeySoftValueMap();
+  private static final Cache<String, RegexFacade> REGEX_CACHE = Caffeine.newBuilder().maximumSize(100_000).expireAfterAccess(1, TimeUnit.MINUTES).build();
 
   @NotNull
   public static RegexFacade regex(@NotNull String regexString) {
-    return REGEX_CACHE.computeIfAbsent(regexString, RegexFacade::new);
+    return REGEX_CACHE.get(regexString, RegexFacade::new);
   }
 
   private static final class LastMatch {

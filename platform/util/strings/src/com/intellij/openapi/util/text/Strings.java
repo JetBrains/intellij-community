@@ -7,10 +7,15 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 public final class Strings {
+  private static final List<String> REPLACES_REFS = Arrays.asList("&lt;", "&gt;", "&amp;", "&#39;", "&quot;");
+  private static final List<String> REPLACES_DISP = Arrays.asList("<", ">", "&", "'", "\"");
+
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(ArrayUtilRt.EMPTY_CHAR_ARRAY);
 
   public static boolean isAscii(char ch) {
@@ -411,6 +416,14 @@ public final class Strings {
   }
 
   @Contract(pure = true)
+  public static @NotNull String trimStart(@NotNull String s, @NotNull String prefix) {
+    if (s.startsWith(prefix)) {
+      return s.substring(prefix.length());
+    }
+    return s;
+  }
+
+  @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars, int from, int to) {
     return stringHashCode(chars, from, to, 0);
   }
@@ -455,5 +468,104 @@ public final class Strings {
   @Contract(pure = true)
   public static int stringHashCodeInsensitive(@NotNull CharSequence chars) {
     return StringUtilRt.stringHashCodeInsensitive(chars);
+  }
+
+  @Contract(pure = true)
+  public static int countChars(@NotNull CharSequence text, char c) {
+    return countChars(text, c, 0, false);
+  }
+
+  @Contract(pure = true)
+  public static int countChars(@NotNull CharSequence text, char c, int offset, boolean stopAtOtherChar) {
+    return countChars(text, c, offset, text.length(), stopAtOtherChar);
+  }
+
+  @Contract(pure = true)
+  public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
+    boolean forward = start <= end;
+    start = forward ? Math.max(0, start) : Math.min(text.length(), start);
+    end = forward ? Math.min(text.length(), end) : Math.max(0, end);
+    int count = 0;
+    for (int i = forward ? start : start - 1; forward == i < end; i += forward ? 1 : -1) {
+      if (text.charAt(i) == c) {
+        count++;
+      }
+      else if (stopAtOtherChar) {
+        break;
+      }
+    }
+    return count;
+  }
+
+  public static @NotNull StringBuilder escapeToRegexp(@NotNull CharSequence text, @NotNull StringBuilder builder) {
+    for (int i = 0; i < text.length(); i++) {
+      final char c = text.charAt(i);
+      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_') {
+        builder.append(c);
+      }
+      else if (c == '\n') {
+        builder.append("\\n");
+      }
+      else if (c == '\r') {
+        builder.append("\\r");
+      }
+      else {
+        final Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
+        if (block == Character.UnicodeBlock.HIGH_SURROGATES || block == Character.UnicodeBlock.LOW_SURROGATES) {
+          builder.append(c);
+        } else {
+          builder.append('\\').append(c);
+        }
+      }
+    }
+
+    return builder;
+  }
+
+  /**
+   * @return {@code text} with some standard XML entities replaced with corresponding characters, e.g. '{@code &lt;}' replaced with '<'
+   */
+  @Contract(pure = true)
+  public static @NotNull String unescapeXmlEntities(@NotNull String text) {
+    return replace(text, REPLACES_REFS, REPLACES_DISP);
+  }
+
+  /**
+   * @return {@code text} with some characters replaced with standard XML entities, e.g. '<' replaced with '{@code &lt;}'
+   */
+  @Contract(pure = true)
+  public static @NotNull String escapeXmlEntities(@NotNull String text) {
+    return replace(text, REPLACES_DISP, REPLACES_REFS);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String replace(@NotNull String text, @NotNull List<String> from, @NotNull List<String> to) {
+    assert from.size() == to.size();
+    StringBuilder result = null;
+    replace:
+    for (int i = 0; i < text.length(); i++) {
+      for (int j = 0; j < from.size(); j += 1) {
+        String toReplace = from.get(j);
+        String replaceWith = to.get(j);
+
+        final int len = toReplace.length();
+        if (len == 0) continue;
+        if (text.regionMatches(i, toReplace, 0, len)) {
+          if (result == null) {
+            result = new StringBuilder(text.length());
+            result.append(text, 0, i);
+          }
+          result.append(replaceWith);
+          //noinspection AssignmentToForLoopParameter
+          i += len - 1;
+          continue replace;
+        }
+      }
+
+      if (result != null) {
+        result.append(text.charAt(i));
+      }
+    }
+    return result == null ? text : result.toString();
   }
 }

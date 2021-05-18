@@ -988,10 +988,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String trimStart(@NotNull String s, @NotNull String prefix) {
-    if (s.startsWith(prefix)) {
-      return s.substring(prefix.length());
-    }
-    return s;
+    return Strings.trimStart(s, prefix);
   }
 
   @Contract(pure = true)
@@ -1981,9 +1978,6 @@ public class StringUtil extends StringUtilRt {
     return '\"' + str + "\"";
   }
 
-  private static final List<String> REPLACES_REFS = Arrays.asList("&lt;", "&gt;", "&amp;", "&#39;", "&quot;");
-  private static final List<String> REPLACES_DISP = Arrays.asList("<", ">", "&", "'", "\"");
-
   /**
    * @deprecated Use {@link #unescapeXmlEntities(String)} instead
    */
@@ -2007,7 +2001,7 @@ public class StringUtil extends StringUtilRt {
    */
   @Contract(pure = true)
   public static @NotNull String unescapeXmlEntities(@NotNull String text) {
-    return replace(text, REPLACES_REFS, REPLACES_DISP);
+    return Strings.unescapeXmlEntities(text);
   }
 
   /**
@@ -2015,7 +2009,7 @@ public class StringUtil extends StringUtilRt {
    */
   @Contract(pure = true)
   public static @NotNull String escapeXmlEntities(@NotNull String text) {
-    return replace(text, REPLACES_DISP, REPLACES_REFS);
+    return Strings.escapeXmlEntities(text);
   }
 
   @Contract(pure = true)
@@ -2072,28 +2066,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static @NotNull StringBuilder escapeToRegexp(@NotNull CharSequence text, @NotNull StringBuilder builder) {
-    for (int i = 0; i < text.length(); i++) {
-      final char c = text.charAt(i);
-      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_') {
-        builder.append(c);
-      }
-      else if (c == '\n') {
-        builder.append("\\n");
-      }
-      else if (c == '\r') {
-        builder.append("\\r");
-      }
-      else {
-        final Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
-        if (block == Character.UnicodeBlock.HIGH_SURROGATES || block == Character.UnicodeBlock.LOW_SURROGATES) {
-          builder.append(c);
-        } else {
-          builder.append('\\').append(c);
-        }
-      }
-    }
-
-    return builder;
+    return Strings.escapeToRegexp(text, builder);
   }
 
   @Contract(pure = true)
@@ -2132,33 +2105,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String replace(@NotNull String text, @NotNull List<String> from, @NotNull List<String> to) {
-    assert from.size() == to.size();
-    StringBuilder result = null;
-    replace:
-    for (int i = 0; i < text.length(); i++) {
-      for (int j = 0; j < from.size(); j += 1) {
-        String toReplace = from.get(j);
-        String replaceWith = to.get(j);
-
-        final int len = toReplace.length();
-        if (len == 0) continue;
-        if (text.regionMatches(i, toReplace, 0, len)) {
-          if (result == null) {
-            result = new StringBuilder(text.length());
-            result.append(text, 0, i);
-          }
-          result.append(replaceWith);
-          //noinspection AssignmentToForLoopParameter
-          i += len - 1;
-          continue replace;
-        }
-      }
-
-      if (result != null) {
-        result.append(text.charAt(i));
-      }
-    }
-    return result == null ? text : result.toString();
+    return Strings.replace(text, from, to);
   }
 
   @Contract(pure = true)
@@ -2186,29 +2133,17 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int countChars(@NotNull CharSequence text, char c) {
-    return countChars(text, c, 0, false);
+    return Strings.countChars(text, c);
   }
 
   @Contract(pure = true)
   public static int countChars(@NotNull CharSequence text, char c, int offset, boolean stopAtOtherChar) {
-    return countChars(text, c, offset, text.length(), stopAtOtherChar);
+    return Strings.countChars(text, c, offset, stopAtOtherChar);
   }
 
   @Contract(pure = true)
   public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
-    boolean forward = start <= end;
-    start = forward ? Math.max(0, start) : Math.min(text.length(), start);
-    end = forward ? Math.min(text.length(), end) : Math.max(0, end);
-    int count = 0;
-    for (int i = forward ? start : start - 1; forward == i < end; i += forward ? 1 : -1) {
-      if (text.charAt(i) == c) {
-        count++;
-      }
-      else if (stopAtOtherChar) {
-        break;
-      }
-    }
-    return count;
+    return Strings.countChars(text, c, start, end, stopAtOtherChar);
   }
 
   /**
