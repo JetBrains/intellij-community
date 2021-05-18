@@ -428,10 +428,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     String containerText = getContainerText(element, name);
     if (containerText != null) {
       var matcher = CONTAINER_PATTERN.matcher(containerText);
-      builder = builder.containerText(
-        matcher.matches() ? matcher.group(2) : containerText,
-        isProblemFile ? getErrorAttributes().toTextAttributes() : null
-      );
+      builder = builder.containerText(matcher.matches() ? matcher.group(2) : containerText);
     }
 
     TextWithIcon itemLocation = getItemLocation(element);
