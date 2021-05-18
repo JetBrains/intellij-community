@@ -606,7 +606,7 @@ public class ExpectedHighlightingData {
   }
 
   private void compareTexts(Collection<? extends HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
-    String actual = composeText(myHighlightingTypes, infos, text, true, myMessageBundles);
+    String actual = composeText(myHighlightingTypes, infos, text, myMessageBundles);
     if (filePath != null && !myText.equals(actual)) {
       // uncomment to overwrite, don't forget to revert on commit!
       //VfsTestUtil.overwriteTestData(filePath, actual);
@@ -628,7 +628,6 @@ public class ExpectedHighlightingData {
   public static String composeText(@NotNull Map<String, ExpectedHighlightingSet> types,
                                    @NotNull Collection<? extends HighlightInfo> infos,
                                    @NotNull String text,
-                                   boolean showTooltips,
                                    ResourceBundle @NotNull ... messageBundles) {
     // filter highlighting data and map each highlighting to a tag name
     List<Pair<String, ? extends HighlightInfo>> list = infos.stream()
@@ -637,6 +636,10 @@ public class ExpectedHighlightingData {
       .collect(Collectors.toList());
     boolean showAttributesKeys =
       types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> i.forcedTextAttributesKey != null);
+
+    String anyWrappedInHtml = XmlStringUtil.wrapInHtml(ANY_TEXT);
+    boolean showTooltips =
+      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> !anyWrappedInHtml.equals(i.getToolTip()));
 
     // sort filtered highlighting data by end offset in descending order
     list.sort((o1, o2) -> {
