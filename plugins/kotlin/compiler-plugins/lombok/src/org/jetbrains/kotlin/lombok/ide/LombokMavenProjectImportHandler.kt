@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.lombok.ide
 
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.lombok.LombokCommandLineProcessor
 import org.jetbrains.kotlin.lombok.LombokCommandLineProcessor.Companion.CONFIG_FILE_OPTION
 import org.jetbrains.kotlin.plugin.ide.AbstractMavenImportHandler
@@ -15,19 +16,27 @@ class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val pluginJarFileFromIdea: File = KotlinArtifacts.instance.lombokCompilerPlugin
 
     override fun getOptions(
+        mavenProject: MavenProject,
         enabledCompilerPlugins: List<String>,
         compilerPluginOptions: List<String>
     ): List<PluginOption>? {
         if (!enabledCompilerPlugins.contains(pluginName)) return null
 
-        return compilerPluginOptions.mapNotNull { v ->
-            if (v.startsWith(CONFIG_FILE_PREFIX)) {
-                val location = v.substring(CONFIG_FILE_PREFIX.length)
-                PluginOption(CONFIG_FILE_OPTION.optionName, location)
+        return compilerPluginOptions.mapNotNull { option ->
+            if (option.startsWith(CONFIG_FILE_PREFIX)) {
+                val location = File(option.substring(CONFIG_FILE_PREFIX.length))
+                val correctedLocation =
+                    if (!location.isAbsolute) File(mavenProject.directory, location.path)
+                    else location
+                PluginOption(CONFIG_FILE_OPTION.optionName, correctedLocation.absolutePath)
             } else {
                 null
             }
         }
+    }
+
+    override fun getOptions(enabledCompilerPlugins: List<String>, compilerPluginOptions: List<String>): List<PluginOption>? {
+        throw NotImplementedError("Shouldn't be called")
     }
 
     companion object {
