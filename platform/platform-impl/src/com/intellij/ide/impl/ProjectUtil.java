@@ -657,9 +657,14 @@ public final class ProjectUtil {
     if (lastProjectLocation != null) {
       return lastProjectLocation.replace('/', File.separatorChar);
     }
+    return getUserHomeProjectDir();
+  }
+
+  @NotNull
+  private static String getUserHomeProjectDir() {
     final String userHome = SystemProperties.getUserHome();
     String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
-    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode()) {
+    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
       productName = ApplicationNamesInfo.getInstance().getProductName();
     }
     return userHome.replace('/', File.separatorChar) + File.separator + productName + "Projects";
@@ -714,7 +719,7 @@ public final class ProjectUtil {
 
   @NotNull
   @SystemDependent
-  public static String getProjectsPath() {
+  public static String getProjectsPath() { //todo: merge somehow with getBaseDir
     Application application = ApplicationManager.getApplication();
     String fromSettings = application == null || application.isHeadlessEnvironment() ? null :
                           GeneralSettings.getInstance().getDefaultProjectDirectory();
@@ -727,9 +732,15 @@ public final class ProjectUtil {
       String propertyValue = System.getProperty(propertyName);
       ourProjectsPath = propertyValue != null
                         ? PathManager.getAbsolutePath(StringUtil.unquoteString(propertyValue, '\"'))
-                        : PathManager.getConfigPath() + File.separator + PROJECTS_DIR;
+                        : getProjectsDirDefault();
     }
     return ourProjectsPath;
+  }
+
+  @NotNull
+  private static String getProjectsDirDefault() {
+    if (PlatformUtils.isDataGrip()) return getUserHomeProjectDir();
+    return PathManager.getConfigPath() + File.separator + PROJECTS_DIR;
   }
 
   public static @NotNull Path getProjectPath(@NotNull String name) {
