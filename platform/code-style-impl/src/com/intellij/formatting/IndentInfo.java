@@ -34,6 +34,17 @@ public class IndentInfo {
     this(lineFeeds, indentSpaces, spaces, false);
   }
 
+  @Override
+  public String toString() {
+    return "IndentInfo{" +
+           "mySpaces=" + mySpaces +
+           ", myIndentSpaces=" + myIndentSpaces +
+           ", myLineFeeds=" + myLineFeeds +
+           ", myForceSkipTabulationsUsage=" + myForceSkipTabulationsUsage +
+           ", myIndentEmptyLines=" + myIndentEmptyLines +
+           '}';
+  }
+
   public IndentInfo(final int lineFeeds,
                     final int indentSpaces,
                     final int spaces,

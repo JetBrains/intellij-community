@@ -53,6 +53,7 @@ abstract class CodeStyleManagerRunnable<T> {
         if (offset != -1) {
           offset = documentWindow.injectedToHost(offset);
         }
+        // see `InjectedLanguageBlockBuilder` to configure injected blocks formatting in the host formatter
         return adjustResultForInjected(perform(topLevelFile, offset, range, defaultValue), documentWindow);
       }
     }

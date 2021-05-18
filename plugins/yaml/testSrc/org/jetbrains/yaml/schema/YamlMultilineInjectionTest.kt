@@ -138,9 +138,139 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     myFixture.checkResult("""
       |myyaml: |
       |  root:
-      |  """.trimMargin())
+      |    """.trimMargin())
+  }
+
+  fun testNewLineInInjectedXML() {
+    myFixture.configureByText("test.yaml", """
+      long:
+        long:
+          nest:
+            #language=XML
+            abc: |
+              <xml><caret></xml>
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      long:
+        long:
+          nest:
+            #language=XML
+            abc: |
+              <xml>
+                  <caret>
+              </xml>
+    """.trimIndent())
   }
   
+  fun testNewLineInInjectedXMLinNested() {
+    myFixture.configureByText("test.yaml", """
+      long:
+        long:
+          nest:
+            #language=XML
+            abc: |
+                <xml1>
+                    <xml2>
+                        <xml3><caret></xml3>
+                    </xml2>
+                </xml1>
+        
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      long:
+        long:
+          nest:
+            #language=XML
+            abc: |
+                <xml1>
+                    <xml2>
+                        <xml3>
+                            <caret>
+                        </xml3>
+                    </xml2>
+                </xml1>
+                
+    """.trimIndent())
+  }
+
+  
+  fun testInjectedJsonBlock() {
+    myFixture.configureByText("test.yaml", """
+    myyaml:
+      #language=JSON
+      json: |
+        {
+          "inner" : {<caret>}
+        }
+
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("JSON")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      myyaml:
+        #language=JSON
+        json: |
+          {
+            "inner" : {
+              
+            }
+          }
+          
+    """.trimIndent())
+  }
+  
+  fun testInjectedFlatIndentBlock() {
+    myFixture.configureByText("test.yaml", """
+      myyaml:
+        #language=Java
+        after: |
+            class B {
+                <caret>
+            }
+
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("JAVA")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      myyaml:
+        #language=Java
+        after: |
+            class B {
+                
+                
+            }
+            
+    """.trimIndent())
+  }
+  
+  fun testInjectedStartIndented() {
+    myFixture.configureByText("test.yaml", """
+    myyaml:
+      #language=JSON
+      json: |<caret>
+
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedContent("")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      myyaml:
+        #language=JSON
+        json: |
+          <caret>
+
+    """.trimIndent())
+  }
+
+
   fun testYamlToYamlInjection2() {
     myFixture.configureByText("test.yaml", """
         myyaml: |
@@ -155,29 +285,89 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     myFixture.checkResult("""
       |myyaml: |
       |  root:
-      |  
+      |    
       |  """.trimMargin())
-    myInjectionFixture.assertInjectedContent("root:\n\n")
+    myInjectionFixture.assertInjectedContent("root:\n  \n")
     PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
     myFixture.type("abc:")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
     myFixture.checkResult("""
       |myyaml: |
       |  root:
-      |  abc:
-      |  
+      |    abc:
+      |      
       |  """.trimMargin())
-    myInjectionFixture.assertInjectedContent("root:\nabc:\n\n")
-    myFixture.type("def:")
+    myInjectionFixture.assertInjectedContent("root:\n  abc:\n    \n")
+    myFixture.type("def: 1")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
     myFixture.checkResult("""
       |myyaml: |
       |  root:
-      |  abc:
-      |  def:
-      |  
+      |    abc:
+      |      def: 1
+      |      
       |  """.trimMargin())
-    myInjectionFixture.assertInjectedContent("root:\nabc:\ndef:\n\n")
+    myInjectionFixture.assertInjectedContent("root:\n  abc:\n    def: 1\n    \n")
+  }
+  
+  fun testYamlToYamlEnterInBefore() {
+    myFixture.configureByText("test.yaml", """
+      |myyaml: |
+      |  root:
+      |    abc:<caret>
+      |      def: 1
+      |      
+      |  """.trimMargin())
+
+    myInjectionFixture.assertInjectedLangAtCaret("yaml")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      |myyaml: |
+      |  root:
+      |    abc:
+      |      
+      |      def: 1
+      |      
+      |  """.trimMargin())
+    myInjectionFixture.assertInjectedContent("root:\n  abc:\n    \n    def: 1\n    \n")
+  }
+  
+  fun testYamlToYamlEnterInBeforeNoInject() {
+    myFixture.configureByText("test.yaml", """
+      |myyaml:  
+      |  root:
+      |    abc:<caret>
+      |      def: 1
+      |      
+      |  """.trimMargin())
+    
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      |myyaml:  
+      |  root:
+      |    abc:
+      |      
+      |      def: 1
+      |      
+      |  """.trimMargin())
+  }
+  
+  fun testYamlToYamlReformat() {
+    myFixture.configureByText("test.yaml", """
+      |myyaml: |
+      |  root:
+      |    abc:
+      |      def: 1<caret>
+      |      
+      |  """.trimMargin())
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_REFORMAT)
+    myFixture.checkResult("""
+      |myyaml: |
+      |  root:
+      |    abc:
+      |      def: 1
+      |      
+      |  """.trimMargin())
   }
 
   fun testBlockInjectionKeep() {
