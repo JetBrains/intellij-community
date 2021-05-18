@@ -200,20 +200,15 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
           def overwrite = project.tasks.findByName(runAppTaskName) != null
           project.tasks.create(name: runAppTaskName, overwrite: overwrite, type: JavaExec) {
             if (javaExePath) executable = javaExePath
-            classpath = project.sourceSets[sourceSetName].runtimeClasspath
             main = mainClass
             $argsString
-            if(_workingDir) workingDir = _workingDir
+            if (_workingDir) workingDir = _workingDir
             standardInput = System.in
-            if(javaModuleName) {
-              inputs.property('moduleName', javaModuleName)
-              doFirst {
-                jvmArgs += [
-                  '--module-path', classpath.asPath,
-                  '--module', javaModuleName + '/' + mainClass
-                ]
-                classpath = files()
-              }
+            if (javaModuleName) {
+              mainModule = javaModuleName
+              classpath = tasks[sourceSets[sourceSetName].jarTaskName].outputs.files + project.sourceSets[sourceSetName].runtimeClasspath;
+            } else {
+              classpath = project.sourceSets[sourceSetName].runtimeClasspath
             }
           }
         }
