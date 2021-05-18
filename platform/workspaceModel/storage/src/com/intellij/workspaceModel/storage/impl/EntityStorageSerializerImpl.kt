@@ -475,7 +475,7 @@ class EntityStorageSerializerImpl(
         val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
 
         val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
-        val persistentIdIndex = kryo.readClassAndObject(input) as PersistentIdInternalIndex<PersistentEntityId<*>>
+        val persistentIdIndex = kryo.readClassAndObject(input) as PersistentIdInternalIndex
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
         val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes, consistencyCheckingMode)

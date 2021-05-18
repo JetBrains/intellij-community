@@ -2,36 +2,37 @@
 package com.intellij.workspaceModel.storage.impl.indices
 
 import com.google.common.collect.HashBiMap
+import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.impl.EntityId
 import org.jetbrains.annotations.TestOnly
 
-open class PersistentIdInternalIndex<T> private constructor(
-  internal open val index: HashBiMap<EntityId, T>
+open class PersistentIdInternalIndex private constructor(
+  internal open val index: HashBiMap<EntityId, PersistentEntityId<*>>
 ) {
-  constructor() : this(HashBiMap.create<EntityId, T>())
+  constructor() : this(HashBiMap.create<EntityId, PersistentEntityId<*>>())
 
-  internal fun getIdsByEntry(entry: T): EntityId? = index.inverse()[entry]
+  internal fun getIdsByEntry(persistentId: PersistentEntityId<*>): EntityId? = index.inverse()[persistentId]
 
-  internal fun getEntryById(id: EntityId): T? = index[id]
+  internal fun getEntryById(id: EntityId): PersistentEntityId<*>? = index[id]
 
-  internal fun entries(): Collection<T> {
+  internal fun entries(): Collection<PersistentEntityId<*>> {
     return index.values
   }
 
-  class MutablePersistentIdInternalIndex<T> private constructor(
+  class MutablePersistentIdInternalIndex private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
-    override var index: HashBiMap<EntityId, T>
-  ) : PersistentIdInternalIndex<T>(index) {
+    override var index: HashBiMap<EntityId, PersistentEntityId<*>>
+  ) : PersistentIdInternalIndex(index) {
 
     private var freezed = true
 
-    internal fun index(id: EntityId, entry: T? = null) {
+    internal fun index(id: EntityId, persistentId: PersistentEntityId<*>? = null) {
       startWrite()
-      if (entry == null) {
+      if (persistentId == null) {
         index.remove(id)
         return
       }
-      index[id] = entry
+      index[id] = persistentId
     }
 
     @TestOnly
@@ -41,7 +42,7 @@ open class PersistentIdInternalIndex<T> private constructor(
     }
 
     @TestOnly
-    internal fun copyFrom(another: PersistentIdInternalIndex<T>) {
+    internal fun copyFrom(another: PersistentIdInternalIndex) {
       startWrite()
       this.index.putAll(another.index)
     }
@@ -52,14 +53,14 @@ open class PersistentIdInternalIndex<T> private constructor(
       index = HashBiMap.create(index)
     }
 
-    fun toImmutable(): PersistentIdInternalIndex<T> {
+    fun toImmutable(): PersistentIdInternalIndex {
       freezed = true
       return PersistentIdInternalIndex(this.index)
     }
 
     companion object {
-      fun <T> from(other: PersistentIdInternalIndex<T>): MutablePersistentIdInternalIndex<T> {
-        if (other is MutablePersistentIdInternalIndex<T>) other.freezed = true
+      fun from(other: PersistentIdInternalIndex): MutablePersistentIdInternalIndex {
+        if (other is MutablePersistentIdInternalIndex) other.freezed = true
         return MutablePersistentIdInternalIndex(other.index)
       }
     }

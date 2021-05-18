@@ -53,7 +53,7 @@ class IonSerializer(virtualFileManager: VirtualFileUrlManager) : EntityStorageSe
     val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
 
     val entitySourceIndex = ion.read(EntityStorageInternalIndex::class.java, stream, configuration) as EntityStorageInternalIndex<EntitySource>
-    val persistentIdIndex = ion.read(EntityStorageInternalIndex::class.java, stream, configuration) as EntityStorageInternalIndex<PersistentEntityId<*>>
+    val persistentIdIndex = ion.read(EntityStorageInternalIndex::class.java, stream, configuration) as PersistentIdInternalIndex
     val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
     val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes, consistencyCheckingMode)
