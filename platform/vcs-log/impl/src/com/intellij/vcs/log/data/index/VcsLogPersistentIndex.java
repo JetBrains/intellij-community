@@ -247,7 +247,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @Override
   public synchronized void markForIndexing(int index, @NotNull VirtualFile root) {
     if (isIndexed(index) || !myRoots.contains(root)) return;
-    TroveUtil.add(myCommitsToIndex, root, index);
+    IntCollectionUtil.add(myCommitsToIndex, root, index);
   }
 
   @Nullable
@@ -609,10 +609,10 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       // We pass hashes to VcsLogProvider#readFullDetails in batches
       // in order to avoid allocating too much memory for these hashes
       // a batch of 20k will occupy ~2.4Mb
-      TroveUtil.processBatches(commits, BATCH_SIZE, batch -> {
+      IntCollectionUtil.processBatches(commits, BATCH_SIZE, batch -> {
         indicator.checkCanceled();
 
-        List<String> hashes = TroveUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
+        List<String> hashes = IntCollectionUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
         myIndexers.get(myRoot).readFullDetails(myRoot, hashes, myPathsEncoder, detail -> {
           storeDetail(detail);
           myNewIndexedCommits.incrementAndGet();

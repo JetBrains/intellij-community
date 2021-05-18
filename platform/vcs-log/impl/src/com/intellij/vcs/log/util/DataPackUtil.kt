@@ -37,7 +37,7 @@ fun DataPack.subgraphDifference(withRefIndex: Int, withoutRefIndex: Int): IntSet
   if (withRefNode < 0 || withoutRefNode < 0) return null
 
   val withRefNodeIds = permanentGraphInfo.linearGraph.subgraphDifference(withRefNode, withoutRefNode)
-  return TroveUtil.map2IntSet(withRefNodeIds) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
+  return IntCollectionUtil.map2IntSet(withRefNodeIds) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
 }
 
 fun DataPack.containsAll(commits: Collection<CommitId>, storage: VcsLogStorage): Boolean {
@@ -59,7 +59,7 @@ fun DataPack.exclusiveCommits(ref: VcsRef, refsModel: RefsModel, storage: VcsLog
   val exclusiveNodes = permanentGraphInfo.linearGraph.exclusiveNodes(refNode) { node ->
     refsModel.isBranchHead(permanentGraphInfo.permanentCommitsInfo.getCommitId(node))
   }
-  return TroveUtil.map2IntSet(exclusiveNodes) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
+  return IntCollectionUtil.map2IntSet(exclusiveNodes) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
 }
 
 private fun RefsModel.isBranchHead(commitId: Int) = refsToCommit(commitId).any { it.type.isBranch }

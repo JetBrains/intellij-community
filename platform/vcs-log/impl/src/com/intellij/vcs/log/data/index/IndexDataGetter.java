@@ -19,7 +19,7 @@ import com.intellij.vcs.log.history.EdgeData;
 import com.intellij.vcs.log.history.FileHistoryData;
 import com.intellij.vcs.log.history.VcsDirectoryRenamesProvider;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
-import com.intellij.vcs.log.util.TroveUtil;
+import com.intellij.vcs.log.util.IntCollectionUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.visible.filters.VcsLogMultiplePatternsTextFilter;
@@ -165,7 +165,7 @@ public final class IndexDataGetter {
       filteredByPath = filterPaths(pathFilter.getFiles());
     }
 
-    IntSet filteredByUserAndPath = TroveUtil.intersect(filteredByUser, filteredByPath, candidates);
+    IntSet filteredByUserAndPath = IntCollectionUtil.intersect(filteredByUser, filteredByPath, candidates);
     if (textFilter == null) {
       return filteredByUserAndPath == null ? IntSets.EMPTY_SET : filteredByUserAndPath;
     }
@@ -212,7 +212,7 @@ public final class IndexDataGetter {
             noTrigramSources.add(string);
           }
           else {
-            filter(myIndexStorage.messages, TroveUtil.intersect(candidates, commits), filter::matches, consumer);
+            filter(myIndexStorage.messages, IntCollectionUtil.intersect(candidates, commits), filter::matches, consumer);
           }
         }
         if (noTrigramSources.isEmpty()) return;

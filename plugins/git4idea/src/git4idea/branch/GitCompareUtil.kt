@@ -4,7 +4,7 @@ package git4idea.branch
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.util.TroveUtil
+import com.intellij.vcs.log.util.IntCollectionUtil
 import com.intellij.vcs.log.util.VcsLogUtil
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
@@ -14,8 +14,8 @@ fun IndexDataGetter.match(root: VirtualFile,
                           sourceBranchCommits: IntSet,
                           targetBranchCommits: IntSet,
                           reliable: Boolean = true): IntSet {
-  val timeToSourceCommit = TroveUtil.groupByAsIntSet(sourceBranchCommits) { getAuthorTime(it) }
-  val authorToSourceCommit = TroveUtil.groupByAsIntSet(sourceBranchCommits) { getAuthor(it) }
+  val timeToSourceCommit = IntCollectionUtil.groupByAsIntSet(sourceBranchCommits) { getAuthorTime(it) }
+  val authorToSourceCommit = IntCollectionUtil.groupByAsIntSet(sourceBranchCommits) { getAuthor(it) }
 
   val result = IntOpenHashSet()
   for (targetCommit in targetBranchCommits) {
@@ -23,7 +23,7 @@ fun IndexDataGetter.match(root: VirtualFile,
     val author = getAuthor(targetCommit)
 
     val commitsForAuthor = authorToSourceCommit[author] ?: IntOpenHashSet()
-    val sourceCandidates = TroveUtil.intersect(timeToSourceCommit[time] ?: IntOpenHashSet(), commitsForAuthor) ?: continue
+    val sourceCandidates = IntCollectionUtil.intersect(timeToSourceCommit[time] ?: IntOpenHashSet(), commitsForAuthor) ?: continue
     if (!sourceCandidates.isEmpty()) {
       result.addAll(selectSourceCommits(targetCommit, root, sourceCandidates, commitsForAuthor, reliable))
     }
@@ -57,7 +57,7 @@ private fun IndexDataGetter.selectSourceCommits(targetCommit: Int,
         }
       }
     }
-    if (TroveUtil.intersects(sourceCandidates, result)) return result // target time should match one of sources time
+    if (IntCollectionUtil.intersects(sourceCandidates, result)) return result // target time should match one of sources time
   }
 
   if (!reliable) {

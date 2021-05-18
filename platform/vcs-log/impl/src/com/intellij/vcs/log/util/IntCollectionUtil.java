@@ -19,7 +19,7 @@ import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public final class TroveUtil {
+public final class IntCollectionUtil {
 
   @Nullable
   public static IntSet intersect(IntSet @NotNull ... sets) {

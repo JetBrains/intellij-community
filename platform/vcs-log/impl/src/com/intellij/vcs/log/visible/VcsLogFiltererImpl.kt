@@ -83,7 +83,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
       when (val commitsForRangeFilter = filterByRange(dataPack, rangeFilters)) {
         is RangeFilterResult.Commits -> {
-          commitCandidates = TroveUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter.commits))
+          commitCandidates = IntCollectionUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter.commits))
           forceFilterByVcs = false
         }
         is RangeFilterResult.Error -> {
@@ -267,7 +267,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                           ?: return Pair(dataGetter.filter(detailsFilters, commitCandidates), null)
 
     val historyData = dataGetter.createFileHistoryData(structureFilter.files).build()
-    val candidates = TroveUtil.intersect(historyData.getCommits(), commitCandidates)
+    val candidates = IntCollectionUtil.intersect(historyData.getCommits(), commitCandidates)
 
     val filtersWithoutStructure = detailsFilters.filterNot { it is VcsLogStructureFilter }
     if (filtersWithoutStructure.isEmpty()) {
