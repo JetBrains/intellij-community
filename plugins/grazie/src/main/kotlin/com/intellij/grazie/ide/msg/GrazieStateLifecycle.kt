@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.msg
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection
@@ -10,6 +11,7 @@ import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.spellcheck.GrazieSpellchecker
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 
@@ -36,6 +38,10 @@ internal class GrazieInitializerManager {
     connection.subscribe(topic, GrazieCommitInspection)
     connection.subscribe(topic, GrazieInspection)
     connection.subscribe(topic, LanguageDetectionInspection)
+
+    ProjectManager.getInstance().openProjects.forEach {
+      DaemonCodeAnalyzer.getInstance(it).restart()
+    }
   }
 
   fun register(subscriber: GrazieStateLifecycle): MessageBusConnection {

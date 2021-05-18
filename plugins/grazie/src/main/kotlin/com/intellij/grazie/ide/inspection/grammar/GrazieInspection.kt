@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.inspection.grammar
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
@@ -17,14 +16,12 @@ import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.utils.lazyConfig
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
-import java.util.*
 
 class GrazieInspection : LocalInspectionTool() {
   companion object : GrazieStateLifecycle {
@@ -46,10 +43,6 @@ class GrazieInspection : LocalInspectionTool() {
       disabledStrategiesIDs = newState.disabledGrammarStrategies
       suppression = newState.suppressingContext
       checking = newState.checkingContext
-
-      ProjectManager.getInstance().openProjects.forEach {
-        DaemonCodeAnalyzer.getInstance(it).restart()
-      }
     }
 
     private fun isCheckInElementTextDomainEnabled(domain: GrammarCheckingStrategy.TextDomain): Boolean {
