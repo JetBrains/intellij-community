@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.timeline.comment
 import com.intellij.collaboration.ui.codereview.SimpleEventListener
 import com.intellij.lang.Language
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileTypes.PlainTextLanguage
@@ -49,7 +50,7 @@ private class SubmittableTextFieldModelContentImpl(private val document: Documen
   override var text: String
     get() = document.text
     set(value) {
-      runUndoTransparentWriteAction {
+      runWriteAction {
         document.setText(value)
       }
     }
@@ -65,4 +66,10 @@ private class SubmittableTextFieldModelContentImpl(private val document: Documen
     set(value) {
       document.setAcceptSlashR(value)
     }
+
+  override fun clear() {
+    runUndoTransparentWriteAction {
+      document.setText("")
+    }
+  }
 }
