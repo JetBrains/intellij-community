@@ -233,7 +233,8 @@ public class UsageViewTest extends BasePlatformTestCase {
                  "    Unclassified  (1 usage found)\n" +
                  "        light_idea_test_case  (1 usage found)\n" +
                  "              (1 usage found)\n" +
-                 "                1 public class X{ int xxx; } //comment\n", StringUtil.convertLineSeparators(text));
+                 "                X.java  (1 usage found)\n" +
+                 "                    1 public class X{ int xxx; } //comment\n", StringUtil.convertLineSeparators(text));
   }
 
   @NotNull

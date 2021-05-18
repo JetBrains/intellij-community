@@ -220,7 +220,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
 
       if (myFindOptionsCount > 2) {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new Title(FindBundle.message("find.what.group"), JBUI.Borders.emptyBottom(8), null), BorderLayout.NORTH);
+        panel.add(new Title(FindBundle.message("find.what.group"), JBUI.Borders.empty(4, 0, 8, 0), null), BorderLayout.NORTH);
         findWhatPanel.setBorder(JBUI.Borders.emptyLeft(17));
         panel.add(findWhatPanel, BorderLayout.CENTER);
 
