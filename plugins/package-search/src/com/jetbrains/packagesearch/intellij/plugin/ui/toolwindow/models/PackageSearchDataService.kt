@@ -170,7 +170,7 @@ internal class PackageSearchDataService(
                 try {
                     performSearch(it.query, it.traceInfo)
                 } catch (e: Throwable) {
-                    logTrace(it.traceInfo, "onSearchQueryChangedFlow") { "Execution failed: ${e.message}" }
+                    logError(it.traceInfo, "onSearchQueryChangedFlow") { "Execution failed: ${e.message}" }
                 } finally {
                     setStatus(isSearching = false)
                 }
@@ -183,7 +183,7 @@ internal class PackageSearchDataService(
                 try {
                     onDataChanged(it)
                 } catch (e: Throwable) {
-                    logTrace(it, "onDataChangedFlow") { "Execution failed: ${e.message}" }
+                    logError(it, "onDataChangedFlow") { "Execution failed: ${e.message}" }
                 } finally {
                     setStatus(isRefreshingData = false)
                 }

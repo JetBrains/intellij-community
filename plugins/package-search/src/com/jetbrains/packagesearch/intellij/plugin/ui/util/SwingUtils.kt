@@ -40,7 +40,7 @@ internal fun mouseListener(
     }
 }
 
-@Suppress("unused")
+
+@Suppress("unused") // The receiver is technically unused
 internal val Dispatchers.AppUI
-    get() = AppUIExecutor.onUiThread().coroutineDispatchingContext() as? CoroutineDispatcher
-        ?: error("AppUIExecutor is not a CoroutineDispatcher")
+    get() = AppUIExecutor.onUiThread().coroutineDispatchingContext()
