@@ -506,63 +506,61 @@ public final class EditorWindow {
     // select an editor in a tabbed pane and then focus an editor if needed
     int index = findFileIndex(editor.getFile());
     if (index != -1) {
-        if (!isDisposed()) {
-          myTabbedPane.setSelectedIndex(index, focusEditor);
-        }
+      if (!isDisposed()) {
+        myTabbedPane.setSelectedIndex(index, focusEditor);
+      }
     }
   }
 
-  public void setEditor(@Nullable EditorWithProviderComposite editor, boolean focusEditor) {
+  public void setEditor(@NotNull EditorWithProviderComposite editor, boolean focusEditor) {
     setEditor(editor, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
 
-  public void setEditor(@Nullable EditorWithProviderComposite editor, @NotNull FileEditorOpenOptions options) {
-    if (editor != null) {
-      boolean isNewEditor = findEditorIndex(editor) == -1;
-      boolean isPreviewMode = (isNewEditor || editor.isPreview()) && shouldReservePreview(editor.getFile(), options);
-      editor.setPreview(isPreviewMode);
+  public void setEditor(@NotNull EditorWithProviderComposite editor, @NotNull FileEditorOpenOptions options) {
+    boolean isNewEditor = findEditorIndex(editor) == -1;
+    boolean isPreviewMode = (isNewEditor || editor.isPreview()) && shouldReservePreview(editor.getFile(), options);
+    editor.setPreview(isPreviewMode);
 
-      if (isNewEditor) {
-        int indexToInsert = INITIAL_INDEX_KEY.get(editor.getFile(), -1);
+    if (isNewEditor) {
+      int indexToInsert = INITIAL_INDEX_KEY.get(editor.getFile(), -1);
 
-        if (indexToInsert == -1 && isPreviewMode) {
-          indexToInsert = findPreviewIndex();
-        }
-        if (indexToInsert == -1) {
-          indexToInsert = UISettings.getInstance().getOpenTabsAtTheEnd() ? myTabbedPane.getTabCount()
-                                                                         : myTabbedPane.getSelectedIndex() + 1;
-        }
-        VirtualFile file = editor.getFile();
-        Icon template = AllIcons.FileTypes.Text;
-        EmptyIcon emptyIcon = EmptyIcon.create(template.getIconWidth(), template.getIconHeight());
-        myTabbedPane.insertTab(file, emptyIcon, new TComp(this, editor), null, indexToInsert, editor);
-
-        Integer dragStartIndex = null;
-        Integer hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY);
-        if (hash != null && System.identityHashCode(myTabbedPane.getTabs()) == hash.intValue()) {
-          dragStartIndex = file.getUserData(DRAG_START_INDEX_KEY);
-        }
-        if (dragStartIndex == null || dragStartIndex != -1) {
-          Boolean initialPinned = file.getUserData(DRAG_START_PINNED_KEY);
-          if (initialPinned != null) {
-            editor.setPinned(initialPinned);
-          }
-        }
-        file.putUserData(DRAG_START_LOCATION_HASH_KEY, null);
-        file.putUserData(DRAG_START_INDEX_KEY, null);
-        file.putUserData(DRAG_START_PINNED_KEY, null);
-        trimToSize(file, false);
-        myOwner.updateFileIconImmediately(file, IconUtil.computeBaseFileIcon(file));
-        myOwner.updateFileIconLater(file);
-        myOwner.updateFileColor(file);
+      if (indexToInsert == -1 && isPreviewMode) {
+        indexToInsert = findPreviewIndex();
       }
-      myOwner.updateFileColor(editor.getFile());
-      if (options.getSelectAsCurrent()) {
-        setSelectedEditor(editor, options.getRequestFocus());
+      if (indexToInsert == -1) {
+        indexToInsert = UISettings.getInstance().getOpenTabsAtTheEnd() ? myTabbedPane.getTabCount()
+                                                                       : myTabbedPane.getSelectedIndex() + 1;
       }
-      myOwner.setCurrentWindow(this, false);
-      hideTabsIfNeeded(editor);
+      VirtualFile file = editor.getFile();
+      Icon template = AllIcons.FileTypes.Text;
+      EmptyIcon emptyIcon = EmptyIcon.create(template.getIconWidth(), template.getIconHeight());
+      myTabbedPane.insertTab(file, emptyIcon, new TComp(this, editor), null, indexToInsert, editor);
+
+      Integer dragStartIndex = null;
+      Integer hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY);
+      if (hash != null && System.identityHashCode(myTabbedPane.getTabs()) == hash.intValue()) {
+        dragStartIndex = file.getUserData(DRAG_START_INDEX_KEY);
+      }
+      if (dragStartIndex == null || dragStartIndex != -1) {
+        Boolean initialPinned = file.getUserData(DRAG_START_PINNED_KEY);
+        if (initialPinned != null) {
+          editor.setPinned(initialPinned);
+        }
+      }
+      file.putUserData(DRAG_START_LOCATION_HASH_KEY, null);
+      file.putUserData(DRAG_START_INDEX_KEY, null);
+      file.putUserData(DRAG_START_PINNED_KEY, null);
+      trimToSize(file, false);
+      myOwner.updateFileIconImmediately(file, IconUtil.computeBaseFileIcon(file));
+      myOwner.updateFileIconLater(file);
+      myOwner.updateFileColor(file);
     }
+    myOwner.updateFileColor(editor.getFile());
+    if (options.getSelectAsCurrent()) {
+      setSelectedEditor(editor, options.getRequestFocus());
+    }
+    myOwner.setCurrentWindow(this, false);
+    hideTabsIfNeeded(editor);
     myOwner.validate();
   }
 
