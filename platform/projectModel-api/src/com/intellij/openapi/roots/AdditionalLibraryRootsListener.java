@@ -21,6 +21,19 @@ public interface AdditionalLibraryRootsListener {
                            @NotNull Collection<VirtualFile> newRoots,
                            @NotNull Collection<VirtualFile> oldRoots);
 
+  /**
+   * Use {@link #fireAdditionalLibraryChanged(Project, String, Collection, Collection)} to notify platform about changes in roots
+   * provided by a {@link SyntheticLibrary} from an {@link AdditionalLibraryRootsProvider}.
+   * In particular {@code newRoots} would be indexed, and Project View tree would be refreshed. So in hypothetical case
+   * when multiple {@link SyntheticLibrary} from same {@link AdditionalLibraryRootsProvider} were changed,
+   * this method should be invoked multiple times, once for each library.
+   * Due to some listeners method should be invoked under write lock.
+   *
+   * @param presentableLibraryName - name of {@link SyntheticLibrary} returned by {@link AdditionalLibraryRootsProvider};
+   *                               used for UI only
+   * @param newRoots               - new roots in {@link SyntheticLibrary}
+   * @param oldRoots               - roots that were in {@link SyntheticLibrary} before
+   */
   @RequiresWriteLock
   static void fireAdditionalLibraryChanged(@NotNull Project project,
                                            @NotNull @Nls String presentableLibraryName,
