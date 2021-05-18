@@ -1135,15 +1135,20 @@ public final class BuildManager implements Disposable {
       // for javac, if compiler from associated SDK instead of cross-compilation is preferred, use a different policy:
       // select the most frequently used jdk from the sdks that are associated with the project, but not older than <oldestPossibleVersion>
       // this policy attempts to compile as much modules as possible without spawning a separate javac process
-      return candidates.entrySet().stream()
+
+      final List<Pair<Sdk, JavaSdkVersion>> sortedSdks = candidates.entrySet().stream()
         .sorted(Map.Entry.<Sdk, Integer>comparingByValue().reversed())
         .map(entry -> Pair.create(entry.getKey(), JavaVersion.tryParse(entry.getKey().getVersionString())))
         .filter(p -> p.second != null && p.second.isAtLeast(oldestPossibleVersion))
         .map(p -> Pair.create(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
-        .findFirst().orElseGet(() -> {
-          Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-          return Pair.create(internalJdk, javaSdkType.getVersion(internalJdk));
-        });
+        .filter(p -> p.second != null)
+        .collect(Collectors.toList());
+
+      if (!sortedSdks.isEmpty()) {
+        // first try to find most used JDK of version 9 and newer => JRT FS support will be needed
+        final Pair<Sdk, JavaSdkVersion> sdk9_plus = ContainerUtil.find(sortedSdks, p -> p.second.isAtLeast(JavaSdkVersion.JDK_1_9));
+        return sdk9_plus != null? sdk9_plus : sortedSdks.iterator().next(); // get the most used
+      }
     }
 
     // now select the latest version from the sdks that are used in the project, but not older than <oldestPossibleVersion>
@@ -1152,6 +1157,7 @@ public final class BuildManager implements Disposable {
       .filter(p -> p.second != null && p.second.isAtLeast(oldestPossibleVersion))
       .max(Pair.comparingBySecond())
       .map(p -> Pair.create(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
+      .filter(p -> p.second != null)
       .orElseGet(() -> {
         Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
         return Pair.create(internalJdk, javaSdkType.getVersion(internalJdk));
