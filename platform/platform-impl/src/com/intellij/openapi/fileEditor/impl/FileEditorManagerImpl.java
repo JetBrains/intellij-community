@@ -733,32 +733,40 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       if (pair != null) return pair;
     }
 
-    EditorWindow windowToOpenIn = findWindowToOpenIn(file, searchForSplitter);
+    EditorWindow windowToOpenIn = null;
+    if (searchForSplitter) {
+      windowToOpenIn = findWindowInAllSplitters(file);
+    }
+    if (windowToOpenIn == null) {
+      windowToOpenIn = getOrCreateCurrentWindow(file);
+    }
     openAssociatedFile(file, windowToOpenIn, windowToOpenIn.getOwner());
     return openFileImpl2(windowToOpenIn, file, options);
   }
 
-  private @NotNull EditorWindow findWindowToOpenIn(@NotNull VirtualFile file, boolean searchForSplitter) {
-    if (searchForSplitter) {
-      boolean selectionRequired = UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE;
-      EditorsSplitters active = getActiveSplittersSync();
-      EditorWindow activeCurrentWindow = active.getCurrentWindow();
-      if (activeCurrentWindow != null
-          && activeCurrentWindow.isFileOpen(file)
-          && (!selectionRequired || file.equals(activeCurrentWindow.getSelectedFile()))) {
-        return activeCurrentWindow;
-      }
-      for (EditorsSplitters splitters : getAllSplitters()) {
-        EditorWindow[] windows = splitters.getWindows();
-        for (EditorWindow window : windows) {
-          if (window.isFileOpen(file)
-              && (!selectionRequired || file.equals(window.getSelectedFile()))) {
-            return window;
-          }
+  @Nullable
+  private EditorWindow findWindowInAllSplitters(@NotNull VirtualFile file) {
+    boolean selectionRequired = UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE;
+    EditorsSplitters active = getActiveSplittersSync();
+    EditorWindow activeCurrentWindow = active.getCurrentWindow();
+    if (activeCurrentWindow != null
+        && activeCurrentWindow.isFileOpen(file)
+        && (!selectionRequired || file.equals(activeCurrentWindow.getSelectedFile()))) {
+      return activeCurrentWindow;
+    }
+    for (EditorsSplitters splitters : getAllSplitters()) {
+      EditorWindow[] windows = splitters.getWindows();
+      for (EditorWindow window : windows) {
+        if (window.isFileOpen(file)
+            && (!selectionRequired || file.equals(window.getSelectedFile()))) {
+          return window;
         }
       }
     }
+    return null;
+  }
 
+  private @NotNull EditorWindow getOrCreateCurrentWindow(@NotNull VirtualFile file) {
     boolean useMainWindow = UISettings.getInstance().getOpenTabsInMainWindow() ||
                             Boolean.TRUE.equals(FileEditorManager.USE_MAIN_WINDOW.get(getSelectedEditor()));
     EditorsSplitters splitters = useMainWindow ? getMainSplitters() : getSplitters();
