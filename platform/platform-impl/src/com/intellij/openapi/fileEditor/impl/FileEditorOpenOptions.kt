@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 data class FileEditorOpenOptions(
   var selectAsCurrent: Boolean = true,
+  var reuseOpen: Boolean = false,
   var requestFocus: Boolean = false,
   var pin: Boolean? = null,
   var index: Int = -1,
@@ -16,6 +17,7 @@ data class FileEditorOpenOptions(
 
   // @formatter:off
   @JvmOverloads fun withSelectAsCurrent(value: Boolean = true)     = apply { selectAsCurrent = value }
+  @JvmOverloads fun withReuseOpen(value: Boolean = true)           = apply { reuseOpen = value }
   @JvmOverloads fun withRequestFocus(value: Boolean = true)        = apply { requestFocus = value }
   @JvmOverloads fun withExactState(value: Boolean = true)          = apply { isExactState = value }
   @JvmOverloads fun withReopeningOnStartup(value: Boolean = true)  = apply { isReopeningOnStartup = value }

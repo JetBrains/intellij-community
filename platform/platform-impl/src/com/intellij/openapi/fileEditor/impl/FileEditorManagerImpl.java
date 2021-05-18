@@ -703,28 +703,45 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                                  boolean focusEditor,
                                                                                  boolean searchForSplitter) {
-    return openFileWithProviders(file, searchForSplitter, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+    FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+      .withRequestFocus(focusEditor)
+      .withReuseOpen(searchForSplitter);
+    return openFileWithProviders(file, openOptions);
+  }
+
+  @Override
+  public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                 boolean focusEditor,
+                                                                                 @NotNull EditorWindow window) {
+    return openFileWithProviders(file, window, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
 
   private @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                  boolean searchForSplitter,
+                                                                                  @NotNull FileEditorOpenOptions options) {
+    return openFileWithProviders(file, null, options);
+  }
+
+  private @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                  @Nullable EditorWindow window,
                                                                                   @NotNull FileEditorOpenOptions options) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertDispatchThread();
 
-    OpenMode mode = getOpenMode(IdeEventQueue.getInstance().getTrueCurrentEvent());
-    if (mode == OpenMode.NEW_WINDOW) {
-      return openFileInNewWindow(file);
-    }
-    if (mode == OpenMode.RIGHT_SPLIT) {
-      Pair<FileEditor[], FileEditorProvider[]> pair = openInRightSplit(file);
-      if (pair != null) return pair;
+    if (window == null) {
+      OpenMode mode = getOpenMode(IdeEventQueue.getInstance().getTrueCurrentEvent());
+      if (mode == OpenMode.NEW_WINDOW) {
+        return openFileInNewWindow(file);
+      }
+      if (mode == OpenMode.RIGHT_SPLIT) {
+        Pair<FileEditor[], FileEditorProvider[]> pair = openInRightSplit(file);
+        if (pair != null) return pair;
+      }
     }
 
-    EditorWindow windowToOpenIn = null;
-    if (searchForSplitter) {
+    EditorWindow windowToOpenIn = window;
+    if (windowToOpenIn == null && options.getReuseOpen()) {
       windowToOpenIn = findWindowInAllSplitters(file);
     }
     if (windowToOpenIn == null) {
@@ -839,24 +856,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   public static boolean forbidSplitFor(@NotNull VirtualFile file) {
     return Boolean.TRUE.equals(file.getUserData(SplitAction.FORBID_TAB_SPLIT));
-  }
-
-  @Override
-  public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                 boolean focusEditor,
-                                                                                 @NotNull EditorWindow window) {
-    return openFileWithProviders(file, window, new FileEditorOpenOptions().withRequestFocus(focusEditor));
-  }
-
-  private @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                  @NotNull EditorWindow window,
-                                                                                  @NotNull FileEditorOpenOptions options) {
-    if (!file.isValid()) {
-      throw new IllegalArgumentException("file is not valid: " + file);
-    }
-    assertDispatchThread();
-
-    return openFileImpl2(window, file, options);
   }
 
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
@@ -1247,10 +1246,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     Ref<FileEditor> selectedEditor = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       VirtualFile file = realDescriptor.getFile();
-      boolean searchForSplitters = !realDescriptor.isUseCurrentWindow();
       FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+        .withReuseOpen(!realDescriptor.isUseCurrentWindow())
         .withRequestFocus(focusEditor);
-      FileEditor[] editors = openFileWithProviders(file, searchForSplitters, openOptions).getFirst();
+      FileEditor[] editors = openFileWithProviders(file, openOptions).getFirst();
       ContainerUtil.addAll(result, editors);
 
       boolean navigated = false;
