@@ -20,12 +20,11 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
-import training.dsl.LessonContext
-import training.dsl.LessonUtil
-import training.dsl.dropMnemonic
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.moveLearnToolWindowRight
 import git4idea.ift.GitLessonsUtil.proceedLink
+import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
+import training.dsl.*
 import java.awt.Rectangle
 import javax.swing.JButton
 
@@ -34,6 +33,8 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
   private val branchName = "main"
   private val commentingLineText = "fur_type: long haired"
   private val commentText = "# debug: check another types (short haired, hairless)"
+
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
     checkoutBranch(branchName)
@@ -45,7 +46,9 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
       modifyFile(virtualFile)
     }
 
+    lateinit var clickLineMarkerTaskId: TaskContext.TaskId
     task {
+      clickLineMarkerTaskId = taskId
       text("Suppose you don't want to commit added comment to the repository, because this change needed only locally. In the common case it can be some personal settings. You can extract the comment to the new changelist, to not commit it accidentally with other changes. Click the highlighted line marker to open the context menu.")
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) l@{ ui: EditorGutterComponentEx ->
         val offset = editor.document.charsSequence.indexOf(commentText)
@@ -65,6 +68,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: EditorComponentImpl ->
         ui.text.contains(defaultChangelistName)
       }
+      restoreByUi()
     }
 
     var newChangeListName = "Comments"
@@ -77,6 +81,11 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
           true
         }
         else false
+      }
+      restoreState(clickLineMarkerTaskId) {
+        (previous.ui?.isShowing != true).also {
+          if (it) HintManager.getInstance().hideAllHints()
+        }
       }
     }
 
@@ -108,17 +117,25 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
       proceedLink()
     }
 
+    lateinit var letsShelveTaskId: TaskContext.TaskId
     task {
+      letsShelveTaskId = taskId
       text("Let's shelve our changes! Right click the highlighted changelist to open context menu.")
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
         ui.anAction is ShelveChangesAction
       }
+      showWarningIfCommitWindowClosed()
     }
 
     val shelveChangesButtonText = VcsBundle.message("shelve.changes.action").dropMnemonic()
     task {
       val shelveChangesText = ActionsBundle.message("action.ChangesView.Shelve.text")
       text("Select ${strong(shelveChangesText)} to open ${strong("Shelf")} dialog.")
+      triggerStart("ChangesView.Shelve")
+      restoreByUi(delayMillis = defaultRestoreDelay)
+    }
+
+    task {
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: JButton ->
         ui.text?.contains(shelveChangesButtonText) == true
       }
@@ -129,6 +146,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
       stateCheck {
         ShelveChangesManager.getInstance(project).allLists.size == 1
       }
+      restoreByUi(letsShelveTaskId)
     }
 
     val removeButtonText = VcsBundle.message("button.remove")
@@ -157,11 +175,13 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: JButton ->
         ui.text?.contains(unshelveChangesButtonText) == true
       }
+      showWarningIfCommitWindowClosed()
     }
 
     task {
       text("Now you can edit the name of the changelist to put the unshelving changes or leave it as the IDE proposed. Click ${strong(unshelveChangesButtonText)} button to apply the changes.")
       stateCheck { editor.document.text.contains(commentText) }
+      restoreByUi(delayMillis = defaultRestoreDelay)
     }
   }
 

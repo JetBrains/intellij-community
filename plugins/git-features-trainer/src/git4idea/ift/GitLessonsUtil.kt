@@ -7,6 +7,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
@@ -20,6 +21,7 @@ import git4idea.commands.Git
 import git4idea.index.actions.runProcess
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
@@ -177,5 +179,24 @@ object GitLessonsUtil {
       "<callback id=\"${LearningUiManager.addCallback { gotIt.complete(true) }}\">Click to proceed</callback>"
     }
     addStep(gotIt)
+  }
+
+  fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
+    showWarningIfToolWindowClosed(ToolWindowId.COMMIT, "Press ${action("CheckinProject")} to open the commit tool window again.",
+                                  restoreTaskWhenResolved)
+  }
+
+  fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
+    showWarningIfToolWindowClosed(ToolWindowId.VCS,
+                                  "Press ${action("ActivateVersionControlToolWindow")} to open the Git tool window again.",
+                                  restoreTaskWhenResolved)
+  }
+
+  private fun TaskContext.showWarningIfToolWindowClosed(toolWindowId: String,
+                                                        @Language("HTML") @Nls warningMessage: String,
+                                                        restoreTaskWhenResolved: Boolean) {
+    showWarning(warningMessage, restoreTaskWhenResolved) {
+      ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)?.isVisible != true
+    }
   }
 }

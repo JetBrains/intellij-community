@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ift.lesson
 
+import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -20,18 +22,16 @@ import com.intellij.vcs.log.util.findBranch
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
-import git4idea.index.actions.runProcess
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
-import training.dsl.LearningBalloonConfig
-import training.dsl.LessonContext
-import training.dsl.TaskRuntimeContext
 import git4idea.ift.GitLessonsUtil.findVcsLogData
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.proceedLink
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
+import git4idea.index.actions.runProcess
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
+import training.dsl.*
 import java.io.File
 import javax.swing.JDialog
 
@@ -40,6 +40,8 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
   private val branchName = "feature"
   private lateinit var repository: GitRepository
   private val remoteProjectName = "RemoteLearningProject"
+
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
@@ -93,7 +95,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows -> ui.text == branchName }
     }
 
+    lateinit var firstShowBranchesTaskId: TaskContext.TaskId
     task("Git.Branches") {
+      firstShowBranchesTaskId = taskId
       text("At first, we need to checkout the ${strong("main")} branch. Please press ${action(it)} or click the highlighted current branch to open the branches list.")
       text("Your active branch is displayed here.", LearningBalloonConfig(Balloon.Position.above, 200))
       triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
@@ -101,10 +105,21 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
       }
     }
 
+    task {
+      triggerByListItemAndHighlight { item -> item.toString() == "main" }
+    }
+
     task("main") {
+      lateinit var curBranchName: String
+      before {
+        curBranchName = repository.currentBranchName ?: error("Not found information about active branch")
+      }
       text("Select the ${strong(it)} branch and choose ${strong("Checkout")}.")
-      triggerByListItemAndHighlight { item -> item.toString() == it }
       stateCheck { repository.currentBranchName == it }
+      restoreState(firstShowBranchesTaskId, delayMillis = defaultRestoreDelay) {
+        val newBranchName = repository.currentBranchName
+        previous.ui?.isShowing != true || (newBranchName != curBranchName && newBranchName != it)
+      }
     }
 
     prepareRuntimeTask {
@@ -124,6 +139,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
+      restoreState(delayMillis = defaultRestoreDelay) {
+        previous.ui?.isShowing != true && !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
+      }
     }
 
     task("Git.Branches") {
@@ -135,7 +153,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
       proceedLink()
     }
 
+    lateinit var secondShowBranchesTaskId: TaskContext.TaskId
     task("Git.Branches") {
+      secondShowBranchesTaskId = taskId
       text("So we should rebase our ${strong(branchName)} branch on ${strong("main")}. Press ${action(it)} or click the highlighted current branch to open the branches list again.")
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows ->
         ui.text == "main"
@@ -145,11 +165,17 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
       }
     }
 
-    task(branchName) {
-      text("Select the ${strong(it)} branch and choose ${strong("Checkout and Rebase onto Current")}.")
-      triggerByListItemAndHighlight { item -> item.toString() == it }
+    task {
+      triggerByListItemAndHighlight { item -> item.toString() == branchName }
+    }
+
+    task {
+      text("Select the ${strong(branchName)} branch and choose ${strong("Checkout and Rebase onto Current")}.")
       triggerByListItemAndHighlight { item -> item.toString() == "Checkout and Rebase onto Current" }
       triggerOnNotification { notification -> notification.title == "Rebase successful" }
+      restoreState(secondShowBranchesTaskId, delayMillis = 3 * defaultRestoreDelay) {
+        previous.ui?.isShowing != true && !StoreReloadManager.getInstance().isReloadBlocked() // reload is blocked when rebase is running
+      }
     }
 
     task("Vcs.Push") {
@@ -163,6 +189,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
         ui.title == it
       }
+      restoreByUi()
     }
 
     task("Force Push") {
@@ -170,6 +197,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
+      restoreByUi(delayMillis = defaultRestoreDelay)
     }
   }
 

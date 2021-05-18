@@ -9,6 +9,7 @@ import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 import com.intellij.vcs.log.ui.frame.MainFrame
@@ -16,13 +17,17 @@ import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
-import training.dsl.LessonContext
-import training.dsl.LessonUtil
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.findVcsLogData
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.proceedLink
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
+import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.ui.LearningUiHighlightingManager
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -32,6 +37,8 @@ class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", "Project histo
   override val existedFile = "src/git/sphinx_cat.yml"
   private val branchName = "feature"
   private val textToFind = "sphinx"
+
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
     checkoutBranch("feature")
@@ -71,6 +78,9 @@ class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", "Project histo
     }
 
     task {
+      before {
+        LearningUiHighlightingManager.clearHighlights()
+      }
       text("In the left side of the tool window listed all branches from your repository. Double click the highlighted ${
         strong("HEAD")
       } branch to show commits only from active branch.")
@@ -80,6 +90,7 @@ class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", "Project histo
       triggerByUiComponentAndHighlight(false, false) { ui: BranchFilterPopupComponent ->
         ui.currentText == "HEAD"
       }
+      showWarningIfGitWindowClosed()
     }
 
     val meFilterText = VcsLogBundle.message("vcs.log.user.filter.me")
@@ -89,6 +100,7 @@ class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", "Project histo
       triggerByListItemAndHighlight { item ->
         item.toString() == meFilterText
       }
+      showWarningIfGitWindowClosed()
     }
 
     task {
@@ -96,6 +108,7 @@ class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", "Project histo
       triggerByUiComponentAndHighlight(false, false) { ui: UserFilterPopupComponent ->
         ui.currentText == meFilterText
       }
+      restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
     task {
@@ -107,6 +120,7 @@ class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", "Project histo
         val model = ui.model as? GraphTableModel ?: return@l false
         model.rowCount > 0 && model.getCommitMetadata(0).fullMessage.contains(textToFind)
       }
+      showWarningIfGitWindowClosed()
     }
 
     task {
@@ -115,6 +129,11 @@ class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", "Project histo
       triggerByUiComponentAndHighlight(false, false) { ui: VcsLogGraphTable ->
         ui.selectedRow == 0
       }
+      restoreState {
+        val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi ?: return@restoreState false
+        vcsLogUi.filterUi.textFilterComponent.text == ""
+      }
+      showWarningIfGitWindowClosed()
     }
 
     // todo Find out why it's hard to collapse highlighted commit details
@@ -125,14 +144,15 @@ class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", "Project histo
     }
 
     task {
-      triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
-        path.getPathComponent(path.pathCount - 1).toString().contains("sphinx_cat.yml")
+      before {
+        LearningUiHighlightingManager.clearHighlights()
       }
-    }
-
-    task {
       text("There are also tree with all files changed in this commit. Click the highlighted file twice to show it's changes.")
+      triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
+        path.getPathComponent(path.pathCount - 1).toString().contains(".yml")
+      }
       triggerByUiComponentAndHighlight(false, false) { _: SimpleDiffPanel -> true }
+      showWarningIfGitWindowClosed()
     }
 
     text("Great! Let's discover how to create commit in the next lesson.")
