@@ -499,7 +499,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns -1 if exact matching is impossible
    */
-  @RequiresEdt
   public int transferLineToOnesideStrict(@NotNull Side side, int line) {
     LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
     return convertor != null ? convertor.convertInv(line) : -1;
@@ -508,7 +507,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns -1 if exact matching is impossible
    */
-  @RequiresEdt
   public int transferLineFromOnesideStrict(@NotNull Side side, int line) {
     LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
     return convertor != null ? convertor.convert(line) : -1;
@@ -517,7 +515,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
-  @RequiresEdt
   public int transferLineToOneside(@NotNull Side side, int line) {
     LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
     return convertor != null ? convertor.convertApproximateInv(line) : line;
@@ -530,7 +527,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
-  @RequiresEdt
   @NotNull
   public Pair<int[], Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
