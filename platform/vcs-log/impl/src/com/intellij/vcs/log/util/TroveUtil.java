@@ -4,8 +4,10 @@ package com.intellij.vcs.log.util;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThrowableConsumer;
-import it.unimi.dsi.fastutil.ints.*;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.ints.IntCollection;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,19 +20,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class TroveUtil {
-  @NotNull
-  public static IntStream streamKeys(@NotNull Int2ObjectMap<?> map) {
-    ObjectIterator<? extends Int2ObjectMap.Entry<?>> it = map.int2ObjectEntrySet().iterator();
-    return IntStream.generate(() -> {
-      return it.next().getIntKey();
-    }).limit(map.size());
-  }
-
-  @NotNull
-  public static IntStream stream(@NotNull IntList list) {
-    if (list.isEmpty()) return IntStream.empty();
-    return IntStream.range(0, list.size()).map(list::getInt);
-  }
 
   @Nullable
   public static IntSet intersect(IntSet @NotNull ... sets) {
@@ -95,14 +84,8 @@ public final class TroveUtil {
   }
 
   @NotNull
-  public static IntStream stream(@NotNull IntSet set) {
-    IntIterator iterator = set.intIterator();
-    return IntStream.generate(iterator::nextInt).limit(set.size());
-  }
-
-  @NotNull
   public static <T> List<T> map2List(@NotNull IntSet set, @NotNull IntFunction<? extends T> function) {
-    return stream(set).mapToObj(function).collect(Collectors.toList());
+    return set.intStream().mapToObj(function).collect(Collectors.toList());
   }
 
   @NotNull
@@ -119,11 +102,7 @@ public final class TroveUtil {
     Map<T, IntSet> result = new HashMap<>();
     collection.forEach((IntConsumer)(it) -> {
       T key = function.apply(it);
-      IntSet values = result.get(key);
-      if (values == null) {
-        values = new IntOpenHashSet();
-        result.put(key, values);
-      }
+      IntSet values = result.computeIfAbsent(key, __ -> new IntOpenHashSet());
       values.add(it);
     });
     return result;

@@ -7,11 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.util.TroveUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -73,7 +69,7 @@ public class CompressedRefs {
 
   @NotNull
   private Stream<VcsRef> streamTags() {
-    return myTags.values().stream().flatMapToInt(TroveUtil::stream).mapToObj(myStorage::getVcsRef);
+    return myTags.values().stream().flatMapToInt(IntCollection::intStream).mapToObj(myStorage::getVcsRef);
   }
 
   @NotNull
@@ -103,8 +99,8 @@ public class CompressedRefs {
   @NotNull
   public Collection<Integer> getCommits() {
     Set<Integer> result = new HashSet<>();
-    TroveUtil.streamKeys(myBranches).forEach(result::add);
-    TroveUtil.streamKeys(myTags).forEach(result::add);
+    myBranches.keySet().intStream().forEach(result::add);
+    myTags.keySet().intStream().forEach(result::add);
     return result;
   }
 

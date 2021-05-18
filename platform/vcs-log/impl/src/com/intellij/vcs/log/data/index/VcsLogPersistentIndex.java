@@ -517,7 +517,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
             indexAll(indicator);
           }
           else {
-            IntStream commits = TroveUtil.stream(myCommits).filter(c -> {
+            IntStream commits = myCommits.intStream().filter(c -> {
               if (isIndexed(c)) {
                 myOldCommits.incrementAndGet();
                 return false;
