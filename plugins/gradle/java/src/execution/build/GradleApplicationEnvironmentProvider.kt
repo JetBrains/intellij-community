@@ -194,6 +194,9 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     ${if (useArgsFile) "gradle.addListener(new ArgFileTaskActionListener(runAppTaskName))\n" else ""}
     ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClass, mapPath('$intelliJRtPath')))\n " else ""}
 
+
+    import org.gradle.util.GradleVersion
+
     allprojects {
       afterEvaluate { project ->
         if(project.path == gradlePath && project?.convention?.findPlugin(JavaPluginConvention)) {
@@ -205,8 +208,18 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
             if (_workingDir) workingDir = _workingDir
             standardInput = System.in
             if (javaModuleName) {
-              mainModule = javaModuleName
               classpath = tasks[sourceSets[sourceSetName].jarTaskName].outputs.files + project.sourceSets[sourceSetName].runtimeClasspath;
+              if (GradleVersion.current().compareTo(GradleVersion.version("6.4")) < 0) {
+                doFirst {
+                  jvmArgs += [
+                    '--module-path', classpath.asPath,
+                    '--module', javaModuleName + '/' + mainClass
+                  ]
+                  classpath = files()
+                }
+              } else {
+                mainModule = javaModuleName
+              }
             } else {
               classpath = project.sourceSets[sourceSetName].runtimeClasspath
             }
