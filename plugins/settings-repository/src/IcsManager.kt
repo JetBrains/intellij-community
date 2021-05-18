@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StreamProvider
@@ -92,7 +92,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     }
   }
 
-  inner class ApplicationLevelProvider : IcsStreamProvider(null) {
+  inner class ApplicationLevelProvider : IcsStreamProvider() {
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
       if (!isRepositoryActive) {
         return false
@@ -163,7 +163,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     })
   }
 
-  open inner class IcsStreamProvider(private val projectId: String?) : StreamProvider {
+  open inner class IcsStreamProvider : StreamProvider {
     override val enabled: Boolean
       get() = this@IcsManager.isActive
 
@@ -173,7 +173,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = isRepositoryActive
 
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
-      val fullPath = toRepositoryPath(path, roamingType, null)
+      val fullPath = toRepositoryPath(path, roamingType)
 
       // first of all we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
       for (repository in readOnlySourcesManager.repositories) {
@@ -198,7 +198,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
       }
     }
 
-    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType): Boolean = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
+    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType): Boolean = repositoryManager.write(toRepositoryPath(fileSpec, roamingType), content, size)
 
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
@@ -207,7 +207,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
         return false
       }
 
-      repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId), consumer)
+      repositoryManager.read(toRepositoryPath(fileSpec, roamingType), consumer)
       return true
     }
 
