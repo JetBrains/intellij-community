@@ -279,6 +279,9 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.sh", eol: "unix")
     buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.py", eol: "unix")
+
+    // Android Studio: go/project-aplos
+    LinuxDistributionBuilder.buildGameToolsScripts(buildContext, distBinDir)
   }
 
   @Override

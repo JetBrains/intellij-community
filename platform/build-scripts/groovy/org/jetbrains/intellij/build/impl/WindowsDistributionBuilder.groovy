@@ -192,7 +192,49 @@ Android Studio: suppress error in code added by commit 8272ffe8 */
       buildContext.patchInspectScript(targetPath)
     }
 
-    buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.bat", eol: "dos")
+    // Android Studio: go/project-aplos
+    buildGameToolsScripts(classPath, distBinDir, fullName, vmOptionsFileName)
+    buildContext.ant.fixcrlf(srcdir: distBinDir, includes: "*.bat", eol: "dos")
+  }
+
+  @CompileStatic(TypeCheckingMode.SKIP)
+  private void buildGameToolsScripts(String classPath, Path distBinDir, String fullName, String vmOptionsFileName) {
+    // We manually set the classpath to include everything the game tools need and disable all plugin loading at runtime with
+    // `-Didea.load.plugins=false`. This change on classpath is needed since AndroidGameDevelopmentToolsPlugin.xml, the starting plugin XML, is
+    // located in plugins/android/lib/game-tools.jar, which is not in classpath by default. In addition, AndroidGameDevelopmentToolsPlugin.xml
+    // directly references all needed Intellij platform components so that the unneeded ones (for example, shift-shift to find everything)
+    // are ignored. See go/project-aplos-design for more details.
+    String gameToolsClassPath = classPath + "\n" + [
+      "plugins/android/lib/*",
+      "plugins/android/resources/*",
+      "plugins/java/lib/java-api.jar",
+      "plugins/java/lib/java-impl.jar",
+      "plugins/java/lib/resources.jar",
+      "plugins/java/lib/java_resources_en.jar"].
+      collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\$it" }.join("\n")
+
+    buildContext.ant.copy(todir: "$distBinDir") {
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")
+      filterset(begintoken: "@@", endtoken: "@@") {
+        filter(token: "product_full", value: fullName + "GameTools")
+        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
+        filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
+        filter(token: "vm_options", value: vmOptionsFileName)
+        filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
+        filter(token: "system_selector", value: "AndroidGameDevelopmentTools")
+        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments + " -Didea.platform.prefix=AndroidGameDevelopmentTools -Didea.load.plugins=false -Didea.initially.ask.config=force-not")
+        filter(token: "class_path", value: gameToolsClassPath)
+        filter(token: "script_name", value: "game-tools.bat")
+      }
+    }
+    buildContext.ant.move(file: "$distBinDir/executable-template.bat", tofile: "$distBinDir/game-tools.bat")
+    buildContext.ant.move(file: "$distBinDir/profiler.bat", tofile: "$distBinDir/profiler.bat")
+
+    // Copy the profiler launcher executable.
+    buildContext.ant.copy(todir: "$distBinDir") {
+      fileset(dir: "$buildContext.paths.communityHome/../../prebuilts/tools/windows/game-tools/GameToolsWinLauncher")
+    }
+    buildContext.ant.move(file: "$distBinDir/ProfilerWinLauncher.exe", tofile: "$distBinDir/profiler.exe")
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
