@@ -171,16 +171,6 @@ object GitLessonsUtil {
     addStep(gotIt)
   }
 
-  // copy pasted logic from PythonOnboardingTour.kt
-  fun TaskContext.proceedLink() {
-    val gotIt = CompletableFuture<Boolean>()
-    runtimeText {
-      removeAfterDone = true
-      "<callback id=\"${LearningUiManager.addCallback { gotIt.complete(true) }}\">Click to proceed</callback>"
-    }
-    addStep(gotIt)
-  }
-
   fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
     showWarningIfToolWindowClosed(ToolWindowId.COMMIT, "Press ${action("CheckinProject")} to open the commit tool window again.",
                                   restoreTaskWhenResolved)

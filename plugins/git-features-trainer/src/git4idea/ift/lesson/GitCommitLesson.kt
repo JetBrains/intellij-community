@@ -28,7 +28,6 @@ import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.moveLearnToolWindowRight
-import git4idea.ift.GitLessonsUtil.proceedLink
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed

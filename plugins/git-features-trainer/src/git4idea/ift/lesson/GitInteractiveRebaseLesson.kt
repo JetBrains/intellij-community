@@ -19,7 +19,6 @@ import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.findVcsLogData
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import git4idea.ift.GitLessonsUtil.proceedLink
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import git4idea.ift.GitLessonsUtil.triggerOnNotification

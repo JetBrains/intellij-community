@@ -264,6 +264,15 @@ fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
+fun TaskContext.proceedLink() {
+  val gotIt = CompletableFuture<Boolean>()
+  runtimeText {
+    removeAfterDone = true
+    LessonsBundle.message("proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
+  }
+  addStep(gotIt)
+}
+
 fun TaskContext.checkToolWindowState(toolWindowId: String, isShowing: Boolean) {
   addFutureStep {
     subscribeForMessageBus(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {

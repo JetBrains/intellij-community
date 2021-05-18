@@ -20,13 +20,9 @@ import com.intellij.vcs.log.util.findBranch
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.findVcsLogData
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import git4idea.ift.GitLessonsUtil.proceedLink
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
-import training.dsl.LessonContext
-import training.dsl.LessonUtil
-import training.dsl.TaskTestContext
-import training.dsl.defaultRestoreDelay
+import training.dsl.*
 import training.ui.LearningUiHighlightingManager
 import java.awt.Component
 import java.awt.Graphics

@@ -24,7 +24,6 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.ift.GitLessonsUtil.findVcsLogData
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import git4idea.ift.GitLessonsUtil.proceedLink
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil

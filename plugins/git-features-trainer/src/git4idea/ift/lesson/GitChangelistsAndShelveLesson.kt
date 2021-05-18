@@ -22,7 +22,6 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.moveLearnToolWindowRight
-import git4idea.ift.GitLessonsUtil.proceedLink
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import training.dsl.*
 import java.awt.Rectangle

@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import git4idea.ift.GitLessonsUtil.checkoutBranch
-import git4idea.ift.GitLessonsUtil.proceedLink
 import training.dsl.*
 import training.learn.LearnBundle
 import training.ui.LearningUiHighlightingManager

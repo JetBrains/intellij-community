@@ -67,7 +67,6 @@ import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTree
@@ -314,15 +313,6 @@ class PythonOnboardingTour :
       proceedLink()
       restoreIfModified(sample)
     }
-  }
-
-  private fun TaskContext.proceedLink() {
-    val gotIt = CompletableFuture<Boolean>()
-    runtimeText {
-      removeAfterDone = true
-      PythonLessonsBundle.message("python.onboarding.proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
-    }
-    addStep(gotIt)
   }
 
   private fun LessonContext.openLearnToolwindow() {
