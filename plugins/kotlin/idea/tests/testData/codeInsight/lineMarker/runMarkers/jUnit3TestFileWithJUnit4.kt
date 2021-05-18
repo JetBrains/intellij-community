@@ -7,11 +7,11 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 
-abstract class <lineMarker descr="Run Test"><lineMarker descr="*">AbstractSessionTest</lineMarker></lineMarker>: TestCase() {// LIGHT_CLASS_FALLBACK
+abstract class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg"><lineMarker descr="*">AbstractSessionTest</lineMarker></lineMarker>: TestCase() {// LIGHT_CLASS_FALLBACK
 }
 
-class <lineMarker descr="Run Test">SessionTest</lineMarker>: AbstractSessionTest() { // LIGHT_CLASS_FALLBACK
-    fun <lineMarker descr="Run Test">testSessionCreateDelete</lineMarker>() { // LIGHT_CLASS_FALLBACK
+class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest</lineMarker>: AbstractSessionTest() { // LIGHT_CLASS_FALLBACK
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">testSessionCreateDelete</lineMarker>() { // LIGHT_CLASS_FALLBACK
     }
 }
 
