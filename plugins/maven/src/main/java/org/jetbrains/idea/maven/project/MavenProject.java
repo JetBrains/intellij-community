@@ -292,10 +292,8 @@ public class MavenProject {
     return myFile;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getPath() {
-    return myFile.getPath();
+  public @NotNull @NlsSafe String getPath() {
+    return myFile.getPresentableUrl();
   }
 
   @NotNull
