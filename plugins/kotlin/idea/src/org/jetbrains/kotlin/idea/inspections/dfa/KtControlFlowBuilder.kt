@@ -8,15 +8,19 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.DeferredOffset
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
+import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.RelationType
+import com.intellij.util.containers.FList
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
-    val flow = ControlFlow(factory, context)
-    var broken: Boolean = false
+    // Will be used to track catch/finally blocks
+    private val traps : FList<DfaControlTransferValue.Trap> = FList.emptyList()
+    private val flow = ControlFlow(factory, context)
+    private var broken: Boolean = false
 
     fun buildFlow(): ControlFlow? {
         processExpression(context)
@@ -45,6 +49,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     }
                 }
             }
+            is KtReturnExpression -> {
+                processReturnExpression(expr)
+            }
             is KtBinaryExpression -> {
                 processBinaryExpression(expr)
             }
@@ -62,6 +69,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 broken = true
             }
         }
+    }
+
+    private fun processReturnExpression(expr: KtReturnExpression) {
+        if (expr.labeledExpression != null) {
+            // TODO: support labels
+            broken = true
+            return
+        }
+        processExpression(expr.returnedExpression)
+        addInstruction(ReturnInstruction(factory, traps, expr))
     }
 
     private fun processReferenceExpression(expr: KtSimpleNameExpression) {

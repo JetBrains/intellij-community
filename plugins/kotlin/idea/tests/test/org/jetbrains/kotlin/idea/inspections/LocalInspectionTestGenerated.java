@@ -4468,6 +4468,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testPlusRange() throws Exception {
             runTest("testData/inspectionsLocal/dfa/plusRange.kt");
         }
+
+        @TestMetadata("returnExpression.kt")
+        public void testReturnExpression() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/returnExpression.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
