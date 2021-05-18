@@ -1199,11 +1199,6 @@
 
     <newProjectWizard implementation="com.intellij.ide.HTMLNewProjectWizard"/>
 
-    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.GradleKotlin"/>
-    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.GradleGroovy"/>
-    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.Maven"/>
-    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.Intellij"/>
-
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>
 
     <applicationConfigurable id="advanced.settings"

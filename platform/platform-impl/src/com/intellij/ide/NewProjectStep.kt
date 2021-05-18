@@ -2,7 +2,6 @@
 package com.intellij.ide
 
 import com.intellij.ide.NewProjectWizard.Companion.EP_WIZARD
-import com.intellij.ide.wizard.LanguageButton
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
@@ -20,13 +19,13 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
   override var settings = NewProjectStepSettings()
 
   val propertyGraph: PropertyGraph = PropertyGraph()
-  private var languages = wizards.map { object : LanguageButton(it.language) {} }
+  private var languages = wizards.map { it.language }
   private val languageProperty = propertyGraph.graphProperty { languages.first() }
 
   init {
     languageProperty.afterPropagation {
       settingsMap.values.forEach { it.forEach { it.component.isVisible = false } }
-      settingsMap[languageProperty.get().language]?.forEach { it.component.isVisible = true }
+      settingsMap[languageProperty.get()]?.forEach { it.component.isVisible = true }
     }
     languageProperty.set(languages.first())
   }
@@ -35,19 +34,19 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
     nameAndPath()
     row {
       row(UIBundle.message("label.project.wizard.new.project.language")) {
-        buttonSelector(languages, languageProperty) { it.language }
+        buttonSelector(languages, languageProperty) { it }
       }
     }
 
     settingsMap.values.forEach {
       it.forEach { lc ->
         row {
-          lc.text?.let {
+          lc.label?.let {
             twoColumnRow(
-              { label(it) },
+              { component(it) },
               { component(lc.component) }
             )
-          } ?: component(lc.component)
+          } ?: row { component(lc.component) }
         }.apply { visible = false }
       }
     }

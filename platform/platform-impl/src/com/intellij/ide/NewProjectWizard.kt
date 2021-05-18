@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import javax.swing.JComponent
+import javax.swing.JLabel
 
 interface NewProjectWizard<T> {
   val language: String
@@ -18,4 +19,4 @@ interface NewProjectWizard<T> {
   }
 }
 
-data class LabelAndComponent(val text: String? = null, val component: JComponent)
+data class LabelAndComponent(val label: JLabel? = null, val component: JComponent)
