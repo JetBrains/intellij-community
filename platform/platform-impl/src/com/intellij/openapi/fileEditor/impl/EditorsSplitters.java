@@ -1015,7 +1015,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         UIUtil.invokeLaterIfNeeded(() -> {
           EditorWithProviderComposite editor = window.findFileComposite(finalFocusedFile);
           if (editor != null) {
-            window.setEditor(editor, true, true);
+            window.setEditor(editor, true);
           }
         });
       }

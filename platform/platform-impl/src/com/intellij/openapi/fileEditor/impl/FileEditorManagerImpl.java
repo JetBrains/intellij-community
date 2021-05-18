@@ -1006,7 +1006,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     FileEditor[] editors = composite.getEditors();
     FileEditorProvider[] providers = composite.getProviders();
 
-    window.setEditor(composite, options.getSelectAsCurrent(), options.getRequestFocus());
+    window.setEditor(composite, options);
 
     for (int i = 0; i < editors.length; i++) {
       restoreEditorState(file, providers[i], editors[i], entry, newEditor, options.isExactState());

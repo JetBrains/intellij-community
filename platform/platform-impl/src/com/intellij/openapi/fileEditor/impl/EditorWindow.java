@@ -513,44 +513,25 @@ public final class EditorWindow {
   }
 
   public void setEditor(@Nullable EditorWithProviderComposite editor, boolean focusEditor) {
-    setEditor(editor, true, focusEditor);
+    setEditor(editor, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
 
-  public void setEditor(@Nullable EditorWithProviderComposite editor, boolean selectEditor, boolean focusEditor) {
+  public void setEditor(@Nullable EditorWithProviderComposite editor, @NotNull FileEditorOpenOptions options) {
     if (editor != null) {
-      var isPreviewMode = shouldReservePreview(editor.getFile(), selectEditor, focusEditor);
-      int index = findEditorIndex(editor);
-      if (index != -1) {
-        if (selectEditor) {
-          editor.setPreview(editor.isPreview() && isPreviewMode);
-          setSelectedEditor(editor, focusEditor);
-        }
-      }
-      else {
-        int previewIndex = isPreviewMode ? findPreviewIndex() : -1;
-        editor.setPreview(isPreviewMode);
-        int indexToInsert;
+      boolean isNewEditor = findEditorIndex(editor) == -1;
+      boolean isPreviewMode = (isNewEditor || editor.isPreview()) && shouldReservePreview(editor.getFile(), options);
+      editor.setPreview(isPreviewMode);
 
-        Integer initialIndex = editor.getFile().getUserData(INITIAL_INDEX_KEY);
-        if (initialIndex != null) {
-          indexToInsert = initialIndex;
-        }
-        else if (previewIndex != -1) {
-          indexToInsert = previewIndex;
-        }
-        else if (UISettings.getInstance().getOpenTabsAtTheEnd()) {
-          indexToInsert = myTabbedPane.getTabCount();
-        }
-        else {
-          int selectedIndex = myTabbedPane.getSelectedIndex();
-          if (selectedIndex >= 0) {
-            indexToInsert = selectedIndex + 1;
-          }
-          else {
-            indexToInsert = 0;
-          }
-        }
+      if (isNewEditor) {
+        int indexToInsert = INITIAL_INDEX_KEY.get(editor.getFile(), -1);
 
+        if (indexToInsert == -1 && isPreviewMode) {
+          indexToInsert = findPreviewIndex();
+        }
+        if (indexToInsert == -1) {
+          indexToInsert = UISettings.getInstance().getOpenTabsAtTheEnd() ? myTabbedPane.getTabCount()
+                                                                         : myTabbedPane.getSelectedIndex() + 1;
+        }
         VirtualFile file = editor.getFile();
         Icon template = AllIcons.FileTypes.Text;
         EmptyIcon emptyIcon = EmptyIcon.create(template.getIconWidth(), template.getIconHeight());
@@ -561,7 +542,7 @@ public final class EditorWindow {
         if (hash != null && System.identityHashCode(myTabbedPane.getTabs()) == hash.intValue()) {
           dragStartIndex = file.getUserData(DRAG_START_INDEX_KEY);
         }
-        if (dragStartIndex == null || dragStartIndex != index) {
+        if (dragStartIndex == null || dragStartIndex != -1) {
           Boolean initialPinned = file.getUserData(DRAG_START_PINNED_KEY);
           if (initialPinned != null) {
             editor.setPinned(initialPinned);
@@ -571,14 +552,14 @@ public final class EditorWindow {
         file.putUserData(DRAG_START_INDEX_KEY, null);
         file.putUserData(DRAG_START_PINNED_KEY, null);
         trimToSize(file, false);
-        if (selectEditor) {
-          setSelectedEditor(editor, focusEditor);
-        }
         myOwner.updateFileIconImmediately(file, IconUtil.computeBaseFileIcon(file));
         myOwner.updateFileIconLater(file);
         myOwner.updateFileColor(file);
       }
       myOwner.updateFileColor(editor.getFile());
+      if (options.getSelectAsCurrent()) {
+        setSelectedEditor(editor, options.getRequestFocus());
+      }
       myOwner.setCurrentWindow(this, false);
       hideTabsIfNeeded(editor);
     }
@@ -1390,9 +1371,8 @@ public final class EditorWindow {
   }
 
   private boolean shouldReservePreview(@NotNull VirtualFile file,
-                                       boolean selectEditor,
-                                       boolean focusEditor) {
-    if (!selectEditor || !UISettings.getInstance().getOpenInPreviewTabIfPossible()) {
+                                       @NotNull FileEditorOpenOptions options) {
+    if (!options.getSelectAsCurrent() || !UISettings.getInstance().getOpenInPreviewTabIfPossible()) {
       return false;
     }
 
@@ -1400,17 +1380,23 @@ public final class EditorWindow {
       return false;
     }
 
-    if (!focusEditor) {
-      Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
-      Component parent = JBIterable.generate(owner, child -> child.getParent()).find(component -> {
-        if (component instanceof JComponent) {
-          return Boolean.TRUE.equals(((JComponent)component).getClientProperty(FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB));
-        }
-        return false;
-      });
-      return parent != null;
+    if (options.getRequestFocus()) {
+      return false;
     }
-    return false;
+
+    Component focusOwner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
+    return hasClientPropertyInHierarchy(focusOwner, FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB);
+  }
+
+  private static boolean hasClientPropertyInHierarchy(@Nullable Component owner,
+                                                      @SuppressWarnings("SameParameterValue") @NotNull Key<Boolean> propertyKey) {
+    Component parent = JBIterable.generate(owner, child -> child.getParent()).find(component -> {
+      if (component instanceof JComponent) {
+        return Boolean.TRUE.equals(((JComponent)component).getClientProperty(propertyKey));
+      }
+      return false;
+    });
+    return parent != null;
   }
 
   private void defaultCloseFile(@NotNull VirtualFile file, boolean transferFocus) {
