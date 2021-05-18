@@ -27,46 +27,39 @@ import java.util.function.BiConsumer
 import kotlin.properties.Delegates.notNull
 
 @Suppress("HardCodedStringLiteral")
-class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
-  companion object {
-    @JvmStatic
-    fun createAllServicesAndExtensions() {
-      val errors = mutableListOf<Throwable>()
-      runModalTask("Creating All Services And Extensions", cancellable = true) { indicator ->
-        val logger = logger<ComponentManagerImpl>()
-        val taskExecutor: (task: () -> Unit) -> Unit = { task ->
-          try {
-            task()
-          }
-          catch (e: ProcessCanceledException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            logger.error(e)
-            errors.add(e)
-          }
-        }
-
-        // check first
-        checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
-
-        checkContainer(ApplicationManager.getApplication() as ComponentManagerImpl, indicator, taskExecutor)
-        ProjectUtil.getOpenProjects().firstOrNull()?.let {
-          checkContainer(it as ComponentManagerImpl, indicator, taskExecutor)
-        }
-
-        indicator.text2 = "Checking light services..."
-        checkLightServices(taskExecutor)
-      }
-
-      // some errors are not thrown but logged
-      val message = (if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged") + ". Check also that no logged errors."
-      Notification("Error Report", "", message, NotificationType.INFORMATION).notify(null)
-    }
-  }
+internal class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
-    createAllServicesAndExtensions()
+    val errors = mutableListOf<Throwable>()
+    runModalTask("Creating All Services And Extensions", cancellable = true) { indicator ->
+      val logger = logger<ComponentManagerImpl>()
+      val taskExecutor: (task: () -> Unit) -> Unit = { task ->
+        try {
+          task()
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          logger.error(e)
+          errors.add(e)
+        }
+      }
+
+      // check first
+      checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
+
+      checkContainer(ApplicationManager.getApplication() as ComponentManagerImpl, indicator, taskExecutor)
+      ProjectUtil.getOpenProjects().firstOrNull()?.let {
+        checkContainer(it as ComponentManagerImpl, indicator, taskExecutor)
+      }
+
+      indicator.text2 = "Checking light services..."
+      checkLightServices(taskExecutor)
+    }
+    // some errors are not thrown but logged
+    val message = (if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged") + ". Check also that no logged errors."
+    Notification("Error Report", "", message, NotificationType.INFORMATION).notify(null)
   }
 }
 
