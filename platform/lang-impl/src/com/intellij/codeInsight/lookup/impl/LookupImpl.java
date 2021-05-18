@@ -337,12 +337,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void appendPrefix(char c) {
+    appendPrefix(c, true);
+  }
+
+  public void appendPrefix(char c, boolean refreshUi) {
     checkValid();
     myOffsets.appendPrefix(c);
     myPresentableArranger.prefixChanged(this);
     requestResize();
-    refreshUi(false, true);
-    ensureSelectionVisible(true);
+    if (refreshUi) {
+      refreshUi(false, true);
+      ensureSelectionVisible(true);
+    }
     myPrefixChangeListeners.forEach((listener -> listener.afterAppend(c)));
   }
 
@@ -379,6 +385,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void truncatePrefix(boolean preserveSelection, int hideOffset) {
+    truncatePrefix(preserveSelection, hideOffset, true);
+  }
+
+  public void truncatePrefix(boolean preserveSelection, int hideOffset, boolean refreshUi) {
     if (!myOffsets.truncatePrefix()) {
       myArranger.prefixTruncated(this, hideOffset);
       return;
@@ -391,7 +401,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     myPresentableArranger.prefixChanged(this);
     requestResize();
-    if (myPresentableArranger == myArranger) {
+    if (refreshUi && myPresentableArranger == myArranger) {
       refreshUi(false, true);
       ensureSelectionVisible(true);
     }
