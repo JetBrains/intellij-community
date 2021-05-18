@@ -21,9 +21,10 @@ import com.intellij.ide.hierarchy.LanguageTypeHierarchy;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import org.jetbrains.annotations.NotNull;
 
-public final class BrowseTypeHierarchyAction extends BrowseHierarchyActionBase {
+public final class BrowseTypeHierarchyAction extends BrowseHierarchyActionBase implements UpdateInBackground {
   public BrowseTypeHierarchyAction() {
     super(LanguageTypeHierarchy.INSTANCE);
   }

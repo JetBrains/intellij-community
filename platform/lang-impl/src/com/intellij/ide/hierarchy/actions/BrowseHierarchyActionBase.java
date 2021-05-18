@@ -29,7 +29,7 @@ import java.awt.*;
 import java.util.List;
 
 
-public abstract class BrowseHierarchyActionBase extends AnAction {
+public abstract class BrowseHierarchyActionBase extends AnAction implements UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(BrowseHierarchyActionBase.class);
   private final LanguageExtension<HierarchyProvider> myExtension;
 
