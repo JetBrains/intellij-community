@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -71,14 +72,21 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement thisToken = descriptor.getPsiElement();
-      final PsiReferenceExpression thisExpression = (PsiReferenceExpression)PsiUtil.skipParenthesizedExprUp(thisToken.getParent());
-      assert thisExpression != null;
-      final String newExpression = thisExpression.getReferenceName();
-      if (newExpression == null) {
-        return;
-      }
-      PsiReplacementUtil.replaceExpression(thisExpression, newExpression, new CommentTracker());
+      final PsiElement thisParenthesized = findBiggestParenthesizedExpr(thisToken);
+      final PsiExpression parentExpression = (PsiExpression)thisParenthesized.getParent();
+      final String newExpression = StringUtil.trimStart(parentExpression.getText(), thisParenthesized.getText() + ".");
+      PsiReplacementUtil.replaceExpression(parentExpression, newExpression, new CommentTracker());
     }
+  }
+
+  private static PsiElement findBiggestParenthesizedExpr(@NotNull PsiElement element){
+    PsiElement current = element;
+    PsiElement parent = element.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      current = parent;
+      parent = current.getParent();
+    }
+    return current;
   }
 
   @Override
@@ -87,6 +95,15 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
   }
 
   private class UnnecessaryThisVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitThisExpression(PsiThisExpression expression) {
+      super.visitThisExpression(expression);
+      PsiElement parenthesizedThis = findBiggestParenthesizedExpr(expression);
+      if (parenthesizedThis.getParent() instanceof PsiNewExpression) {
+        registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      }
+    }
 
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
