@@ -81,6 +81,8 @@
     <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenBeforeCompileTask"/>
     <compiler.task execute="AFTER" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenAfterCompileTask"/>
 
+    <consoleFilterProvider implementation="org.jetbrains.idea.maven.project.MavenConsoleFilterProvider"/>
+
     <projectConfigurable groupId="build.tools" groupWeight="120" instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings"
                          bundle="messages.MavenProjectBundle"
                          key="configurable.MavenSettings.display.name"
