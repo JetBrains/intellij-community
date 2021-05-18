@@ -238,16 +238,18 @@ public final class FSRecords {
       }
     }
 
-    r.lock();
     try {
-      return action.compute();
+      r.lock();
+      try {
+        return action.compute();
+      }
+      finally {
+        r.unlock();
+      }
     }
     catch (Throwable e) {
       handleError(e);
       throw new RuntimeException(e);
-    }
-    finally {
-      r.unlock();
     }
   }
 
