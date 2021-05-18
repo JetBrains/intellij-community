@@ -11,9 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.SystemInfoRt.isLinux
-import com.intellij.openapi.util.SystemInfoRt.isMac
-import com.intellij.openapi.util.SystemInfoRt.isWindows
+import com.intellij.openapi.util.SystemInfoRt.*
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.gradle.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
 import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
@@ -23,10 +21,10 @@ import org.jetbrains.kotlin.idea.configuration.readGradleProperty
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestProject.*
-import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestTarget.*
 import org.jetbrains.kotlin.idea.perf.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.perf.live.AbstractPerformanceProjectsTest
+import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestProject.*
+import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestTarget.*
 import org.jetbrains.kotlin.idea.perf.util.TeamCity.suite
 import org.jetbrains.kotlin.idea.perf.util.logMessage
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -35,8 +33,6 @@ import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.library.KOTLIN_STDLIB_NAME
 import org.jetbrains.kotlin.platform.konan.isNative
-import org.jetbrains.kotlin.test.KotlinRoot
-import java.io.File
 
 class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
 
@@ -124,7 +120,8 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
         val testTarget = TestTarget.values().firstOrNull { nameWithoutPrefix.startsWith(it.alias, ignoreCase = true) }
             ?: fail("Unable to deduct test target from test name: $name") as Nothing
 
-        return testTarget.enabled && super.shouldRunTest()
+        // [VD]: disable temporary due to lack of native libs: No Native libraries except for stdlib for Native module
+        return false && testTarget.enabled && super.shouldRunTest()
     }
 
     fun testIosHelloWorldProjectWithCommonizer() = doTestHighlighting(IOS, HELLO_WORLD, enableCommonizer = true)
