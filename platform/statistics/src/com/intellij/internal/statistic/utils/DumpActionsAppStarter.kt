@@ -59,11 +59,11 @@ class DumpActionsAppStarter : ApplicationStarter {
     }
   }
 
-  private fun processAction(action: AnAction,
+  private fun processAction(action: AnAction?,
                             actionId: String?,
                             visitedActions: HashSet<String>,
                             actionsDescriptions: HashSet<ActionDescription>) {
-
+    if (action == null) return
     if (action is Separator) return
     try {
       val id = actionId ?: ActionManager.getInstance().getId(action) ?: action.javaClass.name
