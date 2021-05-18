@@ -32,11 +32,6 @@ public final class PsiMethodRenderingInfo implements PsiElementCellRenderingInfo
   }
 
   @Override
-  public int getIconFlags() {
-    return PsiClassRenderingInfo.INSTANCE.getIconFlags();
-  }
-
-  @Override
   public String getElementText(PsiMethod element) {
     final PsiNamedElement container = fetchContainer(element);
     String text = container instanceof PsiClass ? PsiClassRenderingInfo.INSTANCE.getElementText((PsiClass)container) : container.getName();

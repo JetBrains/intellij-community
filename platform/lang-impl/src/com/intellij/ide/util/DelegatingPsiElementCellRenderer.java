@@ -14,11 +14,6 @@ public class DelegatingPsiElementCellRenderer<T extends PsiElement> extends PsiE
   }
 
   @Override
-  protected int getIconFlags() {
-    return myRenderingInfo.getIconFlags();
-  }
-
-  @Override
   public String getElementText(T element) {
     return myRenderingInfo.getElementText(element);
   }

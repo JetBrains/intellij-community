@@ -33,11 +33,6 @@ public class MethodOrFunctionalExpressionCellRenderer extends DelegatingPsiEleme
     }
 
     @Override
-    public int getIconFlags() {
-      return PsiClassRenderingInfo.INSTANCE.getIconFlags();
-    }
-
-    @Override
     public Icon getIcon(PsiElement element) {
       return element instanceof PsiMethod ? myMethodCellRenderer.getIcon(element) : PsiElementCellRenderingInfo.super.getIcon(element);
     }

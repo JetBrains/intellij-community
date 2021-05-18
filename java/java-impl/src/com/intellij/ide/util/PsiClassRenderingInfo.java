@@ -17,11 +17,6 @@ public final class PsiClassRenderingInfo implements PsiElementCellRenderingInfo<
   private PsiClassRenderingInfo() { }
 
   @Override
-  public int getIconFlags() {
-    return 0;
-  }
-
-  @Override
   public String getElementText(PsiClass element) {
     return ClassPresentationUtil.getNameForClass(element, false);
   }
