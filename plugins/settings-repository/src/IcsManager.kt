@@ -92,24 +92,6 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     }
   }
 
-  inner class ApplicationLevelProvider : IcsStreamProvider() {
-    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      if (!isRepositoryActive) {
-        return false
-      }
-
-      if (syncManager.writeAndDeleteProhibited) {
-        throw IllegalStateException("Delete is prohibited now")
-      }
-
-      if (repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))) {
-        scheduleCommit()
-      }
-
-      return true
-    }
-  }
-
   suspend fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): Boolean {
     return syncManager.sync(syncType, project, localRepositoryInitializer)
   }
@@ -135,14 +117,14 @@ class IcsManager @JvmOverloads constructor(dir: Path,
   fun setApplicationLevelStreamProvider() {
     val storageManager = ApplicationManager.getApplication().stateStore.storageManager
     // just to be sure
-    storageManager.removeStreamProvider(ApplicationLevelProvider::class.java)
-    storageManager.addStreamProvider(ApplicationLevelProvider(), first = true)
+    storageManager.removeStreamProvider(IcsStreamProvider::class.java)
+    storageManager.addStreamProvider(IcsStreamProvider(), first = true)
   }
 
   fun beforeApplicationLoaded(app: Application) {
     isRepositoryActive = repositoryManager.isRepositoryExists()
 
-    app.stateStore.storageManager.addStreamProvider(ApplicationLevelProvider())
+    app.stateStore.storageManager.addStreamProvider(IcsStreamProvider())
 
     val messageBusConnection = app.messageBus.simpleConnect()
     messageBusConnection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
@@ -163,7 +145,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     })
   }
 
-  open inner class IcsStreamProvider : StreamProvider {
+  inner class IcsStreamProvider : StreamProvider {
     override val enabled: Boolean
       get() = this@IcsManager.isActive
 
@@ -200,7 +182,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
 
     fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType): Boolean = repositoryManager.write(toRepositoryPath(fileSpec, roamingType), content, size)
 
-    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
+    private fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
       if (!isRepositoryActive) {
@@ -212,7 +194,19 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      return false
+      if (!isRepositoryActive) {
+        return false
+      }
+
+      if (syncManager.writeAndDeleteProhibited) {
+        throw IllegalStateException("Delete is prohibited now")
+      }
+
+      if (repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))) {
+        scheduleCommit()
+      }
+
+      return true
     }
   }
 }
