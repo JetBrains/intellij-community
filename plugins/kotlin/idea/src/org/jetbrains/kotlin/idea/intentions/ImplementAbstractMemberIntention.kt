@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.ide.util.PsiClassListCellRenderer
+import com.intellij.ide.util.PsiClassRenderingInfo
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -176,7 +177,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         override fun getContainerText(element: PsiElement?, name: String?): String? {
             return when (element) {
                 is KtEnumEntry -> element.containingClassOrObject?.fqName?.asString()
-                is PsiClass -> PsiClassListCellRenderer.getContainerTextStatic(element)
+                is PsiClass -> PsiClassRenderingInfo.getContainerTextStatic(element)
                 else -> null
             }
         }

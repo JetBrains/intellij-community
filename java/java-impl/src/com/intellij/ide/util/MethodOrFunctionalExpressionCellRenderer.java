@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.psi.NavigatablePsiElement;
@@ -29,12 +29,12 @@ public class MethodOrFunctionalExpressionCellRenderer extends DelegatingPsiEleme
     @Override
     public String getContainerText(final NavigatablePsiElement element, final String name) {
       return element instanceof PsiMethod ? myMethodCellRenderer.getContainerText((PsiMethod)element, name)
-                                          : PsiClassListCellRenderer.getContainerTextStatic(element);
+                                          : PsiClassRenderingInfo.getContainerTextStatic(element);
     }
 
     @Override
     public int getIconFlags() {
-      return PsiClassListCellRenderer.INFO.getIconFlags();
+      return PsiClassRenderingInfo.INSTANCE.getIconFlags();
     }
 
     @Override

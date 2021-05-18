@@ -5,7 +5,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.ide.util.PsiClassRenderingInfo;
 import com.intellij.ide.util.PsiElementCellRenderingInfo;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.java.JavaBundle;
@@ -171,7 +171,7 @@ public class ImplementAbstractMethodHandler {
   }
 
   private static class MyPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
-    private final PsiElementCellRenderingInfo<PsiClass> myInfo = PsiClassListCellRenderer.INFO;
+    private final PsiElementCellRenderingInfo<PsiClass> myInfo = PsiClassRenderingInfo.INSTANCE;
 
     void sort(PsiElement[] result) {
       final Comparator<PsiClass> comparator = myInfo.getComparator();
@@ -193,7 +193,7 @@ public class ImplementAbstractMethodHandler {
 
     @Override
     protected String getContainerText(PsiElement element, String name) {
-      return element instanceof PsiClass ? PsiClassListCellRenderer.getContainerTextStatic(element)
+      return element instanceof PsiClass ? PsiClassRenderingInfo.getContainerTextStatic(element)
                                          : ((PsiEnumConstant)element).getContainingClass().getQualifiedName();
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.psi.*;
@@ -29,13 +29,13 @@ public class MethodCellRenderer extends DelegatingPsiElementCellRenderer<PsiMeth
 
     @Override
     public int getIconFlags() {
-      return PsiClassListCellRenderer.INFO.getIconFlags();
+      return PsiClassRenderingInfo.INSTANCE.getIconFlags();
     }
 
     @Override
     public String getElementText(PsiMethod element) {
       final PsiNamedElement container = fetchContainer(element);
-      String text = container instanceof PsiClass ? PsiClassListCellRenderer.INFO.getElementText((PsiClass)container) : container.getName();
+      String text = container instanceof PsiClass ? PsiClassRenderingInfo.INSTANCE.getElementText((PsiClass)container) : container.getName();
       if (myShowMethodNames) {
         text += "."+PsiFormatUtil.formatMethod(element, PsiSubstitutor.EMPTY, myOptions, PsiFormatUtilBase.SHOW_TYPE);
       }
@@ -44,7 +44,7 @@ public class MethodCellRenderer extends DelegatingPsiElementCellRenderer<PsiMeth
 
     @Override
     public String getContainerText(PsiMethod element, String name) {
-      return PsiClassListCellRenderer.getContainerTextStatic(element);
+      return PsiClassRenderingInfo.getContainerTextStatic(element);
     }
   }
 

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
-import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.ide.util.PsiClassRenderingInfo;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -175,7 +175,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
 
     @Override
     public String getContainerText(final PsiMember element, final String name) {
-      return PsiClassListCellRenderer.getContainerTextStatic(element);
+      return PsiClassRenderingInfo.getContainerTextStatic(element);
     }
 
     @Nullable
