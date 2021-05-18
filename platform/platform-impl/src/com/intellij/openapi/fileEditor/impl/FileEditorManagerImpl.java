@@ -713,6 +713,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                                  boolean focusEditor,
                                                                                  boolean searchForSplitter) {
+    return openFileWithProviders(file, searchForSplitter, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+  }
+
+  private @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                  boolean searchForSplitter,
+                                                                                  @NotNull FileEditorOpenOptions options) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
@@ -770,7 +776,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     openAssociatedFile(file, wndToOpenIn, splitters);
-    return openFileImpl2(wndToOpenIn, file, focusEditor);
+    return openFileImpl2(wndToOpenIn, file, options);
   }
 
   public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(@NotNull VirtualFile file) {
@@ -872,19 +878,34 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                                  boolean focusEditor,
                                                                                  @NotNull EditorWindow window) {
+    return openFileWithProviders(file, window, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+  }
+
+  private @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                  @NotNull EditorWindow window,
+                                                                                  @NotNull FileEditorOpenOptions options) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertDispatchThread();
 
-    return openFileImpl2(window, file, focusEditor);
+    return openFileImpl2(window, file, options);
   }
 
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
                                                                          @NotNull VirtualFile file,
                                                                          boolean focusEditor) {
+    return openFileImpl2(window, file, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+  }
+
+  private @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
+                                                                          @NotNull VirtualFile file,
+                                                                          @NotNull FileEditorOpenOptions options) {
     Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(window, file, focusEditor, null)), "", null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      Pair<FileEditor[], FileEditorProvider[]> editorsProvidersPair = openFileImpl4(window, file, null, options);
+      result.set(editorsProvidersPair);
+    }, "", null);
     return result.get();
   }
 
@@ -897,9 +918,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    * @param entry   map between FileEditorProvider and FileEditorState. If this parameter
    */
   @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull EditorWindow window,
-                                                                 @NotNull VirtualFile file,
-                                                                 boolean focusEditor,
-                                                                 @Nullable HistoryEntry entry) {
+                                                                  @NotNull VirtualFile file,
+                                                                  boolean focusEditor,
+                                                                  @Nullable HistoryEntry entry) {
     return openFileImpl4(window, file, entry, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
 
@@ -1259,7 +1280,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     Ref<FileEditor> selectedEditor = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       VirtualFile file = realDescriptor.getFile();
-      FileEditor[] editors = openFile(file, focusEditor, !realDescriptor.isUseCurrentWindow());
+      boolean searchForSplitters = !realDescriptor.isUseCurrentWindow();
+      FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+        .withRequestFocus(focusEditor);
+      FileEditor[] editors = openFileWithProviders(file, searchForSplitters, openOptions).getFirst();
       ContainerUtil.addAll(result, editors);
 
       boolean navigated = false;
@@ -2012,7 +2036,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
           try {
             newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, i);
-            Pair<FileEditor[], FileEditorProvider[]> pair = openFileImpl2(eachWindow, newFile, editor == selected);
+            FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+              .withRequestFocus(editor == selected);
+            Pair<FileEditor[], FileEditorProvider[]> pair = openFileImpl2(eachWindow, newFile, openOptions);
 
             if (newFilePair.second != null) {
               TextEditorImpl openedEditor = EditorFileSwapper.findSinglePsiAwareEditor(pair.first);
