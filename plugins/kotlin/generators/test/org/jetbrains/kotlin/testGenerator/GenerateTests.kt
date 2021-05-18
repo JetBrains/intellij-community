@@ -1120,6 +1120,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirLazyDeclarationResolveTest> {
             model("lazyResolve")
         }
+        testClass<AbstractFirLibraryModuleDeclarationResolveTest> {
+            model("libraryModuleResolve", isRecursive = false)
+        }
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
             model("outOfBlockProjectWide")
         }
