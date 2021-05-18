@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.idea.perf.util
 import com.intellij.openapi.util.io.FileUtilRt
 import com.sun.management.HotSpotDiagnosticMXBean
 import java.lang.management.ManagementFactory
-import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*

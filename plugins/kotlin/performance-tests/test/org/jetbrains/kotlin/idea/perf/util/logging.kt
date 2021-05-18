@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.idea.perf.util
 import java.io.PrintWriter
 import java.io.StringWriter
 
+val Long.nsToMs get() = (this * 1e-6).toLong()
+
 inline fun gradleMessage(block: () -> String) {
     print("#gradle ${block()}")
 }

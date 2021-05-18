@@ -7,17 +7,11 @@ package org.jetbrains.kotlin.idea.perf
 
 import org.jetbrains.kotlin.idea.perf.profilers.*
 import org.jetbrains.kotlin.idea.perf.util.*
-import org.jetbrains.kotlin.idea.perf.whole.WholeProjectPerformanceTest.Companion.nsToMs
-import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
-import org.jetbrains.kotlin.test.KotlinRoot
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.util.PerformanceCounter
-import java.io.*
+import java.io.FileInputStream
 import java.lang.ref.WeakReference
-import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.math.*
 import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
