@@ -27,14 +27,14 @@ final class PersistentFSRecordAccessor {
   private final PersistentFSAttributeAccessor myPersistentFSAttributeAccessor;
   private final PersistentFSConnection myFSConnection;
   @NotNull
-  private final IntList myNewFreeRecords;
+  private final IntList myNewFreeRecords = new IntArrayList();
 
-  PersistentFSRecordAccessor(@NotNull PersistentFSContentAccessor accessor,
-                             @NotNull PersistentFSAttributeAccessor attributeAccessor, @NotNull PersistentFSConnection connection) {
-    myPersistentFSContentAccessor = accessor;
+  PersistentFSRecordAccessor(@NotNull PersistentFSContentAccessor contentAccessor,
+                             @NotNull PersistentFSAttributeAccessor attributeAccessor,
+                             @NotNull PersistentFSConnection connection) {
+    myPersistentFSContentAccessor = contentAccessor;
     myPersistentFSAttributeAccessor = attributeAccessor;
     myFSConnection = connection;
-    myNewFreeRecords = new IntArrayList();
   }
 
   void addToFreeRecordsList(int id) throws IOException {
