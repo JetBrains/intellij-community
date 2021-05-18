@@ -8,6 +8,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.completion.LookupCancelWatcher"/>
 
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.completion.CompletionDummyIdentifierProviderService"
+            serviceImplementation="org.jetbrains.kotlin.idea.completion.FE10CompletionDummyIdentifierProviderService"/>
+
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.LookupCancelService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.CompletionBindingContextProvider"/>
 
