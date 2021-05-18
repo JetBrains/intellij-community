@@ -98,7 +98,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     }
 
     progressIndicator.checkCanceled()
-    targetEnvironmentProvider.provideEnvironment(remoteEnvironment, progressIndicator)
+    targetEnvironmentProvider.supplyEnvironmentAndRunHandlers(remoteEnvironment, progressIndicator)
     val pathMapperInitScript = createTargetPathMapperInitScript(request, targetPathMapper, environmentConfiguration)
     targetBuildParametersBuilder.withInitScript("ijtgtmapper", pathMapperInitScript)
     targetBuildParameters = targetBuildParametersBuilder.build(consumerOperationParameters, targetArguments)
@@ -319,7 +319,8 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     private val uploads = mutableListOf<Upload>()
     val pathMappingSettings = PathMappingSettings()
 
-    fun provideEnvironment(targetEnvironment: TargetEnvironment, progressIndicator: GradleServerRunner.GradleServerProgressIndicator) {
+    fun supplyEnvironmentAndRunHandlers(targetEnvironment: TargetEnvironment,
+                                        progressIndicator: GradleServerRunner.GradleServerProgressIndicator) {
       environmentPromise.setResult(targetEnvironment to progressIndicator)
       for (upload in uploads) {
         progressIndicator.checkCanceled()
