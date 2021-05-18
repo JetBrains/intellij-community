@@ -14,10 +14,10 @@ import javax.swing.*;
 public class MethodOrFunctionalExpressionCellRenderer extends DelegatingPsiElementCellRenderer<NavigatablePsiElement> {
   public static class MethodOrFunctionalExpressionCellRenderingInfo
     implements PsiElementCellRenderingInfo<NavigatablePsiElement> {
-    private final MethodCellRenderer.MethodCellRenderingInfo myMethodCellRenderer;
+    private final PsiMethodRenderingInfo myMethodCellRenderer;
 
     public MethodOrFunctionalExpressionCellRenderingInfo(boolean showMethodNames, @PsiFormatUtil.FormatMethodOptions int options) {
-      myMethodCellRenderer = new MethodCellRenderer.MethodCellRenderingInfo(showMethodNames, options);
+      myMethodCellRenderer = new PsiMethodRenderingInfo(showMethodNames, options);
     }
 
     @Override

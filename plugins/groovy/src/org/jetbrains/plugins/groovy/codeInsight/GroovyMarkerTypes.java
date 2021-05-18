@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.PsiMethodRenderingInfo;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -116,7 +117,7 @@ public final class GroovyMarkerTypes {
     PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
     if (overridings.length == 0) return null;
 
-    Comparator<PsiMethod> comparator = new MethodCellRenderer.MethodCellRenderingInfo(false).getComparator();
+    Comparator<PsiMethod> comparator = new PsiMethodRenderingInfo(false).getComparator();
     Arrays.sort(overridings, comparator);
 
     String start = DaemonBundle.message("method.is.overriden.header");
@@ -227,7 +228,7 @@ public final class GroovyMarkerTypes {
       PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
       if (overridings.length == 0) return null;
 
-      Comparator<PsiMethod> comparator = new MethodCellRenderer.MethodCellRenderingInfo(false).getComparator();
+      Comparator<PsiMethod> comparator = new PsiMethodRenderingInfo(false).getComparator();
       Arrays.sort(overridings, comparator);
 
       String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");

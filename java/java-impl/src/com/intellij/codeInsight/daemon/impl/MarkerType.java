@@ -232,7 +232,7 @@ public class MarkerType {
       return !isAbstract || aClass == null ? null : getFunctionalImplementationTooltip(aClass);
     }
 
-    Comparator<PsiMethod> comparator = new MethodCellRenderer.MethodCellRenderingInfo(false).getComparator();
+    Comparator<PsiMethod> comparator = new PsiMethodRenderingInfo(false).getComparator();
     Arrays.sort(overridings, comparator);
 
     return getImplementationTooltip(isAbstract ? "Is implemented in" : "Is overridden in", overridings);
