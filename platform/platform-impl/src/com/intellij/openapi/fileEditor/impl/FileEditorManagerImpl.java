@@ -864,9 +864,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return openFileImpl2(window, file, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
 
-  private @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
-                                                                          @NotNull VirtualFile file,
-                                                                          @NotNull FileEditorOpenOptions options) {
+  public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
+                                                                         @NotNull VirtualFile file,
+                                                                         @NotNull FileEditorOpenOptions options) {
     Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       Pair<FileEditor[], FileEditorProvider[]> editorsProvidersPair = openFileImpl4(window, file, null, options);
@@ -995,10 +995,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       // After that we have to select opened editor.
       composite = createComposite(file, newEditors, newProviders);
       if (composite == null) return null;
-
-      if (options.getIndex() >= 0) {
-        composite.getFile().putUserData(EditorWindow.INITIAL_INDEX_KEY, options.getIndex());
-      }
 
       myOpenedEditors.add(composite);
     }
@@ -1990,22 +1986,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           // already open
           if (eachWindow.findFileIndex(newFile) != -1) continue;
 
-          try {
-            newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, i);
-            FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
-              .withRequestFocus(editor == selected);
-            Pair<FileEditor[], FileEditorProvider[]> pair = openFileImpl2(eachWindow, newFile, openOptions);
+          FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+            .withIndex(i)
+            .withRequestFocus(editor == selected);
+          Pair<FileEditor[], FileEditorProvider[]> pair = openFileImpl2(eachWindow, newFile, openOptions);
 
-            if (newFilePair.second != null) {
-              TextEditorImpl openedEditor = EditorFileSwapper.findSinglePsiAwareEditor(pair.first);
-              if (openedEditor != null) {
-                openedEditor.getEditor().getCaretModel().moveToOffset(newFilePair.second);
-                openedEditor.getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
-              }
+          if (newFilePair.second != null) {
+            TextEditorImpl openedEditor = EditorFileSwapper.findSinglePsiAwareEditor(pair.first);
+            if (openedEditor != null) {
+              openedEditor.getEditor().getCaretModel().moveToOffset(newFilePair.second);
+              openedEditor.getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
             }
-          }
-          finally {
-            newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
           }
           closeFile(file, eachWindow);
         }
