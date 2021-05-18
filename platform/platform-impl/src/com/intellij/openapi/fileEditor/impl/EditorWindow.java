@@ -563,7 +563,6 @@ public final class EditorWindow {
       setSelectedEditor(editor, options.getRequestFocus());
     }
     updateTabsVisibility();
-    myOwner.setCurrentWindow(this, false);
     myOwner.validate();
   }
 
@@ -1088,18 +1087,22 @@ public final class EditorWindow {
     for (EditorWindow eachSibling : siblings) {
       // selected editors will be added first
       EditorWithProviderComposite selected = eachSibling.getSelectedEditor();
-      if (editorToSelect == null) {
+      if (editorToSelect == null && selected != null) {
         editorToSelect = selected;
+        break;
       }
     }
 
+    FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+      .withSelectAsCurrent(false) // we'll select and focus a single editor in the end
+      .withRequestFocus(false);
     for (EditorWindow sibling : siblings) {
       EditorWithProviderComposite[] siblingEditors = sibling.getEditors();
       for (EditorWithProviderComposite siblingEditor : siblingEditors) {
         if (editorToSelect == null) {
           editorToSelect = siblingEditor;
         }
-        processSiblingEditor(siblingEditor);
+        processSiblingEditor(siblingEditor, openOptions);
       }
       LOG.assertTrue(sibling != this);
       sibling.dispose();
@@ -1116,10 +1119,11 @@ public final class EditorWindow {
     }
   }
 
-  private void processSiblingEditor(@NotNull EditorWithProviderComposite siblingEditor) {
+  private void processSiblingEditor(@NotNull EditorWithProviderComposite siblingEditor,
+                                    @NotNull FileEditorOpenOptions openOptions) {
     if (getTabCount() < UISettings.getInstance().getState().getEditorTabLimit() &&
         findFileComposite(siblingEditor.getFile()) == null) {
-      setEditor(siblingEditor, true);
+      setEditor(siblingEditor, openOptions);
     }
     else {
       getManager().disposeComposite(siblingEditor);
