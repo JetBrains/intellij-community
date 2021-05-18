@@ -374,10 +374,10 @@ public final class TemplateState extends TemplateStateBase implements Disposable
           initTabStopHighlighters();
           initListeners();
         }
-        myEventPublisher.templateStarted(this);
-
         focusCurrentExpression();
         fireCurrentVariableChanged(-1);
+
+        myEventPublisher.templateStarted(this);
         if (!isInteractiveModeSupported()) {
           finishTemplate(false);
         }
