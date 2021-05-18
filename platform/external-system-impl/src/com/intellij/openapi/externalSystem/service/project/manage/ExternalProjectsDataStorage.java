@@ -300,7 +300,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   }
 
   @Nullable
-  synchronized ExternalProjectInfo get(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
+  ExternalProjectInfo get(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
     return myExternalRootProjects.get(Pair.create(projectSystemId, new File(externalProjectPath)));
   }
 
