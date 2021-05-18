@@ -123,6 +123,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
+  /**
+   * Works on VirtualFile objects, and allows to disable the Preview Tab functionality for certain files.
+   * If a virtual file has this key set to TRUE, the corresponding editor will always be opened in a regular tab.
+   */
+  public static final Key<Boolean> FORBID_PREVIEW_TAB = Key.create("FORBID_PREVIEW_TAB");
   public static final Key<Boolean> OPEN_IN_PREVIEW_TAB = Key.create("OPEN_IN_PREVIEW_TAB");
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
 

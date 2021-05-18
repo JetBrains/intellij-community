@@ -1369,7 +1369,7 @@ public final class EditorWindow {
       return false;
     }
 
-    if (file instanceof NotSuitableForPreviewTab) {
+    if (FileEditorManagerImpl.FORBID_PREVIEW_TAB.get(file, false)) {
       return false;
     }
 
