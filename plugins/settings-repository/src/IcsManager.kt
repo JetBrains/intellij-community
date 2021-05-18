@@ -175,14 +175,12 @@ class IcsManager @JvmOverloads constructor(dir: Path,
         throw IllegalStateException("Save is prohibited now")
       }
 
-      if (doSave(fileSpec, content, size, roamingType) && isAutoCommit(fileSpec, roamingType)) {
+      if (doSave(fileSpec, content, size, roamingType)) {
         scheduleCommit()
       }
     }
 
     fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType): Boolean = repositoryManager.write(toRepositoryPath(fileSpec, roamingType), content, size)
-
-    private fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
       if (!isRepositoryActive) {
