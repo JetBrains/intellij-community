@@ -114,7 +114,7 @@ class IDEKotlinBinaryClassCache {
         )
 
     private val KOTLIN_IS_COMPILED_FILE_ATTRIBUTE: String = "kotlin-is-binary-compiled".apply {
-        service<FileAttributeService>().register(this, 1)
+        service<FileAttributeService>().register(this, 2)
     }
 
     private val KOTLIN_BINARY_DATA_KEY = Key.create<SoftReference<KotlinBinaryData>>(KOTLIN_IS_COMPILED_FILE_ATTRIBUTE)
