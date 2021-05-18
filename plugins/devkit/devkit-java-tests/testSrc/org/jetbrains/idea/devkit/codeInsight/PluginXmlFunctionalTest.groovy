@@ -656,6 +656,27 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.testHighlighting()
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
+  void testActionCompletion() {
+    configureByFile()
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
+    myFixture.copyFileToProject("ActionCompletionBundle.properties")
+
+    myFixture.completeBasic()
+    LookupElement[] lookupElements = myFixture.getLookupElements()
+    assertActionLookupElement(lookupElements[0], "actionId", " \"ActionId Text\"", "ActionId description")
+    assertActionLookupElement(lookupElements[1], "actionId.localized", " \"Action Localized Text\"", "Action localized description")
+    assertActionLookupElement(lookupElements[2], "actionId.missing.localized", null, null)
+  }
+
+  private static void assertActionLookupElement(LookupElement element, String lookupText, String tailText, String typeText) {
+    def presentation = new LookupElementPresentation()
+    element.renderElement(presentation)
+    assertEquals(lookupText, presentation.itemText)
+    assertEquals(tailText, presentation.tailText)
+    assertEquals(typeText, presentation.typeText)
+  }
+
   void testExtensionPointNameValidity() {
     doHighlightingTest(getTestName(true) + ".xml")
   }
