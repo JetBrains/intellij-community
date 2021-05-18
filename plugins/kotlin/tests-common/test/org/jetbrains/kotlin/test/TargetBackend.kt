@@ -16,7 +16,9 @@ enum class TargetBackend(
     JS_IR(true, JS),
     JS_IR_ES6(true, JS_IR),
     WASM(true),
-    ANDROID(false, JVM);
+    ANDROID(false, JVM),
+    JVM_WITH_OLD_EVALUATOR(false),
+    JVM_IR_WITH_OLD_EVALUATOR(true);
 
     val compatibleWith get() = compatibleWithTargetBackend ?: ANY
 }

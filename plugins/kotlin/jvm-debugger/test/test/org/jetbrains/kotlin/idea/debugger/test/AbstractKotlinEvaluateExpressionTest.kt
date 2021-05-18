@@ -100,8 +100,6 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
         doOnBreakpoint {
             createDebugLabels(data.debugLabels)
 
-            val exceptions = linkedMapOf<String, Throwable>()
-
             for ((expression, expected, kind) in data.fragments) {
                 mayThrow(expression) {
                     evaluate(this, expression, kind, expected)
@@ -229,7 +227,7 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
 
     override fun throwExceptionsIfAny() {
         if (exceptions.isNotEmpty()) {
-            val currentBackend = if (useIrBackend()) TargetBackend.JVM_IR else TargetBackend.JVM
+            val currentBackend = if (useIrBackend()) TargetBackend.JVM_IR_WITH_OLD_EVALUATOR else TargetBackend.JVM_WITH_OLD_EVALUATOR
             val outputFile = getExpectedOutputFile()
             val isIgnored = outputFile.exists() && InTextDirectivesUtils.isIgnoredTarget(currentBackend, outputFile)
 
@@ -303,4 +301,5 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             markupMap[localVariableValue] = ValueMarkup(name, null, name)
         }
     }
+
 }

@@ -49,7 +49,7 @@ internal class KotlinOutputChecker(
 
         val outDir = File(testDir)
         var outFile = expectedOutputFile
-        val currentBackend = if (useIrBackend) TargetBackend.JVM_IR else TargetBackend.JVM
+        val currentBackend = if (useIrBackend) TargetBackend.JVM_IR_WITH_OLD_EVALUATOR else TargetBackend.JVM_WITH_OLD_EVALUATOR
         val isIgnored = outFile.exists() && InTextDirectivesUtils.isIgnoredTarget(currentBackend, outFile)
 
         if (!outFile.exists()) {

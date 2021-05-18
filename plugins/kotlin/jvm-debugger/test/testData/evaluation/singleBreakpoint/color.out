@@ -1,11 +1,8 @@
-package color
+// IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR, JVM_IR_WITH_OLD_EVALUATOR
+LineBreakpoint created at color.kt:7
+Run Java
+Connected to the target VM
+color.kt:7
+Disconnected from the target VM
 
-import javax.awt.*
-
-fun main(args: Array<String) {
-    //Breakpoint!
-    args.size
-}
-
-// EXPRESSION: Color.red
-// RESULT: instance of javax.awt.Color(id=ID)
+Process finished with exit code 0
