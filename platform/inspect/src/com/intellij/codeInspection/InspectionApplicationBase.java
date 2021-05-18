@@ -349,8 +349,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
                          new AdditionalLibraryRootsListener() {
                            @Override
                            public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
-                                                           @NotNull Collection<VirtualFile> newRoots,
-                                                           @NotNull Collection<VirtualFile> oldRoots) {
+                                                           @NotNull Collection<? extends VirtualFile> newRoots,
+                                                           @NotNull Collection<? extends VirtualFile> oldRoots) {
                              updateProjectStructure(counter, reportConverter, project, rootLogDir);
                            }
                          });

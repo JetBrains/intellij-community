@@ -18,8 +18,8 @@ public interface AdditionalLibraryRootsListener {
   Topic<AdditionalLibraryRootsListener> TOPIC = new Topic<>(AdditionalLibraryRootsListener.class, Topic.BroadcastDirection.NONE);
 
   void libraryRootsChanged(@NotNull @Nls String presentableLibraryName,
-                           @NotNull Collection<VirtualFile> newRoots,
-                           @NotNull Collection<VirtualFile> oldRoots);
+                           @NotNull Collection<? extends VirtualFile> newRoots,
+                           @NotNull Collection<? extends VirtualFile> oldRoots);
 
   /**
    * Use {@link #fireAdditionalLibraryChanged(Project, String, Collection, Collection)} to notify platform about changes in roots
@@ -37,8 +37,8 @@ public interface AdditionalLibraryRootsListener {
   @RequiresWriteLock
   static void fireAdditionalLibraryChanged(@NotNull Project project,
                                            @NotNull @Nls String presentableLibraryName,
-                                           @NotNull Collection<VirtualFile> newRoots,
-                                           @NotNull Collection<VirtualFile> oldRoots) {
+                                           @NotNull Collection<? extends VirtualFile> newRoots,
+                                           @NotNull Collection<? extends VirtualFile> oldRoots) {
     if (new HashSet<>(newRoots).equals(new HashSet<>(oldRoots))) return;
     project.getMessageBus().syncPublisher(TOPIC).libraryRootsChanged(presentableLibraryName, newRoots, oldRoots);
   }

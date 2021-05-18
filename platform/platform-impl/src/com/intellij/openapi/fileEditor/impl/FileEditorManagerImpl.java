@@ -2026,8 +2026,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     @Override
     public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
-                                    @NotNull Collection<VirtualFile> newRoots,
-                                    @NotNull Collection<VirtualFile> oldRoots) {
+                                    @NotNull Collection<? extends VirtualFile> newRoots,
+                                    @NotNull Collection<? extends VirtualFile> oldRoots) {
       changeHappened();
     }
   }

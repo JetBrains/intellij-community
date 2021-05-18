@@ -76,8 +76,8 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
 
     override fun libraryRootsChanged(presentableLibraryName: String,
-                                     newRoots: MutableCollection<VirtualFile>,
-                                     oldRoots: MutableCollection<VirtualFile>) {
+                                     newRoots: MutableCollection<out VirtualFile>,
+                                     oldRoots: MutableCollection<out VirtualFile>) {
       onRootsChanged()
     }
   }
