@@ -746,24 +746,26 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Nullable
   private EditorWindow findWindowInAllSplitters(@NotNull VirtualFile file) {
-    boolean selectionRequired = UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE;
-    EditorsSplitters active = getActiveSplittersSync();
-    EditorWindow activeCurrentWindow = active.getCurrentWindow();
-    if (activeCurrentWindow != null
-        && activeCurrentWindow.isFileOpen(file)
-        && (!selectionRequired || file.equals(activeCurrentWindow.getSelectedFile()))) {
+    EditorsSplitters activeSplitters = getActiveSplittersSync();
+    EditorWindow activeCurrentWindow = activeSplitters.getCurrentWindow();
+    if (activeCurrentWindow != null && isFileOpenInWindow(file, activeCurrentWindow)) {
       return activeCurrentWindow;
     }
     for (EditorsSplitters splitters : getAllSplitters()) {
       EditorWindow[] windows = splitters.getWindows();
       for (EditorWindow window : windows) {
-        if (window.isFileOpen(file)
-            && (!selectionRequired || file.equals(window.getSelectedFile()))) {
+        if (isFileOpenInWindow(file, window)) {
           return window;
         }
       }
     }
     return null;
+  }
+
+  private static boolean isFileOpenInWindow(@NotNull VirtualFile file, @NotNull EditorWindow window) {
+    boolean shouldFileBeSelected = UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE;
+    return shouldFileBeSelected ? file.equals(window.getSelectedFile())
+                                : window.isFileOpen(file);
   }
 
   private @NotNull EditorWindow getOrCreateCurrentWindow(@NotNull VirtualFile file) {
