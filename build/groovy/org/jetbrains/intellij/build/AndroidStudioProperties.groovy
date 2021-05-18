@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import java.nio.file.Path
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
@@ -182,6 +183,18 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       @Override
       String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "android-studio" }
+
+      @Override
+      @CompileDynamic
+      void copyAdditionalFiles(BuildContext context, Path targetDirectory) {
+        def root = "$context.paths.communityHome/../.."
+
+        context.ant.copy(todir: "$targetDirectory/plugins/c-plugin/bin/clang/linux") {
+          fileset(dir: "$root/prebuilts/tools/clion/bin/clang/linux")
+        }
+        extraExecutables.add("plugins/c-plugin/bin/clang/linux/clangd")
+        extraExecutables.add("plugins/c-plugin/bin/clang/linux/clang-tidy")
+      }
     }
   }
 
