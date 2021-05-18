@@ -17,6 +17,8 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * Allows to customize the test execution environment for the entire test execution without modifying the source code
  * of tests. To specify a test execution policy, set the system property "idea.test.execution.policy" to the FQ name
@@ -83,8 +85,9 @@ public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
     if (policyClassName == null) return null;
     try {
       Class<?> policyClass = Class.forName(policyClassName);
-      ourCurrent = (IdeaTestExecutionPolicy)  policyClass.newInstance();
-    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+      ourCurrent = (IdeaTestExecutionPolicy)policyClass.getDeclaredConstructor().newInstance();
+    }
+    catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
     return ourCurrent;

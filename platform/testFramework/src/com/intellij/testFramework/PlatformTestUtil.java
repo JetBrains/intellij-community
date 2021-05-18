@@ -817,9 +817,9 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull String getCommunityPath() {
-    final String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
+    String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
     if (new File(homePath, "community/.idea").isDirectory()) {
-      return homePath + File.separatorChar + "community";
+      homePath = homePath + File.separatorChar + "community";
     }
     return homePath;
   }

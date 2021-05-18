@@ -144,9 +144,7 @@ public final class PathManager {
     if (rootPath == null) return null;
 
     Path root = Paths.get(rootPath).toAbsolutePath();
-    do {
-      root = root.getParent();
-    } while (root != null && !isIdeaHome(root));
+    do root = root.getParent(); while (root != null && !isIdeaHome(root));
     return root != null ? root.toString() : null;
   }
 
