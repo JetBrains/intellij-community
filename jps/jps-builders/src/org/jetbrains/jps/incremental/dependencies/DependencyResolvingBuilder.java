@@ -27,6 +27,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService;
@@ -288,7 +289,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
           .getRepositories()) {
         repositories.add(ArtifactRepositoryManager.createRemoteRepository(repo.getId(), repo.getUrl()));
       }
-      manager = new ArtifactRepositoryManager(getLocalRepoDir(context), repositories, new ProgressConsumer() {
+      manager = new ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(context.getProjectDescriptor().getModel().getGlobal()), repositories, new ProgressConsumer() {
         @Override
         public void consume(@NlsSafe String message) {
           context.processMessage(new ProgressMessage(message));
@@ -305,8 +306,8 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return manager;
   }
 
-  private static @NotNull File getLocalRepoDir(CompileContext context) {
-    final JpsPathVariablesConfiguration pvConfig = JpsModelSerializationDataService.getPathVariablesConfiguration(context.getProjectDescriptor().getModel().getGlobal());
+  public static @NotNull File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
+    final JpsPathVariablesConfiguration pvConfig = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
     final String localRepoPath = pvConfig != null? pvConfig.getUserVariableValue(MAVEN_REPOSITORY_PATH_VAR) : null;
     if (localRepoPath != null) {
       return new File(localRepoPath);

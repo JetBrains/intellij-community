@@ -342,7 +342,7 @@ final class DistributionJARsBuilder {
       def modulesFromCommunity = projectStructureMapping.includedModules.findAll { moduleName ->
         productProperties.includeIntoSourcesArchiveFilter.test(buildContext.findRequiredModule(moduleName), buildContext)
       }
-      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, "$buildContext.paths.artifacts/$archiveName")
+      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, Path.of(buildContext.paths.artifacts, archiveName), true)
     }
   }
 
