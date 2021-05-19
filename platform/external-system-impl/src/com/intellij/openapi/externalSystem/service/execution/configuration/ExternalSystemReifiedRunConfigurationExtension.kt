@@ -69,9 +69,10 @@ abstract class ExternalSystemReifiedRunConfigurationExtension<C : ExternalSystem
 
     fun <C : ExternalSystemRunConfiguration> createTasksAndArguments(
       project: Project,
+      externalSystemId: ProjectSystemId,
       tasksAndArguments: ExternalSystemTasksAndArguments
     ): SettingsEditorFragment<C, ExternalSystemTasksAndArgumentsField> {
-      val taskAndArgumentsField = ExternalSystemTasksAndArgumentsField(project, tasksAndArguments)
+      val taskAndArgumentsField = ExternalSystemTasksAndArgumentsField(project, externalSystemId, tasksAndArguments)
       return SettingsEditorFragment<C, ExternalSystemTasksAndArgumentsField>(
         "external.system.tasks.and.arguments.fragment",
         ExternalSystemBundle.message("run.configuration.tasks.and.arguments.name"),

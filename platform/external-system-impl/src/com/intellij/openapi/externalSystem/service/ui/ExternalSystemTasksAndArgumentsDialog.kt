@@ -3,26 +3,30 @@ package com.intellij.openapi.externalSystem.service.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.search.SearchUtil
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.ui.SpeedSearchComparator
+import com.intellij.ui.ColoredTableCellRenderer
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.layout.*
 import com.intellij.ui.table.JBTable
-import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
+import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
 
 class ExternalSystemTasksAndArgumentsDialog(
-  project: Project,
+  private val project: Project,
+  private val externalSystemId: ProjectSystemId,
   private val tasksAndArguments: ExternalSystemTasksAndArguments
 ) : DialogWrapper(project) {
 
@@ -52,29 +56,24 @@ class ExternalSystemTasksAndArgumentsDialog(
   override fun createCenterPanel() = panel {
     val taskTable = Table(
       ExternalSystemBundle.message("run.configuration.tasks.and.arguments.task.column"),
-      tasksAndArguments.tasks.map { Item(it.name, it.description, AllIcons.General.Gear) }
+      ExternalSystemBundle.message("run.configuration.tasks.and.arguments.tasks.text"),
+      AllIcons.General.Gear,
+      items = tasksAndArguments.tasks.map { Item(it.name, it.description) }
     )
     val argumentTable = Table(
       ExternalSystemBundle.message("run.configuration.tasks.and.arguments.argument.column"),
-      tasksAndArguments.arguments.map { Item(it.name, it.description) }
+      ExternalSystemBundle.message("run.configuration.tasks.and.arguments.arguments.text"),
+      items = tasksAndArguments.arguments.map { Item(it.name, it.description) }
     )
 
     taskTable.clearSelectionWhenSelected(argumentTable)
     argumentTable.clearSelectionWhenSelected(taskTable)
 
+    row { scrollPane(taskTable) }
+    row { scrollPane(argumentTable) }
+
     onGlobalApply {
       fireItemChosen(taskTable.selectedItem ?: argumentTable.selectedItem)
-    }
-
-    row {
-      scrollPane(taskTable).applyToComponent {
-        preferredSize = JBUI.size(650, 180)
-      }
-    }
-    row {
-      scrollPane(argumentTable).applyToComponent {
-        preferredSize = JBUI.size(650, 180)
-      }
     }
   }
 
@@ -84,7 +83,12 @@ class ExternalSystemTasksAndArgumentsDialog(
     init()
   }
 
-  private class Table(@NlsContexts.ColumnName name: String, items: List<Item>) : JBTable() {
+  private inner class Table(
+    @NlsContexts.ColumnName name: String,
+    @NlsContexts.ColumnName contentName: String,
+    icon: Icon? = null,
+    items: List<Item>
+  ) : JBTable() {
     val selectedItem: Item?
       get() {
         if (selectedRow != -1) {
@@ -97,15 +101,28 @@ class ExternalSystemTasksAndArgumentsDialog(
         }
       }
 
-    private fun installSpeedSearch() {
-      val convertor = Convertor { it: Any? -> if (it is Item) it.name else "" }
-      val search = object : TableSpeedSearch(this, convertor) {
-        override fun selectElement(element: Any, selectedText: String) {
-          super.selectElement(element, selectedText)
-          repaint(visibleRect)
-        }
+    private fun setEmptyText(@Nls text: String) {
+      getAccessibleContext().accessibleName = text
+      emptyText.text = text
+    }
+
+    init {
+      val externalSystemName = externalSystemId.readableName
+      setEmptyText(ExternalSystemBundle.message("initializing.0.projects.data", externalSystemName))
+
+      val projectsManager = ExternalProjectsManager.getInstance(project)
+      projectsManager.runWhenInitialized {
+        setEmptyText(ExternalSystemBundle.message("run.configuration.tasks.and.arguments.no.content", externalSystemName, contentName))
       }
-      search.comparator = SpeedSearchComparator(false, false)
+    }
+
+    init {
+      setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS)
+      setRowSelectionAllowed(true)
+      columnSelectionAllowed = false
+      dragEnabled = false
+      setShowGrid(false)
+      setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     }
 
     private fun column(@NlsContexts.ColumnName name: String, valueOf: (Item) -> String) =
@@ -114,21 +131,29 @@ class ExternalSystemTasksAndArgumentsDialog(
       }
 
     init {
-      autoResizeMode = JTable.AUTO_RESIZE_ALL_COLUMNS
-      rowSelectionAllowed = true
-      dragEnabled = false
-      setShowGrid(false)
-      setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      installSpeedSearch()
+      val taskColumnInfo = column(name) { it.name }
+      val descriptionColumnName = ExternalSystemBundle.message("run.configuration.tasks.and.arguments.description.column")
+      val argumentsColumnInfo = column(descriptionColumnName) { it.description ?: "" }
+      model = ListTableModel(arrayOf(taskColumnInfo, argumentsColumnInfo), items)
     }
 
     init {
-      val taskColumnItem = column(name) { it.name }
-      val descriptionColumnName = ExternalSystemBundle.message("run.configuration.tasks.and.arguments.description.column")
-      val argumentsColumnItem = column(descriptionColumnName) { it.description ?: "" }
-      model = ListTableModel(arrayOf(taskColumnItem, argumentsColumnItem), items)
+      val search = TableSpeedSearch(this)
+      val nameColumn = columnModel.getColumn(0)
+      nameColumn.cellRenderer = Renderer(search, icon)
+      val descriptionColumn = columnModel.getColumn(1)
+      descriptionColumn.cellRenderer = Renderer(search, null)
     }
   }
 
-  data class Item(val name: String, val description: String?, val icon: Icon? = null)
+  private class Renderer(private val search: TableSpeedSearch, private val cellIcon: Icon?) : ColoredTableCellRenderer() {
+    override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+      val text = value as? String ?: return
+      icon = cellIcon
+      isTransparentIconBackground = true
+      SearchUtil.appendFragments(search.enteredPrefix, text, SimpleTextAttributes.STYLE_PLAIN, null, null, this)
+    }
+  }
+
+  data class Item(@Nls val name: String, @Nls val description: String?)
 }

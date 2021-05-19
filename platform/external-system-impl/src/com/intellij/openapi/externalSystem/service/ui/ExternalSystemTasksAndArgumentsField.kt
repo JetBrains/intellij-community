@@ -5,6 +5,7 @@ import com.intellij.execution.ui.CommonParameterFragments
 import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
@@ -24,6 +25,7 @@ import javax.swing.KeyStroke
 
 class ExternalSystemTasksAndArgumentsField(
   project: Project,
+  externalSystemId: ProjectSystemId,
   tasksAndArguments: ExternalSystemTasksAndArguments
 ) : ExtendableTextField() {
 
@@ -46,7 +48,7 @@ class ExternalSystemTasksAndArgumentsField(
 
   init {
     val action = Runnable {
-      val dialog = ExternalSystemTasksAndArgumentsDialog(project, tasksAndArguments)
+      val dialog = ExternalSystemTasksAndArgumentsDialog(project, externalSystemId, tasksAndArguments)
       dialog.whenItemChosen {
         val separator = if (text.endsWith(" ")) "" else " "
         document.insertString(document.length, separator + it.name, null)

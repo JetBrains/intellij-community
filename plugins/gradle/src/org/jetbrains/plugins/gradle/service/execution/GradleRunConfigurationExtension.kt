@@ -21,7 +21,7 @@ class GradleRunConfigurationExtension
     val project = configuration.project
     val projectPathSettings = createProjectPath<GradleRunConfiguration>(project, GradleConstants.SYSTEM_ID)
     val tasksAndArguments = GradleTasksAndArguments(project, projectPathSettings.component().component)
-    val tasksAndArgumentsSettings = createTasksAndArguments<GradleRunConfiguration>(project, tasksAndArguments)
+    val tasksAndArgumentsSettings = createTasksAndArguments<GradleRunConfiguration>(project, GradleConstants.SYSTEM_ID, tasksAndArguments)
 
     add(createBeforeRun(GradleBeforeRunTaskProvider.ID))
     add(projectPathSettings)
