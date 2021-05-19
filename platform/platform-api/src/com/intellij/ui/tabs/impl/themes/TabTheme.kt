@@ -4,6 +4,7 @@ package com.intellij.ui.tabs.impl.themes
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.util.registry.ExperimentalUI
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
@@ -88,7 +89,7 @@ class EditorTabTheme : TabTheme {
   override val inactiveColoredTabBackground: Color
     get() = newUIAware(JBColor.PanelBackground, JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground())
 
-  fun <T> newUIAware(newUI: T, oldUI:T):T = if (Registry.`is`("ide.new.editor.tabs.ui")) newUI else oldUI
+  fun <T> newUIAware(newUI: T, oldUI:T):T = if (ExperimentalUI.isNewEditorTabs()) newUI else oldUI
 }
 
 internal class ToolWindowTabTheme : DefaultTabTheme() {

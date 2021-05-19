@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -180,7 +181,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     mySearchActionsToolbar.setForceShowFirstComponent(true);
     JPanel searchPair = new NonOpaquePanel(new BorderLayout());
     searchPair.add(mySearchActionsToolbar, BorderLayout.CENTER);
-    if (Registry.is("ide.new.editor.tabs.ui")) {
+    if (ExperimentalUI.isNewEditorTabs()) {
       mySearchActionsToolbar.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
       searchPair.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     }
@@ -220,7 +221,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      if (Registry.is("ide.new.editor.tabs.ui")) {
+      if (ExperimentalUI.isNewEditorTabs()) {
         mySearchActionsToolbar.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
         mySplitter.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
         mySplitter.setOpaque(true);
