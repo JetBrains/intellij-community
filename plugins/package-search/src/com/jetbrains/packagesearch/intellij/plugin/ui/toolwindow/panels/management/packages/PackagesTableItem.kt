@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.pom.Navigatable
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
@@ -95,8 +96,8 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
                     val usageInfo = packageModel.usageInfo.find { it.projectModule == projectModule }
                         ?: return null
 
-                    arrayOf(usageInfo.projectModule.getNavigatableDependency(packageModel.groupId, packageModel.artifactId, usageInfo.version))
-                        .filterNotNull().takeIf { it.isNotEmpty() }
+                    usageInfo.projectModule.getNavigatableDependency(packageModel.groupId, packageModel.artifactId, usageInfo.version)
+                        ?.let { arrayOf(it) } ?: emptyArray<Navigatable>()
                 }
                 else -> getData(dataId)
             }

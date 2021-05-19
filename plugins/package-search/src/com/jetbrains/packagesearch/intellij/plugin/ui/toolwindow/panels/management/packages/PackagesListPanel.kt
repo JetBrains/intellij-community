@@ -91,7 +91,8 @@ internal class PackagesListPanel(
             border = scaledEmptyBorder(left = 6)
         }
 
-    private val mainToolbar = ActionManager.getInstance().createActionToolbar("", createActionGroup(), true).apply {
+    private val mainToolbar = ActionManager.getInstance().createActionToolbar("Packages.Manage", createActionGroup(), true).apply {
+        setTargetComponent(toolbar)
         component.background = PackageSearchUI.HeaderBackgroundColor
         component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, JBUI.CurrentTheme.CustomFrameDecorations.paneBackground())
     }

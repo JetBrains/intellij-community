@@ -72,7 +72,6 @@ private const val API_TIMEOUT_MILLIS = 10_000L
 private const val DATA_DEBOUNCE_MILLIS = 100L
 private const val SEARCH_DEBOUNCE_MILLIS = 200L
 
-@Suppress("EXPERIMENTAL_API_USAGE") // Just playing around... can't use StateFlows yet
 internal class PackageSearchDataService(
     override val project: Project
 ) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, LifetimeProvider, Disposable, CoroutineScope {
