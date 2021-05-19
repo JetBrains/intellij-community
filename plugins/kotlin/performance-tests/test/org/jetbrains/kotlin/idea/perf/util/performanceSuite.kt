@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -211,6 +212,13 @@ class PerformanceSuite {
                     } else {
                         jdkTableImpl.internalJdk.homePath!!
                     }
+
+                    val roots = mutableListOf<String>()
+                    roots += homePath
+                    System.getenv("JDK_18")?.let {
+                        roots += it
+                    }
+                    VfsRootAccess.allowRootAccess(rootDisposable, *roots.toTypedArray())
 
                     val javaSdk = JavaSdk.getInstance()
                     val jdk = javaSdk.createJdk("1.8", homePath)

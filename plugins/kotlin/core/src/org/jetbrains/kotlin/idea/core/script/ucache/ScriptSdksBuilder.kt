@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -35,7 +36,8 @@ class ScriptSdksBuilder(
         val nonIndexedSdks = sdks.values.filterNotNullTo(mutableSetOf())
 
         runReadAction {
-            for (module in ModuleManager.getInstance(project).modules) {
+            for (module in ModuleManager.getInstance(project).modules.filter { !it.isDisposed }) {
+                ProgressManager.checkCanceled()
                 if (nonIndexedSdks.isEmpty()) break
                 nonIndexedSdks.remove(ModuleRootManager.getInstance(module).sdk)
             }

@@ -37,7 +37,7 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
     }
 
     fun testHighlightAllKtFilesInProject() {
-        val emptyProfile = System.getProperty("emptyProfile", "false").toBoolean()
+        val emptyProfile = System.getProperty("emptyProfile", "false")!!.toBoolean()
         val projectSpecs = projectSpecs()
         suite(suiteName = "allKtFilesInProject") {
             app {
