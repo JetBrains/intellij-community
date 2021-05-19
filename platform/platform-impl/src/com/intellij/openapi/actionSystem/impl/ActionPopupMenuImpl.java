@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -12,6 +13,7 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
@@ -139,6 +141,16 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
         }
       }
       super.show(component, x, y);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
+        long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
+        //noinspection HardCodedStringLiteral
+        ActionMenu.showDescriptionInStatusBar(true, this, "Context menu invocation took " + time + "ms");
+      }
     }
 
     @Override

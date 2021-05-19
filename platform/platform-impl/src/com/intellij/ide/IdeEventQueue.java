@@ -102,6 +102,7 @@ public final class IdeEventQueue extends EventQueue {
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
   private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
   private final IdePopupManager myPopupManager = new IdePopupManager();
+  private long myPopupTriggerTime = -1;
 
   /**
    * Counter of processed events. It is used to assert that data context lives only inside single
@@ -898,6 +899,9 @@ public final class IdeEventQueue extends EventQueue {
       maybeReady();
       KeyEvent ke = e instanceof KeyEvent ? (KeyEvent)e : null;
       boolean consumed = ke == null || ke.isConsumed();
+      if (e instanceof MouseEvent && ((MouseEvent)e).isPopupTrigger()) {
+        myPopupTriggerTime = System.currentTimeMillis();
+      }
       super.dispatchEvent(e);
       // collect mnemonics statistics only if key event was processed above
       if (!consumed && ke.isConsumed() && KeyEvent.KEY_PRESSED == ke.getID()) {
@@ -924,6 +928,11 @@ public final class IdeEventQueue extends EventQueue {
     catch (Throwable t) {
       processException(t);
     }
+  }
+
+  @ApiStatus.Internal
+  public long getPopupTriggerTime() {
+    return myPopupTriggerTime;
   }
 
   @ApiStatus.Internal
