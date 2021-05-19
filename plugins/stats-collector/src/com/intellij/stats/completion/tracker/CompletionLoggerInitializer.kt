@@ -94,6 +94,11 @@ class CompletionLoggerInitializer : LookupTracker() {
         return "JavaScript"
       }
     }
+    Language.findLanguageByID("SQL")?.let { sql ->
+      if (language.isKindOf(sql)) {
+        return sql.displayName
+      }
+    }
     return language.displayName
   }
 
