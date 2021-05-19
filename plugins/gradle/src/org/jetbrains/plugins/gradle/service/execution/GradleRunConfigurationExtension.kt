@@ -4,9 +4,9 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemReifiedRunConfigurationExtension
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemProjectPathField
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArgumentsField.TasksAndArgumentsInfo
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArgumentsField.TasksAndArgumentsInfo.ArgumentInfo
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArgumentsField.TasksAndArgumentsInfo.TaskInfo
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArguments
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArguments.Argument
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArguments.Task
 import com.intellij.openapi.project.Project
 import org.apache.commons.cli.Option
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
@@ -20,8 +20,8 @@ class GradleRunConfigurationExtension
   override fun MutableList<SettingsEditorFragment<GradleRunConfiguration, *>>.configureFragments(configuration: GradleRunConfiguration) {
     val project = configuration.project
     val projectPathSettings = createProjectPath<GradleRunConfiguration>(project, GradleConstants.SYSTEM_ID)
-    val tasksAndArgumentsInfo = GradleTasksAndArgumentsInfo(project, projectPathSettings.component().component)
-    val tasksAndArgumentsSettings = createTasksAndArguments<GradleRunConfiguration>(project, tasksAndArgumentsInfo)
+    val tasksAndArguments = GradleTasksAndArguments(project, projectPathSettings.component().component)
+    val tasksAndArgumentsSettings = createTasksAndArguments<GradleRunConfiguration>(project, tasksAndArguments)
 
     add(createBeforeRun(GradleBeforeRunTaskProvider.ID))
     add(projectPathSettings)
@@ -61,12 +61,12 @@ class GradleRunConfigurationExtension
     200
   )
 
-  private class GradleTasksAndArgumentsInfo(
+  private class GradleTasksAndArguments(
     private val project: Project,
     private val projectPathField: ExternalSystemProjectPathField
-  ) : TasksAndArgumentsInfo {
+  ) : ExternalSystemTasksAndArguments {
 
-    override val tasks: List<TaskInfo>
+    override val tasks: List<Task>
       get() {
         val allTasks = getGradleTasks(project)
         val projectPath = projectPathField.projectPath
@@ -74,16 +74,16 @@ class GradleRunConfigurationExtension
         val gradlePath = GradleProjectResolverUtil.getGradlePath(moduleNode.data)
           .removeSuffix(":")
         val tasks = allTasks[projectPath] ?: return emptyList()
-        val wildcardTasksInfo = ArrayList<TaskInfo>()
-        val tasksInfo = ArrayList<TaskInfo>()
+        val wildcardTasksInfo = ArrayList<Task>()
+        val tasksInfo = ArrayList<Task>()
         for ((path, tasksData) in tasks.entrySet()) {
           for (taskData in tasksData) {
             val taskFqn = getGradleFqnTaskName(path, taskData)
               .removePrefix(gradlePath)
             val taskDescription = taskData.description
-            wildcardTasksInfo.add(TaskInfo(taskFqn.removePrefix(":"), taskDescription))
+            wildcardTasksInfo.add(Task(taskFqn.removePrefix(":"), taskDescription))
             if (!taskData.isInherited) {
-              tasksInfo.add(TaskInfo(taskFqn, taskDescription))
+              tasksInfo.add(Task(taskFqn, taskDescription))
             }
           }
         }
@@ -91,17 +91,18 @@ class GradleRunConfigurationExtension
                tasksInfo.sortedBy { it.name }
       }
 
-    override val arguments = GradleCommandLineOptionsProvider.getSupportedOptions().options
-      .filterIsInstance<Option>()
-      .mapNotNull {
-        val longOpt = it.longOpt
-        val shortOpt = it.opt
-        when {
-          longOpt != null && shortOpt != null -> ArgumentInfo("--$longOpt", "-$shortOpt", it.description)
-          longOpt != null -> ArgumentInfo("--$longOpt", null, it.description)
-          shortOpt != null -> ArgumentInfo("-$shortOpt", null, it.description)
-          else -> null
-        }
-      }.sortedBy { it.name }
+    override val arguments: List<Argument>
+      get() = GradleCommandLineOptionsProvider.getSupportedOptions().options
+        .filterIsInstance<Option>()
+        .mapNotNull {
+          val longOpt = it.longOpt
+          val shortOpt = it.opt
+          when {
+            longOpt != null && shortOpt != null -> Argument("--$longOpt", "-$shortOpt", it.description)
+            longOpt != null -> Argument("--$longOpt", null, it.description)
+            shortOpt != null -> Argument("-$shortOpt", null, it.description)
+            else -> null
+          }
+        }.sortedBy { it.name }
   }
 }

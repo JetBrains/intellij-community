@@ -9,8 +9,8 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemProjectPathField
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArguments
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArgumentsField
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArgumentsField.TasksAndArgumentsInfo
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent
@@ -69,9 +69,9 @@ abstract class ExternalSystemReifiedRunConfigurationExtension<C : ExternalSystem
 
     fun <C : ExternalSystemRunConfiguration> createTasksAndArguments(
       project: Project,
-      tasksAndArgumentsInfo: TasksAndArgumentsInfo
+      tasksAndArguments: ExternalSystemTasksAndArguments
     ): SettingsEditorFragment<C, ExternalSystemTasksAndArgumentsField> {
-      val taskAndArgumentsField = ExternalSystemTasksAndArgumentsField(project, tasksAndArgumentsInfo)
+      val taskAndArgumentsField = ExternalSystemTasksAndArgumentsField(project, tasksAndArguments)
       return SettingsEditorFragment<C, ExternalSystemTasksAndArgumentsField>(
         "external.system.tasks.and.arguments.fragment",
         ExternalSystemBundle.message("run.configuration.tasks.and.arguments.name"),
