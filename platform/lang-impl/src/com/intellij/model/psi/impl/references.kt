@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
 import com.intellij.model.SymbolResolveResult
@@ -39,11 +39,21 @@ fun PsiFile.allReferencesAround(offset: Int): Collection<PsiSymbolReference> {
   return emptyList()
 }
 
-fun hasReferencesInElement(element: PsiElement, offsetInElement: Int): Boolean {
-  return allReferencesInElement(element, offsetInElement).isNotEmpty()
+/**
+ * @return `true` if any reference intersects with [[startOffsetInElement], [endOffsetInElement]), otherwise `false`
+ * @see hasDeclarationsInElement
+ */
+internal fun hasReferencesInElement(element: PsiElement, startOffsetInElement: Int, endOffsetInElement: Int): Boolean {
+  val referencesInElement = allReferencesInElement(element, -1)
+  for (reference in referencesInElement) {
+    if (reference.rangeInElement.intersects(startOffsetInElement, endOffsetInElement)) {
+      return true
+    }
+  }
+  return false
 }
 
-fun allReferencesInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolReference> {
+private fun allReferencesInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolReference> {
   val references: Collection<PsiSymbolReference> = referencesInElement(element, offsetInElement)
   if (references.isNotEmpty()) {
     return references
@@ -56,8 +66,13 @@ fun allReferencesInElement(element: PsiElement, offsetInElement: Int): Collectio
 }
 
 private fun referencesInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolReference> {
-  val hints = PsiSymbolReferenceHints.offsetHint(offsetInElement)
-  return PsiSymbolReferenceService.getService().getReferences(element, hints)
+  if (offsetInElement < 0) {
+    return PsiSymbolReferenceService.getService().getReferences(element)
+  }
+  else {
+    val hints = PsiSymbolReferenceHints.offsetHint(offsetInElement)
+    return PsiSymbolReferenceService.getService().getReferences(element, hints)
+  }
 }
 
 private fun implicitReference(element: PsiElement): PsiSymbolReference? {

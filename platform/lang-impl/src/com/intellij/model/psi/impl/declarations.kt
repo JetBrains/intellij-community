@@ -28,8 +28,18 @@ fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclar
   return emptyList()
 }
 
-fun hasDeclarationsInElement(element: PsiElement, offsetInElement: Int): Boolean {
-  return declarationsInElement(element, offsetInElement).isNotEmpty()
+/**
+ * @return `true` if any declaration intersects with [[startOffsetInElement], [endOffsetInElement]), otherwise `false`
+ * @see hasReferencesInElement
+ */
+internal fun hasDeclarationsInElement(element: PsiElement, startOffsetInElement: Int, endOffsetInElement: Int): Boolean {
+  val declarationsInElement = declarationsInElement(element, -1)
+  for (declaration in declarationsInElement) {
+    if (declaration.rangeInDeclaringElement.intersects(startOffsetInElement, endOffsetInElement)) {
+      return true
+    }
+  }
+  return false
 }
 
 private val declarationProviderEP = ExtensionPointName<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
