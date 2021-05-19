@@ -6,10 +6,8 @@ import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PartiallyKnownString
 import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UElement
 import org.jetbrains.uast.analysis.UStringBuilderEvaluator
 import org.jetbrains.uast.analysis.UStringEvaluator
-import org.jetbrains.uast.getUCallExpression
 
 class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
   fun `test StringBuilder toString evaluate`() {
@@ -33,7 +31,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           sb1.append("b");
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
       """.trimIndent(),
@@ -42,8 +40,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
-      },
-      retrieveElement = UElement?::getUCallExpression
+      }
     )
   }
 
@@ -64,12 +61,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           sb1.append("b");
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'a'{'x'|'y'}'c''b'",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
       UStringEvaluator.Configuration(
         builderEvaluators = listOf(UStringBuilderEvaluator)
@@ -87,12 +83,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           sb.append("c");
           sb = sb.append("d");
           sb.append("e");
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
       """'a''b''c''d''e'""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
@@ -125,17 +120,16 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           sb1.append("f"); // ignore (no connection)
           
-          return sb.toStrin<caret>g(); // go to potential update from sb
+          return /*<caret>*/ sb.toString(); // go to potential update from sb
         }
       }
     """.trimIndent(),
-      """'a'{''|'c'}'\m/'{''|'e'}""",
+      """'a'{|'c'}'\m/'{|'e'}""",
       configuration = {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
-      },
-      retrieveElement = UElement?::getUCallExpression
+      }
     )
   }
 
@@ -149,12 +143,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           StringBuilder sb2 = sb1.append("c");
           sb2.append("d");
           sb2.append("e");
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
       """'a''b''c''d''e'""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
@@ -176,12 +169,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
             sb.append("c");
           }
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
       """'a'{'b'|'c'}""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
@@ -192,23 +184,22 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
 
   fun `test StringBuilder reassignment and side effect change in if`() {
     doTest(
-      """"
-      class MyFile {
-      String a(boolean param) {
-        StringBuilder sb = new StringBuilder("a");
-
-        if (param) {
-          sb.append("b");
-        } else {
-          sb = new StringBuilder("c");
-        }
-
-        return sb.toStrin<caret>g();
+      """
+        class MyFile {
+          String a(boolean param) {
+            StringBuilder sb = new StringBuilder("a");
+    
+            if (param) {
+              sb.append("b");
+            } else {
+              sb = new StringBuilder("c");
+            }
+    
+            return /*<caret>*/ sb.toString();
+          }
       }
-    }
     """.trimIndent(),
       """{'a''b'|'c'}""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
@@ -231,12 +222,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           sb1.append("e");
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
       """'a''b''c'""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
@@ -256,7 +246,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           if (param) {
             sb.append("c");
             if (!param) {
-              sb1.append("d")
+              sb1.append("d");
             } else {
               sb1.append("e");
             }
@@ -264,12 +254,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
             sb1.append("f");
           }
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
       """'a''b'{'c''d'|'c''e'|'f'}""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
@@ -291,12 +280,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
               sb2.append("d");
             }
             
-            return sb.toStrin<caret>g();
+            return /*<caret>*/ sb.toString();
           }
         }
       """.trimIndent(),
       """'a''b'{|'c''d'}""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
         UStringEvaluator.Configuration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
@@ -315,12 +303,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           sb2.append("dd");
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'a'",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
       UStringEvaluator.Configuration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
@@ -344,12 +331,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
             sb.append("e");
           }
   
-          return sb.toSt<caret>ring();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'aaa'{'d'|'e'}",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
       UStringEvaluator.Configuration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
@@ -379,12 +365,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
             sb.append("d");
           }
   
-          return sb.toSt<caret>ring();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'a'{'1'|'c'|'d'}",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
       UStringEvaluator.Configuration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
@@ -402,12 +387,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           sb = new StringBuilder("b");
           sb.append("c");
    
-          return sb.toSt<caret>ring();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'b''c'",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
       UStringEvaluator.Configuration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
@@ -429,12 +413,11 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
             
             sb.append("d");
    
-          return sb.toSt<caret>ring();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'0''aaa''bbb''d'",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
       UStringEvaluator.Configuration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())

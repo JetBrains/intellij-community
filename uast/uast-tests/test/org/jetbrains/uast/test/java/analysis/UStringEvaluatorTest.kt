@@ -20,59 +20,55 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return "ab<caret>c";
+        return /*<caret>*/ "abc";
       }
     }
   """.trimIndent(),
-    "'abc'",
-    additionalAssertions = {
-      TestCase.assertEquals(1, it.segments.size)
-    }
-  )
+    "'abc'"
+  ) {
+    TestCase.assertEquals(1, it.segments.size)
+  }
 
   fun `test simple concatenation`() = doTest(
     """
     class MyFile {
       String a() {
-        return "abc" +<caret> "def";
+        return /*<caret>*/ "abc" + "def";
       }
     }
     """.trimIndent(),
-    "'abc''def'",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc''def'"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with variable`() = doTest(
     """
     class MyFile {
       String a() {
         String a = "def";
-        return "abc" +<caret> a;
+        return /*<caret>*/ "abc" + a;
       }
     }
     """.trimIndent(),
-    "'abc''def'",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc''def'"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with ternary op and variable`() = doTest(
     """
     class MyFile {
       String a(boolean condition) {
         String a = condition ? "def" : "xyz";
-        return "abc" +<caret> a;
+        return /*<caret>*/ "abc" + a;
       }
     }
     """.trimIndent(),
-    "'abc'{'def'|'xyz'}",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc'{'def'|'xyz'}"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with if and variable`() = doTest(
     """
@@ -84,29 +80,27 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
         } else {
           a = "xyz";
         }
-        return "abc" +<caret> a;
+        return /*<caret>*/ "abc" + a;
       }
     }
     """.trimIndent(),
-    "'abc'{'def'|'xyz'}",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc'{'def'|'xyz'}"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with unknown`() = doTest(
     """
     class MyFile {
       String a(boolean condition, String a) {
-        return "abc" +<caret> a;
+        return /*<caret>*/ "abc" + a;
       }
     }
     """.trimIndent(),
-    "'abc'NULL",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc'NULL"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with constant`() = doTest(
     """
@@ -114,15 +108,14 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       public static final String myConst = "def";
       
       String a() {
-        return "abc" +<caret> myConst;
+        return /*<caret>*/ "abc" + myConst;
       }
     }
     """.trimIndent(),
-    "'abc''def'",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc''def'"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with constant from different file`() = doTest(
     """
@@ -130,7 +123,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       public static final String myConst = "def" + A.myConst;
       
       String a() {
-        return "abc" +<caret> myConst;
+        return /*<caret>*/ "abc" + myConst;
       }
     }
     """.trimIndent(),
@@ -156,7 +149,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     
       String a(boolean a, String param) {
-        return "abc" +<caret> param;
+        return /*<caret>*/ "abc" + param;
       }
     }
     """.trimIndent(),
@@ -181,7 +174,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     
       String a(boolean a, String param) {
-        return "abc" +<caret> param;
+        return /*<caret>*/ "abc" + param;
       }
     }
     """.trimIndent(),
@@ -198,13 +191,13 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return "abc" +<caret> b(false);
+        return /*<caret>*/ "abc" + b(false);
       }
       
       String b(boolean a) {
         if (!a) return "";
         
-        return "xyz"
+        return "xyz";
       }
     }
     """.trimIndent(),
@@ -222,13 +215,13 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     class MyFile {
       String a() {
         String s = "my" + "var";
-        return "abc" +<caret> b(false, s + "1");
+        return /*<caret>*/ "abc" + b(false, s + "1");
       }
       
       String b(boolean a, String param) {
         if (!a) return "aaa";
         
-        return "xyz" + param
+        return "xyz" + param;
       }
     }
     """.trimIndent(),
@@ -245,7 +238,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return "abc" +<caret> b();
+        return /*<caret>*/ "abc" + b();
       }
       
       String b() {
@@ -266,7 +259,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a(String param) {
-        return "a" +<caret> a(param + "b") + param;
+        return /*<caret>*/ "a" + a(param + "b") + param;
       }
     }
     """.trimIndent(),
@@ -283,7 +276,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a(String param) {
-        return "abc" +<caret> b(param + "a") + param;
+        return /*<caret>*/ "abc" + b(param + "a") + param;
       }
       
       String b(String param) {
@@ -304,7 +297,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return "(" + b() <caret> + ")";
+        return /*<caret>*/ "(" + b() + ")";
       }
       
       String b() {
@@ -325,7 +318,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return b("a")<caret>;
+        return /*<caret>*/ b("a");
       }
       
       String b(String param) {
@@ -380,7 +373,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
         String anotherValue;
         
         String a() {
-          return myValue +<caret> anotherValue;
+          return /*<caret>*/ myValue + anotherValue;
         }
       }
       """.trimIndent(),
@@ -397,7 +390,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return b("a")<caret> + c("b");
+        return /*<caret>*/ b("a") + c("b");
       }
       
       String b(String param) {
@@ -429,12 +422,11 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     class MyFile {
       String a(String param) {
         String s = "aaa";
-        return Strings.jo<caret>in("\\m/", "abacaba", param, "my-string" + " is cool", s);
+        return /*<caret>*/ Strings.join("\\m/", "abacaba", param, "my-string" + " is cool", s);
       }
     }
     """.trimIndent(),
     """'abacaba''\m/'NULL'\m/''my-string'' is cool''\m/''aaa'""",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
       UStringEvaluator.Configuration(
         methodEvaluators = mapOf(
