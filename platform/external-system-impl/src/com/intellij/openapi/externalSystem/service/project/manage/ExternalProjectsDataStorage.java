@@ -153,6 +153,9 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     }
 
     mergeLocalSettings();
+
+    incModificationCount();
+
     long finishTs = System.currentTimeMillis();
     LOG.info("Load external projects data in " + (finishTs - startTs) + " millis (read time: " + (readEnd - startTs) + ")");
   }

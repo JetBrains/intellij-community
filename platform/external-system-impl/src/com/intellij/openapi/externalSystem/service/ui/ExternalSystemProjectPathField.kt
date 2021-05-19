@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.service.ui.completetion.SimpleTextCompletionContributor
+import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
+import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
+import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup.UpdatePopupType.SHOW_IF_DOESNT_HAVE_COMPLETED_VARINCES
+import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup.UpdatePopupType.SHOW_IF_HAS_VARIANCES
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -31,8 +33,7 @@ import javax.swing.text.Highlighter
 
 class ExternalSystemProjectPathField(
   project: Project,
-  externalSystemId: ProjectSystemId,
-  parentDisposable: Disposable
+  externalSystemId: ProjectSystemId
 ) : ExtendableTextField() {
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
@@ -152,6 +153,10 @@ class ExternalSystemProjectPathField(
         externalProjects.add(ExternalProject(childName, childPath))
       }
     }
+    val rootProject = externalProjects.firstOrNull()
+    if (rootProject != null) {
+      projectName = rootProject.name
+    }
   }
 
   init {
@@ -218,29 +223,34 @@ class ExternalSystemProjectPathField(
         return ExternalSystemApiUtil.getLocalFileSystemPath(chosenFile)
       }
     }
-    addBrowseExtension(browseFolderRunnable, parentDisposable)
+    addBrowseExtension(browseFolderRunnable, null)
   }
 
   init {
-    val textCompletionContributor = SimpleTextCompletionContributor.create { textToComplete ->
+    val textCompletionContributor = JTextCompletionContributor.create { textToComplete ->
       when (mode) {
-        Mode.NAME -> externalProjects.map { it.name }
+        Mode.NAME -> {
+          externalProjects
+            .map { it.name }
+            .map { TextCompletionInfo(it) }
+        }
         Mode.PATH -> {
           val pathToComplete = getModelPath(textToComplete, removeLastSlash = false)
           externalProjects
             .filter { it.path.startsWith(pathToComplete) }
             .map { it.path.substring(pathToComplete.length) }
             .map { textToComplete + FileUtil.toSystemDependentName(it) }
+            .map { TextCompletionInfo(it) }
         }
       }
     }
-    val textCompletionPopup = TextCompletionPopup(project, this, textCompletionContributor, parentDisposable)
-    textCompletionPopup.onVariantChosen {
-      text = it.text
+    val textCompletionPopup = TextCompletionPopup(project, this, textCompletionContributor)
+    installJTextCompletionPopupTriggers(textCompletionPopup)
+    textCompletionContributor.whenVariantChosen { _, _ ->
       mode = Mode.NAME
     }
     modeProperty.afterChange {
-      textCompletionPopup.updatePopup()
+      textCompletionPopup.updatePopup(SHOW_IF_HAS_VARIANCES)
     }
   }
 

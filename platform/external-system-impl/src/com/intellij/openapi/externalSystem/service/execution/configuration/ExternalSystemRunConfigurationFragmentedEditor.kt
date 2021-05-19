@@ -24,56 +24,10 @@ class ExternalSystemRunConfigurationFragmentedEditor(
     return ArrayList<SettingsEditorFragment<ExternalSystemRunConfiguration, *>>().apply {
       add(CommonParameterFragments.createHeader(ExecutionBundle.message("application.configuration.title.run")))
       addAll(BeforeRunFragment.createGroup())
-      add(createTasksAndArguments())
-      add(createProjectPath())
       add(CommonTags.parallelRun())
       add(CommonParameterFragments.createEnvParameters())
       add(createVmOptions())
       add(LogsGroupFragment())
-    }
-  }
-
-  private fun createTasksAndArguments(): SettingsEditorFragment<ExternalSystemRunConfiguration, RawCommandLineEditor> {
-    val taskAndArgumentsEditor = RawCommandLineEditor().apply {
-      val message = ExternalSystemBundle.message("run.configuration.tasks.and.arguments.empty.state")
-      editorField.accessibleContext.accessibleName = message
-      editorField.emptyText.text = message
-      FragmentedSettingsUtil.setupPlaceholderVisibility(editorField)
-      CommonParameterFragments.setMonospaced(textField)
-    }
-    return SettingsEditorFragment<ExternalSystemRunConfiguration, RawCommandLineEditor>(
-      "external.system.tasks.and.arguments.fragment",
-      ExternalSystemBundle.message("run.configuration.tasks.and.arguments.name"),
-      null,
-      taskAndArgumentsEditor,
-      100,
-      { it, c -> c.text = it.tasksAndArguments },
-      { it, c -> it.tasksAndArguments = c.text },
-      { true }
-    ).apply {
-      isCanBeHidden = false
-      isRemovable = false
-      setHint(ExternalSystemBundle.message("run.configuration.tasks.and.arguments.hint"))
-    }
-  }
-
-  private fun createProjectPath(): SettingsEditorFragment<ExternalSystemRunConfiguration, LabeledComponent<ExternalSystemProjectPathField>> {
-    val externalSystemId = mySettings.externalSystemId
-    val projectPathField = ExternalSystemProjectPathField(project, externalSystemId, this)
-    val projectPathLabel = ExternalSystemBundle.message("run.configuration.project.path.label", externalSystemId.readableName)
-    return SettingsEditorFragment<ExternalSystemRunConfiguration, LabeledComponent<ExternalSystemProjectPathField>>(
-      "external.system.project.path.fragment",
-      ExternalSystemBundle.message("run.configuration.project.path.name", externalSystemId.readableName),
-      null,
-      LabeledComponent.create(projectPathField, projectPathLabel, BorderLayout.WEST),
-      -10,
-      SettingsEditorFragment.Type.EDITOR,
-      { it, c -> c.component.projectPath = it.externalProjectPath ?: "" },
-      { it, c -> it.externalProjectPath = FileUtil.toCanonicalPath(c.component.projectPath) },
-      { true }
-    ).apply {
-      isCanBeHidden = false
-      isRemovable = false
     }
   }
 

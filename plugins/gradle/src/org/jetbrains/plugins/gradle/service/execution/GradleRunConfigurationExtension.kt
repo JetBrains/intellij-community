@@ -2,24 +2,33 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.execution.ui.SettingsEditorFragment
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
-import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtension
+import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemReifiedRunConfigurationExtension
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemProjectPathField
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArgumentsField.TasksAndArgumentsInfo
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArgumentsField.TasksAndArgumentsInfo.ArgumentInfo
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemTasksAndArgumentsField.TasksAndArgumentsInfo.TaskInfo
+import com.intellij.openapi.project.Project
+import org.apache.commons.cli.Option
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
-import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.util.*
 
-class GradleRunConfigurationExtension : ExternalSystemRunConfigurationExtension() {
-  override fun isApplicableFor(configuration: ExternalSystemRunConfiguration): Boolean {
-    return configuration is GradleRunConfiguration
-  }
+class GradleRunConfigurationExtension
+  : ExternalSystemReifiedRunConfigurationExtension<GradleRunConfiguration>(GradleRunConfiguration::class.java) {
 
-  @Suppress("UNCHECKED_CAST")
-  override fun <P : ExternalSystemRunConfiguration> createFragments(configuration: P): List<SettingsEditorFragment<P, *>> {
-    val fragments = ArrayList<SettingsEditorFragment<GradleRunConfiguration, *>>()
-    fragments.add(createBeforeRun(GradleBeforeRunTaskProvider.ID))
-    fragments.add(createScriptDebugEnabledTag())
-    fragments.add(createReattachDebugProcessTag())
-    fragments.add(createDebugAllEnabledTag())
-    return fragments as List<SettingsEditorFragment<P, *>>
+  override fun MutableList<SettingsEditorFragment<GradleRunConfiguration, *>>.configureFragments(configuration: GradleRunConfiguration) {
+    val project = configuration.project
+    val projectPathSettings = createProjectPath<GradleRunConfiguration>(project, GradleConstants.SYSTEM_ID)
+    val tasksAndArgumentsInfo = GradleTasksAndArgumentsInfo(project, projectPathSettings.component().component)
+    val tasksAndArgumentsSettings = createTasksAndArguments<GradleRunConfiguration>(project, tasksAndArgumentsInfo)
+
+    add(createBeforeRun(GradleBeforeRunTaskProvider.ID))
+    add(projectPathSettings)
+    add(tasksAndArgumentsSettings)
+    add(createScriptDebugEnabledTag())
+    add(createReattachDebugProcessTag())
+    add(createDebugAllEnabledTag())
   }
 
   private fun createScriptDebugEnabledTag() = createSettingsTag(
@@ -51,4 +60,48 @@ class GradleRunConfigurationExtension : ExternalSystemRunConfigurationExtension(
     GradleRunConfiguration::setDebugAllEnabled,
     200
   )
+
+  private class GradleTasksAndArgumentsInfo(
+    private val project: Project,
+    private val projectPathField: ExternalSystemProjectPathField
+  ) : TasksAndArgumentsInfo {
+
+    override val tasks: List<TaskInfo>
+      get() {
+        val allTasks = getGradleTasks(project)
+        val projectPath = projectPathField.projectPath
+        val moduleNode = GradleUtil.findGradleModuleData(project, projectPath) ?: return emptyList()
+        val gradlePath = GradleProjectResolverUtil.getGradlePath(moduleNode.data)
+          .removeSuffix(":")
+        val tasks = allTasks[projectPath] ?: return emptyList()
+        val wildcardTasksInfo = ArrayList<TaskInfo>()
+        val tasksInfo = ArrayList<TaskInfo>()
+        for ((path, tasksData) in tasks.entrySet()) {
+          for (taskData in tasksData) {
+            val taskFqn = getGradleFqnTaskName(path, taskData)
+              .removePrefix(gradlePath)
+            val taskDescription = taskData.description
+            wildcardTasksInfo.add(TaskInfo(taskFqn.removePrefix(":"), taskDescription))
+            if (!taskData.isInherited) {
+              tasksInfo.add(TaskInfo(taskFqn, taskDescription))
+            }
+          }
+        }
+        return wildcardTasksInfo.sortedBy { it.name } +
+               tasksInfo.sortedBy { it.name }
+      }
+
+    override val arguments = GradleCommandLineOptionsProvider.getSupportedOptions().options
+      .filterIsInstance<Option>()
+      .mapNotNull {
+        val longOpt = it.longOpt
+        val shortOpt = it.opt
+        when {
+          longOpt != null && shortOpt != null -> ArgumentInfo("--$longOpt", "-$shortOpt", it.description)
+          longOpt != null -> ArgumentInfo("--$longOpt", null, it.description)
+          shortOpt != null -> ArgumentInfo("-$shortOpt", null, it.description)
+          else -> null
+        }
+      }.sortedBy { it.name }
+  }
 }

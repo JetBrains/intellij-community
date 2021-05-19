@@ -4,22 +4,23 @@ package com.intellij.openapi.externalSystem.service.ui.completetion
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.externalSystem.service.ui.addKeyboardAction
+import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.getKeyStrokes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.BaseStep
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.popup.list.ListPopupImpl
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
+import java.awt.event.KeyEvent
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
@@ -30,20 +31,23 @@ import javax.swing.text.JTextComponent
 class TextCompletionPopup<C : JTextComponent>(
   private val project: Project,
   private val parentComponent: C,
-  private val contributor: TextCompletionContributor<C>,
-  private val parentDisposable: Disposable
+  private val contributor: TextCompletionContributor<C>
 ) {
   private var popup: Popup? = null
   private val visibleCompletionVariants = ArrayList<TextCompletionInfo?>()
 
-  private val chooseListeners = ArrayList<(TextCompletionInfo) -> Unit>()
-
-  fun onVariantChosen(action: (TextCompletionInfo) -> Unit) {
-    chooseListeners.add(action)
+  private fun isFocusedParent(): Boolean {
+    val focusManager = IdeFocusManager.getInstance(project)
+    val focusOwner = focusManager.focusOwner
+    return SwingUtilities.isDescendingFrom(focusOwner, parentComponent)
   }
 
-  fun updatePopup(forceShowPopup: Boolean = false) {
-    if (parentComponent.height > 0 && parentComponent.width > 0) {
+  private fun isValidParent(): Boolean {
+    return parentComponent.height > 0 && parentComponent.width > 0
+  }
+
+  fun updatePopup(type: UpdatePopupType) {
+    if (isValidParent() && isFocusedParent()) {
       val textToComplete = contributor.getTextToComplete(parentComponent)
       val completionVariants = contributor.getCompletionVariants(parentComponent, textToComplete)
       visibleCompletionVariants.clear()
@@ -56,41 +60,48 @@ class TextCompletionPopup<C : JTextComponent>(
           visibleCompletionVariants.add(variant)
         }
       }
-      if (!forceShowPopup && visibleCompletionVariants[0] == null) {
-        popup?.cancel()
-        popup = null
+
+      val hasVariances = visibleCompletionVariants[0] != null &&
+                         visibleCompletionVariants.any { it?.text != textToComplete }
+      val hasCompletedVariances = visibleCompletionVariants.any { it?.text == textToComplete }
+      when (type) {
+        UpdatePopupType.UPDATE -> popup?.update()
+        UpdatePopupType.SHOW -> showPopup()
+        UpdatePopupType.HIDE -> hidePopup()
+        UpdatePopupType.SHOW_IF_HAS_VARIANCES ->
+          when {
+            hasVariances -> showPopup()
+            else -> hidePopup()
+          }
+        UpdatePopupType.SHOW_IF_DOESNT_HAVE_COMPLETED_VARINCES ->
+          when {
+            hasCompletedVariances -> popup?.update()
+            hasVariances -> showPopup()
+            else -> hidePopup()
+          }
       }
-      else if (popup == null) {
-        popup = Popup().also {
-          Disposer.register(parentDisposable, it)
-          Disposer.register(it, Disposable { popup = null })
-        }
-        popup?.showUnderneathOf(parentComponent)
-      }
-      popup?.update()
     }
   }
 
-  init {
-    parentComponent.addFocusListener(object : FocusAdapter() {
-      override fun focusGained(e: FocusEvent) {
-        if (contributor.getTextToComplete(parentComponent).isEmpty()) {
-          updatePopup()
-        }
+  private fun showPopup() {
+    if (popup == null) {
+      popup = Popup().also {
+        Disposer.register(it, Disposable { popup = null })
       }
-    })
-    parentComponent.addFocusListener(object : FocusAdapter() {
-      override fun focusGained(e: FocusEvent) {
-        parentComponent.removeFocusListener(this)
-        updatePopup()
-      }
-    })
-    parentComponent.addKeyboardAction(getKeyStrokes("CodeCompletion")) {
-      updatePopup(forceShowPopup = true)
+      popup?.showUnderneathOf(parentComponent)
     }
-    contributor.whenTextModified(parentComponent, {
-      updatePopup()
-    }, parentDisposable)
+    popup?.update()
+  }
+
+  private fun hidePopup() {
+    popup?.cancel()
+    popup = null
+  }
+
+  private fun fireVariantChosen(variant: TextCompletionInfo?) {
+    if (variant != null) {
+      contributor.fireVariantChosen(parentComponent, variant)
+    }
   }
 
   private inner class Popup : ListPopupImpl(project, null, PopupStep(), null) {
@@ -107,6 +118,13 @@ class TextCompletionPopup<C : JTextComponent>(
       size = Dimension(popupWidth, popupHeight)
     }
 
+    override fun process(aEvent: KeyEvent) {
+      if (aEvent.keyCode != KeyEvent.VK_LEFT &&
+          aEvent.keyCode != KeyEvent.VK_RIGHT) {
+        super.process(aEvent)
+      }
+    }
+
     init {
       setMaxRowCount(10)
       setRequestFocus(false)
@@ -119,6 +137,11 @@ class TextCompletionPopup<C : JTextComponent>(
       list.selectionMode = ListSelectionModel.SINGLE_SELECTION
       list.border = null
       list.isFocusable = false
+
+      list.addKeyboardAction(getKeyStrokes(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
+        fireVariantChosen(list.selectedValue as? TextCompletionInfo)
+        hidePopup()
+      }
     }
   }
 
@@ -129,11 +152,7 @@ class TextCompletionPopup<C : JTextComponent>(
     override fun getValues(): List<TextCompletionInfo?> = visibleCompletionVariants
 
     override fun onChosen(selectedValue: TextCompletionInfo?, finalChoice: Boolean): com.intellij.openapi.ui.popup.PopupStep<*>? {
-      if (selectedValue != null) {
-        ApplicationManager.getApplication().invokeLater {
-          chooseListeners.forEach { it(selectedValue) }
-        }
-      }
+      fireVariantChosen(selectedValue)
       return FINAL_CHOICE
     }
 
@@ -165,17 +184,24 @@ class TextCompletionPopup<C : JTextComponent>(
       val prefix = contributor.getTextToComplete(parentComponent)
       val prefixForeground = LookupCellRenderer.MATCHED_FOREGROUND_COLOR
       val prefixAttributes = SimpleTextAttributes(textStyle, prefixForeground)
-      append(prefix, prefixAttributes)
       if (value.text.startsWith(prefix)) {
+        append(prefix, prefixAttributes)
         append(value.text.substring(prefix.length))
+      }
+      else {
+        append(value.text)
       }
       val description = value.description
       if (description != null) {
         val descriptionForeground = LookupCellRenderer.getGrayedForeground(selected)
         val descriptionAttributes = SimpleTextAttributes(textStyle, descriptionForeground)
-        append(description, descriptionAttributes)
-        appendTextPadding(maxOf(preferredSize.width, list.width) - ipad.right, SwingConstants.RIGHT)
+        append(description.trim(), descriptionAttributes)
+        appendTextPadding(maxOf(preferredSize.width + ipad.left + ipad.right, list.width - ipad.right), SwingConstants.RIGHT)
       }
     }
+  }
+
+  enum class UpdatePopupType {
+    UPDATE, SHOW, HIDE, SHOW_IF_HAS_VARIANCES, SHOW_IF_DOESNT_HAVE_COMPLETED_VARINCES
   }
 }
