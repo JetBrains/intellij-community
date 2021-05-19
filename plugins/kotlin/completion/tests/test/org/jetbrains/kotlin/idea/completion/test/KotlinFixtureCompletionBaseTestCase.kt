@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
 abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtureTestCase() {
@@ -20,8 +21,10 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
     protected abstract fun defaultCompletionType(): CompletionType
     protected open fun defaultInvocationCount(): Int = 0
 
+    protected open fun handleTestPath(path: String) = path
+    
     open fun doTest(testPath: String) {
-        val actualTestPath = testPath()
+        val actualTestPath = handleTestPath(testPath())
         configureFixture(actualTestPath)
 
         val fileText = FileUtil.loadFile(File(actualTestPath), true)
@@ -39,7 +42,7 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
                     { completionType, count -> complete(completionType, count) },
                     defaultCompletionType(),
                     defaultInvocationCount(),
-                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES
+                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + IgnoreTests.DIRECTIVES.FIR_IDENTICAL
                 )
             }
         }

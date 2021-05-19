@@ -1236,7 +1236,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFirKeywordCompletionTest> {
-            model("keywords", isRecursive = false)
+            model("keywords", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
         }
     }
 
