@@ -13,7 +13,10 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 
 internal class IndexableSetContributorFilesIterator(private val indexableSetContributor: IndexableSetContributor,
                                                     private val projectAware: Boolean) : IndexableFilesIterator {
-  override fun getDebugName(): String = "Indexable set contributor `${indexableSetContributor.debugName}` ${if (projectAware) "(project)" else "(non-project)"}"
+  override fun getDebugName(): String {
+    val debugName = getName()?.takeUnless { it.isEmpty() } ?: indexableSetContributor.debugName
+    return "Indexable set contributor '$debugName' ${if (projectAware) "(project)" else "(non-project)"}"
+  }
 
   override fun getIndexingProgressText(): String {
     val name = getName()
