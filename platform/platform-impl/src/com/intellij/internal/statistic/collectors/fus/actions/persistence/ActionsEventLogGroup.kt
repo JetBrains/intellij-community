@@ -2,9 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class ActionsEventLogGroup : CounterUsagesCollector() {
@@ -38,6 +36,15 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val DUMB_END = EventFields.Boolean("dumb_end")
 
     @JvmField
+    val RESULT_TYPE = EventFields.String("type", arrayListOf("ignored", "performed", "failed", "unknown"))
+
+    @JvmField
+    val ERROR = EventFields.Class("error")
+
+    @JvmField
+    val RESULT = ObjectEventField("result", RESULT_TYPE, ERROR)
+
+    @JvmField
     val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_INVOKED_EVENT_ID)
 
     @JvmField
@@ -56,6 +63,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
         CONTEXT_MENU,
         DUMB_START,
         DUMB_END,
+        RESULT,
         ACTION_ID,
         ACTION_CLASS,
         ACTION_PARENT,

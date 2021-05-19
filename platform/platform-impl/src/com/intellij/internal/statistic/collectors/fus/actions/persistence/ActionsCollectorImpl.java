@@ -177,15 +177,17 @@ public class ActionsCollectorImpl extends ActionsCollector {
   /** @noinspection unused*/
   public static void onAfterActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
     Stats stats = ourStats.remove(event);
-    if (stats == null || !result.isPerformed()) return;
-    long durationMillis = TimeoutUtil.getDurationMillis(stats.start);
+    long durationMillis = stats != null ? TimeoutUtil.getDurationMillis(stats.start) : -1;
 
     List<EventPair<?>> data = new ArrayList<>();
-    if (stats.isDumb != null) {
+    if (stats != null && stats.isDumb != null) {
       data.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb));
     }
 
-    Project project = stats.projectRef.get();
+    ObjectEventData reportedResult = toReportedResult(result);
+    data.add(ActionsEventLogGroup.RESULT.with(reportedResult));
+
+    Project project = stats != null ? stats.projectRef.get() : null;
     addLanguageContextFields(project, event, data);
     if (action instanceof FusAwareAction) {
       List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
@@ -194,6 +196,26 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
     data.add(EventFields.DurationMs.with(StatisticsUtil.INSTANCE.roundDuration(durationMillis)));
     recordActionInvoked(project, action, event, data);
+  }
+
+  @NotNull
+  private static ObjectEventData toReportedResult(@NotNull AnActionResult result) {
+    if (result.isPerformed()) {
+      return new ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("performed"));
+    }
+
+    if (result == AnActionResult.IGNORED) {
+      return new ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("ignored"));
+    }
+
+    Throwable error = result.getFailureCause();
+    if (error != null) {
+      return new ObjectEventData(
+        ActionsEventLogGroup.RESULT_TYPE.with("failed"),
+        ActionsEventLogGroup.ERROR.with(error.getClass())
+      );
+    }
+    return new ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("unknown"));
   }
 
   private static void addLanguageContextFields(@Nullable Project project, @NotNull AnActionEvent event, @NotNull List<EventPair<?>> data) {
