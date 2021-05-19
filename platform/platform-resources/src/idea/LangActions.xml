@@ -1546,8 +1546,7 @@
 
     <action id="SwitchFileBasedIndexStorageAction"
             class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"
-            text="Switch File-Based Index Storage"
-            internal="true">
+            text="Switch File-Based Index Storage">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
     <action id="ClickLink" class="com.intellij.codeInsight.navigation.actions.ClickLinkAction"
