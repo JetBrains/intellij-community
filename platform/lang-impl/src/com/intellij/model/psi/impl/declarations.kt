@@ -17,7 +17,7 @@ import org.jetbrains.annotations.TestOnly
 /**
  * @return collection of declarations found around the given [offset][offsetInFile] in [file][this]
  */
-fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclaration> {
+internal fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclaration> {
   for ((element: PsiElement, offsetInElement: Int) in elementsAroundOffsetUp(offsetInFile)) {
     ProgressManager.checkCanceled()
     val declarations: Collection<PsiSymbolDeclaration> = declarationsInElement(element, offsetInElement)
@@ -42,7 +42,7 @@ internal fun hasDeclarationsInElement(element: PsiElement, startOffsetInElement:
   return false
 }
 
-fun allDeclarationsInElement(element: PsiElement): Collection<PsiSymbolDeclaration> = declarationsInElement(element, -1)
+internal fun allDeclarationsInElement(element: PsiElement): Collection<PsiSymbolDeclaration> = declarationsInElement(element, -1)
 
 private val declarationProviderEP = ExtensionPointName<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
 

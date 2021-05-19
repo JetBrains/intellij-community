@@ -11,10 +11,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementsAroundOffsetUp
 import com.intellij.psi.util.elementsAtOffsetUp
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * @return collection of [references][PsiSymbolReferenceService.getReferences] to the right of given [offset]
  */
+@Internal
 fun PsiFile.referencesAt(offset: Int): Collection<PsiSymbolReference> {
   for ((element, offsetInElement) in elementsAtOffsetUp(offset)) {
     val references = referencesInElement(element, offsetInElement)
@@ -29,7 +31,7 @@ fun PsiFile.referencesAt(offset: Int): Collection<PsiSymbolReference> {
  * @return collection of [references][PsiSymbolReferenceService.getReferences]
  * and [implicit references][ImplicitReferenceProvider] around given [offset]
  */
-fun PsiFile.allReferencesAround(offset: Int): Collection<PsiSymbolReference> {
+internal fun PsiFile.allReferencesAround(offset: Int): Collection<PsiSymbolReference> {
   for ((element, offsetInElement) in elementsAroundOffsetUp(offset)) {
     val referencesInElement = allReferencesInElement(element, offsetInElement)
     if (referencesInElement.isNotEmpty()) {
