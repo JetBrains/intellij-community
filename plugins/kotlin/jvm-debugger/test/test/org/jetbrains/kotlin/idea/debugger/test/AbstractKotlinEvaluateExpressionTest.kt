@@ -21,6 +21,7 @@ import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompiler
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
@@ -59,6 +60,8 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
     private var isFrameTest = false
 
     private val exceptions = ConcurrentHashMap<String, Throwable>()
+
+    open fun fragmentCompilerBackend() = CodeFragmentCompiler.Companion.FragmentCompilerBackend.JVM
 
     fun doSingleBreakpointTest(path: String) {
         isMultipleBreakpointsTest = false
@@ -168,6 +171,9 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             "KotlinCodeFragmentFactory should be accepted for context element otherwise default evaluator will be called. " +
                     "ContextElement = $text"
         }
+
+
+        evaluationContext.debugProcess.putUserData(CodeFragmentCompiler.KOTLIN_EVALUATOR_FRAGMENT_COMPILER_BACKEND, fragmentCompilerBackend())
 
         contextElement.putCopyableUserData(KotlinCodeFragmentFactory.DEBUG_CONTEXT_FOR_TESTS, debuggerContext)
 
