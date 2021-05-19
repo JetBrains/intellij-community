@@ -6,27 +6,19 @@ listOf(str('a'), str('b'), str('a'), str('c'), str('b')).asSequence()
 .distinct()
 .count()
 distinct
-    before: 1,3,5,6,8
-    after: 2,4,7
+    before: nothing
+    after: nothing
 count
-    before: 2,4,7
+    before: nothing
     after: nothing
 mappings for distinct
   direct:
-    1 -> 2
-    3 -> 4
-    5 -> 2
-    6 -> 7
-    8 -> 4
+    empty
   reverse:
-    1,5 <- 2
-    3,8 <- 4
-    6 <- 7
+    empty
 mappings for count
   direct:
-    2 -> nothing
-    4 -> nothing
-    7 -> nothing
+    empty
   reverse:
     empty
 Disconnected from the target VM
