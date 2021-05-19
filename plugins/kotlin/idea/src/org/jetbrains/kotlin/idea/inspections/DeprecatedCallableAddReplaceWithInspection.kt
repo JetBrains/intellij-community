@@ -53,7 +53,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
     }
 
     override fun applyTo(element: KtCallableDeclaration, project: Project, editor: Editor?) {
-        val replaceWith = element.suggestReplaceWith()!!
+        val replaceWith = element.suggestReplaceWith() ?: return
 
         assert('\n' !in replaceWith.expression && '\r' !in replaceWith.expression) { "Formatted expression text should not contain \\n or \\r" }
 
@@ -181,7 +181,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
         expression = expression.reformatted(true) as KtExpression
 
         return ReplaceWith(
-            expression.text,
+            expression.text.trim(),
             *extractImports(
                 replacementExpression
             ).toTypedArray()
