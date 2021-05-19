@@ -24,6 +24,7 @@ import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.psi.PsiDocumentManager
@@ -32,7 +33,6 @@ import com.intellij.psi.WeighingService
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.ProximityLocation
 import com.intellij.psi.util.proximity.PsiProximityComparator
-import com.intellij.ui.popup.list.ListPopupImpl
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -196,23 +196,20 @@ class KotlinAddImportAction internal constructor(
             return true
         }
 
-        object : ListPopupImpl(project, getVariantSelectionPopup(variantsList)) {
-            private val psiRenderer = DefaultPsiElementCellRenderer()
+        JBPopupFactory.getInstance().createListPopup(project, getVariantSelectionPopup(variantsList)) {
+            val psiRenderer = DefaultPsiElementCellRenderer()
 
-            @Suppress("UNCHECKED_CAST")
-            override fun getListElementRenderer(): ListCellRenderer<AutoImportVariant> {
-                return ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
-                    JPanel(BorderLayout()).apply {
-                        add(
-                            psiRenderer.getListCellRendererComponent(
-                                list,
-                                value.declarationToImport,
-                                index,
-                                isSelected,
-                                cellHasFocus
-                            )
+            ListCellRenderer<AutoImportVariant> { list, value, index, isSelected, cellHasFocus ->
+                JPanel(BorderLayout()).apply {
+                    add(
+                        psiRenderer.getListCellRendererComponent(
+                            list,
+                            value.declarationToImport,
+                            index,
+                            isSelected,
+                            cellHasFocus
                         )
-                    }
+                    )
                 }
             }
         }.showInBestPositionFor(editor)
