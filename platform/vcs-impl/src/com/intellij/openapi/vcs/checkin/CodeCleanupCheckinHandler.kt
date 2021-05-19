@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.actions.PerformFixesTask
 import com.intellij.codeInspection.ex.CleanupProblems
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase
@@ -22,9 +23,9 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.util.SequentialModalProgressTask
 import kotlinx.coroutines.Dispatchers
@@ -43,13 +44,17 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
   private val settings get() = VcsConfiguration.getInstance(project)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    BooleanCommitOption(panel, message("before.checkin.cleanup.code"), true, settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT)
+    ProfileChooser(panel, settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT, 
+                   settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_LOCAL, 
+                   settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE, 
+                   "before.checkin.cleanup.code", 
+                   "before.checkin.cleanup.code.profile")
 
   override fun runCheckinHandlers(runnable: Runnable) {
     if (settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(project)) {
       val filesToProcess = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
       val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextBase
-      val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
+      val profile = getProfile()
 
       globalContext.codeCleanup(AnalysisScope(project, filesToProcess), profile, null, runnable, true)
     }
@@ -75,7 +80,7 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
   private suspend fun findProblems(): CleanupProblems {
     val files = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
     val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextImpl
-    val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
+    val profile = getProfile()
     val scope = AnalysisScope(project, files)
     val indicator = EmptyProgressIndicator()
 
@@ -85,6 +90,17 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
         indicator
       )
     }
+  }
+
+  private fun getProfile(): InspectionProfile {
+    val cleanupProfile = settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE
+    if (cleanupProfile != null) {
+      val profileManager = if (settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_LOCAL) InspectionProfileManager.getInstance()
+      else InspectionProjectProfileManager.getInstance(project)
+      
+      return profileManager.getProfile(cleanupProfile)
+    }
+    return InspectionProjectProfileManager.getInstance(project).currentProfile
   }
 
   private suspend fun applyFixes(cleanupProblems: CleanupProblems) {

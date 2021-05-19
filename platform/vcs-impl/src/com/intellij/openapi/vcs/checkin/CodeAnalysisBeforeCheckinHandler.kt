@@ -52,7 +52,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getWarningIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.PropertyKey
 import javax.swing.JComponent
+import kotlin.reflect.KMutableProperty0
 
 private val LOG = logger<CodeAnalysisBeforeCheckinHandler>()
 
@@ -105,51 +107,12 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
     CodeSmellDetector.getInstance(project).showCodeSmellErrors(problem.codeSmells)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    object : BooleanCommitOption(commitPanel, message("before.checkin.standard.options.check.smells"), true,
-                                 settings::CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
-      override fun getComponent(): JComponent {
-        var profile: InspectionProfileImpl? = null
-        if (settings.CODE_SMELLS_PROFILE != null) {
-          val manager = if (settings.CODE_SMELLS_PROFILE_LOCAL) InspectionProfileManager.getInstance() else InspectionProjectProfileManager.getInstance(project)
-          profile = manager.getProfile(settings.CODE_SMELLS_PROFILE)
-        }
-        setProfileText(profile)
-
-        val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
-          JBPopupMenu.showBelow(sourceLink, ActionPlaces.CODE_INSPECTION, createProfileChooser())
-        }
-        val configureFilterLink = LinkLabel(message("before.checkin.options.check.smells.choose.profile"), null, showFiltersPopup)
-
-        return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
-      }
-
-      private fun setProfileText(profile: InspectionProfileImpl?) {
-        checkBox.text = if (profile == null || profile == InspectionProjectProfileManager.getInstance(project).currentProfile)
-          message("before.checkin.standard.options.check.smells")
-          else message("before.checkin.options.check.smells.profile", profile.displayName)
-      }
-
-      private fun createProfileChooser(): DefaultActionGroup {
-        val group = DefaultActionGroup()
-        group.add(Separator.create(IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.project"))))
-        fillActions(group, InspectionProjectProfileManager.getInstance(project))
-        group.add(Separator.create(IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.ide"))))
-        fillActions(group, InspectionProfileManager.getInstance())
-        return group
-      }
-
-      private fun fillActions(group: DefaultActionGroup, manager: InspectionProfileManager) {
-        for (profile in manager.profiles) {
-          group.add(object : AnAction(profile.displayName) {
-            override fun actionPerformed(e: AnActionEvent) {
-              settings.CODE_SMELLS_PROFILE = profile.name
-              settings.CODE_SMELLS_PROFILE_LOCAL = manager !is InspectionProjectProfileManager
-              setProfileText(profile)
-            }
-          })
-        }
-      }
-    }
+    ProfileChooser(commitPanel, 
+                   settings::CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT, 
+                   settings::CODE_SMELLS_PROFILE_LOCAL, 
+                   settings::CODE_SMELLS_PROFILE, 
+                   "before.checkin.standard.options.check.smells",
+                   "before.checkin.options.check.smells.profile")
 
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     if (!isEnabled()) return ReturnResult.COMMIT
@@ -188,6 +151,62 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
       }
       Messages.NO -> ReturnResult.COMMIT
       else -> ReturnResult.CANCEL
+    }
+  }
+}
+
+class ProfileChooser(commitPanel: CheckinProjectPanel,
+                     property: KMutableProperty0<Boolean>,
+                     private val isLocalProperty : KMutableProperty0<Boolean>,
+                     private val profileProperty : KMutableProperty0<String?>,
+                     private val emptyTitleKey : @PropertyKey(resourceBundle = "messages.VcsBundle") String,
+                     private val profileTitleKey : @PropertyKey(resourceBundle = "messages.VcsBundle") String) 
+  : BooleanCommitOption(commitPanel, message(emptyTitleKey), true, property) {
+
+  private val project = commitPanel.project
+
+  override fun getComponent(): JComponent {
+    var profile: InspectionProfileImpl? = null
+    val profileName = profileProperty.get()
+    if (profileName != null) {
+      val manager = if (isLocalProperty.get()) InspectionProfileManager.getInstance()
+      else InspectionProjectProfileManager.getInstance(project)
+      profile = manager.getProfile(profileName)
+    }
+    setProfileText(profile)
+
+    val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
+      JBPopupMenu.showBelow(sourceLink, ActionPlaces.CODE_INSPECTION, createProfileChooser())
+    }
+    val configureFilterLink = LinkLabel(message("before.checkin.options.check.smells.choose.profile"), null, showFiltersPopup)
+
+    return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
+  }
+
+  private fun setProfileText(profile: InspectionProfileImpl?) {
+    checkBox.text = if (profile == null || profile == InspectionProjectProfileManager.getInstance(project).currentProfile)
+      message(emptyTitleKey)
+    else message(profileTitleKey, profile.displayName)
+  }
+
+  private fun createProfileChooser(): DefaultActionGroup {
+    val group = DefaultActionGroup()
+    group.add(Separator.create(IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.project"))))
+    fillActions(group, InspectionProjectProfileManager.getInstance(project))
+    group.add(Separator.create(IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.ide"))))
+    fillActions(group, InspectionProfileManager.getInstance())
+    return group
+  }
+
+  private fun fillActions(group: DefaultActionGroup, manager: InspectionProfileManager) {
+    for (profile in manager.profiles) {
+      group.add(object : AnAction(profile.displayName) {
+        override fun actionPerformed(e: AnActionEvent) {
+          profileProperty.set(profile.name)
+          isLocalProperty.set(manager !is InspectionProjectProfileManager)
+          setProfileText(profile)
+        }
+      })
     }
   }
 }
