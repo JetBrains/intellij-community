@@ -213,25 +213,13 @@ data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
   override val presentableName: String
     get() = name
 
-  @Transient
-  private var codeCache: Int = 0
-
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ModuleId) return false
-
-    if (this.codeCache != 0 && other.codeCache != 0 && this.codeCache != other.codeCache) return false
-    if (name != other.name) return false
-
-    return true
+    return name == other.name
   }
 
-  override fun hashCode(): Int {
-    if (codeCache != 0) return codeCache
-    val hashCode = name.hashCode()
-    codeCache = hashCode
-    return hashCode
-  }
+  override fun hashCode(): Int  = name.hashCode()
 }
 
 sealed class ModuleDependencyItem : Serializable {
