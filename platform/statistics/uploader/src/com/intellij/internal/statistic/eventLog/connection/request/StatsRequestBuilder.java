@@ -13,6 +13,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
@@ -165,6 +166,7 @@ public class StatsRequestBuilder {
   private HttpRequest newRequest() {
     HttpRequest.Builder builder = HttpRequest.newBuilder().
       setHeader("User-Agent", myUserAgent).
+      timeout(Duration.ofSeconds(10)).
       uri(URI.create(myUrl));
 
     if ("HEAD".equals(myMethod)) {
