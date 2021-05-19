@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.google.common.base.Charsets;
 import com.intellij.openapi.diagnostic.Logger;
 import org.cef.callback.CefCallback;
 import org.cef.handler.CefResourceHandlerAdapter;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 
 /**
  * Serves {@link JBCefBrowser#loadHTML(String, String) requests. See {@link JBCefFileSchemeHandlerFactory}.
@@ -26,7 +26,7 @@ final class JBCefLoadHtmlResourceHandler extends CefResourceHandlerAdapter {
   @NotNull private final InputStream myInputStream;
 
   JBCefLoadHtmlResourceHandler(@NotNull String html) {
-    myInputStream = new ByteArrayInputStream(html.getBytes(Charset.defaultCharset()));
+    myInputStream = new ByteArrayInputStream(html.getBytes(Charsets.UTF_8));
   }
 
   @Override
