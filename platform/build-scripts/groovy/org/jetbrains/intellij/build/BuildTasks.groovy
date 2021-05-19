@@ -21,7 +21,7 @@ abstract class BuildTasks {
   /**
    * Builds archive containing production source roots of the project modules
    */
-  abstract void zipSourcesOfModules(Collection<String> modules, Path targetFile)
+  abstract void zipSourcesOfModules(Collection<String> modules, Path targetFile, boolean includeLibraries = false)
 
   void zipSourcesOfModules(Collection<String> modules, String targetFilePath) {
     zipSourcesOfModules(modules, Path.of(targetFilePath))

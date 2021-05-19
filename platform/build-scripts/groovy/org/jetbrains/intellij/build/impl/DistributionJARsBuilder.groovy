@@ -445,7 +445,7 @@ final class DistributionJARsBuilder {
             false)
         }
       }
-      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, "$buildContext.paths.artifacts/$archiveName")
+      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, Path.of(buildContext.paths.artifacts, archiveName), true)
     }
   }
 
