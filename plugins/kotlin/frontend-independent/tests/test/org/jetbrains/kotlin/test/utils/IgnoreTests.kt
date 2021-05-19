@@ -221,7 +221,7 @@ object IgnoreTests {
 
 
     fun getFirTestFile(originalTestFile: File): File {
-        if (originalTestFile.readText().startsWith(DIRECTIVES.FIR_IDENTICAL)) {
+        if (originalTestFile.readLines().any { it.startsWith(DIRECTIVES.FIR_IDENTICAL) }) {
             return originalTestFile
         }
         val firTestFile = deriveFirTestFile(originalTestFile)
@@ -229,6 +229,13 @@ object IgnoreTests {
             FileUtil.copy(originalTestFile, firTestFile)
         }
         return firTestFile
+    }
+
+    fun getFirTestFileIfFirPassing(originalTestFile: File, passingDirective: String): File {
+        if (!InTextDirectivesUtils.isDirectiveDefined(originalTestFile.readText(), passingDirective)) {
+            return originalTestFile
+        }
+        return getFirTestFile(originalTestFile)
     }
 
 
