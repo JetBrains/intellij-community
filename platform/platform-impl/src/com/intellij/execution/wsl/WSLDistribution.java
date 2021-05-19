@@ -14,10 +14,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,15 +57,15 @@ public class WSLDistribution {
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
+  private @Nullable Integer myVersion;
   private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(this::readHostIp);
   private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(this::readWslIp);
   private final NullableLazyValue<String> myShellPath = NullableLazyValue.createValue(this::readShellPath);
   private final NullableLazyValue<String> myUserHomeProvider = NullableLazyValue.createValue(this::readUserHome);
-  private final @NotNull AtomicNotNullLazyValue<Boolean> isWSL1 =
-    AtomicNotNullLazyValue.createValue(() -> WSLUtil.isWsl1(this) != ThreeState.NO);
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
+    myVersion = dist.myVersion;
   }
 
   WSLDistribution(@NotNull WslDistributionDescriptor descriptor, @Nullable Path executablePath) {
@@ -113,8 +110,18 @@ public class WSLDistribution {
     return null;
   }
 
-  public boolean isWSL1() {
-    return isWSL1.getValue();
+  void setVersion(@Nullable Integer version) {
+    myVersion = version;
+  }
+
+  /**
+   * @return version if it can be determined or -1 instead
+   */
+  public int getVersion() {
+    if (myVersion == null) {
+      myVersion = WSLUtil.getWslVersion(this);
+    }
+    return myVersion;
   }
 
   /**
@@ -299,7 +306,7 @@ public class WSLDistribution {
       commandLine.addParameters("--distribution", getMsId());
       if (options.isExecuteCommandInShell()) {
         // workaround WSL1 problem: https://github.com/microsoft/WSL/issues/4082
-        if (options.getSleepTimeoutSec() > 0 && isWSL1()) {
+        if (options.getSleepTimeoutSec() > 0 && getVersion() == 1) {
           linuxCommandStr += " && sleep " + options.getSleepTimeoutSec();
         }
 
