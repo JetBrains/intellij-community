@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing.worktree
 
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
@@ -19,6 +18,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterInterface
+import org.jetbrains.idea.maven.importing.ModifiableModelsProviderProxy
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProject
@@ -200,7 +200,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
 
   override fun addLibraryDependency(artifact: MavenArtifact,
                                     scope: DependencyScope,
-                                    provider: IdeModifiableModelsProvider,
+                                    provider: ModifiableModelsProviderProxy,
                                     project: MavenProject): LibraryOrderEntry {
     val roots = ArrayList<LibraryRoot>()
 

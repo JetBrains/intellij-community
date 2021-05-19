@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.*;
@@ -57,7 +56,7 @@ public final class MavenModuleImporter {
   private final MavenProjectChanges myMavenProjectChanges;
   private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
-  private final IdeModifiableModelsProvider myModifiableModelsProvider;
+  private final ModifiableModelsProviderProxy myModifiableModelsProvider;
   private MavenRootModelAdapter myRootModelAdapter;
 
   public MavenModuleImporter(Module module,
@@ -66,7 +65,7 @@ public final class MavenModuleImporter {
                              @Nullable MavenProjectChanges changes,
                              Map<MavenProject, String> mavenProjectToModuleName,
                              MavenImportingSettings settings,
-                             IdeModifiableModelsProvider modifiableModelsProvider) {
+                             ModifiableModelsProviderProxy modifiableModelsProvider) {
     myModule = module;
     myMavenTree = mavenTree;
     myMavenProject = mavenProject;
@@ -115,7 +114,7 @@ public final class MavenModuleImporter {
           }
 
           if (importer.getModuleType() == moduleType) {
-            importer.preProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
+            importer.preProcess(myModule, myMavenProject, changes, myModifiableModelsProvider.getModifiableModelsProvider());
           }
         }
         catch (Exception e) {
@@ -144,7 +143,7 @@ public final class MavenModuleImporter {
 
           if (importer.getModuleType() == moduleType) {
             try {
-              importer.process(myModifiableModelsProvider,
+              importer.process(myModifiableModelsProvider.getModifiableModelsProvider(),
                                myModule,
                                myRootModelAdapter,
                                myMavenTree,
@@ -180,7 +179,7 @@ public final class MavenModuleImporter {
           }
 
           if (importer.getModuleType() == moduleType) {
-            importer.postProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
+            importer.postProcess(myModule, myMavenProject, changes, myModifiableModelsProvider.getModifiableModelsProvider());
           }
         } catch(Exception e) {
           MavenLog.LOG.error(e);

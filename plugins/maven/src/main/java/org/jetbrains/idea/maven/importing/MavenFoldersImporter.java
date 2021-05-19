@@ -54,8 +54,7 @@ public class MavenFoldersImporter {
         if (mavenProject == null) continue;
 
         MavenRootModelAdapter a = new MavenRootModelAdapter(
-          new MavenRootModelAdapterLegacyImpl(mavenProject, each,
-                                              ProjectDataManager.getInstance().createModifiableModelsProvider(project)));
+          new MavenRootModelAdapterLegacyImpl(mavenProject, each, new ModifiableModelsProviderProxyImpl(project)));
         new MavenFoldersImporter(mavenProject, settings, a).config(updateTargetFoldersOnly);
 
         ModifiableRootModel model = a.getRootModel();

@@ -30,6 +30,7 @@ import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl;
+import org.jetbrains.idea.maven.importing.ModifiableModelsProviderProxyImpl;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -148,7 +149,7 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
     ApplicationManager.getApplication().runWriteAction(() -> {
       MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                                                                     getModule("project"),
-                                                                                                    ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
+                                                                                                    new ModifiableModelsProviderProxyImpl(myProject)));
       adapter.addSourceFolder(sourceDir.getPath(), JavaSourceRootType.SOURCE);
       adapter.getRootModel().commit();
     });
@@ -179,7 +180,7 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
     ApplicationManager.getApplication().runWriteAction(() -> {
       MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                                 getModule("project"),
-                                                                ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
+                                                                new ModifiableModelsProviderProxyImpl(myProject)));
       adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                               new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
       adapter.getRootModel().commit();

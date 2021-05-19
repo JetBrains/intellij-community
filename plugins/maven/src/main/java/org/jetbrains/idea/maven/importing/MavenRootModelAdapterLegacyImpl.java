@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -15,7 +14,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -47,7 +45,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
   private final Set<String> myOrderEntriesBeforeJdk = new HashSet<>();
 
-  public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final IdeModifiableModelsProvider rootModelsProvider) {
+  public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final ModifiableModelsProviderProxy rootModelsProvider) {
     myMavenProject = p;
     myModuleModel = rootModelsProvider.getModifiableModuleModel();
     myRootModel = rootModelsProvider.getModifiableRootModel(module);
@@ -334,7 +332,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public LibraryOrderEntry addLibraryDependency(MavenArtifact artifact,
                                                 DependencyScope scope,
-                                                IdeModifiableModelsProvider provider,
+                                                ModifiableModelsProviderProxy provider,
                                                 MavenProject project) {
     assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
 
