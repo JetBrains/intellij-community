@@ -3,6 +3,7 @@ package org.jetbrains.uast.analysis
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.IntRef
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiElement
@@ -16,7 +17,8 @@ internal class DependencyGraphBuilder private constructor(
   val dependents: MutableMap<UElement, MutableSet<Dependent>> = mutableMapOf(),
   val dependencies: MutableMap<UElement, MutableSet<Dependency>> = mutableMapOf(),
   private val implicitReceivers: MutableMap<UCallExpression, UThisExpression> = mutableMapOf(),
-  val scopesStates: MutableMap<UExpression, UScopeObjectsState> = mutableMapOf()
+  val scopesStates: MutableMap<UExpression, UScopeObjectsState> = mutableMapOf(),
+  private val inlinedVariables: MutableMap<ULambdaExpression, Pair<String, String>> = mutableMapOf()
 ) : AbstractUastVisitor() {
 
   constructor() : this(currentDepth = 0)
@@ -24,9 +26,9 @@ internal class DependencyGraphBuilder private constructor(
   private val elementsProcessedAsReceiver: MutableSet<UExpression> = mutableSetOf()
 
   private fun createVisitor(scope: LocalScopeContext) =
-    DependencyGraphBuilder(scope, currentDepth, dependents, dependencies, implicitReceivers, scopesStates)
+    DependencyGraphBuilder(scope, currentDepth, dependents, dependencies, implicitReceivers, scopesStates, inlinedVariables)
 
-  inline fun checkedDepthCall(node: UElement, body: () -> Boolean): Boolean {
+  inline fun <T> checkedDepthCall(node: UElement, body: () -> T): T {
     currentDepth++
     try {
       if (currentDepth > maxBuildDepth) {
@@ -43,26 +45,39 @@ internal class DependencyGraphBuilder private constructor(
 
   override fun visitLambdaExpression(node: ULambdaExpression): Boolean = checkedDepthCall(node) {
     ProgressManager.checkCanceled()
-    val child = currentScope.createChild()
+
+    val parent = (node.uastParent as? UCallExpression)
+    val isInlined = parent?.let { KotlinExtensionConstants.isExtensionFunctionToIgnore(it) } == true
+
+    val child = currentScope.createChild(isInlined)
     for (parameter in node.parameters) {
       child.declareFakeVariable(parameter, parameter.name)
       child[parameter.name] = setOf(parameter)
     }
 
-    val parent = (node.uastParent as? UCallExpression)
     parent
       ?.takeIf { KotlinExtensionConstants.isExtensionFunctionToIgnore(it) }
       ?.let { parent.valueArguments.getOrNull(0) as? ULambdaExpression }
       ?.let {
-        it.valueParameters.getOrNull(0)?.name ?: KotlinExtensionConstants.DEFAULT_LAMBDA_ARGUMENT_NAME
+        it.parameters.getOrNull(0)?.name
       }?.let {
-        parent.receiver?.let { receiver ->
-          //child.declareFakeVariable(parent, it)
-          child[it] = setOf(receiver)
+        (parent.receiver ?: parent.getImplicitReceiver())?.let receiverHandle@{ receiver ->
+          val initElements = setOf(receiver)
+          child[it] = initElements
+          updatePotentialEqualReferences(it, initElements, child)
+
+          val inlined = currentScope.declareInlined(receiver) ?: return@receiverHandle
+          child.setPotentialEquality(inlined, it, DependencyEvidence())
+          child[inlined] = initElements
+          inlinedVariables[node] = it to inlined
         }
       }
     node.body.accept(createVisitor(child))
     scopesStates[node] = child.toUScopeObjectsState()
+
+    if (isInlined) {
+      currentScope.updateForInlined(child)
+    }
     return@checkedDepthCall true
   }
 
@@ -96,20 +111,29 @@ internal class DependencyGraphBuilder private constructor(
       argument.takeIf { it == receiver }?.let { elementsProcessedAsReceiver.add(it) }
     }
 
-    node.getImplicitReceiver()?.let { implicitReceiver ->
-      registerDependency(Dependent.CommonDependent(node), Dependency.CommonDependency(implicitReceiver))
-      implicitReceiver.accept(this)
-
-      if (node.uastParent !is UReferenceExpression) {
-        currentScope.setLastPotentialUpdate(THIS_PARAMETER_NAME, node)
-      }
-    }
+    node.getImplicitReceiver()?.accept(this)
 
     return@checkedDepthCall super.visitCallExpression(node)
   }
 
+  override fun afterVisitCallExpression(node: UCallExpression) {
+    node.getImplicitReceiver()?.let { implicitReceiver ->
+      val inlinedCall = inlineCall(node, node.uastParent)
+      if (inlinedCall.isNotEmpty()) {
+        registerDependency(Dependent.CommonDependent(node), Dependency.BranchingDependency(inlinedCall).unwrapIfSingle())
+      }
+      else {
+        registerDependency(Dependent.CommonDependent(node), Dependency.CommonDependency(implicitReceiver))
+        if (node.uastParent !is UReferenceExpression) {
+          currentScope.setLastPotentialUpdate(KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME, node)
+        }
+      }
+    }
+  }
+
   override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean = checkedDepthCall(node) {
     ProgressManager.checkCanceled()
+    node.receiver.accept(this)
     node.selector.accept(this)
     if (node.receiver !in elementsProcessedAsReceiver) {
       registerDependency(Dependent.CommonDependent(node.selector), Dependency.CommonDependency(node.receiver))
@@ -118,9 +142,14 @@ internal class DependencyGraphBuilder private constructor(
       // this element unnecessary now, remove it to avoid memory leaks
       elementsProcessedAsReceiver.remove(node.receiver)
     }
-    registerDependency(Dependent.CommonDependent(node), Dependency.CommonDependency(node.selector))
-    node.receiver.accept(this)
-    if (node.getOutermostQualified() == node) {
+    val inlinedExpressions = inlineCall(node.selector, node.uastParent)
+    if (inlinedExpressions.isNotEmpty()) {
+      registerDependency(Dependent.CommonDependent(node), Dependency.BranchingDependency(inlinedExpressions).unwrapIfSingle())
+    }
+    else {
+      registerDependency(Dependent.CommonDependent(node), Dependency.CommonDependency(node.selector))
+    }
+    if (inlinedExpressions.isEmpty() && node.getOutermostQualified() == node) {
       node.getQualifiedChainWithImplicits().first().referenceOrThisIdentifier?.takeIf { it in currentScope }?.let {
         currentScope.setLastPotentialUpdate(it, node)
       }
@@ -145,31 +174,20 @@ internal class DependencyGraphBuilder private constructor(
     if (node.uastParent is UReferenceExpression && (node.uastParent as? UQualifiedReferenceExpression)?.receiver != node)
       return@checkedDepthCall true
 
-    val referenceInfo = DependencyOfReference.ReferenceInfo(node.identifier, currentScope.getReferencedValues(node.identifier))
-
-    currentScope[node.identifier]?.let {
-      registerDependency(
-        Dependent.CommonDependent(node),
-        Dependency.BranchingDependency(
-          it,
-          referenceInfo
-        ).unwrapIfSingle()
-      )
-    }
-
-    val potentialDependenciesCandidates = currentScope.getLastPotentialUpdate(node.identifier)
-    if (potentialDependenciesCandidates != null) {
-      registerDependency(Dependent.CommonDependent(node),
-                         Dependency.PotentialSideEffectDependency(potentialDependenciesCandidates, referenceInfo))
-    }
+    registerDependenciesForIdentifier(node.identifier, node)
     return@checkedDepthCall super.visitSimpleNameReferenceExpression(node)
   }
 
   override fun visitThisExpression(node: UThisExpression): Boolean = checkedDepthCall(node) {
     ProgressManager.checkCanceled()
+    registerDependenciesForIdentifier(KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME, node)
+    return@checkedDepthCall super.visitThisExpression(node)
+  }
 
-    val referenceInfo = DependencyOfReference.ReferenceInfo(THIS_PARAMETER_NAME, currentScope.getReferencedValues(THIS_PARAMETER_NAME))
-    currentScope[THIS_PARAMETER_NAME]?.let {
+  private fun registerDependenciesForIdentifier(identifier: String, node: UExpression) {
+    val referenceInfo = DependencyOfReference.ReferenceInfo(identifier, currentScope.getReferencedValues(identifier))
+
+    currentScope[identifier]?.let {
       registerDependency(
         Dependent.CommonDependent(node),
         Dependency.BranchingDependency(
@@ -179,23 +197,23 @@ internal class DependencyGraphBuilder private constructor(
       )
     }
 
-    val potentialDependenciesCandidates = currentScope.getLastPotentialUpdate(THIS_PARAMETER_NAME)
+    val potentialDependenciesCandidates = currentScope.getLastPotentialUpdate(identifier)
     if (potentialDependenciesCandidates != null) {
       registerDependency(Dependent.CommonDependent(node),
                          Dependency.PotentialSideEffectDependency(potentialDependenciesCandidates, referenceInfo))
     }
-    return@checkedDepthCall super.visitThisExpression(node)
   }
 
   override fun visitLocalVariable(node: ULocalVariable): Boolean = checkedDepthCall(node) {
     ProgressManager.checkCanceled()
+    node.uastInitializer?.accept(this)
     val name = node.name
     currentScope.declare(node)
     val initializer = node.uastInitializer ?: return@checkedDepthCall super.visitLocalVariable(node)
-    val initElements = initializer.extractBranchesResultAsDependency().elements
+    val initElements = initializer.extractBranchesResultAsDependency().inlineElementsIfPossible().elements
     currentScope[name] = initElements
     updatePotentialEqualReferences(name, initElements)
-    return@checkedDepthCall super.visitLocalVariable(node)
+    return@checkedDepthCall true
   }
 
   override fun visitBinaryExpression(node: UBinaryExpression): Boolean = checkedDepthCall(node) {
@@ -204,7 +222,7 @@ internal class DependencyGraphBuilder private constructor(
         (node.leftOperand is UReferenceExpression || node.leftOperand is UArrayAccessExpression)
     ) {
       node.rightOperand.accept(this)
-      val extractedBranchesResult = node.rightOperand.extractBranchesResultAsDependency()
+      val extractedBranchesResult = node.rightOperand.extractBranchesResultAsDependency().inlineElementsIfPossible()
       (node.leftOperand as? USimpleNameReferenceExpression)
         ?.takeIf { it.identifier in currentScope }
         ?.let {
@@ -213,7 +231,7 @@ internal class DependencyGraphBuilder private constructor(
           currentScope.setLastPotentialUpdateAsAssignment(it.identifier, extractedBranchesResult.elements)
         }
       registerDependency(Dependent.Assigment(node.leftOperand), extractedBranchesResult)
-      return true
+      return@checkedDepthCall true
     }
     registerDependency(
       Dependent.BinaryOperatorDependent(node, isDependentOfLeftOperand = true),
@@ -224,6 +242,18 @@ internal class DependencyGraphBuilder private constructor(
       Dependency.CommonDependency(node.rightOperand)
     )
     return@checkedDepthCall super.visitBinaryExpression(node)
+  }
+
+  private fun Dependency.inlineElementsIfPossible(): Dependency {
+    val newElements = elements.flatMap { element ->
+      when (element) {
+        is UQualifiedReferenceExpression -> inlineCall(element.selector, element.uastParent)
+        is UCallExpression -> inlineCall(element, element.uastParent)
+        else -> listOf()
+      }.takeUnless { it.isEmpty() } ?: listOf(element)
+    }.toSet()
+
+    return Dependency.BranchingDependency(newElements).unwrapIfSingle()
   }
 
   override fun visitIfExpression(node: UIfExpression): Boolean = checkedDepthCall(node) {
@@ -356,34 +386,89 @@ internal class DependencyGraphBuilder private constructor(
   // Ignore field nodes
   override fun visitField(node: UField): Boolean = true
 
-  private fun updatePotentialEqualReferences(name: String, initElements: Set<UElement>) {
-    currentScope.clearPotentialReferences(TEMP_VAR_NAME)
+  private fun inlineCall(selector: UExpression, parent: UElement?): Set<UExpression> {
+    val call = selector as? UCallExpression ?: return emptySet()
+    if (KotlinExtensionConstants.isLetOrRunCall(call)) {
+      val lambda = call.getArgumentForParameter(1) ?: return emptySet()
+      return mutableSetOf<UExpression>().apply {
+        lambda.accept(object : AbstractUastVisitor() {
+          override fun visitReturnExpression(node: UReturnExpression): Boolean {
+            if (node.jumpTarget != lambda) return super.visitReturnExpression(node)
+            node.returnExpression?.let {
+              val inlinedCall = inlineCall(it, node)
+              if (inlinedCall.isNotEmpty()) {
+                addAll(inlinedCall)
+              }
+              else {
+                add(it)
+              }
+            }
+            return super.visitReturnExpression(node)
+          }
+        })
+      }
+    }
+    if (KotlinExtensionConstants.isAlsoOrApplyCall(call)) {
+      val lambda = call.getArgumentForParameter(1) as? ULambdaExpression ?: return emptySet()
+      val paramName = lambda.parameters.singleOrNull()?.name ?: return emptySet()
+      val inlinedVarName = inlinedVariables[lambda]?.takeIf { it.first == paramName }?.second ?: return emptySet()
+      val scopesState = scopesStates[lambda] ?: return emptySet()
+      val candidates = scopesState.lastVariablesUpdates[paramName] ?: return emptySet()
+      val values = scopesState.variableToValueMarks[paramName] ?: return emptySet()
+      val fakeReferenceExpression = UFakeSimpleNameReferenceExpression(parent, inlinedVarName, inlinedVarName)
+      currentScope[inlinedVarName]?.let {
+        registerDependency(
+          Dependent.CommonDependent(fakeReferenceExpression),
+          Dependency.BranchingDependency(it).unwrapIfSingle()
+        )
+      }
+      registerDependency(
+        Dependent.CommonDependent(fakeReferenceExpression),
+        Dependency.PotentialSideEffectDependency(candidates, DependencyOfReference.ReferenceInfo(paramName, values))
+      )
+      return setOf(fakeReferenceExpression)
+    }
+    return emptySet()
+  }
 
-    fun identToReferenceInfo(identifier: String): Pair<String, UReferenceExpression?>? {
-      return identifier.takeIf { id -> id in this.currentScope }?.let { id -> id to null } // simple reference => same references
+  private fun updatePotentialEqualReferences(name: String, initElements: Set<UElement>, scope: LocalScopeContext = currentScope) {
+    scope.clearPotentialReferences(TEMP_VAR_NAME)
+
+    fun getInlined(element: UElement, id: String): String? =
+      element.getParentOfType<ULambdaExpression>()
+        ?.let { inlinedVariables[it] }
+        ?.takeIf { it.first == id }
+        ?.second
+
+    fun identToReferenceInfo(element: UElement, identifier: String): Pair<String, UReferenceExpression?>? {
+      return (identifier.takeIf { id -> id in scope } ?: getInlined(element,
+                                                                    identifier))?.let { id -> id to null } // simple reference => same references
     }
 
     val potentialEqualReferences = initElements
       .mapNotNull {
         when (it) {
-          is UQualifiedReferenceExpression -> it.getQualifiedChainWithImplicits().firstOrNull()?.referenceOrThisIdentifier
-            ?.takeIf { id -> id in currentScope }
-            ?.let { id -> id to it }
-          is USimpleNameReferenceExpression -> identToReferenceInfo(it.identifier)
-          is UThisExpression -> identToReferenceInfo(THIS_PARAMETER_NAME)
-          is UCallExpression -> it.getImplicitReceiver()?.takeIf { THIS_PARAMETER_NAME in currentScope }
-            ?.let { implicitThis ->
-              THIS_PARAMETER_NAME to UFakeQualifiedReferenceExpression(implicitThis, it, it.uastParent)
-            }
+          is UQualifiedReferenceExpression -> it.getQualifiedChainWithImplicits().firstOrNull()?.referenceOrThisIdentifier?.let { identifier ->
+            (identifier.takeIf { id -> id in scope } ?: getInlined(it, identifier))?.let { id -> id to it }
+          }
+          is USimpleNameReferenceExpression -> identToReferenceInfo(it, it.identifier)
+          is UThisExpression -> identToReferenceInfo(it, KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME)
+          is UCallExpression -> {
+            it.getImplicitReceiver()
+              ?.takeIf { KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME in scope }
+              ?.let { implicitThis ->
+                KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME to UFakeQualifiedReferenceExpression(implicitThis, it, it.uastParent)
+              }
+          }
           else -> null
         }
       }
     for ((potentialEqualReference, evidence) in potentialEqualReferences) {
-      currentScope.setPotentialEquality(TEMP_VAR_NAME, potentialEqualReference, DependencyEvidence(evidence))
+      scope.setPotentialEquality(TEMP_VAR_NAME, potentialEqualReference, DependencyEvidence(evidence))
     }
-    currentScope.clearPotentialReferences(name)
-    currentScope.setPotentialEquality(name, TEMP_VAR_NAME, DependencyEvidence())
-    currentScope.clearPotentialReferences(TEMP_VAR_NAME)
+    scope.clearPotentialReferences(name)
+    scope.setPotentialEquality(name, TEMP_VAR_NAME, DependencyEvidence())
+    scope.clearPotentialReferences(TEMP_VAR_NAME)
   }
 
   private fun registerDependency(dependent: Dependent, dependency: Dependency) {
@@ -396,7 +481,10 @@ internal class DependencyGraphBuilder private constructor(
   }
 
   private fun UCallExpression.getImplicitReceiver(): UExpression? {
-    return if (hasImplicitReceiver(this) && THIS_PARAMETER_NAME in currentScope) {
+    return if (
+      hasImplicitReceiver(this) &&
+      (KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME in currentScope || this in implicitReceivers)
+    ) {
       implicitReceivers.getOrPut(this) { UFakeThisExpression(uastParent) }
     }
     else {
@@ -426,7 +514,13 @@ private typealias SideEffectChangeCandidate = Dependency.PotentialSideEffectDepe
 private typealias DependencyEvidence = Dependency.PotentialSideEffectDependency.DependencyEvidence
 private typealias CandidatesTree = Dependency.PotentialSideEffectDependency.CandidatesTree
 
-private class LocalScopeContext(private val parent: LocalScopeContext?) {
+private const val INLINED_PREFIX = "inlined/"
+
+private class LocalScopeContext(
+  private val parent: LocalScopeContext?,
+  private val inlinedId: IntRef = IntRef(),
+  private val isInlined: Boolean = false
+) {
   private val definedInScopeVariables = mutableSetOf<UElement>()
   private val definedInScopeVariablesNames = mutableSetOf<String>()
 
@@ -464,11 +558,21 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
     lastDeclarationOf[name] = element
   }
 
+  fun declareInlined(element: UElement): String? {
+    if (!isInlined) {
+      val name = "$INLINED_PREFIX${inlinedId.get()}"
+      inlinedId.inc()
+      declareFakeVariable(element, name)
+      return name
+    }
+    return parent?.declareInlined(element)
+  }
+
   fun getDeclaration(variable: String): UElement? = lastDeclarationOf[variable] ?: parent?.getDeclaration(variable)
 
   operator fun contains(variable: String): Boolean = variable in definedInScopeVariablesNames || parent?.let { variable in it } == true
 
-  fun createChild() = LocalScopeContext(this)
+  fun createChild(isInlined: Boolean = false) = LocalScopeContext(this, inlinedId, isInlined)
 
   fun setLastPotentialUpdate(variable: String, updateElement: UElement) {
     lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(
@@ -550,9 +654,12 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
   }
 
   fun update(other: LocalScopeContext) {
-    for (variable in variables) {
-      other[variable]?.let { this[variable] = it }
-    }
+    mergeWith(other)
+  }
+
+  fun updateForInlined(other: LocalScopeContext) {
+    update(other)
+    referencesModel.updateForReferences(other.referencesModel, variablesNames.filter { it.startsWith(INLINED_PREFIX) })
   }
 
   fun getReferencedValues(identifier: String): Collection<UValueMark> {
@@ -638,8 +745,33 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
     fun getAllTargetsForReference(reference: String): Collection<UValueMark> {
       return getAllTargets(reference).keys
     }
-  }
 
+    private val references: Sequence<String>
+      get() = generateSequence(this) { it.parent }
+        .flatMap { it.referencesTargets.keys }
+        .distinct()
+
+    // For now works only for inlined variables
+    fun updateForReferences(other: ReferencesModel, references: List<String>) {
+      check(other.parent == this)
+
+      val newTargets = mutableSetOf<UValueMark>()
+      for (reference in references) {
+        other.referencesTargets[reference]?.let {
+          clearReference(reference)
+          referencesTargets[reference] = it
+          newTargets += it.keys
+        }
+      }
+
+      val ownReferences = this.references.toSet()
+      for (target in newTargets) {
+        other.targetsReferences[target]?.filterKeys { it in ownReferences }?.takeUnless { it.isEmpty() }?.let {
+          targetsReferences[target] = it.toMutableMap()
+        }
+      }
+    }
+  }
 }
 
 private fun combineEvidences(ownEvidence: DependencyEvidence, otherEvidence: DependencyEvidence): DependencyEvidence =
@@ -649,15 +781,13 @@ private const val UAST_KT_ELVIS_NAME = "elvis"
 
 private const val TEMP_VAR_NAME = "@$,()"
 
-private const val THIS_PARAMETER_NAME = "<this>"
-
 private fun hasImplicitReceiver(callExpression: UCallExpression): Boolean =
   callExpression.receiver == null && callExpression.receiverType != null
 
 private val UExpression?.referenceOrThisIdentifier: String?
   get() = when (this) {
     is USimpleNameReferenceExpression -> identifier
-    is UThisExpression -> THIS_PARAMETER_NAME
+    is UThisExpression -> KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME
     else -> null
   }
 
@@ -692,3 +822,9 @@ private interface UFakeExpression : UExpression, UResolvable {
 
   override fun resolve(): PsiElement? = null
 }
+
+private class UFakeSimpleNameReferenceExpression(
+  override val uastParent: UElement?,
+  override val resolvedName: String?,
+  override val identifier: String
+) : USimpleNameReferenceExpression, UFakeExpression

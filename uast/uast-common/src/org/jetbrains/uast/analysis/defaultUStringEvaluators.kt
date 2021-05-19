@@ -17,10 +17,7 @@ object UStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator
   override val dslBuildMethodDescriptor: UStringEvaluator.DslMethodDescriptor<PartiallyKnownString?>
     get() = UStringEvaluator.DslMethodDescriptor(
       PsiJavaPatterns.psiMethod().withName("buildString").definedInClass("kotlin.text.StringsKt__StringBuilderKt"),
-      UStringEvaluator.DslLambdaDescriptor(
-        UStringEvaluator.LambdaPlace.Last,
-        0
-      ) { PartiallyKnownString("") }
+      UStringEvaluator.DslLambdaDescriptor(UStringEvaluator.LambdaPlace.Last, 0) { PartiallyKnownString(listOf()) }
     )
 
   override val allowSideEffects: Boolean
@@ -35,30 +32,31 @@ object UStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator
 
   override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration, Boolean) -> PartiallyKnownString?>
     get() = mapOf(
-      PsiJavaPatterns.psiMethod().withName("append").definedInClass(
-        "java.lang.StringBuilder") to { call, currentResult, stringEvaluator, config, isStrict ->
-        val entries = currentResult?.segments?.toMutableList()
-                      ?: mutableListOf<StringEntry>(StringEntry.Unknown(call.sourcePsi!!, TextRange(0, 1)))
-        val argument = call.getArgumentForParameter(0)?.let { argument -> stringEvaluator.calculateValue(argument, config) }
-        if (argument != null) {
-          if (isStrict) {
-            entries.addAll(argument.segments)
+      PsiJavaPatterns.psiMethod().withName("append").definedInClass("java.lang.StringBuilder") to
+        { call, currentResult, stringEvaluator, config, isStrict ->
+          val entries = currentResult?.segments?.toMutableList()
+                        ?: mutableListOf<StringEntry>(StringEntry.Unknown(call.sourcePsi!!, TextRange(0, 1)))
+          val argument = call.getArgumentForParameter(0)?.let { argument -> stringEvaluator.calculateValue(argument, config) }
+          if (argument != null) {
+            if (isStrict) {
+              entries.addAll(argument.segments)
+            }
+            else {
+              entries.add(StringEntry.Unknown(
+                call.sourcePsi!!,
+                TextRange(0, call.sourcePsi!!.textLength),
+                possibleValues = listOf(PartiallyKnownString(argument.segments), PartiallyKnownString(listOf()))
+              ))
+            }
           }
-          else {
-            entries.add(StringEntry.Unknown(
-              call.sourcePsi!!,
-              TextRange(0, call.sourcePsi!!.textLength),
-              possibleValues = listOf(PartiallyKnownString(argument.segments), PartiallyKnownString(""))
-            ))
-          }
-        }
 
-        PartiallyKnownString(entries)
-      },
-      PsiJavaPatterns.psiMethod().definedInClass("java.lang.StringBuilder").constructor(true) to { call, _, stringEvaluator, config, _ ->
-        call.getArgumentForParameter(0)?.let { argument ->
-          stringEvaluator.calculateValue(argument, config)
+          PartiallyKnownString(entries)
+        },
+      PsiJavaPatterns.psiMethod().definedInClass("java.lang.StringBuilder").constructor(true) to
+        { call, _, stringEvaluator, config, _ ->
+          call.getArgumentForParameter(0)?.let { argument ->
+            stringEvaluator.calculateValue(argument, config)
+          } ?: PartiallyKnownString(listOf())
         }
-      }
     )
 }
