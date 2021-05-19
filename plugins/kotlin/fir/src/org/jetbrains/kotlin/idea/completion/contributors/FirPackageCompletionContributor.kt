@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.idea.completion.context.FirNameReferenceRawPositionC
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtPackageSymbol
+import org.jetbrains.kotlin.idea.isExcludedFromAutoImport
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
 import org.jetbrains.kotlin.name.FqName
@@ -27,6 +29,9 @@ internal class FirPackageCompletionContributor(
         } ?: return
         rootSymbol.getPackageScope()
             .getPackageSymbols(scopeNameFilter)
+            .filterNot { packageName ->
+                packageName.fqName.isExcludedFromAutoImport(project, originalKtFile, originalKtFile.languageVersionSettings)
+            }
             .forEach { packageSymbol ->
                 result.addElement(lookupElementFactory.createPackageLookupElement(packageSymbol.fqName))
             }
