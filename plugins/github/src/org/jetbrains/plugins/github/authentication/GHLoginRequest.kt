@@ -24,7 +24,6 @@ internal class GHLoginRequest(
   val isLoginEditable: Boolean = true,
   val isCheckLoginUnique: Boolean = false,
 
-  val password: String? = null,
   val token: String? = null
 )
 
