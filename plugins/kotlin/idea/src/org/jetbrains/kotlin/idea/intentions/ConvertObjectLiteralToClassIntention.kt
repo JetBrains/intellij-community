@@ -73,15 +73,15 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
             newClass.add(it)
         }
 
-        project.executeWriteCommand(text) {
-            ExtractionEngine(
-                object : ExtractionEngineHelper(text) {
-                    override fun configureAndRun(
-                        project: Project,
-                        editor: Editor,
-                        descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
-                        onFinish: (ExtractionResult) -> Unit
-                    ) {
+        ExtractionEngine(
+            object : ExtractionEngineHelper(text) {
+                override fun configureAndRun(
+                    project: Project,
+                    editor: Editor,
+                    descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
+                    onFinish: (ExtractionResult) -> Unit
+                ) {
+                    project.executeWriteCommand(text) {
                         val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = listOf(className))
                         doRefactor(
                             ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT),
@@ -89,38 +89,39 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
                         )
                     }
                 }
-            ).run(editor, ExtractionData(element.containingKtFile, element.toRange(), targetSibling)) { extractionResult ->
-                val functionDeclaration = extractionResult.declaration as KtFunction
-                if (functionDeclaration.valueParameters.isNotEmpty()) {
-                    val valKeyword = psiFactory.createValKeyword()
-                    newClass.createPrimaryConstructorParameterListIfAbsent()
-                        .replaced(functionDeclaration.valueParameterList!!)
-                        .parameters
-                        .forEach {
-                            it.addAfter(valKeyword, null)
-                            it.addModifier(KtTokens.PRIVATE_KEYWORD)
-                        }
-                }
-
-                val introducedClass = functionDeclaration.replaced(newClass).apply {
-                    if (hasMemberReference && containingClass == (parent.parent as? KtClass)) addModifier(KtTokens.INNER_KEYWORD)
-                    primaryConstructor?.reformatted()
-                }.let { CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(it) }
-
-                val file = introducedClass.containingFile
-
-                val template = TemplateBuilderImpl(file).let { builder ->
-                    builder.replaceElement(introducedClass.nameIdentifier!!, NEW_CLASS_NAME, ChooseStringExpression(classNames), true)
-                    for (psiReference in ReferencesSearch.search(introducedClass, LocalSearchScope(file), false)) {
-                        builder.replaceElement(psiReference.element, USAGE_VARIABLE_NAME, NEW_CLASS_NAME, false)
-                    }
-                    builder.buildInlineTemplate()
-                }
-
-                editor.caretModel.moveToOffset(file.startOffset)
-                TemplateManager.getInstance(project).startTemplate(editor, template)
             }
+        ).run(editor, ExtractionData(element.containingKtFile, element.toRange(), targetSibling)) { extractionResult ->
+            val functionDeclaration = extractionResult.declaration as KtFunction
+            if (functionDeclaration.valueParameters.isNotEmpty()) {
+                val valKeyword = psiFactory.createValKeyword()
+                newClass.createPrimaryConstructorParameterListIfAbsent()
+                    .replaced(functionDeclaration.valueParameterList!!)
+                    .parameters
+                    .forEach {
+                        it.addAfter(valKeyword, null)
+                        it.addModifier(KtTokens.PRIVATE_KEYWORD)
+                    }
+            }
+
+            val introducedClass = functionDeclaration.replaced(newClass).apply {
+                if (hasMemberReference && containingClass == (parent.parent as? KtClass)) addModifier(KtTokens.INNER_KEYWORD)
+                primaryConstructor?.reformatted()
+            }.let { CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(it) }
+
+            val file = introducedClass.containingFile
+
+            val template = TemplateBuilderImpl(file).let { builder ->
+                builder.replaceElement(introducedClass.nameIdentifier!!, NEW_CLASS_NAME, ChooseStringExpression(classNames), true)
+                for (psiReference in ReferencesSearch.search(introducedClass, LocalSearchScope(file), false)) {
+                    builder.replaceElement(psiReference.element, USAGE_VARIABLE_NAME, NEW_CLASS_NAME, false)
+                }
+                builder.buildInlineTemplate()
+            }
+
+            editor.caretModel.moveToOffset(file.startOffset)
+            TemplateManager.getInstance(project).startTemplate(editor, template)
         }
+        
     }
 
     override fun applyTo(element: KtObjectLiteralExpression, editor: Editor?) {
