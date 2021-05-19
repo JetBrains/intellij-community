@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.internal.statistic.utils.StatisticsUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
@@ -190,13 +191,8 @@ public class ActionsCollectorImpl extends ActionsCollector {
       List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
       data.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
     }
-    if (durationMillis >= 0) {
-      // In order to successfully merge fast subsequent actions, we use 0ms as the duration value for all actions faster than 50ms
-      if (durationMillis < 50) {
-        durationMillis = 0;
-      }
-      data.add(EventFields.DurationMs.with(durationMillis));
-    }
+
+    data.add(EventFields.DurationMs.with(StatisticsUtil.INSTANCE.roundDuration(durationMillis)));
     recordActionInvoked(project, action, event, data);
   }
 
