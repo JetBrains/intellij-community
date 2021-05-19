@@ -62,38 +62,13 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              elements: List<SearchEverywhereFoundElementInfo>,
                              tabId: String,
                              seSessionId: Int) {
-    val data = hashMapOf<String, Any>()
-    data[SESSION_ID_LOG_DATA_KEY] = seSessionId
-    if (indexes.isNotEmpty()) {
-      data[SELECTED_INDEXES_DATA_KEY] = indexes.map { it.toString() }
-    }
-    data[CLOSE_POPUP_KEY] = closePopup
-    data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
-    data[TYPED_SYMBOL_KEYS] = symbolsTyped
-    data[TYPED_BACKSPACES_DATA_KEY] = backspacesTyped
-    data[TOTAL_SYMBOLS_AMOUNT_DATA_KEY] = symbolsInQuery
-    data[SE_TAB_ID_KEY] = tabId
-
-    val globalTotalStats = globalSummary.totalSummary
-    val localTotalStats = localSummary.getTotalStats()
-    data[LOCAL_MAX_USAGE_COUNT_KEY] = localTotalStats.maxUsageCount
-    data[LOCAL_MIN_USAGE_COUNT_KEY] = localTotalStats.minUsageCount
-    data[GLOBAL_MAX_USAGE_COUNT_KEY] = globalTotalStats.maxUsageCount
-    data[GLOBAL_MIN_USAGE_COUNT_KEY] = globalTotalStats.minUsageCount
-
-    myProject?.let {
-      // report tool windows' ids
-      val twm = ToolWindowManager.getInstance(it)
-      ApplicationManager.getApplication().invokeAndWait {
-        twm.lastActiveToolWindowId?.let { id -> data[LAST_ACTIVE_TOOL_WINDOW_KEY] = id }
-      }
-
-      // report types of open files in editor: fileType -> amount
-      val fem = FileEditorManager.getInstance(it)
-      data[OPEN_FILE_TYPES_KEY] = fem.openFiles.map { file -> file.fileType.name }.distinct()
-    }
-
+    val data = mutableMapOf<String, Any>()
+    // put common data
+    data.putAll(buildCommonFeaturesMap(seSessionId, indexes, closePopup, elements.size, symbolsTyped,
+                                       backspacesTyped, symbolsInQuery, tabId, myProject))
     val currentTime = System.currentTimeMillis()
+    
+    // put data for every item
     data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
       getListItemsNames(it, currentTime).toMap()
     }
@@ -128,10 +103,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     if (element !is MatchedValue) { // not an action/option
       return ItemInfo(null, contributorId, emptyMap())
     }
-    if (element.value !is GotoActionModel.ActionWrapper) { // an option (OptionDescriptor)
-      return ItemInfo(null, contributorId, hashMapOf(IS_ACTION_DATA_KEY to false))
-    }
-    return fillActionItemInfo(item.getPriority(), currentTime, element.value, contributorId)
+    return fillActionItemInfo(item.getPriority(), currentTime, element, contributorId)
   }
 
   data class ItemInfo(val id: String?, val contributorId: String, val additionalData: Map<String, Any>) {
@@ -208,28 +180,32 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     @JvmStatic
     fun fillActionItemInfo(priority: Int,
                            currentTime: Long,
-                           element: GotoActionModel.ActionWrapper,
+                           matchedValue: MatchedValue,
                            contributorId: String): ItemInfo {
-      val action = element.action
+      val wrapper = matchedValue.value as? GotoActionModel.ActionWrapper
+      if (wrapper == null) { // an option (OptionDescriptor)
+        return ItemInfo(null, contributorId, hashMapOf(IS_ACTION_DATA_KEY to false))
+      }
+      val action = wrapper.action
       val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
   
       val data = mutableMapOf(
         IS_ACTION_DATA_KEY to true,
         PRIORITY_DATA_KEY to priority,
         IS_TOGGLE_ACTION_DATA_KEY to (action is ToggleAction),
-        MATCH_MODE_KEY to element.mode,
-        IS_GROUP_KEY to element.isGroupAction
+        MATCH_MODE_KEY to wrapper.mode,
+        IS_GROUP_KEY to wrapper.isGroupAction
       )
   
-      element.actionText?.let {
+      wrapper.actionText?.let {
         data[TEXT_LENGTH_KEY] = withUpperBound(it.length)
       }
   
-      element.groupName?.let {
+      wrapper.groupName?.let {
         data[GROUP_LENGTH_KEY] = withUpperBound(it.length)
       }
   
-      val presentation = if (element.hasPresentation()) element.presentation else action.templatePresentation
+      val presentation = if (wrapper.hasPresentation()) wrapper.presentation else action.templatePresentation
       data[HAS_ICON_KEY] = presentation.icon != null
       data[IS_ENABLED_KEY] = presentation.isEnabled
       data[WEIGHT_KEY] = presentation.weight
@@ -239,7 +215,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         data[TIME_SINCE_LAST_USAGE_DATA_KEY] = currentTime - it.lastUsedTimestamp
         data[LOCAL_USAGE_COUNT_DATA_KEY] = it.usageCount
       }
-  
+
       val globalSummary = globalSummary.getActionStatistics(actionId)
       globalSummary?.let {
         data[GLOBAL_USAGE_COUNT_KEY] = it.usagesCount
@@ -247,6 +223,42 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         data[USAGES_PER_USER_RATIO_DATA_KEY] = roundDouble(it.usagesPerUserRatio)
       }
       return ItemInfo(actionId, contributorId, data)
+    }
+
+    fun buildCommonFeaturesMap(seSessionId: Int, indexes: IntArray, closePopup: Boolean, size: Int, symbolsTyped: Int, backspacesTyped: Int,
+                               symbolsInQuery: Int, tabId: String, project: Project?): Map<String, Any> {
+      val data = hashMapOf<String, Any>()
+      data[SESSION_ID_LOG_DATA_KEY] = seSessionId
+      if (indexes.isNotEmpty()) {
+        data[SELECTED_INDEXES_DATA_KEY] = indexes.map { it.toString() }
+      }
+      data[CLOSE_POPUP_KEY] = closePopup
+      if (size != -1) data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = size
+      if (symbolsTyped != -1) data[TYPED_SYMBOL_KEYS] = symbolsTyped
+      if (backspacesTyped != -1) data[TYPED_BACKSPACES_DATA_KEY] = backspacesTyped
+      if(symbolsInQuery != -1) data[TOTAL_SYMBOLS_AMOUNT_DATA_KEY] = symbolsInQuery
+      data[SE_TAB_ID_KEY] = tabId
+
+      val globalTotalStats = globalSummary.totalSummary
+      val localTotalStats = localSummary.getTotalStats()
+      data[LOCAL_MAX_USAGE_COUNT_KEY] = localTotalStats.maxUsageCount
+      data[LOCAL_MIN_USAGE_COUNT_KEY] = localTotalStats.minUsageCount
+      data[GLOBAL_MAX_USAGE_COUNT_KEY] = globalTotalStats.maxUsageCount
+      data[GLOBAL_MIN_USAGE_COUNT_KEY] = globalTotalStats.minUsageCount
+
+      project?.let {
+        // report tool windows' ids
+        val twm = ToolWindowManager.getInstance(it)
+        ApplicationManager.getApplication().invokeAndWait {
+          twm.lastActiveToolWindowId?.let { id -> data[LAST_ACTIVE_TOOL_WINDOW_KEY] = id }
+        }
+
+        // report types of open files in editor: fileType -> amount
+        val fem = FileEditorManager.getInstance(it)
+        data[OPEN_FILE_TYPES_KEY] = fem.openFiles.map { file -> file.fileType.name }.distinct()
+      }
+
+      return data
     }
   }
 }

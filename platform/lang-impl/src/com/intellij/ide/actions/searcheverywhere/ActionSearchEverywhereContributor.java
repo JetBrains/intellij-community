@@ -111,8 +111,8 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
       }
 
       final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
-      if (Registry.is("mlse.enable.ranking") /*&& TODO flag should be here &&*/ && isActionWrapper) {
-        descriptor = getMLWeightedItemDescriptor(element, this.getSearchProviderId());
+      if (Registry.is("mlse.enable.ranking") /*&& TODO flag should be here */) {
+        descriptor = getMLWeightedItemDescriptor(element, this.getSearchProviderId(), myProject);
       }
       else {
         descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
@@ -233,10 +233,10 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   }
   
   private static FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull GotoActionModel.MatchedValue element,
-                                                                                        @NotNull String contributorId) {
-    final GotoActionModel.ActionWrapper wrapper = (GotoActionModel.ActionWrapper)element.value;
+                                                                                        @NotNull String contributorId, @Nullable Project project) {
     final SearchEverywhereSessionService service = ApplicationManager.getApplication().getService(SearchEverywhereSessionService.class);
-    final double mlWeight = SearchEverywhereMLCache.getCache(service.getCurrentSessionId()).getMLWeight(wrapper, contributorId);
+    final double mlWeight = SearchEverywhereMLCache.getCache(service.getCurrentSessionId())
+      .getMLWeight(element, contributorId, project, "Actions" /*TODO Actions or All depending on the flag*/);
     return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
   }
 
