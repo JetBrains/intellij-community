@@ -83,15 +83,9 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     }
   }
 
-  private @NotNull List<SettingsEditorFragment<Settings, ?>> getFragments() {
-    List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(myFragments);
-    fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getPriority));
-    return fragments;
-  }
-
   @Override
   public @NotNull Collection<SettingsEditor<Settings>> getEditors() {
-    return new ArrayList<>(getFragments());
+    return new ArrayList<>(myFragments);
   }
 
   @Override
@@ -100,9 +94,10 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
       myPanel.setBorder(JBUI.Borders.emptyLeft(5));
       addLine(new JSeparator());
     }
-    List<SettingsEditorFragment<Settings, ?>> fragments = getFragments();
+    List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(myFragments);
     List<SettingsEditorFragment<Settings, ?>> subGroups = ContainerUtil.filter(fragments, fragment -> !fragment.getChildren().isEmpty());
     fragments.removeAll(subGroups);
+    fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getPriority));
     buildBeforeRun(fragments);
     addLine(buildHeader(fragments));
     myGroupInset = myMain == null ? 0 : GROUP_INSET;
@@ -281,7 +276,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   }
 
   private DefaultActionGroup buildGroup(Ref<? super JComponent> lastSelected) {
-    return buildGroup(ContainerUtil.filter(getFragments(), fragment -> fragment.getName() != null), lastSelected);
+    return buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null), lastSelected);
   }
 
   private List<SettingsEditorFragment<Settings, ?>> restoreGroups(List<? extends SettingsEditorFragment<Settings, ?>> fragments) {
