@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.envTest.config
 
+import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT
+import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT_REVISION
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
 import com.intellij.internal.statistic.envTest.upload.RECORDER_ID
 import com.intellij.internal.statistic.envTest.upload.TestEventLogApplicationInfo
-import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService.MACHINE_ID_SALT
-import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService.MACHINE_ID_SALT_REVISION
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
 import junit.framework.TestCase
 import java.util.concurrent.TimeUnit
