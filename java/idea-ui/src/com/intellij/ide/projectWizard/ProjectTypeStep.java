@@ -44,7 +44,9 @@ import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
@@ -98,6 +100,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private JPanel myHeaderPanel;
   private JBLabel myFrameworksLabel;
   private JPanel mySettingsPanel;
+  private JPanel myProjectTypePanel;
   @Nullable
   private ModuleWizardStep mySettingsStep;
   private String myCurrentCard;
@@ -111,6 +114,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     final List<TemplatesGroup> groups = fillTemplatesMap(context);
     LOG.debug("groups=" + groups);
 
+    myProjectTypeList = new JBList<>();
     myProjectTypeList.setModel(new CollectionListModel<>(groups));
     myProjectTypeList.setSelectionModel(new SingleSelectionModel());
     myProjectTypeList.addListSelectionListener(__ -> updateSelection());
@@ -118,6 +122,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       GridLayoutManager layout = (GridLayoutManager)myPanel.getLayout();
       layout.setHGap(0);
       myPanel.setLayout(layout);
+
+      ListWithFilter<TemplatesGroup> listWithFilter = (ListWithFilter<TemplatesGroup>)ListWithFilter.wrap(
+        myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName());
+      listWithFilter.setSearchAlwaysVisible(true);
+      listWithFilter.setMinimumSize(JBUI.size(40, -1));
+      myProjectTypePanel.add(listWithFilter);
+
       mySettingsPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
     }
     myProjectTypeList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<TemplatesGroup>() {
@@ -185,13 +196,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
         };
       }
     });
-
-    new ListSpeedSearch(myProjectTypeList) {
-      @Override
-      protected String getElementText(Object element) {
-        return ((TemplatesGroup)element).getName();
-      }
-    };
 
     myModulesProvider = modulesProvider;
     Project project = context.getProject();
@@ -543,12 +547,16 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return myCurrentCard == TEMPLATES_CARD ? myTemplatesList.getSelectedTemplate() : null;
   }
 
+  @Nullable
   private ModuleBuilder getSelectedBuilder() {
     ProjectTemplate template = getSelectedTemplate();
     if (template != null) {
       return myBuilders.get(template);
     }
-    return getSelectedGroup().getModuleBuilder();
+    TemplatesGroup group = getSelectedGroup();
+    if (group == null) return null;
+
+    return group.getModuleBuilder();
   }
 
   public Collection<ProjectTemplate> getAvailableTemplates() {
@@ -810,6 +818,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   private void reportStatistics(String eventId) {
     TemplatesGroup group = myProjectTypeList.getSelectedValue();
+    if (group == null) return;
+
     FeatureUsageData data = new FeatureUsageData();
     data.addData("projectType", group.getId());
     data.addPluginInfo(group.getPluginInfo());
