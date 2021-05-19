@@ -88,7 +88,7 @@ public class VSCBundle extends Bundle {
               if (grammar instanceof Map) {
                 Object path = ((Map)grammar).get("path");
                 Object language = ((Map)grammar).get("language");
-                Collection<String> extensions = idToExtension.get(language);
+                Collection<String> extensions = idToExtension.getOrDefault(language, emptyList());
                 if (path instanceof String) {
                   grammarExtensions.put((String)path, extensions);
                 }
@@ -104,7 +104,7 @@ public class VSCBundle extends Bundle {
                     if (embeddedScope instanceof String && embeddedLanguage instanceof String) {
                       String embeddedConfig = idToConfig.get(embeddedLanguage);
                       if (embeddedConfig != null) {
-                        scopeConfig.computeIfAbsent(config, (key) -> new ArrayList<>()).add((String)embeddedScope);
+                        scopeConfig.computeIfAbsent(embeddedConfig, (key) -> new ArrayList<>()).add((String)embeddedScope);
                       }
                     }
                   }

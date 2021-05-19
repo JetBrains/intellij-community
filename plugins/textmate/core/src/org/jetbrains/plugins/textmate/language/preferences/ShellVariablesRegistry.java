@@ -45,7 +45,11 @@ public class ShellVariablesRegistry {
     if (scope == null) {
       return null;
     }
-    return new TextMateScopeComparator<>(scope, TextMateShellVariable::getScopeSelector).max(myVariables.get(name));
+    Collection<TextMateShellVariable> variables = myVariables.get(name);
+    if (variables == null) {
+      return null;
+    }
+    return new TextMateScopeComparator<>(scope, TextMateShellVariable::getScopeSelector).max(variables);
   }
 
   public void clear() {

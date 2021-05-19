@@ -19,7 +19,11 @@ public class SnippetsRegistry {
     if (scope == null) {
       return Collections.emptyList();
     }
-    return new TextMateScopeComparator<>(scope, TextMateSnippet::getScopeSelector).sortAndFilter(mySnippets.get(key));
+    Collection<TextMateSnippet> snippets = mySnippets.get(key);
+    if (snippets == null) {
+      return Collections.emptyList();
+    }
+    return new TextMateScopeComparator<>(scope, TextMateSnippet::getScopeSelector).sortAndFilter(snippets);
   }
 
   @NotNull
