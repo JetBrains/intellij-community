@@ -37,6 +37,7 @@ fun createAggregateHtml(
             thead {
               tr {
                 th("IDE")
+                th("Reason")
                 th("Started")
                 th("Total time")
                 th("Scanning time")
@@ -59,6 +60,7 @@ fun createAggregateHtml(
                      StringUtil.formatFileSize(runtimeInfo.maxMemory) + ", " +
                      runtimeInfo.maxNumberOfIndexingThreads + " CPU"
                   )
+                  td(diagnostic.indexingTimes.indexingReason ?: NOT_APPLICABLE)
                   td(diagnostic.indexingTimes.updatingStart.presentableDateTime())
                   td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
                   td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())

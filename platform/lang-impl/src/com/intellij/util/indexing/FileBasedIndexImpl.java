@@ -919,9 +919,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private static void scheduleIndexRebuild(String reason) {
-    LOG.info("schedule index re-scanning, reason: " + reason);
+    LOG.info("schedule index re-build: " + reason);
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
+      DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, reason));
     }
   }
 
@@ -1195,7 +1195,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (!myRegisteredIndexes.isInitialized()) return;
       advanceIndexVersion(indexId);
 
-      Runnable rebuildRunnable = () -> scheduleIndexRebuild("checkRebuild");
+      Runnable rebuildRunnable = () -> scheduleIndexRebuild(message);
 
       if (myIsUnitTestMode) {
         rebuildRunnable.run();

@@ -84,15 +84,18 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
   private final boolean myStartSuspended;
+  private final String myIndexingReason;
   private final PushedFilePropertiesUpdater myPusher;
   private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
 
   public UnindexedFilesUpdater(@NotNull Project project,
                                boolean startSuspended,
-                               @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators) {
+                               @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
+                               @Nullable String indexingReason) {
     super(project);
     myProject = project;
     myStartSuspended = startSuspended;
+    myIndexingReason = indexingReason;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     myProject.putUserData(CONTENT_SCANNED, null);
 
@@ -128,11 +131,15 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
     // file based index extensions for all project files until at least one of UnindexedFilesUpdater-s finishes without cancellation.
     // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
-    this(project, false, null);
+    this(project, false, null, null);
   }
 
-  public UnindexedFilesUpdater(@NotNull Project project, @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators) {
-    this(project, false, predefinedIndexableFilesIterators);
+  public UnindexedFilesUpdater(@NotNull Project project, @Nullable String indexingReason) {
+    this(project, false, null, indexingReason);
+  }
+
+  public UnindexedFilesUpdater(@NotNull Project project, @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators, @Nullable String indexingReason) {
+    this(project, false, predefinedIndexableFilesIterators, indexingReason);
   }
 
   private void updateUnindexedFiles(@NotNull ProjectIndexingHistory projectIndexingHistory, @NotNull ProgressIndicator indicator) {
@@ -501,7 +508,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
     delayIndexingInTestsIfNecessary();
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
-    ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject);
+    ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject, myIndexingReason);
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject);
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);

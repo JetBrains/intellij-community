@@ -101,7 +101,7 @@ public final class FileBasedIndexSwitcher {
 
       IndexingFlag.cleanupProcessedFlag();
       for (Project project : ProjectUtil.getOpenProjects()) {
-        DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
+        DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, "On indexes switcher turned on"));
       }
     }
   }

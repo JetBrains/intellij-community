@@ -175,7 +175,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       List<IndexableFilesIterator> indexableFilesIterators =
         Collections.singletonList(AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex));
 
-      DumbService.getInstance(myProject).queueTask(new UnindexedFilesUpdater(myProject, indexableFilesIterators));
+      DumbService.getInstance(myProject).queueTask(new UnindexedFilesUpdater(myProject, indexableFilesIterators, "On updated roots of library '" + presentableLibraryName + "'"));
     });
   }
 
@@ -329,11 +329,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       return;
     }
 
-    logRootChanges("project roots have changed");
+    String reason = "Project roots have changed";
+    logRootChanges(reason);
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-      dumbService.queueTask(new UnindexedFilesUpdater(myProject));
+      dumbService.queueTask(new UnindexedFilesUpdater(myProject, reason));
     }
   }
 
