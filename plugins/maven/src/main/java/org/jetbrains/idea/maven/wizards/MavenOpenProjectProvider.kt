@@ -23,7 +23,7 @@ internal class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
   override fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
     val builder = builder
     try {
-      builder.isUpdate = false
+      builder.isUpdate = true
       builder.setFileToImport(projectDirectory)
       if (builder.validate(null, project)) {
         builder.commit(project, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
