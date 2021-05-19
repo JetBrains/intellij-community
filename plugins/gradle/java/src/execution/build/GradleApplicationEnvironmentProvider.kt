@@ -207,7 +207,7 @@ internal class GradleApplicationEnvironmentProvider : GradleExecutionEnvironment
             standardInput = System.in
             if (javaModuleName) {
               classpath = tasks[sourceSets[sourceSetName].jarTaskName].outputs.files + project.sourceSets[sourceSetName].runtimeClasspath;
-              if (GradleVersion.current().compareTo(GradleVersion.version("6.4")) < 0) {
+              if (GradleVersion.current().baseVersion < GradleVersion.version("6.4")) {
                 doFirst {
                   jvmArgs += [
                     '--module-path', classpath.asPath,
