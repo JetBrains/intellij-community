@@ -43,6 +43,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
@@ -1113,7 +1114,7 @@ public class MavenUtil {
   }
 
   public static boolean newModelEnabled(Project project) {
-    return Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY));
+    return Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY, true);
   }
 
   public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {
