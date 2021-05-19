@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-sealed class ConvertFilteringFunctionWithDemorgansLawIntention(
+sealed class ConvertFunctionWithDemorgansLawIntention(
     intentionName: () -> String,
     conversions: List<Conversion>,
 ) : SelfTargetingRangeIntention<KtCallExpression>(
@@ -125,7 +125,7 @@ private data class Conversion(
     val negatePredicate: Boolean
 )
 
-class ConvertCallToOppositeIntention : ConvertFilteringFunctionWithDemorgansLawIntention(
+class ConvertCallToOppositeIntention : ConvertFunctionWithDemorgansLawIntention(
     KotlinBundle.lazyMessage("replace.function.call.with.the.opposite"),
     listOf(
         Conversion("all", "none", false, true),
@@ -139,7 +139,7 @@ class ConvertCallToOppositeIntention : ConvertFilteringFunctionWithDemorgansLawI
     )
 )
 
-class ConvertAnyToAllAndViceVersaIntention : ConvertFilteringFunctionWithDemorgansLawIntention(
+class ConvertAnyToAllAndViceVersaIntention : ConvertFunctionWithDemorgansLawIntention(
     KotlinBundle.lazyMessage("replace.0.with.1.and.vice.versa", "any", "all"),
     listOf(
         Conversion("any", "all", true, true),
@@ -147,7 +147,7 @@ class ConvertAnyToAllAndViceVersaIntention : ConvertFilteringFunctionWithDemorga
     )
 )
 
-class ConvertAnyToNoneAndViceVersaIntention : ConvertFilteringFunctionWithDemorgansLawIntention(
+class ConvertAnyToNoneAndViceVersaIntention : ConvertFunctionWithDemorgansLawIntention(
     KotlinBundle.lazyMessage("replace.0.with.1.and.vice.versa", "any", "none"),
     listOf(
         Conversion("any", "none", true, false),
