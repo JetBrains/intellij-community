@@ -137,7 +137,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     DEFAULT
   }
 
-  private EditorsSplitters mySplitters;
+  private volatile @Nullable EditorsSplitters mySplitters;
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<>();
   private Reference<EditorComposite> myLastSelectedComposite = new WeakReference<>(null);
@@ -378,15 +378,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private @NotNull EditorsSplitters initUI() {
     EditorsSplitters result = mySplitters;
-    if (result != null) {
-      return result;
-    }
-
-    synchronized (myInitLock) {
-      result = mySplitters;
-      if (result == null) {
-        result = new EditorsSplitters(this, true, this);
-        mySplitters = result;
+    if (result == null) {
+      synchronized (myInitLock) {
+        result = mySplitters;
+        if (result == null) {
+          result = new EditorsSplitters(this, true, this);
+          mySplitters = result;
+        }
       }
     }
     return result;
@@ -2026,7 +2024,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     @Override
     public void uiSettingsChanged(@NotNull UISettings uiSettings) {
       assertDispatchThread();
-      mySplitters.revalidate();
+      getMainSplitters().revalidate();
       for (EditorsSplitters each : getAllSplitters()) {
         each.setTabsPlacement(uiSettings.getEditorTabPlacement());
         each.trimToSize();
