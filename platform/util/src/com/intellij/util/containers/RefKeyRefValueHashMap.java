@@ -99,12 +99,12 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public boolean containsKey(Object key) {
-    throw RefValueHashMap.pointlessContainsKey();
+    throw RefValueHashMapUtil.pointlessContainsKey();
   }
 
   @Override
   public boolean containsValue(Object value) {
-    throw RefValueHashMap.pointlessContainsValue();
+    throw RefValueHashMapUtil.pointlessContainsValue();
   }
 
   @NotNull

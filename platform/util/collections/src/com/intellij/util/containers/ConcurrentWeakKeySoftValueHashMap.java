@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ObjectUtilsRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -135,7 +135,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     if (valueReference instanceof SoftValue) {
       ((SoftValue<K, V>)valueReference).myKeyReference = keyReference;
     }
-    ObjectUtils.reachabilityFence(k);
+    ObjectUtilsRt.reachabilityFence(k);
     return keyReference;
   }
 
@@ -224,12 +224,12 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public boolean containsKey(Object key) {
-    throw RefValueHashMap.pointlessContainsKey();
+    throw RefValueHashMapUtil.pointlessContainsKey();
   }
 
   @Override
   public boolean containsValue(Object value) {
-    throw RefValueHashMap.pointlessContainsValue();
+    throw RefValueHashMapUtil.pointlessContainsValue();
   }
 
   @Override

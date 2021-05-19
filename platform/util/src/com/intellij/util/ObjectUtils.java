@@ -19,7 +19,7 @@ import java.util.function.Predicate;
 /**
  * @author peter
  */
-public final class ObjectUtils {
+public final class ObjectUtils extends ObjectUtilsRt {
   private ObjectUtils() { }
 
   /** @see NotNullizer */
@@ -37,15 +37,6 @@ public final class ObjectUtils {
   public static @NotNull Object sentinel(@NotNull @NonNls String name) {
     return new Sentinel(name);
   }
-
-  /**
-   * They promise in http://mail.openjdk.java.net/pipermail/core-libs-dev/2018-February/051312.html that
-   * the object reference won't be removed by JIT and GC-ed until this call.
-   *
-   * In Java 11 compatible modules use {@link java.lang.ref.Reference#reachabilityFence(Object)} instead.
-   */
-  @ReviseWhenPortedToJDK("9")
-  public static void reachabilityFence(@SuppressWarnings("unused") @NotNull Object o) {}
 
   private static final class Sentinel {
     private final String myName;

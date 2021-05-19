@@ -129,7 +129,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public boolean containsValue(Object value) {
-    throw RefValueHashMap.pointlessContainsValue();
+    throw RefValueHashMapUtil.pointlessContainsValue();
   }
 
   private static class HardKey<K> implements KeyReference<K> {

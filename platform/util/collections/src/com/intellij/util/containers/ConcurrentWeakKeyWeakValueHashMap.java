@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ObjectUtilsRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -55,7 +55,7 @@ final class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySof
     if (valueReference instanceof WeakValue) {
       ((WeakValue<K, V>)valueReference).myKeyReference = keyReference;
     }
-    ObjectUtils.reachabilityFence(k);
+    ObjectUtilsRt.reachabilityFence(k);
     return keyReference;
   }
 
