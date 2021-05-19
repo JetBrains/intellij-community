@@ -32,7 +32,10 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val CONTEXT_MENU = EventFields.Boolean("context_menu")
 
     @JvmField
-    val DUMB = EventFields.Boolean("dumb")
+    val DUMB_START = EventFields.Boolean("dumb")
+
+    @JvmField
+    val DUMB_END = EventFields.Boolean("dumb_end")
 
     @JvmField
     val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_INVOKED_EVENT_ID)
@@ -51,7 +54,8 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
         EventFields.CurrentFile,
         TOGGLE_ACTION,
         CONTEXT_MENU,
-        DUMB,
+        DUMB_START,
+        DUMB_END,
         ACTION_ID,
         ACTION_CLASS,
         ACTION_PARENT,

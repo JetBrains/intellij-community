@@ -73,12 +73,12 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
     if (event != null) {
       if (action instanceof ToggleAction) {
-        data.add(ActionsEventLogGroup.TOGGLE_ACTION.with(!((ToggleAction)action).isSelected(event)));
+        data.add(ActionsEventLogGroup.TOGGLE_ACTION.with(((ToggleAction)action).isSelected(event)));
       }
       data.addAll(actionEventData(event));
     }
     if (project != null && !project.isDisposed()) {
-      data.add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)));
+      data.add(ActionsEventLogGroup.DUMB_END.with(DumbService.isDumb(project)));
     }
     if (customData != null) {
       data.addAll(customData);
@@ -169,8 +169,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   /** @noinspection unused*/
   public static void onBeforeActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event) {
-    Stats stats = new Stats();
-    stats.projectRef = new WeakReference<>(event.getProject());
+    Stats stats = new Stats(event.getProject());
     ourStats.put(event, stats);
   }
 
@@ -179,32 +178,43 @@ public class ActionsCollectorImpl extends ActionsCollector {
     Stats stats = ourStats.remove(event);
     if (stats == null || !result.isPerformed()) return;
     long durationMillis = TimeoutUtil.getDurationMillis(stats.start);
-    final List<EventPair<?>> customData = new ArrayList<>();
-    Project project = stats.projectRef.get();
-    // we try to avoid as many problems as possible, because
-    // 1. non-async dataContext can fail due to advanced event-count, or freeze EDT on slow GetDataRules
-    // 2. async dataContext can fail due to slow GetDataRules prohibition on EDT
-    DataContext dataContext = Utils.isAsyncDataContext(event.getDataContext()) ?
-                              Utils.freezeDataContext(event.getDataContext(), null) : DataContext.EMPTY_CONTEXT;
-    Language hostFileLanguage = getHostFileLanguage(dataContext, project);
-    customData.add(EventFields.CurrentFile.with(hostFileLanguage));
-    if (hostFileLanguage == null || hostFileLanguage == PlainTextLanguage.INSTANCE) {
-      PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-      Language language = file != null ? file.getLanguage() : null;
-      customData.add(EventFields.Language.with(language));
+
+    List<EventPair<?>> data = new ArrayList<>();
+    if (stats.isDumb != null) {
+      data.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb));
     }
+
+    Project project = stats.projectRef.get();
+    addLanguageContextFields(project, event, data);
     if (action instanceof FusAwareAction) {
       List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
-      customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
+      data.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
     }
     if (durationMillis >= 0) {
       // In order to successfully merge fast subsequent actions, we use 0ms as the duration value for all actions faster than 50ms
       if (durationMillis < 50) {
         durationMillis = 0;
       }
-      customData.add(EventFields.DurationMs.with(durationMillis));
+      data.add(EventFields.DurationMs.with(durationMillis));
     }
-    recordActionInvoked(project, action, event, customData);
+    recordActionInvoked(project, action, event, data);
+  }
+
+  private static void addLanguageContextFields(@Nullable Project project, @NotNull AnActionEvent event, @NotNull List<EventPair<?>> data) {
+    // we try to avoid as many problems as possible, because
+    // 1. non-async dataContext can fail due to advanced event-count, or freeze EDT on slow GetDataRules
+    // 2. async dataContext can fail due to slow GetDataRules prohibition on EDT
+    DataContext dataContext = Utils.isAsyncDataContext(event.getDataContext()) ?
+                              Utils.freezeDataContext(event.getDataContext(), null) :
+                              DataContext.EMPTY_CONTEXT;
+
+    Language hostFileLanguage = getHostFileLanguage(dataContext, project);
+    data.add(EventFields.CurrentFile.with(hostFileLanguage));
+    if (hostFileLanguage == null || hostFileLanguage == PlainTextLanguage.INSTANCE) {
+      PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+      Language language = file != null ? file.getLanguage() : null;
+      data.add(EventFields.Language.with(language));
+    }
   }
 
   private static @Nullable Language getHostFileLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
@@ -218,5 +228,11 @@ public class ActionsCollectorImpl extends ActionsCollector {
   private static final class Stats {
     final long start = System.nanoTime();
     WeakReference<Project> projectRef;
+    final Boolean isDumb;
+
+    private Stats(Project project) {
+      this.projectRef = new WeakReference<>(project);
+      this.isDumb = project != null && !project.isDisposed() ? DumbService.isDumb(project) : null;
+    }
   }
 }
