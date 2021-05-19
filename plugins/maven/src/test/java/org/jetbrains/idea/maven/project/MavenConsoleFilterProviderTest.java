@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 public class MavenConsoleFilterProviderTest extends CodeInsightFixtureTestCase {
 
-  private MavenConsoleFilterProvider filterProvider;
   private Filter @NotNull [] filters;
 
   @Override
@@ -22,28 +21,53 @@ public class MavenConsoleFilterProviderTest extends CodeInsightFixtureTestCase {
   }
 
   public void testMavenFilterKtOk() {
-    String line = "[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt: (1, 32) Unresolved reference: ff";
-    Assert.assertFalse(applyFilter(line).isEmpty());
+    assertSuccess("[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt: (1, 32) Unresolved reference: ff", 8, 61);
   }
 
   public void testMavenFilterJavaOk() {
-    String line = "[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt:[1,32] Unresolved reference: ff";
-    Assert.assertFalse(applyFilter(line).isEmpty());
+    assertSuccess("[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt:[1,32] Unresolved reference: ff", 8, 61);
   }
 
   public void testMavenFilterJavaOk2() {
-    String line = "[ERROR] /home/IdeaProjects/demo/src/main/java/com/example/demo/DemoApplication.java:[9,1]" +
-                  " class, interface, or enum expected";
-    Assert.assertFalse(applyFilter(line).isEmpty());
+    assertSuccess("[ERROR] /home/IdeaProjects/demo/src/main/java/com/example/demo/DemoApplication.java:[9,1]" +
+                  " class, interface, or enum expected", 8, 83);
   }
 
   public void testMavenFilterKtBad() {
-    String line = "[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt: [1,32] Unresolved reference: ff";
-    Assert.assertTrue(applyFilter(line).isEmpty());
+    assertError("[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt: [1,32] Unresolved reference: ff");
   }
 
   public void testMavenFilterKtBad2() {
-    String line = "[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt:(1,32) Unresolved reference: ff";
+    assertError("[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt:(1,32) Unresolved reference: ff");
+  }
+
+  public void testMavenFilterJavaWinOk() {
+    assertSuccess("[ERROR] /C:/Users/Admin/IdeaProjects/test/src/main/java/test/Test.java:[2,1] class, interface, or enum expected", 9, 70);
+  }
+
+  public void testMavenFilterJavaWinBad() {
+    assertError("[ERROR] /C:/Users/Admin/IdeaProjects/test/src/main/java/test/Test.java: [2,1] class, interface, or enum expected");
+  }
+
+  public void testMavenFilterKtWinOk() {
+    assertSuccess("[ERROR] /C:/Users/Admin/IdeaProjects/test/src/main/java/test/Test.kt: (2, 1) class, interface, or enum expected", 9, 68);
+  }
+
+  public void testMavenFilterKtWinBad() {
+    assertError("[ERROR] /C:/Users/Admin/IdeaProjects/test/src/main/java/test/Test.kt: (2,1) class, interface, or enum expected");
+  }
+
+  private void assertSuccess(String line, int expectedStart, int expectedEnd) {
+    List<Filter.Result> results = applyFilter(line);
+    Assert.assertEquals(1, results.size());
+    Filter.Result filterResult = results.get(0);
+    List<Filter.ResultItem> resultItems = filterResult.getResultItems();
+    Assert.assertEquals(1, resultItems.size());
+    Assert.assertEquals(expectedStart, resultItems.get(0).getHighlightStartOffset());
+    Assert.assertEquals(expectedEnd, resultItems.get(0).getHighlightEndOffset());
+  }
+
+  private void assertError(String line) {
     Assert.assertTrue(applyFilter(line).isEmpty());
   }
 
