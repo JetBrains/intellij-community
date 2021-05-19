@@ -136,7 +136,7 @@ public class StatsRequestBuilder {
 
   private static void configureProxy(HttpClient.Builder builder, @NotNull StatsProxyInfo info) {
     Proxy proxy = info.getProxy();
-    if (proxy.type() == Proxy.Type.HTTP) {
+    if (proxy.type() == Proxy.Type.HTTP || proxy.type() == Proxy.Type.SOCKS) {
       SocketAddress proxyAddress = proxy.address();
       if (proxyAddress instanceof InetSocketAddress) {
         InetSocketAddress address = (InetSocketAddress)proxyAddress;
