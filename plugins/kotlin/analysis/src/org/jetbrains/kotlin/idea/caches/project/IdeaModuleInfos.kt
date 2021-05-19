@@ -81,7 +81,6 @@ fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo> =
         approximatePlatform.idePlatformKind.resolution.createLibraryInfo(project, library)
     }
 
-
 interface ModuleSourceInfo : IdeaModuleInfo, TrackableModuleInfo {
     val module: Module
 
