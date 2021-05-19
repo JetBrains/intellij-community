@@ -220,7 +220,7 @@
     </extensionPoint>
     <extensionPoint name="symbolDeclarationPresentationProvider" dynamic="true"
                     beanClass="com.intellij.openapi.util.ClassExtensionPoint">
-      <with attribute="forClass" implements="com.intellij.model.SymbolDeclaration"/>
+      <with attribute="forClass" implements="com.intellij.model.psi.PsiSymbolDeclaration"/>
       <with attribute="implementationClass"
             implements="com.intellij.model.presentation.SymbolDeclarationPresentationProvider"/>
     </extensionPoint>

@@ -10,13 +10,12 @@ import java.util.Collection;
 /**
  * Convenience base class for references that resolve to a single target without additional data.
  */
-public abstract class SingleTargetReference implements SymbolReference {
+public abstract class SingleTargetReference {
 
   /**
    * Default implementation wraps target returned from {@link #resolveSingleTarget()} into resolve result list ,
    * or returns empty list if {@link #resolveSingleTarget()} returned {@code null}.
    */
-  @Override
   @NotNull
   public final Collection<? extends Symbol> resolveReference() {
     return ContainerUtil.createMaybeSingletonList(resolveSingleTarget());
