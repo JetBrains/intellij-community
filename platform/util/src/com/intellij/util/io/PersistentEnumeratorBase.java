@@ -269,8 +269,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
     catch (Throwable e) {
       if (!isCorrupted()) {
-        markCorrupted();
         LOG.info("Marking corrupted:" + myFile, e);
+        markCorrupted();
       }
 
       //noinspection InstanceofCatchParameter
