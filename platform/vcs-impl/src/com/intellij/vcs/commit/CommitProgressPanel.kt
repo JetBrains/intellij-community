@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.icons.AllIcons
 import com.intellij.ide.nls.NlsMessages.formatNarrowAndList
 import com.intellij.openapi.Disposable
@@ -204,6 +205,10 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
 private class CommitChecksProgressIndicator : InlineProgressIndicator(true, CommitChecksTaskInfo()) {
   init {
     component.toolTipText = null
+
+    addStateDelegate(object : AbstractProgressIndicatorExBase() {
+      override fun cancel() = updateProgress() // to show "Stopping" text right away
+    })
   }
 
   override fun createCompactTextAndProgress(component: JPanel) {
@@ -251,9 +256,9 @@ private class CommitChecksProgressIndicator : InlineProgressIndicator(true, Comm
 
 private class CommitChecksTaskInfo : TaskInfo {
   override fun getTitle(): String = message("progress.title.commit.checks")
-  override fun getCancelText(): String = ""
-  override fun getCancelTooltipText(): String = ""
-  override fun isCancellable(): Boolean = false
+  override fun getCancelText(): String = getCancelButtonText()
+  override fun getCancelTooltipText(): String = cancelText
+  override fun isCancellable(): Boolean = true
 }
 
 private class CommitCheckFailure(@Nls val text: String, val detailsViewer: () -> Unit)

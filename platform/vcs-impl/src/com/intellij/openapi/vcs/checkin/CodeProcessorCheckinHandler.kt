@@ -5,6 +5,7 @@ import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -26,7 +27,12 @@ abstract class CodeProcessorCheckinHandler(
     val processor = createCodeProcessor()
 
     withContext(Dispatchers.Default) {
-      processor.processFilesUnderProgress(NoTextIndicator(indicator))
+      val noTextIndicator = NoTextIndicator(indicator)
+
+      ProgressManager.getInstance().executeProcessUnderProgress(
+        { processor.processFilesUnderProgress(noTextIndicator) },
+        noTextIndicator
+      )
     }
     FileDocumentManager.getInstance().saveAllDocuments()
 
