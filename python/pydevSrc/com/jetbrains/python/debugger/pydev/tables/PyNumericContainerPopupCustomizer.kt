@@ -7,12 +7,12 @@ import com.jetbrains.python.debugger.PyFrameAccessor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface PyTableViewCustomizer {
+interface PyNumericContainerPopupCustomizer {
   companion object {
-    private val EP_NAME: ExtensionPointName<PyTableViewCustomizer> =
-      ExtensionPointName.create("com.jetbrains.python.debugger.tableViewCustomizer")
+    private val EP_NAME: ExtensionPointName<PyNumericContainerPopupCustomizer> =
+      ExtensionPointName.create("com.jetbrains.python.debugger.numericContainerPopupCustomizer")
 
-    val instance: PyTableViewCustomizer
+    val instance: PyNumericContainerPopupCustomizer
       get() = EP_NAME.extensionList.first()
   }
 
