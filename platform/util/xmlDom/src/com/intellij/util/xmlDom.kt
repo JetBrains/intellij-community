@@ -138,7 +138,7 @@ private fun readAttributes(reader: XMLStreamReader2, interner: XmlInterner): Map
       var i = 0
       while (i < attributeCount) {
         val name = interner.name(reader.getAttributeLocalName(i))
-        result.put(name, interner.value(name, reader.getAttributeValue(i)))
+        result[name] = interner.value(name, reader.getAttributeValue(i))
         i++
       }
       result
