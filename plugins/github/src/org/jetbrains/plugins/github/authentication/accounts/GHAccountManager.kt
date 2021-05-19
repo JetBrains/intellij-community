@@ -19,7 +19,7 @@ internal val GithubAccount.isGHAccount: Boolean get() = server.isGithubDotCom
 internal class GHAccountManager
   : AccountManagerBase<GithubAccount, String>(GithubUtil.SERVICE_DISPLAY_NAME) {
 
-  override fun persistentAccounts() = service<GHPersistentAccounts>()
+  override fun accountsRepository() = service<GHPersistentAccounts>()
 
   override fun serializeCredentials(credentials: String): String = credentials
   override fun deserializeCredentials(credentials: String): String = credentials
