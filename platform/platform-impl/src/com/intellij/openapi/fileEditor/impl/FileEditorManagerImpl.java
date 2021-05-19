@@ -1237,6 +1237,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       int hostOffset = delegate.getDocumentWindow().injectedToHost(openFileDescriptor.getOffset());
       OpenFileDescriptor fixedDescriptor = new OpenFileDescriptor(openFileDescriptor.getProject(), delegate.getDelegate(), hostOffset);
       fixedDescriptor.setUseCurrentWindow(openFileDescriptor.isUseCurrentWindow());
+      fixedDescriptor.setUsePreviewTab(openFileDescriptor.isUsePreviewTab());
       realDescriptor = fixedDescriptor;
     }
     else {
@@ -1249,6 +1250,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       VirtualFile file = realDescriptor.getFile();
       FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
         .withReuseOpen(!realDescriptor.isUseCurrentWindow())
+        .withUsePreviewTab(realDescriptor.isUsePreviewTab())
         .withRequestFocus(focusEditor);
       FileEditor[] editors = openFileWithProviders(file, openOptions).getFirst();
       ContainerUtil.addAll(result, editors);

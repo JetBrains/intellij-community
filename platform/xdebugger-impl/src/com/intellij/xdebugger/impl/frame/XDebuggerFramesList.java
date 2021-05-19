@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -160,6 +161,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   protected @Nullable Navigatable getSelectedFrameNavigatable() {
     XStackFrame frame = getSelectedFrame();
     Navigatable navigatable = frame != null ? getFrameNavigatable(frame) : null;
+    if (navigatable instanceof OpenFileDescriptor) {
+      ((OpenFileDescriptor)navigatable).setUsePreviewTab(true);
+    }
     return navigatable != null ? keepFocus(navigatable) : null;
   }
 

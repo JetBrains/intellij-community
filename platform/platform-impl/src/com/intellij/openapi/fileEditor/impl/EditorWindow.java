@@ -1365,18 +1365,20 @@ public final class EditorWindow {
 
   private boolean shouldReservePreview(@NotNull VirtualFile file,
                                        @NotNull FileEditorOpenOptions options) {
-    if (!options.getSelectAsCurrent() || !UISettings.getInstance().getOpenInPreviewTabIfPossible()) {
+    if (!UISettings.getInstance().getOpenInPreviewTabIfPossible()) {
       return false;
     }
-
     if (FileEditorManagerImpl.FORBID_PREVIEW_TAB.get(file, false)) {
       return false;
     }
 
-    if (options.getRequestFocus()) {
-      return false;
+    if (options.getUsePreviewTab()) {
+      return true;
     }
 
+    if (!options.getSelectAsCurrent() || options.getRequestFocus()) {
+      return false;
+    }
     Component focusOwner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
     return hasClientPropertyInHierarchy(focusOwner, FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB);
   }
