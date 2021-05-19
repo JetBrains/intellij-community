@@ -3,6 +3,8 @@
 @file:ApiStatus.Internal
 package com.intellij.util
 
+import com.fasterxml.aalto.WFCException
+import com.fasterxml.aalto.impl.ErrorConsts
 import com.intellij.openapi.util.createXmlStreamReader
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.codehaus.stax2.XMLStreamReader2
@@ -35,7 +37,7 @@ object NoOpXmlInterner : XmlInterner {
 @ApiStatus.Internal
 fun readXmlAsModel(inputStream: InputStream): XmlElement {
   val reader = createXmlStreamReader(inputStream)
-  reader.nextTag()
+  nextTag(reader)
   return readXmlAsModel(reader, null, NoOpXmlInterner)
 }
 
@@ -121,7 +123,7 @@ fun readXmlAsModel(reader: XMLStreamReader2,
     }
   }
 
-  throw throw XMLStreamException("Unexpected end of input: ${reader.eventType}", reader.location)
+  throw XMLStreamException("Unexpected end of input: ${reader.eventType}", reader.location)
 }
 
 private fun readAttributes(reader: XMLStreamReader2, interner: XmlInterner): Map<String, String> {
@@ -143,5 +145,22 @@ private fun readAttributes(reader: XMLStreamReader2, interner: XmlInterner): Map
       }
       result
     }
+  }
+}
+
+private fun nextTag(reader: XMLStreamReader2) {
+  while (true) {
+    val next: Int = reader.next()
+    when (next) {
+      XMLStreamConstants.SPACE, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION, XMLStreamConstants.DTD -> continue
+      XMLStreamConstants.CDATA, XMLStreamConstants.CHARACTERS -> {
+        if (reader.isWhiteSpace) {
+          continue
+        }
+        throw WFCException("Received non-all-whitespace CHARACTERS or CDATA event in nextTag().", reader.location)
+      }
+      XMLStreamConstants.START_ELEMENT, XMLStreamConstants.END_ELEMENT -> return
+    }
+    throw WFCException("Received event " + ErrorConsts.tokenTypeDesc(next) + ", instead of START_ELEMENT or END_ELEMENT.", reader.location)
   }
 }
