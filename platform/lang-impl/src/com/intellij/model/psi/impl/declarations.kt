@@ -42,9 +42,9 @@ internal fun hasDeclarationsInElement(element: PsiElement, startOffsetInElement:
   return false
 }
 
-private val declarationProviderEP = ExtensionPointName<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
+fun allDeclarationsInElement(element: PsiElement): Collection<PsiSymbolDeclaration> = declarationsInElement(element, -1)
 
-fun allDeclarations(element: PsiElement): Collection<PsiSymbolDeclaration> = declarationsInElement(element, -1)
+private val declarationProviderEP = ExtensionPointName<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
 
 private fun declarationsInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
   val result = SmartList<PsiSymbolDeclaration>()

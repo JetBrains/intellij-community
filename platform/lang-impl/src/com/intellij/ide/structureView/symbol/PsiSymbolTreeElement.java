@@ -45,7 +45,7 @@ public class PsiSymbolTreeElement extends PsiTreeElementBase<PsiElement> {
     if (declaredSymbol == null) {
       return null;
     }
-    for (PsiSymbolDeclaration symbolDeclaration : Declarations.allDeclarations(declaringElement)) {
+    for (PsiSymbolDeclaration symbolDeclaration : Declarations.allDeclarationsInElement(declaringElement)) {
       if (Objects.equals(declaredSymbol, symbolDeclaration.getSymbol())) {
         return symbolDeclaration;
       }

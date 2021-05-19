@@ -37,7 +37,7 @@ public abstract class SymbolBasedStructureViewModel extends TextEditorBasedStruc
     PsiElementVisitor visitor = new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        var elementDeclarations = Declarations.allDeclarations(element);
+        var elementDeclarations = Declarations.allDeclarationsInElement(element);
         if (elementDeclarations.isEmpty()) {
           ProgressIndicatorProvider.checkCanceled();
           element.acceptChildren(this);
