@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration
 import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import java.util.*
 import kotlin.test.assertNotEquals
 
 class EventLogConfigurationTest : BasePlatformTestCase() {
@@ -46,7 +45,6 @@ class EventLogConfigurationTest : BasePlatformTestCase() {
 
     override fun loadMetadataFromServer(): String = ""
 
-    override fun getOptionValue(name: String): String? = values[name]
+    override fun getOptionValues(): Map<String, String> = values
   }
-
 }

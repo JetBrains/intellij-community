@@ -26,11 +26,12 @@ internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogCo
   private val ourGroupThrottle: EventsIdentityWindowThrottle
 
   init {
-    val threshold = getOrDefault(configOptionsService.getThreshold(recorderId), 24000)
+    val configOptions = configOptionsService.getOptions(recorderId)
+    val threshold = getOrDefault(configOptions.threshold, 24000)
     ourThrottle = EventsRateWindowThrottle(threshold, 60L * 60 * 1000, System.currentTimeMillis())
 
-    val groupThreshold = getOrDefault(configOptionsService.getGroupThreshold(recorderId), 12000)
-    val groupAlertThreshold = getOrDefault(configOptionsService.getGroupAlertThreshold(recorderId), 6000)
+    val groupThreshold = getOrDefault(configOptions.groupThreshold, 12000)
+    val groupAlertThreshold = getOrDefault(configOptions.groupAlertThreshold, 6000)
     ourGroupThrottle = EventsIdentityWindowThrottle(groupThreshold, groupAlertThreshold, 60L * 60 * 1000)
 
     EventLogConfigOptionsService.TOPIC.subscribe(this, object : EventLogThresholdConfigOptionsListener(recorderId) {

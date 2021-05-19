@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.application.subscribe
@@ -113,9 +113,9 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
     get() = machineIdConfigurationReference.get()
 
   init {
-    val configOptionsService = EventLogConfigOptionsService.getInstance()
-    machineIdConfigurationReference = AtomicReference(MachineIdConfiguration(configOptionsService.getMachineIdSalt(recorderId) ?: "",
-                                                                             getNonNegative(configOptionsService.getMachineIdRevision(recorderId))))
+    val configOptions = EventLogConfigOptionsService.getInstance().getOptions(recorderId)
+    machineIdConfigurationReference = AtomicReference(MachineIdConfiguration(configOptions.machineIdSalt ?: "",
+                                                                             getNonNegative(configOptions.machineIdRevision)))
 
     EventLogConfigOptionsService.TOPIC.subscribe(null, object : EventLogRecorderConfigOptionsListener(recorderId) {
       override fun onMachineIdConfigurationChanged(salt: @Nullable String?, revision: Int) {
