@@ -39,6 +39,15 @@ public interface ExternalProjectsManager {
 
   void refreshProject(@NotNull String externalProjectPath, @NotNull ImportSpec importSpec);
 
+  /**
+   * Execute runnable after External projects manager is fully initialized.
+   * <p>
+   * Initialization includes loading external project data cache and can take visible time,
+   * during which query to {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#getExternalProjectInfo(Project, ProjectSystemId, String) ExternalSystemUtil#getExternalProjectInfo}
+   * will return null. Use this method to postpone such queries.
+   *
+   * @param runnable
+   */
   void runWhenInitialized(Runnable runnable);
 
   boolean isIgnored(@NotNull ProjectSystemId systemId, @NotNull String projectPath);

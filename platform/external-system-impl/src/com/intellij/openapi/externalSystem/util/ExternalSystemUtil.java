@@ -1199,6 +1199,16 @@ public final class ExternalSystemUtil {
     }
   }
 
+  /**
+   * Get external project info containing custom data cache
+   * for an external build system project of type projectSystemId at externalProjectPath
+   * @param project IDEA project
+   * @param projectSystemId external build system type id
+   * @param externalProjectPath path to the external project
+   * @return project info, or null if there is no such project, or project info cache is not yet ready
+   * To wait for project info to become available, use
+   * {@link com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager#runWhenInitialized(Runnable) ExternalProjectsManager#runWhenInitialized}
+   */
   @Nullable
   public static ExternalProjectInfo getExternalProjectInfo(@NotNull final Project project,
                                                            @NotNull final ProjectSystemId projectSystemId,
