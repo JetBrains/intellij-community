@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.properties.BundleNameEvaluator;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -132,16 +133,18 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
     @Override
     protected List<PropertiesFile> retrievePropertyFilesByBundleName(String bundleName, PsiElement element) {
+      PsiElement psiElement = CompletionUtil.getOriginalOrSelf(element);
       final String bundleNameToUse =
-        ObjectUtils.chooseNotNull(bundleName == null ? getPluginResourceBundle(element) : bundleName, myFallbackBundleName);
+        ObjectUtils.chooseNotNull(bundleName == null ? getPluginResourceBundle(psiElement) : bundleName,
+                                  myFallbackBundleName);
       if (bundleNameToUse == null) {
         return Collections.emptyList();
       }
 
-      final Project project = element.getProject();
+      final Project project = psiElement.getProject();
       final PropertiesReferenceManager propertiesReferenceManager = PropertiesReferenceManager.getInstance(project);
 
-      final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
       if (module != null) {
         List<PropertiesFile> propertiesFiles = propertiesReferenceManager.findPropertiesFiles(module, bundleNameToUse);
         if (!propertiesFiles.isEmpty()) {
@@ -149,7 +152,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
         }
       }
 
-      return propertiesReferenceManager.findPropertiesFiles(element.getResolveScope(),
+      return propertiesReferenceManager.findPropertiesFiles(psiElement.getResolveScope(),
                                                             bundleNameToUse, BundleNameEvaluator.DEFAULT);
     }
 
