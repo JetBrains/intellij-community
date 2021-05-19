@@ -386,6 +386,13 @@ internal class DependencyGraphBuilder private constructor(
   // Ignore field nodes
   override fun visitField(node: UField): Boolean = true
 
+  override fun visitMethod(node: UMethod): Boolean {
+    for (uastParameter in node.uastParameters) {
+      currentScope.declare(uastParameter)
+    }
+    return super.visitMethod(node)
+  }
+
   private fun inlineCall(selector: UExpression, parent: UElement?): Set<UExpression> {
     val call = selector as? UCallExpression ?: return emptySet()
     if (KotlinExtensionConstants.isLetOrRunCall(call)) {

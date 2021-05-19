@@ -4,6 +4,7 @@ package org.jetbrains.uast.test.java.analysis
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.analysis.UStringBuilderEvaluator
@@ -424,6 +425,48 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
       )
     }
   )
+
+  fun `test StringBuilder result from method usages`() {
+    doTest(
+      """
+        class MyFile {
+          String build(StringBuilder sb) {
+            sb.append("-s1");
+            sb.append("---").append("s2");
+            return /*<caret>*/ sb.toString();
+          }
+        
+          String usage1() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("p1");
+            build(sb);
+          }
+          
+          String usage2() {
+            build(new StringBuilder().append("p2"));
+          }
+          
+          String usage3_1(StringBuilder sb) {
+            sb.append("---");
+            build(sb.append("p3_1"));
+          } 
+          
+          String usage3_2(StringBuilder sb) {
+            sb.append("p3_2");
+            usage3_1(sb);
+          }
+        }
+      """.trimIndent(),
+      """{'p1'|'p2'|NULL'p3_2''---''p3_1'}'-s1''---''s2'""",
+      configuration = {
+        UStringEvaluator.Configuration(
+          builderEvaluators = listOf(UStringBuilderEvaluator),
+          parameterUsagesDepth = 3,
+          usagesSearchScope = LocalSearchScope(myFixture.file)
+        )
+      }
+    )
+  }
 
   private class CloneAwareStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator<PartiallyKnownString?> by UStringBuilderEvaluator {
     override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration, Boolean) -> PartiallyKnownString?>

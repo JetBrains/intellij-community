@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.CachedValue
@@ -25,8 +26,12 @@ import kotlin.collections.HashSet
 class UastLocalUsageDependencyGraph private constructor(
   val dependents: Map<UElement, Set<Dependent>>,
   val dependencies: Map<UElement, Set<Dependency>>,
-  val scopesObjectsStates: Map<UExpression, UScopeObjectsState>
+  val scopesObjectsStates: Map<UExpression, UScopeObjectsState>,
+  private val psiAnchor: PsiElement?
 ) {
+  val uAnchor: UElement?
+    get() = psiAnchor.toUElement()
+
   companion object {
     private val DEPENDENCY_GRAPH_KEY = Key.create<CachedValue<UastLocalUsageDependencyGraph>>("uast.local.dependency.graph")
 
@@ -63,7 +68,7 @@ class UastLocalUsageDependencyGraph private constructor(
           }
         }
       }
-      return UastLocalUsageDependencyGraph(visitor.dependents, visitor.dependencies, visitor.scopesStates)
+      return UastLocalUsageDependencyGraph(visitor.dependents, visitor.dependencies, visitor.scopesStates, element.sourcePsi)
     }
 
     /**
@@ -86,7 +91,8 @@ class UastLocalUsageDependencyGraph private constructor(
       return UastLocalUsageDependencyGraph(
         dependents = methodAndCallerMaps.dependentsMap,
         dependencies = methodAndCallerMaps.dependenciesMap,
-        scopesObjectsStates = methodGraph.scopesObjectsStates
+        scopesObjectsStates = methodGraph.scopesObjectsStates,
+        callerGraph.psiAnchor
       )
     }
   }

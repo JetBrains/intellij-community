@@ -48,7 +48,7 @@ class UStringEvaluator {
     val entries = mutableListOf<StringEntry>()
 
     if (graph.dependencies[element] == null && element is UReferenceExpression) {
-      val declaration = element.resolve()?.toUElement()
+      val declaration = element.resolveToUElement()
       val value = when {
         declaration is UField && declaration.isFinal && declaration.isStatic -> {
           listOfNotNull(UastLocalUsageDependencyGraph.getGraphByUElement(declaration)?.let { graphForField ->
@@ -57,8 +57,10 @@ class UStringEvaluator {
             }
           })
         }
-        declaration is UParameter && declaration.uastParent is UMethod -> {
-          analyzeUsages(declaration.uastParent as UMethod, declaration, configuration)
+        declaration is UParameter && declaration.uastParent is UMethod && declaration.uastParent == graph.uAnchor -> {
+          analyzeUsages(declaration.uastParent as UMethod, declaration, configuration) { usageGraph, argument, usageConfiguration ->
+            calculate(usageGraph, argument, usageConfiguration)
+          }
         }
         declaration is UDeclaration -> {
           configuration.valueProviders.mapNotNull { it.provideValue(declaration) }
@@ -89,8 +91,7 @@ class UStringEvaluator {
       }
       if (element.resolve()?.let { configuration.methodsToAnalyzePattern.accepts(it) } == true) {
         return PartiallyKnownString(
-          StringEntry.Unknown(element.sourcePsi, element.ownTextRange,
-                              analyzeMethod(graph, element, configuration).takeUnless { it.isEmpty() })
+          StringEntry.Unknown(element.sourcePsi, element.ownTextRange, analyzeMethod(graph, element, configuration).takeUnless { it.isEmpty() })
         )
       }
     }
@@ -125,9 +126,12 @@ class UStringEvaluator {
     return PartiallyKnownString(entries)
   }
 
-  private fun analyzeUsages(method: UMethod,
-                            parameter: UParameter,
-                            configuration: Configuration): List<PartiallyKnownString> {
+  private fun analyzeUsages(
+    method: UMethod,
+    parameter: UParameter,
+    configuration: Configuration,
+    valueFromArgumentProvider: (UastLocalUsageDependencyGraph, UExpression, Configuration) -> PartiallyKnownString?
+  ): List<PartiallyKnownString> {
     if (configuration.parameterUsagesDepth < 2) return emptyList()
 
     val parameterIndex = method.uastParameters.indexOf(parameter)
@@ -148,7 +152,7 @@ class UStringEvaluator {
         it.getArgumentForParameter(parameterIndex)?.let { argument ->
           argument.getContainingUMethod()?.let { currentMethod ->
             UastLocalUsageDependencyGraph.getGraphByUElement(currentMethod)?.let { graph ->
-              calculate(graph, argument, configuration.copy(methodCallDepth = configuration.parameterUsagesDepth - 1))
+              valueFromArgumentProvider(graph, argument, configuration.copy(methodCallDepth = configuration.parameterUsagesDepth - 1))
             }
           }
         }
@@ -255,6 +259,22 @@ class UStringEvaluator {
     }
 
     val dependencies = graph.dependencies[element].orEmpty()
+
+    if (dependencies.isEmpty() && element is UReferenceExpression) {
+      val declaration = element.resolveToUElement()
+      if (declaration is UParameter && declaration.uastParent is UMethod && declaration.uastParent == graph.uAnchor) {
+        val usagesResults = analyzeUsages(declaration.uastParent as UMethod, declaration, configuration) { usageGraph, argument, usageConfiguration ->
+          calculateBuilder(usageGraph, argument, usageConfiguration, builderEvaluator, null, null)
+        }
+        return usagesResults.singleOrNull()
+               ?: PartiallyKnownString(listOf(StringEntry.Unknown(
+                 element.sourcePsi,
+                 element.ownTextRange,
+                 usagesResults.takeUnless { it.isEmpty() })
+               ))
+      }
+    }
+
     val (dependency, candidates) = selectDependency(dependencies, builderEvaluator) {
       (originalObjectsToAnalyze == null ||
        it.dependencyWitnessValues.intersect(originalObjectsToAnalyze).isNotEmpty()) &&
