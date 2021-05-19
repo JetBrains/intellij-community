@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterByUnresolvedRefActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterFromUsageFix
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.getPossibleTypeParameterContainers
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractIntroduceAction
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicates
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.KotlinIntroduceTypeAliasHandler
@@ -156,7 +157,7 @@ object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
 
             if (!ApplicationManager.getApplication().isUnitTestMode) {
                 val dataContext = SimpleDataContext.getSimpleContext(
-                    CommonDataKeys.PSI_ELEMENT.name, newTypeParameter,
+                    CommonDataKeys.PSI_ELEMENT, newTypeParameter,
                     (editor as? EditorEx)?.dataContext
                 )
                 editor.selectionModel.removeSelection()
@@ -179,5 +180,6 @@ object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
 }
 
 class IntroduceTypeParameterAction : AbstractIntroduceAction() {
-    override fun getRefactoringHandler(provider: RefactoringSupportProvider) = KotlinIntroduceTypeParameterHandler
+    override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler? =
+        (provider as? KotlinRefactoringSupportProvider)?.getIntroduceTypeParameterHandler()
 }

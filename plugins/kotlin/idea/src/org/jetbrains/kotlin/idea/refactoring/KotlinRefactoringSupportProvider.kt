@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKo
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceLambdaParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinIntroducePropertyHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeParameter.KotlinIntroduceTypeParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHandler
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownHandler
@@ -35,8 +36,9 @@ class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
 
     fun getIntroducePropertyHandler(): RefactoringActionHandler = KotlinIntroducePropertyHandler()
 
-    fun getExtractFunctionHandler(): RefactoringActionHandler =
-        ExtractKotlinFunctionHandler()
+    fun getIntroduceTypeParameterHandler(): RefactoringActionHandler = KotlinIntroduceTypeParameterHandler
+
+    fun getExtractFunctionHandler(): RefactoringActionHandler = ExtractKotlinFunctionHandler()
 
     fun getExtractFunctionToScopeHandler(): RefactoringActionHandler =
         ExtractKotlinFunctionHandler(true, ExtractKotlinFunctionHandler.InteractiveExtractionHelper)
