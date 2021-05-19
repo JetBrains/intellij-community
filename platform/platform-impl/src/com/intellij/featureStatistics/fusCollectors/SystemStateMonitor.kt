@@ -6,25 +6,23 @@ import com.intellij.internal.DebugAttachDetector
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
-import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfo
 import java.time.OffsetDateTime
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 internal class SystemStateMonitor : FeatureUsageStateEventTracker {
-  private val OS_GROUP = EventLogGroup("system.os", 7)
+  private val OS_GROUP = EventLogGroup("system.os", 8)
   private val INITIAL_DELAY = 5
   private val PERIOD_DELAY = 24 * 60
 
@@ -66,13 +64,6 @@ internal class SystemStateMonitor : FeatureUsageStateEventTracker {
     val currentZoneOffset = OffsetDateTime.now().offset
     val currentZoneOffsetFeatureUsageData = FeatureUsageData().addData("value", currentZoneOffset.toString())
     osEvents.add(newMetric("os.timezone", currentZoneOffsetFeatureUsageData))
-    val configuration = EventLogConfiguration.getOrCreate("FUS").machineIdConfiguration
-    val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsFUS", configuration.salt)
-    val data = FeatureUsageData().addData("id", machineId ?: "unknown")
-    if (machineId != null) {
-      data.addData("revision", configuration.revision)
-    }
-    osEvents.add(newMetric("machine.id", data))
     return FUStateUsagesLogger.logStateEventsAsync(OS_GROUP, osEvents)
   }
 
