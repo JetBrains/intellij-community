@@ -37,8 +37,12 @@ object NoOpXmlInterner : XmlInterner {
 @ApiStatus.Internal
 fun readXmlAsModel(inputStream: InputStream): XmlElement {
   val reader = createXmlStreamReader(inputStream)
-  nextTag(reader)
-  return readXmlAsModel(reader, null, NoOpXmlInterner)
+  val tag = nextTag(reader)
+  val rootName = when(tag) {
+    XMLStreamConstants.START_ELEMENT -> reader.localName
+    else -> null
+  }
+  return readXmlAsModel(reader, rootName, NoOpXmlInterner)
 }
 
 @ApiStatus.Internal
@@ -148,7 +152,7 @@ private fun readAttributes(reader: XMLStreamReader2, interner: XmlInterner): Map
   }
 }
 
-private fun nextTag(reader: XMLStreamReader2) {
+private fun nextTag(reader: XMLStreamReader2): Int {
   while (true) {
     val next: Int = reader.next()
     when (next) {
@@ -159,7 +163,7 @@ private fun nextTag(reader: XMLStreamReader2) {
         }
         throw WFCException("Received non-all-whitespace CHARACTERS or CDATA event in nextTag().", reader.location)
       }
-      XMLStreamConstants.START_ELEMENT, XMLStreamConstants.END_ELEMENT -> return
+      XMLStreamConstants.START_ELEMENT, XMLStreamConstants.END_ELEMENT -> return next
     }
     throw WFCException("Received event " + ErrorConsts.tokenTypeDesc(next) + ", instead of START_ELEMENT or END_ELEMENT.", reader.location)
   }
