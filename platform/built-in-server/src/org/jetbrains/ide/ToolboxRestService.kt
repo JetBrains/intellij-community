@@ -14,8 +14,6 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelOption
 import io.netty.handler.codec.http.*
-import io.netty.util.concurrent.Future
-import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.io.addCommonHeaders
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -115,7 +113,6 @@ internal class ToolboxRestService : RestService() {
       return null
     }
 
-    val lifetime = Disposer.newDisposable("toolbox-service-request")
     val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=utf-8")
     response.addCommonHeaders()
@@ -123,7 +120,7 @@ internal class ToolboxRestService : RestService() {
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate") //NON-NLS
     response.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED)
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
-    channel.writeAndFlush(response)
+    channel.writeAndFlush(response).get()
 
     val heartbeatDelay = requestJson.castSafelyTo<JsonObject>()?.get("heartbeatMillis")?.asLong
                          ?: System.getProperty("toolbox.heartbeat.millis", "5000").toLong()
@@ -132,26 +129,16 @@ internal class ToolboxRestService : RestService() {
     runCatching { channel.config().setOption(ChannelOption.SO_KEEPALIVE, true) }
     runCatching { channel.config().setOption(ChannelOption.SO_TIMEOUT, heartbeatDelay.toInt() * 2) }
 
-    val heartbeat = context.executor().scheduleWithFixedDelay(
-      object: Runnable {
-        private fun handleError(t: Throwable) {
+    val lifetime = Disposer.newDisposable("toolbox-service-request")
+    val heartbeat = context.executor().scheduleWithFixedDelay(Runnable {
+        try {
+          channel
+            .writeAndFlush(Unpooled.copiedBuffer(" ", Charsets.UTF_8))
+            .get()
+        }
+        catch (t: Throwable) {
           LOG.debug("Failed to write next heartbeat. ${t.message}", t)
           Disposer.dispose(lifetime)
-        }
-
-        private val futureListener = GenericFutureListener<Future<in Void>> { f ->
-          f.cause()?.let { t -> handleError(t) }
-        }
-
-        override fun run() {
-          try {
-            channel
-              .writeAndFlush(Unpooled.copiedBuffer(" ", Charsets.UTF_8))
-              .addListener(futureListener)
-          }
-          catch (t: Throwable) {
-            handleError(t)
-          }
         }
       }, heartbeatDelay, heartbeatDelay, TimeUnit.MILLISECONDS)
 
@@ -186,8 +173,8 @@ internal class ToolboxRestService : RestService() {
             return@thenAcceptAsync
           }
 
-          runCatching { channel.write(Unpooled.copiedBuffer(gson.toJson(json), Charsets.UTF_8)) }
-          runCatching { channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT) }
+          runCatching { channel.writeAndFlush(Unpooled.copiedBuffer(gson.toJson(json), Charsets.UTF_8)).get() }
+          runCatching { channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).get() }
 
           Disposer.dispose(lifetime)
         },
