@@ -129,6 +129,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    */
   public static final Key<Boolean> FORBID_PREVIEW_TAB = Key.create("FORBID_PREVIEW_TAB");
   public static final Key<Boolean> OPEN_IN_PREVIEW_TAB = Key.create("OPEN_IN_PREVIEW_TAB");
+  /**
+   * Works on FileEditor objects, allows to force opening other editor tabs in the main window.
+   * If the currently selected file editor has this key set to TRUE, new editors will be opened in the main splitters.
+   */
+  public static final Key<Boolean> SINGLETON_EDITOR_IN_WINDOW = Key.create("OPEN_OTHER_TABS_IN_MAIN_WINDOW");
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
 
   public enum OpenMode {
@@ -779,7 +784,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private @NotNull EditorWindow getOrCreateCurrentWindow(@NotNull VirtualFile file) {
     boolean useMainWindow = UISettings.getInstance().getOpenTabsInMainWindow() ||
-                            Boolean.TRUE.equals(FileEditorManager.USE_MAIN_WINDOW.get(getSelectedEditor()));
+                            SINGLETON_EDITOR_IN_WINDOW.get(getSelectedEditor(), false);
     EditorsSplitters splitters = useMainWindow ? getMainSplitters() : getSplitters();
 
     EditorWindow currentWindow = splitters.getCurrentWindow();
