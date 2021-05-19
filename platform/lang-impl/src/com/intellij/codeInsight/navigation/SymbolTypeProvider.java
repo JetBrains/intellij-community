@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.model.Symbol;
-import com.intellij.model.SymbolResolveResult;
 import com.intellij.model.psi.PsiSymbolDeclaration;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -40,8 +39,8 @@ public interface SymbolTypeProvider {
    */
   default @NotNull List<? extends @NotNull Symbol> getSymbolTypes(@NotNull PsiSymbolReference reference) {
     List<Symbol> list = new SmartList<>();
-    for (SymbolResolveResult it : reference.resolveReference()) {
-      list.addAll(getSymbolTypes(it.getTarget()));
+    for (Symbol it : reference.resolveReference()) {
+      list.addAll(getSymbolTypes(it));
     }
     return list;
   }

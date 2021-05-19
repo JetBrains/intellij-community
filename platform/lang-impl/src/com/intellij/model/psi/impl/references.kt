@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
-import com.intellij.model.SymbolResolveResult
+import com.intellij.model.Symbol
 import com.intellij.model.psi.ImplicitReferenceProvider
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolReferenceHints
@@ -89,12 +89,12 @@ private fun implicitReference(element: PsiElement): PsiSymbolReference? {
 
 private class ImmediatePsiSymbolReference(
   private val myElement: PsiElement,
-  private val myResults: Collection<SymbolResolveResult>
+  private val myTargets: Collection<Symbol>
 ) : PsiSymbolReference {
 
   private val myRange = TextRange.from(0, element.textLength)
 
   override fun getElement(): PsiElement = myElement
   override fun getRangeInElement(): TextRange = myRange
-  override fun resolveReference(): Collection<SymbolResolveResult> = myResults
+  override fun resolveReference(): Collection<Symbol> = myTargets
 }

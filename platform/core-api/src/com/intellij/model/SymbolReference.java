@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model;
 
 import com.intellij.psi.PsiElement;
@@ -28,7 +28,7 @@ public interface SymbolReference {
    * @return collection of referenced symbols with additional data, or empty collection if there are no targets
    */
   @NotNull
-  Collection<? extends SymbolResolveResult> resolveReference();
+  Collection<? extends Symbol> resolveReference();
 
   /**
    * Default implementation checks results from {@link #resolveReference()}.
@@ -37,6 +37,6 @@ public interface SymbolReference {
    * @return whether this reference resolves to a target
    */
   default boolean resolvesTo(@NotNull Symbol target) {
-    return ContainerUtil.or(resolveReference(), it -> it.getTarget().equals(target));
+    return ContainerUtil.or(resolveReference(), it -> it.equals(target));
   }
 }
