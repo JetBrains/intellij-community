@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
@@ -8,6 +10,7 @@ import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +29,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
       if (view == null) return UsageViewBundle.message("node.group.code.usages");
 
       UsageViewPresentation presentation = view.getPresentation();
-      return UsageViewBundle.message("usage.view.results.node.scope", presentation.getCodeUsagesString(), presentation.getScopeText()).stripTrailing();
+      return buildText(presentation.getCodeUsagesString(), presentation.getScopeText());
     }
 
     public String toString() {
@@ -47,7 +50,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
       if (view == null) return UsageViewBundle.message("node.non.code.usages");
 
       UsageViewPresentation presentation = view.getPresentation();
-      return UsageViewBundle.message("usage.view.results.node.scope", presentation.getNonCodeUsagesString(), presentation.getScopeText()).stripTrailing();
+      return buildText(presentation.getNonCodeUsagesString(), presentation.getScopeText());
     }
 
     public String toString() {
@@ -129,5 +132,16 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
   @Override
   public boolean isGroupingToggleable() {
     return false;
+  }
+
+  @Nls
+  private static String buildText(String usages, String scope) {
+    @NlsSafe StringBuilder text = new StringBuilder(usages);
+    text.append(" ").append(UsageViewBundle.message("usage.view.results.node.scope.in"));
+
+    if (StringUtil.isNotEmpty(scope)) {
+      text.append(" ").append(scope);
+    }
+    return text.toString();
   }
 }
