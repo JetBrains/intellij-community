@@ -1,6 +1,33 @@
 <html>
 <body>
-Reports array properties in a data class without overridden <code>equals()</code> or <code>hashCode()</code> inside.
-Due to default <code>equals()</code> behaviour for arrays in JVM, it is strongly recommended to override <code>equals()</code> and <code>hashCode()</code> in such cases.
+Reports properties with an <code>Array</code> type in a <code>data</code> class without overridden <code>equals()</code> or <code>hashCode()</code>.
+<p>
+    Array parameters are compared by reference equality, which is likely an unexpected behavior.
+    Thus, it is strongly recommended to override <code>equals()</code> and <code>hashCode()</code> in such cases.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  data class Text(val lines: Array&lt;String&gt;)
+</code></pre>
+<p>A quick-fix is suggested to generate missing <code>equals()</code> and <code>hashCode()</code> implementations:</p>
+<pre><code>
+  data class Text(val lines: Array&lt;String&gt;) {
+      override fun equals(other: Any?): Boolean {
+          if (this === other) return true
+          if (javaClass != other?.javaClass) return false
+
+          other as Text
+
+          if (!lines.contentEquals(other.lines)) return false
+
+          return true
+      }
+
+      override fun hashCode(): Int {
+          return lines.contentHashCode()
+      }
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>
