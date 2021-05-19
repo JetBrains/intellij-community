@@ -28478,6 +28478,11 @@ public abstract class DiagnosisCompilerTestFE10TestdataTestGenerated extends Abs
                 runTest(compilerTestData("compiler/testData/diagnostics/testsWithStdLib/experimental/overrideDifferentExperimentalities.kt"));
             }
 
+            @TestMetadata("overrideInAnonymousObject.kt")
+            public void testOverrideInAnonymousObject() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/overrideInAnonymousObject.kt");
+            }
+
             @TestMetadata("topLevel.kt")
             public void testTopLevel() throws Exception {
                 runTest(compilerTestData("compiler/testData/diagnostics/testsWithStdLib/experimental/topLevel.kt"));
