@@ -152,9 +152,9 @@ internal class XmlSerializerCollectionTest {
   fun immutableCollections() {
     class Bean {
       @XCollection
-      var firstElement: List<String> = Arrays.asList("gradle")
+      val firstElement: List<String> = Arrays.asList("gradle")
       @XCollection
-      var secondElement: List<String> = Collections.singletonList("maven")
+      val secondElement: List<String> = Collections.singletonList("maven")
     }
 
     val bean = Bean()
