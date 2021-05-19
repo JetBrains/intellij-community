@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class TextMateSelectorParser {
-  private static final Logger LOG = Logger.getInstance(TextMateSelectorParser.class);
+  private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSelectorParser.class);
   private static final int NESTING_WEIGH_INITIAL = 100;
   private static final int BASE_WEIGH = NESTING_WEIGH_INITIAL * 10;
 

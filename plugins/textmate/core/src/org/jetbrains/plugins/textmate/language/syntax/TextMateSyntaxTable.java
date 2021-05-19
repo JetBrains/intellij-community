@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -21,12 +21,12 @@ import java.util.Map;
  * Table represents mapping from scopeNames to set of syntax rules {@link SyntaxNodeDescriptor}.
  * <p/>
  * In order to lexing some file with this rules you should retrieve syntax rule
- * by scope name of target language {@link this#getSyntax(CharSequence)}.
+ * by scope name of target language {@link #getSyntax(CharSequence)}.
  * <p/>
  * Scope name of target language can be find in syntax files of TextMate bundles.
  */
 public class TextMateSyntaxTable {
-  private static final Logger LOG = Logger.getInstance(TextMateSyntaxTable.class);
+  private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSyntaxTable.class);
   private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new HashMap<>();
   private Object2IntMap<String> ruleIds;
 
@@ -58,7 +58,7 @@ public class TextMateSyntaxTable {
   public SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
     SyntaxNodeDescriptor syntaxNodeDescriptor = rulesMap.get(scopeName);
     if (syntaxNodeDescriptor == null) {
-      LOG.debug("Can't find syntax node for scope: '" + scopeName + "'");
+      LOG.info("Can't find syntax node for scope: '" + scopeName + "'");
       return SyntaxNodeDescriptor.EMPTY_NODE;
     }
     return syntaxNodeDescriptor;

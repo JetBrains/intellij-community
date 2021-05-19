@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +11,7 @@ import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import java.util.*;
 
 class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
-  private static final Logger LOG = Logger.getInstance(SyntaxNodeDescriptor.class);
+  private static final LoggerRt LOG = LoggerRt.getInstance(SyntaxNodeDescriptor.class);
 
   private Int2ObjectMap<SyntaxNodeDescriptor> myRepository = new Int2ObjectOpenHashMap<>();
   private Map<Constants.StringKey, CharSequence> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
