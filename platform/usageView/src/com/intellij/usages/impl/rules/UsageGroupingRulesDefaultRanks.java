@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
 public enum UsageGroupingRulesDefaultRanks {
-  BEFORE_ALL(-100),
+  BEFORE_ALL(Integer.MIN_VALUE),
 
   BEFORE_NON_CODE(-1),
   NON_CODE(0),
@@ -31,7 +31,7 @@ public enum UsageGroupingRulesDefaultRanks {
   FILE_STRUCTURE(500),
   AFTER_FILE_STRUCTURE(501),
 
-  AFTER_ALL(600);
+  AFTER_ALL(Integer.MAX_VALUE);
 
   private final int myRank;
 
