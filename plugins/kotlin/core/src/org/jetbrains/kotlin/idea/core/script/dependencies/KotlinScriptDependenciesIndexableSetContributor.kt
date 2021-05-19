@@ -31,4 +31,8 @@ class KotlinScriptDependenciesIndexableSetContributor : IndexableSetContributor(
     }
 
     override fun getAdditionalRootsToIndex(): Set<VirtualFile> = emptySet()
+
+    override fun getDebugName(): String {
+        return "Kotlin Script dependencies"
+    }
 }
