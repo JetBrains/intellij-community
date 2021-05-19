@@ -395,7 +395,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       lafClassName = ourLafClassesAliases.get(lafClassName);
     }
 
-    if ("com.sun.java.swing.plaf.windows.WindowsLookAndFeel".equals(lafClassName)) {
+    if ("com.sun.java.swing.plaf.windows.WindowsLookAndFeel".equals(lafClassName) ||
+        "com.intellij.laf.macos.MacIntelliJLaf".equals(lafClassName)) {
       return defaultLightLaf.getValue();
     }
 
