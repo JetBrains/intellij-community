@@ -245,6 +245,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myDummyItemCount.set(count);
   }
 
+  @NotNull
+  public LookupElement getDummyItem() {
+    return myDummyItem;
+  }
+
   public void repaintLookup(boolean onExplicitAction, boolean reused, boolean selectionVisible, boolean itemsChanged) {
     myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
   }
