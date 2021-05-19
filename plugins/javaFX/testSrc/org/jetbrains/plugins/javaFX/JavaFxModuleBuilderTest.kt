@@ -169,8 +169,8 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
           mavenCentral()
       }
 
-      sourceCompatibility = 11
-      targetCompatibility = 11
+      sourceCompatibility = '11'
+      targetCompatibility = '11'
 
       tasks.withType(JavaCompile) {
           options.encoding = 'UTF-8'

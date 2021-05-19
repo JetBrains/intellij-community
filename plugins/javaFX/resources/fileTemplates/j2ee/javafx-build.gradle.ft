@@ -24,8 +24,8 @@ ext {
 #end
 
 #if ($context.sdkFeatureVersion > 0)
-sourceCompatibility = ${context.sdkFeatureVersion}
-targetCompatibility = ${context.sdkFeatureVersion}
+sourceCompatibility = '${context.sdkFeatureVersion}'
+targetCompatibility = '${context.sdkFeatureVersion}'
 #end
 
 tasks.withType(JavaCompile) {
