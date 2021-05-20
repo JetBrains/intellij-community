@@ -7,11 +7,13 @@ import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import kotlin.properties.Delegates
 
-//TODO: changes navigation popup
 open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?)
-  : CacheDiffRequestProcessor.Simple(project) {
+  : CacheDiffRequestProcessor.Simple(project), SelectionAwareGoToChangePopupActionProvider {
 
   private val asyncChangeListener = AsyncDiffRequestChain.Listener {
     dropCaches()
@@ -19,7 +21,7 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
     updateRequest(true)
   }
 
-  var chain: DiffRequestChain? by Delegates.observable<DiffRequestChain?>(null) { _, oldValue, newValue ->
+  var chain: DiffRequestChain? by Delegates.observable(null) { _, oldValue, newValue ->
     if (oldValue is AsyncDiffRequestChain) {
       oldValue.onAssigned(false)
       oldValue.removeListener(asyncChangeListener)
@@ -75,4 +77,18 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
     val chain = chain ?: return false
     return chain.requests.size > 1
   }
+
+  override fun getGoToChangeActionProvider() = this
+
+  override fun getActualProducers(): List<DiffRequestProducer> {
+    return chain?.requests ?: emptyList()
+  }
+
+  override fun getSelectedFilePath(): FilePath? {
+    val producer = chain?.requests?.getOrNull(currentIndex)
+    return if (producer is ChangeDiffRequestChain.Producer) producer.filePath else null
+  }
+
+  //TODO implement: get relevant changes tree and select node
+  override fun selectFilePath(filePath: FilePath) {}
 }
