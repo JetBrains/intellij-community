@@ -551,12 +551,12 @@ idea.fatal.error.notification=disabled
     Files.createDirectories(destLibDir)
     for (File file : library.getFiles(JpsOrderRootType.COMPILED)) {
       Files.copy(file.toPath(), destLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
-      extraJars += file.name
+      extraJars += "lib/" + file.name
     }
-    def srcClassPathTxt = Paths.get("$buildContext.paths.distAll/lib/classpath.txt")
+    def srcClassPathTxt = Paths.get("$buildContext.paths.tempDir/classpath.txt")
     //no file in fleet
     if (Files.exists(srcClassPathTxt)) {
-      def classPathTxt = destLibDir.resolve("classpath.txt")
+      def classPathTxt = distDir.resolve("classpath.txt")
       Files.copy(srcClassPathTxt, classPathTxt, StandardCopyOption.REPLACE_EXISTING)
       Files.writeString(classPathTxt, "\n" + extraJars.join("\n"), StandardOpenOption.APPEND)
       buildContext.messages.warning("added dbus-java to classpath.txt")

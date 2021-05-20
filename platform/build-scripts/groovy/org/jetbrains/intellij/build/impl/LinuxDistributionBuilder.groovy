@@ -188,7 +188,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       paths += jreDirectoryPath
       javaExecutablePath = "jbr/bin/java"
     }
-    boolean hasPatchedClasspathTxt = Files.exists(unixDistPath.resolve("lib/classpath.txt"))
+    boolean hasPatchedClasspathTxt = Files.exists(unixDistPath.resolve("classpath.txt"))
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(Paths.get(productJsonDir), javaExecutablePath)
     paths += productJsonDir
@@ -204,7 +204,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
               exclude(name: it)
             }
             if (hasPatchedClasspathTxt && path == buildContext.paths.distAll) {
-              exclude(name: "lib/classpath.txt")
+              exclude(name: "classpath.txt")
             }
             type(type: "file")
           }
