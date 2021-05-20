@@ -21,15 +21,12 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.EngravedLabel
 import com.intellij.ui.components.BasicOptionButtonUI
-import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.util.findBranch
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.findVcsLogData
-import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
@@ -76,25 +73,10 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     resetGitLogWindow()
-    lateinit var vcsData: VcsLogData
-    task {
-      val future = findVcsLogData()
-      stateCheck {
-        val data = future.getNow(null)
-        if (data != null) {
-          vcsData = data
-          true
-        }
-        else false
-      }
-    }
 
     task {
       text(GitLessonsBundle.message("git.feature.branch.introduction.2", strong(main)))
-      highlightSubsequentCommitsInGitLog(sequenceLength = 2) { commit ->
-        val root = vcsData.roots.single()
-        commit.id == vcsData.dataPack.findBranch(branchName, root)?.commitHash
-      }
+      highlightLatestCommitsFromBranch(branchName, sequenceLength = 2)
       proceedLink()
     }
 
@@ -152,10 +134,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
     task("Git.Branches") {
       text(GitLessonsBundle.message("git.feature.branch.new.commits.explanation", strong(main)))
-      highlightSubsequentCommitsInGitLog(sequenceLength = 2) {
-        val root = vcsData.roots.single()
-        it.id == vcsData.dataPack.findBranch("$remoteName/$main", root)?.commitHash
-      }
+      highlightLatestCommitsFromBranch("$remoteName/$main", sequenceLength = 2)
       proceedLink()
     }
 

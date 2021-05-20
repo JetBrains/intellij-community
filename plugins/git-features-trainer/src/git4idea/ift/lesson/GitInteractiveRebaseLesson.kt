@@ -12,13 +12,14 @@ import com.intellij.ui.table.JBTable
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
-import git4idea.ift.GitLessonsUtil.findVcsLogData
+import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
@@ -49,25 +50,10 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     }
 
     resetGitLogWindow()
-    lateinit var vcsData: VcsLogData
-    task {
-      val future = findVcsLogData()
-      stateCheck {
-        val data = future.getNow(null)
-        if (data != null) {
-          vcsData = data
-          true
-        }
-        else false
-      }
-    }
 
     task {
       text(GitLessonsBundle.message("git.interactive.rebase.introduction"))
-      highlightSubsequentCommitsInGitLog(sequenceLength = 5, highlightInside = false, usePulsation = true) {
-        val root = vcsData.roots.single()
-        it.id == vcsData.dataPack.findBranch(branchName, root)?.commitHash
-      }
+      highlightLatestCommitsFromBranch(branchName, sequenceLength = 5, highlightInside = false, usePulsation = true)
       proceedLink()
     }
 
@@ -78,7 +64,8 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       var commitHashToHighlight: Hash? = null
       before {
         LearningUiHighlightingManager.clearHighlights()
-        commitHashToHighlight = vcsData.findFirstCommitInBranch(branchName)
+        val vcsData = VcsProjectLog.getInstance(project).dataManager
+        commitHashToHighlight = vcsData?.findFirstCommitInBranch(branchName)
       }
       text(GitLessonsBundle.message("git.interactive.rebase.open.context.menu"))
       highlightSubsequentCommitsInGitLog {

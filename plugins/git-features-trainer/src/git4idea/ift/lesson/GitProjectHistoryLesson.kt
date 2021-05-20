@@ -8,7 +8,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
@@ -16,10 +15,9 @@ import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
-import com.intellij.vcs.log.util.findBranch
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
-import git4idea.ift.GitLessonsUtil.findVcsLogData
+import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
@@ -30,7 +28,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.Icon
 
-class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
+class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
   override val existedFile = "src/git/sphinx_cat.yml"
   private val branchName = "feature"
   private val textToFind = "sphinx"
@@ -49,24 +47,9 @@ class GitProjectHistoryLesson() : GitLesson("Git.ProjectHistory", GitLessonsBund
     }
 
     resetGitLogWindow()
-    lateinit var vcsData: VcsLogData
-    task {
-      val future = findVcsLogData()
-      stateCheck {
-        val data = future.getNow(null)
-        if (data != null) {
-          vcsData = data
-          true
-        }
-        else false
-      }
-    }
 
     task {
-      highlightSubsequentCommitsInGitLog {
-        val root = vcsData.roots.single()
-        it.id == vcsData.dataPack.findBranch(branchName, root)?.commitHash
-      }
+      highlightLatestCommitsFromBranch(branchName)
     }
 
     task {

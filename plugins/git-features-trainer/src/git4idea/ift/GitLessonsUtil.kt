@@ -13,11 +13,10 @@ import com.intellij.ui.SearchTextField
 import com.intellij.ui.UIBundle
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import com.intellij.vcs.log.util.findBranch
 import git4idea.commands.Git
 import git4idea.index.actions.runProcess
 import git4idea.repo.GitRepository
@@ -104,26 +103,6 @@ object GitLessonsUtil {
     }
   }
 
-  fun TaskContext.findVcsLogData(): CompletableFuture<VcsLogData> {
-    val future = CompletableFuture<VcsLogData>()
-    val data = VcsProjectLog.getInstance(project).dataManager
-    if (data != null) {
-      future.complete(data)
-    }
-    else {
-      before {
-        subscribeForMessageBus(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, object : VcsProjectLog.ProjectLogListener {
-          override fun logCreated(manager: VcsLogManager) {
-            future.complete(data)
-          }
-
-          override fun logDisposed(manager: VcsLogManager) {}
-        })
-      }
-    }
-    return future
-  }
-
   fun TaskContext.highlightSubsequentCommitsInGitLog(startCommitRow: Int,
                                                      sequenceLength: Int = 1,
                                                      highlightInside: Boolean = true,
@@ -147,6 +126,17 @@ object GitLessonsUtil {
     }
   }
 
+  fun TaskContext.highlightLatestCommitsFromBranch(branchName: String,
+                                                   sequenceLength: Int = 1,
+                                                   highlightInside: Boolean = true,
+                                                   usePulsation: Boolean = false) {
+    highlightSubsequentCommitsInGitLog(sequenceLength, highlightInside, usePulsation) l@{ commit ->
+      val vcsData = VcsProjectLog.getInstance(project).dataManager ?: return@l false
+      val root = vcsData.roots.single()
+      commit.id == vcsData.dataPack.findBranch(branchName, root)?.commitHash
+    }
+  }
+
   private fun VcsLogGraphTable.getRectForSubsequentCommits(startCommitRow: Int, sequenceLength: Int): Rectangle {
     val cells = (1..4).map { getCellRect(startCommitRow, it, false) }
     val width = cells.fold(0) { acc, rect -> acc + rect.width }
@@ -165,7 +155,7 @@ object GitLessonsUtil {
     }
   }
 
-  fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String) {
+  private fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String) {
     val gotIt = CompletableFuture<Boolean>()
     text(text, LearningBalloonConfig(position, width, false) { gotIt.complete(true) })
     addStep(gotIt)
