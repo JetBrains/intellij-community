@@ -365,7 +365,7 @@ public final class PluginManagerCore {
   }
 
   public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
-    return isDevelopedByJetBrains(plugin.getVendor());
+    return isDevelopedByJetBrains(plugin.getVendor()) || isDevelopedByJetBrains(plugin.getOrganization());
   }
 
   public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
