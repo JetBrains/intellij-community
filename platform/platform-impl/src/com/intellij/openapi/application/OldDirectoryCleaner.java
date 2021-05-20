@@ -76,7 +76,7 @@ public final class OldDirectoryCleaner {
     }
 
     public static void completed(int groups, long totalBytes) {
-      COMPLETE.log(groups, totalBytes / 1_000_000L);
+      COMPLETE.log(groups, (totalBytes + 500_000) / 1_000_000L);
     }
   }
 
