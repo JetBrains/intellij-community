@@ -507,4 +507,42 @@ public class TestArrangementBuilder {
   }
 
 
+  void testIdea264100() {
+    doTest(
+      initial: '''
+public class Test {
+    private static final String AAA = "aaa";
+    static final String BBB = AAA;
+    static final String CCC = BBB;
+    private static final Object O2 = "";
+    public static final Object O1 = "";
+    public static final Object DR = "";
+    private static final Object DA = DR;
+    private static final Object B1 = O2.toString() + DA;
+    private static final Object B2 = O2.toString() + DA;
+    private static final Object B3 = O1.toString() + DA;
+    private static final Object B4 = O1.toString() + DA;
+}
+''',
+      expected: '''
+public class Test {
+    public static final Object O1 = "";
+    public static final Object DR = "";
+    private static final String AAA = "aaa";
+    static final String BBB = AAA;
+    static final String CCC = BBB;
+    private static final Object O2 = "";
+    private static final Object DA = DR;
+    private static final Object B1 = O2.toString() + DA;
+    private static final Object B2 = O2.toString() + DA;
+    private static final Object B3 = O1.toString() + DA;
+    private static final Object B4 = O1.toString() + DA;
+}
+''',
+      rules: [
+        rule(STATIC, FINAL),
+        rule(PRIVATE, STATIC, FINAL)
+      ]
+    )
+  }
 }

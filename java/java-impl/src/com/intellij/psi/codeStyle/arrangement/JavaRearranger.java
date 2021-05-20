@@ -278,7 +278,8 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
 
       for (ArrangementEntryDependencyInfo fieldInInitializerInfo : root.getDependentEntriesInfos()) {
         JavaElementArrangementEntry fieldInInitializer = fieldInInitializerInfo.getAnchorEntry();
-        if (arrangedFields.indexOf(fieldInInitializer) > anchorEntryIndex) {
+        if (arrangedFields.indexOf(fieldInInitializer) > anchorEntryIndex ||
+            fieldInInitializerInfo.getDependentEntriesInfos().size() > 0) {
           anchorField.addDependency(fieldInInitializer);
         }
       }
