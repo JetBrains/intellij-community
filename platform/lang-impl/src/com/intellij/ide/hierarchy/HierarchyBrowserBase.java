@@ -28,15 +28,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 
 public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable, DataProvider {
-  private static final HierarchyNodeDescriptor[] EMPTY_DESCRIPTORS = new HierarchyNodeDescriptor[0];
-
   protected final Project myProject;
   protected Content myContent;
 
@@ -60,7 +55,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   @Override
-  public void setContent(Content content) {
+  public void setContent(@NotNull Content content) {
     myContent = content;
   }
 
@@ -79,7 +74,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   @NotNull
-  protected ActionToolbar createToolbar(@NotNull String place, String helpID) {
+  protected ActionToolbar createToolbar(@NotNull String place, @NotNull String helpID) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     appendActions(actionGroup, helpID);
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
@@ -123,15 +118,15 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   @Nullable
-  protected HierarchyNodeDescriptor getDescriptor(DefaultMutableTreeNode node) {
-    Object userObject = node != null ? node.getUserObject() : null;
+  protected static HierarchyNodeDescriptor getDescriptor(@NotNull DefaultMutableTreeNode node) {
+    Object userObject = node.getUserObject();
     if (userObject instanceof HierarchyNodeDescriptor) {
       return (HierarchyNodeDescriptor)userObject;
     }
     return null;
   }
 
-  public PsiElement[] getAvailableElements() {
+  public PsiElement @NotNull [] getAvailableElements() {
     JTree tree = getCurrentTree();
     if (tree == null) {
       return PsiElement.EMPTY_ARRAY;
@@ -144,14 +139,13 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)root;
     HierarchyNodeDescriptor descriptor = getDescriptor(node);
     Set<PsiElement> result = new HashSet<>();
-    collectElements(descriptor, result);
+    if (descriptor != null) {
+      collectElements(descriptor, result);
+    }
     return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  private void collectElements(HierarchyNodeDescriptor descriptor, Set<? super PsiElement> out) {
-    if (descriptor == null) {
-      return;
-    }
+  private void collectElements(@NotNull HierarchyNodeDescriptor descriptor, @NotNull Set<? super PsiElement> out) {
     PsiElement element = getElementFromDescriptor(descriptor);
     if (element != null) {
       out.add(element.getNavigationElement());
@@ -168,14 +162,14 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     }
   }
 
-  public final HierarchyNodeDescriptor[] getSelectedDescriptors() {
+  public final HierarchyNodeDescriptor @NotNull [] getSelectedDescriptors() {
     JTree tree = getCurrentTree();
     if (tree == null) {
-      return EMPTY_DESCRIPTORS;
+      return HierarchyNodeDescriptor.EMPTY_ARRAY;
     }
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length == 0) {
-      return EMPTY_DESCRIPTORS;
+      return HierarchyNodeDescriptor.EMPTY_ARRAY;
     }
     ArrayList<HierarchyNodeDescriptor> list = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
@@ -202,20 +196,20 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
 
-  private Navigatable[] getNavigatables() {
+  private Navigatable @NotNull [] getNavigatables() {
     HierarchyNodeDescriptor[] selectedDescriptors = getSelectedDescriptors();
-    if (selectedDescriptors == null || selectedDescriptors.length == 0) return null;
-    ArrayList<Navigatable> result = new ArrayList<>();
+    if (selectedDescriptors.length == 0) return Navigatable.EMPTY_ARRAY;
+    List<Navigatable> result = new ArrayList<>();
     for (HierarchyNodeDescriptor descriptor : selectedDescriptors) {
       Navigatable navigatable = getNavigatable(descriptor);
       if (navigatable != null) {
         result.add(navigatable);
       }
     }
-    return result.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    return result.toArray(Navigatable.EMPTY_ARRAY);
   }
 
-  private Navigatable getNavigatable(HierarchyNodeDescriptor descriptor) {
+  private Navigatable getNavigatable(@NotNull HierarchyNodeDescriptor descriptor) {
     if (descriptor instanceof Navigatable && descriptor.isValid()) {
       return (Navigatable)descriptor;
     }

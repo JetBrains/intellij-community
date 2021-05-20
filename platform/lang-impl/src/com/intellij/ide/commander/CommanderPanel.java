@@ -487,7 +487,7 @@ public class CommanderPanel extends JPanel {
       }
     }
 
-    return elements.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    return elements.toArray(Navigatable.EMPTY_ARRAY);
   }
 
   private static PsiElement @Nullable [] filterInvalidElements(final PsiElement[] elements) {

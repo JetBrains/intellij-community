@@ -501,12 +501,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   @Override
-  public void setContent(Content content) {
+  public void setContent(@NotNull Content content) {
     super.setContent(content);
-    if (content != null) {
-      // stop all background tasks when toolwindow closed
-      Disposer.register(content, this::disposeAllSheets);
-    }
+    // stop all background tasks when toolwindow closed
+    Disposer.register(content, this::disposeAllSheets);
   }
 
   @Override

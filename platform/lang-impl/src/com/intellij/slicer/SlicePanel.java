@@ -311,7 +311,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
   public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       List<Navigatable> navigatables = getNavigatables();
-      return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+      return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_ARRAY);
     }
     return null;
   }
