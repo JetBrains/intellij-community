@@ -49,7 +49,7 @@ open class DefaultTabTheme : TabTheme {
 
 class EditorTabTheme : TabTheme {
   override val topBorderThickness: Int
-    get() = newUIAware(0, super.topBorderThickness)
+    get() = newUIAware(1, super.topBorderThickness)
 
   val globalScheme: EditorColorsScheme
     get() = EditorColorsManager.getInstance().globalScheme
@@ -58,7 +58,7 @@ class EditorTabTheme : TabTheme {
     get() = newUIAware(JBColor.PanelBackground, JBUI.CurrentTheme.EditorTabs.background())
 
   override val borderColor: Color
-    get() = newUIAware(globalScheme.defaultBackground, JBUI.CurrentTheme.EditorTabs.borderColor())
+    get() = JBUI.CurrentTheme.EditorTabs.borderColor()
 
   override val underlineColor: Color
     get() = globalScheme.getColor(EditorColors.TAB_UNDERLINE) ?: JBUI.CurrentTheme.EditorTabs.underlineColor()
