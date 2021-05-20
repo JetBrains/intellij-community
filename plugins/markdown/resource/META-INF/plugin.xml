@@ -142,6 +142,8 @@ Includes the following features:</p>
     <editorActionHandler action="EditorIndentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
     <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
+    <editorFactoryListener implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarListenersManager"/>
+
     <!--Formatting-->
     <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
     <lang.formatter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.formatter.MarkdownFormattingModelBuilder"/>
@@ -214,15 +216,10 @@ Includes the following features:</p>
   </extensions>
 
   <actions>
-    <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
+    <group id="Markdown.Toolbar.Floating" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               icon="MarkdownIcons.EditorActions.Bold">
-      </action>
-
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
-              icon="MarkdownIcons.EditorActions.Strike_through">
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
@@ -230,10 +227,17 @@ Includes the following features:</p>
               icon="MarkdownIcons.EditorActions.Italic">
       </action>
 
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
+              icon="MarkdownIcons.EditorActions.Strike_through">
+      </action>
+
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               icon="MarkdownIcons.EditorActions.Code_span">
       </action>
+
+      <separator/>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
@@ -244,12 +248,14 @@ Includes the following features:</p>
               id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
               icon="MarkdownIcons.EditorActions.Header_level_up">
       </action>
+    </group>
 
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
-              icon="MarkdownIcons.EditorActions.Link">
-      </action>
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
+            icon="MarkdownIcons.EditorActions.Link">
+    </action>
 
+    <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
       <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
               icon="AllIcons.General.LayoutPreviewOnly">
