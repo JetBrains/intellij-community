@@ -1166,6 +1166,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/replaceWithDotCall", pattern = pattern)
             model("quickfix/replaceWithSafeCall", pattern = pattern)
             model("quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
+            model("quickfix/variables/removeValVarFromParameter", pattern = pattern, filenameStartsLowerCase = true)
             model("quickfix/when", pattern = pattern)
             model("quickfix/wrapWithSafeLetCall", pattern = pattern)
             model("quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern, filenameStartsLowerCase = true)
