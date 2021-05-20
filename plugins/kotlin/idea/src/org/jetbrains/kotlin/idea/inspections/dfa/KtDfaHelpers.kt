@@ -5,12 +5,17 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiType
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
@@ -45,6 +50,27 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
         is FloatValue -> DfTypes.floatValue(constant.value)
         is DoubleValue -> DfTypes.doubleValue(constant.value)
         else -> DfType.TOP
+    }
+}
+
+internal fun KtExpression.getKotlinType(): KotlinType? = analyze(BodyResolveMode.PARTIAL).getType(this)
+
+internal fun KotlinType.toPsiType(context: PsiElement): PsiType? {
+    val typeFqName = this.constructor.declarationDescriptor?.fqNameSafe?.asString()
+    val boxed = isMarkedNullable
+    fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
+    return when (typeFqName) {
+        "kotlin.Int" -> PsiType.INT.orBoxed()
+        "kotlin.Long" -> PsiType.LONG.orBoxed()
+        "kotlin.Short" -> PsiType.SHORT.orBoxed()
+        "kotlin.Boolean" -> PsiType.BOOLEAN.orBoxed()
+        "kotlin.Byte" -> PsiType.BYTE.orBoxed()
+        "kotlin.Char" -> PsiType.CHAR.orBoxed()
+        "kotlin.Double" -> PsiType.DOUBLE.orBoxed()
+        "kotlin.Float" -> PsiType.FLOAT.orBoxed()
+        "kotlin.Unit" -> PsiType.VOID.orBoxed()
+        "kotlin.String" -> PsiType.getJavaLangString(context.manager, context.resolveScope)
+        else -> null
     }
 }
 

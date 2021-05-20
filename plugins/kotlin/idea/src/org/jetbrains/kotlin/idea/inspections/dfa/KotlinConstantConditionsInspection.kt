@@ -19,35 +19,38 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     private enum class ConstantValue {
         TRUE, FALSE, UNKNOWN
     }
+
+    private class KotlinDfaListener : DfaListener {
+        val constantConditions : MutableMap<KtExpression, ConstantValue> = hashMapOf()
+
+        override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
+            if (anchor is KotlinExpressionAnchor) {
+                val expression = anchor.expression
+                if (expression is KtConstantExpression) return
+                val oldVal = constantConditions[expression]
+                if (oldVal == ConstantValue.UNKNOWN) return
+                var newVal = when(state.getDfType(value)) {
+                    DfTypes.TRUE -> ConstantValue.TRUE
+                    DfTypes.FALSE -> ConstantValue.FALSE
+                    else -> ConstantValue.UNKNOWN
+                }
+                if (oldVal != null && oldVal != newVal) {
+                    newVal = ConstantValue.UNKNOWN
+                }
+                constantConditions[expression] = newVal
+            }
+        }
+    }
     
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = namedFunctionVisitor(fun(function) {
         val body = function.bodyExpression ?: function.bodyBlockExpression ?: return
         val factory = DfaValueFactory(holder.project)
         val flow = KtControlFlowBuilder(factory, body).buildFlow() ?: return
         val state = JvmDfaMemoryStateImpl(factory)
-        val constantConditions : MutableMap<KtExpression, ConstantValue> = hashMapOf()
-        val listener = object : DfaListener {
-            override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
-                if (anchor is KotlinExpressionAnchor) {
-                    val expression = anchor.expression
-                    if (expression is KtConstantExpression) return
-                    val oldVal = constantConditions[expression]
-                    if (oldVal == ConstantValue.UNKNOWN) return
-                    var newVal = when(state.getDfType(value)) {
-                        DfTypes.TRUE -> ConstantValue.TRUE
-                        DfTypes.FALSE -> ConstantValue.FALSE
-                        else -> ConstantValue.UNKNOWN
-                    }
-                    if (oldVal != null && oldVal != newVal) {
-                        newVal = ConstantValue.UNKNOWN
-                    }
-                    constantConditions[expression] = newVal
-                }
-            }
-        }
+        val listener = KotlinDfaListener()
         val interpreter = StandardDataFlowInterpreter(flow, listener)
         interpreter.interpret(state)
-        constantConditions.forEach { (expr, cv) -> 
+        listener.constantConditions.forEach { (expr, cv) -> 
             if (cv != ConstantValue.UNKNOWN) {
                 val key = if (cv == ConstantValue.TRUE) "inspection.message.condition.always.true" 
                 else "inspection.message.condition.always.false"

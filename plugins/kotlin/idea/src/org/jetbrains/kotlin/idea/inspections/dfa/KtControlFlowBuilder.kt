@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.inspections.dfa
 import com.intellij.codeInspection.dataFlow.java.inst.BooleanBinaryInstruction
 import com.intellij.codeInspection.dataFlow.java.inst.JvmPushInstruction
 import com.intellij.codeInspection.dataFlow.java.inst.NumericBinaryInstruction
+import com.intellij.codeInspection.dataFlow.java.inst.PrimitiveConversionInstruction
 import com.intellij.codeInspection.dataFlow.lang.ir.*
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.DeferredOffset
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp
@@ -11,10 +12,15 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.RelationType
+import com.intellij.psi.PsiPrimitiveType
 import com.intellij.util.containers.FList
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.typeUtil.isDouble
+import org.jetbrains.kotlin.types.typeUtil.isFloat
+import org.jetbrains.kotlin.types.typeUtil.isLong
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     // Will be used to track catch/finally blocks
@@ -146,8 +152,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processMathExpression(expr: KtBinaryExpression, mathOp: LongRangeBinOp) {
         val left = expr.left
         val right = expr.right
+        val resultType = expr.getKotlinType()
         processExpression(left)
+        addImplicitConversion(left, resultType)
         processExpression(right)
+        addImplicitConversion(right, resultType)
         if (left == null || right == null) {
             addInstruction(EvalUnknownInstruction(KotlinExpressionAnchor(expr), 2))
             return
@@ -156,14 +165,29 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
     }
 
+    private fun addImplicitConversion(expression: KtExpression?, expectedType: KotlinType?) {
+        expression ?: return
+        expectedType ?: return
+        val actualType = expression.getKotlinType() ?: return
+        if (actualType == expectedType) return
+        val actualPsiType = actualType.toPsiType(expression)
+        val expectedPsiType = expectedType.toPsiType(expression)
+        if (actualPsiType is PsiPrimitiveType && expectedPsiType is PsiPrimitiveType) {
+            addInstruction(PrimitiveConversionInstruction(expectedPsiType, null))
+        }
+    }
+
     private fun processBinaryRelationExpression(
         expr: KtBinaryExpression, relation: RelationType,
         forceEqualityByContent: Boolean
     ) {
         val left = expr.left
         val right = expr.right
+        val balancedType = balanceType(left?.getKotlinType(), right?.getKotlinType())
         processExpression(left)
+        addImplicitConversion(left, balancedType)
         processExpression(right)
+        addImplicitConversion(right, balancedType)
         if (left == null || right == null) {
             addInstruction(EvalUnknownInstruction(KotlinExpressionAnchor(expr), 2))
             return
@@ -171,6 +195,18 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         // TODO: support overloaded operators
         // TODO: avoid equals-comparison of unknown object types
         addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
+    }
+
+    private fun balanceType(left: KotlinType?, right: KotlinType?): KotlinType? {
+        if (left == null || right == null) return null
+        if (left.isDouble()) return left
+        if (right.isDouble()) return right
+        if (left.isFloat()) return left
+        if (right.isFloat()) return right
+        if (left.isLong()) return left
+        if (right.isLong()) return right;
+        // null means no balancing is necessary
+        return null
     }
 
     private fun addInstruction(inst: Instruction) {
