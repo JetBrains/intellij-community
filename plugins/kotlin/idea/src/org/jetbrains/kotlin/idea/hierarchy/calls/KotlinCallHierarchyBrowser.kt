@@ -32,7 +32,7 @@ import javax.swing.JTree
 
 class KotlinCallHierarchyBrowser(element: PsiElement) :
     CallHierarchyBrowserBase(element.project, element) {
-    override fun createTrees(trees: MutableMap<String, JTree>) {
+    override fun createTrees(trees: MutableMap<in String, in JTree>) {
         val group = ActionManager.getInstance().getAction(IdeActions.GROUP_CALL_HIERARCHY_POPUP) as ActionGroup
         val baseOnThisMethodAction = BaseOnThisMethodAction()
 

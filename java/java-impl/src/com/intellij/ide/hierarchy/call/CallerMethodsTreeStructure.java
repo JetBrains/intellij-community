@@ -26,13 +26,13 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   /**
    * Should be called in read action
    */
-  public CallerMethodsTreeStructure(@NotNull Project project, @NotNull PsiMember member, final String scopeType) {
+  public CallerMethodsTreeStructure(@NotNull Project project, @NotNull PsiMember member, String scopeType) {
     super(project, new CallHierarchyNodeDescriptor(project, null, member, true, false));
     myScopeType = scopeType;
   }
 
   @Override
-  protected final Object @NotNull [] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
+  protected final Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     if (enclosingElement == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
@@ -69,7 +69,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       methodsToFind.add(method);
       ContainerUtil.addAll(methodsToFind, method.findDeepestSuperMethods());
 
-      Map<PsiMember, NodeDescriptor> methodToDescriptorMap = new HashMap<>();
+      Map<PsiMember, NodeDescriptor<?>> methodToDescriptorMap = new HashMap<>();
       for (PsiMethod methodToFind : methodsToFind) {
         JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
 

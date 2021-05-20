@@ -4,7 +4,7 @@ package com.intellij.ide.hierarchy.method;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 
-public final class ImplementMethodAction extends OverrideImplementMethodAction {
+final class ImplementMethodAction extends OverrideImplementMethodAction {
   @Override
   protected final void update(final Presentation presentation, final int toImplement, final int toOverride) {
     if (toImplement > 0) {

@@ -60,7 +60,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   @Override
-  public void setContent(final Content content) {
+  public void setContent(Content content) {
     myContent = content;
   }
 
@@ -79,10 +79,10 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   @NotNull
-  protected ActionToolbar createToolbar(@NotNull String place, final String helpID) {
-    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+  protected ActionToolbar createToolbar(@NotNull String place, String helpID) {
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
     appendActions(actionGroup, helpID);
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
     actionToolbar.setTargetComponent(this);
     return actionToolbar;
   }
@@ -105,25 +105,25 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   @Nullable
   protected DefaultMutableTreeNode getSelectedNode() {
-    final JTree tree = getCurrentTree();
+    JTree tree = getCurrentTree();
     if (tree == null) return null;
-    final TreePath path = tree.getSelectionPath();
+    TreePath path = tree.getSelectionPath();
     if (path == null) return null;
-    final Object lastPathComponent = path.getLastPathComponent();
+    Object lastPathComponent = path.getLastPathComponent();
     if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
     return (DefaultMutableTreeNode)lastPathComponent;
   }
 
   @Nullable
   protected final PsiElement getSelectedElement() {
-    final DefaultMutableTreeNode node = getSelectedNode();
-    final HierarchyNodeDescriptor descriptor = node != null ? getDescriptor(node) : null;
+    DefaultMutableTreeNode node = getSelectedNode();
+    HierarchyNodeDescriptor descriptor = node != null ? getDescriptor(node) : null;
     return descriptor != null ? getElementFromDescriptor(descriptor) : null;
   }
 
   @Nullable
   protected HierarchyNodeDescriptor getDescriptor(DefaultMutableTreeNode node) {
-    final Object userObject = node != null ? node.getUserObject() : null;
+    Object userObject = node != null ? node.getUserObject() : null;
     if (userObject instanceof HierarchyNodeDescriptor) {
       return (HierarchyNodeDescriptor)userObject;
     }
@@ -131,18 +131,18 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   public PsiElement[] getAvailableElements() {
-    final JTree tree = getCurrentTree();
+    JTree tree = getCurrentTree();
     if (tree == null) {
       return PsiElement.EMPTY_ARRAY;
     }
-    final TreeModel model = tree.getModel();
-    final Object root = model.getRoot();
+    TreeModel model = tree.getModel();
+    Object root = model.getRoot();
     if (!(root instanceof DefaultMutableTreeNode)) {
       return PsiElement.EMPTY_ARRAY;
     }
-    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)root;
-    final HierarchyNodeDescriptor descriptor = getDescriptor(node);
-    final Set<PsiElement> result = new HashSet<>();
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)root;
+    HierarchyNodeDescriptor descriptor = getDescriptor(node);
+    Set<PsiElement> result = new HashSet<>();
     collectElements(descriptor, result);
     return result.toArray(PsiElement.EMPTY_ARRAY);
   }
@@ -151,36 +151,36 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     if (descriptor == null) {
       return;
     }
-    final PsiElement element = getElementFromDescriptor(descriptor);
+    PsiElement element = getElementFromDescriptor(descriptor);
     if (element != null) {
       out.add(element.getNavigationElement());
     }
-    final Object[] children = descriptor.getCachedChildren();
+    Object[] children = descriptor.getCachedChildren();
     if (children == null) {
       return;
     }
     for (Object child : children) {
       if (child instanceof HierarchyNodeDescriptor) {
-        final HierarchyNodeDescriptor childDescriptor = (HierarchyNodeDescriptor)child;
+        HierarchyNodeDescriptor childDescriptor = (HierarchyNodeDescriptor)child;
         collectElements(childDescriptor, out);
       }
     }
   }
 
   public final HierarchyNodeDescriptor[] getSelectedDescriptors() {
-    final JTree tree = getCurrentTree();
+    JTree tree = getCurrentTree();
     if (tree == null) {
       return EMPTY_DESCRIPTORS;
     }
-    final TreePath[] paths = tree.getSelectionPaths();
+    TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length == 0) {
       return EMPTY_DESCRIPTORS;
     }
-    final ArrayList<HierarchyNodeDescriptor> list = new ArrayList<>(paths.length);
-    for (final TreePath path : paths) {
-      final Object lastPathComponent = path.getLastPathComponent();
+    ArrayList<HierarchyNodeDescriptor> list = new ArrayList<>(paths.length);
+    for (TreePath path : paths) {
+      Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
         HierarchyNodeDescriptor descriptor = getDescriptor(node);
         if (descriptor != null) {
           list.add(descriptor);
@@ -202,9 +202,9 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
 
   private Navigatable[] getNavigatables() {
-    final HierarchyNodeDescriptor[] selectedDescriptors = getSelectedDescriptors();
+    HierarchyNodeDescriptor[] selectedDescriptors = getSelectedDescriptors();
     if (selectedDescriptors == null || selectedDescriptors.length == 0) return null;
-    final ArrayList<Navigatable> result = new ArrayList<>();
+    ArrayList<Navigatable> result = new ArrayList<>();
     for (HierarchyNodeDescriptor descriptor : selectedDescriptors) {
       Navigatable navigatable = getNavigatable(descriptor);
       if (navigatable != null) {
@@ -228,9 +228,9 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   @Override
   @Nullable
-  public Object getData(@NotNull @NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      final PsiElement anElement = getSelectedElement();
+      PsiElement anElement = getSelectedElement();
       return anElement != null && anElement.isValid() ? anElement : super.getData(dataId);
     }
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
@@ -240,9 +240,9 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
       return null;
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final DefaultMutableTreeNode selectedNode = getSelectedNode();
+      DefaultMutableTreeNode selectedNode = getSelectedNode();
       if (selectedNode == null) return null;
-      final HierarchyNodeDescriptor descriptor = getDescriptor(selectedNode);
+      HierarchyNodeDescriptor descriptor = getDescriptor(selectedNode);
       if (descriptor == null) return null;
       return getNavigatable(descriptor);
     }
@@ -250,7 +250,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
       return getNavigatables();
     }
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      final JTree tree = getCurrentTree();
+      JTree tree = getCurrentTree();
       if (tree != null) {
         return new DefaultTreeExpander(tree);
       }
@@ -263,7 +263,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     }
 
     @Override
-    public final void actionPerformed(@NotNull final AnActionEvent e) {
+    public final void actionPerformed(@NotNull AnActionEvent e) {
       Objects.requireNonNull(myContent.getManager()).removeContent(myContent, true);
     }
 

@@ -39,7 +39,7 @@ import javax.swing.JTree
 class KotlinOverrideHierarchyBrowser(
     project: Project, baseElement: PsiElement
 ) : MethodHierarchyBrowserBase(project, baseElement) {
-    override fun createTrees(trees: MutableMap<String, JTree>) {
+    override fun createTrees(trees: MutableMap<in String, in JTree>) {
         val actionManager = ActionManager.getInstance()
 
         val tree = createTree(false)

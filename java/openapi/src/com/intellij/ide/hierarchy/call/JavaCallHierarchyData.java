@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Set;
@@ -31,18 +32,18 @@ public class JavaCallHierarchyData {
   private final PsiClassType myOriginalType;
   private final PsiMethod myMethod;
   private final Set<PsiMethod> myMethodsToFind;
-  private final NodeDescriptor myNodeDescriptor;
-  private final Map<PsiMember, NodeDescriptor> myResultMap;
+  private final NodeDescriptor<?> myNodeDescriptor;
+  private final Map<PsiMember, NodeDescriptor<?>> myResultMap;
   private final Project myProject;
 
-  public JavaCallHierarchyData(PsiClass originalClass,
-                               PsiMethod methodToFind,
-                               PsiClassType originalType,
-                               PsiMethod method,
-                               Set<PsiMethod> methodsToFind,
-                               NodeDescriptor nodeDescriptor,
-                               Map<PsiMember, NodeDescriptor> resultMap,
-                               Project project) {
+  public JavaCallHierarchyData(@NotNull PsiClass originalClass,
+                               @NotNull PsiMethod methodToFind,
+                               @NotNull PsiClassType originalType,
+                               @NotNull PsiMethod method,
+                               @NotNull Set<PsiMethod> methodsToFind,
+                               @NotNull NodeDescriptor<?> nodeDescriptor,
+                               @NotNull Map<PsiMember, NodeDescriptor<?>> resultMap,
+                               @NotNull Project project) {
 
     myOriginalClass = originalClass;
     myMethodToFind = methodToFind;
@@ -54,34 +55,42 @@ public class JavaCallHierarchyData {
     myProject = project;
   }
 
+  @NotNull
   public PsiClass getOriginalClass() {
     return myOriginalClass;
   }
 
+  @NotNull
   public PsiMethod getMethodToFind() {
     return myMethodToFind;
   }
 
+  @NotNull
   public PsiClassType getOriginalType() {
     return myOriginalType;
   }
 
+  @NotNull
   public PsiMethod getMethod() {
     return myMethod;
   }
 
+  @NotNull
   public Set<PsiMethod> getMethodsToFind() {
     return myMethodsToFind;
   }
 
-  public NodeDescriptor getNodeDescriptor() {
+  @NotNull
+  public NodeDescriptor<?> getNodeDescriptor() {
     return myNodeDescriptor;
   }
 
-  public Map<PsiMember, NodeDescriptor> getResultMap() {
+  @NotNull
+  public Map<PsiMember, NodeDescriptor<?>> getResultMap() {
     return myResultMap;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }

@@ -34,25 +34,25 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
     Set<PsiMethod> methodsToFind = data.getMethodsToFind();
     PsiMethod methodToFind = data.getMethodToFind();
     PsiClassType originalType = data.getOriginalType();
-    Map<PsiMember, NodeDescriptor> methodToDescriptorMap = data.getResultMap();
+    Map<PsiMember, NodeDescriptor<?>> methodToDescriptorMap = data.getResultMap();
     Project myProject = data.getProject();
 
     if (reference instanceof PsiReferenceExpression) {
-      final PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
+      PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
       if (qualifier instanceof PsiSuperExpression) { // filter super.foo() call inside foo() and similar cases (bug 8411)
-        final PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
+        PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
         if (superClass == null || originalClass.isInheritor(superClass, true)) {
           return false;
         }
       }
       if (qualifier != null && !methodToFind.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiType qualifierType = qualifier.getType();
+        PsiType qualifierType = qualifier.getType();
         if (qualifierType instanceof PsiClassType &&
             !TypeConversionUtil.isAssignable(qualifierType, originalType) &&
             methodToFind != method) {
-          final PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
+          PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
           if (psiClass != null) {
-            final PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);
+            PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);
             if (callee != null && !methodsToFind.contains(callee)) {
               // skip sibling methods
               return false;
@@ -66,7 +66,7 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
         return true;
       }
 
-      final PsiElement parent = ((PsiElement)reference).getParent();
+      PsiElement parent = ((PsiElement)reference).getParent();
       if (parent instanceof PsiNewExpression) {
         if (((PsiNewExpression)parent).getClassReference() != reference) {
           return false;
@@ -82,8 +82,8 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
       }
     }
 
-    final PsiElement element = reference.getElement();
-    final PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
+    PsiElement element = reference.getElement();
+    PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
     CallHierarchyNodeDescriptor parentDescriptor = (CallHierarchyNodeDescriptor) data.getNodeDescriptor();
     if (isRecursiveNode(method, parentDescriptor)) return false;
 

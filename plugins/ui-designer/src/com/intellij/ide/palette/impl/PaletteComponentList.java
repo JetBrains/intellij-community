@@ -372,13 +372,13 @@ public final class PaletteComponentList extends JBList {
 
   private class MyDnDSource implements DnDSource {
     @Override
-    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
       return index >= 0 && myGroup.getItems() [index].startDragging() != null;
     }
 
     @Override
-    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
       if (index < 0) return null;
       return myGroup.getItems() [index].startDragging();
