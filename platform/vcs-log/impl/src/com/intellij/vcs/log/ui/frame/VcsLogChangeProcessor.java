@@ -10,16 +10,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
@@ -61,6 +64,11 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     return wrap(VcsTreeModelData.all(myBrowser.getViewer()));
   }
 
+  @Override
+  public @NotNull List<? extends DiffRequestProducer> getActualProducers() {
+    List<Change> changes = VcsTreeModelData.all(myBrowser.getViewer()).userObjects(Change.class);
+    return ContainerUtil.map(changes, change -> ChangeDiffRequestProducer.create(getProject(), change));
+  }
 
   @NotNull
   private Stream<Wrapper> wrap(@NotNull VcsTreeModelData modelData) {
