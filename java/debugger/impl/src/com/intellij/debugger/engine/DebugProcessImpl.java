@@ -455,7 +455,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         stepRequest.enable();
       }
       catch (IllegalThreadStateException e) { // thread is already dead
-        requestManager.deleteEventRequest(stepRequest);
+        DebuggerUtilsAsync.deleteEventRequest(requestManager, stepRequest);
       }
     }
     catch (ObjectCollectedException ignored) {
@@ -491,7 +491,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     for (StepRequest request : new ArrayList<>(requestManager.stepRequests())) { // need a copy here to avoid CME
       if (stepThread == null || stepThread.equals(request.thread())) {
         try {
-          requestManager.deleteEventRequest(request);
+          DebuggerUtilsAsync.deleteEventRequest(requestManager, request);
         }
         catch (ObjectCollectedException ignored) {
         }

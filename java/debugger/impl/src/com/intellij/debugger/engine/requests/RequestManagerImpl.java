@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -12,7 +13,6 @@ import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -257,11 +257,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
             }
           }
         }
-        try {
-          myEventRequestManager.deleteEventRequest(request);
-        } catch (ArrayIndexOutOfBoundsException e) {
-          LOG.error("Exception in EventRequestManager.deleteEventRequest", e, ThreadDumper.dumpThreadsToString());
-        }
+        DebuggerUtilsAsync.deleteEventRequest(myEventRequestManager, request);
       }
       catch (InvalidRequestStateException ignored) {
         // request is already deleted

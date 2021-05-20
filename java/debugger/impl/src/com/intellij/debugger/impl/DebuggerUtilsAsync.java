@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -6,12 +6,15 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.CommonClassNames;
 import com.jetbrains.jdi.*;
 import com.sun.jdi.*;
+import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.request.EventRequestManager;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,6 +177,20 @@ public final class DebuggerUtilsAsync {
     return completedFuture(null);
   }
 
+  public static CompletableFuture<Void> deleteEventRequest(EventRequestManager eventRequestManager, EventRequest request) {
+    if (Registry.is("debugger.async.jdi") && eventRequestManager instanceof EventRequestManagerImpl) {
+      return ((EventRequestManagerImpl)eventRequestManager).deleteEventRequestAsync(request);
+    }
+    else {
+      try {
+        eventRequestManager.deleteEventRequest(request);
+      }
+      catch (ArrayIndexOutOfBoundsException e) {
+        LOG.error("Exception in EventRequestManager.deleteEventRequest", e, ThreadDumper.dumpThreadsToString());
+      }
+    }
+    return completedFuture(null);
+  }
 
   // Copied from DebuggerUtils
   private static boolean typeEquals(@NotNull Type type, @NotNull String typeName) {
