@@ -51,6 +51,11 @@ class GitStageDiffPreview(project: Project, private val tree: GitStageTree, trac
 
   override fun getAllChanges(): Stream<Wrapper> = wrap(VcsTreeModelData.all(tree))
 
+  override fun getActualProducers(): List<DiffRequestProducer> {
+    return tree.statusNodesListSelection(true)
+      .map { createTwoSidesDiffRequestProducer(project, it) }.list
+  }
+
   private fun wrap(modelData: VcsTreeModelData): Stream<Wrapper> =
     Stream.concat(
       modelData.userObjectsStream(GitFileStatusNode::class.java).filter { it.kind != NodeKind.IGNORED }.map { GitFileStatusNodeWrapper(it) },
