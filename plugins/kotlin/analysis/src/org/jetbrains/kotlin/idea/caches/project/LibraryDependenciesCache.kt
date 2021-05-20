@@ -42,7 +42,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
     private val moduleDependenciesCache by CachedValue(project) {
         CachedValueProvider.Result(
-            ContainerUtil.createConcurrentWeakMap<Module, LibrariesAndSdks>(),
+            ContainerUtil.createConcurrentWeakMap<Module, Pair<Set<DependencyCandidate>, Set<SdkInfo>>>(),
             ProjectRootManager.getInstance(project)
         )
     }
@@ -50,28 +50,32 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     override fun getLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibrariesAndSdks =
         cache.getOrPut(libraryInfo) { computeLibrariesAndSdksUsedWith(libraryInfo) }
 
+    private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibrariesAndSdks {
+        val (dependencyCandidates, sdks) = computeLibrariesAndSdksUsedWithNoFilter(libraryInfo)
+        val chosenCompatibleCandidates = chooseCompatibleDependencies(libraryInfo.platform, dependencyCandidates)
+        val libraries = chosenCompatibleCandidates.map { it.libraries }.flatten()
+        return Pair(libraries, sdks.toList())
+    }
 
     //NOTE: used LibraryRuntimeClasspathScope as reference
-    private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibrariesAndSdks {
-        val libraries = LinkedHashSet<LibraryInfo>()
+    private fun computeLibrariesAndSdksUsedWithNoFilter(libraryInfo: LibraryInfo): Pair<Set<DependencyCandidate>, Set<SdkInfo>> {
+        val libraries = LinkedHashSet<DependencyCandidate>()
         val sdks = LinkedHashSet<SdkInfo>()
-
-        val platform = libraryInfo.platform
 
         for (module in getLibraryUsageIndex().getModulesLibraryIsUsedIn(libraryInfo)) {
             val (moduleLibraries, moduleSdks) = moduleDependenciesCache.getOrPut(module) {
                 computeLibrariesAndSdksUsedIn(module)
             }
 
-            moduleLibraries.filter { compatiblePlatforms(platform, it.platform) }.forEach { libraries.add(it) }
-            moduleSdks.filter { compatiblePlatforms(platform, it.platform) }.forEach { sdks.add(it) }
+            libraries.addAll(moduleLibraries)
+            sdks.addAll(moduleSdks)
         }
 
-        return Pair(libraries.toList(), sdks.toList())
+        return libraries to sdks
     }
 
-    private fun computeLibrariesAndSdksUsedIn(module: Module): LibrariesAndSdks {
-        val libraries = LinkedHashSet<LibraryInfo>()
+    private fun computeLibrariesAndSdksUsedIn(module: Module): Pair<Set<DependencyCandidate>, Set<SdkInfo>> {
+        val libraries = LinkedHashSet<DependencyCandidate>()
         val sdks = LinkedHashSet<SdkInfo>()
 
         val processedModules = HashSet<Module>()
@@ -88,7 +92,12 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
             override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
                 libraryOrderEntry.library.safeAs<LibraryEx>()?.takeIf { !it.isDisposed }?.let {
-                    libraries += createLibraryInfo(project, it)
+                    libraries += createLibraryInfo(project, it).mapNotNull { libraryInfo ->
+                        DependencyCandidate.fromLibraryOrNull(
+                            project,
+                            libraryInfo.library
+                        )
+                    }
                 }
             }
 
@@ -99,14 +108,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
         }, Unit)
 
-        return Pair(libraries.toList(), sdks.toList())
-    }
-
-    /**
-     * @return true if it's OK to add a dependency from a library with platform [from] to a library with platform [to]
-     */
-    private fun compatiblePlatforms(from: TargetPlatform, to: TargetPlatform): Boolean {
-        return from === to || to.containsAll(from) || to.isCommon()
+        return libraries to sdks
     }
 
     private fun getLibraryUsageIndex(): LibraryUsageIndex {
