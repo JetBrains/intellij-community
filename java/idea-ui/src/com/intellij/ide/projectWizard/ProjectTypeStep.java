@@ -196,6 +196,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
         };
       }
     });
+    myProjectTypePanel.add(BorderLayout.CENTER, new JBScrollPane(myProjectTypeList));
 
     myModulesProvider = modulesProvider;
     Project project = context.getProject();
