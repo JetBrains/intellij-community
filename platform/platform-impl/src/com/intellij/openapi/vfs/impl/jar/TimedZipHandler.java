@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.io.ResourceHandle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +50,8 @@ public class TimedZipHandler extends ZipHandlerBase {
     };
   }
 
-  static void closeOpenZipReferences() {
+  @ApiStatus.Internal
+  public static void closeOpenZipReferences() {
     synchronized (ourOpenFileLimitGuard) {
       ourOpenFileLimitGuard.keySet().forEach(TimedZipHandler::dispose);
     }
