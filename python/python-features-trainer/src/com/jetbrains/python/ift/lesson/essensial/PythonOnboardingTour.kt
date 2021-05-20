@@ -391,7 +391,7 @@ class PythonOnboardingTour :
     }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.balloon.open.file", code(demoFileName)),
+      text(PythonLessonsBundle.message("python.onboarding.balloon.open.file", strong(demoFileName)),
            LearningBalloonConfig(Balloon.Position.atRight, duplicateMessage = true, width = 0))
       stateCheck l@{
         if (FileEditorManager.getInstance(project).selectedTextEditor == null) return@l false
