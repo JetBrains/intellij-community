@@ -309,6 +309,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     MarkdownApplicationSettings settings = MarkdownApplicationSettings.getInstance();
     myPanel = retrievePanelProvider(settings).createHtmlPanel();
     myHtmlPanelWrapper.add(myPanel.getComponent(), BorderLayout.CENTER);
+    if (myHtmlPanelWrapper.isShowing()) myHtmlPanelWrapper.validate();
     myHtmlPanelWrapper.repaint();
     myLastRenderedHtml = "";
     this.putUserData(PREVIEW_BROWSER, myPanel);
