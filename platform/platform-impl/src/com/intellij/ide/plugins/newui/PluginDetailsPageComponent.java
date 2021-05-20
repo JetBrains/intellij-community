@@ -9,6 +9,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -528,6 +529,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(!myMarketplace, updateDescriptor) ? updateDescriptor : null;
     myIsPluginAllowed = org.isPluginAllowed(!myMarketplace, pluginDescriptor);
     showPlugin();
+
+    IdeaPluginDescriptor descriptor = component.getPluginDescriptor();
+    PluginsGroup group = component.getGroup();
+    PluginManagerUsageCollector.pluginCardOpened(descriptor, group.type, group.getPluginIndex(descriptor.getPluginId()));
+
     select(0, true);
   }
 
