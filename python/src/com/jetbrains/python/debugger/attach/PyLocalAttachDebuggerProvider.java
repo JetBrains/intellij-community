@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.debugger.attach;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
