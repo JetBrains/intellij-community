@@ -49,6 +49,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -590,6 +591,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       return myEditor.getBackgroundColor();
     }
     Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+    if (ExperimentalUI.isNewEditorTabs()) {
+      color = myEditor.getBackgroundColor();
+    }
     return color != null ? color : EditorColors.GUTTER_BACKGROUND.getDefaultColor();
   }
 
