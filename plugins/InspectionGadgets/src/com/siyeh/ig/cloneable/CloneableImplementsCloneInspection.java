@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -41,7 +42,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreCloneableDueToInheritance = false;
+  public boolean m_ignoreCloneableDueToInheritance = true;
 
   @Override
   @NotNull
@@ -68,25 +69,25 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
       return null;
     }
     final PsiMethod[] superMethods = aClass.findMethodsByName(HardcodedMethodConstants.CLONE, true);
-    boolean generateThrows = false;
+    boolean generateTryCatch = false;
     for (PsiMethod method : superMethods) {
       if (CloneUtils.isClone(method)) {
         if (method.hasModifierProperty(PsiModifier.FINAL)) {
           return null;
         }
-        generateThrows = MethodUtils.hasInThrows(method, "java.lang.CloneNotSupportedException");
+        generateTryCatch = MethodUtils.hasInThrows(method, "java.lang.CloneNotSupportedException");
         break;
       }
     }
-    return new CreateCloneMethodFix(generateThrows);
+    return new CreateCloneMethodFix(generateTryCatch);
   }
 
   private static class CreateCloneMethodFix extends InspectionGadgetsFix {
 
-    private final boolean myGenerateThrows;
+    private final boolean myGenerateTryCatch;
 
-    CreateCloneMethodFix(boolean generateThrows) {
-      myGenerateThrows = generateThrows;
+    CreateCloneMethodFix(boolean generateTryCatch) {
+      myGenerateTryCatch = generateTryCatch;
     }
 
     @NotNull
@@ -104,20 +105,37 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
       }
       final PsiClass aClass = (PsiClass)parent;
       @NonNls final StringBuilder methodText = new StringBuilder();
-      if (PsiUtil.isLanguageLevel5OrHigher(aClass) &&
-          JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {
+      final JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
+      if (PsiUtil.isLanguageLevel5OrHigher(aClass) && codeStyleSettings.INSERT_OVERRIDE_ANNOTATION) {
         methodText.append("@java.lang.Override ");
       }
-      methodText.append("public ").append(aClass.getName());
+      final String className = aClass.getName();
+      methodText.append("public ").append(className);
       final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
       if (typeParameterList != null) {
         methodText.append(typeParameterList.getText());
       }
-      methodText.append(" clone() ");
-      if (myGenerateThrows) {
-        methodText.append("throws java.lang.CloneNotSupportedException ");
+      methodText.append(" clone() {\n");
+      if (myGenerateTryCatch) {
+        methodText.append("try {\n");
       }
-      methodText.append("{\nreturn (").append(element.getText()).append(") super.clone();\n").append("}");
+      if (aClass.getFields().length > 0) {
+        if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+          methodText.append("final ");
+        }
+        methodText.append(className).append(" clone = (").append(className).append(") super.clone();\n");
+        methodText.append("  // ").append(InspectionGadgetsBundle.message("cloneable.class.without.clone.todo.message"));
+        methodText.append("\nreturn clone;\n");
+      }
+      else {
+        methodText.append("return (").append(className).append(") super.clone();\n");
+      }
+      if (myGenerateTryCatch) {
+        methodText.append("} catch (CloneNotSupportedException e) {\n" +
+                          "throw new AssertionError();\n"  +
+                          "}\n");
+      }
+      methodText.append("}");
       final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(methodText.toString(), element);
       final PsiElement newElement = parent.add(method);
       if (isOnTheFly() && newElement.isPhysical()) {
@@ -144,21 +162,28 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
       if (aClass instanceof PsiTypeParameter) {
         return;
       }
-      if (m_ignoreCloneableDueToInheritance) {
-        if (!CloneUtils.isDirectlyCloneable(aClass)) {
-          return;
-        }
-      }
-      else if (!CloneUtils.isCloneable(aClass)) {
+      if (!CloneUtils.isCloneable(aClass)) {
         return;
       }
-      final PsiMethod[] methods = aClass.getMethods();
-      for (final PsiMethod method : methods) {
+      for (PsiMethod method : aClass.findMethodsByName("clone", false)) {
         if (CloneUtils.isClone(method)) {
           return;
         }
       }
-      registerClassError(aClass, aClass);
+      final boolean highlight = !m_ignoreCloneableDueToInheritance || CloneUtils.isDirectlyCloneable(aClass);
+      if (!highlight) {
+        if (!isOnTheFly()) {
+          return;
+        }
+        final PsiElement elementToHighlight =
+          aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier();
+        if (elementToHighlight != null) {
+          registerError(elementToHighlight, ProblemHighlightType.INFORMATION, aClass);
+        }
+      }
+      else {
+        registerClassError(aClass, aClass);
+      }
     }
   }
 }
