@@ -35,7 +35,7 @@ import java.util.*;
 public class ActionsCollectorImpl extends ActionsCollector {
   public static final String DEFAULT_ID = "third.party";
 
-  private static final ActionsBuiltInWhitelist ourWhitelist = ActionsBuiltInWhitelist.getInstance();
+  private static final ActionsBuiltInAllowedlist ourAllowedlist = ActionsBuiltInAllowedlist.getInstance();
   private static final Map<AnActionEvent, Stats> ourStats = ContainerUtil.createWeakMap();
 
   @Override
@@ -45,7 +45,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   /** @noinspection unused*/
   public static void recordCustomActionInvoked(@Nullable Project project, @Nullable String actionId, @Nullable InputEvent event, @NotNull Class<?> context) {
-    String recorded = StringUtil.isNotEmpty(actionId) && ourWhitelist.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
+    String recorded = StringUtil.isNotEmpty(actionId) && ourAllowedlist.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
     ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(project, recorded, new FusInputEvent(event, null));
   }
 
@@ -145,27 +145,27 @@ public class ActionsCollectorImpl extends ActionsCollector {
       return action.getClass().getName();
     }
     if (actionId == null) {
-      actionId = ourWhitelist.getDynamicActionId(action);
+      actionId = ourAllowedlist.getDynamicActionId(action);
     }
     return actionId != null ? actionId : action.getClass().getName();
   }
 
   public static boolean canReportActionId(@NotNull String actionId) {
-    return ourWhitelist.isWhitelistedActionId(actionId);
+    return ourAllowedlist.isAllowedActionId(actionId);
   }
 
   @Override
   public void onActionConfiguredByActionId(@NotNull AnAction action, @NotNull String actionId) {
-    ourWhitelist.registerDynamicActionId(action, actionId);
+    ourAllowedlist.registerDynamicActionId(action, actionId);
   }
 
   /** @noinspection unused*/
   public static void onActionLoadedFromXml(@NotNull AnAction action, @NotNull String actionId, @Nullable IdeaPluginDescriptor plugin) {
-    ourWhitelist.addActionLoadedFromXml(actionId, plugin);
+    ourAllowedlist.addActionLoadedFromXml(actionId, plugin);
   }
 
   public static void onActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {
-    ourWhitelist.addActionsLoadedFromKeymapXml(keymap, actionIds);
+    ourAllowedlist.addActionsLoadedFromKeymapXml(keymap, actionIds);
   }
 
   /** @noinspection unused*/

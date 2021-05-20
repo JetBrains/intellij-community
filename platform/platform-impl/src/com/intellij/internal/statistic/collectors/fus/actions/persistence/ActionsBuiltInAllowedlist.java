@@ -16,10 +16,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-final class ActionsBuiltInWhitelist {
-  private static final ActionsBuiltInWhitelist ourInstance = new ActionsBuiltInWhitelist();
+final class ActionsBuiltInAllowedlist {
+  private static final ActionsBuiltInAllowedlist ourInstance = new ActionsBuiltInAllowedlist();
 
-  static ActionsBuiltInWhitelist getInstance() {
+  static ActionsBuiltInAllowedlist getInstance() {
     return ourInstance;
   }
 
@@ -27,19 +27,19 @@ final class ActionsBuiltInWhitelist {
   private final Map<AnAction, String> myDynamicActionsToId = ContainerUtil.createWeakMap();
 
   private final Set<String> ourXmlActionIds = new HashSet<>();
-  private final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
+  private final Set<String> ourCustomActions = ContainerUtil.newHashSet(
     "ShowUsagesPopup.showSettings",
     "Reload Classes", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
 
-  private ActionsBuiltInWhitelist() {
+  private ActionsBuiltInAllowedlist() {
   }
 
   public boolean isCustomAllowedAction(@NotNull String actionId) {
-    return ourCustomActionWhitelist.contains(actionId);
+    return ourCustomActions.contains(actionId);
   }
 
-  public boolean isWhitelistedActionId(@NotNull String actionId) {
+  public boolean isAllowedActionId(@NotNull String actionId) {
     return isCustomAllowedAction(actionId) || isStaticXmlActionId(actionId);
   }
 
@@ -71,7 +71,7 @@ final class ActionsBuiltInWhitelist {
 
   public void registerDynamicActionId(@NotNull AnAction action, @NotNull String id) {
     synchronized (myLock) {
-      if (isWhitelistedActionId(id)) {
+      if (isAllowedActionId(id)) {
         myDynamicActionsToId.put(action, id);
       }
     }
