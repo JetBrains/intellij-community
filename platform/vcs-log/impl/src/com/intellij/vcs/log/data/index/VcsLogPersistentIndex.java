@@ -363,13 +363,16 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         boolean trigramsEmpty = trigrams.isEmpty();
         boolean usersEmpty = users.isEmpty();
         boolean pathsEmpty = paths.isEmpty();
-        if (trigramsEmpty || usersEmpty || pathsEmpty) {
+        if (trigramsEmpty || usersEmpty) {
           IOException exception = new IOException("Broken index maps:\n" +
                                                   "trigrams empty " + trigramsEmpty + "\n" +
                                                   "users empty " + usersEmpty + "\n" +
                                                   "paths empty " + pathsEmpty);
           LOG.error(exception);
           throw exception;
+        }
+        if (pathsEmpty) {
+          LOG.warn("Paths map is empty");
         }
       }
     }
