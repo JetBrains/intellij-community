@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.process.PtyCommandLineOptions;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -38,53 +39,38 @@ public class PtyCommandLine extends GeneralCommandLine {
     return Registry.is(RUN_PROCESSES_WITH_PTY);
   }
 
-  private boolean myUseCygwinLaunch = false;
-  /**
-   * Setting this to true means that process started with this command line will works with our default ConsoleViewImpl.
-   * <p>
-   * Namely:
-   * <ul>
-   *   <li>Terminal echo suppressed (like {@code stty -echo}).</li>
-   *   <li>Process {@code stderr} will be available separately from process {@code stdout}, unlike regular terminal, when they are merged together.</li>
-   * </ul>
-   * <p>
-   * False means terminal console going to be used, which is working more like regular terminal window.
-   */
-  private boolean myConsoleMode = true;
-  private int myInitialColumns = -1;
-  private int myInitialRows = -1;
+  private final PtyCommandLineOptions.Builder myOptionsBuilder = new PtyCommandLineOptions.Builder().consoleMode(true);
   private boolean myWindowsAnsiColorEnabled = !Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode");
   private boolean myUnixOpenTtyToPreserveOutputAfterTermination = true;
 
   public PtyCommandLine() { }
 
   public PtyCommandLine withUseCygwinLaunch(boolean useCygwinLaunch) {
-    myUseCygwinLaunch = useCygwinLaunch;
+    myOptionsBuilder.useCygwinLaunch(useCygwinLaunch);
     return this;
   }
 
-  /**
-   * @see #myConsoleMode
-   */
   public PtyCommandLine withConsoleMode(boolean consoleMode) {
-    myConsoleMode = consoleMode;
+    myOptionsBuilder.consoleMode(consoleMode);
     return this;
   }
 
-  /**
-   * @see #myConsoleMode
-   */
   public boolean isConsoleMode() {
-    return myConsoleMode;
+    return myOptionsBuilder.getConsoleMode();
   }
 
   public PtyCommandLine withInitialColumns(int initialColumns) {
-    myInitialColumns = initialColumns;
+    myOptionsBuilder.initialColumns(initialColumns);
     return this;
   }
 
   public PtyCommandLine withInitialRows(int initialRows) {
-    myInitialRows = initialRows;
+    myOptionsBuilder.initialRows(initialRows);
+    return this;
+  }
+
+  public PtyCommandLine withOptions(@NotNull PtyCommandLineOptions options) {
+    myOptionsBuilder.set(options);
     return this;
   }
 
@@ -95,10 +81,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   public PtyCommandLine(@NotNull GeneralCommandLine original) {
     super(original);
     if (original instanceof PtyCommandLine) {
-      myUseCygwinLaunch = ((PtyCommandLine)original).myUseCygwinLaunch;
-      myConsoleMode = ((PtyCommandLine)original).myConsoleMode;
-      myInitialColumns = ((PtyCommandLine)original).myInitialColumns;
-      myInitialRows = ((PtyCommandLine)original).myInitialRows;
+      myOptionsBuilder.set(((PtyCommandLine)original).myOptionsBuilder.build());
     }
   }
 
@@ -169,15 +152,15 @@ public class PtyCommandLine extends GeneralCommandLine {
     String[] command = ArrayUtilRt.toStringArray(commands);
     File workDirectory = getWorkDirectory();
     String directory = workDirectory != null ? workDirectory.getPath() : null;
-    boolean cygwin = myUseCygwinLaunch && SystemInfo.isWindows;
+    PtyCommandLineOptions options = myOptionsBuilder.build();
     Application app = ApplicationManager.getApplication();
     PtyProcessBuilder builder = new PtyProcessBuilder(command)
       .setEnvironment(env)
       .setDirectory(directory)
-      .setInitialColumns(myInitialColumns > 0 ? myInitialColumns : null)
-      .setInitialRows(myInitialRows > 0 ? myInitialRows : null)
-      .setConsole(myConsoleMode)
-      .setCygwin(cygwin)
+      .setInitialColumns(options.getInitialColumns() > 0 ? options.getInitialColumns() : null)
+      .setInitialRows(options.getInitialRows() > 0 ? options.getInitialRows() : null)
+      .setConsole(options.getConsoleMode())
+      .setCygwin(options.getUseCygwinLaunch() && SystemInfo.isWindows)
       .setLogFile(app != null && app.isEAP() ? new File(PathManager.getLogPath(), "pty.log") : null)
       .setRedirectErrorStream(isRedirectErrorStream())
       .setWindowsAnsiColorEnabled(myWindowsAnsiColorEnabled)
