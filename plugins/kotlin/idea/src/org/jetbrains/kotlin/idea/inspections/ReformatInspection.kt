@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.actions.FormatChangedTextUtil
+import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
@@ -34,16 +34,15 @@ import org.jetbrains.kotlin.psi.KtFile
 import javax.swing.JComponent
 
 class ReformatInspection(@JvmField var processChangedFilesOnly: Boolean = false) : LocalInspectionTool() {
-    override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<out ProblemDescriptor>? {
-        return checkFile(file, isOnTheFly)?.toTypedArray()
-    }
+    override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<out ProblemDescriptor>? =
+        checkFile(file, isOnTheFly)?.toTypedArray()
 
     private fun checkFile(file: PsiFile, isOnTheFly: Boolean): List<ProblemDescriptor>? {
         if (file !is KtFile || !file.isWritable || !ProjectRootsUtil.isInProjectSource(file)) {
             return null
         }
 
-        if (processChangedFilesOnly && !FormatChangedTextUtil.hasChanges(file)) {
+        if (processChangedFilesOnly && !VcsFacade.getInstance().hasChanges(file)) {
             return null
         }
 
@@ -74,13 +73,11 @@ class ReformatInspection(@JvmField var processChangedFilesOnly: Boolean = false)
         }
     }
 
-    override fun createOptionsPanel(): JComponent? {
-        return SingleCheckboxOptionsPanel(
-            KotlinBundle.message("apply.only.to.modified.files.for.projects.under.a.version.control"),
-            this,
-            "processChangedFilesOnly"
-        )
-    }
+    override fun createOptionsPanel(): JComponent = SingleCheckboxOptionsPanel(
+        KotlinBundle.message("apply.only.to.modified.files.for.projects.under.a.version.control"),
+        this,
+        "processChangedFilesOnly",
+    )
 
     private fun isEmptyLineReformat(whitespace: PsiWhiteSpace, change: FormattingChange): Boolean {
         if (change !is ReplaceWhiteSpace) return false
