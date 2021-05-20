@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -517,7 +518,7 @@ public final class PackageAnnotator {
   }
 
   private static boolean hasGeneratedConstructor(@NotNull final PsiClass aClass) {
-    return ReadAction.compute(() -> {
+    return aClass.getLanguage() == JavaLanguage.INSTANCE && ReadAction.compute(() -> {
       PsiMethod[] constructors = aClass.getConstructors();
       return constructors.length == 0;
     });
