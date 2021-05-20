@@ -200,7 +200,10 @@ class ProfileChooser(commitPanel: CheckinProjectPanel,
 
   private fun fillActions(group: DefaultActionGroup, manager: InspectionProfileManager) {
     for (profile in manager.profiles) {
-      group.add(object : AnAction(profile.displayName) {
+      group.add(object : AnAction() {
+        init {
+          templatePresentation.setText(profile.displayName, false)
+        }
         override fun actionPerformed(e: AnActionEvent) {
           profileProperty.set(profile.name)
           isLocalProperty.set(manager !is InspectionProjectProfileManager)
