@@ -20,7 +20,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.testFramework.ExtensionTestUtil
@@ -89,14 +92,6 @@ fun TestApplicationManager.closeProject(project: Project) {
     logMessage { "project '$name' successfully closed" }
 }
 
-fun runStartupActivities(project: Project) {
-    // obsolete
-}
-
-fun waitForAllEditorsFinallyLoaded(project: Project) {
-    // routing is obsolete in 192
-}
-
 fun replaceWithCustomHighlighter(parentDisposable: Disposable, fromImplementationClass: String, toImplementationClass: String) {
     val pointName = ExtensionPointName.create<LanguageExtensionPoint<Annotator>>(LanguageAnnotators.EP_NAME.name)
     val extensionPoint = pointName.getPoint(null)
@@ -113,4 +108,10 @@ fun replaceWithCustomHighlighter(parentDisposable: Disposable, fromImplementatio
     if (filteredExtensions.size < extensions.size) {
         ExtensionTestUtil.maskExtensions(pointName, filteredExtensions + listOf(point), parentDisposable)
     }
+}
+
+fun Project.relativePath(file: VirtualFile): String {
+    val basePath = guessProjectDir() ?: error("don't use it for a default project $this")
+    return FileUtil.getRelativePath(basePath.toNioPath().toFile(), file.toNioPath().toFile())
+        ?: error("$file is not located within a project $this")
 }

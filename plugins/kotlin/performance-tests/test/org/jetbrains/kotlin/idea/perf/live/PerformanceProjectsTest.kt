@@ -5,10 +5,8 @@
 
 package org.jetbrains.kotlin.idea.perf.live
 
-import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.RunAll
@@ -24,7 +22,6 @@ import org.jetbrains.kotlin.idea.testFramework.Fixture
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.isAKotlinScriptFile
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction.GRADLE_PROJECT
-import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.test.assertNotEquals
 
@@ -427,7 +424,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
                 }
                 fixture.use {
-                    cleanupCaches(project)
+                    project.cleanupCaches()
                 }
             }
         }

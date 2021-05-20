@@ -175,8 +175,6 @@ enum class ProjectOpenAction {
 
             dispatchAllInvocationEvents()
 
-            runStartupActivities(project)
-
             logMessage { "project ${openProject.projectName} is ${if (project.isInitialized) "initialized" else "not initialized"}" }
 
             with(ChangeListManager.getInstance(project) as ChangeListManagerImpl) {

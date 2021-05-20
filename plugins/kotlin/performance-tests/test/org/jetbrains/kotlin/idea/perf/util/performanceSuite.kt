@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultPro
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.testFramework.*
+import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.close
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -343,14 +344,19 @@ class PerformanceSuite {
             Fixture.openFileInEditor(project, path).psiFile.also { openFiles.add(it.virtualFile) }
 
         fun fixture(path: String): Fixture {
-            val fixture = Fixture.openFixture(project, path)
+            return fixture(Fixture.projectFileByName(project, path).virtualFile)
+        }
+
+        fun fixture(file: VirtualFile): Fixture {
+            val fixture = Fixture.openFixture(project, file)
             openFiles.add(fixture.vFile)
-            if (Fixture.isAKotlinScriptFile(path)) {
+            val fileName = file.name
+            if (Fixture.isAKotlinScriptFile(fileName)) {
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(fixture.psiFile)
             }
-            if (path.endsWith(KotlinFileType.EXTENSION)) {
+            if (fileName.endsWith(KotlinFileType.EXTENSION)) {
                 assert(fixture.psiFile is KtFile) {
-                    "$path expected to be a Kotlin file"
+                    "$file expected to be a Kotlin file"
                 }
             }
             return fixture
@@ -362,12 +368,12 @@ class PerformanceSuite {
         fun close(editorFile: PsiFile?) {
             commitAllDocuments()
             editorFile?.virtualFile?.let {
-                FileEditorManager.getInstance(project).closeFile(it)
+                project.close(it)
             }
         }
 
-        fun <T> measure(vararg name: String, f: MeasurementScope<T>.() -> Unit): List<T?> {
-            val after = { PsiManager.getInstance(project).dropPsiCaches() }
+        fun <T> measure(vararg name: String, clearCaches: Boolean = true, f: MeasurementScope<T>.() -> Unit): List<T?> {
+            val after = { if (clearCaches) PsiManager.getInstance(project).dropPsiCaches() }
             return app.stats.measure(name.joinToString("-"), f, after)
         }
 

@@ -663,8 +663,8 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
             }
             tearDown {
                 it.setUpValue?.let { ef ->
-                    cleanupCaches(project)
-                    close(project, ef.psiFile.virtualFile)
+                    project.cleanupCaches()
+                    project.close(ef.psiFile)
                 }
                 it.value?.let { v -> assertNotNull(v) }
             }

@@ -6,13 +6,22 @@
 package org.jetbrains.kotlin.idea.perf.whole
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
+import org.jetbrains.kotlin.idea.testFramework.relativePath
+import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 import java.io.File
+import java.nio.file.Files
 
 @RunWith(JUnit3RunnerWithInners::class)
 class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
@@ -39,46 +48,53 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
     fun testHighlightAllKtFilesInProject() {
         val emptyProfile = System.getProperty("emptyProfile", "false")!!.toBoolean()
         val projectSpecs = projectSpecs()
-        suite(suiteName = "allKtFilesInProject") {
+        for (projectSpec in projectSpecs) {
+            val projectName = projectSpec.name
+            val projectPath = projectSpec.path
+
+            suite(suiteName = "allKtFilesIn-$projectName") {
             app {
                 warmUpProject()
 
                 with(config) {
                     warmup = 1
-                    iterations = 3
+                    iterations = 1
                 }
-                for (projectSpec in projectSpecs) {
-                    val projectName = projectSpec.name
-                    val projectPath = projectSpec.path
+
 
                     try {
                         project(ExternalProject(projectPath, ProjectOpenAction.GRADLE_PROJECT), refresh = true) {
                             profile(if (emptyProfile) EmptyProfile else DefaultProfile)
 
-                            val projectDir = File(projectPath)
+                            val ktFiles = mutableSetOf<VirtualFile>()
+                            project.runReadActionInSmartMode {
+                                val projectFileIndex = ProjectFileIndex.getInstance(project)
+                                val modules = mutableSetOf<Module>()
+                                val ktFileProcessor = { ktFile: VirtualFile ->
+                                    if (projectFileIndex.isInSourceContent(ktFile)) {
+                                        ktFiles.add(ktFile)
+                                    }
+                                    true
+                                }
+                                FileTypeIndex.processFiles(KotlinFileType.INSTANCE, ktFileProcessor, GlobalSearchScope.projectScope(project))
+                                modules
+                            }
 
-                            val ktFiles = projectDir.allFilesWithExtension("kt").toList()
                             logStatValue("number of kt files", ktFiles.size)
                             val topMidLastFiles =
                                 limitedFiles(ktFiles, 10)
-                                    .map {
-                                        val path = it.path
-                                        it to path.substring(path.indexOf(projectPath) + projectPath.length + 1)
-                                    }
                             logStatValue("limited number of kt files", topMidLastFiles.size)
 
                             topMidLastFiles.forEach {
-                                logMessage { "${it.second} fileSize: ${it.first.length()}" }
+                                logMessage { "${project.relativePath(it)} fileSize: ${Files.size(it.toNioPath())}" }
                             }
 
-                            topMidLastFiles.forEachIndexed { idx, pair ->
-                                val file = pair.first
-                                val fileName = pair.second
-                                logMessage { "$idx / ${topMidLastFiles.size} : $fileName fileSize: ${file.length()}" }
+                            topMidLastFiles.forEachIndexed { idx, file ->
+                                logMessage { "$idx / ${topMidLastFiles.size} : ${project.relativePath(file)} fileSize: ${Files.size(file.toNioPath())}" }
 
                                 try {
-                                    fixture(fileName).use {
-                                        measure<List<HighlightInfo>>(fileName) {
+                                    fixture(file).use {
+                                        measure<List<HighlightInfo>>(it.fileName, clearCaches = false) {
                                             test = {
                                                 highlight(it)
                                             }
@@ -97,10 +113,10 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
         }
     }
 
-    private fun limitedFiles(ktFiles: List<File>, partPercent: Int): Collection<File> {
+    private fun limitedFiles(ktFiles: Collection<VirtualFile>, partPercent: Int): Collection<VirtualFile> {
         val sortedBySize = ktFiles
-            .filter { it.length() > 0 }
-            .map { it to it.length() }.sortedByDescending { it.second }
+            .filter { Files.size(it.toNioPath()) > 0 }
+            .map { it to Files.size(it.toNioPath()) }.sortedByDescending { it.second }
         val percentOfFiles = (sortedBySize.size * partPercent) / 100
 
         val topFiles = sortedBySize.take(percentOfFiles).map { it.first }

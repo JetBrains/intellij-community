@@ -104,7 +104,7 @@ class Fixture(
             try {
                 applyText(it)
             } finally {
-                cleanupCaches(project)
+                project.cleanupCaches()
             }
         }
     }
@@ -117,7 +117,7 @@ class Fixture(
                 applyText(text)
             }
         } finally {
-            cleanupCaches(project)
+            project.cleanupCaches()
         }
     }
 
@@ -146,20 +146,24 @@ class Fixture(
 
     override fun close() {
         savedText = null
-        close(project, vFile)
+        project.close(vFile)
     }
 
     companion object {
         // quite simple impl - good so far
         fun isAKotlinScriptFile(fileName: String) = fileName.endsWith(KotlinParserDefinition.STD_SCRIPT_EXT)
 
-        fun cleanupCaches(project: Project) {
+        fun Project.cleanupCaches() {
             commitAllDocuments()
-            PsiManager.getInstance(project).dropPsiCaches()
+            PsiManager.getInstance(this).dropPsiCaches()
         }
 
-        fun close(project: Project, file: VirtualFile) {
-            FileEditorManager.getInstance(project).closeFile(file)
+        fun Project.close(file: PsiFile) {
+            close(file.virtualFile)
+        }
+
+        fun Project.close(file: VirtualFile) {
+            FileEditorManager.getInstance(this).closeFile(file)
         }
 
         fun enableAnnotatorsAndLoadDefinitions(project: Project) {
@@ -199,12 +203,21 @@ class Fixture(
             return Fixture(fileName, project, editor, file)
         }
 
+        fun openFixture(project: Project, file: VirtualFile): Fixture {
+            val fileInEditor = openFileInEditor(project, file)
+            val psiFile = fileInEditor.psiFile
+            val editorFactory = EditorFactory.getInstance()
+            val editor = editorFactory.getEditors(fileInEditor.document, project)[0]
+            val fileName = project.relativePath(file)
+            return Fixture(fileName, project, editor, psiFile)
+        }
+
         private fun baseName(name: String): String {
             val index = name.lastIndexOf("/")
             return if (index > 0) name.substring(index + 1) else name
         }
 
-        private fun projectFileByName(project: Project, name: String): PsiFile {
+        internal fun projectFileByName(project: Project, name: String): PsiFile {
             val fileManager = VirtualFileManager.getInstance()
             val url = "${project.guessProjectDir()}/$name"
             fileManager.refreshAndFindFileByUrl(url)?.let {
@@ -230,11 +243,15 @@ class Fixture(
         }
 
         fun openFileInEditor(project: Project, name: String): EditorFile {
+            val psiFile = projectFileByName(project, name)
+            return openFileInEditor(project, psiFile.virtualFile)
+        }
+
+        fun openFileInEditor(project: Project, vFile: VirtualFile): EditorFile {
             val fileDocumentManager = FileDocumentManager.getInstance()
             val fileEditorManager = FileEditorManager.getInstance(project)
 
-            val psiFile = projectFileByName(project, name)
-            val vFile = psiFile.virtualFile
+            val psiFile = vFile.toPsiFile(project) ?: error("Unable to find psi file for ${vFile.path}")
 
             assertTrue("file $vFile is not indexed yet", FileIndexFacade.getInstance(project).isInContent(vFile))
 
@@ -248,8 +265,6 @@ class Fixture(
 
             val offset = psiFile.textOffset
             assertTrue("side effect: to load the text", offset >= 0)
-
-            waitForAllEditorsFinallyLoaded(project)
 
             return EditorFile(psiFile = psiFile, document = document)
         }
