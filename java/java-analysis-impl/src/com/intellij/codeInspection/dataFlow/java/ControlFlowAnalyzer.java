@@ -940,14 +940,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           syntheticVar = false;
         }
       }
-      if (syntheticVar) {
-        expressionValue = createTempVariable(targetType);
-        addInstruction(new JvmPushInstruction(expressionValue, null, true));
-      }
       selector.accept(this);
       generateBoxingUnboxingInstructionFor(selector, targetType);
       if (syntheticVar) {
-        addInstruction(new AssignInstruction(null, null));
+        expressionValue = createTempVariable(targetType);
+        addInstruction(new SimpleAssignmentInstruction(null, expressionValue));
       }
       addInstruction(new PopInstruction());
     }
@@ -1882,17 +1879,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       int lengthValue = (Integer)val;
       if (lengthValue > 0 && lengthValue <= MAX_UNROLL_SIZE) {
         DfaVariableValue var = createTempVariable(type);
-        addInstruction(new JvmPushInstruction(var, null, true));
-        addInstruction(new SwapInstruction());
-        addInstruction(new AssignInstruction(null, var));
-        for (int i = 0; i < lengthValue; i++) {
-          DfaValue value = ArrayElementDescriptor.getArrayElementValue(getFactory(), var, i);
-          addInstruction(new JvmPushInstruction(value == null ? getFactory().getUnknown() : value, null, true));
-        }
+        addInstruction(new SimpleAssignmentInstruction(null, var));
         addInstruction(new PushValueInstruction(DfTypes.defaultValue(componentType)));
         for (int i = lengthValue - 1; i >= 0; i--) {
           DfaValue value = ArrayElementDescriptor.getArrayElementValue(getFactory(), var, i);
-          addInstruction(new AssignInstruction(null, value));
+          if (value instanceof DfaVariableValue) {
+            addInstruction(new SimpleAssignmentInstruction(null, (DfaVariableValue)value));
+          }
         }
         addInstruction(new PopInstruction());
       }
