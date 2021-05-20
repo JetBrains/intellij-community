@@ -726,7 +726,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * "Local" is any inheritor of {@link LocalFileSystem} (including temporary)
+   * @return true if filesystem inherits {@link LocalFileSystem} (including temporary)
    */
   public boolean isInLocalFileSystem() {
     return false;
