@@ -96,17 +96,15 @@ public final class OldDirectoryCleaner {
       myLogger.debug("groups: " + groups);
     }
 
-    if (!result.isEmpty()) {
-      if (myBestBefore != 0) {
-        deleteCowardly(groups);
-        Stats.completed(groups.size(), groups.stream().mapToLong(g -> g.size).sum());
-      }
-      else {
-        UpdateChecker.getNotificationGroup()
-          .createNotification(message("old.dirs.notification.text"), NotificationType.INFORMATION)
-          .addAction(createSimpleExpiring(message("old.dirs.notification.action"), () -> confirmAndDelete(project, groups)))
-          .notify(project);
-      }
+    if (myBestBefore != 0) {
+      deleteCowardly(groups);
+      Stats.completed(groups.size(), groups.stream().mapToLong(g -> g.size).sum());
+    }
+    else if (!groups.isEmpty()) {
+      UpdateChecker.getNotificationGroup()
+        .createNotification(message("old.dirs.notification.text"), NotificationType.INFORMATION)
+        .addAction(createSimpleExpiring(message("old.dirs.notification.action"), () -> confirmAndDelete(project, groups)))
+        .notify(project);
     }
   }
 
