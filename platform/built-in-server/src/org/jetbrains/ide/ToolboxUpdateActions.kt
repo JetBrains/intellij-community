@@ -20,7 +20,7 @@ internal class ToolboxSettingsActionRegistryState: BaseState() {
 @Service(Service.Level.APP)
 @State(name = "toolbox-update-state", storages = [Storage(StoragePathMacros.CACHE_FILE)], allowLoadInTests = true)
 internal class ToolboxSettingsActionRegistry : SimplePersistentStateComponent<ToolboxSettingsActionRegistryState>(ToolboxSettingsActionRegistryState()), Disposable {
-  private val pendingActions : MutableMap<String, AnAction> = ConcurrentHashMap()
+  private val pendingActions : MutableMap<String, SettingsEntryPointAction.UpdateAction> = ConcurrentHashMap()
 
   private val alarm = MergingUpdateQueue("toolbox-updates", 500, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD).usePassThroughInUnitTestMode()
 
@@ -50,7 +50,7 @@ internal class ToolboxSettingsActionRegistry : SimplePersistentStateComponent<To
     })
   }
 
-  fun registerUpdateAction(lifetime: Disposable, persistentActionId: String, action: AnAction) {
+  fun registerUpdateAction(lifetime: Disposable, persistentActionId: String, action: SettingsEntryPointAction.UpdateAction) {
     val dispose = Disposable {
       pendingActions.remove(persistentActionId, action)
       scheduleUpdate()
@@ -65,7 +65,7 @@ internal class ToolboxSettingsActionRegistry : SimplePersistentStateComponent<To
     scheduleUpdate()
   }
 
-  fun getActions() : List<AnAction> = pendingActions.entries.sortedBy { it.key }.map { it.value }
+  fun getActions() : List<SettingsEntryPointAction.UpdateAction> = pendingActions.entries.sortedBy { it.key }.map { it.value }
 }
 
 class ToolboxSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {

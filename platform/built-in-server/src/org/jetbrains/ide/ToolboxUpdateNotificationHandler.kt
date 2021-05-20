@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.Nls
 import java.lang.Boolean
 import java.util.concurrent.TimeUnit
 import kotlin.String
@@ -36,6 +37,14 @@ private fun parseUpdateNotificationRequest(request: JsonElement): UpdateNotifica
   return UpdateNotification(version = version, build = build)
 }
 
+internal class ToolboxUpdateAction(text: @Nls String, val actionHandler: Consumer<AnActionEvent>) : SettingsEntryPointAction.UpdateAction(text) {
+  override fun isIdeUpdate() = true
+
+  override fun actionPerformed(e: AnActionEvent) {
+    actionHandler.consume(e)
+  }
+}
+
 internal class ToolboxUpdateNotificationHandler : ToolboxServiceHandler<UpdateNotification> {
   override val requestName: String = "update-notification"
   override fun parseRequest(request: JsonElement) = parseUpdateNotificationRequest(request)
@@ -48,9 +57,8 @@ internal class ToolboxUpdateNotificationHandler : ToolboxServiceHandler<UpdateNo
     val fullProductName = ApplicationNamesInfo.getInstance().fullProductName
     val title = IdeBundle.message("toolbox.updates.download.update.action.text", request.build, request.version, fullProductName)
     val description = IdeBundle.message("toolbox.updates.download.update.action.description", request.build, request.version, fullProductName)
-    val action = DumbAwareAction.create(title, actionHandler)
+    val action = ToolboxUpdateAction(title, actionHandler)
     action.templatePresentation.description = description
-    action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.APPLICATION_ICON, Boolean.TRUE)
     service<ToolboxSettingsActionRegistry>().registerUpdateAction(lifetime, "toolbox-02-update-${request.build}", action)
   }
 }
@@ -86,9 +94,8 @@ internal class ToolboxRestartNotificationHandler : ToolboxServiceHandler<UpdateN
     val fullProductName = ApplicationNamesInfo.getInstance().fullProductName
     val title = IdeBundle.message("toolbox.updates.download.ready.action.text", request.build, request.version, fullProductName)
     val description = IdeBundle.message("toolbox.updates.download.ready.action.description", request.build, request.version, fullProductName)
-    val action = DumbAwareAction.create(title, actionHandler)
+    val action = ToolboxUpdateAction(title, actionHandler)
     action.templatePresentation.description = description
-    action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.APPLICATION_ICON, Boolean.TRUE)
 
     service<ToolboxSettingsActionRegistry>().registerUpdateAction(lifetime, "toolbox-01-restart-${request.build}", action)
   }

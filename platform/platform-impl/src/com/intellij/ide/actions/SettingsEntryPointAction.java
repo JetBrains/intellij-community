@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
@@ -78,16 +79,17 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     List<AnAction> pluginActions = new ArrayList<>();
 
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-      for (AnAction action : provider.getUpdateActions(context)) {
+      for (UpdateAction action : provider.getUpdateActions(context)) {
         Presentation presentation = action.getTemplatePresentation();
-        if (presentation.getClientProperty(ActionProvider.APPLICATION_ICON) == null) {
-          presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
-          pluginActions.add(action);
-        }
-        else {
+        if (action.isIdeUpdate()) {
           presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
           appActions.add(action);
         }
+        else {
+          presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
+          pluginActions.add(action);
+        }
+        action.markAsRead();
       }
     }
 
@@ -145,15 +147,17 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
     loop:
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-      for (AnAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
-        if (action.getTemplatePresentation().getClientProperty(ActionProvider.APPLICATION_ICON) == null) {
-          myShowPluginsUpdateIcon = true;
-        }
-        else {
-          myShowPlatformUpdateIcon = true;
-        }
-        if (myShowPlatformUpdateIcon && myShowPluginsUpdateIcon) {
-          break loop;
+      for (UpdateAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
+        if (action.isNewAction()) {
+          if (action.isIdeUpdate()) {
+            myShowPlatformUpdateIcon = true;
+          }
+          else {
+            myShowPluginsUpdateIcon = true;
+          }
+          if (myShowPlatformUpdateIcon && myShowPluginsUpdateIcon) {
+            break loop;
+          }
         }
       }
     }
@@ -312,8 +316,26 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   public interface ActionProvider {
     ExtensionPointName<ActionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.settingsEntryPointActionProvider");
 
-    String APPLICATION_ICON = "Application_Type_Icon";
+    @NotNull Collection<UpdateAction> getUpdateActions(@NotNull DataContext context);
+  }
 
-    @NotNull Collection<AnAction> getUpdateActions(@NotNull DataContext context);
+  public static abstract class UpdateAction extends DumbAwareAction {
+    protected UpdateAction() {
+    }
+
+    protected UpdateAction(@Nullable @NlsActions.ActionText String text) {
+      super(text);
+    }
+
+    public boolean isIdeUpdate() {
+      return false;
+    }
+
+    public boolean isNewAction() {
+      return true;
+    }
+
+    public void markAsRead() {
+    }
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -123,7 +124,7 @@ class JdkUpdateNotification(val jdk: Sdk,
 
   val isUpdateActionVisible get() = !myIsUpdateRunning && !myIsTerminated
 
-  inner class JdkUpdateSuggestionAction : DumbAwareAction() {
+  inner class JdkUpdateSuggestionAction : SettingsEntryPointAction.UpdateAction() {
     val jdkUpdateNotification = this@JdkUpdateNotification
 
     init {
