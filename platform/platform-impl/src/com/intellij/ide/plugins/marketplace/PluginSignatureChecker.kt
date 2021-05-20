@@ -122,8 +122,14 @@ internal object PluginSignatureChecker {
     val certsExceptCA = certs.subList(0, certs.size - 1)
     return certsExceptCA.mapNotNull { certificate ->
       val crlUris = CertificateUtils.getCrlUris(certificate)
-      if (crlUris.isEmpty()) throw IllegalArgumentException("CRL not found for certificate")
-      if (crlUris.size > 1) throw IllegalArgumentException("Multiple CRL URI found in certificate")
+      if (crlUris.isEmpty()) {
+        LOG.error("CRL not found for certificate")
+        throw IllegalArgumentException("CRL not found for certificate")
+      }
+      if (crlUris.size > 1) {
+        LOG.error("Multiple CRL URI found in certificate")
+        throw IllegalArgumentException("Multiple CRL URI found in certificate")
+      }
       val crlURI = crlUris.first()
       val certificateFactory = CertificateFactory.getInstance("X.509")
       val inputStream = HttpRequests.request(crlURI.toURL().toExternalForm())
