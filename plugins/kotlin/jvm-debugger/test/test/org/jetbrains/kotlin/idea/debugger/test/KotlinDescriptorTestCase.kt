@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.test.Directives
 import org.jetbrains.kotlin.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.test.TargetBackend
 import org.junit.ComparisonFailure
 import java.io.File
 
@@ -242,7 +243,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     abstract fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences)
 
     override fun initOutputChecker(): OutputChecker {
-        return KotlinOutputChecker(getTestDataPath(), testAppPath, appOutputPath, useIrBackend(), getExpectedOutputFile())
+        return KotlinOutputChecker(getTestDataPath(), testAppPath, appOutputPath, if (useIrBackend()) TargetBackend.JVM_IR else TargetBackend.JVM, getExpectedOutputFile())
     }
 
     override fun setUpModule() {
