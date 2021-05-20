@@ -45,11 +45,26 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         is KtConstantExpression -> processConstantExpression(expr)
         is KtSimpleNameExpression -> processReferenceExpression(expr)
         is KtIfExpression -> processIfExpression(expr)
+        is KtWhileExpression -> processWhileExpression(expr)
         is KtProperty -> processDeclaration(expr)
         else -> {
             // unsupported construct
             broken = true
         }
+    }
+
+    private fun processWhileExpression(expr: KtWhileExpression) {
+        val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
+        val condition = expr.condition
+        processExpression(condition)
+        val endOffset = DeferredOffset()
+        addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE, condition))
+        processExpression(expr.body)
+        addInstruction(PopInstruction())
+        addInstruction(GotoInstruction(startOffset))
+        setOffset(endOffset)
+        pushUnknown()
+        addInstruction(FinishElementInstruction(expr))
     }
 
     private fun processBlock(expr: KtBlockExpression) {

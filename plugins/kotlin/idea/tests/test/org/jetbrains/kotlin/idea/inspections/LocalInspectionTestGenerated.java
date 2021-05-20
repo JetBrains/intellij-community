@@ -4498,6 +4498,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testReturnLiteral() throws Exception {
             runTest("testData/inspectionsLocal/dfa/returnLiteral.kt");
         }
+
+        @TestMetadata("whileStatement.kt")
+        public void testWhileStatement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whileStatement.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
