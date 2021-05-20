@@ -48,6 +48,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isBackgroundCommitChecks
 import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.Dispatchers
@@ -77,7 +78,7 @@ class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyS
 
 class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
-    return if (isBackgroundCommitChecks() && panel.isNonModalCommit) RunTestsBeforeCheckinHandler(panel) else CheckinHandler.DUMMY
+    return if (isBackgroundCommitChecks() && (panel.isNonModalCommit || panel.commitWorkflowHandler is NullCommitWorkflowHandler)) RunTestsBeforeCheckinHandler(panel) else CheckinHandler.DUMMY
   }
 }
 
