@@ -190,8 +190,8 @@ public final class PluginDownloader {
 
     if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check")) {
       boolean certified = isFromMarketplace()
-                          ? PluginSignatureChecker.verifyPluginByJetBrains(myDescriptor, myFile)
-                          : PluginSignatureChecker.verifyPluginByCustomCertificates(myDescriptor, myFile);
+                          ? PluginSignatureChecker.verifyPluginByJetBrains(myDescriptor, myFile, showMessageOnError)
+                          : PluginSignatureChecker.verifyPluginByCustomCertificates(myDescriptor, myFile, showMessageOnError);
       if (!certified) {
         myShownErrors = true;
         return null;
