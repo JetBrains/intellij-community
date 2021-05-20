@@ -24,6 +24,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.*;
+import com.intellij.util.containers.FList;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import com.sun.tools.javac.Main;
@@ -92,6 +93,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, KDeclarationContainer.class);
     appendPath(cp, NotNullProducer.class);  // intellij.platform.util
     appendPath(cp, Strings.class);  // intellij.platform.util.strings
+    appendPath(cp, FList.class);  // intellij.platform.util.collections
+    appendPath(cp, XmlDomReader.class);  // intellij.platform.util.xmlDom
     appendPath(cp, StartUpMeasurer.class);  // intellij.platform.util.diagnostic
     appendPath(cp, NotNullFunction.class);  // intellij.platform.util.rt
     appendPath(cp, SimpleTextAttributes.class);

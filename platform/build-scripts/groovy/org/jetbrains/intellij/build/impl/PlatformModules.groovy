@@ -144,6 +144,7 @@ final class PlatformModules {
       addModule("intellij.platform.util.text.matching", UTIL_JAR)
       addModule("intellij.platform.util.collections", UTIL_JAR)
       addModule("intellij.platform.util.strings", UTIL_JAR)
+      addModule("intellij.platform.util.xmlDom", UTIL_JAR)
       addModule("intellij.platform.util.diagnostic", UTIL_JAR)
       addModule("intellij.platform.util.ui", UTIL_JAR)
       addModule("intellij.platform.util.ex", UTIL_JAR)

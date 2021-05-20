@@ -4,6 +4,7 @@ package com.intellij.openapi.application;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.util.XmlDomReader;
 import com.intellij.util.containers.FList;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,6 +23,7 @@ public final class ClassPathUtil {
     @SuppressWarnings("UnnecessaryFullyQualifiedName") Class<?>[] classes = {
       PathManager.class,                                  // module 'intellij.platform.util'
       Strings.class,                                      // module 'intellij.platform.util.strings'
+      XmlDomReader.class,                                 // module 'intellij.platform.util.xmlDom'
       FList.class,                                        // module 'intellij.platform.util.collections'
       MinusculeMatcher.class,                             // module 'intellij.platform.util.text.matching'
       StartUpMeasurer.class,                              // module 'intellij.platform.util.diagnostic'
