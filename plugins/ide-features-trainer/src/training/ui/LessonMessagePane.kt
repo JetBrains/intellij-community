@@ -135,7 +135,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   private fun initStyleConstants() {
     val fontSize = UISettings.instance.fontSize.toInt()
 
-    StyleConstants.setForeground(INACTIVE, UISettings.instance.passedColor)
+    StyleConstants.setForeground(INACTIVE, UISettings.instance.inactiveColor)
 
     StyleConstants.setFontFamily(REGULAR, fontFamily)
     StyleConstants.setFontSize(REGULAR, fontSize)
@@ -421,7 +421,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     if (activeMessages.lastOrNull()?.state != MessageState.PASSED || panelMode == false) { // lesson can be opened as passed
       val firstActiveMessage = firstActiveMessage()
       if (firstActiveMessage != null) {
-        val color = if (panelMode) UISettings.instance.activeTaskNumberColor else UISettings.instance.tooltipTaskNumber
+        val color = if (panelMode) UISettings.instance.activeTaskNumberColor else UISettings.instance.tooltipTaskNumberColor
         paintNumber(firstActiveMessage, color)
       }
     }
@@ -490,7 +490,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
             }
           }
           MessagePart.MessageType.CODE -> {
-            val needColor = if (panelMode) UISettings.instance.codeBorderColor else UISettings.instance.tooltipCodeBackgroundColor
+            val needColor = UISettings.instance.codeBorderColor
             drawRectangleAroundText(myMessage, g2d, needColor) { r2d ->
               if (panelMode) {
                 g2d.draw(r2d)

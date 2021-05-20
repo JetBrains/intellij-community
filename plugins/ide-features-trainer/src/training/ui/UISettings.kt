@@ -46,7 +46,7 @@ internal class UISettings {
   val shortcutBackgroundColor = JBColor(Color(0xE6EEF7), Color(39, 43, 46))
   val codeForegroundColor = JBColor.namedColor("ParameterInfo.foreground", JBColor(0x1D1D1D, 0xBBBBBB))
   val codeBorderColor = JBColor.namedColor("Button.disabledBorderColor", JBColor(0xC4C4C4, 0x5E6060))
-  val passedColor = JBColor(Color(200, 200, 200), Color(103, 103, 103))
+  val inactiveColor = JBColor(Color(200, 200, 200), Color(103, 103, 103))
   val moduleProgressColor = JBColor(0x808080, 0x8C8C8C)
   val backgroundColor = UIUtil.getTreeBackground()
   val completedColor = JBColor(0x368746, 0x50A661)
@@ -58,7 +58,7 @@ internal class UISettings {
 
   val futureTaskNumberColor: Color = JBColor(0xDEDEDE, 0x777777)
   val activeTaskNumberColor: Color = JBColor(0x808080, 0xFEFEFE)
-  val tooltipTaskNumber: Color = JBColor(0x6CA6ED, 0x6A9DDE)
+  val tooltipTaskNumberColor: Color = JBColor(0x6CA6ED, 0x6A9DDE)
 
   //BORDERS
   val emptyBorder: Border
