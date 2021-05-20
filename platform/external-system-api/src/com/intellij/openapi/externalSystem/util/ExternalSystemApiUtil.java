@@ -404,12 +404,9 @@ public final class ExternalSystemApiUtil {
   }
 
   /**
-   * Configures given classpath to reference target i18n bundle file(s).
-   *
-   * @param classPath    process classpath
-   * @param bundlePath   path to the target bundle file
-   * @param contextClass class from the same content root as the target bundle file
+   * @deprecated there is no need to call this method since we don't put message bundles to separate resources_en.jar files (IDEA-255246)
    */
+  @Deprecated
   public static void addBundle(@NotNull PathsList classPath, @NotNull String bundlePath, @NotNull Class<?> contextClass) {
     String pathToUse = bundlePath.replace('.', '/');
     if (!pathToUse.endsWith(".properties")) {
