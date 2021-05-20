@@ -171,9 +171,10 @@ class ModulesToIRsConverter(
                 module.template,
                 module,
                 module.sourcesets.map { sourceset ->
+                    val path = if (sourceset.createDirectory) modulePath / Defaults.SRC_DIR / sourceset.sourcesetType.name else null
                     SingleplatformSourcesetIR(
                         sourceset.sourcesetType,
-                        modulePath / Defaults.SRC_DIR / sourceset.sourcesetType.name,
+                        path,
                         persistentListOf(),
                         sourceset
                     )
@@ -277,9 +278,10 @@ class ModulesToIRsConverter(
         mutateProjectStructureByModuleConfigurator(target, modulePath)
         val sourcesetss = target.sourcesets.map { sourceset ->
             val sourcesetName = target.name + sourceset.sourcesetType.name.capitalize()
+            val path = if (sourceset.createDirectory) modulePath / Defaults.SRC_DIR / sourcesetName else null
             MultiplatformSourcesetIR(
                 sourceset.sourcesetType,
-                modulePath / Defaults.SRC_DIR / sourcesetName,
+                path,
                 target.name,
                 persistentListOf(),
                 sourceset

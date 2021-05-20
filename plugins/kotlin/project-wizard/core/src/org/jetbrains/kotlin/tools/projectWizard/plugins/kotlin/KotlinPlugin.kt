@@ -147,8 +147,9 @@ class KotlinPlugin(context: Context) : Plugin(context) {
         val createSourcesetDirectories by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runAfter(KotlinPlugin.createModules)
             withAction {
-                fun Path.createKotlinAndResourceDirectories(moduleConfigurator: ModuleConfigurator) =
-                    with(service<FileSystemWizardService>()) {
+                fun Path?.createKotlinAndResourceDirectories(moduleConfigurator: ModuleConfigurator): TaskResult<Unit> {
+                    if (this == null) return UNIT_SUCCESS
+                    return with(service<FileSystemWizardService>()) {
                         createDirectory(this@createKotlinAndResourceDirectories / moduleConfigurator.kotlinDirectoryName) andThen
                                 if (createResourceDirectories.settingValue) {
                                     createDirectory(this@createKotlinAndResourceDirectories / moduleConfigurator.resourcesDirectoryName)
@@ -156,6 +157,7 @@ class KotlinPlugin(context: Context) : Plugin(context) {
                                     UNIT_SUCCESS
                                 }
                     }
+                }
 
                 forEachModule { moduleIR ->
                     moduleIR.sourcesets.mapSequenceIgnore { sourcesetIR ->

@@ -51,7 +51,8 @@ class Sourceset(
     val sourcesetType: SourcesetType,
     var dependencies: List<SourcesetDependency> = emptyList(),
     var parent: Module? = null,
-    override val identificator: Identificator = GeneratedIdentificator(sourcesetType.name)
+    override val identificator: Identificator = GeneratedIdentificator(sourcesetType.name),
+    val createDirectory: Boolean = true
 ) : DisplayableSettingItem, IdentificatorOwner {
     override val text: String get() = sourcesetType.name
     override val greyText: String? get() = null

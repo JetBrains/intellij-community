@@ -13,13 +13,13 @@ import java.nio.file.Path
 
 sealed class SourcesetIR : BuildSystemIR {
     abstract val sourcesetType: SourcesetType
-    abstract val path: Path
+    abstract val path: Path?
     abstract val original: Sourceset
 }
 
 data class SingleplatformSourcesetIR(
     override val sourcesetType: SourcesetType,
-    override val path: Path,
+    override val path: Path?,
     override val irs: PersistentList<BuildSystemIR>,
     override val original: Sourceset
 ) : SourcesetIR(), IrsOwner {
@@ -29,7 +29,7 @@ data class SingleplatformSourcesetIR(
 
 data class MultiplatformSourcesetIR(
     override val sourcesetType: SourcesetType,
-    override val path: Path,
+    override val path: Path?,
     val targetName: String,
     override val irs: PersistentList<BuildSystemIR>,
     override val original: Sourceset
