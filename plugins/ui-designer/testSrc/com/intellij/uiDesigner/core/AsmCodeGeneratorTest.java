@@ -13,6 +13,7 @@ import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.rt.execution.application.AppMainV2;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBTabbedPane;
@@ -83,8 +84,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, SystemInfo.class);
     appendPath(cp, ApplicationManager.class);
     appendPath(cp, DynamicBundle.class);
-    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
-    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/RuntimeBundle.properties"));
+    appendPath(cp, AppMainV2.class); // intellij.java.rt
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/com/intellij/uiDesigner/core/TestProperties.properties"));
     appendPath(cp, GridLayoutManager.class); // intellij.java.guiForms.rt
     appendPath(cp, DataProvider.class);
