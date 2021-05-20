@@ -37,46 +37,32 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return flow
     }
 
-    private fun processExpression(expr: KtExpression?) {
-        when (expr) {
-            null -> {
-                pushUnknown()
-            }
-            is KtBlockExpression -> {
-                val statements = expr.statements
-                if (statements.isEmpty()) {
-                    pushUnknown()
-                } else {
-                    for (child in statements) {
-                        processExpression(child)
-                        if (child != statements.last()) {
-                            addInstruction(PopInstruction())
-                        }
-                        if (broken) return
-                    }
+    private fun processExpression(expr: KtExpression?) = when (expr) {
+        null -> pushUnknown()
+        is KtBlockExpression -> processBlock(expr)
+        is KtReturnExpression -> processReturnExpression(expr)
+        is KtBinaryExpression -> processBinaryExpression(expr)
+        is KtConstantExpression -> processConstantExpression(expr)
+        is KtSimpleNameExpression -> processReferenceExpression(expr)
+        is KtIfExpression -> processIfExpression(expr)
+        is KtProperty -> processDeclaration(expr)
+        else -> {
+            // unsupported construct
+            broken = true
+        }
+    }
+
+    private fun processBlock(expr: KtBlockExpression) {
+        val statements = expr.statements
+        if (statements.isEmpty()) {
+            pushUnknown()
+        } else {
+            for (child in statements) {
+                processExpression(child)
+                if (child != statements.last()) {
+                    addInstruction(PopInstruction())
                 }
-            }
-            is KtReturnExpression -> {
-                processReturnExpression(expr)
-            }
-            is KtBinaryExpression -> {
-                processBinaryExpression(expr)
-            }
-            is KtConstantExpression -> {
-                processConstantExpression(expr)
-            }
-            is KtSimpleNameExpression -> {
-                processReferenceExpression(expr)
-            }
-            is KtIfExpression -> {
-                processIfExpression(expr)
-            }
-            is KtProperty -> {
-                processDeclaration(expr)
-            }
-            else -> {
-                // unsupported construct
-                broken = true
+                if (broken) return
             }
         }
     }
@@ -250,7 +236,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (left.isFloat()) return left
         if (right.isFloat()) return right
         if (left.isLong()) return left
-        if (right.isLong()) return right;
+        if (right.isLong()) return right
         // null means no balancing is necessary
         return null
     }
