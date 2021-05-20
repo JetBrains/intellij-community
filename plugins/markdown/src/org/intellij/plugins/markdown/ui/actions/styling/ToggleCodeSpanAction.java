@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ToggleCodeSpanAction extends BaseToggleStateAction {
+
   @NotNull
   @Override
   protected String getBoundString(@NotNull CharSequence text, int selectionStart, int selectionEnd) {

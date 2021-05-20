@@ -143,6 +143,7 @@ Includes the following features:</p>
     <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
     <editorFactoryListener implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarListenersManager"/>
+    <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
 
     <!--Formatting-->
     <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
@@ -220,21 +221,25 @@ Includes the following features:</p>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               icon="MarkdownIcons.EditorActions.Bold">
+        <keyboard-shortcut first-keystroke="control B" keymap="$default"/>
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
               icon="MarkdownIcons.EditorActions.Italic">
+        <keyboard-shortcut first-keystroke="control I" keymap="$default"/>
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
               icon="MarkdownIcons.EditorActions.Strike_through">
+        <keyboard-shortcut first-keystroke="control shift S" keymap="$default"/>
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               icon="MarkdownIcons.EditorActions.Code_span">
+        <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
       </action>
 
       <separator/>
