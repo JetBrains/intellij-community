@@ -139,6 +139,10 @@ public final class BuildManager implements Disposable {
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
+  private static final String[] INHERITED_IDE_VM_OPTIONS = {
+    "user.language", "user.country", "user.region", PathManager.PROPERTY_PATHS_SELECTOR, "idea.case.sensitive.fs", "java.net.preferIPv4Stack"
+  };
+
   // do not make static in order not to access application on class load
   private final boolean IS_UNIT_TEST_MODE;
   private static final String IWS_EXTENSION = ".iws";
@@ -1310,7 +1314,6 @@ public final class BuildManager implements Disposable {
     if (IS_UNIT_TEST_MODE) {
       cmdLine.addParameter("-Dtest.mode=true");
     }
-    cmdLine.addParameter("-Djdt.compiler.useSingleThread=true"); // always run eclipse compiler in single-threaded mode
 
     if (requestProjectPreload) {
       cmdLine.addPathParameter("-Dpreload.project.path=", FileUtil.toCanonicalPath(getProjectPath(project)));
@@ -1321,14 +1324,9 @@ public final class BuildManager implements Disposable {
       cmdLine.addPathParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + "=", ProjectUtil.getExternalConfigurationDir(project));
     }
 
-    final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
-    if (shouldGenerateIndex != null) {
-      cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
-    }
     cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + projectConfig.isParallelCompilationEnabled());
     if (projectConfig.isParallelCompilationEnabled()) {
-      final boolean allowParallelAutomake = Registry.is("compiler.automake.allow.parallel", true);
-      if (!allowParallelAutomake) {
+      if (!Registry.is("compiler.automake.allow.parallel", true)) {
         cmdLine.addParameter("-D" + GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION + "=false");
       }
     }
@@ -1338,12 +1336,10 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-D" + GlobalOptions.REPORT_BUILD_STATISTICS + "=true");
     }
 
-    if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
-      cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");
-    }
-
-    // this will make netty initialization faster on some systems
-    cmdLine.addParameter("-Dio.netty.initialSeedUniquifier=" + ThreadLocalRandom.getInitialSeedUniquifier());
+    // third party libraries tweaks
+    cmdLine.addParameter("-Djdt.compiler.useSingleThread=true"); // always run eclipse compiler in single-threaded mode
+    cmdLine.addParameter("-Daether.connector.resumeDownloads=false"); // always re-download maven libraries if partially downloaded
+    cmdLine.addParameter("-Dio.netty.initialSeedUniquifier=" + ThreadLocalRandom.getInitialSeedUniquifier()); // this will make netty initialization faster on some systems
 
     for (String option : userAdditionalOptionsList) {
       cmdLine.addParameter(option);
@@ -1411,8 +1407,7 @@ public final class BuildManager implements Disposable {
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     cmdLine.setCharset(mySystemCharset);
     cmdLine.addParameter("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + mySystemCharset.name());
-    String[] propertiesToPass = {"user.language", "user.country", "user.region", PathManager.PROPERTY_PATHS_SELECTOR, "idea.case.sensitive.fs"};
-    for (String name : propertiesToPass) {
+    for (String name : INHERITED_IDE_VM_OPTIONS) {
       final String value = System.getProperty(name);
       if (value != null) {
         cmdLine.addParameter("-D" + name + "=" + value);
