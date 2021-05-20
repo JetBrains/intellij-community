@@ -98,7 +98,12 @@ internal object PluginSignatureChecker {
     certificates: List<Certificate> = emptyList()
   ): Boolean {
     val jbCert = jetbrainsCertificate ?: return processSignatureWarning(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))
-    val isRevoked = isCertificatesRevoked(jbCert)
+    val isRevoked = try {
+      isCertificatesRevoked(jbCert)
+    }
+    catch (e: IllegalArgumentException) {
+      return processSignatureWarning(descriptor, e.message ?: IdeBundle.message("jetbrains.certificate.invalid"))
+    }
     if (isRevoked) {
       LOG.info("Plugin ${pluginFile.name} has revoked JetBrains certificate")
       return processRevokedCertificate(descriptor)
