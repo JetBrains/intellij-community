@@ -49,10 +49,10 @@ internal object PluginSignatureChecker {
   fun verifyPluginByAllCertificates(descriptor: IdeaPluginDescriptor, pluginFile: File, showAcceptDialog: Boolean = true): Boolean {
     val certificates = PluginCertificateStore.getInstance().customTrustManager.certificates.orEmpty()
     return if (showAcceptDialog) {
-      isSignedInBackground(descriptor, pluginFile, certificates)
+      isSignedInWithAcceptDialog(descriptor, pluginFile, certificates)
     }
     else {
-      isSignedInWithAcceptDialog(descriptor, pluginFile, certificates)
+      isSignedInBackground(descriptor, pluginFile, certificates)
     }
   }
 
