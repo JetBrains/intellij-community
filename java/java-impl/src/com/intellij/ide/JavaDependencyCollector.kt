@@ -1,19 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
+import com.intellij.ide.plugins.DependencyCollector
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.ide.plugins.DependencyCollector
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 
 class JavaDependencyCollector : DependencyCollector {
-  override val dependencyKind: String
-    get() = "java"
-
   override fun collectDependencies(project: Project): List<String> {
     val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     val result = mutableSetOf<String>()

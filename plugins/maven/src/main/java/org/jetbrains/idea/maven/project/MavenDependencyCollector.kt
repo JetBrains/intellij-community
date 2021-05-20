@@ -7,9 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 
 class MavenDependencyCollector : DependencyCollector {
-  override val dependencyKind: String
-    get() = "java"
-
   override fun collectDependencies(project: Project): List<String> {
     val result = mutableSetOf<String>()
     for (mavenProject in MavenProjectsManager.getInstance(project).projects) {

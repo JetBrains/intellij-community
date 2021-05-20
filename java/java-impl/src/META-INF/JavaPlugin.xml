@@ -2163,7 +2163,7 @@
                  defaultValue="https://frameworks.jetbrains.com"
                  description="The host is used to download dependency config updates for framework starters"/>
 
-    <dependencyCollector implementation="com.intellij.ide.JavaDependencyCollector"/>
+    <dependencyCollector kind="java" implementation="com.intellij.ide.JavaDependencyCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

@@ -8,18 +8,44 @@ import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
 
-interface DependencyCollector {
-  val dependencyKind: String
+class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollector>() {
+  @Attribute("kind")
+  @JvmField
+  @RequiredElement
+  var kind: String = ""
 
-  fun collectDependencies(project: Project): List<String>
+  @Attribute("implementation")
+  @JvmField
+  @RequiredElement
+  var implementation: String = ""
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<DependencyCollector>("com.intellij.dependencyCollector")
+    val EP_NAME = ExtensionPointName.create<DependencyCollectorBean>("com.intellij.dependencyCollector")
   }
+
+  override fun getImplementationClassName(): String = implementation
 }
 
+/**
+ * Collects dependencies for the given project, so that the IDE can offer to enable/install plugins supporting those dependencies.
+ * Implementations of this interface are registered through the `dependencyCollector` extension point.
+ */
+interface DependencyCollector {
+  /**
+   * Returns the list of dependencies for the given project. Each element in the returned list is the name/coordinate of a dependency.
+   * The specific format of returned strings depends on the dependency kind. For Java, the format is Maven group ID and artifact ID
+   * separated by a colon.
+   */
+  fun collectDependencies(project: Project): List<String>
+}
+
+/**
+ * Marks a plugin as supporting a given dependency. The `coordinate` attribute specifies the name or coordinate of the supported
+ * library/dependency, in the same format as returned from [DependencyCollector.collectDependencies] for the respective dependency kind.
+ */
 class DependencySupportBean : PluginAware {
   private var pluginDescriptor: PluginDescriptor? = null
 
@@ -33,6 +59,9 @@ class DependencySupportBean : PluginAware {
   @RequiredElement
   var coordinate: String = ""
 
+  /**
+   * The user-readable name of the corresponding library or framework. Shown to the user in messages suggesting to install/enable plugins.
+   */
   @Attribute("displayName")
   @JvmField
   @NlsSafe

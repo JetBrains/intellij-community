@@ -13,9 +13,6 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleDependencyCollector : DependencyCollector {
-  override val dependencyKind: String
-    get() = "java"
-
   override fun collectDependencies(project: Project): List<String> {
     val projectInfoList = ProjectDataManager.getInstance().getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
     val result = mutableListOf<String>()
