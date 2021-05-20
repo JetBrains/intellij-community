@@ -66,9 +66,9 @@ public class MavenProjectImporter {
   private final boolean myImportModuleGroupsRequired;
   private final MavenImportingSettings myImportingSettings;
 
-  //private IdeModifiableModelsProvider myModelsProvider;
   private ModifiableModelsProviderProxy myModelsProvider;
-  private ModuleModelProxy myModuleModel = null;
+  private ModuleModelProxy myModuleModel;
+  private WorkspaceEntityStorageBuilder myDiff;
   private final Module myDummyModule;
 
   private final List<Module> myCreatedModules = new ArrayList<>();
@@ -92,16 +92,16 @@ public class MavenProjectImporter {
     myImportModuleGroupsRequired = importModuleGroupsRequired;
     myModelsProvider = new ModifiableModelsProviderProxyImpl(modelsProvider, myProject);
     myImportingSettings = importingSettings;
-    myModuleModel = new ModuleModelProxyWrapper(myModelsProvider.getModifiableModuleModel());
+    myModuleModel = ((ModifiableModelsProviderProxyImpl)myModelsProvider).getModuleModel();
+    myDiff = ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder();
     myDummyModule = dummyModule;
   }
 
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
     if (MavenUtil.newModelEnabled(myProject)) {
-      WorkspaceEntityStorageBuilder diff = ((IdeModifiableModelsProviderImpl)myModelsProvider).getActualStorageBuilder();
-      myModuleModel = new ModuleModelProxyImpl(diff, myProject);
-      ((ModifiableModelsProviderProxyImpl)myModelsProvider).usingDiff(diff);
+      ((ModifiableModelsProviderProxyImpl)myModelsProvider).usingDiff(myDiff);
+      myModuleModel = ((ModifiableModelsProviderProxyImpl)myModelsProvider).getModuleModel();
     }
     return importProjectOldWay();
   }

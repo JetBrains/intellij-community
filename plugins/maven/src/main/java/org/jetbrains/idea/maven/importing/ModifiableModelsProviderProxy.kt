@@ -2,11 +2,10 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 import com.intellij.openapi.externalSystem.model.project.ProjectId
-import com.intellij.openapi.externalSystem.service.project.*
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -14,7 +13,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 
 interface ModifiableModelsProviderProxy {
@@ -44,14 +42,19 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
   constructor(project: Project) : this(IdeModifiableModelsProviderImpl(project), project)
 
   var diff : WorkspaceEntityStorageBuilder? = null
-  val moduleModel : ModuleModelProxy by lazy { ModuleModelProxyImpl(diff!!, project) }
-  val modifiableWorkspace: ModifiableWorkspace by lazy {
-    ReadAction.compute(
-      ThrowableComputable<ModifiableWorkspace, RuntimeException> {
-        project.service<ExternalProjectsWorkspaceImpl>()
-          .createModifiableWorkspace(delegate as AbstractIdeModifiableModelsProvider)
-      })
-  }
+
+  private val moduleModelProxy by lazy { ModuleModelProxyImpl(diff!!, project) }
+  private val moduleModelWrapper by lazy { ModuleModelProxyWrapper(delegate.modifiableModuleModel) }
+
+  val moduleModel : ModuleModelProxy
+    get() {
+      return if (diff != null) {
+        moduleModelProxy
+      }
+      else {
+        moduleModelWrapper
+      }
+    }
 
   fun usingDiff(newDiff: WorkspaceEntityStorageBuilder) {
     diff = newDiff
@@ -73,7 +76,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
 
 
   override fun registerModulePublication(module: Module, id: ProjectCoordinate) {
-    modifiableWorkspace.register(id, module);
+    delegate.registerModulePublication(module, id)
   }
 
   override fun getModifiableRootModel(module: Module?): ModifiableRootModel? = delegate.getModifiableRootModel(module)
