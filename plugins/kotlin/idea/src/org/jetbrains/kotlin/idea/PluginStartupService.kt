@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 class PluginStartupService : Disposable {
 
-    fun register(project: Project) {
+    fun register() {
         val eventMulticaster = EditorFactory.getInstance().eventMulticaster
         val documentListener: DocumentListener = object : DocumentListener {
             override fun documentChanged(e: DocumentEvent) {
@@ -32,7 +32,7 @@ class PluginStartupService : Disposable {
         }
         eventMulticaster.addDocumentListener(documentListener, this)
 
-        val indexPatternSearch = ServiceManager.getService(IndexPatternSearch::class.java)
+        val indexPatternSearch = ApplicationManager.getApplication().getService(IndexPatternSearch::class.java)
         val kotlinTodoSearcher = KotlinTodoSearcher()
         indexPatternSearch.registerExecutor(kotlinTodoSearcher)
 
