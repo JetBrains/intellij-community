@@ -105,16 +105,6 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   protected abstract @Nullable FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest formattingRequest);
 
   /**
-   * Merge changes if the document has changed since {@code asyncFormat()} was called. The default implementation does nothing and
-   * rejects the updated text.
-   *
-   * @param document The current document.
-   * @param updatedText The updated text to merge into the documents.
-   */
-  @SuppressWarnings("unused")
-  protected void mergeChanges(@NotNull Document document, @NotNull String updatedText) {}
-
-  /**
    * @return A notification group ID to use when error messages are shown to an end user.
    */
   protected abstract @NotNull String getNotificationGroupId();
@@ -251,7 +241,9 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
           try {
             WriteAction.run((ThrowableRunnable<Throwable>)() -> {
               if (myDocument.getModificationStamp() > myInitialModificationStamp) {
-                mergeChanges(myDocument, updatedText);
+                for (DocumentMerger merger : DocumentMerger.EP_NAME.getExtensionList()) {
+                  if (merger.updateDocument(myDocument, updatedText)) break;
+                }
               }
               else {
                 myDocument.setText(updatedText);
