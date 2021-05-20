@@ -35,7 +35,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.java.guiForms.designer") {
       directoryName = "uiDesigner"
       mainJarName = "uiDesigner.jar"
-      withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar", null)
+      withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
     },
     plugin("intellij.properties") {
       withModule("intellij.properties.psi", "properties.jar")
@@ -43,7 +43,7 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.properties.resource.bundle.editor"),
     plugin("intellij.vcs.git") {
-      withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
+      withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
     },
     plugin("intellij.vcs.svn"){
       withProjectLibrary("sqlite")
@@ -55,7 +55,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.java.langInjection", "IntelliLang.jar")
       withModule("intellij.xml.langInjection", "IntelliLang.jar")
       withModule("intellij.java.langInjection.jps")
-      doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.tasks.core") {
       directoryName = "tasks"
@@ -63,7 +62,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.tasks.compatibility")
       withModule("intellij.tasks.jira")
       withModule("intellij.tasks.java")
-      doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.xslt.debugger") {
       withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")
@@ -144,7 +142,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.devkit.jps")
     },
     plugin("intellij.eclipse") {
-      withModule("intellij.eclipse.jps", "eclipse-jps.jar", null)
+      withModule("intellij.eclipse.jps", "eclipse-jps.jar")
       withModule("intellij.eclipse.common")
     },
     plugin("intellij.java.coverage") {
@@ -154,7 +152,6 @@ final class CommunityRepositoryModules {
       directoryName = "java-decompiler"
       mainJarName = "java-decompiler.jar"
       withModule("intellij.java.decompiler.engine", mainJarName)
-      doNotCreateSeparateJarForLocalizableResources()
     },
     javaFXPlugin("intellij.javaFX.community"),
     plugin("intellij.terminal") {
@@ -190,7 +187,7 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.android.jpsBuildPlugin") {
       withModule("intellij.android.jpsBuildPlugin.common")
-      withModule("intellij.android.jpsBuildPlugin.jps", "jps/android-jps-plugin.jar", null)
+      withModule("intellij.android.jpsBuildPlugin.jps", "jps/android-jps-plugin.jar")
     }
   ]
 
@@ -203,10 +200,8 @@ final class CommunityRepositoryModules {
       withModule("intellij.cucumber.jvmFormatter3")
       withModule("intellij.cucumber.jvmFormatter4")
       withModule("intellij.cucumber.jvmFormatter5")
-      doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.cucumber.groovy") {
-      doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.gauge"),
     plugin("intellij.protoeditor") {
@@ -228,10 +223,10 @@ final class CommunityRepositoryModules {
         return "$declaredVersion.$ideVersion"
       })
 
-      withModule("intellij.android.common", "android-common.jar", null)
-      withModule("intellij.android.buildCommon", "build-common.jar", null)
+      withModule("intellij.android.common", "android-common.jar")
+      withModule("intellij.android.buildCommon", "build-common.jar")
 
-      withModule("intellij.android.core", "android.jar", null)
+      withModule("intellij.android.core", "android.jar")
       withModule("intellij.android.adb", "android.jar")
       withModule("intellij.android.app-inspection", "android.jar")
       withModule("intellij.android.app-inspection.ide", "android.jar")
@@ -412,7 +407,6 @@ final class CommunityRepositoryModules {
       additionalModules.each {
         withModule(it)
       }
-      doNotCreateSeparateJarForLocalizableResources()
     }
   }
 }

@@ -138,7 +138,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
         }
 
         //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
-        withModule("intellij.java.rt", "idea_rt.jar", null)
+        withModule("intellij.java.rt", "idea_rt.jar")
 
         //for compatibility with users' projects which take these libraries from IDEA installation
         withProjectLibrary("jetbrains-annotations")
