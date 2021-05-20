@@ -12,24 +12,18 @@ class KtLocalVariableDescriptor(val variable : KtCallableDeclaration) : Variable
     override fun isStable(): Boolean = true
 
     override fun getDfType(qualifier: DfaVariableValue?): DfType {
-        val varType = variable.type()
-        return if (varType == null) DfType.TOP else getDfType(varType)
+        val varType = variable.type() ?: return DfType.TOP
+        return getDfType(varType)
     }
 
     override fun createValue(factory: DfaValueFactory, qualifier: DfaValue?): DfaValue {
-        assert(qualifier == null)
+        assert(qualifier == null) { "Local variable descriptor should not be qualified, got qualifier '$qualifier'" }
         return factory.varFactory.createVariableValue(this)
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is KtLocalVariableDescriptor && other.variable == variable
-    }
+    override fun equals(other: Any?): Boolean = other is KtLocalVariableDescriptor && other.variable == variable
 
-    override fun hashCode(): Int {
-        return variable.hashCode()
-    }
+    override fun hashCode(): Int = variable.hashCode()
 
-    override fun toString(): String {
-        return variable.name ?: "<unknown>"
-    }
+    override fun toString(): String = variable.name ?: "<unknown>"
 }
