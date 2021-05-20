@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
-  static final HierarchyNodeDescriptor[] EMPTY_ARRAY = new HierarchyNodeDescriptor[0];
   @NotNull
   protected CompositeAppearance myHighlightedText;
   private Object[] myCachedChildren;

@@ -9,7 +9,7 @@ package com.intellij.pom;
  */
 public interface Navigatable {
 
-  Navigatable[] EMPTY_ARRAY = new Navigatable[0];
+  Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[0];
 
   /**
    * Open editor and select/navigate to the object there if possible.

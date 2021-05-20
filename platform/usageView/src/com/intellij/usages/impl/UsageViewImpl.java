@@ -2014,7 +2014,7 @@ public class UsageViewImpl implements UsageViewEx {
         return myTextFileExporter;
       }
       else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        return ContainerUtil.mapNotNull(selectedNodes(), n-> ObjectUtils.tryCast(TreeUtil.getUserObject(n), Navigatable.class)).toArray(Navigatable.EMPTY_ARRAY);
+        return ContainerUtil.mapNotNull(selectedNodes(), n-> ObjectUtils.tryCast(TreeUtil.getUserObject(n), Navigatable.class)).toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
       else if (USAGES_KEY.is(dataId)) {
         return getSelectedUsages().toArray(Usage.EMPTY_ARRAY);

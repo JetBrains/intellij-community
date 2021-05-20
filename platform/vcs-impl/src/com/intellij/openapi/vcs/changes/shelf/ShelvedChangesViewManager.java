@@ -444,7 +444,7 @@ public class ShelvedChangesViewManager implements Disposable {
             navigatables.add(navigatable);
           }
         }
-        return navigatables.toArray(Navigatable.EMPTY_ARRAY);
+        return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
       return super.getData(dataId);
     }
