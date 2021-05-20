@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
-import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -27,13 +26,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain>
-  extends GoToChangePopupBuilder.BaseGoToChangePopupAction<Chain> {
-
-  public ChangeGoToChangePopupAction(@NotNull Chain chain) {
-    super(chain);
-  }
-
+public abstract class ChangeGoToChangePopupAction extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
   @NotNull
   protected abstract DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping);
 

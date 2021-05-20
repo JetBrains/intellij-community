@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
@@ -57,10 +57,15 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
    * NB: {@code chain.getRequests()} MUST return instances of {@link Producer}
    */
   @NotNull
-  private static ChangeGoToChangePopupAction<DiffRequestChain> createGoToChangeAction(@NotNull DiffRequestChain chain,
-                                                                                      @NotNull Consumer<? super Integer> onSelected,
-                                                                                      int defaultSelection) {
-    return new ChangeGoToChangePopupAction<>(chain) {
+  private static ChangeGoToChangePopupAction createGoToChangeAction(@NotNull DiffRequestChain chain,
+                                                                    @NotNull Consumer<? super Integer> onSelected,
+                                                                    int defaultSelection) {
+    return new ChangeGoToChangePopupAction() {
+      @Override
+      protected boolean canNavigate() {
+        return chain.getRequests().size() > 1;
+      }
+
       @NotNull
       @Override
       protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
