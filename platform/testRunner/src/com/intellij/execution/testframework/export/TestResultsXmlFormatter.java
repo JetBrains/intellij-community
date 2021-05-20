@@ -227,7 +227,7 @@ public final class TestResultsXmlFormatter {
     final int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : -1;
     final Printer printer = new Printer() {
       @Override
-      public void print(String text, ConsoleViewContentType contentType) {
+      public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
         ProgressManager.checkCanceled();
         if (contentType != lastType.get()) {
           if (buffer.length() > 0) {
@@ -250,7 +250,7 @@ public final class TestResultsXmlFormatter {
       }
 
       @Override
-      public void printHyperlink(String text, HyperlinkInfo info) {
+      public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
         if (info instanceof DiffHyperlink.DiffHyperlinkInfo) {
           final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
           try {
