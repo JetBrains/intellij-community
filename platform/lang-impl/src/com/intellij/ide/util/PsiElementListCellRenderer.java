@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.navigation.*;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -63,9 +64,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
-    myBackgroundRenderer = Registry.is("psi.element.list.cell.renderer.background")
-                           ? new PsiElementBackgroundListCellRenderer(this)
-                           : null;
+    myBackgroundRenderer =
+      Registry.is("psi.element.list.cell.renderer.background") && !ApplicationManager.getApplication().isHeadlessEnvironment()
+      ? new PsiElementBackgroundListCellRenderer(this)
+      : null;
   }
 
   private class MyAccessibleContext extends JPanel.AccessibleJPanel {
