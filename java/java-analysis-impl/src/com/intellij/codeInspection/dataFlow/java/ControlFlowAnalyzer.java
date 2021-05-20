@@ -1506,7 +1506,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
              TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
              TypeConversionUtil.isNumericType(actualType) &&
              TypeConversionUtil.isNumericType(expectedType)) {
-      addInstruction(new PrimitiveConversionInstruction((PsiPrimitiveType)expectedType, explicit ? context : null));
+      DfaAnchor anchor = explicit ? new JavaExpressionAnchor(context) : null;
+      addInstruction(new PrimitiveConversionInstruction((PsiPrimitiveType)expectedType, anchor));
     }
   }
 
