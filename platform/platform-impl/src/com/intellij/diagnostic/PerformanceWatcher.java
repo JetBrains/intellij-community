@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -23,6 +24,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +129,17 @@ public final class PerformanceWatcher implements Disposable {
               }
               Attachment attachment = new Attachment("crash.txt", content);
               attachment.setIncluded(true);
-              Attachment[] attachments = new Attachment[]{attachment};
+
+              // include plugins list
+              String plugins = StreamEx.of(PluginManagerCore.getLoadedPlugins())
+                .filter(d -> d.isEnabled() && !d.isBundled())
+                .map(PluginInfoDetectorKt::getPluginInfoByDescriptor)
+                .map(i -> i.getId() + " (" + i.getVersion() + ")")
+                .joining("\n", "Extra plugins:\n", "");
+              Attachment pluginsAttachment = new Attachment("plugins.txt", plugins);
+              attachment.setIncluded(true);
+
+              Attachment[] attachments = new Attachment[]{attachment, pluginsAttachment};
 
               // look for extended crash logs
               File extraLog = findExtraLogFile(pid, appInfoFileLastModified);
