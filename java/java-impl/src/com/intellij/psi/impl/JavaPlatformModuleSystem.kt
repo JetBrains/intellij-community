@@ -10,17 +10,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInspection.JavaSuppressionUtil
-import com.intellij.codeInspection.JavaSuppressionUtil.SUPPRESS_INSPECTIONS_ANNOTATION_NAME
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
-import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.annotations.NonNls
@@ -32,10 +28,6 @@ import org.jetbrains.annotations.NonNls
  * @see <a href="http://openjdk.java.net/jeps/261">JEP 261: Module System</a>
  */
 class JavaPlatformModuleSystem : JavaModuleSystemEx {
-  companion object {
-    private const val SUPPRESS_ID = "JPMS"
-  }
-
   override fun getName(): String = "Java Platform Module System"
 
   override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean =
@@ -47,9 +39,6 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean): ErrorWithFixes? {
     val useFile = place.containingFile?.originalFile
     if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
-      if (isSuppressedByModuleDescriptor(place, targetFile)) {
-        return null
-      }
       val useVFile = useFile.virtualFile
       val index = ProjectFileIndex.getInstance(useFile.project)
       if (useVFile == null || !index.isInLibrarySource(useVFile)) {
@@ -86,23 +75,6 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
 
     return null
-  }
-
-  private fun isSuppressedByModuleDescriptor(place: PsiElement, targetFile: PsiFile?): Boolean {
-    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
-    if (useModule == null) {
-      return false
-    }
-    // There is a special workaround if we try to resolve SuppressWarnings (targetFile = SuppressWarnings) annotation inside module-info file.
-    // We should omit calling resolve twice to prevent possible stack recursion (see com.intellij.openapi.util.RecursionManager.CachingPreventedException).
-    // Resolving SuppressWarnings may be called the second time if we try to get annotation's fqn to find certain warnings then.
-    if (targetFile is ClsFileImpl && targetFile.classes.any { it.qualifiedName == SUPPRESS_INSPECTIONS_ANNOTATION_NAME }) {
-      val suppressWarnings = useModule.annotations.firstOrNull {
-        it.nameReferenceElement?.referenceName == StringUtil.getShortName(SUPPRESS_INSPECTIONS_ANNOTATION_NAME)
-      }
-      return suppressWarnings != null && JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation(suppressWarnings).contains(SUPPRESS_ID)
-    }
-    return JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation(useModule).contains(SUPPRESS_ID)
   }
 
   private val ERR = ErrorWithFixes("-")
