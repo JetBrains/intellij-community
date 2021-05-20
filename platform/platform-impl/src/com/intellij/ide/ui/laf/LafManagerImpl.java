@@ -854,7 +854,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue());
 
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS,
-                   AppUIUtil.adjustFractionalMetrics(UISettings.getPREFERRED_FRACTIONAL_METRICS_VALUE()));
+                   AppUIUtil.adjustFractionalMetrics(UISettings.Companion.getPreferredFractionalMetricsValue()));
 
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);

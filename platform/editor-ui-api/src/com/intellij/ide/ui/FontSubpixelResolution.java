@@ -6,8 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.awt.*;
 import java.lang.reflect.Field;
 
-public class FontSubpixelResolution {
-
+public final class FontSubpixelResolution {
   private static final Logger LOG = Logger.getInstance(FontSubpixelResolution.class);
 
   public static final Dimension RESOLUTION;
