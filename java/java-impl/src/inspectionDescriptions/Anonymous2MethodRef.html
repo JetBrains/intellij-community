@@ -3,26 +3,24 @@
 Reports anonymous types which can be replaced with method references.
 <p>
   Note that if an anonymous class is converted into an unbound method reference, the same method reference object 
-  can be reused by Java runtime during subsequent invocations. On the other hand, when an anonymous class is used, 
+  can be reused by the Java runtime during subsequent invocations. On the other hand, when an anonymous class is used,
   separate objects are created every time. Thus, applying the quick-fix can cause the semantics change in rare cases, 
   e.g. when anonymous class instances are used as <code>HashMap</code> keys.
 </p>
-<p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
     Runnable r = new Runnable() {
       @Override
       public void run() {
         System.out.println();
       }
     };
-</pre>
-<p>The quickfix changes this code to the compact form: <code>Runnable r = System.out::println;</code></p>
+</code></pre>
+<p>The quick-fix changes this code to the compact form: <code>Runnable r = System.out::println;</code>.</p>
 <!-- tooltip end -->
-<p>
-    Use the checkbox below to enable this inspection for interfaces which are not annotated with @FunctionalInterface
-</p>
+<p>Use the <b>Report when interface is not annotated with @FunctionalInterface</b> option to enable this inspection for
+  interfaces which are not annotated with @FunctionalInterface.</p>
 
-<p>This inspection only reports if the language level of the project or module is 8 or higher</p>
+<p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 </body>
 </html>

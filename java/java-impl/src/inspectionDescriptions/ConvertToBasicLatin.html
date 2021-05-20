@@ -1,29 +1,18 @@
 <html>
 <body>
-Detects non-Basic Latin characters in literals and suggests replacing them with unicode entities.
-<p>
-  Before:
-</p>
-<p>
-  <code>
-    // © 2021
-    <br>
-    char c = '©';
-    <br>
-    String s = "Áî";
-  </code>
-</p>
-<p>
-  After:
-</p>
-<p>
-  <code>
-    // &amp;copy; 2021
-    <br>
-    char c = '\u00a9';
-    <br>
-    String s = "\u00c1\u00ee";
-  </code>
-</p>
+Reports non-Basic Latin characters in literals and suggests replacing them with unicode entities.
+<p>Example:</p>
+<pre><code>
+  // © 2021
+  char c = '©';
+  String s = "Áî";
+</code>
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  // &amp;copy; 2021
+  char c = '\u00a9';
+  String s = "\u00c1\u00ee";
+</code></pre>
 </body>
 </html>
