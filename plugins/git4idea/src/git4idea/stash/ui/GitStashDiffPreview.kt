@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash.ui
 
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.IdeBorderFactory
@@ -44,6 +46,12 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, paren
 
   override fun getAllChanges(): Stream<Wrapper> {
     return wrap(VcsTreeModelData.all(tree))
+  }
+
+  override fun getActualProducers(): List<DiffRequestProducer> {
+    return VcsTreeModelData.all(tree)
+      .userObjects(Change::class.java)
+      .mapNotNull { ChangeDiffRequestProducer.create(project, it) }
   }
 
   override fun selectChange(change: Wrapper) {
