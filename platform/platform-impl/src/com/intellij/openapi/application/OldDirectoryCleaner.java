@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.IdeBundle;
@@ -71,12 +71,12 @@ public final class OldDirectoryCleaner {
       SCHEDULED.log();
     }
 
-    public static void started(int actualDelay) {
-      STARTED.log(actualDelay);
+    public static void started(int actualDelayDays) {
+      STARTED.log(actualDelayDays);
     }
 
-    public static void completed(int groups, long total) {
-      COMPLETE.log(groups, total / 1_000_000L);
+    public static void completed(int groups, long totalBytes) {
+      COMPLETE.log(groups, totalBytes / 1_000_000L);
     }
   }
 
