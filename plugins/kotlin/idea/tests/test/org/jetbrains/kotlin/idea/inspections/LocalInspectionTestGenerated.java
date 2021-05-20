@@ -4454,9 +4454,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/andRange.kt");
         }
 
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/assignment.kt");
+        }
+
         @TestMetadata("basicRange.kt")
         public void testBasicRange() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicRange.kt");
+        }
+
+        @TestMetadata("declaration.kt")
+        public void testDeclaration() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/declaration.kt");
         }
 
         @TestMetadata("doubleCompareInt.kt")

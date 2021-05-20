@@ -6,7 +6,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.*
 
 class KtLocalVariableDescriptor(val variable : KtCallableDeclaration) : VariableDescriptor {
     override fun isStable(): Boolean = true
@@ -26,4 +27,18 @@ class KtLocalVariableDescriptor(val variable : KtCallableDeclaration) : Variable
     override fun hashCode(): Int = variable.hashCode()
 
     override fun toString(): String = variable.name ?: "<unknown>"
+    
+    companion object {
+        fun create(expr: KtExpression?): KtLocalVariableDescriptor? {
+            if (expr is KtSimpleNameExpression) {
+                val target = expr.mainReference.resolve()
+                if (target is KtCallableDeclaration) {
+                    if (target is KtParameter || target is KtProperty && target.isLocal) {
+                        return KtLocalVariableDescriptor(target)
+                    }
+                }
+            }
+            return null
+        }
+    }
 }

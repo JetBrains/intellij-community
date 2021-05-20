@@ -94,3 +94,12 @@ internal fun mathOpFromToken(token: IElementType): LongRangeBinOp? = when(token)
     KtTokens.PERC -> LongRangeBinOp.MOD
     else -> null
 }
+
+internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = when(token) {
+    KtTokens.PLUSEQ -> LongRangeBinOp.PLUS
+    KtTokens.MINUSEQ -> LongRangeBinOp.MINUS
+    KtTokens.MULTEQ -> LongRangeBinOp.MUL
+    KtTokens.DIVEQ -> LongRangeBinOp.DIV
+    KtTokens.PERCEQ -> LongRangeBinOp.MOD
+    else -> null
+}

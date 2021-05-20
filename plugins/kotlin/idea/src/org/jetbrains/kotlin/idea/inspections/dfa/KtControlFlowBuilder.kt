@@ -13,8 +13,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.util.containers.FList
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.KotlinType
@@ -70,11 +71,26 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtIfExpression -> {
                 processIfExpression(expr)
             }
+            is KtProperty -> {
+                processDeclaration(expr)
+            }
             else -> {
                 // unsupported construct
                 broken = true
             }
         }
+    }
+
+    private fun processDeclaration(variable: KtProperty) {
+        val initializer = variable.initializer
+        if (initializer == null) {
+            pushUnknown()
+            return
+        }
+        val dfaVariable = factory.varFactory.createVariableValue(KtLocalVariableDescriptor(variable))
+        processExpression(initializer)
+        addImplicitConversion(initializer, variable.type())
+        addInstruction(SimpleAssignmentInstruction(KotlinExpressionAnchor(variable), dfaVariable))
     }
 
     private fun processReturnExpression(expr: KtReturnExpression) {
@@ -88,17 +104,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processReferenceExpression(expr: KtSimpleNameExpression) {
-        val target = expr.mainReference.resolve()
-        if (target is KtCallableDeclaration) {
-            if (target is KtParameter || target is KtProperty && target.isLocal) {
-                addInstruction(
-                    JvmPushInstruction(
-                        KtLocalVariableDescriptor(target).createValue(factory, null),
-                        KotlinExpressionAnchor(expr)
-                    )
-                )
-                return
-            }
+        val descriptor = KtLocalVariableDescriptor.create(expr)
+        if (descriptor != null) {
+            addInstruction(JvmPushInstruction(descriptor.createValue(factory, null), KotlinExpressionAnchor(expr)))
+            return
         }
         // TODO: support other references
         broken = true
@@ -128,8 +137,45 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processShortCircuitExpression(expr, token === KtTokens.ANDAND)
             return
         }
+        if (ASSIGNMENT_TOKENS.contains(token)) {
+            processAssignmentExpression(expr)
+            return
+        }
         // TODO: support other operators
         broken = true
+    }
+
+    private fun processAssignmentExpression(expr: KtBinaryExpression) {
+        val left = expr.left
+        val right = expr.right
+        val descriptor = KtLocalVariableDescriptor.create(left)
+        val leftType = left?.getKotlinType()
+        val rightType = right?.getKotlinType()
+        if (descriptor == null) {
+            processExpression(left)
+            addInstruction(PopInstruction())
+            processExpression(right)
+            addImplicitConversion(right, leftType)
+            // TODO: support qualified assignments
+            addInstruction(FlushFieldsInstruction())
+            return
+        }
+        val token = expr.operationToken
+        val mathOp = mathOpFromAssignmentToken(token)
+        if (mathOp != null) {
+            val resultType = balanceType(leftType, rightType)
+            processExpression(left)
+            addImplicitConversion(left, resultType)
+            processExpression(right)
+            addImplicitConversion(right, resultType)
+            addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
+            addImplicitConversion(right, resultType, leftType)
+        } else {
+            processExpression(right)
+            addImplicitConversion(right, leftType)
+        }
+        // TODO: support overloaded assignment
+        addInstruction(SimpleAssignmentInstruction(KotlinExpressionAnchor(expr), factory.varFactory.createVariableValue(descriptor)))
     }
 
     private fun processShortCircuitExpression(expr: KtBinaryExpression, and: Boolean) {
@@ -157,18 +203,18 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addImplicitConversion(left, resultType)
         processExpression(right)
         addImplicitConversion(right, resultType)
-        if (left == null || right == null) {
-            addInstruction(EvalUnknownInstruction(KotlinExpressionAnchor(expr), 2))
-            return
-        }
-        // TODO: support overloaded operators
         addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
+        // TODO: support overloaded operators
     }
 
     private fun addImplicitConversion(expression: KtExpression?, expectedType: KotlinType?) {
+        addImplicitConversion(expression, expression?.getKotlinType(), expectedType)
+    }
+
+    private fun addImplicitConversion(expression: KtExpression?, actualType: KotlinType?, expectedType: KotlinType?) {
         expression ?: return
+        actualType ?: return
         expectedType ?: return
-        val actualType = expression.getKotlinType() ?: return
         if (actualType == expectedType) return
         val actualPsiType = actualType.toPsiType(expression)
         val expectedPsiType = expectedType.toPsiType(expression)
@@ -235,5 +281,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(elseStatement)
         setOffset(skipElseOffset)
         addInstruction(FinishElementInstruction(ifExpression))
+    }
+    
+    companion object {
+        val ASSIGNMENT_TOKENS = TokenSet.create(KtTokens.EQ, KtTokens.PLUSEQ, KtTokens.MINUSEQ, KtTokens.MULTEQ, KtTokens.DIVEQ, KtTokens.PERCEQ)
     }
 }
