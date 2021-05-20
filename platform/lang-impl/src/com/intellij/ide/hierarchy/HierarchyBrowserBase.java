@@ -91,6 +91,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     ActionManager actionManager = ActionManager.getInstance();
     actionGroup.add(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL));
+    actionGroup.add(actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL));
     actionGroup.add(actionManager.getAction(PinToolwindowTabAction.ACTION_NAME));
     actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new ExporterToTextFileHierarchy(this)));
     actionGroup.add(new CloseAction());
