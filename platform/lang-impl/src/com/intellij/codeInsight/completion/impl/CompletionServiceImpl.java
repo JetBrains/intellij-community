@@ -42,26 +42,30 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        List<ClientId> clientIdsToRemove = new ArrayList<>();
-        for (ClientId clientId : clientId2Holders.keySet()) {
-          CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator(clientId);
-          if (indicator != null && indicator.getProject() == project) {
-            indicator.closeAndFinish(true);
-            clientIdsToRemove.add(clientId);
-          }
-          else if (indicator == null) {
-            clientIdsToRemove.add(clientId);
-          }
-        }
-        for (ClientId clientId : clientIdsToRemove) {
-          clientId2Holders.remove(clientId);
+        List<ClientId> clientIds = new ArrayList<>(clientId2Holders.keySet());  // original set might be modified during iteration
+        for (ClientId clientId : clientIds) {
+          ClientId.withClientId(clientId, () -> {
+            CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator(clientId);
+            if (indicator != null && indicator.getProject() == project) {
+              indicator.closeAndFinish(true);
+              setCompletionPhase(clientId, CompletionPhase.NoCompletion);
+            }
+            else if (indicator == null) {
+              setCompletionPhase(clientId, CompletionPhase.NoCompletion);
+            }
+          });
         }
       }
     });
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        clientId2Holders.clear();
+        List<ClientId> clientIds = new ArrayList<>(clientId2Holders.keySet());  // original set might be modified during iteration
+        for (ClientId clientId : clientIds) {
+          ClientId.withClientId(clientId, () -> {
+            setCompletionPhase(clientId, CompletionPhase.NoCompletion);
+          });
+        }
       }
     });
   }
@@ -239,12 +243,19 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     }
 
     Disposer.dispose(oldPhase);
+    if (isPhase(phase, CompletionPhase.NoCompletion.getClass()) && !ClientId.isValid(clientId)) {
+      clientId2Holders.remove(clientId);
+      return;
+    }
     Throwable phaseTrace = new Throwable();
     CompletionPhaseHolder holder = new CompletionPhaseHolder(phase, phaseTrace);
     CompletionPhaseHolder previous = clientId2Holders.put(clientId, holder);
     if (previous == null) {
       Disposer.register(ClientId.toDisposable(clientId), () -> {
-        clientId2Holders.remove(clientId);
+        if (isPhase(clientId, CompletionPhase.NoCompletion.getClass())) {
+          clientId2Holders.remove(clientId);
+        }
+        // Otherwise it's still used (e.g. by CompletionProgressIndicator)
       });
     }
   }
