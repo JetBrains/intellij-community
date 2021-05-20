@@ -5,10 +5,10 @@
 
 package org.jetbrains.kotlin.idea.asJava
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.*
 
 interface LightClassProvider {
@@ -41,9 +41,7 @@ interface LightClassProvider {
 
     companion object {
 
-        fun getInstance(project: Project): LightClassProvider {
-            return ServiceManager.getService(project, LightClassProvider::class.java)
-        }
+        fun getInstance(project: Project): LightClassProvider = project.getServiceSafe()
 
         fun providedGetLightFieldForCompanionObject(companionObject: KtClassOrObject): PsiField? =
             getInstance(companionObject.project).getLightFieldForCompanionObject(companionObject)

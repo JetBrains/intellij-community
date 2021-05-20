@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
@@ -56,7 +57,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.util.ArrayList
 
 class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerEx() {
-    private val stackFrameInterceptor: StackFrameInterceptor = myDebugProcess.project.getService()
+    private val stackFrameInterceptor: StackFrameInterceptor = myDebugProcess.project.getServiceSafe()
 
     private val allKotlinFilesScope = object : DelegatingGlobalSearchScope(
         KotlinSourceFilterScope.projectAndLibrariesSources(GlobalSearchScope.allScope(myDebugProcess.project), myDebugProcess.project)

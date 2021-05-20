@@ -16,7 +16,7 @@
 
 package org.jetbrains.kotlin.idea.internal
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.serviceOrNull
 import org.jetbrains.kotlin.psi.KtFile
 
 class DecompileFailedException(message: String, cause: Throwable) : RuntimeException(message, cause)
@@ -25,9 +25,7 @@ interface KotlinDecompilerService {
     fun decompile(file: KtFile): String?
 
     companion object {
-        fun getInstance(): KotlinDecompilerService? {
-            return ServiceManager.getService(KotlinDecompilerService::class.java)
-        }
+        fun getInstance(): KotlinDecompilerService? = serviceOrNull()
     }
 }
 

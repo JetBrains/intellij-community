@@ -11,7 +11,7 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -136,7 +136,6 @@ class LoadConfigurationAction : AnAction(
 
 fun getGradleVersion(project: Project, settings: GradleProjectSettings): String {
     return GradleInstallationManager.getGradleVersion(
-        ServiceManager.getService(GradleInstallationManager::class.java)
-            .getGradleHome(project, settings.externalProjectPath)?.path
+        service<GradleInstallationManager>().getGradleHome(project, settings.externalProjectPath)?.path
     ) ?: GradleVersion.current().version
 }

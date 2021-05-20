@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.idea.search.usagesSearch.operators
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchRequestCollector
@@ -24,6 +23,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
+import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -43,7 +43,7 @@ class InvokeOperatorReferenceSearcher(
     private val callArgumentsSize: Int?
 
     init {
-        val uastContext = ServiceManager.getService<UastContext>(targetFunction.project, UastContext::class.java)
+        val uastContext = targetFunction.project.getService<UastContext>()
         callArgumentsSize = when {
             uastContext != null -> {
                 val uMethod = uastContext.convertOpt<UMethod>(targetDeclaration, null)

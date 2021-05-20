@@ -5,20 +5,18 @@
 
 package org.jetbrains.kotlin.idea.findUsages
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.*
 
 interface KotlinFindUsagesSupport {
 
     companion object {
-        fun getInstance(project: Project): KotlinFindUsagesSupport {
-            return ServiceManager.getService(project, KotlinFindUsagesSupport::class.java)
-        }
+        fun getInstance(project: Project): KotlinFindUsagesSupport = project.getServiceSafe()
 
         val KtParameter.isDataClassComponentFunction: Boolean
             get() =  getInstance(project).isDataClassComponentFunction(this)

@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.idea.kdoc
 
-import com.intellij.openapi.components.ServiceManager
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.resolve.BindingContext
 
 interface SampleResolutionService {
@@ -29,7 +29,7 @@ interface SampleResolutionService {
             resolutionFacade: ResolutionFacade,
             qualifiedName: List<String>
         ): Collection<DeclarationDescriptor> {
-            val instance = ServiceManager.getService(resolutionFacade.project, SampleResolutionService::class.java)
+            val instance = resolutionFacade.project.getService<SampleResolutionService>()
             return instance?.resolveSample(context, fromDescriptor, resolutionFacade, qualifiedName) ?: emptyList()
         }
     }

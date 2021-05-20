@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.services
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -49,8 +49,7 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
                         if (externalProject == null) {
                             importingErrorMessage = "Got null External project after import"
                         } else {
-                            ServiceManager.getService(ProjectDataManager::class.java).importData(externalProject,
-                                                                                                 project, true)
+                            service<ProjectDataManager>().importData(externalProject, project, true)
                         }
                     }
 

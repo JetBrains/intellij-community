@@ -6,14 +6,11 @@
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.psi.search.EverythingGlobalScope
-import com.intellij.util.indexing.*
-import com.intellij.util.io.DataExternalizer
-import com.intellij.util.io.EnumDataDescriptor
 import org.jetbrains.kotlin.idea.caches.FileAttributeService
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
 
@@ -22,7 +19,7 @@ enum class KnownLibraryKindForIndex {
 }
 
 private val KOTLIN_LIBRARY_KIND_FILE_ATTRIBUTE: String = "kotlin-library-kind".apply {
-    ServiceManager.getService(FileAttributeService::class.java)?.register(this, 1)
+    serviceOrNull<FileAttributeService>()?.register(this, 1)
 }
 
 // TODO: Detect library kind for Jar file using IdePlatformKindResolution.
@@ -30,7 +27,7 @@ fun VirtualFile.getLibraryKindForJar(): KnownLibraryKindForIndex {
     if (this !is VirtualFileWithId) return detectLibraryKindFromJarContentsForIndex(this)
 
     val service =
-        ServiceManager.getService(FileAttributeService::class.java)
+        serviceOrNull<FileAttributeService>()
             ?: return detectLibraryKindFromJarContentsForIndex(this)
 
     service

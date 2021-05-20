@@ -5,12 +5,12 @@
 
 package org.jetbrains.kotlin.idea.kdoc
 
-import com.intellij.openapi.components.ServiceManager
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallType
+import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.idea.util.getFileResolutionScope
 import org.jetbrains.kotlin.idea.util.substituteExtensionIfCallable
 import org.jetbrains.kotlin.incremental.components.LookupLocation
@@ -200,7 +200,7 @@ private fun getOuterScope(descriptor: DeclarationDescriptorWithSource, resolutio
             ImportingScope.Empty,
             parent
         )
-        val kotlinCacheService = ServiceManager.getService(containingFile.project, KotlinCacheService::class.java)
+        val kotlinCacheService = containingFile.project.getService<KotlinCacheService>()
         val facadeToUse = kotlinCacheService?.getResolutionFacade(listOf(containingFile)) ?: resolutionFacade
         return facadeToUse.getFileResolutionScope(containingFile)
     } else {

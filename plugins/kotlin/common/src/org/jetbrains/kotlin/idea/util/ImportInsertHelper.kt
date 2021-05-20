@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.util.*
@@ -43,8 +43,7 @@ abstract class ImportInsertHelper {
 
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): ImportInsertHelper =
-            ServiceManager.getService<ImportInsertHelper>(project, ImportInsertHelper::class.java)
+        fun getInstance(project: Project): ImportInsertHelper = project.getServiceSafe()
     }
 }
 

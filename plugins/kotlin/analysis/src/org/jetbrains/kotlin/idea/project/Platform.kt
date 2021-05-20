@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.idea.project
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -40,6 +39,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgume
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.facet.getLibraryLanguageLevel
+import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.impl.isCommon
@@ -303,9 +303,8 @@ fun MutableMap<LanguageFeature, LanguageFeature.State>.configureMultiplatformSup
 }
 
 val PsiElement.languageVersionSettings: LanguageVersionSettings
-    get() {
-        if (ServiceManager.getService(project, ProjectFileIndex::class.java) == null) {
-            return LanguageVersionSettingsImpl.DEFAULT
-        }
-        return IDELanguageSettingsProvider.getLanguageVersionSettings(this.getModuleInfo(), project)
+    get() = if (project.getService<ProjectFileIndex>() == null) {
+        LanguageVersionSettingsImpl.DEFAULT
+    } else {
+        IDELanguageSettingsProvider.getLanguageVersionSettings(this.getModuleInfo(), project)
     }

@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_COMMON_COMPILER_ARGUMENTS_SECTION
 import org.jetbrains.kotlin.config.detectVersionAutoAdvance
 import org.jetbrains.kotlin.config.dropVersionsIfNecessary
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 @State(name = KOTLIN_COMMON_COMPILER_ARGUMENTS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class KotlinCommonCompilerArgumentsHolder(project: Project) : BaseKotlinCompilerSettings<CommonCompilerArguments>(project) {
@@ -38,7 +38,6 @@ class KotlinCommonCompilerArgumentsHolder(project: Project) : BaseKotlinCompiler
     override fun createSettings() = CommonCompilerArguments.DummyImpl()
 
     companion object {
-        fun getInstance(project: Project) =
-            ServiceManager.getService<KotlinCommonCompilerArgumentsHolder>(project, KotlinCommonCompilerArgumentsHolder::class.java)!!
+        fun getInstance(project: Project): KotlinCommonCompilerArgumentsHolder = project.getServiceSafe()
     }
 }

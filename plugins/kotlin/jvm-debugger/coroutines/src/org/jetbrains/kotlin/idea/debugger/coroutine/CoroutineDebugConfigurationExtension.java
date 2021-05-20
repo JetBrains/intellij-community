@@ -8,7 +8,6 @@ import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +22,7 @@ public class CoroutineDebugConfigurationExtension extends RunConfigurationExtens
             RunnerSettings runnerSettings
     ) {
         Project project = configuration.getProject();
-        DebuggerListener listener = ServiceManager.getService(project, DebuggerListener.class);
+        DebuggerListener listener = project.getService(DebuggerListener.class);
         if (listener != null) {
             listener.registerDebuggerConnection(configuration, params, runnerSettings);
         } else {

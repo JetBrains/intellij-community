@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -44,7 +44,7 @@ class QuickFixes {
     }
 
     companion object {
-        fun getInstance(): QuickFixes = ServiceManager.getService(QuickFixes::class.java)
+        fun getInstance(): QuickFixes = service()
     }
 }
 

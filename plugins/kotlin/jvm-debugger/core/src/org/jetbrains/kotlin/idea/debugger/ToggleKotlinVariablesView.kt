@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.debugger
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
@@ -17,9 +17,7 @@ class ToggleKotlinVariablesState {
     companion object {
         private const val KOTLIN_VARIABLE_VIEW = "debugger.kotlin.variable.view"
 
-        fun getService(): ToggleKotlinVariablesState {
-            return ServiceManager.getService(ToggleKotlinVariablesState::class.java)
-        }
+        fun getService(): ToggleKotlinVariablesState = service()
     }
 
     var kotlinVariableView = PropertiesComponent.getInstance().getBoolean(KOTLIN_VARIABLE_VIEW, true)

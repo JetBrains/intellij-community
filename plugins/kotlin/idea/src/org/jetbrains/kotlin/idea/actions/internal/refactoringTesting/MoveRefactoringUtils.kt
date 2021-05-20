@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.actions.internal.refactoringTesting
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -42,7 +41,7 @@ internal fun gitReset(project: Project, projectRoot: VirtualFile) {
     val resetLineHandler = gitLineHandlerCtor.newInstance(project, projectRoot, gitCommandReset)
     gitLineHandlerAddParameters.invoke(resetLineHandler, listOf("--hard", "HEAD"))
 
-    val gitService = ServiceManager.getService(gitCls)
+    val gitService = ApplicationManager.getApplication().getService(gitCls)
     val runCommandResult = runCommand.invoke(gitService, resetLineHandler)
 
     val gitResetResultCode = getExitCode.invoke(runCommandResult) as Int

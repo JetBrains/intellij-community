@@ -5,7 +5,6 @@
 
 package org.jetbrains.uast.kotlin.internal
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiSubstitutor
@@ -20,7 +19,7 @@ import org.jetbrains.uast.kotlin.resolveToDeclaration
 
 
 internal fun getReferenceVariants(ktElement: KtExpression, nameHint: String): Sequence<PsiElement> =
-    ServiceManager.getService(ktElement.project, KotlinUastResolveProviderService::class.java)
+    ktElement.project.getService(KotlinUastResolveProviderService::class.java)!!
         .getReferenceVariants(ktElement, nameHint)
         .mapNotNull { resolveToDeclaration(ktElement, it) }
 

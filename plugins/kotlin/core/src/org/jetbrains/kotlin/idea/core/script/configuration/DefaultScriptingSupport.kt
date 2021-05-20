@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.core.script.configuration
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRoot
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.*
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.util.EDT
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -323,7 +323,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
         if (oldReports != newReports) {
             scriptingDebugLog(file) { "new script reports = $newReports" }
 
-            ServiceManager.getService(project, ScriptReportSink::class.java).attachReports(file, newReports)
+            project.getServiceSafe<ScriptReportSink>().attachReports(file, newReports)
 
             GlobalScope.launch(EDT(project)) {
                 if (project.isDisposed) return@launch

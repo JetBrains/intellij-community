@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.idea.caches.lightClasses
 
 import com.intellij.ide.highlighter.JavaClassFileType
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,6 +25,7 @@ import com.intellij.psi.impl.java.stubs.PsiJavaFileStub
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl
 import com.intellij.util.cls.ClsFormatException
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import java.io.IOException
 
 class ClsJavaStubByVirtualFileCache {
@@ -61,8 +61,6 @@ class ClsJavaStubByVirtualFileCache {
     companion object {
         private val LOG = Logger.getInstance(ClsJavaStubByVirtualFileCache::class.java)
 
-        fun getInstance(project: Project): ClsJavaStubByVirtualFileCache {
-            return ServiceManager.getService(project, ClsJavaStubByVirtualFileCache::class.java)
-        }
+        fun getInstance(project: Project): ClsJavaStubByVirtualFileCache = project.getServiceSafe()
     }
 }

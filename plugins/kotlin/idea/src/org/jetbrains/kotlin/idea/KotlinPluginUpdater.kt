@@ -8,18 +8,16 @@ package org.jetbrains.kotlin.idea
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
-import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.idea.LoggerFactory
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
@@ -35,7 +33,6 @@ import com.intellij.util.Alarm
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.kotlin.idea.update.verify
-import java.io.File
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -328,7 +325,7 @@ class KotlinPluginUpdater : Disposable {
         private const val PROPERTY_NAME = "kotlin.lastUpdateCheck"
         private val LOG = Logger.getInstance(KotlinPluginUpdater::class.java)
 
-        fun getInstance(): KotlinPluginUpdater = ServiceManager.getService(KotlinPluginUpdater::class.java)
+        fun getInstance(): KotlinPluginUpdater = service()
 
         class ResponseParseException(message: String, cause: Exception? = null) : IllegalStateException(message, cause)
 

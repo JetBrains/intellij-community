@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.idea.j2k
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 
@@ -21,6 +21,6 @@ interface J2KPostProcessingRegistrar {
 
     companion object {
         val instance: J2KPostProcessingRegistrar
-            get() = ServiceManager.getService(J2KPostProcessingRegistrar::class.java)
+            get() = service()
     }
 }

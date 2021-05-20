@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.idea.testFramework
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback
@@ -38,7 +38,7 @@ class StatefulTestGradleProjectRefreshCallback(
             error = Error("Got null external project after Gradle import")
             return
         }
-        ServiceManager.getService(ProjectDataManager::class.java).importData(externalProject, project, true)
+        service<ProjectDataManager>().importData(externalProject, project, true)
     }
 
     override fun onFailure(errorMessage: String, errorDetails: String?) {

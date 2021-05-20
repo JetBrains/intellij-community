@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.core.script.configuration.utils
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 /**
  * This cache is used by [org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport] only.
@@ -24,16 +25,13 @@ class ScriptClassRootsStorage : PersistentStateComponent<ScriptClassRootsStorage
     var sdks: Set<String> = hashSetOf()
     var defaultSdkUsed: Boolean = false
 
-    override fun getState(): ScriptClassRootsStorage? {
-        return this
-    }
+    override fun getState(): ScriptClassRootsStorage = this
 
     override fun loadState(state: ScriptClassRootsStorage) {
         XmlSerializerUtil.copyBean(state, this)
     }
 
     companion object {
-        fun getInstance(project: Project): ScriptClassRootsStorage =
-            ServiceManager.getService(project, ScriptClassRootsStorage::class.java)
+        fun getInstance(project: Project): ScriptClassRootsStorage = project.getServiceSafe()
     }
 }

@@ -79,7 +79,7 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
 
     private val PsiElement.isJvmElement: Boolean
         get() {
-            val resolveProvider = ServiceManager.getService(project, KotlinUastResolveProviderService::class.java)
+            val resolveProvider: KotlinUastResolveProviderService = project.getService(KotlinUastResolveProviderService::class.java)!!
             return resolveProvider.isJvmElement(this)
         }
 

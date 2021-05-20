@@ -5,13 +5,10 @@
 
 package org.jetbrains.kotlin.idea.caches.project
 
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 /**
  * Maintains and caches mapping ModuleInfo -> SdkInfo *form its dependencies*
@@ -29,8 +26,7 @@ interface SdkInfoCache {
     fun findOrGetCachedSdk(moduleInfo: ModuleInfo): SdkInfo?
 
     companion object {
-        fun getInstance(project: Project): SdkInfoCache =
-            ServiceManager.getService(project, SdkInfoCache::class.java)
+        fun getInstance(project: Project): SdkInfoCache = project.getServiceSafe()
     }
 }
 

@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -32,7 +32,7 @@ class PluginStartupService : Disposable {
         }
         eventMulticaster.addDocumentListener(documentListener, this)
 
-        val indexPatternSearch = ApplicationManager.getApplication().getService(IndexPatternSearch::class.java)
+        val indexPatternSearch = service<IndexPatternSearch>()
         val kotlinTodoSearcher = KotlinTodoSearcher()
         indexPatternSearch.registerExecutor(kotlinTodoSearcher)
 

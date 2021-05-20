@@ -5,10 +5,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring
 
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 @State(name = "KotlinRefactoringSettings", storages = [Storage("kotlinRefactoring.xml")])
@@ -96,6 +93,6 @@ class KotlinRefactoringSettings : PersistentStateComponent<KotlinRefactoringSett
     companion object {
         @JvmStatic
         val instance: KotlinRefactoringSettings
-            get() = ServiceManager.getService(KotlinRefactoringSettings::class.java)
+            get() = service()
     }
 }

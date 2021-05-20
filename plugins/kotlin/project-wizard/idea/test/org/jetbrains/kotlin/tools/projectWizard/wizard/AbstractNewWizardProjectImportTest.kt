@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.scripting.gradle.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.util.application.getService
 import org.jetbrains.kotlin.tools.projectWizard.cli.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ServicesManager
@@ -114,7 +115,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
         directory: Path,
         distributionTypeSettings: DistributionType = DistributionType.WRAPPED
     ) {
-        com.intellij.openapi.components.ServiceManager.getService(project, GradleSettings::class.java)?.apply {
+        project.getService<GradleSettings>()?.apply {
             isOfflineWork = GradleEnvironment.Headless.GRADLE_OFFLINE?.toBoolean() ?: isOfflineWork
             serviceDirectoryPath = GradleEnvironment.Headless.GRADLE_SERVICE_DIRECTORY ?: serviceDirectoryPath
         }

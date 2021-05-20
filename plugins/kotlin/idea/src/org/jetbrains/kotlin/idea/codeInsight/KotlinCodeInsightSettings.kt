@@ -5,13 +5,11 @@
 
 package org.jetbrains.kotlin.idea.codeInsight
 
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StoragePathMacros.WORKSPACE_FILE
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 @State(name = "KotlinCodeInsightWorkspaceSettings", storages = [Storage(WORKSPACE_FILE)])
 class KotlinCodeInsightWorkspaceSettings : PersistentStateComponent<KotlinCodeInsightWorkspaceSettings> {
@@ -25,9 +23,7 @@ class KotlinCodeInsightWorkspaceSettings : PersistentStateComponent<KotlinCodeIn
 
     companion object {
 
-        fun getInstance(project: Project): KotlinCodeInsightWorkspaceSettings {
-            return ServiceManager.getService(project, KotlinCodeInsightWorkspaceSettings::class.java)
-        }
+        fun getInstance(project: Project): KotlinCodeInsightWorkspaceSettings = project.getServiceSafe()
 
     }
 
@@ -45,9 +41,7 @@ class KotlinCodeInsightSettings : PersistentStateComponent<KotlinCodeInsightSett
 
     companion object {
 
-        fun getInstance(): KotlinCodeInsightSettings {
-            return ServiceManager.getService(KotlinCodeInsightSettings::class.java)
-        }
+        fun getInstance(): KotlinCodeInsightSettings = service()
 
     }
 
