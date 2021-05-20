@@ -27,6 +27,10 @@ public final class GoToChangePopupBuilder {
     AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection);
   }
 
+  public interface GoToChangeActionProvider {
+    @NotNull AnAction createGoToChangeAction();
+  }
+
   @NotNull
   public static AnAction create(@NotNull DiffRequestChain chain, @NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
     if (chain instanceof Chain) {

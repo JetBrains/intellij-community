@@ -5,18 +5,16 @@ import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.AsyncDiffRequestChain;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor.Simple {
+public class CacheDiffRequestChainProcessor
+  extends CacheDiffRequestProcessor.Simple implements GoToChangePopupBuilder.GoToChangeActionProvider {
   @NotNull private final DiffRequestChain myRequestChain;
   private int myIndex;
 
@@ -71,12 +69,6 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor.Si
   // Navigation
   //
 
-  @NotNull
-  @Override
-  protected List<AnAction> getNavigationActions() {
-    return ContainerUtil.append(super.getNavigationActions(), createGoToChangeAction());
-  }
-
   @Override
   protected boolean hasNextChange(boolean fromUpdate) {
     return myIndex < myRequestChain.getRequests().size() - 1;
@@ -104,17 +96,18 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor.Si
     return myRequestChain.getRequests().size() > 1;
   }
 
-  @NotNull
-  private AnAction createGoToChangeAction() {
-    AnAction action = GoToChangePopupBuilder.create(myRequestChain, index -> {
+  @Override
+  public @NotNull AnAction createGoToChangeAction() {
+    return GoToChangePopupBuilder.create(myRequestChain, index -> {
       if (index >= 0 && index < myRequestChain.getRequests().size() && index != myIndex) {
         setCurrentRequest(index);
       }
     }, myIndex);
-    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-      patchShortcutSet(action, "GotoClass", null);
-    }
-    return action;
+  }
+
+  @Override
+  protected @Nullable GoToChangePopupBuilder.GoToChangeActionProvider getGoToChangeActionProvider() {
+    return this;
   }
 
   private class MyChangeListener implements AsyncDiffRequestChain.Listener {
