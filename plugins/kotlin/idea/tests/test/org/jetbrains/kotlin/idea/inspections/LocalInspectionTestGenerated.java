@@ -4473,6 +4473,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testReturnExpression() throws Exception {
             runTest("testData/inspectionsLocal/dfa/returnExpression.kt");
         }
+
+        @TestMetadata("returnLiteral.kt")
+        public void testReturnLiteral() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/returnLiteral.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

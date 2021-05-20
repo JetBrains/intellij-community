@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.namedFunctionVisitor
 
@@ -29,6 +30,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
                 if (anchor is KotlinExpressionAnchor) {
                     val expression = anchor.expression
+                    if (expression is KtConstantExpression) return
                     val oldVal = constantConditions[expression]
                     if (oldVal == ConstantValue.UNKNOWN) return
                     var newVal = when(state.getDfType(value)) {
