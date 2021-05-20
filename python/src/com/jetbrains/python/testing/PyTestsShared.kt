@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing
 
 import com.intellij.execution.*
@@ -11,7 +11,6 @@ import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesP
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
@@ -446,10 +445,6 @@ abstract class PyAbstractTestConfiguration(project: Project,
     ThreeState.NO
   }
 
-  @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
-  @DelegationProperty
-  val legacyConfigurationAdapter: PyTestLegacyConfigurationAdapter<PyAbstractTestConfiguration> = PyTestLegacyConfigurationAdapter(this)
-
   /**
    * For real launch use [getWorkingDirectorySafe] instead
    */
@@ -584,9 +579,6 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
 
   override fun writeExternal(element: org.jdom.Element) {
-    // Write legacy config to preserve it
-    legacyConfigurationAdapter.writeExternal(element)
-    // Super is called after to overwrite legacy settings with new one
     super.writeExternal(element)
 
     val gson = com.google.gson.Gson()
@@ -611,7 +603,6 @@ abstract class PyAbstractTestConfiguration(project: Project,
         it.set(fromJson)
       }
     }
-    legacyConfigurationAdapter.readExternal(element)
   }
 
 
@@ -725,18 +716,12 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
      * Inspects file relative imports, finds farthest and returns folder with imported file
      */
     private fun getDirectoryForFileToBeImportedFrom(file: PyFile): PsiDirectory? {
-      val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.max() ?: 0
+      val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.maxOrNull() ?: 0
       var elementFolder = file.parent ?: return null
       for (i in 1..maxRelativeLevel) {
         elementFolder = elementFolder.parent ?: return null
       }
       return elementFolder
-    }
-  }
-
-  init {
-    if (!isNewTestsModeEnabled()) {
-      throw ExtensionNotApplicableException.INSTANCE
     }
   }
 
@@ -762,13 +747,6 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
     // Since we need module, no need to even try to create config with out of it
     context.module ?: return null
     return super.createConfigurationFromContext(context)
-  }
-
-  override fun findOrCreateConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContext? {
-    if (!isNewTestsModeEnabled()) {
-      return null
-    }
-    return super.findOrCreateConfigurationFromContext(context)
   }
 
   // test configuration is always prefered over regular one
