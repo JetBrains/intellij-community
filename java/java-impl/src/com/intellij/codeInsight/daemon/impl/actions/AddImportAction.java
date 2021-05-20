@@ -30,8 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +132,7 @@ public class AddImportAction implements QuestionAction {
         }
       };
     JBPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, (superRenderer) -> {
-      PopupListElementRenderer baseRenderer = (PopupListElementRenderer)superRenderer;
+      GroupedItemsListRenderer baseRenderer = (GroupedItemsListRenderer)superRenderer;
       ListCellRenderer<Object> psiRenderer = new DefaultPsiElementCellRenderer();
       return (list, value, index, isSelected, cellHasFocus) -> {
         baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

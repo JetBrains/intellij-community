@@ -23,6 +23,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +142,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       };
 
     final JBPopup popup = JBPopupFactory.getInstance().createListPopup(project, step, (superRenderer) -> {
-      final PopupListElementRenderer<T> rightArrow = (PopupListElementRenderer<T>)superRenderer;
+      final GroupedItemsListRenderer<T> rightArrow = (GroupedItemsListRenderer<T>)superRenderer;
       final StaticMemberRenderer psiRenderer = new StaticMemberRenderer();
       return new ListCellRenderer<T>() {
         @Override
