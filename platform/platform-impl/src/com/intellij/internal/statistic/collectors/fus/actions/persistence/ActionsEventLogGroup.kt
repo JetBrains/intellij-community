@@ -12,7 +12,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_INVOKED_EVENT_ID = "action.invoked"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", 62)
+    val GROUP = EventLogGroup("actions", 63)
 
     @JvmField
     val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", "action")
@@ -30,10 +30,10 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val CONTEXT_MENU = EventFields.Boolean("context_menu")
 
     @JvmField
-    val DUMB_START = EventFields.Boolean("dumb")
+    val DUMB_START = EventFields.Boolean("dumb_start")
 
     @JvmField
-    val DUMB_END = EventFields.Boolean("dumb_end")
+    val DUMB = EventFields.Boolean("dumb")
 
     @JvmField
     val RESULT_TYPE = EventFields.String("type", arrayListOf("ignored", "performed", "failed", "unknown"))
@@ -48,8 +48,9 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_INVOKED_EVENT_ID)
 
     @JvmField
-    val ACTION_INVOKED = registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, ADDITIONAL, EventFields.Language,
-                                                    EventFields.DurationMs)
+    val ACTION_INVOKED = registerActionInvokedEvent(
+      GROUP, ACTION_INVOKED_EVENT_ID, ADDITIONAL, EventFields.Language, EventFields.DurationMs, DUMB_START, RESULT
+    )
 
     @JvmStatic
     fun registerActionInvokedEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {
@@ -61,9 +62,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
         EventFields.CurrentFile,
         TOGGLE_ACTION,
         CONTEXT_MENU,
-        DUMB_START,
-        DUMB_END,
-        RESULT,
+        DUMB,
         ACTION_ID,
         ACTION_CLASS,
         ACTION_PARENT,
