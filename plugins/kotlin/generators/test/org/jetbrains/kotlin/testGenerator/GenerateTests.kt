@@ -1165,6 +1165,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractHighLevelQuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("quickfix/abstract", pattern = pattern)
+            model("quickfix/addExclExclCall", pattern = pattern, filenameStartsLowerCase = true)
+            model("quickfix/addInitializer", pattern = pattern, filenameStartsLowerCase = true)
+            model("quickfix/addPropertyAccessors", pattern = pattern, filenameStartsLowerCase = true)
             model("quickfix/expressions", pattern = pattern)
             model("quickfix/lateinit", pattern = pattern)
             model("quickfix/modifiers", pattern = pattern, isRecursive = false)
@@ -1172,9 +1175,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/replaceWithDotCall", pattern = pattern)
             model("quickfix/replaceWithSafeCall", pattern = pattern)
             model("quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
-            model("quickfix/addInitializer", pattern = pattern)
-            model("quickfix/addPropertyAccessors", pattern = pattern)
             model("quickfix/when", pattern = pattern, filenameStartsLowerCase = true)
+            model("quickfix/wrapWithSafeLetCall", pattern = pattern, filenameStartsLowerCase = true)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
