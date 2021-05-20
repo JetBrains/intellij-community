@@ -9,7 +9,6 @@ import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,11 +48,6 @@ public final class ClassPathUtil {
       }
     }
 
-    // intellij.platform.resources.en
-    String resourceRoot = PathManager.getResourceRoot(PathManager.class, "/messages/CommonBundle.properties");
-    if (resourceRoot != null) {
-      classPath.add(Paths.get(resourceRoot).toAbsolutePath().toString());
-    }
     classPath.add(PathManager.getJarPathForClass(Pair.class)); // kotlin-stdlib
     classPath.add(PathManager.getResourceRoot(PathManager.class, "/kotlin/jdk7/AutoCloseableKt.class")); // kotlin-stdlib-jdk7
     classPath.add(PathManager.getResourceRoot(PathManager.class, "/kotlin/streams/jdk8/StreamsKt.class")); // kotlin-stdlib-jdk8
