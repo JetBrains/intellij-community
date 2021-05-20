@@ -16,6 +16,7 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
+import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.findVcsLogData
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
@@ -30,7 +31,7 @@ import javax.swing.JButton
 import javax.swing.JDialog
 import javax.swing.KeyStroke
 
-class GitInteractiveRebaseLesson: GitLesson("Git.InteractiveRebase", "Interactive Rebase") {
+class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessonsBundle.message("git.interactive.rebase.lesson.name")) {
   override val existedFile = "src/git/martian_cat.yml"
   private val branchName = "fixes"
 
@@ -40,7 +41,7 @@ class GitInteractiveRebaseLesson: GitLesson("Git.InteractiveRebase", "Interactiv
     checkoutBranch(branchName)
 
     task("ActivateVersionControlToolWindow") {
-      text("Suppose you have made some fixes to your project. Press ${action(it)} to open Git tool window and overview the project history.")
+      text(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it)))
       stateCheck {
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
@@ -62,7 +63,7 @@ class GitInteractiveRebaseLesson: GitLesson("Git.InteractiveRebase", "Interactiv
     }
 
     task {
-      text("But from the resulting highlighted sequence of commits, it was difficult to understand what has changed in general. It would be more easy if some commits will be reordered or squashed.")
+      text(GitLessonsBundle.message("git.interactive.rebase.introduction"))
       highlightSubsequentCommitsInGitLog(sequenceLength = 5, highlightInside = false, usePulsation = true) {
         val root = vcsData.roots.single()
         it.id == vcsData.dataPack.findBranch(branchName, root)?.commitHash
@@ -79,7 +80,7 @@ class GitInteractiveRebaseLesson: GitLesson("Git.InteractiveRebase", "Interactiv
         LearningUiHighlightingManager.clearHighlights()
         commitHashToHighlight = vcsData.findFirstCommitInBranch(branchName)
       }
-      text("We can use ${strong("Interactive Rebase")} to solve this task easily. Right click the highlighted commit to open context menu.")
+      text(GitLessonsBundle.message("git.interactive.rebase.open.context.menu"))
       highlightSubsequentCommitsInGitLog {
         it.id == commitHashToHighlight
       }
@@ -90,17 +91,18 @@ class GitInteractiveRebaseLesson: GitLesson("Git.InteractiveRebase", "Interactiv
     }
 
     task {
-      text("Select ${strong(interactiveRebaseMenuItemText)} from the list and press ${LessonUtil.rawEnter()} or click on it.")
+      text(GitLessonsBundle.message("git.interactive.rebase.choose.interactive.rebase",
+                                    strong(interactiveRebaseMenuItemText), LessonUtil.rawEnter()))
       val rebasingDialogTitle = GitBundle.message("rebase.interactive.dialog.title")
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
-        ui.title == rebasingDialogTitle
+        ui.title?.contains(rebasingDialogTitle) == true
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
     lateinit var movingCommitText: String
     task {
-      text("Seems that the highlighted commit fixes something in the first commit from the list. It would be great if we combine them in one. Select the highlighted commit.")
+      text(GitLessonsBundle.message("git.interactive.rebase.select.one.commit"))
       highlightCommitInRebaseDialog(4)
       triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
         if (ui !is VcsLogGraphTable) {
@@ -114,7 +116,7 @@ class GitInteractiveRebaseLesson: GitLesson("Git.InteractiveRebase", "Interactiv
 
     task {
       val moveUpShortcut = CommonShortcuts.MOVE_UP.shortcuts.first() as KeyboardShortcut
-      text("And now move this commit to the highlighted place. Use mouse or press ${LessonUtil.rawKeyStroke(moveUpShortcut.firstKeyStroke)} three times.")
+      text(GitLessonsBundle.message("git.interactive.rebase.move.commit", LessonUtil.rawKeyStroke(moveUpShortcut.firstKeyStroke)))
       triggerByPartOfComponent(highlightInside = true, usePulsation = false) { ui: JBTable ->
         if (ui !is VcsLogGraphTable) {
           ui.getCellRect(1, 1, false).apply { height = 1 }
@@ -133,13 +135,14 @@ class GitInteractiveRebaseLesson: GitLesson("Git.InteractiveRebase", "Interactiv
 
     task {
       val fixupShortcut = KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_MASK)
-      text("Press ${LessonUtil.rawKeyStroke(fixupShortcut)} or click highlighted button and select ${strong("Fixup")} from the list to add changes from this commit to the first commit.")
+      text(GitLessonsBundle.message("git.interactive.rebase.invoke.fixup", LessonUtil.rawKeyStroke(fixupShortcut),
+                                    strong(GitBundle.message("rebase.entry.action.name.fixup"))))
       triggerByUiComponentAndHighlight { _: BasicOptionButtonUI.ArrowButton -> true }
       trigger("git4idea.rebase.interactive.dialog.FixupAction")
     }
 
     task {
-      text("Great! Seems that the three highlighted commits are about the same. So we can combine them in one and edit resulting message. Select highlighted commits using ${LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)}.")
+      text(GitLessonsBundle.message("git.interactive.rebase.select.three.commits", LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)))
       highlightSubsequentCommitsInRebaseDialog(startRowIncl = 2, endRowExcl = 5)
       triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
         ui.similarCommitsSelected()
@@ -148,7 +151,8 @@ class GitInteractiveRebaseLesson: GitLesson("Git.InteractiveRebase", "Interactiv
 
     task {
       val squashShortcut = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_MASK)
-      text("And now press ${LessonUtil.rawKeyStroke(squashShortcut)} or click ${strong("Squash")} button to unite the commits.")
+      text(GitLessonsBundle.message("git.interactive.rebase.invoke.squash",
+                                    LessonUtil.rawKeyStroke(squashShortcut), strong(GitBundle.message("rebase.entry.action.name.squash"))))
       triggerByUiComponentAndHighlight { _: BasicOptionButtonUI.MainButton -> true }
       trigger("git4idea.rebase.interactive.dialog.SquashAction")
       restoreState {
@@ -163,22 +167,22 @@ class GitInteractiveRebaseLesson: GitLesson("Git.InteractiveRebase", "Interactiv
 
     task {
       val applyRewordShortcut = CommonShortcuts.CTRL_ENTER.shortcuts.first() as KeyboardShortcut
-      text("By default messages of all squashing commits included in the resulting message, but in our case we can replace it with something like ${code("Fix style")}. Edit the message if you want and press ${LessonUtil.rawKeyStroke(applyRewordShortcut.firstKeyStroke)} to apply reword.")
+      text(GitLessonsBundle.message("git.interactive.rebase.apply.reword", LessonUtil.rawKeyStroke(applyRewordShortcut.firstKeyStroke)))
       stateCheck { previous.ui?.isShowing != true }
     }
 
     task {
       val startRebasingButtonText = GitBundle.message("rebase.interactive.dialog.start.rebase")
-      text("Finally click ${strong(startRebasingButtonText)} to perform rebase.")
+      text(GitLessonsBundle.message("git.interactive.rebase.start.rebasing", strong(startRebasingButtonText)))
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: JButton ->
-        ui.text.contains(startRebasingButtonText)
+        ui.text?.contains(startRebasingButtonText) == true
       }
       triggerOnNotification {
         it.displayId == GitNotificationIdsHolder.REBASE_SUCCESSFUL
       }
     }
 
-    text("Congratulations! You have made history of the project clean again!")
+    text(GitLessonsBundle.message("git.interactive.rebase.congratulations"))
   }
 
   private fun TaskContext.highlightCommitInRebaseDialog(rowInd: Int) {

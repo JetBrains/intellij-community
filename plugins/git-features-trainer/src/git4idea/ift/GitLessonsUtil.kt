@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.UIBundle
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
@@ -28,7 +29,6 @@ import training.dsl.LessonContext
 import training.dsl.TaskContext
 import training.dsl.subscribeForMessageBus
 import training.ui.LearnToolWindow
-import training.ui.LearningUiManager
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 
@@ -99,8 +99,8 @@ object GitLessonsUtil {
     }
 
     task {
-      text("Press ${strong("Got it!")} to proceed.")
-      gotItStep(Balloon.Position.atLeft, 300, "We moved the Learn panel to the right because it is covered by the Commit tool window.")
+      text(GitLessonsBundle.message("git.balloon.press.to.proceed", strong(UIBundle.message("got.it"))))
+      gotItStep(Balloon.Position.atLeft, 300, GitLessonsBundle.message("git.move.learn.window.balloon.text"))
     }
   }
 
@@ -172,13 +172,13 @@ object GitLessonsUtil {
   }
 
   fun TaskContext.showWarningIfCommitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
-    showWarningIfToolWindowClosed(ToolWindowId.COMMIT, "Press ${action("CheckinProject")} to open the commit tool window again.",
+    showWarningIfToolWindowClosed(ToolWindowId.COMMIT, GitLessonsBundle.message("git.window.closed.warning", action("CheckinProject")),
                                   restoreTaskWhenResolved)
   }
 
   fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = true) {
     showWarningIfToolWindowClosed(ToolWindowId.VCS,
-                                  "Press ${action("ActivateVersionControlToolWindow")} to open the Git tool window again.",
+                                  GitLessonsBundle.message("git.commit.window.closed.warning", action("ActivateVersionControlToolWindow")),
                                   restoreTaskWhenResolved)
   }
 

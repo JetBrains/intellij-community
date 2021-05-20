@@ -17,7 +17,7 @@ class GitLearningCourse : LearningCourse {
              GitChangelistsAndShelveLesson(),
              GitAnnotateLesson())
     }
-    val module = object : IftModule("Git", "Some description",
+    val module = object : IftModule(GitLessonsBundle.message("git.module.name"), GitLessonsBundle.message("git.module.description"),
                                     null, LessonType.PROJECT, initLessons) {
       override val sanitizedName: String = ""
     }

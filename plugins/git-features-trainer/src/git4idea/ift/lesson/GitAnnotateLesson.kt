@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
+import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import training.dsl.*
 import training.learn.LearnBundle
@@ -26,9 +27,11 @@ import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import javax.swing.JEditorPane
 
-class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
+class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("git.annotate.lesson.name")) {
   override val existedFile = "src/git/martian_cat.yml"
   private val branchName = "main"
+  private val propertyName = "ears_number"
+  private val editedPropertyName = "ear_number"
   private val firstStateText = "ears_number: 4"
   private val secondStateText = "ear_number:   4"
   private val thirdStateText = "ear_number:   2"
@@ -44,7 +47,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
     val annotateActionName = ActionsBundle.message("action.Annotate.text").dropMnemonic()
 
     task {
-      text("Look at the highlighted property. Seems strange that according to the value of this property, cat has 4 ears. The reason of this change is interesting. We can investigate the history of the file using ${strong("Annotate")} feature.")
+      text(GitLessonsBundle.message("git.annotate.introduction", strong(annotateActionName)))
       triggerByPartOfComponent l@{ ui: EditorComponentImpl ->
         val startOffset = ui.editor.document.charsSequence.indexOf(firstStateText)
         if (startOffset == -1) return@l null
@@ -59,22 +62,22 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
     val annotateMenuItemText = ActionsBundle.message("action.Annotate.with.Blame.text").dropMnemonic()
     if (isAnnotateShortcutSet()) {
       task("Annotate") {
-        text("Press ${action(it)} to show history of this file.")
+        text(GitLessonsBundle.message("git.annotate.invoke.shortcut.1", action(it)))
         trigger(it)
       }
     }
     else {
       task {
         before { LearningUiHighlightingManager.clearHighlights() }
-        text("Right click somewhere in the highlighted area to open context menu.")
+        text(GitLessonsBundle.message("git.annotate.open.context.menu"))
         highlightGutterComponent(null, firstStateText, highlightRight = true)
         highlightAnnotateMenuItem()
       }
 
       task("Annotate") {
         val addShortcutText = LearnBundle.message("shortcut.balloon.add.shortcut")
-        text("Choose ${strong(annotateMenuItemText)} option to show history of this file.")
-        text("<strong>Tip</strong>: you can assign a shortcut for ${strong(annotateActionName)} action. Click this link ${action(it)} and choose ${strong(addShortcutText)}.")
+        text(GitLessonsBundle.message("git.annotate.choose.annotate", strong(annotateMenuItemText)))
+        text(GitLessonsBundle.message("git.annotate.add.shortcut.tip", strong(annotateActionName), action(it), strong(addShortcutText)))
         trigger(it)
         restoreByUi()
       }
@@ -85,14 +88,14 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
     task {
       before { LearningUiHighlightingManager.clearHighlights() }
       openFirstDiffTaskId = taskId
-      text("Annotate action provides easy access to the last commit that modified any specific line of the file. You can see that <strong>Jonny Catsville</strong> is the last who modified our strange line. Right click the highlighted annotation to open the context menu.")
+      text(GitLessonsBundle.message("git.annotate.feature.explanation", strong("Jonny Catsville")))
       highlightAnnotation(null, firstStateText, highlightRight = true)
       highlightShowDiffMenuItem()
     }
 
     var firstDiffSplitter: DiffSplitter? = null
     task {
-      text("Choose ${strong(showDiffText)} option to show what is changed in this commit.")
+      text(GitLessonsBundle.message("git.annotate.choose.show.diff", strong(showDiffText)))
       trigger("com.intellij.openapi.vcs.actions.ShowDiffFromAnnotation")
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
@@ -117,13 +120,15 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
 
     if (isAnnotateShortcutSet()) {
       task("Annotate") {
-        text("You can see that our strange value of ${code("ears_number")} appeared earlier than this commit. So let's go deeper in the history! Move the caret to the left editor and press ${action(it)} again.")
+        text(GitLessonsBundle.message("git.annotate.go.deeper", code(propertyName)) + " "
+             + GitLessonsBundle.message("git.annotate.invoke.shortcut.2", action(it)))
         triggerOnAnnotationsShown(firstDiffSplitter, secondStateText)
         restoreIfDiffClosed(openFirstDiffTaskId, firstDiffSplitter)
       }
     } else {
       task {
-        text("You can see that our strange value of ${code("ears_number")} appeared earlier than this commit. So let's go deeper in the history! Right click somewhere in the highlighted area and choose ${strong(annotateMenuItemText)} option from the opened menu.")
+        text(GitLessonsBundle.message("git.annotate.go.deeper", code(propertyName)) + " "
+             + GitLessonsBundle.message("git.annotate.invoke.manually", strong(annotateMenuItemText)))
         highlightGutterComponent(firstDiffSplitter, secondStateText, highlightRight = false)
         val annotateItemFuture = highlightAnnotateMenuItem()
         triggerOnAnnotationsShown(firstDiffSplitter, secondStateText)
@@ -136,7 +141,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
     lateinit var openSecondDiffTaskId: TaskContext.TaskId
     task {
       openSecondDiffTaskId = taskId
-      text("Right click the highlighted annotation to open the context menu and choose ${strong(showDiffText)} option.")
+      text(GitLessonsBundle.message("git.annotate.show.diff", strong(showDiffText)))
       highlightAnnotation(firstDiffSplitter, secondStateText, highlightRight = false)
       val showDiffItemFuture = highlightShowDiffMenuItem()
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: EditorComponentImpl ->
@@ -152,13 +157,15 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
 
     if (isAnnotateShortcutSet()) {
       task("Annotate") {
-        text("Great! We found the place where ${code("ear_number")} value was changed. So let's annotate it for the last time to investigate the reason of this change. Move the caret to the right editor and press ${action(it)}.")
+        text(GitLessonsBundle.message("git.annotate.found.needed.commit", code(editedPropertyName)) + " "
+             + GitLessonsBundle.message("git.annotate.invoke.shortcut.3", action(it)))
         triggerOnAnnotationsShown(secondDiffSplitter, secondStateText)
         restoreIfDiffClosed(openSecondDiffTaskId, secondDiffSplitter)
       }
     } else {
       task {
-        text("Great! We found the place where ${code("ear_number")} value was changed. So let's annotate it for the last time to investigate the reason of this change. Right click somewhere in the highlighted area and choose ${strong(annotateMenuItemText)} option from the opened menu.")
+        text(GitLessonsBundle.message("git.annotate.found.needed.commit", code(editedPropertyName)) + " "
+             + GitLessonsBundle.message("git.annotate.invoke.manually", strong(annotateMenuItemText)))
         highlightGutterComponent(secondDiffSplitter, secondStateText, highlightRight = true)
         val annotateItemFuture = highlightAnnotateMenuItem()
         triggerOnAnnotationsShown(secondDiffSplitter, secondStateText)
@@ -168,7 +175,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
     }
 
     task {
-      text("Click the highlighted annotation to show information about this commit.")
+      text(GitLessonsBundle.message("git.annotate.click.annotation"))
       highlightAnnotation(secondDiffSplitter, secondStateText, highlightRight = true)
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: JEditorPane ->
         ui.text?.contains(partOfTargetCommitMessage) == true
@@ -177,7 +184,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
     }
 
     task {
-      text("As mentioned in the highlighted commit message, this strange value of ${code("ear_number")} is not a mistake. So after the long journey through the history of this file you can close all opened windows to return to the editor.")
+      text(GitLessonsBundle.message("git.annotate.close.all.windows", code(editedPropertyName)))
       stateCheck {
         previous.ui?.isShowing != true && firstDiffSplitter?.isShowing != true && secondDiffSplitter?.isShowing != true
       }
@@ -185,13 +192,15 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", "Annotate with Git Blame") {
 
     if (isAnnotateShortcutSet()) {
       task("Annotate") {
-        text("And now you can close the annotations. Press ${action(it)}.")
+        text(GitLessonsBundle.message("git.annotate.close.annotations") + " "
+             + GitLessonsBundle.message("git.annotate.close.by.shortcut", action(it)))
         stateCheck { !isAnnotationsShown(editor) }
       }
     } else {
       task("Annotate") {
         val closeAnnotationsText = EditorBundle.message("close.editor.annotations.action.name")
-        text("And now you can close the annotations. Right click somewhere in the highlighted area and choose ${strong(closeAnnotationsText)} item from the opened menu.")
+        text(GitLessonsBundle.message("git.annotate.close.annotations") + " "
+             + GitLessonsBundle.message("git.annotate.invoke.manually", strong(closeAnnotationsText)))
         triggerByPartOfComponent { ui: EditorGutterComponentEx ->
           Rectangle(ui.x + ui.annotationsAreaOffset, ui.y, ui.annotationsAreaWidth, ui.height)
         }

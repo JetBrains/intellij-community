@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
+import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.moveLearnToolWindowRight
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
@@ -27,7 +28,7 @@ import training.dsl.*
 import java.awt.Rectangle
 import javax.swing.JButton
 
-class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Changelists and Shelf") {
+class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLessonsBundle.message("git.changelists.shelf.lesson.name")) {
   override val existedFile = "src/git/martian_cat.yml"
   private val branchName = "main"
   private val commentingLineText = "fur_type: long haired"
@@ -48,7 +49,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
     lateinit var clickLineMarkerTaskId: TaskContext.TaskId
     task {
       clickLineMarkerTaskId = taskId
-      text("Suppose you don't want to commit added comment to the repository, because this change needed only locally. In the common case it can be some personal settings. You can extract the comment to the new changelist, to not commit it accidentally with other changes. Click the highlighted line marker to open the context menu.")
+      text(GitLessonsBundle.message("git.changelists.shelf.introduction"))
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) l@{ ui: EditorGutterComponentEx ->
         val offset = editor.document.charsSequence.indexOf(commentText)
         if (offset == -1) return@l null
@@ -63,7 +64,8 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
 
     task {
       val newChangelistText = VcsBundle.message("ex.new.changelist")
-      text("Click the ${strong(defaultChangelistName)} link and choose the ${strong(newChangelistText)} item.")
+      text(GitLessonsBundle.message("git.changelists.shelf.choose.new.changelist",
+                                    strong(defaultChangelistName), strong(newChangelistText)))
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: EditorComponentImpl ->
         ui.text.contains(defaultChangelistName)
       }
@@ -72,7 +74,8 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
 
     var newChangeListName = "Comments"
     task {
-      text("Name the new changelist something like ${code("Comments")}. Press ${LessonUtil.rawEnter()} or click ${strong(CommonBundle.getOkButtonText())} button to create new changelist.")
+      text(GitLessonsBundle.message("git.changelists.shelf.create.changelist",
+                                    LessonUtil.rawEnter(), strong(CommonBundle.getOkButtonText())))
       stateCheck {
         val changeListManager = ChangeListManager.getInstance(project)
         if (changeListManager.changeListsNumber == 2) {
@@ -93,7 +96,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
     }
 
     task("CheckinProject") {
-      text("Now please press ${action(it)} to open commit tool window and see created changelist.")
+      text(GitLessonsBundle.message("git.changelists.shelf.open.commit.window", action(it)))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
       }
@@ -108,8 +111,9 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
 
     moveLearnToolWindowRight()
 
+    val shelfText = VcsBundle.message("shelf.tab")
     task {
-      text("In addition you can use ${strong("Shelf")} feature to save this changes in the file on your computer. Changes stored in the ${strong("Shelf")} can be applied later in any branch. So it will protect you from losing this changes.")
+      text(GitLessonsBundle.message("git.changelists.shelf.explanation", strong(shelfText)))
       triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
         path.getPathComponent(path.pathCount - 1).toString().contains(newChangeListName)
       }
@@ -119,21 +123,21 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
     lateinit var letsShelveTaskId: TaskContext.TaskId
     task {
       letsShelveTaskId = taskId
-      text("Let's shelve our changes! Right click the highlighted changelist to open context menu.")
+      text(GitLessonsBundle.message("git.changelists.shelf.open.context.menu"))
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
         ui.anAction is ShelveChangesAction
       }
       showWarningIfCommitWindowClosed()
     }
 
-    val shelveChangesButtonText = VcsBundle.message("shelve.changes.action").dropMnemonic()
     task {
-      val shelveChangesText = ActionsBundle.message("action.ChangesView.Shelve.text")
-      text("Select ${strong(shelveChangesText)} to open ${strong("Shelf")} dialog.")
+      text(GitLessonsBundle.message("git.changelists.shelf.open.shelf.dialog",
+                                    strong(ActionsBundle.message("action.ChangesView.Shelve.text")), strong(shelfText)))
       triggerStart("ChangesView.Shelve")
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
+    val shelveChangesButtonText = VcsBundle.message("shelve.changes.action").dropMnemonic()
     task {
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: JButton ->
         ui.text?.contains(shelveChangesButtonText) == true
@@ -141,7 +145,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
     }
 
     task {
-      text("Now you can edit the shelf message or leave it as the IDE proposed. Click ${strong(shelveChangesButtonText)} button to store the changes in the shelf.")
+      text(GitLessonsBundle.message("git.changelists.shelf.shelve.changelist", strong(shelveChangesButtonText), strong(shelfText)))
       stateCheck {
         ShelveChangesManager.getInstance(project).allLists.size == 1
       }
@@ -156,12 +160,12 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
     }
 
     task {
-      text("We don't need this changelist anymore, so click the ${strong(removeButtonText)} button.")
+      text(GitLessonsBundle.message("git.changelists.shelf.remove.changelist", strong(removeButtonText)))
       stateCheck { previous.ui?.isShowing != true }
     }
 
     task {
-      text("You can see that our changelist successfully saved to the ${strong("Shelf")} and comment is disappeared from the open file.")
+      text(GitLessonsBundle.message("git.changelists.shelf.performed.explanation", strong(shelfText)))
       triggerByFoundPathAndHighlight(highlightInside = true, usePulsation = true) { _, path ->
         path.pathCount == 2
       }
@@ -170,7 +174,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
 
     val unshelveChangesButtonText = VcsBundle.message("unshelve.changes.action")
     task("ShelveChanges.UnshelveWithDialog") {
-      text("When your changes stored in the ${strong("Shelf")} you can apply it again. To perform it, select the highlighted changelist and press ${action(it)} to open the ${strong("Unshelve")} dialog.")
+      text(GitLessonsBundle.message("git.changelists.shelf.open.unshelve.dialog", strong(shelfText), action(it)))
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: JButton ->
         ui.text?.contains(unshelveChangesButtonText) == true
       }
@@ -178,7 +182,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", "Chan
     }
 
     task {
-      text("Now you can edit the name of the changelist to put the unshelving changes or leave it as the IDE proposed. Click ${strong(unshelveChangesButtonText)} button to apply the changes.")
+      text(GitLessonsBundle.message("git.changelists.shelf.unshelve.changelist", strong(unshelveChangesButtonText)))
       stateCheck { editor.document.text.contains(commentText) }
       restoreByUi(delayMillis = defaultRestoreDelay)
     }

@@ -25,6 +25,8 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.DocumentUtil
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
+import git4idea.i18n.GitBundle
+import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.moveLearnToolWindowRight
@@ -39,7 +41,7 @@ import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.tree.TreePath
 
-class GitCommitLesson : GitLesson("Git.Commit", "Commit") {
+class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.commit.lesson.name")) {
   override val existedFile = "src/git/simple_cat.yml"
   private val branchName = "feature"
   private val firstFileName = "simple_cat.yml"
@@ -55,9 +57,7 @@ class GitCommitLesson : GitLesson("Git.Commit", "Commit") {
     }
 
     task {
-      text("Suppose you modified some files in the project and want to commit them to the current branch. Press ${
-        action("CheckinProject")
-      } to open commit tool window.")
+      text(GitLessonsBundle.message("git.commit.open.commit.window", action("CheckinProject")))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
       }
@@ -82,8 +82,8 @@ class GitCommitLesson : GitLesson("Git.Commit", "Commit") {
     task { highlightVcsChange(secondFileName, highlightBorder = false) }
 
     task {
-      text("Commit tool window provides wide customization for your commit. First, let's choose the files that we want to commit.")
-      text("Deselect this file to exclude it from commit.", LearningBalloonConfig(Balloon.Position.atRight, 300))
+      text(GitLessonsBundle.message("git.commit.choose.files"))
+      text(GitLessonsBundle.message("git.commit.choose.files.balloon"), LearningBalloonConfig(Balloon.Position.atRight, 300))
       highlightVcsChange(secondFileName)
       triggerOnOneChangeIncluded(firstFileName)
       showWarningIfCommitWindowClosed()
@@ -92,7 +92,7 @@ class GitCommitLesson : GitLesson("Git.Commit", "Commit") {
     lateinit var showOptionsTaskId: TaskContext.TaskId
     task {
       showOptionsTaskId = taskId
-      text("Second, let's configure before commit actions. Press ${icon(AllIcons.General.Gear)} to open options popup.")
+      text(GitLessonsBundle.message("git.commit.open.before.commit.options", icon(AllIcons.General.Gear)))
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionButton ->
         ActionManager.getInstance().getId(ui.action) == "ChangesView.ShowCommitOptions"
       }
@@ -112,8 +112,9 @@ class GitCommitLesson : GitLesson("Git.Commit", "Commit") {
     }
 
     task {
-      text("${strong("Analyze code")} is very useful when you are working with the code. It will notify if warnings and errors will be found in the committing files. In our case you can stay this option the same.")
-      text("Switch on ${strong("Reformat code")} to automatically edit files according to codestyle.")
+      val analyzeOptionText = VcsBundle.message("before.checkin.standard.options.check.smells").dropMnemonic()
+      text(GitLessonsBundle.message("git.commit.analyze.code.explanation", strong(analyzeOptionText)))
+      text(GitLessonsBundle.message("git.commit.enable.reformat.code", strong(reformatCodeButtonText)))
       triggerByUiComponentAndHighlight(false, false) { ui: JBCheckBox ->
         ui.text == reformatCodeButtonText && ui.isSelected
       }
@@ -121,16 +122,17 @@ class GitCommitLesson : GitLesson("Git.Commit", "Commit") {
     }
 
     task {
-      text("When required options selected you can close the commit options popup. Press ${LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)}.")
+      text(GitLessonsBundle.message("git.commit.close.commit.options", LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
       stateCheck {
         previous.ui?.isShowing != true
       }
     }
 
+    val commitButtonText = GitBundle.message("commit.action.name").dropMnemonic()
     task {
-      text("And now you can edit commit message or leave it as proposed. Then click ${strong("Commit")} button to perform commit.")
+      text(GitLessonsBundle.message("git.commit.perform.commit", strong(commitButtonText)))
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: JBOptionButton ->
-        ui.text == "Commit"
+        ui.text?.contains(commitButtonText) == true
       }
       triggerOnCommitPerformed()
       showWarningIfCommitWindowClosed()
@@ -140,7 +142,7 @@ class GitCommitLesson : GitLesson("Git.Commit", "Commit") {
       before {
         LearningUiHighlightingManager.clearHighlights()
       }
-      text("Great! Press ${action(it)} to open Git tool window and see your commit in the tree.")
+      text(GitLessonsBundle.message("git.commit.open.git.window", action(it)))
       stateCheck {
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
@@ -150,56 +152,56 @@ class GitCommitLesson : GitLesson("Git.Commit", "Commit") {
     resetGitLogWindow()
 
     task {
-      text("Select top commit in the tree to see the information about it.")
+      text(GitLessonsBundle.message("git.commit.select.top.commit"))
       triggerOnTopCommitSelected()
       showWarningIfGitWindowClosed()
     }
 
     task {
-      text("In the right side of the Git tool window you can see one file changed by last commit.")
+      text(GitLessonsBundle.message("git.commit.committed.file.explanation"))
       triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { _: VcsLogChangesBrowser -> true }
       proceedLink()
       showWarningIfGitWindowClosed(restoreTaskWhenResolved = false)
     }
 
     task {
-      text("What to do if we forgot to add some changes to the last performed commit? The best way is to use ${
-        strong("Amend")
-      } feature to edit last commit. Press ${
-        LessonUtil.rawKeyStroke(
-          KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK))
-      } or select ${strong("Amend")} checkbox in the commit tool window.")
       val amendCheckboxText = VcsBundle.message("checkbox.amend").dropMnemonic()
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: JBCheckBox -> ui.text == amendCheckboxText }
+      text(GitLessonsBundle.message("git.commit.select.amend.checkbox",
+                                    strong(amendCheckboxText),
+                                    LessonUtil.rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK))))
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: JBCheckBox ->
+        ui.text?.contains(amendCheckboxText) == true
+      }
       triggerByUiComponentAndHighlight(false, false) { ui: JBCheckBox ->
-        ui.text == amendCheckboxText && ui.isSelected
+        ui.text?.contains(amendCheckboxText) == true && ui.isSelected
       }
       showWarningIfCommitWindowClosed()
     }
 
     task {
-      text("Select highlighted file to add it to commit.")
+      text(GitLessonsBundle.message("git.commit.select.file"))
       highlightVcsChange(secondFileName)
       triggerOnOneChangeIncluded(secondFileName)
       showWarningIfCommitWindowClosed()
     }
 
     task {
-      text("Press ${strong("Amend Commit")} button to edit last commit.")
+      val amendButtonText = VcsBundle.message("amend.action.name", commitButtonText)
+      text(GitLessonsBundle.message("git.commit.amend.commit", strong(amendButtonText)))
       triggerByUiComponentAndHighlight { ui: JBOptionButton ->
-        ui.text == "Amend Commit"
+        ui.text?.contains(amendButtonText) == true
       }
       triggerOnCommitPerformed()
       showWarningIfCommitWindowClosed()
     }
 
     task {
-      text("Select top commit in the Git tool window again to see the information about amended commit.")
+      text(GitLessonsBundle.message("git.commit.select.top.commit.again"))
       triggerOnTopCommitSelected()
       showWarningIfGitWindowClosed()
     }
 
-    text("Now you can see that our commit contain two changed files.")
+    text(GitLessonsBundle.message("git.commit.two.committed.files.explanation"))
   }
 
   private fun TaskContext.highlightVcsChange(changeFileName: String, highlightBorder: Boolean = true) {

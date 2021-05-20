@@ -1,14 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ift.lesson
 
+import com.intellij.CommonBundle
 import com.intellij.configurationStore.StoreReloadManager
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.ui.PushLog
+import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -22,6 +26,8 @@ import com.intellij.vcs.log.util.findBranch
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
+import git4idea.i18n.GitBundle
+import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.findVcsLogData
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
@@ -34,9 +40,11 @@ import training.dsl.*
 import java.io.File
 import javax.swing.JDialog
 
-class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature branch workflow") {
+class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessonsBundle.message("git.feature.branch.lesson.name")) {
   override val existedFile = "src/git/simple_cat.yml"
+  private val remoteName = "origin"
   private val branchName = "feature"
+  private val main = "main"
   private lateinit var repository: GitRepository
   private val remoteProjectName = "RemoteLearningProject"
 
@@ -49,18 +57,18 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
       runProcess(project, "", false) {
         val git = Git.getInstance()
         repository = GitRepositoryManager.getInstance(project).repositories.first()
-        git.addRemote(repository, "origin", remoteProjectRoot.path).throwOnError()
+        git.addRemote(repository, remoteName, remoteProjectRoot.path).throwOnError()
         repository.update()
         git.fetch(repository, repository.remotes.first(), emptyList())
         git.checkout(repository, branchName, null, false, false).throwOnError()
-        git.setUpstream(repository, "origin/main", "main")
+        git.setUpstream(repository, "$remoteName/$main", main)
         repository.update()
       }
       modifyRemoteProject(remoteProjectRoot)
     }
 
     task("ActivateVersionControlToolWindow") {
-      text("Suppose you have finished the work on your ${strong(branchName)} branch and pushed the changes to remote hoping to merge it with the ${strong("main")} branch later. Press ${action(it)} to open Git tool window and overview the project history.")
+      text(GitLessonsBundle.message("git.feature.branch.introduction.1", strong(branchName), strong(main), action(it)))
       stateCheck {
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
@@ -81,8 +89,8 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
       }
     }
 
-    task("main") {
-      text("But when you were worked on it some of your colleagues may also push their changes to the ${strong(it)} branch. So we should check that possible changes from ${strong(it)} will not conflict with our changes.")
+    task {
+      text(GitLessonsBundle.message("git.feature.branch.introduction.2", strong(main)))
       highlightSubsequentCommitsInGitLog(sequenceLength = 2) { commit ->
         val root = vcsData.roots.single()
         commit.id == vcsData.dataPack.findBranch(branchName, root)?.commitHash
@@ -97,27 +105,25 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
     lateinit var firstShowBranchesTaskId: TaskContext.TaskId
     task("Git.Branches") {
       firstShowBranchesTaskId = taskId
-      text("At first, we need to checkout the ${strong("main")} branch. Please press ${action(it)} or click the highlighted current branch to open the branches list.")
-      text("Your active branch is displayed here.", LearningBalloonConfig(Balloon.Position.above, 200))
-      triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
-        ui.text.contains("Git Branches")
-      }
+      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.1", strong(main), action(it)))
+      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 200))
+      triggerOnBranchesPopupShown()
     }
 
     task {
-      triggerByListItemAndHighlight { item -> item.toString() == "main" }
+      triggerByListItemAndHighlight { item -> item.toString() == main }
     }
 
-    task("main") {
+    task {
       lateinit var curBranchName: String
       before {
         curBranchName = repository.currentBranchName ?: error("Not found information about active branch")
       }
-      text("Select the ${strong(it)} branch and choose ${strong("Checkout")}.")
-      stateCheck { repository.currentBranchName == it }
+      text(GitLessonsBundle.message("git.feature.branch.checkout.branch", strong(main), strong(GitBundle.message("branches.checkout"))))
+      stateCheck { repository.currentBranchName == main }
       restoreState(firstShowBranchesTaskId, delayMillis = defaultRestoreDelay) {
         val newBranchName = repository.currentBranchName
-        previous.ui?.isShowing != true || (newBranchName != curBranchName && newBranchName != it)
+        previous.ui?.isShowing != true || (newBranchName != curBranchName && newBranchName != main)
       }
     }
 
@@ -127,14 +133,15 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
     }
 
     task("Vcs.UpdateProject") {
-      text("Second, we should update the ${strong("main")} branch to be aware of the possible changes from remote. Press ${action(it)} to open update project dialog.")
+      text(GitLessonsBundle.message("git.feature.branch.open.update.dialog", strong(main), action(it)))
+      val updateProjectDialogTitle = VcsBundle.message("action.display.name.update.scope", VcsBundle.message("update.project.scope.name"))
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
-        ui.title == "Update Project"
+        ui.title?.contains(updateProjectDialogTitle) == true
       }
     }
 
     task {
-      text("Click ${strong("OK")} button to confirm update.")
+      text(GitLessonsBundle.message("git.feature.branch.confirm.update", strong(CommonBundle.getOkButtonText())))
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
@@ -144,10 +151,10 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
     }
 
     task("Git.Branches") {
-      text("There really were some changes in the ${strong("main")} branch.")
+      text(GitLessonsBundle.message("git.feature.branch.new.commits.explanation", strong(main)))
       highlightSubsequentCommitsInGitLog(sequenceLength = 2) {
         val root = vcsData.roots.single()
-        it.id == vcsData.dataPack.findBranch("origin/main", root)?.commitHash
+        it.id == vcsData.dataPack.findBranch("$remoteName/$main", root)?.commitHash
       }
       proceedLink()
     }
@@ -155,13 +162,11 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
     lateinit var secondShowBranchesTaskId: TaskContext.TaskId
     task("Git.Branches") {
       secondShowBranchesTaskId = taskId
-      text("So we should rebase our ${strong(branchName)} branch on ${strong("main")}. Press ${action(it)} or click the highlighted current branch to open the branches list again.")
+      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.2", strong(branchName), strong(main), action(it)))
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows ->
-        ui.text == "main"
+        ui.text == main
       }
-      triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
-        ui.text.contains("Git Branches")
-      }
+      triggerOnBranchesPopupShown()
     }
 
     task {
@@ -169,34 +174,46 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", "Feature b
     }
 
     task {
-      text("Select the ${strong(branchName)} branch and choose ${strong("Checkout and Rebase onto Current")}.")
-      triggerByListItemAndHighlight { item -> item.toString() == "Checkout and Rebase onto Current" }
-      triggerOnNotification { notification -> notification.title == "Rebase successful" }
+      val checkoutAndRebaseText = GitBundle.message("branches.checkout.and.rebase.onto.current")
+      text(GitLessonsBundle.message("git.feature.branch.checkout.and.rebase", strong(branchName), strong(checkoutAndRebaseText)))
+      triggerByListItemAndHighlight { item -> item.toString().contains(checkoutAndRebaseText) }
+      triggerOnNotification { notification -> notification.title == GitBundle.message("rebase.notification.successful.title") }
       restoreState(secondShowBranchesTaskId, delayMillis = 3 * defaultRestoreDelay) {
         previous.ui?.isShowing != true && !StoreReloadManager.getInstance().isReloadBlocked() // reload is blocked when rebase is running
       }
     }
 
     task("Vcs.Push") {
-      text("When ${strong(branchName)} branch become updated we should update it in the remote repository too. Press ${action(it)} to open push dialog.")
+      text(GitLessonsBundle.message("git.feature.branch.open.push.dialog", strong(branchName), action(it)))
       triggerByUiComponentAndHighlight(false, false) { _: PushLog -> true }
     }
 
-    task("Force Push") {
-      text("We can't just push the changes, because our remote ${strong(branchName)} branch conflicts with updated local branch. We should use ${strong(it)}. Press highlighted arrow near ${strong("Push")} button to open drop-down menu and select ${strong(it)}.")
+    val forcePushText = DvcsBundle.message("action.force.push").dropMnemonic()
+    task {
+      text(GitLessonsBundle.message("git.feature.branch.choose.force.push",
+                                    strong(branchName), strong(forcePushText), strong(DvcsBundle.message("action.push").dropMnemonic())))
       triggerByUiComponentAndHighlight(usePulsation = true) { _: BasicOptionButtonUI.ArrowButton -> true }
+      val forcePushDialogTitle = DvcsBundle.message("force.push.dialog.title")
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
-        ui.title == it
+        ui.title?.contains(forcePushDialogTitle) == true
       }
       restoreByUi()
     }
 
-    task("Force Push") {
-      text("Press ${strong(it)} button again to confirm action.")
+    task {
+      text(GitLessonsBundle.message("git.feature.branch.confirm.force.push", strong(forcePushText)))
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
+    }
+  }
+
+  private fun TaskContext.triggerOnBranchesPopupShown() {
+    triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
+      val branchesInRepoText = DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", GitBundle.message("git4idea.vcs.name"),
+                                                  DvcsUtil.getShortRepositoryName(repository))
+      ui.text?.contains(branchesInRepoText) == true
     }
   }
 
