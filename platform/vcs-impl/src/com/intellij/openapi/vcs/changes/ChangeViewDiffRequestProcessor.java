@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
@@ -20,18 +21,21 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple implements DiffPreviewUpdateProcessor {
+public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple
+  implements DiffPreviewUpdateProcessor, SelectionAwareGoToChangePopupActionProvider {
 
   private static final int MANY_CHANGES_THRESHOLD = 10000;
 
@@ -184,6 +188,32 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Override
+  public @NotNull List<? extends DiffRequestProducer> getActualProducers() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public void selectFilePath(@NotNull FilePath filePath) {
+    Wrapper changeToSelect = ContainerUtil.find(getAllChanges().iterator(), change -> change.getFilePath().equals(filePath));
+
+    if (changeToSelect != null) {
+      myCurrentChange = changeToSelect;
+      selectChange(changeToSelect);
+    }
+  }
+
+  @Nullable
+  @Override
+  public FilePath getSelectedFilePath() {
+    return myCurrentChange != null ? myCurrentChange.getFilePath() : null;
+  }
+
+  @Override
+  protected @Nullable GoToChangePopupBuilder.GoToChangeActionProvider getGoToChangeActionProvider() {
+    return this;
+  }
+
+  @Override
   protected boolean hasNextChange(boolean fromUpdate) {
     PrevNextDifferenceIterable strategy = getSelectionStrategy(fromUpdate);
     return strategy != null && strategy.canGoNext();
@@ -317,6 +347,9 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   public abstract static class Wrapper {
     @NotNull
+    public abstract FilePath getFilePath();
+
+    @NotNull
     public abstract Object getUserObject();
 
     @Nullable
@@ -353,10 +386,15 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       return change;
     }
 
+    @Override
+    public @NotNull FilePath getFilePath() {
+      return ChangesUtil.getFilePath(change);
+    }
+
     @Nullable
     @Override
     public String getPresentableName() {
-      return ChangesUtil.getFilePath(change).getName();
+      return getFilePath().getName();
     }
 
     @Nullable
@@ -399,22 +437,27 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       this.path = path;
     }
 
+    @Override
+    public @NotNull FilePath getFilePath() {
+      return path;
+    }
+
     @NotNull
     @Override
     public Object getUserObject() {
-      return path;
+      return getFilePath();
     }
 
     @Nullable
     @Override
     public String getPresentableName() {
-      return path.getName();
+      return getFilePath().getName();
     }
 
     @Nullable
     @Override
     public DiffRequestProducer createProducer(@Nullable Project project) {
-      return UnversionedDiffRequestProducer.create(project, path);
+      return UnversionedDiffRequestProducer.create(project, getFilePath());
     }
   }
 
