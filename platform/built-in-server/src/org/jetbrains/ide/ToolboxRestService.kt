@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.google.gson.JsonElement
@@ -10,14 +10,18 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.castSafelyTo
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.delete
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelOption
 import io.netty.handler.codec.http.*
 import org.jetbrains.io.addCommonHeaders
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.writeText
 
 val toolboxHandlerEP: ExtensionPointName<ToolboxServiceHandler<*>> = ExtensionPointName.create("com.intellij.toolboxServiceHandler")
 
@@ -73,6 +77,26 @@ private fun <T> wrapHandler(handler: ToolboxServiceHandler<T>, request: JsonElem
     }
 
     override fun toString(): String = "ToolboxInnerHandler{$handler, $param}"
+  }
+}
+
+internal class ToolboxRestServiceConfig : Disposable {
+  override fun dispose() = Unit
+
+  init {
+    val toolboxPortFilePath = System.getProperty("toolbox.notification.portFile")
+    if (toolboxPortFilePath != null) {
+      AppExecutorUtil.getAppExecutorService().submit {
+        val server = BuiltInServerManager.getInstance()
+        val port = server.waitForStart().port
+        val portFile = Path.of(toolboxPortFilePath)
+        runCatching { Files.createDirectories(portFile.parent) }
+        runCatching { portFile.writeText("$port") }
+        Disposer.register(this) {
+          runCatching { portFile.delete() }
+        }
+      }
+    }
   }
 }
 
