@@ -103,7 +103,6 @@ public class MavenServerCMDState extends CommandLineState {
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
     Collection<String> classPath = collectRTLibraries(myDistribution.getVersion());
-    params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
     for (String s : classPath) {
       params.getClassPath().add(s);
     }
