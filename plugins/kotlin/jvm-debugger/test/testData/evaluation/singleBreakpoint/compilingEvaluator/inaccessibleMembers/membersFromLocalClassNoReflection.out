@@ -1,4 +1,5 @@
-LineBreakpoint created at membersFromLocalClassNoReflection.kt:24
+// IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR, JVM_IR_WITH_IR_EVALUATOR
+LineBreakpoint created at ceLocalClassMembers.kt:24
 Run Java
 Connected to the target VM
 membersFromLocalClassNoReflection.kt:24
