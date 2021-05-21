@@ -27,6 +27,7 @@ final class PlatformModules {
     "intellij.platform.lvcs",
     "intellij.platform.ide",
     "intellij.platform.projectModel",
+    "intellij.platform.remote.core",
     "intellij.platform.remoteServers.agent.rt",
     "intellij.platform.remoteServers",
     "intellij.platform.tasks",
