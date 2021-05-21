@@ -3,6 +3,7 @@ package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
+import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -67,7 +68,13 @@ class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
       foreground = if (getDetails(account)?.name == null) primaryTextColor else secondaryTextColor
     }
     serverName.apply {
-      text = account.server.toString()
+      if (account is ServerAccount) {
+        isVisible = true
+        text = account.server.toString()
+      }
+      else {
+        isVisible = false
+      }
       foreground = secondaryTextColor
     }
     profilePicture.apply {

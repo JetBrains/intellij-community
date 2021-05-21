@@ -119,9 +119,6 @@ class AccountManagerBaseTest {
 
   private class MockAccount(override val id: String = generateId()) : Account() {
     override val name: String = ""
-    override val server: ServerPath = object : ServerPath {
-      override fun toString() = "test_server"
-    }
   }
 
   private class TestManager(private val persistentAccounts: AccountsRepository<MockAccount>,
