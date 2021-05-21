@@ -47,8 +47,8 @@ import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import git4idea.GitVcs
 import git4idea.conflicts.GitConflictsUtil.canShowMergeWindow
-import git4idea.conflicts.GitMergeHandler
 import git4idea.conflicts.GitConflictsUtil.showMergeWindow
+import git4idea.conflicts.GitMergeHandler
 import git4idea.i18n.GitBundle.message
 import git4idea.index.GitStageCommitWorkflow
 import git4idea.index.GitStageCommitWorkflowHandler
@@ -121,7 +121,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     toolbarGroup.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
     toolbarGroup.addSeparator()
     toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))
-    toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true)
+    toolbar = ActionManager.getInstance().createActionToolbar(GIT_STAGE_PANEL_PLACE, toolbarGroup, true)
     toolbar.setTargetComponent(tree)
 
     PopupHandler.installPopupHandler(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
@@ -458,6 +458,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   companion object {
     @NonNls
     private const val GROUPING_PROPERTY_NAME = "GitStage.ChangesTree.GroupingKeys"
+    private const val GIT_STAGE_PANEL_PLACE = "GitStagePanelPlace"
   }
 }
 
