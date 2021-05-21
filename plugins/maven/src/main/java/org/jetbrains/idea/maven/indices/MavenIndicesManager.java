@@ -108,8 +108,10 @@ public final class MavenIndicesManager implements Disposable {
     }
   }
 
-  private synchronized boolean doInitIndicesFields() {
-    if (myIndices != null) return true;
+  private boolean doInitIndicesFields() {
+    synchronized (this) {
+      if (myIndices != null) return true;
+    }
     myIndexer = MavenServerManager.getInstance().createIndexer(myProject);
     myDownloadListener = new MavenServerDownloadListener() {
       @Override

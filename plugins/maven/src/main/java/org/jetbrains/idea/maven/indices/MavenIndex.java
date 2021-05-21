@@ -237,14 +237,15 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   @Override
-  public synchronized void close(boolean releaseIndexContext) {
+  public void close(boolean releaseIndexContext) {
+    IndexData data = myData;
     try {
-      if (myData != null) myData.close(releaseIndexContext);
+      if (data != null) data.close(releaseIndexContext);
     }
     catch (MavenIndexException e) {
       MavenLog.LOG.warn(e);
     }
-    myData = null;
+    data = null;
   }
 
   private synchronized void save() {
