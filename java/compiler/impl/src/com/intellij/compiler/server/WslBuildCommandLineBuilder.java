@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.YourKitProfilerService;
@@ -24,7 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
+final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   private final Project myProject;
   private final @NotNull WSLDistribution myDistribution;
   private final @Nullable ProgressIndicator myProgressIndicator;

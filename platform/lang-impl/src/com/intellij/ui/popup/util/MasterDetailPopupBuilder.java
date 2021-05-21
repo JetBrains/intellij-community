@@ -134,10 +134,8 @@ public final class MasterDetailPopupBuilder implements MasterController {
   }
 
   private void chooseItems(boolean withEnterOrDoubleClick) {
-    for (Object item : getSelectedItems()) {
-      if (item instanceof ItemWrapper) {
-        myDelegate.itemChosen((ItemWrapper)item, myProject, myPopup, withEnterOrDoubleClick);
-      }
+    for (ItemWrapper item : getSelectedItems()) {
+      myDelegate.itemChosen(item, myProject, myPopup, withEnterOrDoubleClick);
     }
   }
 
@@ -187,8 +185,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
   @NotNull
   public JBPopup createMasterDetailPopup() {
     if (myChooserComponent instanceof JList) {
-      //noinspection unchecked
-      ((JList)myChooserComponent).setCellRenderer(new ListItemRenderer(myProject, myDelegate));
+      ((JList<?>)myChooserComponent).setCellRenderer(new ListItemRenderer(myProject, myDelegate));
     }
 
     if (myDetailView == null) {
@@ -345,23 +342,19 @@ public final class MasterDetailPopupBuilder implements MasterController {
   }
 
   private static final class ListItemRenderer extends JPanel implements ListCellRenderer {
-    private final Project myProject;
     private final ColoredListCellRenderer myRenderer;
-    private final Delegate myDelegate;
 
     private ListItemRenderer(Project project, Delegate delegate) {
       super(new BorderLayout());
-      myProject = project;
-      myDelegate = delegate;
 
       setBackground(UIUtil.getListBackground());
 
-      JComponent accessory = myDelegate.createAccessoryView(project);
+      JComponent accessory = delegate.createAccessoryView(project);
       if (accessory != null) {
         add(accessory, BorderLayout.WEST);
       }
 
-      myRenderer = new ItemWrapperListRenderer(myProject, accessory);
+      myRenderer = new ItemWrapperListRenderer(project, accessory);
       add(myRenderer, BorderLayout.CENTER);
     }
 

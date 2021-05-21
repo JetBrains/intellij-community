@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -8,7 +8,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.testFramework.MapDataContext;
-import gnu.trove.THashSet;
 
 import java.util.*;
 
@@ -40,7 +39,7 @@ public class HideAllToolWindowsTest extends ToolWindowManagerTestCase {
 
     MapDataContext context = new MapDataContext();
     context.put(CommonDataKeys.PROJECT, getProject());
-    Set<String> visibleIds = new THashSet<>();
+    Set<String> visibleIds = new HashSet<>();
     for (String id : types.keySet()) {
       if (manager.getToolWindow(id).isVisible()) {
         visibleIds.add(id);

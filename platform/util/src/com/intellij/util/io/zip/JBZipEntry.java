@@ -338,7 +338,7 @@ public class JBZipEntry implements Cloneable {
     long start = calcDataOffset();
     long size = getCompressedSize();
     myFile.ensureFlushed(start + size);
-    if (myFile.archive.length() < start + size) {
+    if (myFile.myArchive.length() < start + size) {
       throw new EOFException();
     }
     BoundedInputStream bis = new BoundedInputStream(start, size);
@@ -545,9 +545,9 @@ public class JBZipEntry implements Cloneable {
 
   public long calcDataOffset() throws IOException {
     long offset = getHeaderOffset();
-    myFile.archive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
+    myFile.myArchive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
     byte[] b = new byte[JBZipFile.WORD];
-    myFile.archive.readFully(b);
+    myFile.myArchive.readFully(b);
     int fileNameLen = ZipShort.getValue(b, 0);
     int extraFieldLen = ZipShort.getValue(b, JBZipFile.SHORT);
     return offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD + fileNameLen + extraFieldLen;
@@ -604,7 +604,7 @@ public class JBZipEntry implements Cloneable {
       }
 
       final int ret;
-      RandomAccessFile archive = myFile.archive;
+      RandomAccessFile archive = myFile.myArchive;
       archive.seek(loc);
       ret = archive.read(b, off, len);
 
@@ -625,7 +625,7 @@ public class JBZipEntry implements Cloneable {
         return -1;
       }
 
-      RandomAccessFile archive = myFile.archive;
+      RandomAccessFile archive = myFile.myArchive;
       archive.seek(loc++);
       return archive.read();
     }

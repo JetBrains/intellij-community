@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -567,6 +567,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule(".definition-only { padding: " + definitionTopPadding + "px 17px 0 " + leftPadding + "px; }");
     editorKit.getStyleSheet().addRule(".definition-only pre { margin-bottom: 0 }");
     editorKit.getStyleSheet().addRule(".content { padding: 5px 16px 0 " + leftPadding + "px; max-width: 100% }");
+    editorKit.getStyleSheet().addRule(".content-separated { padding: 5px 16px 5px " + leftPadding + "px; max-width: 100%;" +
+                                      "                     border-bottom: thin solid #" + ColorUtil.toHex(borderColor) + "; }");
     editorKit.getStyleSheet().addRule(".content-only { padding: 8px 16px 0 " + leftPadding + "px; max-width: 100% }");
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 16px 0 " + leftPadding + "px; }");
     editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 16px 0 " + leftPadding + "px; }");
@@ -587,7 +589,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private static Color getLinkColor() {
-    return JBUI.CurrentTheme.Link.linkColor();
+    return JBUI.CurrentTheme.Link.Foreground.ENABLED;
   }
 
   @Override

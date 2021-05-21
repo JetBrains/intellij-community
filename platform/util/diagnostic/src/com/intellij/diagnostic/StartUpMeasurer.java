@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.*;
 
@@ -248,10 +249,10 @@ public final class StartUpMeasurer {
                                      @NonNls @NotNull String phase,
                                      long time,
                                      @NotNull Map<String, Object2LongOpenHashMap<String>> pluginCostMap) {
-    Object2LongOpenHashMap<String> costPerPhaseMap = pluginCostMap.computeIfAbsent(pluginId, __ -> new Object2LongOpenHashMap<>());
+    Object2LongMap<String> costPerPhaseMap = pluginCostMap.computeIfAbsent(pluginId, __ -> new Object2LongOpenHashMap<>());
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (costPerPhaseMap) {
-      costPerPhaseMap.addTo(phase, time);
+      costPerPhaseMap.mergeLong(phase, time, Math::addExact);
     }
   }
 }

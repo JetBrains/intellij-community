@@ -12,6 +12,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.model.psi.PsiSymbolReference;
@@ -38,6 +39,7 @@ import com.intellij.testFramework.*;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
+import com.intellij.usages.UsageTarget;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -465,6 +467,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   String getUsageViewTreeTextRepresentation(@NotNull Collection<? extends UsageInfo> usages);
 
+  @NotNull String getUsageViewTreeTextRepresentation(@NotNull List<UsageTarget> usageTargets, @NotNull Collection<? extends Usage> usages);
+
   /**
    * @return a text representation of {@link com.intellij.usages.UsageView} created from usages of {@code to}
    * <p>
@@ -473,6 +477,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   String getUsageViewTreeTextRepresentation(@NotNull PsiElement to);
 
+  @NotNull String getUsageViewTreeTextRepresentation(@NotNull SearchTarget target);
 
   RangeHighlighter @NotNull [] testHighlightUsages(@TestDataFile String @NotNull ... files);
 

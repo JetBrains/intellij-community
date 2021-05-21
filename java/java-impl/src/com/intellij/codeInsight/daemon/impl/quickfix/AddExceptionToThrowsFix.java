@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -16,13 +16,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class AddExceptionToThrowsFix extends BaseIntentionAction {
+public final class AddExceptionToThrowsFix extends BaseIntentionAction {
   private final PsiElement myWrongElement;
 
   public AddExceptionToThrowsFix(@NotNull PsiElement wrongElement) {
@@ -44,7 +43,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     final PsiMethod targetMethod = collectExceptions(exceptions);
     if (targetMethod == null) return;
 
-    Set<PsiClassType> unhandledExceptions = new THashSet<>(exceptions);
+    Set<PsiClassType> unhandledExceptions = new HashSet<>(exceptions);
 
     addExceptionsToThrowsList(project, targetMethod, unhandledExceptions);
   }

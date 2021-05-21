@@ -179,7 +179,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   protected List<PyDebugValue> loadFrame() throws PyDebuggerException {
-    return convertToList(myDebugProcess.loadFrame());
+    return convertToList(myDebugProcess.loadFrame(null));
   }
 
   protected PyStackFrame getCurrentStackFrame() {
@@ -191,7 +191,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     assert debugValue != null;
     Semaphore variableSemaphore = new Semaphore(0);
     final ArrayList<PyFrameAccessor.PyAsyncValue<String>> valuesForEvaluation = createAsyncValue(debugValue, variableSemaphore);
-    myDebugProcess.loadAsyncVariablesValues(valuesForEvaluation);
+    myDebugProcess.loadAsyncVariablesValues(null, valuesForEvaluation);
     if (!variableSemaphore.tryAcquire(NORMAL_TIMEOUT, TimeUnit.MILLISECONDS)) {
       throw new PyDebuggerException("Timeout exceeded, failed to load variable: " + debugValue.getName());
     }

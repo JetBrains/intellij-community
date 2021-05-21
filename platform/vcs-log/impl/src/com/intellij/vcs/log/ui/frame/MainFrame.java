@@ -354,7 +354,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         myChangesBrowser.showText(statusText -> {
           statusText.setText(VcsLogBundle.message("vcs.log.changes.too.many.status", detailsList.size(), sizeText));
           statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.changes.too.many.show.anyway.status.action"),
-                                         VcsLogUiUtil.getLinkAttributes(),
+                                         SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                          e -> myChangesBrowser.setSelectedDetails(detailsList));
         });
       }
@@ -433,7 +433,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
         if (visiblePack.getFilters().isEmpty()) {
           statusText.setText(VcsLogBundle.message("vcs.log.no.commits.status")).
-            appendSecondaryText(VcsLogBundle.message("vcs.log.commit.status.action"), VcsLogUiUtil.getLinkAttributes(),
+            appendSecondaryText(VcsLogBundle.message("vcs.log.commit.status.action"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                 ActionUtil.createActionListener(IdeActions.ACTION_CHECKIN_PROJECT, this,
                                                                 ActionPlaces.UNKNOWN));
           String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHECKIN_PROJECT);

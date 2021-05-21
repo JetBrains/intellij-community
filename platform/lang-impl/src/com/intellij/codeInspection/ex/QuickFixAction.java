@@ -35,13 +35,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
 
 public abstract class QuickFixAction extends AnAction implements CustomComponentAction {
@@ -102,7 +100,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     final InspectionTree tree = view.getTree();
     try {
       Ref<List<CommonProblemDescriptor[]>> descriptors = Ref.create();
-      Set<VirtualFile> readOnlyFiles = new THashSet<>();
+      Set<VirtualFile> readOnlyFiles = new HashSet<>();
       TreePath[] paths = tree.getSelectionPaths();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -217,7 +215,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   private static Set<VirtualFile> getReadOnlyFiles(RefEntity @NotNull [] refElements) {
-    Set<VirtualFile> readOnlyFiles = new THashSet<>();
+    Set<VirtualFile> readOnlyFiles = new HashSet<>();
     for (RefEntity refElement : refElements) {
       PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
       if (psiElement == null || psiElement.getContainingFile() == null) continue;

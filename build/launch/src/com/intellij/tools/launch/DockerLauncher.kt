@@ -2,16 +2,19 @@ package com.intellij.tools.launch
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.launch.Launcher.affixIO
+import com.intellij.util.execution.ParametersListUtil
 import com.sun.security.auth.module.UnixSystem
 import org.apache.log4j.Logger
 import java.io.File
 import java.nio.file.Files
+import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.pow
 
 class DockerLauncher(private val paths: PathsProvider, private val options: DockerLauncherOptions) {
   companion object {
     private val logger = Logger.getLogger(DockerLauncher::class.java)
+    private val random = Random()
   }
 
   private val UBUNTU_18_04_WITH_USER_TEMPLATE = "ubuntu-18-04-docker-launcher"
@@ -54,12 +57,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     }
 
     fun MutableList<String>.addReadonly(volume: File) = addVolume(volume, false)
-    fun MutableList<String>.addWritable(volume: File) = addVolume(volume, true)
-
-    // docker can create these under root, so we create them ourselves
-    Files.createDirectories(paths.logFolder.toPath())
-    Files.createDirectories(paths.configFolder.toPath())
-    Files.createDirectories(paths.systemFolder.toPath())
+    fun MutableList<String>.addWriteable(volume: File) = addVolume(volume, true)
 
     val dockerCmd = mutableListOf(
       "docker",
@@ -75,14 +73,26 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       "--user=$username"
     )
 
+    val containerName = if (options.containerName != null)
+      "${options.containerName}-${System.nanoTime()}".let {
+        dockerCmd.add("--name=$it")
+        it
+      }
+    else null
+
     // **** RW ****
-    //paths.tempFolder.writeable(),
-    dockerCmd.addWritable(paths.logFolder)
-    dockerCmd.addWritable(paths.configFolder)
-    dockerCmd.addWritable(paths.systemFolder)
-    dockerCmd.addWritable(paths.outputRootFolder) // classpath index making a lot of noise in stderr
-    dockerCmd.addWritable(paths.ultimateRootFolder.resolve("platform/intellij-client-tests/data")) // gold & tmp files for it
-    dockerCmd.addWritable(paths.communityRootFolder.resolve("build/download")) //quiche
+    val writeable = listOf(paths.logFolder,
+                           paths.configFolder,
+                           paths.systemFolder,
+                           paths.outputRootFolder, // classpath index making a lot of noise
+                           paths.ultimateRootFolder.resolve("platform/intellij-client-tests/data"), // classpath index making a lot of noise in stderr
+                           paths.communityRootFolder.resolve("build/download")) // quiche lib
+
+    // docker can create these under root, so we create them ourselves
+    writeable.forEach {
+      Files.createDirectories(it.toPath())
+      dockerCmd.addWriteable(it)
+    }
 
     // **** RO ****
     dockerCmd.addReadonly(paths.javaHomeFolder)
@@ -130,12 +140,21 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
     logger.info(dockerCmd.joinToString("\n"))
 
-    if (options.network != DockerNetwork.AUTO && options.network.defaultGatewayIPv4Address != null) {
+    // docker will still have a route for all subnet packets to go through the host, this only affects anything not in the subnet
+    val ipRouteBash = if (options.network != DockerNetwork.AUTO && options.network.defaultGatewayIPv4Address != null) "sudo ip route change default via ${options.network.defaultGatewayIPv4Address}" else null
+
+    if (options.runBashBeforeJava != null || ipRouteBash != null) {
       dockerCmd.add("/bin/bash")
       dockerCmd.add("-c")
 
-      // docker will still have a route for all subnet packets to go through the host, this only affects anything not in the subnet
-      dockerCmd.add("ip route change default ${options.network.defaultGatewayIPv4Address} && ${cmd.joinToString(" ")}}")
+      val cmdHttpLinkSomewhatEscaped = cmd.joinToString(" ").replace("&", "\\&")
+
+      var entrypointBash = ""
+      if (ipRouteBash != null)
+        entrypointBash += "$ipRouteBash && "
+      if (options.runBashBeforeJava != null)
+        entrypointBash += "${options.runBashBeforeJava} && "
+      dockerCmd.add("$entrypointBash$cmdHttpLinkSomewhatEscaped")
     }
     else {
       dockerCmd.addAll(cmd)
@@ -170,14 +189,31 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     }
 
     val containerId = containerIdFile.readText()
-    assert(containerId.isNotEmpty()) { "Started container ID must not be empty" }
+    if (containerId.isEmpty()) error { "Started container ID must not be empty" }
     logger.info("Container ID=$containerId")
+
+    if (containerName != null) {
+      fun isInDockerPs() = runCmd(1, TimeUnit.MINUTES, true, paths.tempFolder, true, "docker", "ps").count { it.contains(containerName) } > 0
+
+      for (i in 1..5) {
+        if (!dockerRun.isAlive) error("docker run exited with code ${dockerRun.exitValue()}")
+
+        if (isInDockerPs()) {
+          logger.info("Container with name $containerName detected in docker ps output")
+          break;
+        }
+
+        val sleepMillis = 100L * 2.0.pow(i).toLong()
+        logger.info("No container with name $containerName in docker ps output, sleeping for $sleepMillis")
+        Thread.sleep(sleepMillis)
+      }
+    }
 
     return dockerRun
   }
 
-  private fun dockerInfo() = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder, "docker", "info")
-  private fun dockerKill(containerId: String) = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder,"docker", "kill", containerId)
+  private fun dockerInfo() = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder, false, "docker", "info")
+  private fun dockerKill(containerId: String) = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder,false, "docker", "kill", containerId)
 
   private fun dockerBuild(tag: String, buildArgs: Map<String, String>) {
     val dockerBuildCmd = listOf("docker", "build", "-t", tag).toMutableList()
@@ -192,16 +228,26 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
            TimeUnit.MINUTES,
            true,
            paths.communityRootFolder.resolve("build/launch/src/com/intellij/tools/launch"),
+           false,
            *dockerBuildCmd.toTypedArray())
   }
 
-  private fun runCmd(timeout: Long, unit: TimeUnit, assertSuccess: Boolean, workDir: File, vararg cmd: String): Int {
+
+  private fun runCmd(timeout: Long, unit: TimeUnit, assertSuccess: Boolean, workDir: File, captureStdout: Boolean = false, vararg cmd: String): List<String> {
     if (!SystemInfo.isLinux)
       error("We are heavily relaying on paths being the same everywhere and may use networks, so only Linux can be used as a host system.")
 
     val processBuilder = ProcessBuilder(*cmd)
     processBuilder.directory(workDir)
-    processBuilder.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
+
+    val stdoutFile = File.createTempFile(cmd[0], "out")
+    @Suppress("SSBasedInspection")
+    stdoutFile.deleteOnExit()
+
+    if (!captureStdout)
+      processBuilder.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
+    else
+      processBuilder.redirectOutput(stdoutFile)
 
     val readableCmd = cmd.joinToString(" ", prefix = "'", postfix = "'")
     logger.info(readableCmd)
@@ -211,11 +257,11 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
         error("${cmd[0]} failed to exit under required timeout of $timeout $unit, will destroy it")
 
       if (assertSuccess)
-        assert(process.exitValue() == 0)
+        if (process.exitValue() != 0) error("${cmd[0]} exited with non-zero exit code ${process.exitValue()}. Full commandline: ${cmd.joinToString(" ")}")
     } finally {
       process.destroy()
     }
 
-    return process.exitValue()
+    return stdoutFile.readLines()
   }
 }

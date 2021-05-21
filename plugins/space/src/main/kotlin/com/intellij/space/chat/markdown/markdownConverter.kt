@@ -4,6 +4,7 @@ package com.intellij.space.chat.markdown
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
+import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.flavours.gfm.StrikeThroughParser
@@ -50,6 +51,7 @@ private class SpaceFlavourDescriptor : GFMFlavourDescriptor() {
     val parentProviders = super.createHtmlGeneratingProviders(linkMap, baseURI).toMutableMap()
     parentProviders[MarkdownElementTypes.EMPH] = SimpleInlineTagProvider("i", 1, -1)
     parentProviders[MarkdownElementTypes.STRONG] = SimpleInlineTagProvider("b", 2, -2)
+    parentProviders[GFMElementTypes.STRIKETHROUGH] = SimpleInlineTagProvider("strike", 2, -2)
     return parentProviders
   }
 }

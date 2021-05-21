@@ -4,6 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.util.io.ResizeableMappedFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 public class PersistentFSRecordsStorage {
 
   private static final int PARENT_OFFSET = 0;
@@ -162,11 +164,21 @@ public class PersistentFSRecordsStorage {
   }
 
   void close() {
-    myFile.close();
+    try {
+      myFile.close();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   void force() {
-    myFile.force();
+    try {
+      myFile.force();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   boolean isDirty() {

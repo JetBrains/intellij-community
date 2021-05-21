@@ -27,13 +27,13 @@
       instance="com.intellij.space.settings.SpaceSettingsPanel"/>
 
     <toolWindow id="Space Automation"
-                icon="SpaceIcons.MainToolwindow"
+                icon="SpaceIcons.SpaceToolWindow"
                 anchor="right"
                 canCloseContents="true"
                 factoryClass="com.intellij.space.tools.SpaceToolWindowFactory"/>
 
     <toolWindow id="Space Code Reviews"
-                icon="SpaceIcons.MainToolwindow"
+                icon="SpaceIcons.SpaceToolWindow"
                 anchor="left"
                 canCloseContents="true"
                 doNotActivateOnStart="true"
@@ -75,7 +75,7 @@
       <separator/>
       <action id="com.intellij.space.actions.SpaceMainToolBarAction"
               class="com.intellij.space.actions.SpaceMainToolBarAction"
-              icon="SpaceIcons.MainToolwindow">
+              icon="SpaceIcons.SpaceToolWindow">
       </action>
       <add-to-group group-id="NavBarToolBar" anchor="last"/>
       <add-to-group group-id="MainToolBar" anchor="last"/>

@@ -3,10 +3,9 @@ package com.intellij.ide.ui.experimental.toolbar
 
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 @State(name = "ToolbarSettingsService", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
 class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
                                                           PersistentStateComponent<ExperimentalToolbarStateWrapper> {
+  val logger = Logger.getInstance(ExperimentalToolbarSettings::class.java)
   val newToolbarEnabled: Boolean
     get() = Registry.`is`("ide.new.navbar", false)
 
@@ -28,6 +28,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
       toolbarState.state =
         getToolbarStateByVisibilityFlags(v, if(v) false else isToolbarVisible(), v,
                                          if(v) false else isNavBarVisible())
+      logger.info("Registry value new.navbar was changed to $v, toolbar state is " + toolbarState.state)
       updateSettingsState()
       UISettings.instance.fireUISettingsChanged()
     }
@@ -106,6 +107,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
   private fun updateSettingsState() {
     UISettings.instance.state.showNavigationBar = toolbarState.state.navBarVisible
     UISettings.instance.state.showMainToolbar = toolbarState.state.oldToolbarVisible
+    logger.info("showNavigationBar: $UISettings.instance.state.showNavigationBar showMainToolbar: $UISettings.instance.state.showMainToolbar")
   }
 
   override fun isToolbarVisible(): Boolean {

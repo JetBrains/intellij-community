@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.google.common.base.Supplier
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.stream.JsonReader
@@ -150,11 +149,11 @@ abstract class RestService : HttpRequestHandler() {
       .create()
   }
 
-  private val abuseCounter = CacheBuilder.newBuilder()
+  private val abuseCounter = Caffeine.newBuilder()
     .expireAfterWrite(1, TimeUnit.MINUTES)
-    .build<InetAddress, AtomicInteger>(CacheLoader.from(Supplier { AtomicInteger() }))
+    .build<InetAddress, AtomicInteger>(CacheLoader { AtomicInteger() })
 
-  private val trustedOrigins = CacheBuilder.newBuilder()
+  private val trustedOrigins = Caffeine.newBuilder()
     .maximumSize(1024)
     .expireAfterWrite(1, TimeUnit.DAYS)
     .build<String, Boolean>()
@@ -205,7 +204,7 @@ abstract class RestService : HttpRequestHandler() {
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     try {
-      val counter = abuseCounter.get((context.channel().remoteAddress() as InetSocketAddress).address)
+      val counter = abuseCounter.get((context.channel().remoteAddress() as InetSocketAddress).address)!!
       if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
         HttpResponseStatus.TOO_MANY_REQUESTS.orInSafeMode(HttpResponseStatus.OK).send(context.channel(), request)
         return true

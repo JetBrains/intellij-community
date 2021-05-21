@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.BundleBase;
@@ -12,12 +12,17 @@ import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -72,8 +77,32 @@ public final class NotificationGroupEP implements PluginAware {
    *
    * @see Notification#displayId
    */
-  @Attribute("notificationIds")
-  public String notificationIds;
+  @Attribute(value = "notificationIds", converter = IdParser.class)
+  public @Nullable List<String> notificationIds;
+
+  private static final class IdParser extends Converter<List<String>> {
+    @Override
+    public @NotNull List<String> fromString(@NotNull String value) {
+      if (value.isEmpty()) {
+        return Collections.emptyList();
+      }
+
+      String[] values = StringUtilRt.convertLineSeparators(value, "").split(";");
+      List<String> result = new ArrayList<>(values.length);
+      for (String item : values) {
+        if (!item.isEmpty()) {
+          result.add(value.trim());
+        }
+      }
+      return result;
+    }
+
+    @NotNull
+    @Override
+    public String toString(@NotNull List<String> ids) {
+      return String.join(",", ids);
+    }
+  }
 
   private PluginDescriptor pluginDescriptor;
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatu
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -64,7 +65,8 @@ class MavenProjectsAware(
     context: ExternalSystemSettingsFilesReloadContext,
     action: (Pair<List<VirtualFile>, List<VirtualFile>>) -> Unit
   ) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment &&
+        !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
       action(partitionSettingsFiles(context))
       return
     }

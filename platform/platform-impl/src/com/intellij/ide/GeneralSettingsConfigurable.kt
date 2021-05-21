@@ -83,7 +83,7 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
           }
         }
 
-        if (PlatformUtils.isDataGrip()) {
+        if (PlatformUtils.isDataGrip() || PlatformUtils.isPyCharmDs()) {
           row {
             checkBox(mySkipWelcomeScreen)
           }

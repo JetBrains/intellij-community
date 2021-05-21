@@ -19,6 +19,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.lesson.kimpl.checkToolWindowState
 import training.learn.lesson.kimpl.closeAllFindTabs
 
 abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
@@ -102,8 +103,10 @@ abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
         }
       }
 
-      actionTask("HideActiveWindow") {
-        LessonsBundle.message("declaration.and.usages.hide.view", action(it))
+      task("HideActiveWindow") {
+        text(LessonsBundle.message("declaration.and.usages.hide.view", action(it)))
+        checkToolWindowState("Find", false)
+        test { actions(it) }
       }
 
       actionTask("ActivateFindToolWindow") {

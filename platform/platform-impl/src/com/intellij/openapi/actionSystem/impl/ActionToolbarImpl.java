@@ -1464,6 +1464,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myUpdater.updateActions(false, true, false);
   }
 
+  public static boolean isInPopupToolbar(@Nullable Component component) {
+    return ComponentUtil.getParentOfType(PopupToolbar.class, component) != null;
+  }
+
   @TestOnly
   public static ActionToolbarImpl findToolbar(ActionGroup group) {
     for (ActionToolbarImpl toolbar : ourToolbars) {

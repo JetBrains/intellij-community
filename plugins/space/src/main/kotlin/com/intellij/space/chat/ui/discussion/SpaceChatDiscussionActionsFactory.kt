@@ -98,8 +98,8 @@ internal class SpaceChatDiscussionActionsFactory(
         else {
           resolvingModel.value = ResolvingState.REOPENING
         }
-        reviewService.resolveCodeDiscussion(currentDiscussion.id, !currentDiscussion.resolved)
         delay(200) // reduce status label blinking
+        reviewService.resolveCodeDiscussion(currentDiscussion.id, !currentDiscussion.resolved)
         resolvingModel.value = ResolvingState.READY
       }
     }

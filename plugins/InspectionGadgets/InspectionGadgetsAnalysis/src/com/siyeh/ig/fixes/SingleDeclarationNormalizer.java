@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,7 +85,7 @@ final class SingleDeclarationNormalizer {
 
   @NotNull
   private static Map<Integer, Set<String>> getFieldAnnotations(@NotNull PsiElement startElement) {
-    Int2ObjectOpenHashMap<Set<String>> result = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<Set<String>> result = new Int2ObjectOpenHashMap<>();
     int dimensionCounter = 0;
     PsiElement nextSibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(startElement);
     while (nextSibling != null) {

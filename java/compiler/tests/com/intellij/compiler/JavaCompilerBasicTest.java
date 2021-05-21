@@ -135,56 +135,54 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
       public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
       }
     }, Locale.US, null);
-    final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList());
-
-    fileManager.setLocation(StandardLocation.CLASS_PATH, Collections.singleton(jarFile));
-    fileManager.setLocation(StandardLocation.SOURCE_PATH, Collections.emptyList());
-
-    final File srcA = new File(srcAFile.getPath());
-    final File srcB = new File(srcBFile.getPath());
-    final Iterable<? extends JavaFileObject> sources = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(srcA, srcB));
     
-    final Iterator<? extends JavaFileObject> it = sources.iterator();
-    assertTrue(it.hasNext());
-    final JavaFileObject srcAFileObject = it.next();
-    assertTrue(it.hasNext());
-    final JavaFileObject srcBFileObject = it.next();
-    assertFalse(it.hasNext());
+    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
+      fileManager.setLocation(StandardLocation.CLASS_PATH, Collections.singleton(jarFile));
+      fileManager.setLocation(StandardLocation.SOURCE_PATH, Collections.emptyList());
 
-    assertEquals(JavaFileObject.Kind.SOURCE, srcAFileObject.getKind());
-    assertEquals(JavaFileObject.Kind.SOURCE, srcBFileObject.getKind());
-    assertEquals(srcA.toURI().getPath(), srcAFileObject.toUri().getPath());
-    assertEquals(srcB.toURI().getPath(), srcBFileObject.toUri().getPath());
-    assertTrue(fileManager.isSameFile(srcAFileObject, srcAFileObject));
-    assertFalse(fileManager.isSameFile(srcAFileObject, srcBFileObject));
-    checkFileObjectsBelongToLocation(fileManager, StandardLocation.SOURCE_PATH, sources);
+      final File srcA = new File(srcAFile.getPath());
+      final File srcB = new File(srcBFile.getPath());
+      final Iterable<? extends JavaFileObject> sources = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(srcA, srcB));
 
-    final Iterable<JavaFileObject> libClasses = fileManager.list(StandardLocation.CLASS_PATH, "arch", Collections.singleton(JavaFileObject.Kind.SOURCE), false);
-    final Iterator<JavaFileObject> clsIterator = libClasses.iterator();
-    assertTrue(clsIterator.hasNext());
-    final JavaFileObject res1 = clsIterator.next();
-    assertTrue(clsIterator.hasNext());
-    final JavaFileObject res2 = clsIterator.next();
-    assertFalse(clsIterator.hasNext());
+      final Iterator<? extends JavaFileObject> it = sources.iterator();
+      assertTrue(it.hasNext());
+      final JavaFileObject srcAFileObject = it.next();
+      assertTrue(it.hasNext());
+      final JavaFileObject srcBFileObject = it.next();
+      assertFalse(it.hasNext());
 
-    assertTrue(res1 instanceof ZipFileObject);
-    assertEquals(JavaFileObject.Kind.SOURCE, res1.getKind());
+      assertEquals(JavaFileObject.Kind.SOURCE, srcAFileObject.getKind());
+      assertEquals(JavaFileObject.Kind.SOURCE, srcBFileObject.getKind());
+      assertEquals(srcA.toURI().getPath(), srcAFileObject.toUri().getPath());
+      assertEquals(srcB.toURI().getPath(), srcBFileObject.toUri().getPath());
+      assertTrue(fileManager.isSameFile(srcAFileObject, srcAFileObject));
+      assertFalse(fileManager.isSameFile(srcAFileObject, srcBFileObject));
+      checkFileObjectsBelongToLocation(fileManager, StandardLocation.SOURCE_PATH, sources);
 
-    assertTrue(res2 instanceof ZipFileObject);
-    assertEquals(JavaFileObject.Kind.SOURCE, res2.getKind());
-    
-    assertFalse(fileManager.isSameFile(res1, res2));
-    checkFileObjectsBelongToLocation(fileManager, StandardLocation.CLASS_PATH, libClasses);
+      final Iterable<JavaFileObject> libClasses = fileManager.list(StandardLocation.CLASS_PATH, "arch", Collections.singleton(JavaFileObject.Kind.SOURCE), false);
+      final Iterator<JavaFileObject> clsIterator = libClasses.iterator();
+      assertTrue(clsIterator.hasNext());
+      final JavaFileObject res1 = clsIterator.next();
+      assertTrue(clsIterator.hasNext());
+      final JavaFileObject res2 = clsIterator.next();
+      assertFalse(clsIterator.hasNext());
+
+      assertTrue(res1 instanceof ZipFileObject);
+      assertEquals(JavaFileObject.Kind.SOURCE, res1.getKind());
+
+      assertTrue(res2 instanceof ZipFileObject);
+      assertEquals(JavaFileObject.Kind.SOURCE, res2.getKind());
+
+      assertFalse(fileManager.isSameFile(res1, res2));
+      checkFileObjectsBelongToLocation(fileManager, StandardLocation.CLASS_PATH, libClasses);
+    }
   }
 
-  private static void checkFileObjectsBelongToLocation(JpsJavacFileManager fileManager,
-                                                       final JavaFileManager.Location location,
-                                                       Iterable<? extends FileObject> fileObjects) throws IOException {
+  private static void checkFileObjectsBelongToLocation(JpsJavacFileManager fileManager, final JavaFileManager.Location location, Iterable<? extends FileObject> fileObjects) throws IOException {
     for (FileObject source : fileObjects) {
       assertTrue(source.getName() + " should belong to " + location.getName(), fileManager.contains(location, source));
     }
   }
-
 
   public void testSymlinksInSources() throws IOException {
     if (!IoTestUtil.isSymLinkCreationSupported) {

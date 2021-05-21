@@ -51,9 +51,4 @@ public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Val
 
   @TestOnly
   void cleanupForNextTest();
-
-  @Nullable
-  default String dumpStatistics() {
-    return null;
-  }
 }

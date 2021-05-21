@@ -16,7 +16,7 @@ import java.io.ByteArrayOutputStream
 class EntityStorageSerializationTest {
   @Test
   fun `simple model serialization`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = createEmptyBuilder()
     builder.addSampleEntity("MyEntity")
 
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toStorage(), VirtualFileUrlManagerImpl())
@@ -24,7 +24,7 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serialization with version changing`() {
-    val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
+    val builder = createEmptyBuilder()
     builder.addSampleEntity("MyEntity")
 
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
@@ -56,7 +56,7 @@ class EntityStorageSerializationTest {
     val virtualFileManager = VirtualFileUrlManagerImpl()
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
 
-    val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
+    val builder = createEmptyBuilder()
 
     // Do not replace ArrayList() with emptyList(). This must be a new object for this test
     builder.addLibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), ArrayList(), MySource)
@@ -70,7 +70,7 @@ class EntityStorageSerializationTest {
     val virtualFileManager = VirtualFileUrlManagerImpl()
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
 
-    val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
+    val builder = createEmptyBuilder()
 
     builder.addSampleEntity("myString")
 
@@ -85,7 +85,7 @@ class EntityStorageSerializationTest {
     val virtualFileManager = VirtualFileUrlManagerImpl()
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
 
-    val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
+    val builder = createEmptyBuilder()
 
     builder.addSampleEntity("myString")
 

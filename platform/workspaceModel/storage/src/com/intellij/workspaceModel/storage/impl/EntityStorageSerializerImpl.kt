@@ -449,9 +449,9 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
         val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
-
-        val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
-        val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
+        val checkingMode = ConsistencyCheckingMode.default()
+        val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes, checkingMode)
+        val builder = WorkspaceEntityStorageBuilderImpl.from(storage, checkingMode)
 
         builder.entitiesByType.entityFamilies.forEach { family ->
           family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }

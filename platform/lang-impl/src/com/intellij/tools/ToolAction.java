@@ -100,6 +100,8 @@ public class ToolAction extends AnAction implements DumbAware {
 
   @NotNull
   public static DataContext getToolDataContext(@NotNull DataContext dataContext) {
+    if (dataContext instanceof SimpleDataContext) return dataContext;
+
     SimpleDataContext.Builder builder = SimpleDataContext.builder()
       .addAll(dataContext, PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE);
     VirtualFile virtualFile = dataContext.getData(VIRTUAL_FILE);

@@ -753,7 +753,7 @@ public final class JavaReflectionReferenceUtil {
 
     @Override
     public int hashCode() {
-      return Objects.hash(myReturnType, myArgumentTypes);
+      return Objects.hash(myReturnType, Arrays.hashCode(myArgumentTypes));
     }
 
     @Override

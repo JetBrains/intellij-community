@@ -32,7 +32,10 @@ import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.BooleanStack;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +49,7 @@ public final class FormSourceCodeGenerator {
   private static final Logger LOG = Logger.getInstance(FormSourceCodeGenerator.class);
 
   @NonNls private StringBuffer myBuffer;
-  private Stack<Boolean> myIsFirstParameterStack;
+  private BooleanStack myIsFirstParameterStack;
   private final Project myProject;
   private final ArrayList<FormErrorInfo> myErrors;
   private boolean myNeedLoadLabelText;
@@ -54,9 +57,9 @@ public final class FormSourceCodeGenerator {
 
   private static final Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<>();
   private static final Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<>();
-  @NonNls private static final Int2ObjectOpenHashMap<String> ourFontStyleMap = new Int2ObjectOpenHashMap<>();
-  @NonNls private static final Int2ObjectOpenHashMap<String> ourTitleJustificationMap = new Int2ObjectOpenHashMap<>();
-  @NonNls private static final Int2ObjectOpenHashMap<String> ourTitlePositionMap = new Int2ObjectOpenHashMap<>();
+  @NonNls private static final Int2ObjectMap<String> ourFontStyleMap = new Int2ObjectOpenHashMap<>();
+  @NonNls private static final Int2ObjectMap<String> ourTitleJustificationMap = new Int2ObjectOpenHashMap<>();
+  @NonNls private static final Int2ObjectMap<String> ourTitlePositionMap = new Int2ObjectOpenHashMap<>();
 
   private boolean myNeedGetMessageFromBundle;
 
@@ -183,10 +186,10 @@ public final class FormSourceCodeGenerator {
 
   private void _generate(final LwRootContainer rootContainer, final Module module) throws CodeGenerationException, IncorrectOperationException{
     myBuffer = new StringBuffer();
-    myIsFirstParameterStack = new Stack<>();
+    myIsFirstParameterStack = new BooleanStack();
 
     final HashMap<LwComponent,String> component2variable = new HashMap<>();
-    final Object2IntOpenHashMap<String> class2variableIndex = new Object2IntOpenHashMap<>();
+    final Object2IntMap<String> class2variableIndex = new Object2IntOpenHashMap<>();
     final HashMap<String,LwComponent> id2component = new HashMap<>();
 
     if (rootContainer.getComponentCount() != 1) {
@@ -622,7 +625,7 @@ public final class FormSourceCodeGenerator {
 
   private void generateSetupCodeForComponent(final LwComponent component,
                                              final HashMap<LwComponent, String> component2TempVariable,
-                                             final Object2IntOpenHashMap<String> class2variableIndex,
+                                             final Object2IntMap<String> class2variableIndex,
                                              final HashMap<String, LwComponent> id2component,
                                              final Module module,
                                              final PsiClass aClass) throws CodeGenerationException{
@@ -852,8 +855,11 @@ public final class FormSourceCodeGenerator {
     return aClass != null && aClass.findMethodsByName("setDisplayedMnemonicIndex", true).length > 0;
   }
 
-  private void generateListModelProperty(final LwIntrospectedProperty property, final Object2IntOpenHashMap<String> class2variableIndex,
-                                         final PsiClass aClass, final Object value, final String variable) {
+  private void generateListModelProperty(final LwIntrospectedProperty property,
+                                         final Object2IntMap<String> class2variableIndex,
+                                         final PsiClass aClass,
+                                         final Object value,
+                                         final String variable) {
     String valueClassName;
     if (property.getPropertyClassName().equals(ComboBoxModel.class.getName())) {
       valueClassName = DefaultComboBoxModel.class.getName();
@@ -1036,7 +1042,7 @@ public final class FormSourceCodeGenerator {
 
   private void generateComponentReferenceProperties(final LwComponent component,
                                                     final HashMap<LwComponent, String> component2variable,
-                                                    final Object2IntOpenHashMap<String> class2variableIndex,
+                                                    final Object2IntMap<String> class2variableIndex,
                                                     final HashMap<String, LwComponent> id2component,
                                                     final PsiClass aClass) {
     String variable = getVariable(component, component2variable, class2variableIndex, aClass);
@@ -1067,7 +1073,7 @@ public final class FormSourceCodeGenerator {
 
   private void generateButtonGroups(final LwRootContainer rootContainer,
                                     final HashMap<LwComponent, String> component2variable,
-                                    final Object2IntOpenHashMap<String> class2variableIndex,
+                                    final Object2IntMap<String> class2variableIndex,
                                     final HashMap<String, LwComponent> id2component,
                                     final PsiClass aClass) {
     IButtonGroup[] groups = rootContainer.getButtonGroups();
@@ -1210,7 +1216,7 @@ public final class FormSourceCodeGenerator {
    */
   private static String getVariable(final LwComponent component,
                                     final HashMap<LwComponent, String> component2variable,
-                                    final Object2IntOpenHashMap<String> class2variableIndex,
+                                    final Object2IntMap<String> class2variableIndex,
                                     final PsiClass aClass) {
     if (component2variable.containsKey(component)) {
       return component2variable.get(component);
@@ -1228,7 +1234,8 @@ public final class FormSourceCodeGenerator {
     return result;
   }
 
-  private static String generateUniqueVariableName(@NonNls final String className, final Object2IntOpenHashMap<String> class2variableIndex,
+  private static String generateUniqueVariableName(@NonNls final String className,
+                                                   final Object2IntMap<String> class2variableIndex,
                                                    final PsiClass aClass) {
     final String shortName;
     if (className.startsWith("javax.swing.J")) {
@@ -1249,7 +1256,7 @@ public final class FormSourceCodeGenerator {
     }
     String result;
     do {
-      class2variableIndex.addTo(className, 1);
+      class2variableIndex.mergeInt(className, 1, Math::addExact);
       int newIndex = class2variableIndex.getInt(className);
 
       result = Character.toLowerCase(shortName.charAt(0)) + shortName.substring(1) + newIndex;
@@ -1301,7 +1308,7 @@ public final class FormSourceCodeGenerator {
     myBuffer.append(methodName);
     myBuffer.append('(');
 
-    myIsFirstParameterStack.push(Boolean.TRUE);
+    myIsFirstParameterStack.push(true);
   }
 
   private void startStaticMethodCall(final String fullClassName, @NonNls final String methodName) {
@@ -1312,7 +1319,7 @@ public final class FormSourceCodeGenerator {
     myBuffer.append(methodName);
     myBuffer.append('(');
 
-    myIsFirstParameterStack.push(Boolean.TRUE);
+    myIsFirstParameterStack.push(true);
   }
 
   private void startStaticMethodCall(final Class aClass, @NonNls final String methodName) {
@@ -1324,7 +1331,7 @@ public final class FormSourceCodeGenerator {
 
     myIsFirstParameterStack.pop();
 
-    if (myIsFirstParameterStack.empty()) {
+    if (myIsFirstParameterStack.isEmpty()) {
       myBuffer.append(";\n");
     }
   }
@@ -1336,7 +1343,7 @@ public final class FormSourceCodeGenerator {
     myBuffer.append(className);
     myBuffer.append('(');
 
-    myIsFirstParameterStack.push(Boolean.TRUE);
+    myIsFirstParameterStack.push(true);
   }
 
   void endConstructor() {
@@ -1372,7 +1379,7 @@ public final class FormSourceCodeGenerator {
     myBuffer.append(value);
   }
 
-  void push(final int value, final Int2ObjectOpenHashMap map){
+  void push(final int value, final Int2ObjectMap map){
     final String stringRepresentation = (String)map.get(value);
     if (stringRepresentation != null) {
       checkParameter();
@@ -1446,12 +1453,12 @@ public final class FormSourceCodeGenerator {
   }
 
   void checkParameter() {
-    if (!myIsFirstParameterStack.empty()) {
-      final Boolean b = myIsFirstParameterStack.pop();
-      if (b.equals(Boolean.FALSE)) {
+    if (!myIsFirstParameterStack.isEmpty()) {
+      final boolean b = myIsFirstParameterStack.pop();
+      if (!b) {
         myBuffer.append(',');
       }
-      myIsFirstParameterStack.push(Boolean.FALSE);
+      myIsFirstParameterStack.push(false);
     }
   }
 }

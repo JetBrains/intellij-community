@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
@@ -33,7 +32,6 @@ import java.util.List;
 public abstract class XsltRunnerExtension {
     public static final ExtensionPointName<XsltRunnerExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("XPathView.xsltRunnerExtension");
 
-
     public abstract ProcessListener createProcessListener(Project project, UserDataHolder extensionData);
 
     /**
@@ -42,7 +40,6 @@ public abstract class XsltRunnerExtension {
     public abstract boolean createTabs(Project project, AdditionalTabComponentManager manager, AdditionalTabComponent outputConsole, ProcessHandler process);
 
     public abstract void patchParameters(SimpleJavaParameters parameters, XsltRunConfiguration xsltCommandLineState, UserDataHolder extensionData) throws CantRunException;
-
 
     protected abstract boolean supports(XsltRunConfiguration config, boolean debugger);
 

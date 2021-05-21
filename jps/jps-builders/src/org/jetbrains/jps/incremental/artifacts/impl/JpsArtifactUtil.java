@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsComplexPackagingElement;
@@ -51,7 +50,7 @@ public final class JpsArtifactUtil {
   }
 
   public static Set<JpsModule> getModulesIncludedInArtifacts(final @NotNull Collection<? extends JpsArtifact> artifacts) {
-    final Set<JpsModule> modules = new THashSet<>();
+    final Set<JpsModule> modules = new HashSet<>();
     for (JpsArtifact artifact : artifacts) {
       processPackagingElements(artifact.getRootElement(), element -> {
         if (element instanceof JpsModuleOutputPackagingElement) {

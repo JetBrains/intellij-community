@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.FileASTNode;
@@ -32,7 +32,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -1468,7 +1467,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     int docHash2 = System.identityHashCode(document);
     assertNotSame(docHash0, docHash1);
     assertNotSame(docHash0, docHash2);
-    Set<RangeMarker> collectedMarkers = new THashSet<>();
+    Set<RangeMarker> collectedMarkers = new HashSet<>();
     ((DocumentEx)document).processRangeMarkers(new CommonProcessors.CollectProcessor<>(collectedMarkers));
     assertSameElements("", collectedMarkers, Arrays.asList(marker[0], persistentMarker[0], oldmarker[0]));
     collectedMarkers.clear();

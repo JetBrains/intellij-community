@@ -68,22 +68,20 @@
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
-      <library name="org.languagetool:languagetool-core:5.0" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.0.2" />
+      <library name="org.languagetool:languagetool-core:5.2" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.2" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.0.2/languagetool-core-5.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.2/languagetool-core-5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.0.2/languagetool-core-5.0.2-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.languagetool:language-en:5.0" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.0" />
+      <library name="org.languagetool:language-en:5.2" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.2" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.0/language-en-5.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.2/language-en-5.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -241,6 +239,26 @@
         <properties include-transitive-deps="false" maven-id="com.hankcs:aho-corasick-double-array-trie:1.2.2" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1.2.2/aho-corasick-double-array-trie-1.2.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="com.vdurmont:emoji-java:5.1.1" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.vdurmont:emoji-java:5.1.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/vdurmont/emoji-java/5.1.1/emoji-java-5.1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.json:json:20170516" type="repository">
+        <properties maven-id="org.json:json:20170516" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20170516/json-20170516.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

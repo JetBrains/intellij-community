@@ -87,7 +87,7 @@ final class PairElementsFMap<V1, V2> implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
+  public @NotNull Key @NotNull [] getKeys() {
     return new Key[] { key1, key2 };
   }
 

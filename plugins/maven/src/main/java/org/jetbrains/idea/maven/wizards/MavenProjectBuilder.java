@@ -9,9 +9,9 @@ import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModels
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
@@ -171,7 +171,8 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
-    if (!manager.hasProjects() && settings.generalSettings.isShowDialogWithAdvancedSettings()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
+        !manager.hasProjects() && settings.generalSettings.isShowDialogWithAdvancedSettings()) {
       showGeneralSettingsConfigurationDialog(project, settings.generalSettings);
     }
 
@@ -179,8 +180,8 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles);
     manager.waitForReadingCompletion();
-
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
+        !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode() &&
         !ApplicationManager.getApplication().isUnitTestMode()) {
       Promise<List<Module>> promise = manager.scheduleImportAndResolve();
       manager.waitForResolvingCompletion();

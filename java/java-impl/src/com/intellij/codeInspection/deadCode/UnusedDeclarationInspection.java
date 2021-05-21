@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
@@ -21,7 +21,6 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -30,12 +29,10 @@ import org.jetbrains.uast.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase {
+public final class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase {
   private final UnusedParametersInspection myUnusedParameters = new UnusedParametersInspection();
 
   public UnusedDeclarationInspection() { }
@@ -272,7 +269,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
     }
 
     private void findUnusedLocalVariablesInCodeBlock(@NotNull PsiCodeBlock codeBlock, @NotNull List<CommonProblemDescriptor> descriptors) {
-      Set<PsiVariable> usedVariables = new THashSet<>();
+      Set<PsiVariable> usedVariables = new HashSet<>();
       List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(codeBlock, usedVariables);
       if (unusedDefs != null && !unusedDefs.isEmpty()) {
         for (DefUseUtil.Info varDefInfo : unusedDefs) {

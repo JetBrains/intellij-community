@@ -12,35 +12,43 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class UastMetaLanguage extends MetaLanguage {
-  private final Set<Language> myLanguages;
+  static final class Holder {
+    private static final Set<Language> myLanguages;
+
+    static {
+      Collection<UastLanguagePlugin> languagePlugins = UastLanguagePlugin.Companion.getInstances();
+      myLanguages = new HashSet<>(languagePlugins.size());
+      initLanguages(languagePlugins);
+
+      UastLanguagePlugin.Companion.getExtensionPointName().addChangeListener(() -> {
+        myLanguages.clear();
+        initLanguages(UastLanguagePlugin.Companion.getInstances());
+      }, null);
+    }
+
+    private static void initLanguages(Collection<UastLanguagePlugin> languagePlugins) {
+      for (UastLanguagePlugin plugin : languagePlugins) {
+        myLanguages.add(plugin.getLanguage());
+      }
+    }
+
+    public static Set<Language> getLanguages() {
+      return myLanguages;
+    }
+  }
 
   private UastMetaLanguage() {
     super("UAST");
-
-    Collection<UastLanguagePlugin> languagePlugins = UastLanguagePlugin.Companion.getInstances();
-    myLanguages = new HashSet<>(languagePlugins.size());
-    initLanguages(languagePlugins);
-
-    UastLanguagePlugin.Companion.getExtensionPointName().addChangeListener(() -> {
-      myLanguages.clear();
-      initLanguages(UastLanguagePlugin.Companion.getInstances());
-    }, null);
-  }
-
-  private void initLanguages(Collection<UastLanguagePlugin> languagePlugins) {
-    for (UastLanguagePlugin plugin : languagePlugins) {
-      myLanguages.add(plugin.getLanguage());
-    }
   }
 
   @Override
   public boolean matchesLanguage(@NotNull Language language) {
-    return myLanguages.contains(language);
+    return Holder.myLanguages.contains(language);
   }
 
   @NotNull
   @Override
   public Collection<Language> getMatchingLanguages() {
-    return Collections.unmodifiableSet(myLanguages);
+    return Collections.unmodifiableSet(Holder.myLanguages);
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.MacUIUtil;
@@ -81,8 +82,33 @@ public final class DarculaUIUtil {
     g.fill(shape);
   }
 
-  public static void paintFocusTag(Graphics2D g2, float width, float height) {
-    Outline.focus.setGraphicsColor(g2, true);
+  public static Outline computeOutlineFor(Component c) {
+    JComponent component = ObjectUtils.tryCast(c, JComponent.class);
+
+    if (component != null) {
+      String outline = ObjectUtils.tryCast(component.getClientProperty("JComponent.outline"), String.class);
+
+      if (outline != null) {
+        if (outline.equals("error")) {
+          return Outline.error;
+        }
+        else if (outline.equals("warning")) {
+          return Outline.warning;
+        }
+      }
+    }
+
+    return Outline.focus;
+  }
+
+  public static void paintTag(Graphics2D g2, float width, float height, boolean hasFocus, Outline type) {
+    if (type == Outline.focus && !hasFocus) {
+      return;
+    }
+    else {
+      type.setGraphicsColor(g2, hasFocus);
+    }
+
     float bw = BW.getFloat();
     Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
     border.append(new RoundRectangle2D.Float(0, 0, width, height, height, height), false);

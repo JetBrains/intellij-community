@@ -190,8 +190,8 @@ public final class ByLine {
         int start1 = Math.max(last1, builder.getIndex1());
         int start2 = Math.max(last2, builder.getIndex2());
 
-        IntArrayList subLines1 = new IntArrayList();
-        IntArrayList subLines2 = new IntArrayList();
+        IntList subLines1=new IntArrayList();
+        IntList subLines2=new IntArrayList();
         for (int i = start1; i < line1; i++) {
           if (StringUtil.equalsIgnoreWhitespaces(sample, lines1.get(i).getContent())) {
             subLines1.add(i);

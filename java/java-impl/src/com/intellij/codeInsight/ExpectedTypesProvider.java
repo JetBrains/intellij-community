@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.testFrameworks.AssertHint;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1296,7 +1295,7 @@ public final class ExpectedTypesProvider {
       final PsiManager manager = methodCallExpr.getManager();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       Set<PsiMethod> psiMethods = mapToDeepestSuperMethods(myClassProvider.findDeclaredMethods(manager, Objects.requireNonNull(reference.getReferenceName())));
-      Set<ExpectedTypeInfo> types = new THashSet<>();
+      Set<ExpectedTypeInfo> types = new HashSet<>();
       for (PsiMethod method : psiMethods) {
         final PsiClass aClass = method.getContainingClass();
         if (aClass == null || !facade.getResolveHelper().isAccessible(method, reference, aClass)) continue;

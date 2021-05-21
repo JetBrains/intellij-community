@@ -92,9 +92,13 @@ class TMHAssertionGenerator {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresBackgroundThread";
 
     AssertBackgroundThread() {
-      this(Type.getType("L" + DEFAULT_ANNOTATION_CLASS_NAME + ";"),
-          Type.getType("L" + DEFAULT_APPLICATION_MANAGER_CLASS_NAME + ";"),
-          Type.getType("L" + DEFAULT_APPLICATION_CLASS_NAME + ";"));
+      this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
+    }
+
+    AssertBackgroundThread(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+      this(Type.getType("L" + annotationClassName + ";"),
+           Type.getType("L" + applicationManagerClassName + ";"),
+           Type.getType("L" + applicationClassName + ";"));
     }
 
     AssertBackgroundThread(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
@@ -111,6 +115,12 @@ class TMHAssertionGenerator {
           Type.getType("L" + DEFAULT_APPLICATION_CLASS_NAME + ";"));
     }
 
+    AssertReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+      this(Type.getType("L" + annotationClassName + ";"),
+           Type.getType("L" + applicationManagerClassName + ";"),
+           Type.getType("L" + applicationClassName + ";"));
+    }
+
     AssertReadAccess(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
       super(annotationClass, applicationManagerClass, applicationClass, new Method("assertReadAccessAllowed", "()V"));
     }
@@ -123,6 +133,12 @@ class TMHAssertionGenerator {
       this(Type.getType("L" + DEFAULT_ANNOTATION_CLASS_NAME + ";"),
           Type.getType("L" + DEFAULT_APPLICATION_MANAGER_CLASS_NAME + ";"),
           Type.getType("L" + DEFAULT_APPLICATION_CLASS_NAME + ";"));
+    }
+
+    AssertWriteAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+      this(Type.getType("L" + annotationClassName + ";"),
+           Type.getType("L" + applicationManagerClassName + ";"),
+           Type.getType("L" + applicationClassName + ";"));
     }
 
     AssertWriteAccess(Type annotationClass, Type applicationManagerClass, Type applicationClass) {

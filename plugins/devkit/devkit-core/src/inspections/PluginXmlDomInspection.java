@@ -838,6 +838,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         else if (psiField.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
           highlightExperimental(attributeValue, holder);
         }
+        else if (psiField.hasAnnotation(ApiStatus.Internal.class.getCanonicalName()) &&
+                 module != null && !PsiUtil.isIdeaProject(module.getProject())) {
+          highlightInternal(attributeValue, holder);
+        }
       }
     }
 

@@ -928,6 +928,14 @@ public final class ArrayUtil {
     }
     return max;
   }
+  @Contract(pure = true)
+  public static double max(double @NotNull [] values) {
+    double max = Double.NEGATIVE_INFINITY;
+    for (double value : values) {
+      if (value > max) max = value;
+    }
+    return max;
+  }
 
   @Contract(pure = true)
   public static int[] mergeSortedArrays(int @NotNull [] a1, int @NotNull [] a2, boolean mergeEqualItems) {

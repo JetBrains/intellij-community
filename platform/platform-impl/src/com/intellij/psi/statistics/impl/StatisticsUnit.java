@@ -145,8 +145,8 @@ final class StatisticsUnit {
 
   private static void writeStringIntMap(DataOutput dataOut, Object2IntMap<String> map) throws IOException {
     DataInputOutputUtilRt.writeINT(dataOut, map.size());
-    for (Object context : map.keySet()) {
-      IOUtil.writeUTF(dataOut, (String)context);
+    for (String context : map.keySet()) {
+      IOUtil.writeUTF(dataOut, context);
       DataInputOutputUtilRt.writeINT(dataOut, map.getInt(context));
     }
   }

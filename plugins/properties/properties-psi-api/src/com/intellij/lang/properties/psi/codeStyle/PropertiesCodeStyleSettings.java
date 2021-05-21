@@ -55,8 +55,7 @@ public class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
     parentElement = parentElement.getChild(getTagName());
     if (parentElement != null) {
       Character delimiter = null;
-      for (final Object o : parentElement.getChildren("option")) {
-        Element e = (Element)o;
+      for (final Element e : parentElement.getChildren("option")) {
         String fieldName = e.getAttributeValue("name");
         if ("KEY_VALUE_DELIMITER".equals(fieldName)) {
           final String value = e.getAttributeValue("value");

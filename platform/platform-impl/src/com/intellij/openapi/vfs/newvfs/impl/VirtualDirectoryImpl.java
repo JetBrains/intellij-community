@@ -793,7 +793,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   static void checkLeaks(@NotNull KeyFMap newMap) {
     for (Key<?> key : newMap.getKeys()) {
-      if (key != null && newMap.get(key) instanceof PsiCachedValue) {
+      if (newMap.get(key) instanceof PsiCachedValue) {
         throw new AssertionError("Don't store CachedValue in VFS user data, since it leads to memory leaks");
       }
     }

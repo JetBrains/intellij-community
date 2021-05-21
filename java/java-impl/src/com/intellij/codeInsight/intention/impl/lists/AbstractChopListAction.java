@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.lists;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,30 +26,32 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    Context<L, E> context = from(element);
-    if (context == null) return;
-    Document document = editor.getDocument();
-    List<E> elements = context.elements;
-    int size = elements.size();
-    for (int i = elements.size() - 1; i >= 0; i--) {
-      E el = elements.get(i);
-      if (nextBreak(el) == null) {
-        int offset = findOffsetForBreakAfter(el);
-        if (i == size - 1 && !needTailBreak(el)) continue;
-        document.insertString(offset, "\n");
+    WriteAction.run(() -> {
+      Context<L, E> context = from(element);
+      if (context == null) return;
+      Document document = editor.getDocument();
+      List<E> elements = context.elements;
+      int size = elements.size();
+      for (int i = elements.size() - 1; i >= 0; i--) {
+        E el = elements.get(i);
+        if (nextBreak(el) == null) {
+          int offset = findOffsetForBreakAfter(el);
+          if (i == size - 1 && !needTailBreak(el)) continue;
+          document.insertString(offset, "\n");
+        }
       }
-    }
-    E first = elements.get(0);
-    if (needHeadBreak(first)){
-      document.insertString(findOffsetOfBreakBeforeFirst(first), "\n");
-    }
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    SmartPsiElementPointer<L> pointer = SmartPointerManager.createPointer(context.list);
-    documentManager.commitDocument(document);
-    L list = pointer.getElement();
-    if (list != null) {
-      CodeStyleManager.getInstance(project).adjustLineIndent(list.getContainingFile(), list.getParent().getTextRange());
-    }
+      E first = elements.get(0);
+      if (needHeadBreak(first)) {
+        document.insertString(findOffsetOfBreakBeforeFirst(first), "\n");
+      }
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      SmartPsiElementPointer<L> pointer = SmartPointerManager.createPointer(context.list);
+      documentManager.commitDocument(document);
+      L list = pointer.getElement();
+      if (list != null) {
+        CodeStyleManager.getInstance(project).adjustLineIndent(list.getContainingFile(), list.getParent().getTextRange());
+      }
+    });
   }
 
   abstract int findOffsetForBreakAfter(E element);

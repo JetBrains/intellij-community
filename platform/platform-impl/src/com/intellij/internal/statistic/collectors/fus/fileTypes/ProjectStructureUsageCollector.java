@@ -25,7 +25,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.JBIterable;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer;
@@ -75,7 +74,7 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
       .flatMap(JpsModelSerializerExtension::getModuleSourceRootPropertiesSerializers)
       .toMap(JpsElementPropertiesSerializer::getType, JpsElementPropertiesSerializer::getTypeId);
     int contentRoots = 0, sourceRoots = 0, excludedRoots = 0, packagePrefix = 0;
-    Object2IntOpenHashMap<String> types = new Object2IntOpenHashMap<>();
+    Object2IntMap<String> types = new Object2IntOpenHashMap<>();
     Module[] modules = ModuleManager.getInstance(project).getModules();
 
     for (Module module : modules) {
@@ -92,7 +91,7 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
           if (key == null) {
             continue;
           }
-          types.addTo(key, 1);
+          types.mergeInt(key, 1, Math::addExact);
         }
       }
     }
@@ -102,9 +101,7 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
     result.add(CONTENT_ROOTS_TOTAL.metric(contentRoots));
     result.add(SOURCE_ROOTS_TOTAL.metric(sourceRoots));
     result.add(EXCLUDED_ROOTS_TOTAL.metric(excludedRoots));
-    ObjectIterator<Object2IntMap.Entry<String>> iterator = types.object2IntEntrySet().fastIterator();
-    while (iterator.hasNext()) {
-      Object2IntMap.Entry<String> entry = iterator.next();
+    for (Object2IntMap.Entry<String> entry : types.object2IntEntrySet()) {
       result.add(SOURCE_ROOT.metric(entry.getIntValue(), entry.getKey()));
     }
     if (PlatformUtils.isIntelliJ()) {

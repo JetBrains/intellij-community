@@ -13,15 +13,13 @@ import com.intellij.space.ui.LoadableListVmImpl
 import com.intellij.space.ui.bindScroll
 import com.intellij.space.ui.toLoadable
 import com.intellij.space.vcs.review.SpaceReviewDataKeys
-import com.intellij.ui.CollectionListModel
-import com.intellij.ui.ListUtil
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.*
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import java.awt.Component
+import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 
@@ -66,11 +64,18 @@ internal object SpaceReviewListFactory {
     listVm.isLoading.forEach(listVm.lifetime) { isLoading ->
       if (isLoading) {
         progressStripe.startLoading()
-        reviewsList.setEmptyText(SpaceBundle.message("review.loading.reviews"))
+        reviewsList.emptyText
+          .clear()
+          .appendText(SpaceBundle.message("review.loading.reviews"))
       }
       else {
         progressStripe.stopLoading()
-        reviewsList.setEmptyText(SpaceBundle.message("review.list.empty"))
+        reviewsList.emptyText
+          .clear()
+          .appendText(SpaceBundle.message("review.list.empty"))
+          .appendSecondaryText(SpaceBundle.message("action.refresh.text"), SimpleTextAttributes.LINK_ATTRIBUTES, ActionListener {
+            listVm.refresh()
+          })
       }
     }
 

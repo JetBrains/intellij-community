@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.marketplace
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
@@ -15,18 +15,22 @@ open class PluginModulesHelper {
     fun getInstance(): PluginModulesHelper = service()
   }
 
-  private val pluginsModuleCache: Cache<PluginModule, Optional<PluginId>> = CacheBuilder
+  private val pluginsModuleCache: Cache<PluginModule, Optional<PluginId>> = Caffeine
     .newBuilder()
     .expireAfterWrite(1, TimeUnit.HOURS)
     .build()
 
   fun getMarketplacePluginIdByModule(depPluginId: PluginId): PluginId? {
     val installedPluginWithModule = PluginManagerCore.findPluginByModuleDependency(depPluginId)
-    if (installedPluginWithModule != null) return installedPluginWithModule.pluginId
+    if (installedPluginWithModule != null) {
+      return installedPluginWithModule.pluginId
+    }
 
     val pluginModule = depPluginId.idString
     val cachedModule = pluginsModuleCache.getIfPresent(pluginModule)?.orElse(null)
-    if (cachedModule != null) return cachedModule
+    if (cachedModule != null) {
+      return cachedModule
+    }
 
     val updatesByModule: List<IdeCompatibleUpdate> = MarketplaceRequests.getInstance().getCompatibleUpdatesByModule(pluginModule)
     return updatesByModule.firstOrNull()

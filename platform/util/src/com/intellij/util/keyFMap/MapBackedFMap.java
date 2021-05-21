@@ -23,18 +23,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-import static com.intellij.util.keyFMap.ArrayBackedFMap.getKeysByIndices;
-
 final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   private MapBackedFMap(@NotNull MapBackedFMap oldMap, final int exclude) {
     super(oldMap.size());
-    oldMap.forEachEntry(new TIntObjectProcedure<Object>() {
-      @Override
-      public boolean execute(int key, Object val) {
-        if (key != exclude) put(key, val);
-        assert key >= 0 : key;
-        return true;
+    oldMap.forEachEntry((key, val) -> {
+      if (key != exclude) {
+        put(key, val);
       }
+      assert key >= 0 : key;
+      return true;
     });
     assert size() > ArrayBackedFMap.ARRAY_THRESHOLD;
   }
@@ -57,7 +54,7 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
     int keyCode = key.hashCode();
     assert keyCode >= 0 : key;
-    @SuppressWarnings("unchecked")
+    //noinspection unchecked
     V oldValue = (V)get(keyCode);
     if (value == oldValue) return this;
     MapBackedFMap newMap = new MapBackedFMap(this, -1);
@@ -94,18 +91,15 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
 
   @Override
   public Key @NotNull [] getKeys() {
-    return getKeysByIndices(keys());
+    return ArrayBackedFMap.getKeysByIndices(keys());
   }
 
   @Override
   public int getValueIdentityHashCode() {
     final int[] hash = {0};
-    forEachEntry(new TIntObjectProcedure<Object>() {
-      @Override
-      public boolean execute(int key, Object value) {
-        hash[0] = (hash[0] * 31 + key) * 31 + System.identityHashCode(value);
-        return true;
-      }
+    forEachEntry((key, value) -> {
+      hash[0] = (hash[0] * 31 + key) * 31 + System.identityHashCode(value);
+      return true;
     });
     return hash[0];
   }
@@ -115,12 +109,7 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
     if(other == this) return true;
     if (!(other instanceof MapBackedFMap) || other.size() != size()) return false;
     final MapBackedFMap map = (MapBackedFMap)other;
-    return forEachEntry(new TIntObjectProcedure<Object>() {
-      @Override
-      public boolean execute(int key, Object value) {
-        return map.get(key) == value;
-      }
-    });
+    return forEachEntry((key, value) -> map.get(key) == value);
   }
 
   @Override

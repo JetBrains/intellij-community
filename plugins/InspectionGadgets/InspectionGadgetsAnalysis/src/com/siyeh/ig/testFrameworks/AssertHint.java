@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.psi.*;
@@ -13,8 +13,9 @@ import java.util.Map;
 import java.util.function.Function;
 
 public final class AssertHint {
+  @NonNls private static final String ORG_TESTNG_ASSERT = "org.testng.Assert";
   private final int myArgIndex;
-  private final boolean myMessageOnFirstPosition;
+  private final ParameterOrder myParameterOrder;
   private final @Nullable PsiExpression myMessage;
   private final @NotNull PsiMethod myMethod;
   private final @NotNull PsiExpression myOriginalExpression;
@@ -25,16 +26,30 @@ public final class AssertHint {
                      @NotNull PsiMethod method,
                      @NotNull PsiExpression originalExpression) {
     myArgIndex = index;
-    myMessageOnFirstPosition = messageOnFirstPosition;
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null && ORG_TESTNG_ASSERT.equals(containingClass.getQualifiedName())) {
+      // strictly speaking testng fail() has the message on the first position, but we ignore that here
+      myParameterOrder = ParameterOrder.ACTUAL_EXPECTED_MESSAGE;
+    }
+    else {
+      myParameterOrder = messageOnFirstPosition ? ParameterOrder.MESSAGE_EXPECTED_ACTUAL : ParameterOrder.EXPECTED_ACTUAL_MESSAGE;
+    }
     myMessage = message;
     myMethod = method;
     myOriginalExpression = originalExpression;
   }
 
   public boolean isMessageOnFirstPosition() {
-    return myMessageOnFirstPosition;
+    return myParameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL;
   }
 
+  /**
+   * @return false for testng, true otherwise
+   */
+  public boolean isExpectedActualOrder() {
+    return myParameterOrder == ParameterOrder.EXPECTED_ACTUAL_MESSAGE || myParameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL;
+  }
+  
   /**
    * @return index of the first (left) argument in expected/actual pair.
    */
@@ -55,11 +70,11 @@ public final class AssertHint {
   }
 
   public @NotNull PsiExpression getExpected() {
-    return isMessageOnFirstPosition() ? getFirstArgument() : getSecondArgument();
+    return myParameterOrder != ParameterOrder.ACTUAL_EXPECTED_MESSAGE ? getFirstArgument() : getSecondArgument();
   }
 
   public @NotNull PsiExpression getActual() {
-    return isMessageOnFirstPosition() ? getSecondArgument() : getFirstArgument();
+    return myParameterOrder == ParameterOrder.ACTUAL_EXPECTED_MESSAGE ? getFirstArgument() : getSecondArgument();
   }
 
   public @NotNull PsiExpression getOriginalExpression() {
@@ -225,7 +240,7 @@ public final class AssertHint {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    return "org.testng.AssertJUnit".equals(qualifiedName) || "org.testng.Assert".equals(qualifiedName) && "fail".equals(method.getName()) ||
+    return "org.testng.AssertJUnit".equals(qualifiedName) || ORG_TESTNG_ASSERT.equals(qualifiedName) && "fail".equals(method.getName()) ||
            JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) ||
            JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName) ||
            JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(qualifiedName) ||
@@ -238,13 +253,28 @@ public final class AssertHint {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    return "org.testng.Assert".equals(qualifiedName) && !"fail".equals(method.getName()) ||
+    return ORG_TESTNG_ASSERT.equals(qualifiedName) && !"fail".equals(method.getName()) ||
            JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
            JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS.equals(qualifiedName);
   }
 
   public boolean isAssertTrue() {
     return "assertTrue".equals(getMethod().getName());
+  }
+
+  enum ParameterOrder {
+    /**
+     * junit 3/junit 4
+     */
+    MESSAGE_EXPECTED_ACTUAL,
+    /**
+     * junit 5
+     */
+    EXPECTED_ACTUAL_MESSAGE,
+    /**
+     * testng
+     */
+    ACTUAL_EXPECTED_MESSAGE
   }
 
   public static final class JUnitCommonAssertNames {

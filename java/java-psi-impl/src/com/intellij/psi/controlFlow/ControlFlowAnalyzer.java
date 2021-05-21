@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,11 +47,11 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   private final @NotNull ControlFlowOptions myOptions;
   private final boolean myAssignmentTargetsAreElements;
 
-  private final Stack<IntArrayList> intArrayPool = new Stack<>();
+  private final Stack<IntList> intArrayPool = new Stack<>();
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getStartOffset(element)
-  private final Map<PsiElement, IntArrayList> offsetsAddElementStart = new HashMap<>();
+  private final Map<PsiElement, IntList> offsetsAddElementStart = new HashMap<>();
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getEndOffset(element)
-  private final Map<PsiElement, IntArrayList> offsetsAddElementEnd = new HashMap<>();
+  private final Map<PsiElement, IntList> offsetsAddElementEnd = new HashMap<>();
   private final ControlFlowFactory myControlFlowFactory;
   private final List<SubRangeInfo> mySubRanges = new ArrayList<>();
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
@@ -120,7 +121,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private static class StatementStack {
     private final Stack<PsiElement> myStatements = new Stack<>();
-    private final IntArrayList myAtStart = new IntArrayList();
+    private final IntList myAtStart = new IntArrayList();
 
     private void popStatement() {
       myAtStart.removeInt(myAtStart.size() - 1);
@@ -143,24 +144,24 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @NotNull
-  private IntArrayList getEmptyIntArray() {
+  private IntList getEmptyIntArray() {
     if (intArrayPool.isEmpty()) {
       return new IntArrayList(1);
     }
-    IntArrayList list = intArrayPool.pop();
+    IntList list = intArrayPool.pop();
     list.clear();
     return list;
   }
 
-  private void poolIntArray(@NotNull IntArrayList list) {
+  private void poolIntArray(@NotNull IntList list) {
     intArrayPool.add(list);
   }
 
   // patch instruction currently added to control flow so that its jump offset corrected on getStartOffset(element) or getEndOffset(element)
   //  when corresponding element offset become available
   private void addElementOffsetLater(@NotNull PsiElement element, boolean atStart) {
-    Map<PsiElement, IntArrayList> offsetsAddElement = atStart ? offsetsAddElementStart : offsetsAddElementEnd;
-    IntArrayList offsets = offsetsAddElement.get(element);
+    Map<PsiElement, IntList> offsetsAddElement = atStart ? offsetsAddElementStart : offsetsAddElementEnd;
+    IntList offsets = offsetsAddElement.get(element);
     if (offsets == null) {
       offsets = getEmptyIntArray();
       offsetsAddElement.put(element, offsets);
@@ -180,7 +181,8 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     offsetsAddElementEnd.put(element, null);
   }
 
-  private void patchInstructionOffsets(@Nullable IntArrayList offsets, int add) {
+  private void patchInstructionOffsets(@Nullable IntList offsets,
+                                       int add) {
     if (offsets == null) return;
     for (int i = 0; i < offsets.size(); i++) {
       int offset = offsets.getInt(i);
@@ -193,10 +195,10 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private ControlFlow cleanup() {
     // make all non patched goto instructions jump to the end of control flow
-    for (IntArrayList offsets : offsetsAddElementStart.values()) {
+    for (IntList offsets : offsetsAddElementStart.values()) {
       patchInstructionOffsets(offsets, myCurrentFlow.getEndOffset(myCodeFragment));
     }
-    for (IntArrayList offsets : offsetsAddElementEnd.values()) {
+    for (IntList offsets : offsetsAddElementEnd.values()) {
       patchInstructionOffsets(offsets, myCurrentFlow.getEndOffset(myCodeFragment));
     }
 

@@ -391,6 +391,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     return myModulePathsToLoad == null ? 0 : myModulePathsToLoad.size();
   }
 
+  @Override
   public boolean areModulesLoaded() {
     return myModulesLoaded;
   }

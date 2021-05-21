@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -50,7 +50,7 @@ public abstract class JavaStubElementType<StubT extends StubElement<?>, PsiT ext
   public abstract PsiT createPsi(@NotNull ASTNode node);
 
   @Override
-  public final @NotNull StubT createStub(@NotNull PsiT psi, StubElement<?> parentStub) {
+  public final @NotNull StubT createStub(@NotNull PsiT psi, StubElement<? extends PsiElement> parentStub) {
     final String message = "Should not be called. Element=" + psi + "; class" + psi.getClass() + "; file=" + (psi.isValid() ? psi.getContainingFile() : "-");
     throw new UnsupportedOperationException(message);
   }

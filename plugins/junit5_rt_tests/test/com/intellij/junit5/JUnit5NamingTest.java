@@ -25,29 +25,27 @@ import java.util.Arrays;
 public class JUnit5NamingTest extends JUnit5CodeInsightTest {
   @Test
   void arrayParameters() {
-    doTest(() -> {
-      PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("MyTest.java", "import org.junit.jupiter.api.*;" +
-                                                                               "class MyTest {" +
-                                                                               "  @Test void foo(int[] i); \n" +
-                                                                               "  @Test void foo(int i); \n" +
-                                                                               "  @Test void foo(String[] i); \n" +
-                                                                               "  @Test void foo(String i); \n" +
-                                                                               "  @Test void foo(Foo[] i); \n" +
-                                                                               "  @Test void foo(Foo i); \n" +
-                                                                               "  static class Foo {}" +
-                                                                               "}");
-      String[] methodPresentations =
-        Arrays.stream(file.getClasses()[0].getMethods())
-          .map(method -> JUnitConfiguration.Data.getMethodPresentation(method))
-          .toArray(String[]::new);
-      Assertions.assertArrayEquals(new String[] {"foo(int[])",
-                                     "foo(int)", 
-                                     "foo([Ljava.lang.String;)", 
-                                     "foo(java.lang.String)", 
-                                     "foo([LMyTest$Foo;)", 
-                                     "foo(MyTest$Foo)"}, 
-                                   methodPresentations, 
-                                   Arrays.toString(methodPresentations));
-    });
+    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("MyTest.java", "import org.junit.jupiter.api.*;" +
+                                                                             "class MyTest {" +
+                                                                             "  @Test void foo(int[] i); \n" +
+                                                                             "  @Test void foo(int i); \n" +
+                                                                             "  @Test void foo(String[] i); \n" +
+                                                                             "  @Test void foo(String i); \n" +
+                                                                             "  @Test void foo(Foo[] i); \n" +
+                                                                             "  @Test void foo(Foo i); \n" +
+                                                                             "  static class Foo {}" +
+                                                                             "}");
+    String[] methodPresentations =
+      Arrays.stream(file.getClasses()[0].getMethods())
+        .map(method -> JUnitConfiguration.Data.getMethodPresentation(method))
+        .toArray(String[]::new);
+    Assertions.assertArrayEquals(new String[]{"foo(int[])",
+                                   "foo(int)",
+                                   "foo([Ljava.lang.String;)",
+                                   "foo(java.lang.String)",
+                                   "foo([LMyTest$Foo;)",
+                                   "foo(MyTest$Foo)"},
+                                 methodPresentations,
+                                 Arrays.toString(methodPresentations));
   }
 }

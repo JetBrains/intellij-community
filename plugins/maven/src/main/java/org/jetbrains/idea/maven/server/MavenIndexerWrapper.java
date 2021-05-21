@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.project.Project;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.apache.lucene.search.Query;
@@ -22,7 +23,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<MavenServerIndexer> {
-  private final Int2ObjectOpenHashMap<IndexData> myDataMap = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<IndexData> myDataMap = new Int2ObjectOpenHashMap<>();
   private final Project myProject;
 
   public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent, Project project) {

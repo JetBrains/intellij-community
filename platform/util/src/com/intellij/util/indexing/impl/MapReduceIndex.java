@@ -25,7 +25,6 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   protected final AtomicLong myModificationStamp = new AtomicLong();
   protected final DataIndexer<Key, Value, Input> myIndexer;
-  private final @Nullable ValueSerializationChecker<Value> myValueSerializationChecker;
+  private final @Nullable ValueSerializationChecker<Value, Input> myValueSerializationChecker;
   private final @NotNull IndexExtension<Key, Value, Input> myExtension;
 
   private final ForwardIndex myForwardIndex;
@@ -250,7 +249,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @Override
-  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content) throws MapInputException, ProcessCanceledException {
+  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content)
+    throws MapReduceIndexMappingException, ProcessCanceledException {
     InputData<Key, Value> data;
     try {
       data = mapInput(inputId, content);
@@ -258,8 +258,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     catch (ProcessCanceledException e) {
       throw e;
     }
+    catch (MapReduceIndexMappingException e) {
+      throw e;
+    }
     catch (Exception e) {
-      throw new MapInputException("Failed to map data for input " + inputId + " for index " + myIndexId.getName(), e);
+      throw new MapReduceIndexMappingException(e, myExtension.getClass());
     }
 
     UpdateData<Key, Value> updateData = new UpdateData<>(
@@ -271,16 +274,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     );
 
     return new IndexUpdateComputable(updateData, data);
-  }
-
-  /**
-   * An exception occurred while mapping data for a single file by its associated indexer.
-   * We should not rebuild the whole index if indexing of only one file has failed.
-   */
-  public static final class MapInputException extends RuntimeException {
-    public MapInputException(String message, Throwable cause) {
-      super(message, cause);
-    }
   }
 
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
@@ -312,7 +305,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
     Map<Key, Value> data = mapByIndexer(inputId,  content);
     if (myValueSerializationChecker != null) {
-      myValueSerializationChecker.checkValuesHaveProperEqualsAndHashCode(data);
+      myValueSerializationChecker.checkValuesHaveProperEqualsAndHashCode(data, content);
     }
     checkCanceled();
     return new InputData<>(data);

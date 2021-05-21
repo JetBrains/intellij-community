@@ -349,15 +349,40 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     });
   }
 
+  /**
+   * Different places in IntelliJ codebase behaves differently in case of headless mode.
+   *
+   * Often, they're trying to make async parts synchronous to make it more predictable or controllable.
+   * E.g. in tests or IntelliJ-based command line tools this is the usual code:
+   *
+   * ```
+   * if (ApplicationManager.getApplication().isHeadless()) {
+   *   performSyncChange()
+   * }
+   * else {
+   *   scheduleAsyncChange()
+   * }
+   * ```
+   *
+   * However, sometimes headless application should behave just as regular GUI Application,
+   * with all its asynchronous stuff. For that, the application must declare `intellij.progress.task.ignoreHeadless`
+   * system property. And clients should modify its pure `isHeadless` condition to something like
+   *
+   * ```
+   * ApplicationManager.getApplication().isHeadless() && !shouldRunHeadlessTasksAsynchronously()
+   * ```
+   *
+   * @return true is asynchronous tasks must remain asynchronous even in headless mode
+   */
   @ApiStatus.Internal
-  public static boolean shouldRunHeadlessTasksSynchronously() {
+  public static boolean shouldKeepTasksAsynchronousInHeadlessMode() {
     return SystemProperties.getBooleanProperty("intellij.progress.task.ignoreHeadless", false);
   }
 
   // from any: bg or current if can't
   @Override
   public void run(@NotNull Task task) {
-    if (task.isHeadless() && !shouldRunHeadlessTasksSynchronously()) {
+    if (task.isHeadless() && !shouldKeepTasksAsynchronousInHeadlessMode()) {
       if (SwingUtilities.isEventDispatchThread()) {
         runProcessWithProgressSynchronously(task, null);
       }

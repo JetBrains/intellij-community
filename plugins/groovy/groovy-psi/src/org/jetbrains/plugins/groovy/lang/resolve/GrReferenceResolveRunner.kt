@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -96,7 +96,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
   // We are in `com.foo` from `com.foo.bar.Baz`.
   // Go up and find if any parent resolves to a class => this expression is a package reference.
   // This expression may also be a class reference, and this is handled in [resolveUnqualifiedType].
-  for (parent in this.parents) {
+  for (parent in this.parents(false)) {
     if (parent !is GrReferenceExpression) {
       // next parent is not a reference expression
       // => next parent is not a class fully qualified name

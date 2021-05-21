@@ -3,11 +3,12 @@ package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.psi.impl.cache.impl.id.IdDataConsumer;
 import com.intellij.psi.search.IndexPattern;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 public final class OccurrenceConsumer {
   private final IdDataConsumer myIndexDataConsumer;
-  private Object2IntOpenHashMap<IndexPattern> myTodoOccurrences;
+  private Object2IntMap<IndexPattern> myTodoOccurrences;
   private final boolean myNeedToDo;
 
   public OccurrenceConsumer(IdDataConsumer indexDataConsumer, boolean needToDo) {
@@ -32,7 +33,7 @@ public final class OccurrenceConsumer {
     if (myTodoOccurrences == null) {
       myTodoOccurrences = new Object2IntOpenHashMap<>();
     }
-    myTodoOccurrences.addTo(pattern, 1);
+    myTodoOccurrences.mergeInt(pattern, 1, Math::addExact);
   }
 
   public int getOccurrenceCount(IndexPattern pattern) {

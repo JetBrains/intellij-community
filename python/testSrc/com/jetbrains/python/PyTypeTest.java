@@ -3957,6 +3957,23 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  public void testFunctionReturnGeneric() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("(Any, str, T3) -> T3",
+                   "from typing import Callable, TypeVar\n" +
+                   "\n" +
+                   "T1 = TypeVar('T1')\n" +
+                   "T2 = TypeVar('T2')\n" +
+                   "T3 = TypeVar('T3')\n" +
+                   "\n" +
+                   "def bar(p1: T1, p2: T2) -> Callable[[T1, T2, T3], T3]:\n" +
+                   "  pass\n" +
+                   "\n" +
+                   "expr = bar(dunno, 'sd')")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
+import com.intellij.space.chat.model.api.SpaceChatItemAdditionalFeature
 import com.intellij.space.chat.ui.link
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAutoUpdatableComponentService
@@ -58,6 +59,10 @@ internal class MessageTitleComponent(
     isOpaque = false
     add(authorPanel)
     add(timePanel)
+    val showResolvedStateFeature = message.additionalFeatures.filterIsInstance<SpaceChatItemAdditionalFeature.ShowResolvedState>().singleOrNull()
+    if (showResolvedStateFeature != null) {
+      add(createResolvedComponent(lifetime, showResolvedStateFeature.resolved))
+    }
     add(actionsPanel)
     launch(lifetime, Ui) {
       delay(2000)

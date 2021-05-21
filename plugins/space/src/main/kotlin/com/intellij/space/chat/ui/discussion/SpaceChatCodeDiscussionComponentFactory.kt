@@ -3,7 +3,6 @@ package com.intellij.space.chat.ui.discussion
 
 import circlet.code.api.CodeDiscussionRecord
 import circlet.code.api.CodeDiscussionSnippet
-import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.Ref
 import circlet.platform.client.property
 import circlet.platform.client.resolve
@@ -11,10 +10,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.SpaceChatAvatarType
+import com.intellij.space.chat.ui.SpaceChatEditableComponent
 import com.intellij.space.chat.ui.SpaceChatMarkdownTextComponent
+import com.intellij.space.chat.ui.message.createResolvedComponent
 import com.intellij.space.chat.ui.thread.createThreadComponent
-import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.SideBorder
@@ -39,12 +40,13 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class SpaceChatCodeDiscussionComponentFactory(
+internal class SpaceChatCodeDiscussionComponentFactory(
   private val project: Project,
   private val lifetime: Lifetime,
   private val server: String,
 ) {
-  fun createComponent(codeDiscussion: Ref<CodeDiscussionRecord>, thread: M2ChannelVm): JComponent? {
+  fun createComponent(message: SpaceChatItem, codeDiscussion: Ref<CodeDiscussionRecord>): JComponent? {
+    val thread = message.thread!!
     val discussion = codeDiscussion.resolve()
     val discussionProperty = codeDiscussion.property()
     val resolved = lifetime.map(discussionProperty) { it.resolved }
@@ -77,10 +79,11 @@ class SpaceChatCodeDiscussionComponentFactory(
     }
     val reviewCommentComponent = SpaceChatMarkdownTextComponent(server)
 
+    val collapseModel = SingleValueModelImpl(true)
     val panel = JPanel(VerticalLayout(JBUIScale.scale(4))).apply {
       isOpaque = false
       add(snapshotComponent, VerticalLayout.FILL_HORIZONTAL)
-      add(reviewCommentComponent, VerticalLayout.FILL_HORIZONTAL)
+      add(createEditableReviewCommentComponent(reviewCommentComponent, message, collapseModel), VerticalLayout.FILL_HORIZONTAL)
     }
 
     val threadActionsFactory = SpaceChatDiscussionActionsFactory(
@@ -100,7 +103,6 @@ class SpaceChatCodeDiscussionComponentFactory(
       )
       addToCenter(outerActionsFactory.createActionsComponent(thread))
     }
-    val collapseModel = SingleValueModelImpl(true)
 
     val threadWithActionsComponent = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
@@ -141,6 +143,20 @@ class SpaceChatCodeDiscussionComponentFactory(
     return component
   }
 
+  private fun createEditableReviewCommentComponent(
+    reviewCommentContent: JComponent,
+    message: SpaceChatItem,
+    collapseModel: SingleValueModel<Boolean>
+  ): JComponent {
+    val editableReviewCommentComponent = SpaceChatEditableComponent(lifetime, reviewCommentContent, message)
+    editableReviewCommentComponent.editingModel.addValueUpdatedListener { isEditing ->
+      if (isEditing) {
+        collapseModel.value = false
+      }
+    }
+    return editableReviewCommentComponent
+  }
+
   private fun updateActionsComponentVisibility(
     outerActionsPanel: JComponent,
     prevMessagesCount: Int?,
@@ -165,12 +181,7 @@ class SpaceChatCodeDiscussionComponentFactory(
     val parentPath = PathUtil.getParentPath(filePath)
     val nameLabel = JBLabel(name, null, SwingConstants.LEFT).setCopyable(true)
 
-    val resolvedLabel = JBLabel(SpaceBundle.message("chat.message.resolved.text"), UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-      isOpaque = true
-    }
-
+    val resolvedLabel = createResolvedComponent(lifetime, resolved)
     return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("${JBUI.scale(5)}", "0").fill().noGrid())).apply {
       add(nameLabel, CC().minWidth("0").shrinkPrio(9))
 
@@ -183,12 +194,6 @@ class SpaceChatCodeDiscussionComponentFactory(
       add(resolvedLabel, CC().hideMode(3).shrinkPrio(0))
       add(collapseButton, CC().hideMode(3).shrinkPrio(0))
       add(expandButton, CC().hideMode(3).shrinkPrio(0))
-
-      resolved.forEach(lifetime) {
-        resolvedLabel.isVisible = it
-        revalidate()
-        repaint()
-      }
     }
   }
 

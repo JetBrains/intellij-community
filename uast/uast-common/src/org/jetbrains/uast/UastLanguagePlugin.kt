@@ -2,6 +2,7 @@
 package org.jetbrains.uast
 
 import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
@@ -125,8 +126,10 @@ interface UastLanguagePlugin {
    *         (or to [UElement] if no type was specified)
    */
   @JvmDefault
-  fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
-    classSetOf(PsiElement::class.java)
+  fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> {
+    logger<UastLanguagePlugin>().warn(Exception("fallback to the PsiElement for ${this.javaClass}, it can have a performance impact"))
+    return classSetOf(PsiElement::class.java)
+  }
 }
 
 inline fun <reified T : UElement> UastLanguagePlugin.convertOpt(element: PsiElement?, parent: UElement?): T? {

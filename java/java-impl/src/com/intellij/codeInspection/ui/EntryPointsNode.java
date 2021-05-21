@@ -5,7 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +30,7 @@ public final class EntryPointsNode extends InspectionNode {
   }
 
   @Override
-  protected void visitProblemSeverities(@NotNull Object2IntOpenHashMap<HighlightDisplayLevel> counter) {
+  protected void visitProblemSeverities(@NotNull Object2IntMap<HighlightDisplayLevel> counter) {
     //do nothing here
   }
 

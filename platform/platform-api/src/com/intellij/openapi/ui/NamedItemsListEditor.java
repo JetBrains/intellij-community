@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,13 +24,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiPredicate;
 
 public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   private final Namer<? super T> myNamer;
   private final Factory<? extends T> myFactory;
   private final Cloner<T> myCloner;
   private final List<T> myItems = new ArrayList<>();
-  private final Equality<? super T> myComparer;
+  private final BiPredicate<? super T, ? super T> myComparer;
   private List<T> myResultItems;
   private final List<T> myOriginalItems;
   private boolean myShowIcons;
@@ -39,7 +39,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   protected NamedItemsListEditor(Namer<? super T> namer,
                                  Factory<? extends T> factory,
                                  Cloner<T> cloner,
-                                 Equality<? super T> comparer,
+                                 BiPredicate<? super T, ? super T> comparer,
                                  List<T> items) {
     this(namer, factory, cloner, comparer, items, true);
   }
@@ -47,7 +47,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   protected NamedItemsListEditor(Namer<? super T> namer,
                                  Factory<? extends T> factory,
                                  Cloner<T> cloner,
-                                 Equality<? super T> comparer,
+                                 BiPredicate<? super T, ? super T> comparer,
                                  List<T> items,
                                  boolean initInConstructor) {
     myNamer = namer;
@@ -147,6 +147,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   protected List<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
     result.add(new AddAction());
+    //noinspection unchecked
     result.add(new MyDeleteAction(forAll(o -> canDelete((T)((MyNode)o).getConfigurable().getEditableObject()))));
     result.add(new CopyAction());
     return result;
@@ -181,7 +182,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   protected UnnamedConfigurable getItemConfigurable(final T item) {
     final Ref<UnnamedConfigurable> result = new Ref<>();
     TreeUtil.traverse((TreeNode)myTree.getModel().getRoot(), node -> {
-      final NamedConfigurable configurable = (NamedConfigurable)((DefaultMutableTreeNode)node).getUserObject();
+      final NamedConfigurable<?> configurable = (NamedConfigurable<?>)((DefaultMutableTreeNode)node).getUserObject();
       if (configurable.getEditableObject() == item) {
         //noinspection unchecked
         result.set(((ItemConfigurable)configurable).myConfigurable);
@@ -268,7 +269,9 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     if (myResultItems.size() != myItems.size()) return true;
 
     for (int i = 0; i < myItems.size(); i++) {
-      if (!myComparer.equals(myItems.get(i), myResultItems.get(i))) return true;
+      if (!myComparer.test(myItems.get(i), myResultItems.get(i))) {
+        return true;
+      }
     }
 
     return super.isModified();
@@ -324,7 +327,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   protected void onItemCloned(T clone) {
   }
 
-  private class AddAction extends DumbAwareAction {
+  private final class AddAction extends DumbAwareAction {
     AddAction() {
       super(IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.text.add"),
             IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.description.add"), IconUtil.getAddIcon());

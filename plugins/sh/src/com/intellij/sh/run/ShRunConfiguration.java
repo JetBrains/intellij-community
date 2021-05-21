@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
 import com.intellij.execution.Executor;
@@ -34,7 +34,7 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 import static com.intellij.sh.ShBundle.message;
 
-public class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
+final class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
   @NonNls private static final String TAG_PREFIX = "INDEPENDENT_";
   @NonNls private static final String SCRIPT_TEXT_TAG = "SCRIPT_TEXT";
   @NonNls private static final String SCRIPT_PATH_TAG = "SCRIPT_PATH";
@@ -87,9 +87,8 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     }
   }
 
-  @Nullable
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
+  public @NotNull RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
     return new ShRunConfigurationProfileState(environment.getProject(), this);
   }
 

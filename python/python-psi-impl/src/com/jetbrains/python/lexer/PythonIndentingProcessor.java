@@ -21,11 +21,11 @@ import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PythonIndentingProcessor extends MergingLexerAdapter {
-  protected final IntArrayList myIndentStack = new IntArrayList();
+  protected final IntStack myIndentStack = new IntStack();
   protected int myBraceLevel;
   protected boolean myLineHasSignificantTokens;
   protected int myLastNewLineIndent = -1;
@@ -255,12 +255,12 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
       pushToken(PyTokenTypes.STATEMENT_BREAK, pos, pos);
       final int indents = myIndentStack.size();
       for (int i = 0; i < indents - 1; i++) {
-        final int indent = myIndentStack.peekInt(0);
+        final int indent = myIndentStack.peek();
         if (myCurrentNewLineIndent >= indent) {
           break;
         }
         if (myIndentStack.size() > 1) {
-          myIndentStack.popInt();
+          myIndentStack.pop();
           pushToken(PyTokenTypes.DEDENT, pos, pos);
         }
       }
@@ -376,7 +376,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   protected void processIndent(int whiteSpaceStart, IElementType whitespaceTokenType) {
-    int lastIndent = myIndentStack.peekInt(0);
+    int lastIndent = myIndentStack.peek();
     int indent = getNextLineIndent();
     myLastNewLineIndent = indent;
     // don't generate indent/dedent tokens if a line contains only end-of-line comment and whitespace
@@ -401,13 +401,13 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   private void closeDanglingSuitesWithComments(int indent, int whiteSpaceStart) {
-    int lastIndent = myIndentStack.peekInt(0);
+    int lastIndent = myIndentStack.peek();
 
     int insertIndex = myLineBreakBeforeFirstCommentIndex == -1 ? myTokenQueue.size() : myLineBreakBeforeFirstCommentIndex;
     int lastSuiteIndent;
     while (indent < lastIndent) {
-      lastSuiteIndent = myIndentStack.popInt();
-      lastIndent = myIndentStack.peekInt(0);
+      lastSuiteIndent = myIndentStack.pop();
+      lastIndent = myIndentStack.peek();
       int dedentOffset = whiteSpaceStart;
       if (indent > lastIndent) {
         myTokenQueue.add(new PendingToken(PyTokenTypes.INCONSISTENT_DEDENT, whiteSpaceStart, whiteSpaceStart));

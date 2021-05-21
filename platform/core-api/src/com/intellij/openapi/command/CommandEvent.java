@@ -19,17 +19,9 @@ public class CommandEvent extends EventObject {
   private final Document myDocument;
 
   public CommandEvent(@NotNull CommandProcessor processor, @NotNull Runnable command, Project project, @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
-    this(processor, command, null, null, project, undoConfirmationPolicy);
+    this(processor, command, null, null, project, undoConfirmationPolicy, true, null);
   }
 
-  public CommandEvent(@NotNull CommandProcessor processor,
-                      @NotNull Runnable command,
-                      @NlsContexts.Command String commandName,
-                      Object commandGroupId,
-                      Project project,
-                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
-    this(processor, command, commandName, commandGroupId, project, undoConfirmationPolicy, true, null);
-  }
   public CommandEvent(@NotNull CommandProcessor processor,
                       @NotNull Runnable command,
                       @NlsContexts.Command String commandName,

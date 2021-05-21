@@ -21,6 +21,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.FactoryMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -313,7 +314,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                         Map<MethodCandidateInfo, PsiSubstitutor> map,
                                         boolean ignoreIfStaticsProblem) {
     boolean atLeastOneMatch = false;
-    IntArrayList unmatchedIndices = null;
+    IntList unmatchedIndices = null;
     for (int i = 0; i < conflicts.size(); i++) {
       ProgressManager.checkCanceled();
       CandidateInfo info = conflicts.get(i);

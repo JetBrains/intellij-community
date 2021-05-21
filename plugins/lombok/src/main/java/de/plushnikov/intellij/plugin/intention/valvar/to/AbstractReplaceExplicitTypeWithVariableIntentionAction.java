@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.intention.valvar.AbstractValVarIntentionAction;
@@ -28,6 +29,9 @@ public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction ext
 
   @Override
   public boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement context) {
+    if (PsiUtil.isLanguageLevel10OrHigher(context)) {
+      return false;
+    }
     PsiElement[] declaredElements = context.getDeclaredElements();
     if (declaredElements.length != 1) {
       return false;
@@ -50,7 +54,7 @@ public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction ext
     return isAvailableOnDeclarationCustom(context, localVariable);
   }
 
-  protected abstract boolean isAvailableOnDeclarationCustom(PsiDeclarationStatement context, PsiLocalVariable localVariable);
+  protected abstract boolean isAvailableOnDeclarationCustom(@NotNull PsiDeclarationStatement context,@NotNull PsiLocalVariable localVariable);
 
   @Override
   public void invokeOnDeclarationStatement(PsiDeclarationStatement declarationStatement) {

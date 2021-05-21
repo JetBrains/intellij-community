@@ -9,16 +9,19 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 public final class CommandMerger {
   private final UndoManagerImpl myManager;
-  private Object myLastGroupId;
+  private Reference<Object> myLastGroupId; // weak reference to avoid memleaks when clients pass some exotic objects as commandId
   private boolean myForcedGlobal;
   private boolean myTransparent;
   private @NlsContexts.Command String myCommandName;
@@ -66,7 +69,9 @@ public final class CommandMerger {
 
     if (nextCommandToMerge.isTransparent() || !hasActions()) return;
 
-    myLastGroupId = groupId;
+    if (groupId != SoftReference.dereference(myLastGroupId)) {
+      myLastGroupId = groupId == null ? null : new WeakReference<>(groupId);
+    }
     if (myCommandName == null) myCommandName = commandName;
   }
 
@@ -76,7 +81,7 @@ public final class CommandMerger {
     if (isTransparent() || nextCommandToMerge.isTransparent()) {
       return !hasActions() || !nextCommandToMerge.hasActions() || myAllAffectedDocuments.equals(nextCommandToMerge.myAllAffectedDocuments);
     }
-    return !myForcedGlobal && !nextCommandToMerge.myForcedGlobal && canMergeGroup(groupId, myLastGroupId);
+    return !myForcedGlobal && !nextCommandToMerge.myForcedGlobal && canMergeGroup(groupId, SoftReference.dereference(myLastGroupId));
   }
 
   public static boolean canMergeGroup(Object groupId, Object lastGroupId) {

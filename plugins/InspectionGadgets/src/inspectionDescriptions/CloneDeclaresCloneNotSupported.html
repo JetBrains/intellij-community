@@ -1,16 +1,14 @@
 <html>
 <body>
-Reports <code>clone()</code> methods which are not declared as throwing
-<code>CloneNotSupportedException</code>. If <code>clone()</code> is not declared
-to possibly throw <code>CloneNotSupportedException</code>, then subclasses which need to
-prohibit cloning will not be able to do so in the standard way. This inspection will not report
-<code>clone()</code> methods declared <code>final</code>,
-or <code>clone()</code> methods on <code>final</code> classes.
+Reports <code>clone()</code> methods that don't declare <code>CloneNotSupportedException</code>.
+If <code>CloneNotSupportedException</code> is not declared, then subclasses will not be able to prohibit cloning
+in the standard way. This inspection does not report <code>clone()</code> methods declared <code>final</code>
+and <code>clone()</code> methods on <code>final</code> classes.
 <!-- tooltip end -->
 <p>
 Use the checkbox below to indicate if this inspection should only warn on <code>protected</code> methods.
-In <i>Effective Java, Second Edition</i> (but not in the first edition) it is recommended to omit the <code>CloneNotSupportedException</code>
-declaration on <code>public</code> methods, because methods that don't throw checked exceptions are easier to use.
+  You can disable warnings for public methods if you are following the recommendation given in <i>Effective Java, Second Edition</i>> to omit
+  the exception declaration for public methods to make them easier to use.
 <p>
 <p>Example</p>
 <pre><code>

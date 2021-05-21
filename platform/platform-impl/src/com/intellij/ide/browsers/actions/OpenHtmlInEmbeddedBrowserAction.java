@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
   OpenHtmlInEmbeddedBrowserAction() {
-    super(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtil.loadSmallApplicationIcon(ScaleContext.create()));
+    super(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtil.loadSmallApplicationIconForRelease(ScaleContext.create(), 16));
   }
 
   @Override

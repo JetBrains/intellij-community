@@ -153,35 +153,33 @@ public final class BytecodeAnalysisConverter {
 
   public static void addEffectAnnotations(Map<EKey, Effects> puritySolutions,
                                           MethodAnnotations result,
-                                          EKey methodKey,
+                                          EKey pureKey,
                                           boolean constructor) {
-    for (Map.Entry<EKey, Effects> entry : puritySolutions.entrySet()) {
-      EKey key = entry.getKey().mkStable();
-      EKey baseKey = key.mkBase();
-      if (!methodKey.equals(baseKey)) {
-        continue;
-      }
-      result.returnValue = entry.getValue().returnValue;
-      Set<EffectQuantum> effects = entry.getValue().effects;
-
-      MutationSignature sig = MutationSignature.pure();
-      for (EffectQuantum effect : effects) {
-        if (effect.equals(EffectQuantum.ThisChangeQuantum)) {
-          // Pure constructor is allowed to change "this" object as this is a new object anyways
-          if (!constructor) {
-            sig = sig.alsoMutatesThis();
-          }
-        }
-        else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
-          int paramN = ((EffectQuantum.ParamChangeQuantum)effect).n;
-          sig = sig.alsoMutatesArg(paramN);
-        }
-        else {
-          sig = MutationSignature.unknown();
-          break;
-        }
-      }
-      result.mutates.put(methodKey, sig);
+    Effects solution = puritySolutions.get(pureKey.mkUnstable());
+    if (solution == null) {
+      solution = puritySolutions.get(pureKey.mkStable());
+      if (solution == null) return;
     }
+    result.returnValue = solution.returnValue;
+    Set<EffectQuantum> effects = solution.effects;
+
+    MutationSignature sig = MutationSignature.pure();
+    for (EffectQuantum effect : effects) {
+      if (effect.equals(EffectQuantum.ThisChangeQuantum)) {
+        // Pure constructor is allowed to change "this" object as this is a new object anyways
+        if (!constructor) {
+          sig = sig.alsoMutatesThis();
+        }
+      }
+      else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
+        int paramN = ((EffectQuantum.ParamChangeQuantum)effect).n;
+        sig = sig.alsoMutatesArg(paramN);
+      }
+      else {
+        sig = MutationSignature.unknown();
+        break;
+      }
+    }
+    result.mutates = sig;
   }
 }

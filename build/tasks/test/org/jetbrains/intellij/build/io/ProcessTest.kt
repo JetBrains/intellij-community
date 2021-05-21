@@ -59,4 +59,9 @@ class ProcessTest {
     catch (e: ProcessRunTimedOut) {
     }
   }
+
+  @Test
+  fun threadDump() {
+    dumpThreads(ProcessHandle.current().pid())
+  }
 }

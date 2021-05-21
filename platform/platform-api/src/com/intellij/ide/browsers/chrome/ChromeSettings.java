@@ -8,7 +8,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +94,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   @Override
   public ChromeSettings clone() {
     ChromeSettings clone = (ChromeSettings)super.clone();
-    clone.myEnvironmentVariables = new THashMap<>(myEnvironmentVariables);
+    clone.myEnvironmentVariables = new HashMap<>(myEnvironmentVariables);
     return clone;
   }
 

@@ -138,10 +138,10 @@ public final class DynamicMemberUtils {
       PsiField[] allFields = new PsiField[fields.length];
 
       int i = 0;
-      for (PsiField field : fields) {
-        MyGrDynamicPropertyImpl dynamicField = new MyGrDynamicPropertyImpl(myClass, (GrField)field, null, classSource);
+      for (GrField field : fields) {
+        MyGrDynamicPropertyImpl dynamicField = new MyGrDynamicPropertyImpl(myClass, field, null, classSource);
 
-        Map<String, String> commentMap = parseComment(((GrField)field).getDocComment());
+        Map<String, String> commentMap = parseComment(field.getDocComment());
         String originalInfo = commentMap.get("originalInfo");
         if (originalInfo == null) {
           originalInfo = classCommentMap.get("originalInfo");

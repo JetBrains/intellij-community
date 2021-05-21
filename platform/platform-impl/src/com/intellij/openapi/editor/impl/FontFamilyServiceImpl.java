@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.MultiMap;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-public final class FontFamilyServiceImpl extends FontFamilyService {
+final class FontFamilyServiceImpl extends FontFamilyService {
   private static final Logger LOG = Logger.getInstance(FontFamilyServiceImpl.class);
 
   private static final Method GET_FONT_2D_METHOD = ReflectionUtil.getDeclaredMethod(Font.class, "getFont2D");
@@ -30,39 +31,48 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
   private static final int PREFERRED_MAIN_WEIGHT = 400;
   private static final int PREFERRED_BOLD_WEIGHT_DIFF = 300;
 
+  // Fira Code requires specific migration due to naming workaround in JBR used earlier
+  private static final Map<String, String[]> FIRA_CODE_MIGRATION_MAP = Map.of(
+    "Fira Code Light", new String[] {"Fira Code", "Light", "Light"},
+    "Fira Code Medium", new String[] {"Fira Code", "Medium", "Medium"},
+    "Fira Code Retina", new String[] {"Fira Code", "Retina", "Retina"}
+  );
+
   private final SortedMap<String, FontFamily> myFamilies = new TreeMap<>();
 
   private FontFamilyServiceImpl() {
-    if (SystemProperties.is("new.editor.font.selector")) {
-      if (GET_FONT_2D_METHOD == null || GET_TYPO_FAMILY_METHOD == null || GET_TYPO_SUBFAMILY_METHOD == null || GET_WEIGHT_METHOD == null) {
-        LOG.warn("Couldn't access required runtime API, will fall back to basic logic of font selection");
-      }
-      else {
-        try {
-          Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-          for (Font font : fonts) {
-            Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
-            String fontName = font.getFontName();
-            String font2DName = font2D.getFontName(null);
-            if (!fontName.equals(font2DName)) {
-              // skip fonts that are declared as available, but cannot be used due to some reason,
-              // with JDK substituting them with a different font (on Windows)
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
-              }
-              continue;
-            }
-            String family = (String)GET_TYPO_FAMILY_METHOD.invoke(font2D);
-            String subfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(font2D);
-            FontFamily fontFamily = myFamilies.computeIfAbsent(family, FontFamily::new);
-            fontFamily.addFont(subfamily, font);
+    if (ApplicationManager.getApplication().isUnitTestMode() || !AppEditorFontOptions.NEW_FONT_SELECTOR) {
+      return;
+    }
+
+    if (GET_FONT_2D_METHOD == null || GET_TYPO_FAMILY_METHOD == null || GET_TYPO_SUBFAMILY_METHOD == null || GET_WEIGHT_METHOD == null) {
+      LOG.warn("Couldn't access required runtime API, will fall back to basic logic of font selection");
+      return;
+    }
+
+    try {
+      Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
+      for (Font font : fonts) {
+        Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
+        String fontName = font.getFontName();
+        String font2DName = font2D.getFontName(null);
+        if (!fontName.equals(font2DName)) {
+          // skip fonts that are declared as available, but cannot be used due to some reason,
+          // with JDK substituting them with a different font (on Windows)
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
           }
+          continue;
         }
-        catch (Throwable e) {
-          LOG.error(e);
-          myFamilies.clear(); // fallback to old behaviour in case of any errors
-        }
+        String family = (String)GET_TYPO_FAMILY_METHOD.invoke(font2D);
+        String subfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(font2D);
+        FontFamily fontFamily = myFamilies.computeIfAbsent(family, FontFamily::new);
+        fontFamily.addFont(subfamily, font);
       }
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      myFamilies.clear(); // fallback to old behaviour in case of any errors
     }
   }
 
@@ -109,6 +119,66 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
     FontFamily fontFamily = myFamilies.get(family);
     return fontFamily == null ? super.getFontImpl(family, regularSubFamily, boldSubFamily, style)
                               : fontFamily.getFont(regularSubFamily, boldSubFamily, style);
+  }
+
+  @Override
+  protected String @NotNull [] migrateFontSettingImpl(@NotNull String family) {
+    if (!myFamilies.isEmpty()) {
+      if (FIRA_CODE_MIGRATION_MAP.containsKey(family)) {
+        if (!myFamilies.containsKey(family)) { // check for new enough JBR
+          return FIRA_CODE_MIGRATION_MAP.get(family);
+        }
+      }
+      else {
+        try {
+          assert GET_FONT_2D_METHOD != null;
+          assert GET_TYPO_FAMILY_METHOD != null;
+          assert GET_TYPO_SUBFAMILY_METHOD != null;
+
+          Font baseFont = new Font(family, Font.PLAIN, 1);
+          String baseFamily = baseFont.getFamily();
+          Font2D baseFont2D = (Font2D)GET_FONT_2D_METHOD.invoke(baseFont);
+          String baseTypoFamily = (String)GET_TYPO_FAMILY_METHOD.invoke(baseFont2D);
+          String baseTypoSubfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(baseFont2D);
+
+          Font boldFont = new Font(family, Font.BOLD, 1);
+          String boldFamily = boldFont.getFamily();
+          Font2D boldFont2D = (Font2D)GET_FONT_2D_METHOD.invoke(boldFont);
+          String boldTypoFamily = (String)GET_TYPO_FAMILY_METHOD.invoke(boldFont2D);
+          String boldTypoSubfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(boldFont2D);
+
+          if (!family.equals(baseFamily) || !family.equals(boldFamily)) {
+            LOG.debug("Cannot migrate " + family + ": unexpected resolved families - " + baseFamily + ", " + boldFamily);
+          }
+          else if (!Objects.equals(baseTypoFamily, boldTypoFamily)) {
+            LOG.debug("Cannot migrate " + family + ": normal and bold variations resolve to different typographic families - "
+                      + baseTypoFamily + ", " + boldTypoFamily);
+          }
+          else {
+            FontFamily fontFamily = myFamilies.get(baseTypoFamily);
+            if (fontFamily == null) {
+              LOG.debug("Cannot migrate " + family + ": typographic font family not found - " + baseTypoFamily);
+            }
+            else if (!fontFamily.hasSubFamily(baseTypoSubfamily)) {
+              LOG.debug("Cannot migrate " + family + ": subfamily " + baseTypoSubfamily
+                        + " not found in typographic font family " + baseTypoFamily);
+            }
+            else if (!fontFamily.hasSubFamily(boldTypoSubfamily)) {
+              LOG.debug("Cannot migrate " + family + ": subfamily " + boldTypoSubfamily
+                        + " not found in typographic font family " + baseTypoFamily);
+            }
+            else {
+              return new String[] {baseTypoFamily, baseTypoSubfamily,
+                                   Objects.equals(baseTypoSubfamily, boldTypoSubfamily) ? null : boldTypoSubfamily};
+            }
+          }
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+    }
+    return super.migrateFontSettingImpl(family);
   }
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -265,6 +335,11 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
       }
       String target = (style & Font.BOLD) == 0 ? regularSubFamily : boldSubFamily;
       return (style & Font.ITALIC) == 0 ? members.get(target) : italics.get(target);
+    }
+
+    private boolean hasSubFamily(String subFamily) {
+      initIfNeeded();
+      return italics.containsKey(subFamily);
     }
   }
 

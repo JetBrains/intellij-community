@@ -176,7 +176,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   protected void appendActionToEmptyText(@Nls @NotNull String text, @NotNull Runnable action) {
-    getEmptyText().appendSecondaryText(text, VcsLogUiUtil.getLinkAttributes(), e -> action.run());
+    getEmptyText().appendSecondaryText(text, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> action.run());
   }
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {

@@ -9,7 +9,6 @@ import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -54,13 +53,14 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   default ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash) {
     return ((ListenableFuture<Boolean>)getVcsLog().jumpToReference(commitHash));
   }
 
   @ApiStatus.Internal
   <T> void jumpTo(@NotNull T commitId,
-                  @NotNull PairFunction<? super GraphTableModel, ? super T, Integer> rowGetter,
+                  @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
                   @NotNull SettableFuture<? super Boolean> future,
                   boolean silently);
 }

@@ -956,8 +956,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       if (each instanceof InvalidProjectModelException) {
         ModelValidationResult modelValidationResult = ((InvalidProjectModelException)each).getValidationResult();
         if (modelValidationResult != null) {
-          for (Object eachValidationProblem : modelValidationResult.getMessages()) {
-            problems.add(MavenProjectProblem.createStructureProblem(path, (String)eachValidationProblem));
+          for (String eachValidationProblem : modelValidationResult.getMessages()) {
+            problems.add(MavenProjectProblem.createStructureProblem(path, eachValidationProblem));
           }
         }
         else {

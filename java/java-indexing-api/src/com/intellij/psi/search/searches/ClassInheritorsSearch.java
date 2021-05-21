@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
@@ -159,7 +160,7 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
         throw new ProcessCanceledException();
       }
       PsiFile file = aClass.getContainingFile();
-      return (file != null ? file : aClass).getUseScope();
+      return PsiSearchHelper.getInstance(aClass.getProject()).getUseScope(file != null ? file : aClass);
     }), checkDeep);
   }
 

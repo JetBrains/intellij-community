@@ -161,7 +161,14 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     return response
   }
 
-  fun signInManually(serverName: String, uiLifetime: Lifetime, component: Component) {
+  fun signInManually(server:String, uiLifetime: Lifetime, component: Component) {
+    var serverName = server
+    if (serverName.isBlank()) {
+      val error = SpaceBundle.message("login.panel.error.organization.url.should.not.be.empty")
+      loginState.value = SpaceLoginState.Disconnected("", error)
+      return
+    }
+    serverName = normalizeUrl(serverName)
     launch(uiLifetime, Ui) {
       uiLifetime.usingSource { connectLt ->
         try {
@@ -192,6 +199,13 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     }
   }
 
+  private fun normalizeUrl(serverName: String): String {
+    var result = serverName
+    result = if (result.startsWith("https://") || result.startsWith("http://")) result else "https://$result"
+    result = result.removeSuffix("/")
+    return result
+  }
+
   fun signOut() {
     val oldManager = manager.value
     oldManager?.signOut(true)
@@ -208,11 +222,17 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
       return AutoSignInResult.NOT_AUTHORIZED_BEFORE
     }
     val newManager = createWorkspaceManager(wsLifetime, server)
-    return if (newManager.signInNonInteractive()) {
-      manager.value = newManager
-      AutoSignInResult.AUTHORIZED
+    return try {
+      if (newManager.signInNonInteractive()) {
+        manager.value = newManager
+        AutoSignInResult.AUTHORIZED
+      }
+      else {
+        AutoSignInResult.NOT_AUTHORIZED
+      }
     }
-    else {
+    catch (th: Throwable) {
+      LOG.info(th, "Couldn't authorize interactively")
       AutoSignInResult.NOT_AUTHORIZED
     }
   }

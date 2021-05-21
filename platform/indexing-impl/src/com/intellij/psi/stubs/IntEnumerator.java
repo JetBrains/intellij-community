@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -15,7 +16,7 @@ import java.util.function.IntUnaryOperator;
 
 @ApiStatus.Internal
 final class IntEnumerator {
-  private final Int2IntOpenHashMap myEnumerates;
+  private final Int2IntMap myEnumerates;
   private final IntList myIds;
   private int myNext;
 

@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review
 
-import circlet.workspaces.Workspace
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.space.components.SpaceWorkspaceComponent
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.space.vcs.Context
 import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.space.vcs.SpaceProjectInfo
@@ -15,14 +17,29 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import icons.SpaceIcons
+import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.LifetimeSource
 import runtime.reactive.Property
 import runtime.reactive.property.mapInit
 
 @Service
-internal class SpaceCodeReviewTabManager(private val project: Project) {
+internal class SpaceCodeReviewTabManager(private val project: Project) : LifetimedDisposable by LifetimedDisposableImpl() {
 
   private var myReviewTabContentManager: SpaceCodeReviewTabContentManager? = null
+
+  init {
+    project.service<SpaceProjectContext>().context.forEach(lifetime) { context ->
+      val toolWindow: ToolWindow = ToolWindowManager
+                                     .getInstance(project)
+                                     .getToolWindow(SpaceReviewToolWindowFactory.ID) ?: return@forEach
+
+      val isAvailable = context.isAssociatedWithSpaceRepository
+      if (isAvailable && !toolWindow.isAvailable) {
+        toolWindow.isShowStripeButton = true
+      }
+      toolWindow.isAvailable = isAvailable
+    }
+  }
 
   companion object {
     fun getInstance(project: Project): SpaceCodeReviewTabManager = project.service()
@@ -30,46 +47,44 @@ internal class SpaceCodeReviewTabManager(private val project: Project) {
 
   internal fun showReviews(contentManager: ContentManager) {
     if (myReviewTabContentManager == null) {
-      myReviewTabContentManager = SpaceCodeReviewTabContentManager(project, contentManager)
+      myReviewTabContentManager = SpaceCodeReviewTabContentManager(project, contentManager, lifetime)
     }
   }
 }
 
-internal class SpaceCodeReviewTabContentManager(private val project: Project, private val cm: ContentManager) {
-  private val lifetime: LifetimeSource = LifetimeSource()
-  private val workspace: Property<Workspace?> = SpaceWorkspaceComponent.getInstance().workspace
+internal class SpaceCodeReviewTabContentManager(private val project: Project,
+                                                private val contentManager: ContentManager,
+                                                lifetime: Lifetime) {
   private val context: Property<Context> = SpaceProjectContext.getInstance(project).context
 
-  private val contents: Property<MutableMap<SpaceProjectInfo, Content>> =
-    lifetime.mapInit(workspace, context, mutableMapOf()) { ws, context ->
-      if (ws == null) {
-        return@mapInit mutableMapOf<SpaceProjectInfo, Content>()
-      }
-
-      if (!context.isAssociatedWithSpaceRepository) {
-        return@mapInit mutableMapOf<SpaceProjectInfo, Content>()
-      }
-
-      val result = HashMap<SpaceProjectInfo, Content>()
-      context.reposInProject.forEach {
-        val content = createContent(project, it.key, it.value)
-        result[it.key] = content
-      }
-      result
+  private val contents: Property<MutableMap<SpaceProjectInfo, Content>> = lifetime.mapInit(context, mutableMapOf()) { context ->
+    if (!context.isAssociatedWithSpaceRepository) {
+      return@mapInit mutableMapOf<SpaceProjectInfo, Content>()
     }
 
+    val result = HashMap<SpaceProjectInfo, Content>()
+    context.reposInProject.forEach {
+      val content = createContent(project, it.key, it.value)
+      result[it.key] = content
+    }
+    result
+  }
+
   init {
-    contents.forEachWithPrevious(lifetime) { prev, next ->
-      prev?.keys
-        ?.filter { key -> !next.keys.contains(key) }.orEmpty()
+    contents.forEachWithPrevious(lifetime) { prev: MutableMap<SpaceProjectInfo, Content>?, next: MutableMap<SpaceProjectInfo, Content> ->
+      val previous = prev ?: emptyMap()
+      previous.keys
+        .filter { key -> !next.keys.contains(key) }
         .forEach {
-          cm.removeContent(prev?.get(it)!!, true)
+          val content = previous[it]!!
+          contentManager.removeContent(content, true)
         }
 
-      next.keys.filter { key -> !(prev?.contains(key) ?: false) }
+      next.keys.filter { key -> !previous.contains(key) }
         .forEach {
-          cm.addContent(next[it]!!)
-          cm.setSelectedContent(next[it]!!)
+          val content = next[it]!!
+          contentManager.addContent(content)
+          contentManager.setSelectedContent(content)
         }
     }
   }

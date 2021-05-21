@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
-import gnu.trove.Equality;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +21,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdArrangementRuleAliasToken> {
+public final class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdArrangementRuleAliasToken> {
   private static final Namer<StdArrangementRuleAliasToken> NAMER = new Namer<>() {
     @Override
     public String getName(StdArrangementRuleAliasToken token) {
@@ -55,13 +55,14 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
       return new StdArrangementRuleAliasToken(original.getName(), original.getDefinitionRules());
     }
   };
-  private static final Equality<StdArrangementRuleAliasToken> COMPARER = (o1, o2) -> Objects.equals(o1.getId(), o2.getId());
+  private static final BiPredicate<StdArrangementRuleAliasToken, StdArrangementRuleAliasToken>
+    COMPARER = (o1, o2) -> Objects.equals(o1.getId(), o2.getId());
 
   @NotNull private final Set<String> myUsedTokenIds;
   @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
   @NotNull private final ArrangementColorsProvider myColorsProvider;
 
-  protected ArrangementRuleAliasesListEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
+  ArrangementRuleAliasesListEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
                                              @NotNull ArrangementColorsProvider colorsProvider,
                                              @NotNull List<StdArrangementRuleAliasToken> items,
                                              @NotNull Set<String> usedTokenIds) {

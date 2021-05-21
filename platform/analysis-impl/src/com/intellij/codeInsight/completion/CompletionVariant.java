@@ -61,21 +61,20 @@ public class CompletionVariant {
     return myItemProperties;
   }
 
-  private boolean isScopeClassFinal(Class scopeClass){
-    for (final Object myScopeClass : myScopeClasses) {
-      Scope scope = (Scope)myScopeClass;
-      if (ReflectionUtil.isAssignable(scope.myClass, scopeClass) && scope.myIsFinalScope) {
+  private boolean isScopeClassFinal(Class<?> scopeClass){
+    for (final Scope myScopeClass : myScopeClasses) {
+      if (ReflectionUtil.isAssignable(myScopeClass.myClass, scopeClass) && myScopeClass.myIsFinalScope) {
         return true;
       }
     }
     return false;
   }
 
-  private boolean isScopeClassAcceptable(Class scopeClass){
+  private boolean isScopeClassAcceptable(Class<?> scopeClass){
     boolean ret = false;
 
-    for (final Object myScopeClass : myScopeClasses) {
-      final Class aClass = ((Scope)myScopeClass).myClass;
+    for (final Scope myScopeClass : myScopeClasses) {
+      final Class<?> aClass = myScopeClass.myClass;
       if (ReflectionUtil.isAssignable(aClass, scopeClass)) {
         ret = true;
         break;
@@ -153,10 +152,10 @@ public class CompletionVariant {
 
 
   private static class Scope{
-    Class myClass;
+    Class<?> myClass;
     boolean myIsFinalScope;
 
-    Scope(Class aClass, boolean isFinalScope){
+    Scope(Class<?> aClass, boolean isFinalScope){
       myClass = aClass;
       myIsFinalScope = isFinalScope;
     }
@@ -176,7 +175,6 @@ public class CompletionVariant {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString(){
     return "completion variant at " + myPosition.toString() + " completions: " + myCompletionsList;
   }

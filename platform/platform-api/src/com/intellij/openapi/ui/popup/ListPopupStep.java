@@ -28,6 +28,10 @@ public interface ListPopupStep<T> extends PopupStep<T> {
    */
   boolean isSelectable(T value);
 
+  default boolean isFinal(T value) {
+    return !hasSubstep(value);
+  }
+
   /**
    * Returns the icon to display for the specified list item.
    *

@@ -109,7 +109,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
    * @return          map that holds '{@code line number -> number of back slashes}' mapping for the target text
    */
   static @NotNull Int2IntMap countBackSlashes(CharSequence text, int start, int end) {
-    Int2IntOpenHashMap result = new Int2IntOpenHashMap();
+    Int2IntMap result=new Int2IntOpenHashMap();
     int line = 0;
     if (end > text.length()) {
       end = text.length();

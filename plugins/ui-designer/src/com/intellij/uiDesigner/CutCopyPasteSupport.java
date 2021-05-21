@@ -112,8 +112,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     }
 
     final ArrayList<RadComponent> componentsToPaste = new ArrayList<>();
-    final IntArrayList xs = new IntArrayList();
-    final IntArrayList ys = new IntArrayList();
+    final IntList xs=new IntArrayList();
+    final IntList ys=new IntArrayList();
     loadComponentsToPaste(myEditor, serializedComponents, xs, ys, componentsToPaste);
 
     myEditor.getMainProcessor().startPasteProcessor(componentsToPaste, xs, ys);
@@ -122,8 +122,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   @Nullable
   private static ArrayList<RadComponent> deserializeComponents(final GuiEditor editor, final String serializedComponents) {
     ArrayList<RadComponent> components = new ArrayList<>();
-    IntArrayList xs = new IntArrayList();
-    IntArrayList ys = new IntArrayList();
+    IntList xs=new IntArrayList();
+    IntList ys=new IntArrayList();
     if (!loadComponentsToPaste(editor, serializedComponents, xs, ys, components)) {
       return null;
     }

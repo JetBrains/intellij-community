@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.injected.editor.InjectedFileChangesHandler;
 import com.intellij.injected.editor.InjectedFileChangesHandlerProvider;
+import com.intellij.injected.editor.InjectionMeta;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -41,6 +42,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandler;
+import com.intellij.psi.impl.source.tree.injected.changesHandler.IndentAwareInjectedFileChangesHandler;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
@@ -145,6 +147,9 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       InjectedFileChangesHandlerProvider.EP.forLanguage(firstShred.getHost().getLanguage());
     if (changesHandlerFactory != null) {
       myEditChangesHandler = changesHandlerFactory.createFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
+    }
+    else if (ContainerUtil.or(shreds, it -> InjectionMeta.INJECTION_INDENT.get(it.getHost()) != null)) {
+      myEditChangesHandler = new IndentAwareInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
     }
     else {
       myEditChangesHandler = new CommonInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);

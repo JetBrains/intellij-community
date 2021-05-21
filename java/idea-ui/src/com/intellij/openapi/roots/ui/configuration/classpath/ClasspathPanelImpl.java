@@ -44,6 +44,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -500,7 +501,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     for (ClasspathTableItem<?> item : toAdd) {
       myModel.addRow(item);
     }
-    IntArrayList toSelect = new IntArrayList();
+    IntList toSelect = new IntArrayList();
     for (int i = myModel.getRowCount() - toAdd.size(); i < myModel.getRowCount(); i++) {
       toSelect.add(myEntryTable.convertRowIndexToView(i));
     }
@@ -629,7 +630,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myModel.clear();
     myModel.init();
     myModel.fireTableDataChanged();
-    IntArrayList newSelection = new IntArrayList();
+    IntList newSelection = new IntArrayList();
     for (int i = 0; i < myModel.getRowCount(); i++) {
       if (oldSelection.contains(getItemAt(i))) {
         newSelection.add(i);

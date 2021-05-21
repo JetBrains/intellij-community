@@ -36,6 +36,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author anna
@@ -234,7 +235,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @Override
   @NotNull
   public JBPopup createPopup() {
-    AbstractPopup popup = new AbstractPopup().init(
+    return createPopup(DEFAULT_POPUP_SUPPLIER);
+  }
+
+  @NotNull
+  public AbstractPopup createPopup(Supplier<? extends AbstractPopup> popupSupplier) {
+    AbstractPopup popup = popupSupplier.get().init(
       myProject, myComponent, myPreferredFocusedComponent, myRequestFocus, myFocusable, myMovable, myDimensionServiceKey,
       myResizable, myTitle, myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
       myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
@@ -252,6 +258,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     Disposer.register(ApplicationManager.getApplication(), popup);
     return popup;
   }
+
+
+  private final Supplier<AbstractPopup> DEFAULT_POPUP_SUPPLIER = () -> new AbstractPopup();
 
   @Override
   @NotNull

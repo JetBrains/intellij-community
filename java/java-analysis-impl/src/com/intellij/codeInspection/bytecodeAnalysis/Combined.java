@@ -3,7 +3,6 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
-import com.intellij.util.SingletonSet;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +17,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.*;
@@ -203,7 +201,7 @@ final class CombinedAnalysis {
         for (ParamKey pk: calls) {
           keys.add(new EKey(pk.method, new In(pk.i, false), pk.stable));
         }
-        result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+        result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
       }
     }
     return new Equation(key, result);
@@ -263,7 +261,7 @@ final class CombinedAnalysis {
       if (keys.isEmpty()) {
         return null;
       } else {
-        result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+        result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
       }
     }
     else {
@@ -280,9 +278,11 @@ final class CombinedAnalysis {
       result = Value.Fail;
     }
     else if (!interpreter.calls.isEmpty()) {
-      Set<EKey> keys =
-        interpreter.calls.stream().map(call -> new EKey(call.method, Throw, call.stableCall)).collect(Collectors.toSet());
-      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+      Set<EKey> keys = new HashSet<>();
+      for (TrackableCallValue call : interpreter.calls) {
+        keys.add(new EKey(call.method, Throw, call.stableCall));
+      }
+      result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
     }
     else {
       return null;
@@ -304,7 +304,7 @@ final class CombinedAnalysis {
         keys.addAll(call.getKeysForParameter(i, direction));
         keys.add(new EKey(call.method, Throw, call.stableCall));
       }
-      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+      result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
     }
     else {
       return null;
@@ -347,8 +347,8 @@ final class CombinedAnalysis {
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
       EKey callKey = new EKey(call.method, Out, call.stableCall);
-      Set<EKey> keys = new SingletonSet<>(callKey);
-      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+      Set<EKey> keys = Collections.singleton(callKey);
+      result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
     }
     else {
       return null;
@@ -366,8 +366,8 @@ final class CombinedAnalysis {
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
       EKey callKey = new EKey(call.method, NullableOut, call.stableCall || call.thisCall);
-      Set<EKey> keys = new SingletonSet<>(callKey);
-      result = new Pending(new SingletonSet<>(new Component(Value.Null, keys)));
+      Set<EKey> keys = Collections.singleton(callKey);
+      result = new Pending(Collections.singleton(new Component(Value.Null, keys)));
     }
     else if (returnValue instanceof TrackableNullValue) {
       result = Value.Null;
@@ -764,7 +764,7 @@ final class NegationAnalysis {
     if (keys.isEmpty()) {
       result = Value.Top;
     } else {
-      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
+      result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
     }
     return new Equation(key, result);
   }

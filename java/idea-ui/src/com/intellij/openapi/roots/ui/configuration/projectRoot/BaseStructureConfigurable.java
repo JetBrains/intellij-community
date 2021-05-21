@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.MasterDetailsState;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.TreeSpeedSearch;
@@ -37,6 +36,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Place.Navigator {
   protected StructureConfigurableContext myContext;
@@ -90,15 +90,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
     if (node == null && nodeByName == null) return ActionCallback.DONE;
 
-    final NamedConfigurable config;
-    if (node != null) {
-      config = node.getConfigurable();
-    } else {
-      config = nodeByName.getConfigurable();
-    }
-
-    final ActionCallback result = new ActionCallback().doWhenDone(() -> myAutoScrollEnabled = true);
-
+    NamedConfigurable<?> config = Objects.requireNonNullElse(node, nodeByName).getConfigurable();
+    ActionCallback result = new ActionCallback().doWhenDone(() -> myAutoScrollEnabled = true);
     myAutoScrollEnabled = false;
     myAutoScrollHandler.cancelAllRequests();
     final MyNode nodeToSelect = node != null ? node : nodeByName;
@@ -311,12 +304,11 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return null;
   }
 
-  protected class MyRemoveAction extends MyDeleteAction {
-    public MyRemoveAction() {
-      //noinspection Convert2Lambda
-      super(new Condition<>() {
+  final class MyRemoveAction extends MyDeleteAction {
+    MyRemoveAction() {
+      super(new Predicate<>() {
         @Override
-        public boolean value(final Object[] objects) {
+        public boolean test(final Object[] objects) {
           List<MyNode> nodes = new ArrayList<>();
           for (Object object : objects) {
             if (!(object instanceof MyNode)) return false;

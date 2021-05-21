@@ -20,6 +20,8 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UMethod;
 
@@ -29,8 +31,10 @@ public class MethodSourceReference extends BaseJunitAnnotationReference {
   }
 
   @Override
-  protected boolean staticSuccessfulCheck(PsiMethod method, PsiClass psiClass, UClass literalClazz, UMethod literalMethod) {
+  protected boolean hasNoStaticProblem(@NotNull PsiMethod method, @NotNull UClass literalClazz, @Nullable UMethod literalMethod) {
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    PsiClass psiClass = method.getContainingClass();
+    if (psiClass == null) return false;
     return (TestUtils.testInstancePerClass(psiClass) != isStatic) && method.getParameterList().isEmpty();
   }
 }

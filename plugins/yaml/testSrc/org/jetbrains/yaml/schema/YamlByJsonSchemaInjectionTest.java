@@ -67,4 +67,13 @@ public class YamlByJsonSchemaInjectionTest extends JsonSchemaHighlightingTestBas
            "}", "x:\n" +
                 "  - <a><caret></a>;", true);
   }
+
+  public void testRegex() {
+    doTest("{\n" +
+           "  \"additionalProperties\": {\n" +
+           "    \"type\": \"string\",\n" +
+           "    \"x-intellij-language-injection\": \"XML\"\n" +
+           "  }\n" +
+           "}", "abc: \"d<caret>ef\"", true);
+  }
 }

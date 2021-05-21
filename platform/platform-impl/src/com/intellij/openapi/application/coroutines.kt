@@ -177,6 +177,6 @@ private class SmartRunnable<T>(action: (ctx: CoroutineContext) -> T, continuatio
   override fun run() {
     val continuation = myContinuation ?: return
     val action = myAction ?: return
-    continuation.resume(action.invoke(continuation.context))
+    continuation.resumeWith(kotlin.runCatching { action.invoke(continuation.context) })
   }
 }

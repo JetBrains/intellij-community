@@ -49,19 +49,28 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
+import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 import com.intellij.util.indexing.events.IndexedFilesListener;
 import com.intellij.util.indexing.events.VfsEventsMerger;
-import com.intellij.util.indexing.impl.MapReduceIndex;
-import com.intellij.util.indexing.impl.storage.*;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
+import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
+import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
+import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
+import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.snapshot.SnapshotHashEnumeratorService;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -304,15 +313,24 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @ApiStatus.Internal
-  public void dumpIndexStatistics() {
-    String statistics = getRegisteredIndexes().getState().getIndexIDs().stream().map(id -> {
-      var indexStats = getIndex(id).dumpStatistics();
-      if (indexStats == null) return null;
-      return "id = " + id + ": " + indexStats;
-    }).filter(Objects::nonNull).collect(Collectors.joining(", "));
-    if (!statistics.isEmpty()) {
-      LOG.info(statistics);
+  public void resetSnapshotInputMappingStatistics() {
+    for (ID<?, ?> id : getRegisteredIndexes().getState().getIndexIDs()) {
+      UpdatableIndex<?, ?, FileContent> index = getIndex(id);
+      if (index instanceof VfsAwareMapReduceIndex) {
+        ((VfsAwareMapReduceIndex<?, ?>)index).resetSnapshotInputMappingsStatistics();
+      }
     }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<SnapshotInputMappingsStatistics> dumpSnapshotInputMappingStatistics() {
+    return getRegisteredIndexes().getState().getIndexIDs().stream().map(id -> {
+      UpdatableIndex<?, ?, FileContent> index = getIndex(id);
+      if (index instanceof VfsAwareMapReduceIndex) {
+        return ((VfsAwareMapReduceIndex<?, ?>)index).dumpSnapshotInputMappingsStatistics();
+      }
+      return null;
+    }).filter(Objects::nonNull).collect(Collectors.toList());
   }
 
   void addStaleIds(@NotNull IntSet staleIds) {
@@ -365,10 +383,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void loadIndexes() {
-    LOG.assertTrue(myRegisteredIndexes == null);
-    myStorageBufferingHandler.resetState();
-    myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);
+  public synchronized void loadIndexes() {
+    if (myRegisteredIndexes == null) {
+      LOG.assertTrue(myRegisteredIndexes == null);
+      myStorageBufferingHandler.resetState();
+      myRegisteredIndexes = new RegisteredIndexes(myFileDocumentManager, this);
+    }
   }
 
   @Override
@@ -847,7 +867,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (e instanceof ProcessCanceledException) {
       return null;
     }
-    if (e instanceof MapReduceIndex.MapInputException) {
+    if (e instanceof MapReduceIndexMappingException) {
+      if (e.getCause() instanceof SnapshotInputMappingException) {
+        // IDEA-258515: corrupted snapshot index storage must be rebuilt.
+        return e.getCause();
+      }
       // If exception has happened on input mapping (DataIndexer.map),
       // it is handled as the indexer exception and must not lead to index rebuild.
       return null;
@@ -949,7 +973,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         if(myStorageBufferingHandler.runUpdate(true, () -> task.processAll(documentsToProcessForProject, project)) &&
            documentsToProcessForProject.size() == documents.size() &&
            !hasActiveTransactions()
-          ) {
+        ) {
           ProgressManager.checkCanceled();
           myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
         }
@@ -1164,8 +1188,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       Throwable initializationProblem = getState().getInitializationProblem(indexId);
       String message = "Index is not created for `" + indexId.getName() + "`";
       throw initializationProblem != null
-      ? new IllegalStateException(message, initializationProblem)
-      : new IllegalStateException(message);
+            ? new IllegalStateException(message, initializationProblem)
+            : new IllegalStateException(message);
     }
     return index;
   }
@@ -1188,21 +1212,21 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   private Predicate<VirtualFile> filesToBeIndexedForProjectCondition(Project project) {
     return virtualFile -> {
-        if (!virtualFile.isValid()) {
+      if (!virtualFile.isValid()) {
+        return true;
+      }
+
+      for (IndexableFileSet set : myIndexableSets) {
+        final Project proj = myIndexableSetToProjectMap.get(set);
+        if (proj != null && !proj.equals(project)) {
+          continue; // skip this set as associated with a different project
+        }
+        if (ReadAction.compute(() -> set.isInSet(virtualFile))) {
           return true;
         }
-
-        for (IndexableFileSet set : myIndexableSets) {
-          final Project proj = myIndexableSetToProjectMap.get(set);
-          if (proj != null && !proj.equals(project)) {
-            continue; // skip this set as associated with a different project
-          }
-          if (ReadAction.compute(() -> set.isInSet(virtualFile))) {
-            return true;
-          }
-        }
-        return false;
-      };
+      }
+      return false;
+    };
   }
 
   public boolean isFileUpToDate(VirtualFile file) {
@@ -1444,11 +1468,22 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       long mapInputTime = System.nanoTime();
       try {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, currentFC);
-      } catch (MapReduceIndex.MapInputException e) {
-        LOG.error(e);
+      } catch (MapReduceIndexMappingException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof SnapshotInputMappingException) {
+          requestRebuild(indexId, e);
+          return null;
+        }
         if (currentFC != null) {
           setIndexedState(index, currentFC, inputId, false);
         }
+        BrokenIndexingDiagnostics.INSTANCE.getExceptionListener().onFileIndexMappingFailed(
+          inputId,
+          currentFC != null ? currentFC.getFile() : file,
+          currentFC != null ? currentFC.getFileType() : file != null ? file.getFileType() : null,
+          indexId,
+          e
+        );
         return null;
       } finally {
         mapInputTime = System.nanoTime() - mapInputTime;
@@ -1906,12 +1941,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   public static InputFilter composeInputFilter(@NotNull InputFilter filter, @NotNull Predicate<? super VirtualFile> condition) {
     return filter instanceof ProjectSpecificInputFilter
-    ? new ProjectSpecificInputFilter() {
+           ? new ProjectSpecificInputFilter() {
       @Override
       public boolean acceptInput(@NotNull IndexedFile file) {
         return ((ProjectSpecificInputFilter)filter).acceptInput(file) && condition.test(file.getFile());
       }
     }
-    : file -> filter.acceptInput(file) && condition.test(file);
+           : file -> filter.acceptInput(file) && condition.test(file);
   }
 }

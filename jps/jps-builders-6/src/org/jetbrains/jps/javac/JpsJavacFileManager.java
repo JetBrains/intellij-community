@@ -251,7 +251,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   @Override
   public ClassLoader getClassLoader(Location location) {
     // ensure processor's loader will not resolve against JPS classes and libraries used in JPS
-    final ClassLoader loader = LazyInitClassLoader.createFrom(getLocation(location), myContext.getStandardFileManager().getClass().getClassLoader());
+    final ClassLoader loader = LazyClassLoader.createFrom(getLocation(location), myContext.getStandardFileManager().getClass().getClassLoader());
     if (loader instanceof Closeable) {
       myCloseables.add((Closeable)loader);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.UITheme;
@@ -14,21 +14,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
-  private static final String RELAUNCH_PROPERTY = "UITheme.relaunch";
-
   private final UITheme myTheme;
   private boolean myInitialised;
 
@@ -67,54 +65,54 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   protected void installEditorScheme() {
     String name = myTheme.getEditorSchemeName();
     if (name != null) {
-      EditorColorsManager cm = EditorColorsManager.getInstance();
-      EditorColorsScheme scheme = cm.getScheme(name);
+      EditorColorsManager editorColorManager = EditorColorsManager.getInstance();
+      EditorColorsScheme scheme = editorColorManager.getScheme(name);
       if (scheme != null) {
-        cm.setGlobalScheme(scheme);
+        editorColorManager.setGlobalScheme(scheme);
       }
     }
   }
 
   private void installBackgroundImage() {
-    installBackgroundImage(myTheme.getBackground(), IdeBackgroundUtil.EDITOR_PROP);
-    installBackgroundImage(myTheme.getEmptyFrameBackground(), IdeBackgroundUtil.FRAME_PROP);
+    boolean installed = installBackgroundImage(myTheme.getBackground(), IdeBackgroundUtil.EDITOR_PROP);
+    installed = installBackgroundImage(myTheme.getEmptyFrameBackground(), IdeBackgroundUtil.FRAME_PROP) || installed;
+    if (installed) {
+      IdeBackgroundUtil.repaintAllWindows();
+    }
   }
 
-  private void installBackgroundImage(Map<String, Object> backgroundProps, String bgImageProperty) {
+  private boolean installBackgroundImage(@Nullable Map<String, Object> backgroundProps, String bgImageProperty) {
+    Object path = backgroundProps == null ? null : backgroundProps.get("image");
+    if (!(path instanceof String)) {
+      return false;
+    }
+
     try {
-      if (backgroundProps != null) {
-        Object path = backgroundProps.get("image");
-        if (path instanceof String) {
-          File tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.toString().substring(((String)path).lastIndexOf(".")), true);
-          URL resource = myTheme.getResource((String)path);
-          if (resource != null) {
-            try (InputStream input = myTheme.getResourceAsStream((String)path)) {
-              try (FileOutputStream output = new FileOutputStream(tmpImage)) {
-                FileUtil.copy(input, output);
-              }
-            }
-
-            String image = tmpImage.getPath();
-            Object transparency = backgroundProps.get("transparency");
-            String alpha = String.valueOf(transparency instanceof Integer ? (int)transparency : 15);
-            String fill = parseEnumValue(backgroundProps.get("fill"), IdeBackgroundUtil.Fill.SCALE);
-            String anchor = parseEnumValue(backgroundProps.get("anchor"), IdeBackgroundUtil.Anchor.CENTER);
-
-            String spec = StringUtil.join(new String[]{image, alpha, fill, anchor}, ",");
-            String currentSpec = PropertiesComponent.getInstance().getValue(bgImageProperty);
-            PropertiesComponent.getInstance().setValue("old." + bgImageProperty, currentSpec);
-
-            PropertiesComponent.getInstance().setValue(bgImageProperty, spec);
-            IdeBackgroundUtil.repaintAllWindows();
-          }
-          else {
-            throw new IllegalArgumentException("Can't load background: " + path);
-          }
-        }
+      Path tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.toString().substring(((String)path).lastIndexOf(".")), true).toPath();
+      InputStream stream = myTheme.getResourceAsStream((String)path);
+      if (stream == null) {
+        throw new IllegalArgumentException("Can't load background: " + path);
       }
+
+      try (stream) {
+        Files.copy(stream, tmpImage);
+      }
+
+      Object transparency = backgroundProps.get("transparency");
+      String alpha = String.valueOf(transparency instanceof Integer ? (int)transparency : 15);
+      String fill = parseEnumValue(backgroundProps.get("fill"), IdeBackgroundUtil.Fill.SCALE);
+      String anchor = parseEnumValue(backgroundProps.get("anchor"), IdeBackgroundUtil.Anchor.CENTER);
+
+      String spec = String.join(",", tmpImage.toString(), alpha, fill, anchor);
+      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+      String currentSpec = propertyComponent.getValue(bgImageProperty);
+      propertyComponent.setValue("old." + bgImageProperty, currentSpec);
+      propertyComponent.setValue(bgImageProperty, spec);
+      return true;
     }
     catch (IOException e) {
       Logger.getInstance(getClass()).error(e);
+      return false;
     }
   }
 

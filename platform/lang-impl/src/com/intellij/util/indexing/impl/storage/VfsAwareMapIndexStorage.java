@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
-public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private final boolean myBuildKeyHashToVirtualFileMapping;
   @Nullable
   private KeyHashLog<Key> myKeyHashToVirtualFileMapping;
@@ -67,7 +67,7 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
   }
 
   @Override
-  public void flush() {
+  public void flush() throws IOException {
     l.lock();
     try {
       super.flush();

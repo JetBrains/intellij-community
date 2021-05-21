@@ -8,14 +8,14 @@ import org.junit.Test
 class AssertConsistencyTest {
   @Test
   fun `check should pass`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = createEmptyBuilder()
     builder.addAssertConsistencyEntity(true)
     (builder.toStorage() as AbstractEntityStorage).assertConsistency()
   }
 
   @Test(expected = AssertionError::class)
   fun `check should fail`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = createEmptyBuilder()
     builder.addAssertConsistencyEntity(false)
     (builder.toStorage() as AbstractEntityStorage).assertConsistency()
   }

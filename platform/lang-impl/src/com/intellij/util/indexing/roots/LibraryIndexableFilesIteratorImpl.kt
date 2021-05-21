@@ -45,6 +45,6 @@ class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryI
         rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
       }
     }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, fileFilter)
+    return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
   }
 }

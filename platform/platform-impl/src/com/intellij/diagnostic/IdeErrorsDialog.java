@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
@@ -186,9 +186,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return 0;
   }
 
-  @Nullable
   @Override
-  protected JComponent createNorthPanel() {
+  protected @Nullable JComponent createNorthPanel() {
     myCountLabel = new JBLabel();
     myInfoLabel = ComponentsKt.htmlComponent("", null, null, null, false, e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && DISABLE_PLUGIN_URL.equals(e.getDescription())) {
@@ -207,11 +206,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     controls.add(actionToolbar("IdeErrorsForward", new ForwardAction()), BorderLayout.EAST);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, NORTH, NONE, JBUI.insets(3, 0), 0, 0));
-    panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, NORTH, HORIZONTAL, JBUI.insets(3, 10), 0, 2));
-    panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insets(3, 0), 0, 0));
-    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, NORTHEAST, NONE, JBUI.insets(3, 0), 0, 0));
-    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 4, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(3, 0), 0, 0));
+    panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, WEST, HORIZONTAL, JBUI.insets(3, 10), 0, 0));
+    panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.insets(3, 0), 0, 0));
+    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, EAST, NONE, JBUI.insets(3, 0), 0, 0));
+    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(2, 1, 3, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
 
@@ -886,8 +885,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
   }
 
-  @Nullable
-  public static IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
+  public static @Nullable IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = null;
     if (event instanceof IdeaReportingEvent) {
       plugin = ((IdeaReportingEvent)event).getPlugin();
@@ -901,12 +899,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return plugin;
   }
 
-  /**
-   * @deprecated use {@link PluginUtil#findPluginId}
-   */
-  @Nullable
+  /** @deprecated use {@link PluginUtil#findPluginId} */
   @Deprecated
-  public static PluginId findPluginId(@NotNull Throwable t) {
+  public static @Nullable PluginId findPluginId(@NotNull Throwable t) {
     return PluginUtil.getInstance().findPluginId(t);
   }
 

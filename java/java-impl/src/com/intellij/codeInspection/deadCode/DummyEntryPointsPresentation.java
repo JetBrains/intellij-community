@@ -14,7 +14,7 @@ import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +46,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
                                                @NotNull InspectionTreeNode parent) {
     return new UnusedDeclarationRefElementNode(entity, this, parent) {
       @Override
-      protected void visitProblemSeverities(@NotNull Object2IntOpenHashMap<HighlightDisplayLevel> counter) {
+      protected void visitProblemSeverities(@NotNull Object2IntMap<HighlightDisplayLevel> counter) {
         // do nothing
       }
     };

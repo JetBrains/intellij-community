@@ -34,6 +34,7 @@ import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
@@ -61,6 +62,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   public static final ExecutorService GLOBAL_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "Indexing", getMaxNumberOfIndexingThreads()
   );
+  private static final int MINIMUM_NUMBER_OF_FILES_TO_RUN_CONCURRENT_INDEXING =
+    SystemProperties.getIntProperty("intellij.indexing.minimum.number.of.files.to.run.concurrent.indexing", 100);
   private static final @NotNull Key<Boolean> CONTENT_SCANNED = Key.create("CONTENT_SCANNED");
   private static final @NotNull Key<UnindexedFilesUpdater> RUNNING_TASK = Key.create("RUNNING_INDEX_UPDATER_TASK");
   private static final Object ourLastRunningTaskLock = new Object();
@@ -176,51 +179,71 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     poweredIndicator.setText(IndexingBundle.message("progress.indexing.updating"));
     ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(poweredIndicator, totalFiles);
 
-    int numberOfIndexingThreads = getNumberOfIndexingThreads();
-    LOG.info("Use " + numberOfIndexingThreads + " indexing " + StringUtil.pluralize("thread", numberOfIndexingThreads));
-    IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
+    myIndex.resetSnapshotInputMappingStatistics();
 
     Instant startIndexing = Instant.now();
     try {
-      for (IndexableFilesIterator provider : orderedProviders) {
-        List<VirtualFile> providerFiles = providerToFiles.get(provider);
-        if (providerFiles == null || providerFiles.isEmpty()) {
-          continue;
-        }
-        concurrentTasksProgressManager.setText(provider.getIndexingProgressText());
-        SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(providerFiles.size());
-        try {
-          IndexingJobStatistics statistics;
-          IndexUpdateRunner.IndexingInterruptedException exception = null;
-          try {
-            statistics = indexUpdateRunner.indexFiles(myProject, provider.getDebugName(), providerFiles, subTaskIndicator);
-          }
-          catch (IndexUpdateRunner.IndexingInterruptedException e) {
-            exception = e;
-            statistics = e.myStatistics;
-          }
-
-          try {
-            projectIndexingHistory.addProviderStatistics(statistics);
-          }
-          catch (Exception e) {
-            LOG.error("Failed to add indexing statistics for " + provider.getDebugName(), e);
-          }
-
-          if (exception != null) {
-            ExceptionUtil.rethrow(exception.getCause());
-          }
-        }
-        finally {
-          subTaskIndicator.finished();
-        }
-      }
+      indexFiles(orderedProviders, providerToFiles, projectIndexingHistory, concurrentTasksProgressManager);
     } finally {
       projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(startIndexing, Instant.now()));
     }
 
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Finished. Unindexed files update"));
-    myIndex.dumpIndexStatistics();
+    List<SnapshotInputMappingsStatistics> snapshotInputMappingsStatistics = myIndex.dumpSnapshotInputMappingStatistics();
+    projectIndexingHistory.addSnapshotInputMappingStatistics(snapshotInputMappingsStatistics);
+  }
+
+  private void indexFiles(@NotNull List<IndexableFilesIterator> orderedProviders,
+                          @NotNull Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles,
+                          @NotNull ProjectIndexingHistory projectIndexingHistory,
+                          @NotNull ConcurrentTasksProgressManager concurrentTasksProgressManager) {
+    int numberOfIndexingThreads = getNumberOfIndexingThreads();
+    LOG.info("Use " + numberOfIndexingThreads + " indexing " + StringUtil.pluralize("thread", numberOfIndexingThreads));
+    IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
+
+    for (int index = 0; index < orderedProviders.size(); ) {
+      List<VirtualFile> files = new ArrayList<>();
+      String indexingProgressText = "";
+      StringBuilder providerDebugName = new StringBuilder();
+      while (files.size() < MINIMUM_NUMBER_OF_FILES_TO_RUN_CONCURRENT_INDEXING && index < orderedProviders.size()) {
+        IndexableFilesIterator provider = orderedProviders.get(index++);
+        List<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
+        files.addAll(providerFiles);
+
+        indexingProgressText = provider.getIndexingProgressText();
+        if (providerDebugName.length() > 0) {
+          providerDebugName.append(", ");
+        }
+        providerDebugName.append(provider.getDebugName());
+      }
+      concurrentTasksProgressManager.setText(indexingProgressText);
+      SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(files.size());
+      try {
+        IndexingJobStatistics statistics;
+        IndexUpdateRunner.IndexingInterruptedException exception = null;
+        try {
+          statistics = indexUpdateRunner.indexFiles(myProject, providerDebugName.toString(), files, subTaskIndicator);
+        }
+        catch (IndexUpdateRunner.IndexingInterruptedException e) {
+          exception = e;
+          statistics = e.myStatistics;
+        }
+
+        try {
+          projectIndexingHistory.addProviderStatistics(statistics);
+        }
+        catch (Exception e) {
+          LOG.error("Failed to add indexing statistics for " + providerDebugName, e);
+        }
+
+        if (exception != null) {
+          ExceptionUtil.rethrow(exception.getCause());
+        }
+      }
+      finally {
+        subTaskIndicator.finished();
+      }
+    }
   }
 
   private static @NotNull String getLogScanningCompletedStageMessage(@NotNull ProjectIndexingHistory projectIndexingHistory) {
@@ -365,7 +388,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
 
     Application app = ApplicationManager.getApplication();
-    if (!app.isCommandLine() || CoreProgressManager.shouldRunHeadlessTasksSynchronously()) {
+    if (!app.isCommandLine() || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
       long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
       MessageBusConnection connection = app.getMessageBus().connect();
       connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {

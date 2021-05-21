@@ -11,7 +11,7 @@ import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -983,13 +983,20 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       return;
     }
 
+    final Runnable commandRunnable = () -> WriteCommandAction.runWriteCommandAction(
+      myProject, CodeStyleBundle.message("command.name.reformat"), null, () -> commitAndFormat(file), file);
+
     CodeStyleCachingService.getInstance(myProject).scheduleWhenSettingsComputed(
       file,
-      () -> CommandProcessor.getInstance().executeCommand(
-        myProject,
-        () -> ApplicationManager.getApplication().runWriteAction(() -> commitAndFormat(file)),
-        CodeStyleBundle.message("command.name.reformat"), null
-      )
+      () -> {
+        //noinspection SSBasedInspection
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          commandRunnable.run();
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(commandRunnable);
+        }
+      }
     );
   }
 

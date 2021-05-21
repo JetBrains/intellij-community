@@ -42,7 +42,6 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import com.intellij.util.ui.JBUI
@@ -69,6 +68,7 @@ class GitStageLineStatusTracker(
   private val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
 
   private val blockOperations: LineStatusTrackerBlockOperations<StagedRange, StagedRange> = MyBlockOperations(LOCK)
+  private val stagedBlockOperations: LineStatusTrackerBlockOperations<Range, BlockI> = MyStagedBlockOperations(LOCK)
   private val stagedTracker: DocumentTracker
   private val unstagedTracker: DocumentTracker
 
@@ -184,6 +184,8 @@ class GitStageLineStatusTracker(
   override fun transferLineFromVcs(line: Int, approximate: Boolean): Int = blockOperations.transferLineFromVcs(line, approximate)
   override fun transferLineToVcs(line: Int, approximate: Boolean): Int = blockOperations.transferLineToVcs(line, approximate)
 
+  fun transferLineFromLocalToStaged(line: Int, approximate: Boolean): Int = stagedBlockOperations.transferLineToVcs(line, approximate)
+  fun transferLineFromStagedToLocal(line: Int, approximate: Boolean): Int = stagedBlockOperations.transferLineFromVcs(line, approximate)
 
   override fun scrollAndShowHint(range: Range, editor: Editor) {
     renderer.scrollAndShow(editor, range)
@@ -760,6 +762,11 @@ class GitStageLineStatusTracker(
     override fun getBlocks(): List<StagedRange>? = if (isValid()) blocks else null
     override fun StagedRange.toRange(): StagedRange = this
   }
+
+  private inner class MyStagedBlockOperations(lock: DocumentTracker.Lock) : LineStatusTrackerBlockOperations<Range, BlockI>(lock) {
+    override fun getBlocks(): List<BlockI>? = if (isValid()) unstagedTracker.blocks else null
+    override fun BlockI.toRange(): Range = Range(start, end, vcsStart, vcsEnd)
+  }
 }
 
 class StagedRange(line1: Int, line2: Int,
@@ -773,7 +780,7 @@ class StagedRange(line1: Int, line2: Int,
   override val vcsEnd: Int get() = vcsLine2
   override val isEmpty: Boolean get() = line1 == line2 && stagedLine1 == stagedLine2 && vcsLine1 == vcsLine2
 
-  fun hasStagedLines() : Boolean = stagedLine1 != stagedLine2
+  fun hasStagedLines(): Boolean = stagedLine1 != stagedLine2
 }
 
 private class BlockMerger(private val staged: List<DocumentTracker.Block>,

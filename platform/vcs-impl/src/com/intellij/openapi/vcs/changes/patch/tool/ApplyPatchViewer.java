@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.*;
@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -40,7 +39,7 @@ import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntListIterator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,8 +50,6 @@ import java.util.List;
 import java.util.*;
 
 class ApplyPatchViewer implements DataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance(ApplyPatchViewer.class);
-
   @Nullable private final Project myProject;
   @NotNull private final DiffContext myContext;
   @NotNull private final ApplyPatchRequest myPatchRequest;
@@ -296,12 +293,10 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myPatchEditor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(convertor1.createConvertor()),
                                                      new LineNumberConverterAdapter(convertor2.createConvertor()));
 
-    TIntArrayList lines = builder.getSeparatorLines();
-    for (int i = 0; i < lines.size(); i++) {
-      int offset = patchDocument.getLineStartOffset(lines.get(i));
+    for (IntListIterator iterator = builder.getSeparatorLines().iterator(); iterator.hasNext(); ) {
+      int offset = patchDocument.getLineStartOffset(iterator.nextInt());
       DiffDrawUtil.createLineSeparatorHighlighter(myPatchEditor, offset, offset, BooleanGetter.TRUE);
     }
-
 
     List<PatchChangeBuilder.Hunk> hunks = builder.getHunks();
 

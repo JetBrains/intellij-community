@@ -5,6 +5,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 class ArrayBackedFMap implements KeyFMap {
   static final int ARRAY_THRESHOLD = 8;
   // Invariant: keys are always sorted
@@ -108,18 +110,21 @@ class ArrayBackedFMap implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
+  public @NotNull Key @NotNull [] getKeys() {
     return getKeysByIndices(keys);
   }
 
-  static Key @NotNull [] getKeysByIndices(int[] indexes) {
+  static @NotNull Key @NotNull [] getKeysByIndices(int[] indexes) {
     Key[] result = new Key[indexes.length];
 
-    for (int i = 0; i < indexes.length; i++) {
-      result[i] = Key.getKeyByIndex(indexes[i]);
+    int o = 0;
+    for (int index : indexes) {
+      Key<Object> key = Key.getKeyByIndex(index);
+      if (key != null) {
+        result[o++] = key;
+      }
     }
-
-    return result;
+    return o == result.length ? result : Arrays.copyOf(result, o);
   }
 
   @Override

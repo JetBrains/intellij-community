@@ -3,10 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.codeInsight.actions.ReaderModeSettings;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventField;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.internal.statistic.eventLog.events.VarargEventId;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -30,9 +27,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
 
@@ -42,8 +45,9 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 61);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 62);
 
+  private static final ClassEventField FILE_EDITOR = EventFields.Class("file_editor");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
   private static final EventField<Boolean> IS_IN_READER_MODE = EventFields.Boolean("is_in_reader_mode");
@@ -60,45 +64,79 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
 
   private static final VarargEventId SELECT = registerFileTypeEvent("select");
   private static final VarargEventId EDIT = registerFileTypeEvent("edit");
-  private static final VarargEventId OPEN = registerFileTypeEvent("open", IS_WRITABLE, IS_IN_READER_MODE);
+  private static final VarargEventId OPEN = registerFileTypeEvent(
+    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_IN_READER_MODE
+  );
   private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE, IS_IN_READER_MODE);
 
   public static void triggerEdit(@NotNull Project project, @NotNull VirtualFile file) {
-    log(EDIT, project, file);
+    log(EDIT, project, file, false);
   }
 
   public static void triggerSelect(@NotNull Project project, @Nullable VirtualFile file) {
     if (file != null) {
-      log(SELECT, project, file);
+      log(SELECT, project, file, false);
     }
     else {
       logEmptyFile();
     }
   }
 
-  public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
-    OPEN.log(project, ArrayUtil.append(ArrayUtil.append(buildCommonEventPairs(project, file),
-                                       IS_WRITABLE.with(file.isWritable())),
-                                       IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file))));
+  public static void triggerOpen(@NotNull Project project, @NotNull FileEditorManager source,
+                                 @NotNull VirtualFile file, @Nullable Long openStartedNs) {
+    long timeToShow = openStartedNs != null ? TimeoutUtil.getDurationMillis(openStartedNs) : -1;
+    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    if (editor == null) {
+      logOpened(project, file, fileEditor, timeToShow, -1);
+    }
+    else {
+      source.runWhenLoaded(editor, () -> {
+        long durationMs = openStartedNs != null ? TimeoutUtil.getDurationMillis(openStartedNs) : -1;
+        logOpened(project, file, fileEditor, timeToShow, durationMs);
+      });
+    }
+  }
+
+  private static void logOpened(@NotNull Project project,
+                                @NotNull VirtualFile file,
+                                @Nullable FileEditor fileEditor,
+                                long timeToShow, long durationMs) {
+    List<@NotNull EventPair<?>> data = buildCommonEventPairs(project, file, true);
+    if (fileEditor != null) {
+      data.add(FILE_EDITOR.with(fileEditor.getClass()));
+    }
+    data.add(EventFields.TimeToShowMs.with(timeToShow));
+    if (durationMs != -1) {
+      data.add(EventFields.DurationMs.with(durationMs));
+    }
+    OPEN.log(data);
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
-    CLOSE.log(project, ArrayUtil.append(ArrayUtil.append(buildCommonEventPairs(project, file),
-                                        IS_WRITABLE.with(file.isWritable())),
-                                        IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file))));
+    log(CLOSE, project, file, true);
   }
 
-  private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {
-    eventId.log(project, buildCommonEventPairs(project, file));
+  private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file, boolean withWritable) {
+    eventId.log(project, buildCommonEventPairs(project, file, withWritable));
   }
 
-  private static EventPair<?> @NotNull [] buildCommonEventPairs(@NotNull Project project,
-                                                                @NotNull VirtualFile file) {
+  private static List<@NotNull EventPair<?>> buildCommonEventPairs(@NotNull Project project,
+                                                                   @NotNull VirtualFile file,
+                                                                   boolean withWritable) {
     FileType fileType = file.getFileType();
-    return new EventPair[]{EventFields.PluginInfoFromInstance.with(fileType),
+    List<EventPair<?>> data = ContainerUtil.newArrayList(
+      EventFields.PluginInfoFromInstance.with(fileType),
       EventFields.FileType.with(fileType),
       EventFields.AnonymizedPath.with(file.getPath()),
-      SCHEMA.with(findSchema(project, file))};
+      SCHEMA.with(findSchema(project, file))
+    );
+
+    if (withWritable) {
+      data.add(IS_WRITABLE.with(file.isWritable()));
+      data.add(IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file)));
+    }
+    return data;
   }
 
   private static void logEmptyFile() {
@@ -191,23 +229,6 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     @Override
     public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
       onChange(dataContext);
-    }
-  }
-
-  public static class MyFileEditorManagerListener implements FileEditorManagerListener {
-    @Override
-    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      triggerOpen(source.getProject(), file);
-    }
-
-    @Override
-    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      triggerClosed(source.getProject(), file);
-    }
-
-    @Override
-    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-      triggerSelect(event.getManager().getProject(), event.getNewFile());
     }
   }
 }

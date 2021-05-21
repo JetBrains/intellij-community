@@ -130,6 +130,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
       @Override
       public void lookAndFeelChanged(@NotNull LafManager source) {
+        if (myScreen != null) {
+          Disposer.dispose(myScreen);
+        }
+        if (myBalloonLayout != null) {
+          Disposer.dispose(myBalloonLayout);
+        }
         myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
         if(USE_TABBED_WELCOME_SCREEN){
           var selectedIndex = ((TabbedWelcomeScreen)myScreen).getSelectedIndex();

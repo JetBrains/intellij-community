@@ -1,27 +1,85 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.IconUtil;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
-import org.cef.handler.CefLifeSpanHandler;
-import org.cef.handler.CefLifeSpanHandlerAdapter;
+import org.cef.browser.CefFrame;
+import org.cef.handler.*;
+import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 
 /**
  * Base class for windowed and offscreen browsers.
  */
 public abstract class JBCefBrowserBase implements JBCefDisposable {
 
-  protected static final String BLANK_URI = "about:blank";
+  @NotNull protected static final String BLANK_URI = "about:blank";
+  @NotNull private static final Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
+
   @SuppressWarnings("SpellCheckingInspection")
   protected static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
   @Nullable private volatile LoadDeferrer myLoadDeferrer;
+  @NotNull private volatile String myLastRequestedUrl = "";
+
+  private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
+    new LazyInitializer.NotNullValue<>() {
+      @Override
+      public @NotNull String initialize() {
+        try {
+          return new String(FileUtil.loadBytes(Objects.requireNonNull(
+            JBCefApp.class.getResourceAsStream("resources/load_error.html"))), StandardCharsets.UTF_8);
+        }
+        catch (IOException | NullPointerException e) {
+          Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", e);
+        }
+        return "";
+      }
+    };
+
+  private static final LazyInitializer.NotNullValue<ScaleContext.Cache<String>> BASE64_ERROR_PAGE_ICON =
+    new LazyInitializer.NotNullValue<>() {
+      @Override
+      public @NotNull ScaleContext.Cache<String> initialize() {
+        return new ScaleContext.Cache<>((ctx) -> {
+          try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            BufferedImage image = IconUtil.toBufferedImage(IconUtil.scale(ERROR_PAGE_ICON, ctx), false);
+            ImageIO.write(image, "png", out);
+            return Base64.getEncoder().encodeToString(out.toByteArray());
+          }
+          catch (IOException ex) {
+            Logger.getInstance(JBCefBrowser.class).error("couldn't write an error image", ex);
+          }
+          return "";
+        });
+      }
+    };
 
   /**
    * According to
@@ -36,30 +94,64 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private static final double LOG_ZOOM = Math.log(ZOOM_COMMON_RATIO);
   @NotNull protected final JBCefClient myCefClient;
   @NotNull protected final CefBrowser myCefBrowser;
-  @Nullable protected final CefLifeSpanHandler myLifeSpanHandler;
+  @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
+  @Nullable private final CefLoadHandler myLoadHandler;
+  @Nullable private final CefRequestHandler myRequestHandler;
   private final ReentrantLock myCookieManagerLock = new ReentrantLock();
   protected volatile boolean myIsCefBrowserCreated;
   @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
+  private final boolean myIsDefaultClient;
+  @Nullable private volatile String myCssBgColor;
 
-  JBCefBrowserBase(@NotNull JBCefClient cefClient, @NotNull CefBrowser cefBrowser, boolean newBrowserCreated) {
+  JBCefBrowserBase(@NotNull JBCefClient cefClient, @NotNull CefBrowser cefBrowser, boolean isNewBrowserCreated, boolean isDefaultClient) {
     myCefClient = cefClient;
     myCefBrowser = cefBrowser;
+    myIsDefaultClient = isDefaultClient;
 
-    if (newBrowserCreated) {
+    if (isNewBrowserCreated) {
       cefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
         @Override
         public void onAfterCreated(CefBrowser browser) {
           myIsCefBrowserCreated = true;
           LoadDeferrer loader = myLoadDeferrer;
           if (loader != null) {
-            loader.load(browser);
+            loader.load();
             myLoadDeferrer = null;
           }
+        }
+      }, getCefBrowser());
+
+      cefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
+        @Override
+        public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+          setPageBackgroundColor();
+        }
+        @Override
+        public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+          // do not show error page if another URL has already been requested to load
+          if (myLastRequestedUrl.equals(failedUrl)) {
+            UIUtil.invokeLaterIfNeeded(() -> loadErrorPage(errorText, failedUrl));
+          }
+        }
+      }, getCefBrowser());
+
+      cefClient.addRequestHandler(myRequestHandler = new CefRequestHandlerAdapter() {
+        @Override
+        public boolean onBeforeBrowse(CefBrowser browser,
+                                      CefFrame frame,
+                                      CefRequest request,
+                                      boolean user_gesture,
+                                      boolean is_redirect)
+        {
+          myLastRequestedUrl = ObjectUtils.notNull(request.getURL(), "");
+          return super.onBeforeBrowse(browser, frame, request, user_gesture, is_redirect);
         }
       }, getCefBrowser());
     }
     else {
       myLifeSpanHandler = null;
+      myLoadHandler = null;
+      myRequestHandler = null;
     }
   }
 
@@ -68,10 +160,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   public final void loadURL(@NotNull String url) {
     if (myIsCefBrowserCreated) {
-      myCefBrowser.loadURL(url);
+      loadUrlImpl(url);
     }
     else {
-      myLoadDeferrer = JBCefBrowser.LoadDeferrer.urlDeferrer(url);
+      myLoadDeferrer = new LoadDeferrer(null, url);
     }
   }
 
@@ -83,10 +175,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   public final void loadHTML(@NotNull String html, @NotNull String url) {
     if (myIsCefBrowserCreated) {
-      loadString(myCefBrowser, html, url);
+      loadHtmlImpl(html, url);
     }
     else {
-      myLoadDeferrer = JBCefBrowser.LoadDeferrer.htmlDeferrer(html, url);
+      myLoadDeferrer = new LoadDeferrer(html, url);
     }
   }
 
@@ -154,8 +246,21 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
   @Override
   public void dispose() {
+    dispose(null);
+  }
+
+  protected void dispose(@Nullable Runnable subDisposer) {
     myDisposeHelper.dispose(() -> {
+      if (subDisposer != null) subDisposer.run();
+
       if (myLifeSpanHandler != null) getJBCefClient().removeLifeSpanHandler(myLifeSpanHandler, getCefBrowser());
+      if (myLoadHandler != null) getJBCefClient().removeLoadHandler(myLoadHandler, getCefBrowser());
+      if (myRequestHandler != null) getJBCefClient().removeRequestHandler(myRequestHandler, getCefBrowser());
+
+      myCefBrowser.stopLoad();
+      myCefBrowser.close(true);
+
+      if (myIsDefaultClient) Disposer.dispose(myCefClient);
     });
   }
 
@@ -179,12 +284,67 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return null;
   }
 
-  private static void loadString(CefBrowser cefBrowser, String html, String url) {
-    url = JBCefFileSchemeHandlerFactory.registerLoadHTMLRequest(cefBrowser, html, url);
-    cefBrowser.loadURL(url);
+  /**
+   * Sets (overrides) background color in the html page.
+   * <p></p>
+   * The color is set for the currently displayed page and all the subsequently loaded pages.
+   *
+   * @see <a href="https://www.w3schools.com/cssref/css_colors_legal.asp">css color format</a>
+   * @param cssColor the color in CSS format
+   */
+  public void setPageBackgroundColor(@NotNull String cssColor) {
+    myCssBgColor = cssColor;
+    setPageBackgroundColor();
   }
 
-  protected static final class LoadDeferrer {
+  private void setPageBackgroundColor() {
+    if (myCssBgColor != null) {
+      getCefBrowser().executeJavaScript("document.body.style.backgroundColor = \"" + myCssBgColor + "\";", BLANK_URI, 0);
+    }
+  }
+
+  private void loadHtmlImpl(@NotNull String html, @NotNull String url) {
+    loadUrlImpl(JBCefFileSchemeHandlerFactory.registerLoadHTMLRequest(getCefBrowser(), html, url));
+  }
+
+  private void loadUrlImpl(@NotNull String url) {
+    getCefBrowser().loadURL(url);
+  }
+
+  private void loadErrorPage(@NotNull String errorText, @NotNull String failedUrl) {
+    int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.1);
+    int headerFontSize = fontSize + JBUIScale.scale(3);
+    int headerPaddingTop = headerFontSize / 5;
+    int lineHeight = headerFontSize * 2;
+    int iconPaddingRight = JBUIScale.scale(12);
+    Color bgColor = JBColor.background();
+    String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
+    Color fgColor = JBColor.foreground();
+    String fgWebColor = String.format("#%02x%02x%02x", fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue());
+
+    String html = ERROR_PAGE_READER.get();
+    html = html.replace("${lineHeight}", String.valueOf(lineHeight));
+    html = html.replace("${iconPaddingRight}", String.valueOf(iconPaddingRight));
+    html = html.replace("${fontSize}", String.valueOf(fontSize));
+    html = html.replace("${headerFontSize}", String.valueOf(headerFontSize));
+    html = html.replace("${headerPaddingTop}", String.valueOf(headerPaddingTop));
+    html = html.replace("${bgWebColor}", bgWebColor);
+    html = html.replace("${fgWebColor}", fgWebColor);
+    html = html.replace("${errorText}", errorText);
+    html = html.replace("${failedUrl}", failedUrl);
+
+    ScaleContext ctx = ScaleContext.create();
+    ctx.update(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
+    // Reset sys scale to prevent raster downscaling on passing the image to jcef.
+    // Overriding is used to prevent scale change during further intermediate context transformations.
+    ctx.overrideScale(SYS_SCALE.of(1.0));
+
+    html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
+
+    loadHTML(html);
+  }
+
+  private final class LoadDeferrer {
     @Nullable private final String myHtml;
     @NotNull private final String myUrl;
 
@@ -193,23 +353,12 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myUrl = url;
     }
 
-    @NotNull
-    public static LoadDeferrer urlDeferrer(String url) {
-      return new LoadDeferrer(null, url);
-    }
-
-    @NotNull
-    public static LoadDeferrer htmlDeferrer(String html, String url) {
-      return new LoadDeferrer(html, url);
-    }
-
-
-    public void load(@NotNull CefBrowser browser) {
+    public void load() {
       // JCEF demands async loading.
       SwingUtilities.invokeLater(
         myHtml == null ?
-        () -> browser.loadURL(myUrl) :
-        () -> loadString(browser, myHtml, myUrl));
+        () -> loadUrlImpl(myUrl) :
+        () -> loadHtmlImpl(myHtml, myUrl));
     }
   }
 }

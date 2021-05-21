@@ -14,14 +14,21 @@ import com.jetbrains.python.psi.stubs.PyDecoratorStub;
  */
 public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDecoratorStub {
   private final QualifiedName myQualifiedName;
+  private final boolean myHasArgumentList;
 
-  protected PyDecoratorStubImpl(final QualifiedName qualname, final StubElement parent) {
+  protected PyDecoratorStubImpl(final QualifiedName qualname, final boolean hasArgumentList, final StubElement parent) {
     super(parent, PyElementTypes.DECORATOR_CALL);
     myQualifiedName = qualname;
+    myHasArgumentList = hasArgumentList;
   }
 
   @Override
   public QualifiedName getQualifiedName() {
     return myQualifiedName;
+  }
+
+  @Override
+  public boolean hasArgumentList() {
+    return myHasArgumentList;
   }
 }

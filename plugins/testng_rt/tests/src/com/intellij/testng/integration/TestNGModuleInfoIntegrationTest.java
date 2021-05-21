@@ -53,7 +53,7 @@ public class TestNGModuleInfoIntegrationTest extends AbstractTestFrameworkCompil
   }
 
   public void testModuleInfoInSourceRoot() throws ExecutionException {
-    PsiPackage defaultPackage = JavaPsiFacade.getInstance(myProject).findPackage("p").getParentPackage();
+    PsiPackage defaultPackage = JavaPsiFacade.getInstance(myProject).findPackage("p");
     final MapDataContext dataContext = new MapDataContext();
     dataContext.put("myModule", myModule);
     TestNGConfiguration configuration =

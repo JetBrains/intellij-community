@@ -2,14 +2,19 @@
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.englishFullName
+import circlet.client.api.identifier
 import circlet.code.api.CodeReviewParticipant
+import circlet.code.api.CodeReviewParticipantRole
 import circlet.code.api.CodeReviewRecord
+import circlet.code.api.identifier
 import circlet.platform.client.resolve
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.vcs.review.ReviewUiSpec.avatarSizeIntValue
-import com.intellij.space.vcs.review.details.selector.SpaceReviewersSelectorVm
+import com.intellij.space.vcs.review.details.selector.SpaceReviewParticipantSelectorFactory
+import com.intellij.space.vcs.review.details.selector.createSelectorVm
+import com.intellij.space.vcs.review.details.selector.createSpaceReviewParticipantController
 import com.intellij.space.vcs.review.details.selector.showPopup
 import com.intellij.space.vcs.review.editIconButton
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -29,50 +34,34 @@ import javax.swing.JLabel
 import javax.swing.SwingConstants
 
 internal class AuthorsComponent(
+  private val parentComponent: JComponent,
   detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
   participantsVm: SpaceReviewParticipantsVm
-) : ParticipantsComponent(detailsVm, participantsVm.authors, SpaceBundle.message("review.label.authors"))
+) : ParticipantsComponent(parentComponent,
+                          detailsVm,
+                          participantsVm,
+                          participantsVm.authors,
+                          SpaceBundle.message("review.label.authors"),
+                          CodeReviewParticipantRole.Author)
 
 internal class ReviewersComponent(
-  private val detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
-  private val participantsVm: SpaceReviewParticipantsVm
-) : ParticipantsComponent(detailsVm, participantsVm.reviewers, SpaceBundle.message("review.label.reviewers")) {
-
-
-  override fun additionalControls(): List<JComponent> {
-    val popupLifetime = SequentialLifetimes(lifetime)
-
-    val listener: (e: ActionEvent) -> Unit = {
-
-      val next = popupLifetime.next()
-      val possibleReviewersVM = SpaceReviewersSelectorVm(
-        next,
-        detailsVm.review.value,
-        detailsVm.projectKey,
-        detailsVm.client,
-        detailsVm,
-        participantsVm
-      )
-
-      showPopup(selectorVm = possibleReviewersVM,
-                lifetime = next,
-                parent = panel,
-                participantsVm = participantsVm)
-    }
-    val editReviewersButton = editIconButton().apply {
-      border = JBUI.Borders.empty(6, 0)
-      actionListener = ActionListener { listener(it) }
-    }
-
-    return listOf(editReviewersButton)
-  }
-
-}
+  private val parentComponent: JComponent,
+  detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
+  participantsVm: SpaceReviewParticipantsVm
+) : ParticipantsComponent(parentComponent,
+                          detailsVm,
+                          participantsVm,
+                          participantsVm.reviewers,
+                          SpaceBundle.message("review.label.reviewers"),
+                          CodeReviewParticipantRole.Reviewer)
 
 internal open class ParticipantsComponent(
-  detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
-  participantsVm: Property<List<CodeReviewParticipant>?>,
-  @NlsContexts.Label labelText: String
+  private val parentComponent: JComponent,
+  private val detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
+  private val participantsVm: SpaceReviewParticipantsVm,
+  participants: Property<List<CodeReviewParticipant>?>,
+  @NlsContexts.Label labelText: String,
+  val role: CodeReviewParticipantRole
 ) : Lifetimed by detailsVm {
 
   val panel: NonOpaquePanel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, 0, 0))
@@ -84,20 +73,16 @@ internal open class ParticipantsComponent(
     border = JBUI.Borders.empty(6, 0, 6, 5)
   }
 
-  open fun additionalControls(): List<JComponent> = emptyList()
-
   init {
-    participantsVm.forEach(detailsVm.lifetime) { users ->
+    participants.forEach(detailsVm.lifetime) { users ->
       panel.removeAll()
 
       if (users?.size == 0) {
-        val additionalControls = additionalControls()
-        if (additionalControls.isNotEmpty()) {
-          val control = Wrapper(additionalControls[0]).apply {
-            border = JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP / 2)
-          }
-          panel.add(control)
+        val additionalControl = additionalControl(role)
+        val control = Wrapper(additionalControl).apply {
+          border = JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP / 2)
         }
+        panel.add(control)
       }
 
       users?.forEachIndexed { index, codeReviewParticipant ->
@@ -109,15 +94,44 @@ internal open class ParticipantsComponent(
         }
         avatarProvider.getIcon(memberProfile)
         val participantPanel = Wrapper(reviewerLabel)
-        val additionalControls = additionalControls()
-        if (index == users.lastIndex && additionalControls.isNotEmpty()) {
-          participantPanel.add(additionalControls[0], BorderLayout.LINE_END)
+        val additionalControl = additionalControl(role)
+        if (index == users.lastIndex) {
+          participantPanel.add(additionalControl, BorderLayout.LINE_END)
         }
         panel.add(participantPanel)
       }
 
-      panel.validate()
-      panel.repaint()
+      parentComponent.validate()
+      parentComponent.repaint()
+    }
+  }
+
+  private fun additionalControl(role: CodeReviewParticipantRole): JComponent {
+    val popupLifetime = SequentialLifetimes(lifetime)
+
+    val listener: (e: ActionEvent) -> Unit = {
+      val nextLifetime = popupLifetime.next()
+
+      val client = detailsVm.client
+      val projectIdentifier = detailsVm.projectKey.identifier
+      val reviewIdentifier = detailsVm.review.value.identifier
+
+      val selectorVm = createSelectorVm(participantsVm, detailsVm, projectIdentifier, nextLifetime, client, reviewIdentifier, role)
+      val controller = createSpaceReviewParticipantController(client, projectIdentifier, reviewIdentifier, role)
+
+      val componentData = SpaceReviewParticipantSelectorFactory.create(
+        selectorVm, nextLifetime, controller,
+        if (role == CodeReviewParticipantRole.Reviewer) SpaceBundle.message("review.participant.suggested.reviewers") else ""
+      )
+      showPopup(panel,
+                componentData.component,
+                componentData.focusableComponent,
+                componentData.clickListener)
+    }
+
+    return editIconButton().apply {
+      border = JBUI.Borders.empty(6, 0)
+      actionListener = ActionListener { listener(it) }
     }
   }
 }

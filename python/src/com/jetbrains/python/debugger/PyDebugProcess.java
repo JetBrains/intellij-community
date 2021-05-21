@@ -761,22 +761,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public boolean isCurrentFrameCached() {
-    try {
-      synchronized (myFrameCacheObject) {
-        final PyStackFrame frame = currentFrame();
-        return myStackFrameCache.containsKey(frame.getThreadFrameId());
-      }
+  public boolean isFrameCached(@NotNull XStackFrame contextFrame) {
+    synchronized (myFrameCacheObject) {
+      final PyStackFrame frame = (PyStackFrame) contextFrame;
+      return myStackFrameCache.containsKey(frame.getThreadFrameId());
     }
-    catch (PyDebuggerException ignored) {
-    }
-    return false;
   }
 
   @Override
   @Nullable
-  public XValueChildrenList loadFrame() throws PyDebuggerException {
-    final PyStackFrame frame = currentFrame();
+  public XValueChildrenList loadFrame(@Nullable final XStackFrame contextFrame) throws PyDebuggerException {
+    final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame) contextFrame;
     synchronized (myFrameCacheObject) {
       //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
       if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
@@ -832,11 +827,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void loadAsyncVariablesValues(@NotNull final List<PyAsyncValue<String>> pyAsyncValues) {
+  public void loadAsyncVariablesValues(@Nullable XStackFrame contextFrame, @NotNull final List<PyAsyncValue<String>> pyAsyncValues) {
     PyDebugValueExecutionService.getInstance(getProject()).submitTask(this, () -> {
       try {
         if (isConnected()) {
-          final PyStackFrame frame = currentFrame();
+          final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame) contextFrame;
           XSuspendContext context = getSession().getSuspendContext();
           String threadId = threadIdBeforeResumeOrStep(context);
           for (PyThreadInfo suspendedThread : mySuspendedThreads) {

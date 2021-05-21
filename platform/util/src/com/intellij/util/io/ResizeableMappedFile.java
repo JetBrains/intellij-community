@@ -22,7 +22,11 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 public class ResizeableMappedFile implements Forceable {
   private static final Logger LOG = Logger.getInstance(ResizeableMappedFile.class);
@@ -174,7 +179,7 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   @Override
-  public void force() {
+  public void force() throws IOException {
     if (isDirty()) {
       if (myLastWrittenLogicalSize != myLogicalSize) {
         writeLength(myLogicalSize);
@@ -230,18 +235,17 @@ public class ResizeableMappedFile implements Forceable {
     myStorage.put(index, src, offset, length);
   }
 
-  public void close() {
-    try {
+  public void close() throws IOException {
+    List<Exception> exceptions = new SmartList<>();
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
       force();
       if (truncateOnClose && myLogicalSize < myStorage.length()) {
         myStorage.resize(myLogicalSize);
       }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    finally {
-      myStorage.close();
+    }));
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> myStorage.close()));
+    if (!exceptions.isEmpty()) {
+      throw new IOException(new CompoundRuntimeException(exceptions));
     }
   }
 

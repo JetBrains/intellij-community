@@ -15,6 +15,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ConsoleTitleGen;
 import com.intellij.execution.target.*;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
@@ -538,7 +539,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     // TODO [Targets API] We should pass the proper progress indicator here
     TargetEnvironment targetEnvironment =
-      targetEnvironmentFactory.prepareRemoteEnvironment(targetEnvironmentRequest, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);
+      targetEnvironmentFactory.prepareRemoteEnvironment(targetEnvironmentRequest, TargetProgressIndicator.EMPTY);
 
     // TODO [Targets API] [regression] We should create PTY process when `PtyCommandLine.isEnabled()`
     //  (see the legacy method `doCreateConsoleCmdLine()`)
@@ -550,15 +551,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                                                      interpreterOptions);
 
     // The environment is now prepared and ide server port should be resolved, so let's start the server
-    HostPort localHostPort;
-    try {
-      localHostPort = ideServerHostPortOnTarget.apply(targetEnvironment);
-    }
-    catch (RuntimeException e) {
-      throw new ExecutionException(e);
-    }
-    PydevConsoleCommunicationServer communicationServer =
-      new PydevConsoleCommunicationServer(myProject, localHostPort.getHost(), localHostPort.getPort());
+    // TODO check if binding to "localhost" properly works for Docker target on Linux host machine
+    String ideServerHost = "localhost";
+    PydevConsoleCommunicationServer communicationServer = new PydevConsoleCommunicationServer(myProject, ideServerHost, ideServerPort);
     myPydevConsoleCommunication = communicationServer;
     try {
       communicationServer.serve();

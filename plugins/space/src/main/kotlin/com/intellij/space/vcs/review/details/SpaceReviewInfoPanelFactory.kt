@@ -97,10 +97,12 @@ internal object SpaceReviewInfoPanelFactory {
       usersPanel.removeAll()
       if (participantsVm != null) {
         val reviewersComponent = ReviewersComponent(
+          topLevelPanel,
           detailsVm,
           participantsVm
         )
         val authorsComponent = AuthorsComponent(
+          topLevelPanel,
           detailsVm,
           participantsVm
         )

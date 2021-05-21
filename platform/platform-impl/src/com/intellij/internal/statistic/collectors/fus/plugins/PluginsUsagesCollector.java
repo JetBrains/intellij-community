@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.plugins;
 
 import com.intellij.ide.plugins.*;
@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -40,9 +41,9 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
     result.addAll(getDisabledPlugins());
     result.addAll(getEnabledNonBundledPlugins());
     result.addAll(getPerProjectPlugins(PER_PROJECT_ENABLED,
-                                       ProjectPluginTrackerState::getEnabledPlugins));
+                                       ProjectPluginTracker::getEnabledPluginsIds));
     result.addAll(getPerProjectPlugins(PER_PROJECT_DISABLED,
-                                       ProjectPluginTrackerState::getDisabledPlugins));
+                                       ProjectPluginTracker::getDisabledPluginsIds));
     return result;
   }
 
@@ -67,10 +68,9 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
   }
 
   private static @NotNull Set<MetricEvent> getPerProjectPlugins(@NotNull EventId1<Integer> eventId,
-                                                                @NotNull Function<@NotNull ProjectPluginTrackerState, @NotNull Set<String>> countProducer) {
+                                                                @NotNull Function<@NotNull ProjectPluginTracker, @NotNull Set<PluginId>> countProducer) {
     return ProjectPluginTrackerManager
       .getInstance()
-      .getState()
       .getTrackers()
       .values()
       .stream()

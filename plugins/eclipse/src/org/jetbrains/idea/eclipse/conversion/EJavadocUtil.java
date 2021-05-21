@@ -4,7 +4,7 @@ package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -14,7 +14,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.Function;
 import org.jdom.Element;
@@ -50,9 +53,8 @@ public final class EJavadocUtil {
     if (attributes == null) {
       return;
     }
-    for (Object o : attributes.getChildren("attribute")) {
-      if (Comparing.strEqual(((Element)o).getAttributeValue("name"), JAVADOC_LOCATION)) {
-        Element attribute = (Element)o;
+    for (Element attribute : attributes.getChildren("attribute")) {
+      if (Comparing.strEqual(attribute.getAttributeValue("name"), JAVADOC_LOCATION)) {
         String javadocPath = attribute.getAttributeValue("value");
         if (!SystemInfo.isWindows) {
           javadocPath = javadocPath.replaceFirst(FILE_PROTOCOL, FILE_PROTOCOL + "/");
@@ -65,7 +67,7 @@ public final class EJavadocUtil {
   private static String toIdeaJavadocUrl(ModuleRootModel model, String javadocPath, List<String> currentRoots) {
     if (javadocPath.startsWith(FILE_PROTOCOL)) {
       if (new File(javadocPath.substring(FILE_PROTOCOL.length())).exists()) {
-        return VfsUtil.pathToUrl(javadocPath.substring(FILE_PROTOCOL.length()));
+        return VfsUtilCore.pathToUrl(javadocPath.substring(FILE_PROTOCOL.length()));
       }
     }
     else {
@@ -101,7 +103,7 @@ public final class EJavadocUtil {
               if (relativeToModulePath.length() < relativeToModulePathWithJarSuffix.length()) {
                 url += relativeToModulePathWithJarSuffix.substring(relativeToModulePath.length());
               }
-              return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, VfsUtil.urlToPath(url));
+              return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, VfsUtilCore.urlToPath(url));
             }
           }
         }
@@ -139,7 +141,7 @@ public final class EJavadocUtil {
   private static String toEclipseJavadocPath(ModuleRootModel model, String javadocPath) {
     final String protocol = VirtualFileManager.extractProtocol(javadocPath);
     if (!Comparing.strEqual(protocol, HttpFileSystem.getInstance().getProtocol())) {
-      final String path = VfsUtil.urlToPath(javadocPath);
+      final String path = VfsUtilCore.urlToPath(javadocPath);
       final VirtualFile contentRoot = getContentRoot(model);
       final Project project = model.getModule().getProject();
       final VirtualFile baseDir = contentRoot != null ? contentRoot.getParent() : project.getBaseDir();
@@ -165,7 +167,7 @@ public final class EJavadocUtil {
           }
           else {
             LOG.info("Javadoc path: " + javadocPath);
-            final Module module = ModuleUtil.findModuleForFile(javadocFile, project);
+            final Module module = ModuleUtilCore.findModuleForFile(javadocFile, project);
             LOG.info("Module: " + (module != null ? module.getName() : "not found"));
             if (module != null) {
               LOG.info("Content roots: " + Arrays.toString(ModuleRootManager.getInstance(module).getContentRoots()));
@@ -197,12 +199,10 @@ public final class EJavadocUtil {
       eclipseUrls.add(fun.fun(roots[0]));
     }
 
-    final List children = new ArrayList(orderEntry.getChildren(ATTRIBUTES_TAG));
-    for (Object o : children) {
-      final Element attsElement = (Element)o;
-      final ArrayList attTags = new ArrayList(attsElement.getChildren(ATTRIBUTE_TAG));
-      for (Object a : attTags) {
-        Element attElement = (Element)a;
+    final List<Element> children = new ArrayList<>(orderEntry.getChildren(ATTRIBUTES_TAG));
+    for (Element attsElement : children) {
+      final ArrayList<Element> attTags = new ArrayList<>(attsElement.getChildren(ATTRIBUTE_TAG));
+      for (Element attElement : attTags) {
         if (Comparing.strEqual(attElement.getAttributeValue("name"), attributeName)) {
           final String javadocPath = attElement.getAttributeValue("value");
           if (!eclipseUrls.remove(javadocPath)) {

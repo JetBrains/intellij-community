@@ -8,23 +8,20 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
-import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
@@ -33,71 +30,82 @@ import java.util.stream.Collectors;
 public class TMHInstrumenterTest extends UsefulTestCase {
   private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/assertEdtInstrumenter/";
 
-  private static final String ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresEdt";
+  private static final String REQUIRES_EDT_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresEdt";
+  private static final String REQUIRES_BACKGROUND_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresBackgroundThread";
+  private static final String REQUIRES_READ_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresReadLock";
+  private static final String REQUIRES_WRITE_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresWriteLock";
   private static final String APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/fake/ApplicationManager";
   private static final String APPLICATION_CLASS_NAME = "com/intellij/openapi/application/fake/Application";
 
   private static final String TESTING_BACKGROUND_THREAD_NAME = "TESTING_BACKGROUND_THREAD";
-  private static final String CALLED_OUTSIDE_AWT_MESSAGE = "Access is allowed from event dispatch thread only.";
+  private static final String REQUIRES_EDT_MESSAGE = "Access is allowed from event dispatch thread only.";
+  private static final String REQUIRES_BACKGROUND_THREAD_MESSAGE = "Access from event dispatch thread is not allowed.";
 
   public void testSimple() throws Exception {
-    doTest();
+    doEdtTest();
   }
 
   public void testSecondMethod() throws Exception {
-    doTest();
+    doEdtTest();
   }
 
   public void testMethodHasOtherAnnotationBefore() throws Exception {
-    doTest();
+    doEdtTest();
   }
 
   public void testMethodHasOtherAnnotationAfter() throws Exception {
-    doTest();
+    doEdtTest();
   }
 
   public void testEmptyBody() throws Exception {
-    doTest();
+    doEdtTest();
   }
 
   public void testConstructor() throws Exception {
-    doTest(TMHInstrumenterTest::invokeConstructor);
+    TestClass testClass = getInstrumentedTestClass();
+    testClass.aClass.getDeclaredConstructor().newInstance();
+    assertThrows(Throwable.class, REQUIRES_EDT_MESSAGE,
+                 () -> executeInBackground(() -> testClass.aClass.getDeclaredConstructor().newInstance()));
   }
 
   public void testDoNotInstrument() throws Exception {
-    TestClass testClass = prepareTest(false);
-    assertFalse(testClass.isInstrumented);
-    assertNull(invokeMethod(testClass.aClass));
-    assertNull(invokeInBackground(testClass.aClass, TMHInstrumenterTest::invokeMethod));
+    TestClass testClass = getNotInstrumentedTestClass();
+    invokeMethod(testClass.aClass);
+    executeInBackground(() -> invokeMethod(testClass.aClass));
   }
 
-  private void doTest() throws Exception {
-    doTest(TMHInstrumenterTest::invokeMethod);
+  public void testRequiresBackgroundThreadAssertion() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    executeInBackground(() -> invokeMethod(testClass.aClass));
+    assertThrows(Throwable.class, REQUIRES_BACKGROUND_THREAD_MESSAGE, () -> invokeMethod(testClass.aClass));
   }
 
-  private void doTest(@NotNull ThrowableConvertor<Class<?>, Throwable, Exception> invoker) throws Exception {
+  public void testRequiresReadLockAssertion() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertReadAccessAllowed"));
+  }
+
+  public void testRequiresWriteLockAssertion() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertWriteAccessAllowed"));
+  }
+
+  private void doEdtTest() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    invokeMethod(testClass.aClass);
+    assertThrows(Throwable.class, REQUIRES_EDT_MESSAGE, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
+  }
+
+  private @NotNull TestClass getInstrumentedTestClass() throws IOException {
     TestClass testClass = prepareTest(false);
     assertTrue(testClass.isInstrumented);
-    assertNull(invoker.convert(testClass.aClass));
-    Throwable throwable = invokeInBackground(testClass.aClass, invoker);
-    assertNotNull(throwable);
-    assertEquals(CALLED_OUTSIDE_AWT_MESSAGE, throwable.getMessage());
+    return testClass;
   }
 
-  private static @Nullable Throwable invokeInBackground(@NotNull Class<?> testClass,
-                                                        @NotNull ThrowableConvertor<Class<?>, Throwable, Exception> invoker) {
-    ExecutorService executor = Executors.newSingleThreadExecutor(r -> new Thread(r, TESTING_BACKGROUND_THREAD_NAME));
-    Future<Throwable> futureThrowable = executor.submit(() -> invoker.convert(testClass));
-    try {
-      return futureThrowable.get(10, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException | TimeoutException e) {
-      fail("Test failed to get result of the task from the ExecutorService: " + e.getCause().getMessage());
-    }
-    catch (ExecutionException e) {
-      fail("Method call failed with unexpected exception when executed in background: " + e.getCause().getMessage());
-    }
-    return null;
+  private @NotNull TestClass getNotInstrumentedTestClass() throws IOException {
+    TestClass testClass = prepareTest(false);
+    assertFalse(testClass.isInstrumented);
+    return testClass;
   }
 
   @NotNull
@@ -115,13 +123,13 @@ public class TMHInstrumenterTest extends UsefulTestCase {
       else {
         byte[] instrumentedClassData = instrument(classData);
         if (instrumentedClassData != null) {
-          testClass = new TestClass(classLoader.doDefineClass(null, instrumentedClassData), true);
+          testClass = new TestClass(classLoader.doDefineClass(null, instrumentedClassData), instrumentedClassData, true);
           if (printClassFiles) {
-            printDebugInfo(classData, instrumentedClassData);
+            TMHTestUtil.printDebugInfo(classData, instrumentedClassData);
           }
         }
         else {
-          testClass = new TestClass(classLoader.doDefineClass(null, classData), false);
+          testClass = new TestClass(classLoader.doDefineClass(null, classData), classData, false);
         }
       }
     }
@@ -151,53 +159,53 @@ public class TMHInstrumenterTest extends UsefulTestCase {
     FailSafeClassReader reader = new FailSafeClassReader(classData);
     int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
     ClassWriter writer = new ClassWriter(reader, flags);
-    boolean instrumented = TMHInstrumenter.instrument(reader, writer, Collections.singleton(
-      new TMHAssertionGenerator.AssertEdt(ANNOTATION_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME))
-    );
+    boolean instrumented = TMHInstrumenter.instrument(reader, writer, ContainerUtil.set(
+      new TMHAssertionGenerator.AssertEdt(REQUIRES_EDT_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator.AssertBackgroundThread(REQUIRES_BACKGROUND_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator.AssertReadAccess(REQUIRES_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator.AssertWriteAccess(REQUIRES_WRITE_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
+    ));
     return instrumented ? writer.toByteArray() : null;
   }
 
-  @Nullable
-  private static Throwable invokeMethod(@NotNull Class<?> testClass) {
-    try {
+  private static void invokeMethod(@NotNull Class<?> testClass) {
+    rethrowExceptions(() -> {
       Object instance = testClass.getDeclaredConstructor().newInstance();
       Method method = testClass.getMethod("test");
       method.invoke(instance);
-    }
-    catch (InvocationTargetException e) {
-      return e.getCause();
-    }
-    catch (IllegalAccessException | InstantiationException | NoSuchMethodException e) {
-      fail("Failed to invoke test method: " + e.getMessage());
-    }
-    return null;
+    });
   }
 
-  @Nullable
-  private static Throwable invokeConstructor(@NotNull Class<?> testClass) {
+  private static void rethrowExceptions(@NotNull ThrowableRunnable<? extends Throwable> runnable) {
     try {
-      testClass.getDeclaredConstructor().newInstance();
+      runnable.run();
     }
-    catch (InvocationTargetException e) {
-      return e.getCause();
+    catch (Throwable e) {
+      //noinspection InstanceofCatchParameter
+      if (e instanceof InvocationTargetException) {
+        ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
+      }
+      ExceptionUtil.rethrowAllAsUnchecked(e);
     }
-    catch (IllegalAccessException | InstantiationException | NoSuchMethodException e) {
-      fail("Failed to invoke constructor: " + e.getMessage());
-    }
-    return null;
   }
 
-  private static void printDebugInfo(byte[] classData, byte[] instrumentedClassData) {
-    printClass(classData);
-    System.out.println();
-    printClass(instrumentedClassData);
+  private static void executeInBackground(@NotNull ThrowableRunnable<? extends Throwable> runnable) throws ExecutionException {
+    waitResult(startInBackground(runnable));
   }
 
-  public static void printClass(byte[] data) {
-    @SuppressWarnings("ImplicitDefaultCharsetUsage")
-    PrintWriter printWriter = new PrintWriter(System.out);
-    TraceClassVisitor visitor = new TraceClassVisitor(printWriter);
-    new ClassReader(data).accept(visitor, 0);
+  private static @NotNull Future<?> startInBackground(@NotNull ThrowableRunnable<? extends Throwable> runnable) {
+    return Executors.newSingleThreadExecutor(r -> new Thread(r, TESTING_BACKGROUND_THREAD_NAME))
+      .submit(() -> rethrowExceptions(runnable));
+  }
+
+  private static void waitResult(@NotNull Future<?> future) throws ExecutionException {
+    try {
+      future.get(10, TimeUnit.MINUTES);
+    }
+    catch (InterruptedException | TimeoutException e) {
+      e.printStackTrace();
+      fail("Background computation didn't finish as expected");
+    }
   }
 
   private static class MyClassLoader extends ClassLoader {
@@ -212,10 +220,12 @@ public class TMHInstrumenterTest extends UsefulTestCase {
 
   private static class TestClass {
     final Class<?> aClass;
+    final byte[] classBytes;
     final boolean isInstrumented;
 
-    TestClass(Class<?> aClass, boolean isInstrumented) {
+    TestClass(Class<?> aClass, byte[] classBytes, boolean isInstrumented) {
       this.aClass = aClass;
+      this.classBytes = classBytes;
       this.isInstrumented = isInstrumented;
     }
   }

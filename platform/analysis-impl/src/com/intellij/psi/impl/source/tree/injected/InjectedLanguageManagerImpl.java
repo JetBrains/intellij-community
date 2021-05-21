@@ -62,6 +62,11 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
         // in the injector cache
         clearInjectorCache();
       }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        clearInjectorCache();
+      }
     });
   }
 

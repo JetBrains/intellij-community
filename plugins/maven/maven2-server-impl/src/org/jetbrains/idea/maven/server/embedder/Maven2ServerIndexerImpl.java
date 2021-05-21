@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.embedder;
 
-import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -308,7 +307,7 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
   @Override
   public Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-    Set<MavenArchetype> result = new THashSet<MavenArchetype>();
+    Set<MavenArchetype> result = new HashSet<MavenArchetype>();
     doCollectArchetypes("internal-catalog", result);
     return result;
   }

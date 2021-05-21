@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ComboBoxPopup;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

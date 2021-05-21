@@ -271,7 +271,7 @@ class B implements AnnotationBuilder {
   }
 
   @Override
-  public void create() {
+  public Annotation createAnnotation() {
     if (created) {
       throw new IllegalStateException("Must not call .create() twice");
     }
@@ -326,6 +326,7 @@ class B implements AnnotationBuilder {
     myHolder.add(annotation);
     myHolder.queueToUpdateIncrementally();
     myHolder.annotationCreatedFrom(this);
+    return annotation;
   }
 
   private static <T extends IntentionAction & LocalQuickFix>

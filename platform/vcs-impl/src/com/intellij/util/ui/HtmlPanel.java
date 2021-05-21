@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -101,7 +101,7 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     Document document = getDocument();
     if (document instanceof HTMLDocument) {
       StyleSheet styleSheet = ((HTMLDocument)document).getStyleSheet();
-      String linkColor = "#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()); // NON-NLS
+      String linkColor = "#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.ENABLED); // NON-NLS
       styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}"); // NON-NLS
     }
   }

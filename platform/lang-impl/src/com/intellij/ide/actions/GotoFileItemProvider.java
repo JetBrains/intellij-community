@@ -100,7 +100,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     String sanitized = getSanitizedPattern(parameters.getCompletePattern(), myModel);
     int qualifierEnd = sanitized.lastIndexOf('/') + 1;
     NameGrouper grouper = new NameGrouper(sanitized.substring(qualifierEnd), indicator);
-    processNames(FindSymbolParameters.simple(myProject, true), name -> grouper.processName(name));
+    processNames(parameters, name -> grouper.processName(name));
 
     Ref<Boolean> hasSuggestions = Ref.create(false);
     DirectoryPathMatcher dirMatcher = DirectoryPathMatcher.root(myModel, sanitized.substring(0, qualifierEnd));
@@ -127,9 +127,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     List<ChooseByNameContributor> contributors = DumbService.getDumbAwareExtensions(myProject, ChooseByNameContributor.FILE_EP_NAME);
     for (ChooseByNameContributor contributor : contributors) {
       if (contributor instanceof DefaultFileNavigationContributor) {
-        FilenameIndex.processAllFileNames(nameProcessor,
-                                          parameters.getSearchScope(), // todo why it was true?
-                                          parameters.getIdFilter());
+        FilenameIndex.processAllFileNames(nameProcessor, parameters.getSearchScope(), parameters.getIdFilter());
       }
       else {
         myModel.processContributorNames(contributor, parameters, nameProcessor);

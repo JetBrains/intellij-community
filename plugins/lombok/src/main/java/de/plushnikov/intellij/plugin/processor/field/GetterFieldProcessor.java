@@ -28,7 +28,9 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiField psiField,
+                                     @NotNull PsiAnnotation psiAnnotation,
+                                     @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != methodVisibility && null != psiClass) {
@@ -61,6 +63,8 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
       }
     }
 
+    validateOnXAnnotations(psiAnnotation, psiField, builder, "onMethod");
+
     if (result) {
       result = validateExistingMethods(psiField, builder);
     }
@@ -90,7 +94,8 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, 0)) {
           final String setterMethodName = LombokUtils.getGetterName(psiField);
 
-          builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.similar.name.s.already.exists"), setterMethodName, methodName);
+          builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.similar.name.s.already.exists"),
+                             setterMethodName, methodName);
           result = false;
         }
       }
@@ -126,10 +131,15 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     final String blockText = String.format("return %s.%s;", isStatic ? psiClass.getName() : "this", psiField.getName());
     methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
 
-    PsiModifierList modifierList = methodBuilder.getModifierList();
-    copyAnnotations(psiField, modifierList,
-      LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
-    addOnXAnnotations(PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.GETTER), modifierList, "onMethod");
+    final PsiModifierList modifierList = methodBuilder.getModifierList();
+
+    copyCopyableAnnotations(psiField, modifierList, LombokUtils.BASE_COPYABLE_ANNOTATIONS);
+    PsiAnnotation fieldGetterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.GETTER);
+    copyOnXAnnotations(fieldGetterAnnotation, modifierList, "onMethod");
+    if (psiField.isDeprecated()) {
+      modifierList.addAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
+    }
+
     return methodBuilder;
   }
 

@@ -97,6 +97,16 @@ public class FontFamilyService {
     return getFont(family, subFamily, subFamily, Font.PLAIN, size);
   }
 
+  /**
+   * Migrates from old font setting ('standard' font family name) to new font settings (typographic family name and typographic subfamily
+   * names to be used for 'normal' and 'bold' font) if possible.
+   *
+   * @return array of 3 elements: typographic family name, typographic subfamily for 'normal' text and typographic subfamily for 'bold' text
+   */
+  public static String @NotNull [] migrateFontSetting(@NotNull String family) {
+    return getInstance().migrateFontSettingImpl(family);
+  }
+
   private static @NotNull FontFamilyService getInstance() {
     FontFamilyService instance = ApplicationManager.getApplication().getService(FontFamilyService.class);
     return instance == null ? new FontFamilyService() : instance;
@@ -139,5 +149,9 @@ public class FontFamilyService {
       return new Font(FontPreferences.DEFAULT_FONT_NAME, style, 1);
     }
     return font;
+  }
+
+  protected String @NotNull [] migrateFontSettingImpl(@NotNull String family) {
+    return new String[] {family, null, null};
   }
 }

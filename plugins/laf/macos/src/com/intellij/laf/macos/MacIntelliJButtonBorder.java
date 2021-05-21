@@ -47,7 +47,7 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
         g2.fill(border);
       }
       else if (isTag(c)) {
-        DarculaUIUtil.paintFocusTag(g2, width, height);
+        DarculaUIUtil.paintTag(g2, width, height, c.hasFocus(), DarculaUIUtil.computeOutlineFor(c));
       }
       else {
         DarculaUIUtil.paintFocusBorder(g2, width, height, arc, true);

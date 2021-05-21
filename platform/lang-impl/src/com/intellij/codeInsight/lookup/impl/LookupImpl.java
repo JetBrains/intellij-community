@@ -672,6 +672,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     LookupUsageTracker.trackLookup(myCreatedTimestamp, this);
 
+    return doShowLookup();
+  }
+
+  protected boolean doShowLookup() {
     myAdComponent.showRandomText();
     if (Boolean.TRUE.equals(myEditor.getUserData(AutoPopupController.NO_ADS))) {
       myAdComponent.clearAdvertisements();

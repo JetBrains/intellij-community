@@ -12,14 +12,6 @@ import java.util.Map;
 
 public final class ActionGroupUtil {
 
-  /**
-   * @deprecated use {@link #isGroupEmpty(ActionGroup, AnActionEvent, boolean)} instead
-   */
-  @Deprecated
-  public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
-    return isGroupEmpty(actionGroup, e, false);
-  }
-
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean isInModalContext) {
     return activeActionTraverser(actionGroup, e, isInModalContext).traverse().isEmpty();
   }

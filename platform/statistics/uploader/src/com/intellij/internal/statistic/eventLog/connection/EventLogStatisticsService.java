@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection;
 
-import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.eventLog.*;
-import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
+import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpResponse;
+import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestBuilder;
+import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
 import org.apache.http.Consts;
 import org.apache.http.entity.ContentType;
 import org.jetbrains.annotations.ApiStatus;
@@ -141,7 +142,9 @@ public class EventLogStatisticsService implements StatisticsService {
           if (logger.isTraceEnabled()) {
             logger.trace(file.getName() + " -> " + e.getMessage());
           }
-          decorator.onFailed(null, 50, null);
+          //noinspection InstanceofCatchParameter
+          int errorCode = e instanceof StatsRequestBuilder.InvalidHttpRequest ? ((StatsRequestBuilder.InvalidHttpRequest)e).getCode() : 50;
+          decorator.onFailed(null, errorCode, null);
         }
       }
 

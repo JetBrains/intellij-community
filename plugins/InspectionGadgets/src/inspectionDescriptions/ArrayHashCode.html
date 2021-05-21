@@ -1,10 +1,14 @@
 <html>
 <body>
-Reports <b>hashCode()</b> being called
-on an array. To get the same hash code for two arrays
-with identical contents call <b>Arrays.hashCode()</b>.
-Use <b>Arrays.deepHashCode()</b> to calculate the hash
-code of a multi-dimensional array.
+Reports improper hash code calculation for arrays. In order to
+correctly calculate the hash code for an array, use:
+<ul>
+  <li><b>Arrays.hashcode()</b> for linear arrays</li>
+  <li><b>Arrays.deepHashcode()</b> for multidimensional arrays</li>
+</ul>
+These methods should also be used with <b>Objects.hash()</b> when
+the sequence of input values includes arrays, for example:
+<b>Objects.hash(string, Arrays.hashcode(array))</b>
 <!-- tooltip end -->
 <p>
 </body>

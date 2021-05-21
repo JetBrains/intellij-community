@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -47,6 +47,7 @@ import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -71,6 +72,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   public static final String SCOPE_PROJECT = "Production";
   public static final String SCOPE_ALL = "All";
   public static final String SCOPE_CLASS = "This Class";
+  public static final String SCOPE_MODULE = "This Module";
   public static final String SCOPE_TEST = "Test";
 
   public static final String HELP_ID = "reference.toolWindows.hierarchy";
@@ -202,6 +204,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     HashMap<String, Supplier<String>> map = new HashMap<>();
     map.put(SCOPE_PROJECT, () -> ProjectProductionScope.INSTANCE.getPresentableName());
     map.put(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"));
+    map.put(SCOPE_MODULE, () -> LangBundle.message("this.module.scope.name"));
     map.put(SCOPE_TEST, () -> TestsScope.INSTANCE.getPresentableName());
     map.put(SCOPE_ALL, () -> CustomScopesProviderEx.getAllScope().getPresentableName());
     return map;
@@ -229,7 +232,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @Nullable
   protected Color getFileColorForNode(Object node) {
     if (node instanceof HierarchyNodeDescriptor) {
-      PsiFile containingFile = ((HierarchyNodeDescriptor) node).getContainingFile();
+      PsiFile containingFile = SlowOperations.allowSlowOperations(() -> ((HierarchyNodeDescriptor)node).getContainingFile());
       return ProjectViewTree.getColorForElement(containingFile);
     }
     return null;
@@ -739,6 +742,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     result.add(TestsScope.INSTANCE);
     result.add(CustomScopesProviderEx.getAllScope());
     result.add(new NamedScope(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"), AllIcons.Ide.LocalScope, null));
+    result.add(new NamedScope(SCOPE_MODULE, () -> LangBundle.message("this.module.scope.name"), AllIcons.Ide.LocalScope, null));
 
     final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {

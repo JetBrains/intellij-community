@@ -56,8 +56,8 @@ public final class ModifierFlags {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.SEALED, SEALED_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.NON_SEALED, NON_SEALED_MASK);
 
-    for (Object name : NAME_TO_MODIFIER_FLAG_MAP.keySet()) {
-      MODIFIER_FLAG_TO_NAME_MAP.put(NAME_TO_MODIFIER_FLAG_MAP.getInt(name), (String)name);
+    for (String name : NAME_TO_MODIFIER_FLAG_MAP.keySet()) {
+      MODIFIER_FLAG_TO_NAME_MAP.put(NAME_TO_MODIFIER_FLAG_MAP.getInt(name), name);
     }
 
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.PUBLIC_KEYWORD, PUBLIC_MASK);

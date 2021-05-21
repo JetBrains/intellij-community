@@ -18,6 +18,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -254,7 +255,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
 
       List<ResourceVariable> resourceVariables = new ArrayList<>();
       List<PsiStatement> statementsToDelete = new ArrayList<>();
-      IntArrayList initializerPositions = new IntArrayList();
+      IntList initializerPositions = new IntArrayList();
       for (PsiVariable resourceVariable : collectedVariables) {
         boolean variableUsedOutsideTry = isVariableUsedOutsideContext(resourceVariable, tryStatement);
         if (!PsiUtil.isLanguageLevel9OrHigher(finallyBlock) && variableUsedOutsideTry) return null;
@@ -311,7 +312,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       return new Context(resourceVariables, new HashSet<>(statementsToDelete));
     }
 
-    private static boolean initializersAreAtTheBeginning(IntArrayList initializerPositions) {
+    private static boolean initializersAreAtTheBeginning(IntList initializerPositions) {
       initializerPositions.sort(null);
       for (int i = 0; i < initializerPositions.size(); i++) {
         if (initializerPositions.getInt(i) != i) return false;

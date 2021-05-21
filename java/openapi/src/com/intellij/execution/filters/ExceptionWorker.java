@@ -74,7 +74,8 @@ public class ExceptionWorker {
 
     myMethod = myInfo.methodNameRange.substring(line);
 
-    myClassResolveInfo = myCache.resolveClassOrFile(myInfo.classFqnRange.substring(line).trim(), myInfo.fileName);
+    String className = myInfo.classFqnRange.substring(line).trim();
+    myClassResolveInfo = myCache.resolveClassOrFile(className, myInfo.fileName);
     if (myClassResolveInfo.myClasses.isEmpty()) return null;
 
     /*
@@ -97,10 +98,15 @@ public class ExceptionWorker {
       virtualFiles, myInfo.lineNumber - 1, myProject, action);
     Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, myClassResolveInfo.myInLibrary);
     if (myMethod.startsWith("access$")) {
+      // Bridge method: just skip it
       myLocationRefiner = elementMatcher;
     }
+    else if (elementMatcher instanceof FunctionCallMatcher && className.matches(".+\\$\\$Lambda\\$\\d+/0x[0-9a-f]+")) {
+      // Like at com.example.MyClass$$Lambda$3363/0x00000008026d6440.fun(Unknown Source)
+      myLocationRefiner = new FunctionCallMatcher(myMethod);
+    }
     else if (myMethod.startsWith("lambda$")) {
-      myLocationRefiner = new FunctionCallMatcher();
+      myLocationRefiner = new FunctionCallMatcher(null);
     }
     else {
       myLocationRefiner = new StackFrameMatcher(line, myInfo);
@@ -198,7 +204,7 @@ public class ExceptionWorker {
     int dotIdx = methodName.getStartOffset() - 1;
     int moduleIdx = line.indexOf('/');
     int classNameIdx;
-    if (moduleIdx > -1 && moduleIdx < dotIdx) {
+    if (moduleIdx > -1 && moduleIdx < dotIdx && !line.startsWith("0x", moduleIdx + 1)) {
       classNameIdx = moduleIdx + 1;
     }
     else {
@@ -312,7 +318,7 @@ public class ExceptionWorker {
       TextRange fileLineRange = TextRange.create(fileLineStart, fileLineEnd);
       String fileAndLine = fileLineRange.substring(line);
 
-      if ("Native Method".equals(fileAndLine)) {
+      if ("Native Method".equals(fileAndLine) || "Unknown Source".equals(fileAndLine)) {
         return new ParsedLine(classFqnRange, methodNameRange, fileLineRange, null, -1);
       }
 
@@ -521,9 +527,16 @@ public class ExceptionWorker {
   }
 
   private static class FunctionCallMatcher implements ExceptionLineRefiner {
+    private final @Nullable String myMethodName;
+
+    private FunctionCallMatcher(@Nullable String name) {
+      myMethodName = name;
+    }
+
     @Override
     public PsiElement matchElement(@NotNull PsiElement element) {
       if (!(element instanceof PsiIdentifier)) return null;
+      if (myMethodName != null && !element.textMatches(myMethodName)) return null;
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceExpression)) return null;
       PsiMethodCallExpression call = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);

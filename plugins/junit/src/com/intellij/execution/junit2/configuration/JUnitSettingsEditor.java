@@ -17,6 +17,7 @@ import com.intellij.rt.execution.junit.RepeatCount;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Supplier;
 
 import static com.intellij.execution.junit.JUnitConfiguration.FORK_NONE;
@@ -76,6 +77,7 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                         configuration -> configuration.getRepeatMode(),
                                         (configuration, mode) -> configuration.setRepeatMode(mode),
                                         configuration -> !RepeatCount.ONCE.equals(configuration.getRepeatMode()));
+    repeat.setVariantNameProvider(s -> JUnitBundle.message("repeat." + s.replace(' ', '.').toLowerCase(Locale.ENGLISH)));
     fragments.add(repeat);
 
     LabeledComponent<JTextField> countField =
@@ -110,6 +112,7 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                         configuration -> configuration.getForkMode(),
                                         (configuration, s) -> configuration.setForkMode(s),
                                         configuration -> !FORK_NONE.equals(configuration.getForkMode()));
+    forkMode.setVariantNameProvider(s -> JUnitBundle.message("fork.mode." + s.toLowerCase(Locale.ENGLISH)));
     fragments.add(forkMode);
 
     testKind.addSettingsEditorListener(

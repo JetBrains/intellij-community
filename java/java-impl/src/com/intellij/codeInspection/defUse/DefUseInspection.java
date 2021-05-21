@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -18,7 +18,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -66,7 +65,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
                               final ProblemsHolder holder,
                               final boolean isOnTheFly) {
     if (body == null) return;
-    final Set<PsiVariable> usedVariables = new THashSet<>();
+    final Set<PsiVariable> usedVariables = new HashSet<>();
     List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
 
     if (unusedDefs != null && !unusedDefs.isEmpty()) {

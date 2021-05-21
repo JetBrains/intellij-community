@@ -406,16 +406,9 @@ public final class PyResolveUtil {
     else {
       imports = Collections.emptyList();
     }
-    for (Object function : functions) {
-      //TODO: most likely the following code is obsolete
-      //if (!(function instanceof PyFunction)) {
-      //  FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
-      //                                               new Throwable("found non-function object " + function + " in function list"));
-      //  break;
-      //}
-      PyFunction pyFunction = (PyFunction)function;
-      if (pyFunction.getContainingClass() != null) {
-        ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction, imports, element)));
+    for (PyFunction function : functions) {
+      if (function.getContainingClass() != null) {
+        ret.add(new ImplicitResolveResult(function, getImplicitResultRate(function, imports, element)));
       }
     }
 

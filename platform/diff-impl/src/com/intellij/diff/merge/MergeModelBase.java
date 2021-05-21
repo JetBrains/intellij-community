@@ -35,8 +35,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   @NotNull private final Document myDocument;
   @Nullable private final UndoManager myUndoManager;
 
-  @NotNull private final IntArrayList myStartLines = new IntArrayList();
-  @NotNull private final IntArrayList myEndLines = new IntArrayList();
+  @NotNull private final IntList myStartLines=new IntArrayList();
+  @NotNull private final IntList myEndLines=new IntArrayList();
 
   @NotNull private final IntSet myChangesToUpdate = new IntOpenHashSet();
   private int myBulkChangeUpdateDepth;

@@ -1913,7 +1913,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new DupInstruction());
     generateBoxingUnboxingInstructionFor(operand, unboxedType);
     PsiType resultType = TypeConversionUtil.binaryNumericPromotion(unboxedType, PsiType.INT);
-    addInstruction(new PushValueInstruction(DfTypes.intValue(1)));
+    Object addend = TypeConversionUtil.computeCastTo(1, resultType);
+    addInstruction(new PushValueInstruction(DfTypes.constant(addend, resultType)));
     addInstruction(new BinopInstruction(token, null, resultType));
     if (!unboxedType.equals(resultType)) {
       addInstruction(new PrimitiveConversionInstruction(unboxedType, null));

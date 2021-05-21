@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -19,6 +18,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 
 public class GotoActionAction extends SearchEverywhereBaseAction implements DumbAware, LightEditCompatible {
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     String tabID = Registry.is("search.everywhere.group.contributors.by.type")
@@ -36,15 +35,21 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     showInSearchEverywherePopup(tabID, e, false, true);
   }
 
-  public static void openOptionOrPerformAction(@NotNull Object element, String enteredText, @Nullable Project project, @Nullable Component component) {
+  /** @deprecated please use {@link #openOptionOrPerformAction(Object, String, Project, Component, int)} instead */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static void openOptionOrPerformAction(@NotNull Object element,
+                                               String enteredText,
+                                               @Nullable Project project,
+                                               @Nullable Component component) {
     openOptionOrPerformAction(element, enteredText, project, component, 0);
   }
 
-  private static void openOptionOrPerformAction(Object element,
-                                                String enteredText,
-                                                @Nullable Project project,
-                                                @Nullable Component component,
-                                                @JdkConstants.InputEventMask int modifiers) {
+  public static void openOptionOrPerformAction(@NotNull Object element,
+                                               String enteredText,
+                                               @Nullable Project project,
+                                               @Nullable Component component,
+                                               @JdkConstants.InputEventMask int modifiers) {
     // invoke later to let the Goto Action popup close completely before the action is performed
     // and avoid focus issues if the action shows complicated popups itself
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -54,26 +59,25 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
         OptionDescription optionDescription = (OptionDescription)element;
         if (optionDescription.hasExternalEditor()) {
           optionDescription.invokeInternalEditor();
-        } else {
+        }
+        else {
           ShowSettingsUtilImpl.showSettingsDialog(project, optionDescription.getConfigurableId(), enteredText);
         }
       }
       else {
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
-          () -> performAction(element, component, null, modifiers, null));
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> performAction(element, component, null, modifiers));
       }
     });
   }
 
   public static void performAction(@NotNull Object element, @Nullable Component component, @Nullable AnActionEvent e) {
-    performAction(element, component, e, 0, null);
+    performAction(element, component, e, 0);
   }
 
   private static void performAction(Object element,
                                     @Nullable Component component,
                                     @Nullable AnActionEvent e,
-                                    @JdkConstants.InputEventMask int modifiers,
-                                    @Nullable Runnable callback) {
+                                    @JdkConstants.InputEventMask int modifiers) {
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
     AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
@@ -89,7 +93,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
           if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(context)) {
             ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-              event.getPresentation().getText(), (ActionGroup)action, context, false, callback, -1);
+              event.getPresentation().getText(), (ActionGroup)action, context, false, null, -1);
             Window window = SwingUtilities.getWindowAncestor(component);
             if (window != null) {
               popup.showInCenterOf(window);
@@ -102,7 +106,6 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
             ActionManagerEx manager = ActionManagerEx.getInstanceEx();
             manager.fireBeforeActionPerformed(action, context, event);
             ActionUtil.performActionDumbAware(action, event);
-            if (callback != null) callback.run();
             manager.fireAfterActionPerformed(action, context, event);
           }
         }

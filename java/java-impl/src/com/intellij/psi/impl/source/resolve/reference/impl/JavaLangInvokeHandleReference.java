@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -13,14 +13,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
@@ -152,7 +148,7 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
   }
 
   private Object[] lookupFields(@NotNull ReflectiveClass ownerClass, Predicate<? super PsiField> filter) {
-    final Set<String> uniqueNames = new THashSet<>();
+    final Set<String> uniqueNames = new HashSet<>();
     return Arrays.stream(ownerClass.getPsiClass().getAllFields())
       .filter(field -> field != null &&
                        (field.getContainingClass() == ownerClass.getPsiClass() || !field.hasModifierProperty(PsiModifier.PRIVATE)) &&

@@ -23,9 +23,7 @@ internal fun buildLoginPanel(st: SpaceLoginState.Disconnected,
     val loginButton = JButton(SpaceBundle.message("login.panel.log.in.button")).apply {
       addActionListener {
         isEnabled = false
-        var url = serverField.text
-        url = if (url.startsWith("https://") || url.startsWith("http://")) url else "https://$url"
-        loginAction(url.removeSuffix("/"))
+        loginAction(serverField.text.trim())
       }
     }
 

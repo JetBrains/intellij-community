@@ -6,15 +6,17 @@ import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import org.jetbrains.org.objectweb.asm.Type;
 
-import java.util.stream.Stream;
+import java.util.List;
 
 enum Value implements Result {
   Bot, NotNull, Null, True, False, Fail, Pure, Top;
+  static final List<Value> BOOLEAN = List.of(True, False);
+  static final List<Value> OBJECT = List.of(Null, NotNull);
 
-  static Stream<Value> typeValues(Type type) {
-    if (ASMUtils.isReferenceType(type)) return Stream.of(Null, NotNull);
-    if (ASMUtils.isBooleanType(type)) return Stream.of(True, False);
-    return Stream.empty();
+  static List<Value> typeValues(Type type) {
+    if (ASMUtils.isReferenceType(type)) return OBJECT;
+    if (ASMUtils.isBooleanType(type)) return BOOLEAN;
+    return List.of();
   }
 
   ContractReturnValue toReturnValue() {

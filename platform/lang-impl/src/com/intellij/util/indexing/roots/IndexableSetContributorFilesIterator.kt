@@ -46,7 +46,7 @@ internal class IndexableSetContributorFilesIterator(private val indexableSetCont
       if (projectAware) indexableSetContributor.getAdditionalProjectRootsToIndex(project)
       else indexableSetContributor.additionalRootsToIndex
     }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, allRoots, fileIterator, fileFilter)
+    return IndexableFilesIterationMethods.iterateRoots(project, allRoots, fileIterator, fileFilter, excludeNonProjectRoots = false)
   }
 
 }

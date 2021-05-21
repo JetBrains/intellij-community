@@ -2,9 +2,9 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ public final class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
 
   @Override
   protected ByteBuffer create() throws IOException {
-    try (FileContext context = new FileContext(myFile, myReadOnly)) {
+    try (FileContext context = openContext()) {
       FileChannel channel = context.myFile;
       assert channel != null;
       ByteBuffer buffer = ByteBuffer.allocateDirect((int)myLength);
@@ -94,20 +94,16 @@ public final class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     }
   }
 
-  FileContext flushWithContext(@Nullable FileContext fileContext) {
+  void flushWithContext(@NotNull FileContext fileContext) throws IOException {
     ByteBuffer buffer = getCachedBuffer();
     if (buffer != null && isDirty()) {
-      try {
-        if (fileContext == null) {
-          fileContext = new FileContext(myFile, myReadOnly);
-        }
-        doFlush(fileContext, buffer);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      doFlush(fileContext, buffer);
     }
-    return fileContext;
+  }
+
+  @NotNull
+  ReadWriteDirectBufferWrapper.FileContext openContext() throws IOException {
+    return new FileContext(myFile, myReadOnly);
   }
 
   private void doFlush(FileContext fileContext, ByteBuffer buffer) throws IOException {
@@ -122,7 +118,7 @@ public final class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   public void flush() {
     ByteBuffer buffer = getCachedBuffer();
     if (buffer != null && isDirty()) {
-      try (FileContext context = new FileContext(myFile, myReadOnly)) {
+      try (FileContext context = openContext()) {
         doFlush(context, buffer);
       }
       catch (IOException e) {

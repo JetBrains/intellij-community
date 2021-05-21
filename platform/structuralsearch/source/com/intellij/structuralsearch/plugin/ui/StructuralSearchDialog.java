@@ -367,7 +367,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     mySearchCriteriaEdit = createEditor(false);
     mySearchEditorPanel.setFirstComponent(mySearchCriteriaEdit);
 
-    final JPanel wrapper = new JPanel(new BorderLayout());
+    final JPanel wrapper = new JPanel(new BorderLayout()); // needed for border
     final Color color = UIManager.getColor("Borders.ContrastBorderColor");
     wrapper.setBorder(IdeBorderFactory.createBorder(color));
     wrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
@@ -433,7 +433,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final ToolbarLabel replacementTemplateLabel = new ToolbarLabel(SSRBundle.message("replacement.template.label"));
     final DefaultActionGroup labelGroup = new DefaultActionGroup(new Spacer(), replacementTemplateLabel);
     final ActionManager actionManager = ActionManager.getInstance();
-    final ActionToolbar labelToolbar = actionManager.createActionToolbar("StructuralSearchDialog", labelGroup, true);
+    final ActionToolbar labelToolbar = actionManager.createActionToolbar("StructuralReplaceDialog", labelGroup, true);
 
     final CheckboxAction shortenFqn = new CheckboxAction(SSRBundle.message("shorten.fully.qualified.names.checkbox")) {
 
@@ -517,8 +517,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       layout.createSequentialGroup().
         addGroup(
           layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-            .addComponent(labelToolbar.getComponent())
-            .addComponent(replacementToolbar.getComponent())
+            .addComponent(labelToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+            .addComponent(replacementToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
         )
         .addGap(4)
         .addComponent(wrapper)
@@ -688,7 +688,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       Separator.getInstance(),
       mySwitchAction
     );
-
 
     templateActionGroup.setPopup(true);
     final Presentation presentation = templateActionGroup.getTemplatePresentation();

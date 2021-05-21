@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.request;
 
+import com.intellij.internal.statistic.StatisticsStringUtil;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
@@ -44,7 +45,10 @@ public class StatsRequestBuilder {
 
   @NotNull
   public StatsRequestBuilder withBody(@NotNull String body, @NotNull ContentType contentType) {
-    myBody = new StringEntity(body, contentType);
+    if (StatisticsStringUtil.isEmptyOrSpaces(body)) {
+      throw new EmptyHttpRequestBody();
+    }
+    myBody = new StringEntity(body.trim(), contentType);
     return this;
   }
 
@@ -130,14 +134,39 @@ public class StatsRequestBuilder {
     }
     else if ("POST".equals(myMethod)) {
       HttpPost post = new HttpPost(myUrl);
-      if (myBody != null) {
-        post.setEntity(new GzipCompressingEntity(myBody));
+      if (myBody == null || myBody.getContentLength() == 0) {
+        throw new EmptyHttpRequestBody();
       }
+      post.setEntity(new GzipCompressingEntity(myBody));
       return post;
     }
     else if ("GET".equals(myMethod)) {
       return new HttpGet(myUrl);
     }
-    throw new IllegalArgumentException();
+    throw new IllegalHttpRequestTypeException();
+  }
+
+  public static class EmptyHttpRequestBody extends InvalidHttpRequest {
+    public EmptyHttpRequestBody() {
+      super(51);
+    }
+  }
+
+  public static class IllegalHttpRequestTypeException extends InvalidHttpRequest {
+    public IllegalHttpRequestTypeException() {
+      super(52);
+    }
+  }
+
+  public static class InvalidHttpRequest extends RuntimeException {
+    private final int myCode;
+
+    public InvalidHttpRequest(int code) {
+      myCode = code;
+    }
+
+    public int getCode() {
+      return myCode;
+    }
   }
 }

@@ -186,8 +186,6 @@
     <extensionPoint name="statistic.eventLog.eventLoggerProvider" interface="com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider"/>
     <extensionPoint name="statistic.eventLog.fusStateEventTracker" interface="com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker"/>
 
-    <extensionPoint name="uiDropperActions" interface="com.intellij.internal.inspector.UiDropperActionExtension"/>
-
     <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
 
     <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider" dynamic="true"/>

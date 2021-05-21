@@ -16,6 +16,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -265,7 +266,7 @@ public final class KeyChooserDialog extends DialogWrapper{
   }
 
   private final class MySpeedSearch extends SpeedSearchBase<JTable> {
-    private Object2IntOpenHashMap<Object> myElements;
+    private Object2IntMap<Object> myElements;
     private Object[] myElementsArray;
 
     MySpeedSearch(final JTable component) {

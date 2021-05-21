@@ -91,6 +91,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     INLINE_ELEMENTS.put("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
     INLINE_ELEMENTS.put("parameter_hint_highlighted", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED);
     INLINE_ELEMENTS.put("parameter_hint_current", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT);
+    INLINE_ELEMENTS.put("inlay_default", DefaultLanguageHighlighterColors.INLAY_DEFAULT);
+    INLINE_ELEMENTS.put("inlay_text_without_background", DefaultLanguageHighlighterColors.INLAY_DEFAULT);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -189,6 +191,14 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.java.attribute.descriptor.inline.parameter.hint.current"),
       DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT),
+
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.default"),
+      DefaultLanguageHighlighterColors.INLAY_DEFAULT),
+
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.text.without.background"),
+      DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND),
 
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.language.defaults.highlighted.reference"), DefaultLanguageHighlighterColors.HIGHLIGHTED_REFERENCE),

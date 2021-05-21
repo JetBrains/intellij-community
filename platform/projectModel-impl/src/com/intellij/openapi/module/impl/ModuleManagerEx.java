@@ -15,6 +15,8 @@ public abstract class ModuleManagerEx extends ModuleManager {
   public static final String IML_EXTENSION = ".iml";
   public static final String MODULE_GROUP_SEPARATOR = "/";
 
+  public abstract boolean areModulesLoaded();
+
   @ApiStatus.Experimental
   public abstract Collection<ModulePath> getFailedModulePaths();
 

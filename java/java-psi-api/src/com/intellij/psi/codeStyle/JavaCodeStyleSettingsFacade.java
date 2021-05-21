@@ -33,12 +33,6 @@ public abstract class JavaCodeStyleSettingsFacade {
   public abstract boolean useFQClassNames();
 
   /**
-   * @deprecated Use {@link JavaFileCodeStyleFacade#isJavaDocLeadingAsterisksEnabled()}
-   */
-  @Deprecated
-  public abstract boolean isJavaDocLeadingAsterisksEnabled();
-
-  /**
    * @deprecated Use {@link JavaFileCodeStyleFacade#getIndentSize()}
    */
   @Deprecated

@@ -68,7 +68,7 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
       registerDescriptor(descriptor);
     }
     if (descriptors instanceof ArrayList<?>) {
-      ((ArrayList)descriptors).trimToSize();
+      ((ArrayList<?>)descriptors).trimToSize();
     }
     myRootsByTarget.put(target, descriptors);
   }

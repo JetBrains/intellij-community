@@ -14,6 +14,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ public final class TypeInfo {
   public static final TypeInfo[] EMPTY_ARRAY = {};
 
   private static final String[] ourIndexFrequentType;
-  private static final Object2IntOpenHashMap<String> ourFrequentTypeIndex;
+  private static final Object2IntMap<String> ourFrequentTypeIndex;
   static {
     ourIndexFrequentType = new String[]{
       "",

@@ -17,8 +17,7 @@ public interface UsageHandler<O> {
 
   enum UsageAction {
     FIND_USAGES,
-    SHOW_USAGES,
-    ;
+    SHOW_USAGES
   }
 
   /**

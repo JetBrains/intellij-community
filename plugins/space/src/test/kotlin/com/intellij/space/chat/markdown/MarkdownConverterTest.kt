@@ -74,6 +74,11 @@ internal class MarkdownConverterTest {
     assertEquals(htmlText, convertToHtml(markdownText, "https://jetbrains.com"))
   }
 
+  @Test
+  fun strikethrough() {
+    "~~removed~~" shouldBe "<p><strike>removed</strike></p>"
+  }
+
 
   private infix fun String.shouldBe(htmlText: String) {
     assertEquals(htmlText, convertToHtml(this))

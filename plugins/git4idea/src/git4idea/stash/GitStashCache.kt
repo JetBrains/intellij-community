@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
+import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.intellij.openapi.Disposable
@@ -26,8 +25,9 @@ import java.util.concurrent.Callable
 class GitStashCache(val project: Project) : Disposable {
   private val executor = MoreExecutors.listeningDecorator(AppExecutorUtil.createBoundedApplicationPoolExecutor("Git Stash Loader", 1))
 
-  val cache: LoadingCache<CommitId, ListenableFuture<StashData>> = CacheBuilder.newBuilder()
-    .maximumSize(100).build(CacheLoader.from { commitId -> return@from scheduleLoading(commitId!!) })
+  private val cache = Caffeine.newBuilder()
+    .maximumSize(100)
+    .build<CommitId, ListenableFuture<StashData>>(CacheLoader { scheduleLoading(it) })
 
   init {
     LowMemoryWatcher.register(Runnable { cache.invalidateAll() }, this)
@@ -52,13 +52,16 @@ class GitStashCache(val project: Project) : Disposable {
 
   fun getCachedStashData(stashInfo: StashInfo): StashData? {
     val future = cache.getIfPresent(CommitId(stashInfo.hash, stashInfo.root)) ?: return null
-    if (!future.isDone) return null
-    return future.get()
+    return when {
+      !future.isDone -> null
+      else -> future.get()
+    }
   }
 
   fun loadStashData(stashInfo: StashInfo) {
-    if (Disposer.isDisposed(this)) return
-    cache.get(CommitId(stashInfo.hash, stashInfo.root))
+    if (!Disposer.isDisposed(this)) {
+      cache.get(CommitId(stashInfo.hash, stashInfo.root))
+    }
   }
 
   override fun dispose() {

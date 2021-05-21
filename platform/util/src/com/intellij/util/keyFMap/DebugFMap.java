@@ -65,7 +65,7 @@ class DebugFMap implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
+  public @NotNull Key @NotNull [] getKeys() {
     return myMap.keySet().toArray(new Key[0]);
   }
 

@@ -28,11 +28,6 @@ public class CoreJavaCodeStyleSettingsFacade extends JavaCodeStyleSettingsFacade
   }
 
   @Override
-  public boolean isJavaDocLeadingAsterisksEnabled() {
-    return false;
-  }
-
-  @Override
   public int getIndentSize() {
     return 4;
   }

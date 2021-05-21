@@ -2,9 +2,10 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.lightEdit.menuBar.LightEditMenuBar;
+import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper;
 import com.intellij.ide.lightEdit.statusBar.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -131,8 +132,8 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
 
     @Override
-    protected @NotNull IdeMenuBar createMenuBar() {
-      return new LightEditMenuBar();
+    protected @Nullable ActionGroup getMainMenuActionGroup() {
+      return new LightEditMainMenuHelper().getMainMenuActionGroup();
     }
 
     @NotNull

@@ -115,8 +115,8 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   @Override
   public final @NotNull List<FileASTNode> getKnownTreeRoots() {
     List<FileASTNode> files = new ArrayList<>(myRoots.size());
-    for (PsiFile file : myRoots.values()) {
-      final FileASTNode treeElement = ((PsiFileImpl)file).getNodeIfLoaded();
+    for (PsiFileImpl file : myRoots.values()) {
+      final FileASTNode treeElement = file.getNodeIfLoaded();
       if (treeElement != null) {
         files.add(treeElement);
       }

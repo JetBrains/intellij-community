@@ -4,8 +4,7 @@ Reports <code>abstract</code> classes which can be converted to interfaces.
 Java doesn't support multiple class inheritance while class can implement multiple interfaces,
 so it make sense to use interfaces wherever possible instead of classes.
 A class may be converted to an interface if it has no superclass (other
-than Object), has no fields declared that are not <code>static</code>, <code>final</code>, and <code>public</code>, and has no
-methods declared that are not <code>public</code> and <code>abstract</code> and no inner classes that are not <code>public</code>.
+than Object), has only <code>public static final</code> fields, <code>public abstract</code> methods, and <code>public</code> inner classes.
 <!-- tooltip end -->
 
 <p>Example:</p>

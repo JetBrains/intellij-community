@@ -189,6 +189,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
   }
 
+  override fun areModulesLoaded(): Boolean {
+    return WorkspaceModelTopics.getInstance(project).modulesAreLoaded
+  }
+
   private fun postProcessModules(oldModuleNames: MutableMap<Module, String>,
                                  unloadedModulesSet: MutableSet<String>) {
     if (oldModuleNames.isNotEmpty()) {
@@ -234,7 +238,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             return
           }
 
-          if (!WorkspaceModelTopics.getInstance(project).modulesAreLoaded) return
+          if (!areModulesLoaded()) return
 
           addModule(change.entity)
         }
@@ -288,7 +292,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         if (moduleEntity.name !in unloadedModules) {
 
           val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
-          if (library == null && WorkspaceModelTopics.getInstance(project).modulesAreLoaded) {
+          if (library == null && areModulesLoaded()) {
             val module = entityStore.current.findModuleByEntity(moduleEntity)
                          ?: error("Could not find module bridge for module entity $moduleEntity")
             val moduleRootComponent = ModuleRootComponentBridge.getInstance(module)
@@ -606,12 +610,12 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     internal fun hasModuleGroups(entityStorage: VersionedEntityStorage) =
       entityStorage.current.entities(ModuleGroupPathEntity::class.java).firstOrNull() != null
 
-    private const val INDEX_ID = "moduleBridge"
+    private const val MODULE_BRIDGE_MAPPING_ID = "intellij.modules.bridge"
 
     internal val WorkspaceEntityStorage.moduleMap: ExternalEntityMapping<ModuleBridge>
-      get() = getExternalMapping(INDEX_ID)
+      get() = getExternalMapping(MODULE_BRIDGE_MAPPING_ID)
     internal val WorkspaceEntityStorageDiffBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
-      get() = getMutableExternalMapping(INDEX_ID)
+      get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     @JvmStatic
     fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) =

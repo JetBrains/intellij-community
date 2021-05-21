@@ -11,16 +11,22 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.idea.HardwareAgentRequired;
+import com.intellij.lang.LanguageAnnotators;
+import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -68,6 +74,9 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
                   "}";
     configureByText(JavaFileType.INSTANCE, text);
 
+    PlatformTestUtil.maskExtensions(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, getProject(), Collections.emptyList(), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(LanguageInjector.EXTENSION_POINT_NAME, Collections.emptyList(), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(new ExtensionPointName<>(((ExtensionPointImpl)LanguageAnnotators.INSTANCE.getPoint()).getName()), Collections.emptyList(), getTestRootDisposable());
     PlatformTestUtil.startPerformanceTest("highlighting many string literals", 11_000, () -> {
       assertEmpty(highlightErrors());
 

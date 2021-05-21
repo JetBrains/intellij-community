@@ -178,20 +178,8 @@ public final class JavacMain {
         }
       }
 
-      final LineOutputWriter out = new LineOutputWriter() {
-        @Override
-        protected void lineAvailable(String line) {
-          if (usingJavac) {
-            diagnosticConsumer.outputLineAvailable(line);
-          }
-          else {
-            // todo: filter too verbose eclipse output?
-          }
-        }
-      };
-
       final WrappedProcessorsContainer wrappedProcessors;
-      final DiagnosticListener<JavaFileObject> diagnosticListener;
+      final DiagnosticOutputConsumer diagnosticListener;
       if (TRACK_AP_GENERATED_DEPENDENCIES && isAnnotationProcessingEnabled) {
         // use real processor class names and not names of processor wrappers
         wrappedProcessors = new WrappedProcessorsContainer();
@@ -201,6 +189,18 @@ public final class JavacMain {
         wrappedProcessors = null;
         diagnosticListener = diagnosticConsumer;
       }
+
+      final LineOutputWriter out = new LineOutputWriter() {
+        @Override
+        protected void lineAvailable(String line) {
+          if (usingJavac) {
+            diagnosticListener.outputLineAvailable(line);
+          }
+          else {
+            // todo: filter too verbose eclipse output?
+          }
+        }
+      };
 
       // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
       // do not delegate to corresponding methods of FileManager's base implementation

@@ -9,14 +9,13 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.TitleInfoProvider
 import com.intellij.openapi.wm.impl.simpleTitleParts.RegistryOption
+import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
 import com.intellij.xdebugger.*
 
-private class DebuggerTitleInfoProvider : TitleInfoProvider {
+private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption("ide.debug.in.title", null)) {
   companion object {
     private fun getHelper(project: Project) = project.service<DebuggerTitleInfoProviderService>()
   }
-
-  private val option = RegistryOption("ide.debug.in.title", null)
 
   init {
     option.listener = {
@@ -27,24 +26,9 @@ private class DebuggerTitleInfoProvider : TitleInfoProvider {
     }
   }
 
-  private var updateListeners: MutableSet<((provider: TitleInfoProvider) -> Unit)> = HashSet()
-
-  override val borderlessSuffix: String = ""
-  override val borderlessPrefix: String = " "
-
-  override fun addUpdateListener(project: Project, value: (provider: TitleInfoProvider) -> Unit) {
-    updateListeners.add(value)
+  override fun addSubscription(project: Project, disp: Disposable, value: (provider: TitleInfoProvider) -> Unit) {
+    super.addSubscription(project, disp, value)
     updateSubscriptions(project)
-    updateNotify()
-  }
-
-  private fun isEnabled(): Boolean {
-    return option.isActive && updateListeners.isNotEmpty()
-  }
-
-  private fun updateNotify() {
-    updateListeners.forEach { it(this) }
-    TitleInfoProvider.fireConfigurationChanged()
   }
 
   override fun isActive(project: Project): Boolean {

@@ -82,7 +82,7 @@ public class UsageViewPresentation {
    * @deprecated use {@link #setSearchString}
    */
   @Deprecated
-  public void setUsagesString(String usagesString) {
+  public void setUsagesString(@Nls String usagesString) {
     myUsagesString = usagesString;
   }
 

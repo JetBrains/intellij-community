@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
@@ -438,5 +438,34 @@ public class FileUtilHeavyTest {
       fail("`createDirectories()` over a dangling symlink shall not pass");
     }
     catch (FileAlreadyExistsException ignored) { }
+  }
+
+  @Test
+  public void setReadOnly() throws IOException {
+    Path f = tempDir.newFile("f").toPath();
+
+    NioFiles.setReadOnly(f, true);
+    try {
+      Files.writeString(f, "test");
+      fail("Writing to " + f + " should have failed");
+    }
+    catch (AccessDeniedException ignored) { }
+
+    NioFiles.setReadOnly(f, false);
+    Files.writeString(f, "test");
+
+    Path d = tempDir.newDirectory("d").toPath(), child = d.resolve("f");
+
+    NioFiles.setReadOnly(d, true);
+    if (!SystemInfo.isWindows) {
+      try {
+        Files.createFile(child);
+        fail("Creating " + child + " should have failed");
+      }
+      catch (AccessDeniedException ignored) { }
+    }
+
+    NioFiles.setReadOnly(d, false);
+    Files.createFile(child);
   }
 }

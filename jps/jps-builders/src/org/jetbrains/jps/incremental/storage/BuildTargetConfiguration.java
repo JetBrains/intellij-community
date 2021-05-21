@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,10 +19,7 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class BuildTargetConfiguration {
   public static final Key<Set<JpsModule>> MODULES_WITH_TARGET_CONFIG_CHANGED_KEY = GlobalContextKey.create("_modules_with_target_config_changed_");
@@ -81,7 +78,7 @@ public final class BuildTargetConfiguration {
           synchronized (MODULES_WITH_TARGET_CONFIG_CHANGED_KEY) {
             Set<JpsModule> modules = MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.get(context);
             if (modules == null) {
-              MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.set(context, modules = new THashSet<>());
+              MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.set(context, modules = new HashSet<>());
             }
             modules.add(module);
           }

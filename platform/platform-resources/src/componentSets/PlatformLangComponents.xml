@@ -69,7 +69,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
-                        headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl" preload="notHeadless"/>
+                        headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl" preload="notHeadless" order="first"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.WindowManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.WindowManagerImpl"
@@ -170,7 +170,9 @@
   <projectListeners>
     <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
-    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyFileEditorManagerListener"
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageService$MyBeforeFileEditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageService$MyFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
 
     <!-- another one for project level -->

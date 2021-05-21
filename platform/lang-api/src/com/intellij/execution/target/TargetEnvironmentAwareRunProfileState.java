@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target;
 
 import com.intellij.execution.ExecutionException;
@@ -90,8 +90,7 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
     boolean isStopped();
 
     default void stopWithErrorMessage(@NlsContexts.DialogMessage @NotNull String text) {
-      addText(text, ProcessOutputType.STDERR);
-      addText("\n", ProcessOutputType.STDERR);
+      addText(text + "\n", ProcessOutputType.STDERR);
       stop();
     }
   }

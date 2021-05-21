@@ -21,6 +21,7 @@ import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrac
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.BooleanProperty
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -41,7 +42,10 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   private val projectStates = ConcurrentHashMap<State.Id, State.Project>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
   private val isDisabled = AtomicBooleanProperty(isDisabledAutoReload.get())
-  private val asyncChangesProcessingProperty = AtomicBooleanProperty(!ApplicationManager.getApplication().isHeadlessEnvironment)
+  private val asyncChangesProcessingProperty = AtomicBooleanProperty(
+    !ApplicationManager.getApplication().isHeadlessEnvironment
+    || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
+  )
   private val projectChangeOperation = AnonymousParallelOperationTrace(debugName = "Project change operation")
   private val projectRefreshOperation = CompoundParallelOperationTrace<String>(debugName = "Project refresh operation")
   private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", AUTO_REPARSE_DELAY, false, null, project)

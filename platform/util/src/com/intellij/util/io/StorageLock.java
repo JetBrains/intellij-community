@@ -2,8 +2,10 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.system.CpuArch;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
@@ -15,10 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -277,10 +276,10 @@ public final class StorageLock {
   }
 
   @Nullable
-  private Map<Integer, ByteBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext, boolean read) {
+  private Map<Integer, ByteBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext) {
     mySegmentsAccessLock.lock();
     try {
-      storageLockContext.checkThreadAccess(read);
+      storageLockContext.checkThreadAccess(false);
       Map<Integer, ByteBufferWrapper> mineBuffers = null;
       for (Map.Entry<Integer, ByteBufferWrapper> entry : mySegments.entrySet()) {
         if ((entry.getKey() & FILE_INDEX_MASK) == index) {
@@ -297,8 +296,8 @@ public final class StorageLock {
     }
   }
 
-  void unmapBuffersForOwner(int index, StorageLockContext storageLockContext, boolean read) {
-    final Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext, read);
+  void unmapBuffersForOwner(int index, StorageLockContext storageLockContext) {
+    final Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
 
     if (buffers != null) {
       mySegmentsAccessLock.lock();
@@ -320,27 +319,41 @@ public final class StorageLock {
     }
   }
 
-  void flushBuffersForOwner(int index, StorageLockContext storageLockContext) {
-    Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext, false);
+  void flushBuffersForOwner(int index, StorageLockContext storageLockContext) throws IOException {
+    Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
 
     if (buffers != null) {
+      List<IOException> exceptions = new SmartList<>();
+
       mySegmentsAllocationLock.lock();
       try {
         ReadWriteDirectBufferWrapper.FileContext fileContext = null;
-        for (ByteBufferWrapper buffer : buffers.values()) {
-          if (buffer instanceof ReadWriteDirectBufferWrapper) {
-            fileContext = ((ReadWriteDirectBufferWrapper)buffer).flushWithContext(fileContext);
-          }
-          else {
-            buffer.flush();
+        try {
+          for (ByteBufferWrapper buffer : buffers.values()) {
+            if (buffer.isDirty()) {
+              assert buffer instanceof ReadWriteDirectBufferWrapper;
+              if (fileContext == null) {
+                fileContext = ((ReadWriteDirectBufferWrapper)buffer).openContext();
+              }
+              ((ReadWriteDirectBufferWrapper)buffer).flushWithContext(fileContext);
+            }
           }
         }
-        if (fileContext != null) {
-          fileContext.close();
+        catch (IOException e) {
+          exceptions.add(e);
+        }
+        finally {
+          if (fileContext != null) {
+            fileContext.close();
+          }
         }
       }
       finally {
         mySegmentsAllocationLock.unlock();
+      }
+
+      if (!exceptions.isEmpty()) {
+        throw new IOException(new CompoundRuntimeException(exceptions));
       }
     }
   }

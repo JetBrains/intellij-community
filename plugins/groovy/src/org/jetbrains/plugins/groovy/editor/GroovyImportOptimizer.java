@@ -121,10 +121,8 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
       final GroovyCodeStyleSettings settings = GroovyCodeStyleSettings.getInstance(myFile);
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
-      Object2IntOpenHashMap<String> packageCountMap = new Object2IntOpenHashMap<>();
-      packageCountMap.defaultReturnValue(-1);
-      Object2IntOpenHashMap<String> classCountMap = new Object2IntOpenHashMap<>();
-      classCountMap.defaultReturnValue(-1);
+      Object2IntMap<String> packageCountMap=new Object2IntOpenHashMap<>();
+      Object2IntMap<String> classCountMap=new Object2IntOpenHashMap<>();
 
       //init packageCountMap
       for (String importedClass : importedClasses) {
@@ -137,7 +135,7 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
 
         final String packageName = StringUtil.getPackageName(importedClass);
 
-        packageCountMap.addTo(packageName, 1);
+        packageCountMap.mergeInt(packageName, 1, Math::addExact);
       }
 
       //init classCountMap
@@ -146,7 +144,7 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
           continue;
         }
 
-        classCountMap.addTo(StringUtil.getPackageName(importedMember), 1);
+        classCountMap.mergeInt(StringUtil.getPackageName(importedMember), 1, Math::addExact);
       }
 
       final Set<String> onDemandImportedSimpleClassNames = new HashSet<>();

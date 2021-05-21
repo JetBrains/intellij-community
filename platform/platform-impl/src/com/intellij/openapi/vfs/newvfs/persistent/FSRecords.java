@@ -280,7 +280,7 @@ public final class FSRecords {
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
   @NotNull
-  static ListResult update(int parentId, @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
+  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
     assert parentId > 0: parentId;
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
@@ -299,7 +299,7 @@ public final class FSRecords {
       // optimization: when converter returned unchanged children (see e.g. PersistentFSImpl.findChildInfo())
       // then do not save them back again unnecessarily
       if (!toSave.equals(children)) {
-        updateSymlinksForNewChildren(parentId, children, toSave);
+        updateSymlinksForNewChildren(parent, children, toSave);
         ourTreeAccessor.doSaveChildren(parentId, toSave, ourConnection);
       }
       return toSave;
@@ -318,25 +318,25 @@ public final class FSRecords {
     }
   }
 
-  private static void updateSymlinksForNewChildren(int parentId, @NotNull ListResult oldChildren, @NotNull ListResult newChildren) {
+  private static void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
+                                                   @NotNull ListResult oldChildren,
+                                                   @NotNull ListResult newChildren) {
     // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
     ContainerUtil.processSortedListsInOrder(oldChildren.children, newChildren.children, Comparator.comparingInt(ChildInfo::getId), true,
                                             (childInfo, isOldInfo) -> {
                                               if (!isOldInfo) {
-                                                updateSymlinkInfoForNewChild(parentId, childInfo);
+                                                updateSymlinkInfoForNewChild(parent, childInfo);
                                               }
                                             });
   }
 
-  private static void updateSymlinkInfoForNewChild(int parentId, @NotNull ChildInfo info) {
+  private static void updateSymlinkInfoForNewChild(@NotNull VirtualFile parent, @NotNull ChildInfo info) {
     int attributes = info.getFileAttributeFlags();
     if (attributes != -1 && PersistentFS.isSymLink(attributes)) {
       int id = info.getId();
       String symlinkTarget = info.getSymlinkTarget();
       storeSymlinkTarget(id, symlinkTarget);
       CharSequence name = info.getName();
-      VirtualFile parent = PersistentFS.getInstance().findFileById(parentId);
-      assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
       VirtualFileSystem fs = parent.getFileSystem();
       if (fs instanceof LocalFileSystemImpl) {
         String linkPath = parent.getPath() + '/' + name;

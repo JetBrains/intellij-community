@@ -13,8 +13,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +98,7 @@ public final class Divider {
 
     Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
 
-    IntArrayList starts = new IntArrayList(STARTING_TREE_HEIGHT);
+    IntStack starts = new IntStack(STARTING_TREE_HEIGHT);
     starts.push(startOffset);
     Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
     Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);

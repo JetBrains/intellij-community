@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -16,11 +16,11 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -91,7 +91,7 @@ final class SliceForwardUtil {
     if (from instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)from;
       PsiElement scope = parameter.getDeclarationScope();
-      Collection<PsiParameter> parametersToAnalyze = new THashSet<>();
+      Collection<PsiParameter> parametersToAnalyze = new HashSet<>();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;
         int index = method.getParameterList().getParameterIndex(parameter);
@@ -106,7 +106,7 @@ final class SliceForwardUtil {
           }
         }
 
-        final THashSet<PsiMethod> implementors = new THashSet<>(superMethods);
+        final Set<PsiMethod> implementors = new HashSet<>(superMethods);
         for (PsiMethod superMethod : superMethods) {
           ProgressManager.checkCanceled();
           if (!OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(sub -> {
@@ -145,7 +145,7 @@ final class SliceForwardUtil {
 
       Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
       superMethods.add(method);
-      final Set<PsiReference> processed = new THashSet<>(); //usages of super method and overridden method can overlap
+      final Set<PsiReference> processed = new HashSet<>(); //usages of super method and overridden method can overlap
       for (final PsiMethod containingMethod : superMethods) {
         if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), true).forEach(reference -> {
           ProgressManager.checkCanceled();

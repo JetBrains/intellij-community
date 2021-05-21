@@ -691,6 +691,11 @@ public abstract class AttachToProcessActionBase extends AnAction {
     }
 
     @Override
+    public boolean isFinal(AttachItem value) {
+      return value instanceof AttachToProcessItem;
+    }
+
+    @Override
     public PopupStep onChosen(AttachItem selectedValue,
                               boolean finalChoice,
                               @MagicConstant(flagsFromClass = InputEvent.class) int eventModifiers) {

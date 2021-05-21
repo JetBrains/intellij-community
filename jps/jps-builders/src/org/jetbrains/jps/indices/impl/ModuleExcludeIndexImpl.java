@@ -130,8 +130,8 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
       }
     }
 
-    for (List<File> files : myModuleToExcludesMap.values()) {
-      ((ArrayList<File>)files).trimToSize();
+    for (ArrayList<File> files : myModuleToExcludesMap.values()) {
+      files.trimToSize();
     }
   }
 

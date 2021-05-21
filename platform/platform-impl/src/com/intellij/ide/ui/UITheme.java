@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.google.common.hash.Hasher;
@@ -36,10 +36,12 @@ import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.Borders.customLine;
@@ -97,14 +99,19 @@ public final class UITheme {
     return getProviderClassLoader().getResource(path);
   }
 
-  public InputStream getResourceAsStream(String path) {
-    URL url = getResource(path);
-    try {
-      return url != null ? url.openStream() : null;
+  public @Nullable InputStream getResourceAsStream(String path) {
+    if (isTempTheme()) {
+      Path file = Path.of(path);
+      if (Files.exists(file)) {
+        try {
+          return Files.newInputStream(file);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
     }
-    catch (IOException e) {
-      return null;
-    }
+    return getProviderClassLoader().getResourceAsStream(path);
   }
 
   private boolean isTempTheme() {
@@ -344,13 +351,13 @@ public final class UITheme {
       value = color == null ? parseValue(key, valueStr) : color;
       if (key.startsWith("*.")) {
         String tail = key.substring(1);
-        Object finalValue = value;
         addPattern(key, value, defaults);
 
-        //please DO NOT stream on UIDefaults directly
-        ((UIDefaults)defaults.clone()).keySet().stream()
-          .filter(k -> k instanceof String && ((String)k).endsWith(tail))
-          .forEach(k -> defaults.put(k, finalValue));
+        for (Object k : new ArrayList<>(defaults.keySet())) {
+          if (k instanceof String && ((String)k).endsWith(tail)) {
+            defaults.put(k, value);
+          }
+        }
       }
       else {
         defaults.put(key, value);

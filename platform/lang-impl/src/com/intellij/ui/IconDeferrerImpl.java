@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -42,6 +42,7 @@ public final class IconDeferrerImpl extends IconDeferrer {
       }
     })
     .build();
+
   private final AtomicLong lastClearTimestamp = new AtomicLong();
 
   public IconDeferrerImpl() {
@@ -93,10 +94,11 @@ public final class IconDeferrerImpl extends IconDeferrer {
     return Objects.requireNonNull(iconCache.get(param, param1 -> {
       long started = lastClearTimestamp.get();
       //noinspection unchecked
-      return new DeferredIconImpl<>(base, (T)param1, evaluator, (source, key, r) -> {
+      T key = (T)param1;
+      return new DeferredIconImpl<>(base, key, evaluator, (source, result) -> {
         // check if our results is not outdated yet
         if (started == lastClearTimestamp.get()) {
-          iconCache.put(key, autoUpdatable ? source : r);
+          iconCache.put(key, autoUpdatable ? source : result);
         }
       }, autoUpdatable);
     }));

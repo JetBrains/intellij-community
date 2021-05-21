@@ -461,7 +461,7 @@ public class AsmCodeGenerator {
         if (lwComponent instanceof LwNestedForm) {
           componentLocal = getNestedFormComponent(generator, componentClass, componentLocal);
         }
-        parentCodeGenerator.generateComponentLayout(lwComponent, generator, componentLocal, parentLocal);
+        parentCodeGenerator.generateComponentLayout(lwComponent, generator, componentLocal, parentLocal, myClassName);
       }
 
       if (lwComponent instanceof LwContainer) {

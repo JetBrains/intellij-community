@@ -2,6 +2,7 @@
 
 package com.intellij.psi.impl.include;
 
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -12,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,7 +86,14 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
       public Map<String, List<FileIncludeInfoImpl>> map(@NotNull FileContent inputData, @NotNull Set<FileIncludeProvider> providers) {
         Map<String, List<FileIncludeInfoImpl>> map = FactoryMap.create(key -> new ArrayList<>());
         for (FileIncludeProvider provider : providers) {
-          for (FileIncludeInfo info : provider.getIncludeInfos(inputData)) {
+          FileIncludeInfo[] includeInfos;
+          try {
+            includeInfos = provider.getIncludeInfos(inputData);
+          } catch (Exception e) {
+            if (e instanceof ControlFlowException) throw e;
+            throw new MapReduceIndexMappingException(e, provider.getClass());
+          }
+          for (FileIncludeInfo info : includeInfos) {
             FileIncludeInfoImpl impl = new FileIncludeInfoImpl(info.path, info.offset, info.runtimeOnly, provider.getId());
             map.get(info.fileName).add(impl);
           }

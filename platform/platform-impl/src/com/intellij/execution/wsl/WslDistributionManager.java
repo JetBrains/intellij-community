@@ -5,9 +5,7 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -100,31 +98,6 @@ public abstract class WslDistributionManager implements Disposable {
       }
     }
     return d;
-  }
-
-  @Nullable
-  public Pair<String, @Nullable WSLDistribution> parseWslPath(@NotNull String path) {
-    if (!WSLUtil.isSystemCompatible()) return null;
-    path = FileUtil.toSystemDependentName(path);
-    if (!path.startsWith(WSLDistribution.UNC_PREFIX)) return null;
-
-    path = StringUtil.trimStart(path, WSLDistribution.UNC_PREFIX);
-    int index = path.indexOf('\\');
-    if (index == -1) return null;
-
-    String distName = path.substring(0, index);
-    String wslPath = FileUtil.toSystemIndependentName(path.substring(index));
-
-    return Pair.create(wslPath, getOrCreateDistributionByMsId(distName, false));
-  }
-
-  @Nullable
-  public WSLDistribution distributionFromPath(@NotNull String path) {
-    Pair<String, @Nullable WSLDistribution> pair = parseWslPath(path);
-    if (pair != null && pair.second != null) {
-      return pair.second;
-    }
-    return null;
   }
 
   public static boolean isWslPath(@NotNull String path) {

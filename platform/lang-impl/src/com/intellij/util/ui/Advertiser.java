@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -34,7 +34,7 @@ public class Advertiser {
   public Advertiser() {
     myNextLabel = new JLabel(CodeInsightBundle.message("label.next.tip"));
     myNextLabel.setFont(adFont());
-    myNextLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
+    myNextLabel.setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {

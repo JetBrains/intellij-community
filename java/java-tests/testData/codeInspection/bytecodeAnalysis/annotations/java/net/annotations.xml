@@ -1182,6 +1182,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URLConnection java.lang.String typeToPackageName(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URLConnection java.lang.String typeToPackageName(java.lang.String) 0'>

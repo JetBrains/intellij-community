@@ -58,6 +58,12 @@ fun runJava(mainClass: String,
     }
 
     if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
+      try {
+        dumpThreads(process.pid())
+      }
+      catch (e: Exception) {
+        logger.warn("Cannot dump threads: ${e.message}")
+      }
       process.destroyForcibly().waitFor()
       javaRunFailed("$timeout timeout")
     }
@@ -116,26 +122,19 @@ private fun readErrorOutput(process: Process, timeout: Timeout, logger: Logger) 
     process.errorStream.consume(process, timeout, logger::warn)
   }
 
-private fun InputStream.consume(process: Process, timeout: Timeout, consumeLine: (String) -> Unit) {
+private fun InputStream.consume(process: Process, timeout: Timeout, consume: (String) -> Unit) {
   bufferedReader().use { reader ->
-    var separator = ""
-    var lineBuilder = StringBuilder()
+    var linesCount = 0
+    var linesBuffer = StringBuilder()
     while (!timeout.isElapsed && process.isAlive || reader.ready()) {
       if (reader.ready()) {
         val char = reader.read().takeIf { it != -1 }?.toChar()
-        if (char == '\n' || char == '\r') {
-          separator += char
-        }
-        if (char == null ||
-            separator == "\n" ||
-            separator == "\r" ||
-            separator == "\r\n") {
-          consumeLine(lineBuilder.toString())
-          lineBuilder = StringBuilder()
-          separator = ""
-        }
-        else {
-          lineBuilder.append(char)
+        if (char == '\n' || char == '\r') linesCount++
+        if (char != null) linesBuffer.append(char)
+        if (char == null || !reader.ready() || linesCount > 100) {
+          consume(linesBuffer.toString())
+          linesBuffer = StringBuilder()
+          linesCount = 0
         }
       }
       else {
@@ -179,4 +178,13 @@ internal class Timeout(private val millis: Long) {
   val isElapsed: Boolean get() = remainingTime == 0L
 
   override fun toString() = "${millis}ms"
+}
+
+internal fun dumpThreads(pid: Long) {
+  val jstack = System.getenv("JAVA_HOME")
+                 ?.removeSuffix("/")
+                 ?.removeSuffix("\\")
+                 ?.let { "$it/bin/jstack" }
+               ?: "jstack"
+  runProcess(jstack, "$pid")
 }

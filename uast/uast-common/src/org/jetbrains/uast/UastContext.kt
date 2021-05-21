@@ -18,11 +18,13 @@ package org.jetbrains.uast
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.Contract
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 import org.jetbrains.uast.util.emptyClassSet
+import java.util.*
 
 @Deprecated("use UastFacade or UastLanguagePlugin instead", ReplaceWith("UastFacade"))
 class UastContext(val project: Project) : UastLanguagePlugin by UastFacade {
@@ -101,8 +103,35 @@ object UastFacade : UastLanguagePlugin {
   override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
     findPlugin(element)?.convertToAlternatives(element, requiredTypes) ?: emptySequence()
 
+  private interface UastPluginListener {
+    fun onPluginsChanged()
+  }
+
+  private val exposedListeners = Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap<UastPluginListener, Boolean>())
+
+  init {
+    UastLanguagePlugin.extensionPointName.addChangeListener({ exposedListeners.forEach(UastPluginListener::onPluginsChanged) }, null);
+  }
+
   override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
-    ClassSetsWrapper(languagePlugins.map2Array { it.getPossiblePsiSourceTypes(*uastTypes) })
+    object : ClassSet<PsiElement>, UastPluginListener {
+
+      fun initInner() = ClassSetsWrapper(languagePlugins.map2Array { it.getPossiblePsiSourceTypes(*uastTypes) })
+
+      private var inner: ClassSetsWrapper<PsiElement> = initInner()
+
+      override fun onPluginsChanged() {
+        inner = initInner()
+      }
+
+      override fun isEmpty(): Boolean = inner.isEmpty()
+
+      override fun contains(element: Class<out PsiElement>): Boolean = inner.contains(element)
+
+      override fun toList(): List<Class<out PsiElement>> = inner.toList()
+
+    }.also { exposedListeners.add(it) }
+
 }
 
 
@@ -176,6 +205,8 @@ val DEFAULT_EXPRESSION_TYPES_LIST: Array<Class<out UExpression>> = arrayOf(UExpr
  * @return types of possible source PSI elements of [language], which instances in principle
  *         can be converted to at least one of the specified [uastTypes]
  *         (or to [UElement] if no type was specified)
+ *
+ * @see UastFacade.getPossiblePsiSourceTypes
  */
 fun getPossiblePsiSourceTypes(language: Language, vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
   UastLanguagePlugin.byLanguage(language)?.getPossiblePsiSourceTypes(*uastTypes) ?: emptyClassSet()

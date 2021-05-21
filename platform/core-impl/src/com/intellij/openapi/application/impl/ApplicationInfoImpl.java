@@ -645,7 +645,11 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
   @Override
   public @Nullable String getSmallApplicationSvgIconUrl() {
-    return isEAP() && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
+    return getSmallApplicationSvgIconUrl(isEAP());
+  }
+
+  public @Nullable String getSmallApplicationSvgIconUrl(boolean isEap) {
+    return isEap && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
   }
 
   @Override

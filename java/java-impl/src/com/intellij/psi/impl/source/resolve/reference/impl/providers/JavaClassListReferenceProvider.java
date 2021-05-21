@@ -44,10 +44,8 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
     NotNullLazyValue<Set<String>> topLevelPackages = NotNullLazyValue.createValue(() -> {
       Set<String> knownTopLevelPackages = new HashSet<>();
       List<PsiPackage> defaultPackages = getDefaultPackages(position.getProject());
-      for (PsiElement pack : defaultPackages) {
-        if (pack instanceof PsiPackage) {
-          knownTopLevelPackages.add(((PsiPackage)pack).getName());
-        }
+      for (PsiPackage pack : defaultPackages) {
+        knownTopLevelPackages.add(pack.getName());
       }
       return knownTopLevelPackages;
     });

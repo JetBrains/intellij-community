@@ -7,7 +7,7 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.NlsContexts;
 import de.plushnikov.intellij.plugin.LombokBundle;
-import de.plushnikov.intellij.plugin.icon.LombokIcons;
+import icons.LombokIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ public class LombokConfigColorSettingsPage implements ColorSettingsPage {
   @Nullable
   @Override
   public Icon getIcon() {
-    return LombokIcons.CONFIG_FILE_ICON;
+    return LombokIcons.Config;
   }
 
   @NotNull
@@ -54,15 +54,13 @@ public class LombokConfigColorSettingsPage implements ColorSettingsPage {
     return null;
   }
 
-  @NotNull
   @Override
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return DESCRIPTORS;
   }
 
-  @NotNull
   @Override
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 

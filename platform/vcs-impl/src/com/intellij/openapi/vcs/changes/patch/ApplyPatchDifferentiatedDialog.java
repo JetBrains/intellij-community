@@ -77,7 +77,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
-import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.map;
 
@@ -1022,7 +1021,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         component.append(text, SimpleTextAttributes.GRAY_ATTRIBUTES);
         if (!patchInProgress.baseExistsOrAdded()) {
           component.append("  ");
-          component.append(VcsBundle.message("patch.apply.select.missing.base.link"), new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
+          component.append(VcsBundle.message("patch.apply.select.missing.base.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                            (Runnable)myChangesTreeList::handleInvalidChangesAndToggle);
         }
         else {

@@ -162,7 +162,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
   }
 
   @Override
-  public void flush() {
+  public void flush() throws IOException {
     if (myNameStorage instanceof Forceable) {
       if (((Forceable)myNameStorage).isDirty()) {
         ((Forceable)myNameStorage).force();

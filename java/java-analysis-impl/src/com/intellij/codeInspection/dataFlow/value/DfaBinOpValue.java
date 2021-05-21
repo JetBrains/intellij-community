@@ -11,6 +11,7 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,20 +130,23 @@ public final class DfaBinOpValue extends DfaValue {
       if (value != null) {
         return value;
       }
-      LongRangeSet leftRange = DfLongType.extractRange(state.getDfType(left));
-      LongRangeSet rightRange = DfLongType.extractRange(state.getDfType(right));
+      DfIntegralType leftType = ObjectUtils.tryCast(state.getDfType(left), DfIntegralType.class);
+      DfIntegralType rightType = ObjectUtils.tryCast(state.getDfType(right), DfIntegralType.class);
+      if (leftType == null || rightType == null) {
+        return myFactory.fromDfType(isLong ? DfTypes.LONG : DfTypes.INT);
+      }
       if (op == LongRangeBinOp.MUL) {
-        if (LongRangeSet.point(1).equals(leftRange)) return right;
-        if (LongRangeSet.point(1).equals(rightRange)) return left;
+        if (LongRangeSet.point(1).equals(leftType.getRange())) return right;
+        if (LongRangeSet.point(1).equals(rightType.getRange())) return left;
       }
       if (op == LongRangeBinOp.DIV) {
-        if (LongRangeSet.point(1).equals(rightRange)) return left;
+        if (LongRangeSet.point(1).equals(rightType.getRange())) return left;
       }
       if (op == LongRangeBinOp.SHL || op == LongRangeBinOp.SHR || op == LongRangeBinOp.USHR) {
-        if (LongRangeSet.point(0).equals(rightRange)) return left;
+        if (LongRangeSet.point(0).equals(rightType.getRange())) return left;
       }
-      LongRangeSet result = op.eval(leftRange, rightRange, isLong);
-      return myFactory.fromDfType(DfTypes.rangeClamped(result, isLong));
+      DfType resType = leftType.eval(rightType, op);
+      return myFactory.fromDfType(resType);
     }
 
     @Nullable

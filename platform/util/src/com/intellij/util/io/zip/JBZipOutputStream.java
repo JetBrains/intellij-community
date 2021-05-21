@@ -69,7 +69,7 @@ class JBZipOutputStream {
    */
   JBZipOutputStream(JBZipFile file, long currentCDOffset) {
     myFile = file;
-    raf = myFile.archive;
+    raf = myFile.myArchive;
     writtenOnDisk = currentCDOffset;
   }
 

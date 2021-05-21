@@ -2,16 +2,16 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -20,15 +20,23 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
@@ -38,16 +46,22 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBRectangle;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
+import java.awt.event.*;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.util.List;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -621,6 +635,7 @@ public final class EditorWindow {
       myPanel.setOpaque(false);
 
       Splitter splitter = new OnePixelSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
+      splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, Boolean.TRUE);
       EditorWindow res = new EditorWindow(myOwner, myOwner.parentDisposable);
       EditorWithProviderComposite selectedEditor = getSelectedEditor();
       panel.remove(myTabbedPane.getComponent());
@@ -633,7 +648,8 @@ public final class EditorWindow {
       myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
       if (fileIsSecondaryComponent) {
         splitter.setSecondComponent(res.myPanel);
-      } else {
+      }
+      else {
         splitter.setFirstComponent(res.myPanel);
       }
       // open only selected file in the new splitter instead of opening all tabs
@@ -734,6 +750,320 @@ public final class EditorWindow {
     return res.toArray(new EditorWindow[0]);
   }
 
+  public enum RelativePosition {
+    CENTER(SwingConstants.CENTER), UP(SwingConstants.TOP), LEFT(SwingConstants.LEFT), DOWN(SwingConstants.BOTTOM), RIGHT(SwingConstants.RIGHT);
+
+    final int mySwingConstant;
+
+    RelativePosition(int swingConstant) {
+      mySwingConstant = swingConstant;
+    }
+  }
+
+  @NotNull
+  public Map<RelativePosition, EditorWindow> getAdjacentEditors() {
+    checkConsistency();
+    final Map<RelativePosition, EditorWindow> adjacentEditors = new HashMap<>(4); //Can't have more than 4
+
+    final List<EditorWindow> windows = myOwner.getOrderedWindows();
+    windows.remove(this);
+    final Map<JPanel, EditorWindow> panel2Window = new HashMap<>();
+    for (EditorWindow win : windows) {
+      panel2Window.put(win.myPanel, win);
+    }
+
+    final RelativePoint relativePoint = new RelativePoint(myPanel.getLocationOnScreen());
+    final Point point = relativePoint.getPoint(myOwner);
+    BiFunction<Integer, Integer, Component> nearestComponent = (x, y) -> SwingUtilities.getDeepestComponentAt(myOwner, x, y);
+    Function<Component, EditorWindow> findAdjacentEditor = (component) -> {
+      while (component != myOwner && component != null) {
+        if (panel2Window.containsKey(component)) {
+          return panel2Window.get(component);
+        }
+        component = component.getParent();
+      }
+      return null;
+    };
+    BiConsumer<EditorWindow, RelativePosition> biConsumer = (window, position) -> {
+      if (window == null) {
+        return;
+      }
+      adjacentEditors.put(position,window);
+    };
+
+    // Even if above/below adjacent editor is shifted a bit to the right from left edge of current editor,
+    // still try to choose editor that is visually above/below - shifted nor more then quater of editor width.
+    int x = point.x + myPanel.getWidth() / 4;
+    // Splitter has width of one pixel - we need to step at least 2 pixels to be over adjacent editor
+    int searchStep = 2;
+
+    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(x, point.y - searchStep)), RelativePosition.UP);
+    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(x, point.y + myPanel.getHeight() + searchStep)), RelativePosition.DOWN);
+    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(point.x - searchStep, point.y)), RelativePosition.LEFT);
+    biConsumer.accept(findAdjacentEditor.apply(nearestComponent.apply(point.x + myPanel.getWidth() + searchStep, point.y)), RelativePosition.RIGHT);
+
+    return adjacentEditors;
+  }
+
+  private MySplitPainter myPainter = null;
+  private Runnable showSplitChooser(boolean showInfoPanel) {
+    myPainter = new MySplitPainter(showInfoPanel);
+
+    Disposable disposable = Disposer.newDisposable("GlassPaneListeners");
+    IdeGlassPaneUtil.find(myPanel).addPainter(myPanel, myPainter, disposable);
+
+    myPanel.repaint();
+    myPanel.setFocusable(true);
+    myPanel.grabFocus();
+    myPanel.setFocusTraversalKeysEnabled(false);
+
+    final FocusAdapter focusAdapter = new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        myPanel.removeFocusListener(this);
+        if (SplitterService.getInstance().myActiveWindow == EditorWindow.this) {
+          SplitterService.getInstance().stopSplitChooser(true);
+        }
+      }
+    };
+
+    myPanel.addFocusListener(focusAdapter);
+
+    return () -> {
+      myPainter.myRectangle = null;
+      myPainter = null;
+      myPanel.removeFocusListener(focusAdapter);
+      myPanel.setFocusable(false);
+      myPanel.repaint();
+      Disposer.dispose(disposable);
+    };
+  }
+
+  private final class MySplitPainter extends AbstractPainter {
+    private Shape myRectangle = TabsUtil.getDropArea(EditorWindow.this.getTabbedPane().getTabs());
+    private boolean myShowInfoPanel;
+    RelativePosition myPosition = RelativePosition.CENTER;
+
+    private MySplitPainter(boolean showInfoPanel) {
+      myShowInfoPanel = showInfoPanel;
+    }
+
+    @Override
+    public boolean needsRepaint() {
+      return myRectangle != null;
+    }
+
+    @Override
+    public void executePaint(Component component, Graphics2D g) {
+      if (myRectangle == null) {
+        return;
+      }
+      GraphicsUtil.setupAAPainting(g);
+      g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
+      g.fill(myRectangle);
+
+      if (myPosition == RelativePosition.CENTER && myShowInfoPanel) {
+        drawInfoPanel(component, g);
+      }
+    }
+
+    private void drawInfoPanel(Component component, Graphics2D g) {
+      int centerX = myRectangle.getBounds().x + myRectangle.getBounds().width / 2;
+      int centerY = myRectangle.getBounds().y + myRectangle.getBounds().height / 2;
+
+      int height = Registry.intValue("ide.splitter.chooser.info.panel.height");
+      int width = Registry.intValue("ide.splitter.chooser.info.panel.width");
+      int arc = Registry.intValue("ide.splitter.chooser.info.panel.arc");
+
+      Function<String, String> getShortcut = (actionId) -> {
+        KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
+        return KeymapUtil.getKeystrokeText(shortcut == null ? null : shortcut.getFirstKeyStroke());
+      };
+      String openShortcuts = String.format(IdeBundle.message("split.with.chooser.move.tab"), getShortcut.apply("SplitChooser.Split"),
+                                           SplitterService.getInstance().myInitialEditorWindow != null
+                                           ? String.format(IdeBundle.message("split.with.chooser.duplicate.tab"), getShortcut.apply("SplitChooser.Duplicate")) : "");
+      String switchShortcuts = String.format(IdeBundle.message("split.with.chooser.switch.tab"), getShortcut.apply("SplitChooser.NextWindow"));
+
+      // Adjust default width to info text
+      Font font = UIUtil.getLabelFont();
+      FontMetrics fontMetrics = g.getFontMetrics(font);
+      int openShortcutsWidth = fontMetrics.stringWidth(openShortcuts);
+      int switchShortcutsWidth = fontMetrics.stringWidth(switchShortcuts);
+      width = Math.max(width, Math.round(Math.max(openShortcutsWidth, switchShortcutsWidth) * 1.2f));
+
+      // Check if info panel will actually fit into editor with some free space around edges
+      if (myRectangle.getBounds().height < height * 1.2f || myRectangle.getBounds().width < width * 1.2f) {
+        return;
+      }
+
+      final Shape rectangle = new RoundRectangle2D.Double(centerX - width / 2.0, centerY - height / 2.0, width, height, arc, arc);
+      g.setColor(UIUtil.getLabelBackground());
+      g.fill(rectangle);
+
+      int arrowsCenterVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.center");
+      int arrowsVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.vertical");
+      int arrowsHShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.horizontal");
+      Function<Icon, Point> function = (icon) -> new Point(centerX - icon.getIconWidth() / 2, centerY - icon.getIconHeight() / 2 + arrowsCenterVShift);
+      Point forUpDownIcons = function.apply(AllIcons.General.ArrowUp);
+      AllIcons.General.ArrowUp.paintIcon(component, g, forUpDownIcons.x, forUpDownIcons.y - arrowsVShift);
+      AllIcons.General.ArrowDown.paintIcon(component, g, forUpDownIcons.x, forUpDownIcons.y + arrowsVShift);
+      Point forLeftRightIcons = function.apply(AllIcons.General.ArrowRight);
+      AllIcons.General.ArrowRight.paintIcon(component, g, forLeftRightIcons.x + arrowsHShift, forLeftRightIcons.y);
+      AllIcons.General.ArrowLeft.paintIcon(component, g, forLeftRightIcons.x - arrowsHShift, forLeftRightIcons.y);
+
+      int textVShift = Registry.intValue("ide.splitter.chooser.info.panel.text.shift");
+      int textY = forUpDownIcons.y + AllIcons.General.ArrowDown.getIconHeight() + textVShift;
+      g.setColor(UIUtil.getLabelForeground());
+      g.setFont(font);
+      g.drawString(openShortcuts, centerX - openShortcutsWidth / 2, textY);
+      g.drawString(switchShortcuts, centerX - switchShortcutsWidth / 2, textY + fontMetrics.getHeight());
+    }
+
+    private void positionChanged(RelativePosition position) {
+      if (myPosition == position) {
+        return;
+      }
+      myShowInfoPanel = false;
+      myPosition = position;
+      myRectangle = null;
+      setNeedsRepaint(true);
+
+      Rectangle r = TabsUtil.getDropArea(EditorWindow.this.getTabbedPane().getTabs());
+      switch (myPosition) {
+        case CENTER:
+          break;
+        case UP:
+          r.height /= 2;
+          break;
+        case LEFT:
+          r.width /= 2;
+          break;
+        case DOWN:
+          int h = r.height / 2;
+          r.height -= h;
+          r.y += h;
+          break;
+        case RIGHT:
+          int w = r.width / 2;
+          r.width -= w;
+          r.x += w;
+          break;
+      }
+      myRectangle = new Rectangle2D.Double(r.x, r.y, r.width, r.height);
+    }
+  }
+
+  @Service
+  public static final class SplitterService {
+    private EditorWindow myActiveWindow = null;
+    private VirtualFile myFile = null;
+    private Runnable mySplitChooserDisposer = null;
+    private EditorWindow myInitialEditorWindow = null;
+
+    public void activateSplitChooser(@NotNull EditorWindow window, @NotNull VirtualFile file, boolean openedFromEditor) {
+      if (isActive()) {
+        stopSplitChooser(true);
+      }
+      myActiveWindow = window;
+      myFile = file;
+      if (openedFromEditor) {
+        myInitialEditorWindow = myActiveWindow;
+      }
+      mySplitChooserDisposer = myActiveWindow.showSplitChooser(true);
+    }
+
+    public void switchWindow(@NotNull EditorWindow window) {
+      if (mySplitChooserDisposer != null) {
+        mySplitChooserDisposer.run();
+      }
+      myActiveWindow = window;
+      mySplitChooserDisposer = myActiveWindow.showSplitChooser(false);
+    }
+
+    public void stopSplitChooser(boolean interrupted) {
+      EditorWindow activeWindow = myActiveWindow;
+      myActiveWindow = null;
+      myFile = null;
+      mySplitChooserDisposer.run();
+      mySplitChooserDisposer = null;
+      myInitialEditorWindow = null;
+      if (!interrupted) {
+        activeWindow.requestFocus(true);
+      }
+    }
+
+    public static SplitterService getInstance() {
+      return ApplicationManager.getApplication().getService(SplitterService.class);
+    }
+
+    public boolean isActive() {
+      return myActiveWindow != null;
+    }
+
+    public void nextWindow() {
+      if (!isActive()) {
+        return;
+      }
+
+      List<EditorWindow> orderedWindows = myActiveWindow.getOwner().getOrderedWindows();
+      int index = (orderedWindows.indexOf(myActiveWindow) + 1) % orderedWindows.size();
+      switchWindow(orderedWindows.get(index));
+    }
+
+    public void previousWindow() {
+      if (!isActive()) {
+        return;
+      }
+
+      List<EditorWindow> orderedWindows = myActiveWindow.getOwner().getOrderedWindows();
+      int index = orderedWindows.indexOf(myActiveWindow) - 1;
+      index = index < 0 ? orderedWindows.size() - 1 : index;
+      switchWindow(orderedWindows.get(index));
+    }
+
+    public void split(boolean move) {
+      final EditorWindow activeWindow = myActiveWindow;
+      final EditorWindow initialWindow = myInitialEditorWindow;
+      final VirtualFile file = myFile;
+      final RelativePosition position = activeWindow.myPainter.myPosition;
+
+      stopSplitChooser(false);
+
+      // If a position is default and focus is still in the same editor window => nothing need to be done
+      if (position != RelativePosition.CENTER || initialWindow != activeWindow) {
+        if (position == RelativePosition.CENTER) {
+          final FileEditorManagerEx fileEditorManager = activeWindow.getManager();
+          fileEditorManager.openFile(file, true);
+        }
+        else {
+          activeWindow.split(
+            position == RelativePosition.UP || position == RelativePosition.DOWN ? JSplitPane.VERTICAL_SPLIT : JSplitPane.HORIZONTAL_SPLIT,
+            true, file, true,
+            position != RelativePosition.LEFT && position != RelativePosition.UP);
+        }
+
+        if (initialWindow != null && move) {
+          initialWindow.closeFile(file, true ,false);
+        }
+      }
+    }
+
+    public void setSplitSide(RelativePosition side) {
+      if (side != myActiveWindow.myPainter.myPosition) {
+        myActiveWindow.myPainter.positionChanged(side);
+      } else {
+        final Map<RelativePosition, EditorWindow> editors = myActiveWindow.getAdjacentEditors();
+        if (editors.containsKey(side)) {
+          if (!isActive()) {
+            return;
+          }
+
+          switchWindow(editors.get(side));
+        }
+      }
+    }
+  }
+
   void changeOrientation() {
     checkConsistency();
     Container parent = myPanel.getParent();
@@ -741,17 +1071,6 @@ public final class EditorWindow {
       Splitter splitter = (Splitter)parent;
       splitter.setOrientation(!splitter.getOrientation());
     }
-  }
-
-  private void updateFileIconDecoration(@NotNull VirtualFile file) {
-    EditorWithProviderComposite composite = Objects.requireNonNull(findFileComposite(file));
-    int index = findEditorIndex(composite);
-    LOG.assertTrue(index != -1);
-    Icon current = myTabbedPane.getIconAt(index);
-    if (current instanceof DecoratedTabIcon) {
-      current = ((DecoratedTabIcon)current).fileIcon;
-    }
-    myTabbedPane.setIconAt(index, decorateFileIcon(composite, current));
   }
 
   void updateFileIcon(@NotNull VirtualFile file, @NotNull Icon icon) {
@@ -778,17 +1097,17 @@ public final class EditorWindow {
    * @return baseIcon augmented with pin/modification status
    */
   private static Icon decorateFileIcon(@NotNull EditorComposite composite, @NotNull Icon baseIcon) {
-    Icon modifiedIcon;
     UISettings settings = UISettings.getInstance();
-    if (settings.getMarkModifiedTabsWithAsterisk()) {
-      Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
-      modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite.isModified() ? crop : new EmptyIcon(7, 7);
-      DecoratedTabIcon result = new DecoratedTabIcon(2, baseIcon);
-      result.setIcon(baseIcon, 0);
-      result.setIcon(modifiedIcon, 1, -modifiedIcon.getIconWidth() / 2, 0);
-      return JBUIScale.scaleIcon(result);
+    if (!settings.getMarkModifiedTabsWithAsterisk()) {
+      return baseIcon;
     }
-    return baseIcon;
+
+    Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
+    Icon modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite.isModified() ? crop : EmptyIcon.create(7, 7);
+    DecoratedTabIcon result = new DecoratedTabIcon(2, baseIcon);
+    result.setIcon(baseIcon, 0);
+    result.setIcon(modifiedIcon, 1, -modifiedIcon.getIconWidth() / 2, 0);
+    return JBUIScale.scaleIcon(result);
   }
 
   private static class DecoratedTabIcon extends LayeredIcon {

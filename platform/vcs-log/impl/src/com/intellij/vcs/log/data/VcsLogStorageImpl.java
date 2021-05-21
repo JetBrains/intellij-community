@@ -309,7 +309,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   private static final class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
     MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor) throws IOException {
-      super(storageId.getStorageFile(STORAGE), commitIdKeyDescriptor, Page.PAGE_SIZE, new StorageLockContext(true, true),
+      super(storageId.getStorageFile(STORAGE), commitIdKeyDescriptor, Page.PAGE_SIZE, new StorageLockContext(true),
             storageId.getVersion());
     }
 

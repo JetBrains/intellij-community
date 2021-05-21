@@ -34,10 +34,12 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
   public void testDoublePrimitive() { doTest(); }
   public void testEqualsToTrueJUnit5() { doTest(); }
   public void testTrueToEqualsJUnit5() { doTest(); }
+  public void testTrueToEqualsJUnit5Order() { doTest(); }
   public void testTrueToEqualsBetweenIncompatibleTypes() { doTest(); }
   public void testFalseToNotEqualsJUnit4() { doTest(); }
   public void testObjectEqualsToEquals() { doTest(); }
   public void testTrueToArrayEquals() { doTest(); }
+  public void testTrueToArrayEqualsJUnit5() { doTest(); }
   public void testNegatedTrue() { doTest(); }
 
   @Override
@@ -100,8 +102,10 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
                        "public final class Assertions {\n" +
                        "    public static void assertEquals(Object expected, Object actual) {}\n" +
                        "    public static void assertTrue(boolean expected) {}\n" +
+                       "    public static void assertTrue(boolean expected, String message) {}\n" +
+                       "    public static void assertTrue(boolean expected, Supplier<String> message) {}\n" +
                        "    public static void assertEquals(Object expected, Object actual, Supplier<String> message) {}\n" +
-                       "    public static void assertTrue(Object expected, Supplier<String> message) {}\n" +
+                       "    public static void assertArrayEquals(int[] expected, int[] actual, String message) {}\n" +
                        "}");
   }
 }

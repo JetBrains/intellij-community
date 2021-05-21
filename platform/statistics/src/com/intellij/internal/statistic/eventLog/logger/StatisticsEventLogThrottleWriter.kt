@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.logger
 
 import com.intellij.application.subscribe
@@ -9,10 +9,10 @@ import com.intellij.internal.statistic.utils.EventsIdentityWindowThrottle
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle
 import com.intellij.openapi.util.Disposer
 
-class StatisticsEventLogThrottleWriter(configOptionsService: EventLogConfigOptionsService,
-                                       recorderId: String,
-                                       private val recorderVersion: String,
-                                       private val delegate: StatisticsEventLogWriter): StatisticsEventLogWriter {
+internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogConfigOptionsService,
+                                                recorderId: String,
+                                                private val recorderVersion: String,
+                                                private val delegate: StatisticsEventLogWriter) : StatisticsEventLogWriter {
   private val ourLock: Any = Object()
 
   /**

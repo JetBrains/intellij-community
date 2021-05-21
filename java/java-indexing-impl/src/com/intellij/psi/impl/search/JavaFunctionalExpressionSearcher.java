@@ -81,6 +81,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       if (InjectedLanguageManager.getInstance(project).isInjectedFragment(aClass.getContainingFile()) || !hasJava8Modules(project)) {
         return;
       }
+      PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(project);
 
       Set<PsiClass> visited = new HashSet<>();
       processSubInterfaces(aClass, visited);
@@ -90,7 +91,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
           PsiType samType = saMethod.getReturnType();
           if (samType == null) continue;
 
-          SearchScope scope = samClass.getUseScope().intersectWith(session.scope);
+          SearchScope scope = psiSearchHelper.getUseScope(samClass).intersectWith(session.scope);
           descriptors.add(new SamDescriptor(samClass, saMethod, samType, GlobalSearchScopeUtil.toGlobalSearchScope(scope, project)));
         }
       }
@@ -111,7 +112,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     MultiMap<VirtualFile, FunExprOccurrence> result = MultiMap.createLinkedSet();
     descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
       for (SamDescriptor descriptor : descriptors) {
-        GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope);
+        GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope, false, true);
         for (FunctionalExpressionKey key : descriptor.keys) {
           FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, null, (file, infos) -> {
             result.putValues(file, ContainerUtil.map(infos, entry -> entry.occurrence));

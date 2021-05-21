@@ -7,8 +7,8 @@ import com.intellij.util.io.isAncestor
 import java.nio.file.Files
 import java.nio.file.Path
 
-
 private val LOG = logger<JdkInstallerWSL>()
+
 object JdkInstallerWSL {
   fun unpackJdkOnWsl(wslDistribution: WSLDistributionForJdkInstaller,
                      packageType: JdkPackageType,

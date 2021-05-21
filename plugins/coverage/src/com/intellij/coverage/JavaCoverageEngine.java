@@ -518,24 +518,24 @@ public class JavaCoverageEngine extends CoverageEngine {
       int hits = 0;
       final String indent = "    ";
       if (lineData.getJumps() != null) {
-        for (Object o : lineData.getJumps()) {
-          final JumpData jumpData = (JumpData)o;
+        for (JumpData jumpData : lineData.getJumps()) {
           if (jumpData.getTrueHits() + jumpData.getFalseHits() > 0) {
             final PsiExpression expression = expressions.get(idx++);
             final PsiElement parentExpression = expression.getParent();
             boolean reverse = parentExpression instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parentExpression).getOperationTokenType() == JavaTokenType.OROR
                               || parentExpression instanceof PsiDoWhileStatement || parentExpression instanceof PsiAssertStatement;
             buf.append(indent).append(expression.getText()).append("\n");
-            buf.append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", reverse ? jumpData.getFalseHits() : jumpData.getTrueHits())).append("\n");
-            buf.append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", reverse ? jumpData.getTrueHits() : jumpData.getFalseHits())).append("\n");
+            buf.append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", reverse ? jumpData.getFalseHits() : jumpData
+              .getTrueHits())).append("\n");
+            buf.append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", reverse ? jumpData
+              .getTrueHits() : jumpData.getFalseHits())).append("\n");
             hits += jumpData.getTrueHits() + jumpData.getFalseHits();
           }
         }
       }
 
       if (lineData.getSwitches() != null) {
-        for (Object o : lineData.getSwitches()) {
-          final SwitchData switchData = (SwitchData)o;
+        for (SwitchData switchData : lineData.getSwitches()) {
           final PsiExpression conditionExpression = expressions.get(idx++);
           buf.append(indent).append(conditionExpression.getText()).append("\n");
           int i = 0;

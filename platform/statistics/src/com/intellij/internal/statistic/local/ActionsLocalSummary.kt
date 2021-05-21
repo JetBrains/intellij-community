@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.local
 
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -32,7 +32,7 @@ class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummaryState>, 
     this.totalSummary = calculateTotalSummary(state)
   }
 
-  fun calculateTotalSummary(state: ActionsLocalSummaryState): ActionsTotalSummary {
+  private fun calculateTotalSummary(state: ActionsLocalSummaryState): ActionsTotalSummary {
     var maxUsageCount = 0
     var minUsageCount = Integer.MAX_VALUE
     for (value in state.data.values) {

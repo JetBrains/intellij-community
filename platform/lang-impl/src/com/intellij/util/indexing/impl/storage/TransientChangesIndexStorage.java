@@ -166,27 +166,16 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
   }
 
   private UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
-    TransientChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
-    if (valueContainer == null) {
-      valueContainer = new TransientChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<>() {
-        @Override
-        public @NotNull Object getLock() {
-          return this;
+    return myMap.computeIfAbsent(key, k -> {
+      return new TransientChangeTrackingValueContainer<>(() -> {
+        try {
+          return myBackendStorage.read(key);
         }
-
-        @Override
-        public ValueContainer<Value> compute() {
-          try {
-            return myBackendStorage.read(key);
-          }
-          catch (StorageException e) {
-            throw new RuntimeException(e);
-          }
+        catch (StorageException e) {
+          throw new RuntimeException(e);
         }
       });
-      myMap.put(key, valueContainer);
-    }
-    return valueContainer;
+    });
   }
 
   @Override

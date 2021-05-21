@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
 import com.intellij.ide.ui.laf.IntelliJLaf
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.compareFileContent
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.SVGLoader
@@ -181,6 +182,7 @@ internal fun dumpComponentBounds(component: Container): Map<String, IntArray> {
 internal fun getComponentKey(c: Component, index: Int): String {
   return when {
     c is JLabel && !c.text.isNullOrEmpty() -> StringUtil.removeHtmlTags(c.text, true).removeSuffix(":") + " [label]"
+    c is ActionLink && !c.text.isNullOrEmpty() -> StringUtil.removeHtmlTags(c.text, true) + " [link]"
     c is AbstractButton && c.text.isNotEmpty() -> StringUtil.removeHtmlTags(c.text, true)
     c is TitledSeparator -> c.text + " [titledSeparator]"
     else -> "${c.javaClass.simpleName} #${index}"

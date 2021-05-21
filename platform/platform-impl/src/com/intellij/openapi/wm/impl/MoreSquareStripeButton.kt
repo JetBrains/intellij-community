@@ -16,7 +16,7 @@ import java.awt.Point
 import java.util.function.Predicate
 
 class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar) :
-  ActionButton(createAction(toolwindowSideBar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 24)) {
+  ActionButton(createAction(toolwindowSideBar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
 
   companion object {
     val largeStripeToolwindowPredicate: Predicate<ToolWindow> = Predicate { !it.isVisibleOnLargeStripe }

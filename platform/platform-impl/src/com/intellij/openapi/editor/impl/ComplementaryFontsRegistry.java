@@ -5,8 +5,8 @@ import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
@@ -21,8 +21,8 @@ import java.util.*;
 
 public final class ComplementaryFontsRegistry {
   private static final Logger LOG = Logger.getInstance(ComplementaryFontsRegistry.class);
-  private static final boolean NEW_FONT_SELECTION = SystemProperties.is("new.editor.font.selector");
-  private static final boolean PATCH_FONT_NAMES = Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND && !NEW_FONT_SELECTION;
+  private static final boolean PATCH_FONT_NAMES = Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND &&
+                                                  !AppEditorFontOptions.NEW_FONT_SELECTOR;
   private static final String DEFAULT_FALLBACK_FONT = Font.MONOSPACED;
   private static final Object lock = new Object();
   @SuppressWarnings("unchecked")
@@ -259,7 +259,7 @@ public final class ComplementaryFontsRegistry {
     if (originalStyle < 0 || originalStyle > 3) originalStyle = Font.PLAIN;
     synchronized (lock) {
       FallBackInfo fallBackInfo = null;
-      boolean typographicNames = NEW_FONT_SELECTION && useTypographicNames;
+      boolean typographicNames = AppEditorFontOptions.NEW_FONT_SELECTOR && useTypographicNames;
       @JdkConstants.FontStyle int style = originalStyle;
       if (PATCH_FONT_NAMES && style != Font.PLAIN) {
         Pair<String, Integer>[] replacement = ourStyledFontMap.get(defaultFontFamily);
@@ -421,7 +421,7 @@ public final class ComplementaryFontsRegistry {
       myLastFontKey.myContext = fontRenderContext;
       FontInfo fontInfo = myFontInfoMap.get(myLastFontKey);
       if (fontInfo == null) {
-        fontInfo = NEW_FONT_SELECTION
+        fontInfo = AppEditorFontOptions.NEW_FONT_SELECTOR
                    ? new FontInfo(myBaseFont, size, useLigatures, fontRenderContext)
                    : new FontInfo(myBaseFont.getName(), size, myBaseFont.getStyle(), useLigatures, fontRenderContext);
         myFontInfoMap.put(myLastFontKey.clone(), fontInfo);

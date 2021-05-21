@@ -9,11 +9,9 @@ import com.intellij.openapi.util.TextRange;
 
 public interface JsonStringLiteral extends JsonLiteral {
 
-  @NotNull
-  List<Pair<TextRange, String>> getTextFragments();
+  @NotNull List<Pair<TextRange, String>> getTextFragments();
 
-  @NotNull
-  String getValue();
+  @NotNull String getValue();
 
   boolean isPropertyName();
 

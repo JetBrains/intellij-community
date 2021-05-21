@@ -64,11 +64,11 @@ public final class TargetAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
 
-    for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFileList()) {
+    for (final AntBuildFileBase buildFile : AntConfiguration.getInstance(project).getBuildFileList()) {
       final String name = buildFile.getPresentableName();
       if (name != null && myBuildName.equals(name)) {
         final List<String> targets = myTargets.size() == 1 && getDefaultTargetName().equals(myTargets.iterator().next()) ? Collections.emptyList() : myTargets;
-        ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, e.getDataContext(), Collections.emptyList(), AntBuildListener.NULL);
+        ExecutionHandler.runBuild(buildFile, targets, null, e.getDataContext(), Collections.emptyList(), AntBuildListener.NULL);
         return;
       }
     }

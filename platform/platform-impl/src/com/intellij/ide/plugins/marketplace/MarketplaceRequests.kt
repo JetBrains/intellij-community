@@ -15,6 +15,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.*
+import com.intellij.util.ui.IoErrorText
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.xml.sax.InputSource
@@ -249,7 +250,7 @@ open class MarketplaceRequests {
                            indicator: ProgressIndicator?,
                            @Nls indicatorMessage: String,
                            parser: (Reader) -> T): T {
-    val eTag = if (file == null) null else loadEtagForFile(file)
+    val eTag = if (file == null) null else loadETagForFile(file)
     return HttpRequests
       .request(url)
       .tuner { connection ->
@@ -285,8 +286,10 @@ open class MarketplaceRequests {
           throw e
         }
         catch (e: Exception) {
-          val fileText = file?.readText()
-          LOG.warn("Error reading Marketplace file: url=$url file=${file?.fileName}. File content:\n$fileText")
+          LOG.warn("Error reading Marketplace file: url=${url} file=${file?.fileName}", e)
+          if (file != null && LOG.isDebugEnabled) {
+            LOG.debug("File content:\n${try { Files.readString(file) } catch (e: Exception) { IoErrorText.message(e) } }")
+          }
           throw e
         }
       }
@@ -382,7 +385,7 @@ open class MarketplaceRequests {
   }
 }
 
-private fun loadEtagForFile(file: Path): String {
+private fun loadETagForFile(file: Path): String {
   val eTagFile = getETagFile(file)
   try {
     val lines = Files.readAllLines(eTagFile)
@@ -401,6 +404,7 @@ private fun loadEtagForFile(file: Path): String {
   return ""
 }
 
+@Suppress("SpellCheckingInspection")
 private fun getETagFile(file: Path): Path = file.parent.resolve("${file.fileName}.etag")
 
 private fun saveETagForFile(file: Path, eTag: String) {

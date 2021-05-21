@@ -57,7 +57,7 @@ public final class JBCefApp {
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
   // [tav] todo: retrieve the version at compile time from the "jcef" maven lib
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 77;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 87;
 
   @NotNull private final CefApp myCefApp;
 
@@ -215,7 +215,7 @@ public final class JBCefApp {
     static JBCefApp init() {
       ourInitialized.set(true);
       JCefAppConfig config = null;
-      if (isSupported(true)) {
+      if (isSupported()) {
         try {
           config = JCefAppConfig.getInstance();
         }
@@ -243,10 +243,6 @@ public final class JBCefApp {
    * In order to assuredly meet the above requirements the IDE should run with a bundled JBR.
    */
   public static boolean isSupported() {
-    return isSupported(false);
-  }
-
-  private static boolean isSupported(boolean logging) {
     boolean testModeEnabled = RegistryManager.getInstance().is("ide.browser.jcef.testMode.enabled");
     if (ourSupported != null && !testModeEnabled) {
       return ourSupported.get();
@@ -260,9 +256,7 @@ public final class JBCefApp {
       }
       Function<String, Boolean> unsupported = (msg) -> {
         ourSupported = new AtomicBoolean(false);
-        if (logging) {
-          LOG.warn(msg + (!msg.contains("disabled") ? " (Use JBR bundled with the IDE)" : ""));
-        }
+        LOG.warn(msg + (!msg.contains("disabled") ? " (Use JBR bundled with the IDE)" : ""));
         return false;
       };
       // warn: do not change to Registry.is(), the method used at startup

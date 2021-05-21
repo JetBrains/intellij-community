@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
@@ -236,7 +237,8 @@ public class MavenUtil {
 
   public static boolean isNoBackgroundMode() {
     return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment());
+            || ApplicationManager.getApplication().isHeadlessEnvironment() &&
+               !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode());
   }
 
   public static boolean isInModalContext() {
@@ -771,6 +773,10 @@ public class MavenUtil {
     if (result == null) {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
                                         resolveGlobalSettingsFile(overriddenMavenHome));
+
+      if(result == null) {
+        result = new File(resolveM2Dir(), REPOSITORY_DIR);
+      }
     }
     try {
       return result.getCanonicalFile();
@@ -807,8 +813,8 @@ public class MavenUtil {
     return new File(localRepository, relPath);
   }
 
-  @NotNull
-  public static File doResolveLocalRepository(@Nullable File userSettingsFile, @Nullable File globalSettingsFile) {
+  @Nullable
+  protected static File doResolveLocalRepository(@Nullable File userSettingsFile, @Nullable File globalSettingsFile) {
     if (userSettingsFile != null) {
       final String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
       if (!isEmpty(fromUserSettings)) {
@@ -823,7 +829,7 @@ public class MavenUtil {
       }
     }
 
-    return new File(resolveM2Dir(), REPOSITORY_DIR);
+    return null;
   }
 
   @Nullable

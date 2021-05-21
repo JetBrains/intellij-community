@@ -94,7 +94,7 @@ public final class ResolverTree {
   }
 
   private Object2IntMap<PsiTypeVariable> calculateDegree() {
-    Object2IntOpenHashMap<PsiTypeVariable> result = new Object2IntOpenHashMap<>();
+    Object2IntMap<PsiTypeVariable> result=new Object2IntOpenHashMap<>();
     for (Constraint constr : myConstraints) {
       PsiTypeVarCollector collector = new PsiTypeVarCollector();
       setDegree(collector.getSet(constr.getRight()), result);
@@ -102,9 +102,10 @@ public final class ResolverTree {
     return result;
   }
 
-  private static void setDegree(final Set<PsiTypeVariable> set, Object2IntOpenHashMap<PsiTypeVariable> result) {
+  private static void setDegree(final Set<PsiTypeVariable> set,
+                                Object2IntMap<PsiTypeVariable> result) {
     for (PsiTypeVariable var : set) {
-      result.addTo(var, 1);
+      result.mergeInt(var, 1, Math::addExact);
     }
   }
 

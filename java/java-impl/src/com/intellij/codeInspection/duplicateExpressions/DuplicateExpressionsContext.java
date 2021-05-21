@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.openapi.util.Key;
@@ -7,11 +7,12 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -19,10 +20,10 @@ import java.util.function.BiConsumer;
 /**
  * @author Pavel.Dolgov
  */
-class DuplicateExpressionsContext {
+final class DuplicateExpressionsContext {
   private static final Key<Map<PsiCodeBlock, DuplicateExpressionsContext>> CONTEXTS_KEY = Key.create("DuplicateExpressionsContext");
 
-  private final Map<PsiExpression, List<PsiExpression>> myOccurrences = new THashMap<>(new ExpressionHashingStrategy());
+  private final Map<PsiExpression, List<PsiExpression>> myOccurrences = new Object2ObjectOpenCustomHashMap<>(new ExpressionHashingStrategy());
   private final ComplexityCalculator myComplexityCalculator = new ComplexityCalculator();
   private final SideEffectCalculator mySideEffectCalculator = new SideEffectCalculator();
 
@@ -49,7 +50,7 @@ class DuplicateExpressionsContext {
     if (nearestBody != null) {
       Map<PsiCodeBlock, DuplicateExpressionsContext> contexts = session.getUserData(CONTEXTS_KEY);
       if (contexts == null) {
-        session.putUserData(CONTEXTS_KEY, contexts = new THashMap<>());
+        session.putUserData(CONTEXTS_KEY, contexts = new HashMap<>());
       }
       return contexts.computeIfAbsent(nearestBody, unused -> new DuplicateExpressionsContext());
     }

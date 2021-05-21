@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -78,7 +78,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author peter
  */
-public class JavaCompletionContributor extends CompletionContributor implements DumbAware {
+public final class JavaCompletionContributor extends CompletionContributor implements DumbAware {
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
       // dot at the statement beginning
       psiElement().afterLeaf(".").insideStarting(psiExpressionStatement()),

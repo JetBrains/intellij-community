@@ -2,27 +2,34 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
+import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 @State(name = "DefaultFont", storages = @Storage("editor.xml"))
 public final class AppEditorFontOptions implements PersistentStateComponent<AppEditorFontOptions.PersistentFontPreferences> {
+  private static final Logger LOG = Logger.getInstance(AppEditorFontOptions.class);
+  public static final boolean NEW_FONT_SELECTOR = SystemProperties.getBooleanProperty("new.editor.font.selector", true);
+
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
 
   public AppEditorFontOptions() {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
+    Application app = ApplicationManager.getApplication();
+    if (!app.isHeadlessEnvironment() || app.isUnitTestMode()) {
       myFontPreferences.register(FontPreferences.DEFAULT_FONT_NAME, UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
     }
   }
@@ -93,12 +100,10 @@ public final class AppEditorFontOptions implements PersistentStateComponent<AppE
   }
 
   private static String[] migrateFamilyNameIfNeeded(String family, String regularSubFamily, String boldSubFamily) {
-    if (SystemInfo.isJetBrainsJvm && SystemProperties.is("new.editor.font.selector")) {
-      switch (family) {
-        case "Fira Code Light": return new String[] {"Fira Code", "Light", null};
-        case "Fira Code Medium": return new String[] {"Fira Code", "Medium", null};
-        case "Fira Code Retina": return new String[] {"Fira Code", "Retina", null};
-      }
+    if (regularSubFamily == null && boldSubFamily == null && FontFamilyService.isServiceSupported()) {
+      String[] result = FontFamilyService.migrateFontSetting(family);
+      LOG.info("Font setting migration: " + family + " -> " + Arrays.toString(result));
+      return result;
     }
     return new String[] {family, regularSubFamily, boldSubFamily};
   }

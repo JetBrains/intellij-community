@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dsl
 
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.ExternalDependencyModificator
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -288,17 +291,25 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
   }
 
 
-  override fun declaredDependencies(module: Module): List<UnifiedDependency> {
+  override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency>? {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
 
 
-    return ReadAction.compute<List<UnifiedDependency>, Throwable> {
+    return ReadAction.compute<List<DeclaredDependency>, Throwable> {
       val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.getFile()) ?: throw IllegalStateException(
         MavenProjectBundle.message("maven.model.error", module.name))
       model.dependencies.dependencies.map {
         var scope = it.scope.stringValue;
         if (scope == SCOPE_COMPILE) scope = null
-        UnifiedDependency(it.groupId.stringValue, it.artifactId.stringValue, it.version.stringValue, scope)
+        val dataContext = object: DataContext {
+          override fun getData(dataId: String): Any? {
+            if(CommonDataKeys.PSI_ELEMENT.`is`(dataId)){
+              return it.xmlElement
+            }
+            return null
+          }
+        }
+        DeclaredDependency(it.groupId.stringValue, it.artifactId.stringValue, it.version.stringValue, scope, dataContext)
       }
     }
 

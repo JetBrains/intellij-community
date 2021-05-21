@@ -35,13 +35,14 @@ internal fun vcsRoots(project: Path): List<Path> {
 
   jme.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, project.toFile())
   val result = vcsPattern.findAll(Files.readString(vcsXml))
-    .map { expandJpsMacro(it.value) }
+    .map { it.value.takeIf(String::isNotBlank)?.let(::expandJpsMacro) ?: project.toString() }
     .map {
       val file = Paths.get(it)
       if (Files.exists(file)) file else project.resolve(it)
     }
     .filter(Files::exists)
     .toList()
+  require(result.isNotEmpty())
   log("Found ${result.size} repo roots in $project:")
   result.forEach { log(it.toAbsolutePath().toString()) }
   return result

@@ -16,7 +16,7 @@ class EntitiesTest {
 
   @Before
   fun setUp() {
-    builder = WorkspaceEntityStorageBuilder.create()
+    builder = createEmptyBuilder()
   }
 
   @Test

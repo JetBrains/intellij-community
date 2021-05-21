@@ -24,12 +24,12 @@ import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogEditorDiffPreview;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.NonNls;
@@ -105,7 +105,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId,
                                           boolean commitExists,
-                                          @NotNull PairFunction<? super GraphTableModel, ? super T, Integer> rowGetter) {
+                                          @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
     if (getFilterUi().getFilters().isEmpty() || !commitExists) {
       super.handleCommitNotFound(commitId, commitExists, rowGetter);
       return;

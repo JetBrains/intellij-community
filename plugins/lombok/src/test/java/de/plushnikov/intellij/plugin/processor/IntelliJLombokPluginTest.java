@@ -2,8 +2,6 @@ package de.plushnikov.intellij.plugin.processor;
 
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
-import java.io.IOException;
-
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
@@ -14,15 +12,15 @@ public class IntelliJLombokPluginTest extends AbstractLombokParsingTestCase {
     return false;
   }
 
-  public void testNonNullPlain() throws IOException {
+  public void testNonNullPlain() {
     doTest();
   }
 
-  public void testSynchronizedName() throws IOException {
+  public void testSynchronizedName() {
     doTest();
   }
 
-  public void ignore_testSynchronizedPlain() throws IOException {
+  public void ignore_testSynchronizedPlain() {
     //TODO known problem, try to fix later
     doTest();
   }

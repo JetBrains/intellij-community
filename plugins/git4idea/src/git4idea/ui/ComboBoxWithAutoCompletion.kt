@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.keymap.KeymapManager
@@ -67,7 +68,10 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
     myEditableComponent?.requestFocus()
   }
 
-  fun getText() = myEditor?.document?.text
+  @Nls
+  fun getText(): String? {
+    return myEditor?.document?.text
+  }
 
   fun setPlaceholder(@Nls placeHolder: String) {
     myPlaceHolder = placeHolder
@@ -78,6 +82,14 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
   fun selectAll() {
     myEditableComponent?.selectAll()
+  }
+
+  fun addDocumentListener(listener: DocumentListener) {
+    myEditableComponent?.addDocumentListener(listener)
+  }
+
+  fun removeDocumentListener(listener: DocumentListener) {
+    myEditableComponent?.removeDocumentListener(listener)
   }
 
   private fun initEditor() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.*;
@@ -24,8 +24,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +34,7 @@ import java.util.*;
 /**
  * @author Pavel.Dolgov
  */
-public class DuplicateExpressionsInspection extends LocalInspectionTool {
+public final class DuplicateExpressionsInspection extends LocalInspectionTool {
   public int complexityThreshold = 70;
 
   @NotNull
@@ -112,7 +110,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
         DuplicateExpressionsContext context = DuplicateExpressionsContext.getContext(body, session);
         if (context == null) return;
 
-        Set<PsiExpression> processed = new THashSet<>();
+        Set<PsiExpression> processed = new HashSet<>();
         context.forEach((pattern, occurrences) -> {
           if (!processed.contains(pattern)) {
             processed.addAll(occurrences);
@@ -178,7 +176,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
 
   @Nullable
   private static Set<PsiVariable> collectVariablesSafeToExtract(@NotNull List<? extends PsiExpression> occurrences) {
-    Set<PsiVariable> variables = new THashSet<>();
+    Set<PsiVariable> variables = new HashSet<>();
     Ref<Boolean> refFailed = new Ref<>(Boolean.FALSE);
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -211,7 +209,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     if (occurrences.size() <= 1) {
       return Collections.emptyMap();
     }
-    Map<PsiVariable, PsiExpression> initializers = new THashMap<>();
+    Map<PsiVariable, PsiExpression> initializers = new HashMap<>();
     for (PsiExpression occurrence : occurrences) {
       PsiVariable variable = findVariableByInitializer(occurrence);
       if (variable != null) {
@@ -222,7 +220,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       return Collections.emptyMap();
     }
 
-    Map<PsiExpression, List<PsiVariable>> result = new THashMap<>();
+    Map<PsiExpression, List<PsiVariable>> result = new HashMap<>();
     initializers.forEach((variable, initializer) -> {
       for (PsiExpression occurrence : occurrences) {
         if (occurrence != initializer && canReplaceWith(occurrence, variable)) {
@@ -267,9 +265,8 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     return null;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
+  public @NotNull JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
       JavaBundle.message("inspection.duplicate.expressions.complexity.threshold"), this, "complexityThreshold", 3);
   }

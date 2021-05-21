@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.process.BuildProcessHandler;
@@ -44,7 +44,7 @@ import static com.intellij.util.ContentUtilEx.getFullName;
 /**
  * @author Vladislav.Soroka
  */
-public final class BuildContentManagerImpl implements BuildContentManager {
+public final class BuildContentManagerImpl implements BuildContentManager, Disposable {
   /**
    * @deprecated use Build_Tab_Title_Supplier instead
    */
@@ -67,6 +67,10 @@ public final class BuildContentManagerImpl implements BuildContentManager {
 
   public BuildContentManagerImpl(@NotNull Project project) {
     myProject = project;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
@@ -225,7 +229,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
     if (closeListenerMap != null) {
       CloseListener closeListener = closeListenerMap.remove(buildDescriptor.getId());
       if (closeListener != null) {
-        closeListener.dispose();
+        Disposer.dispose(closeListener);
         if (closeListenerMap.isEmpty()) {
           content.putUserData(CONTENT_CLOSE_LISTENERS, null);
         }
@@ -252,7 +256,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
     private @Nullable BuildProcessHandler myProcessHandler;
 
     private CloseListener(final @NotNull Content content, @NotNull BuildProcessHandler processHandler) {
-      super(content, myProject);
+      super(content, myProject, BuildContentManagerImpl.this);
       myProcessHandler = processHandler;
     }
 

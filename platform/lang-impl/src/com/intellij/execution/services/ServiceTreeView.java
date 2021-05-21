@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -27,7 +27,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
@@ -441,7 +440,7 @@ class ServiceTreeView extends ServiceView {
   private static void setEmptyText(JComponent component, StatusText emptyText) {
     emptyText.setText(ExecutionBundle.message("service.view.empty.tree.text"));
     emptyText.appendSecondaryText(ExecutionBundle.message("service.view.add.service.action.name"),
-                                  new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
+                                  SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                   new ActionListener() {
                                     @Override
                                     public void actionPerformed(ActionEvent e) {

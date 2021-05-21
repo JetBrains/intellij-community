@@ -128,7 +128,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
           return new BackgroundableProcessIndicator(task);
         }
 
-        return shouldRunHeadlessTasksSynchronously()
+        return shouldKeepTasksAsynchronousInHeadlessMode()
                ? new ProgressIndicatorBase()
                : new EmptyProgressIndicator();
       }, PlainEdtExecutor.INSTANCE);

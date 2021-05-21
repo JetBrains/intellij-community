@@ -836,9 +836,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   public AntBuildFileBase getAntBuildFile(@NotNull PsiFile file) {
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile != null) {
-      for (AntBuildFile bFile : myBuildFiles) {
+      for (AntBuildFileBase bFile : myBuildFiles) {
         if (vFile.equals(bFile.getVirtualFile())) {
-          return (AntBuildFileBase)bFile;
+          return bFile;
         }
       }
     }

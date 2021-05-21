@@ -69,6 +69,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IconDeferrer
+import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
@@ -92,6 +93,7 @@ import java.util.*
 import java.util.function.Function
 import java.util.function.Predicate
 import javax.swing.JComponent
+import javax.swing.ToolTipManager
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -118,13 +120,8 @@ object DynamicPlugins {
    */
   @JvmStatic
   fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
-    val descriptorsToLoad = loadFullDescriptorsWithoutRestart(
-      descriptors,
-      load = true,
-    ) ?: return false
-
     val loader = lazy(LazyThreadSafetyMode.NONE) { OptionalDependencyDescriptorLoader() }
-    return descriptorsToLoad.allWithLogging(load = true) {
+    return updateDescriptorsWithoutRestart(descriptors, load = true) {
       loadPlugin(it, checkImplementationDetailDependencies = true, loader = loader)
     }
   }
@@ -139,21 +136,19 @@ object DynamicPlugins {
     project: Project? = null,
     parentComponent: JComponent? = null,
     options: UnloadPluginOptions = UnloadPluginOptions().withDisable(true),
-  ): Boolean {
-    val descriptorsToUnload = loadFullDescriptorsWithoutRestart(
-      descriptors,
-      load = false,
-    ) ?: return false
-
-    return descriptorsToUnload.reversed().allWithLogging(load = false) {
-      unloadPluginWithProgress(project, parentComponent, it, options)
-    }
+  ): Boolean = updateDescriptorsWithoutRestart(descriptors, load = false) {
+    unloadPluginWithProgress(project, parentComponent, it, options)
   }
 
-  private fun loadFullDescriptorsWithoutRestart(
+  private fun updateDescriptorsWithoutRestart(
     plugins: Collection<IdeaPluginDescriptor>,
     load: Boolean,
-  ): List<IdeaPluginDescriptorImpl>? {
+    predicate: (IdeaPluginDescriptorImpl) -> Boolean,
+  ): Boolean {
+    if (plugins.isEmpty()) {
+      return true
+    }
+
     val loadedPlugins = PluginManagerCore.getLoadedPlugins().map { it.pluginId }
     val descriptors = plugins
       .asSequence()
@@ -162,32 +157,36 @@ object DynamicPlugins {
       .map { PluginDescriptorLoader.loadFullDescriptor(it) }
       .toList()
 
-    val message = descriptors.joinToString(
-      prefix = "Plugins to ${operationText(load)}: [",
-      postfix = "]"
-    ) {
+    val operationText = if (load) "load" else "unload"
+    val message = descriptors.joinToString(prefix = "Plugins to $operationText: [", postfix = "]") {
       it.pluginId.idString
     }
     LOG.info(message)
 
-    return if (descriptors.all { allowLoadUnloadWithoutRestart(it, context = descriptors) })
-      PluginManagerCore.getPluginsSortedByDependency(descriptors, load)
-    else
-      null
+    if (!descriptors.all { allowLoadUnloadWithoutRestart(it, context = descriptors) }) {
+      return false
+    }
+
+    pluginsSortedByDependency(descriptors, load).forEach { descriptor ->
+      descriptor.isEnabled = load
+
+      if (!predicate.invoke(descriptor)) {
+        LOG.info("Failed to $operationText: $descriptor, restart required")
+        InstalledPluginsState.getInstance().isRestartRequired = true
+        return false
+      }
+    }
+
+    return true
   }
 
-  private fun Collection<IdeaPluginDescriptorImpl>.allWithLogging(
+  private fun pluginsSortedByDependency(
+    descriptors: List<IdeaPluginDescriptorImpl>,
     load: Boolean,
-    predicate: (IdeaPluginDescriptorImpl) -> Boolean,
-  ): Boolean {
-    return firstOrNull {
-      predicate.invoke(it).not()
-    }?.also {
-      LOG.info("Failed to ${operationText(load)}: $it")
-    } == null
+  ): List<IdeaPluginDescriptorImpl> {
+    val plugins = PluginManagerCore.getPluginsSortedByDependency(descriptors)
+    return if (load) plugins.asList() else plugins.reversed()
   }
-
-  private fun operationText(load: Boolean) = if (load) "load" else "unload"
 
   /**
    * @param context Plugins which are being loaded at the same time as [descriptor]
@@ -389,7 +388,9 @@ object DynamicPlugins {
         }
       }
     }
-    val indicator = PotemkinProgress(IdeBundle.message("unloading.plugin.progress.title", pluginDescriptor.name), project, parentComponent,
+    val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.unloading.plugin.title", pluginDescriptor.name),
+                                     project,
+                                     parentComponent,
                                      null)
     indicator.runInSwingThread {
       result = unloadPlugin(pluginDescriptor, options.withSave(false))
@@ -493,11 +494,14 @@ object DynamicPlugins {
           app.getServiceIfCreated(TopHitCache::class.java)?.clear()
           PresentationFactory.clearPresentationCaches()
           ActionToolbarImpl.updateAllToolbarsImmediately(true)
+          TouchBarsManager.reloadAll()
           (serviceIfCreated<NotificationsManager>() as? NotificationsManagerImpl)?.expireAll()
           MessagePool.getInstance().clearErrors()
           LaterInvocator.purgeExpiredItems()
           FileAttribute.resetRegisteredIds()
           resetFocusCycleRoot()
+          clearNewFocusOwner()
+          hideTooltip()
           PerformanceWatcher.getInstance().clearFreezeStacktraces()
 
           for (classLoader in classLoaders) {
@@ -600,29 +604,19 @@ object DynamicPlugins {
         focusCycleRoot = focusCycleRoot.parent
       }
       if (focusCycleRoot is IdeFrameImpl) {
-        LOG.info("Focus cycle root reset to IdeFrame (from parent hierarchy)")
         focusManager.setGlobalCurrentFocusCycleRoot(focusCycleRoot)
       }
       else {
+        focusCycleRoot = focusManager.currentFocusCycleRoot
         val dataContext = DataManager.getInstance().getDataContext(focusCycleRoot)
         val project = CommonDataKeys.PROJECT.getData(dataContext)
         if (project != null) {
           val projectFrame = WindowManager.getInstance().getFrame(project)
           if (projectFrame != null) {
-            LOG.info("Focus cycle root reset to IdeFrame (from DataContext)")
-            focusManager.setGlobalCurrentFocusCycleRoot(focusCycleRoot)
+            focusManager.setGlobalCurrentFocusCycleRoot(projectFrame)
           }
-          else {
-            LOG.info("Can't find new focus cycle root; old root is $focusCycleRoot")
-          }
-        }
-        else {
-          LOG.info("No project in data context of $focusCycleRoot")
         }
       }
-    }
-    else {
-      LOG.info("No current focus cycle root")
     }
   }
 
@@ -929,12 +923,39 @@ object DynamicPlugins {
     }
   }
 
+  private fun hideTooltip() {
+    try {
+      val showMethod = ToolTipManager::class.java.declaredMethods.find { it.name == "show" }
+      if (showMethod == null) {
+        LOG.info("ToolTipManager.show method not found")
+        return
+      }
+      showMethod.isAccessible = true
+      showMethod.invoke(ToolTipManager.sharedInstance(), null)
+    }
+    catch (e: Throwable) {
+      LOG.info("Failed to hide tooltip", e)
+    }
+  }
+
 
   private fun clearCglibStopBacktrace() {
     val field = ReflectionUtil.getDeclaredField(ClassNameReader::class.java, "EARLY_EXIT")
     if (field != null) {
       try {
         ThrowableInterner.clearBacktrace((field[null] as Throwable))
+      }
+      catch (e: Throwable) {
+        LOG.info(e)
+      }
+    }
+  }
+
+  private fun clearNewFocusOwner() {
+    val field = ReflectionUtil.getDeclaredField(KeyboardFocusManager::class.java, "newFocusOwner")
+    if (field != null) {
+      try {
+        field.set(null, null)
       }
       catch (e: Throwable) {
         LOG.info(e)

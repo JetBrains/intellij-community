@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.openapi.project.Project;
@@ -24,7 +24,7 @@ public final class IssueLinkHtmlRenderer {
   public static String formatTextIntoHtml(@NotNull Project project, @NotNull @Nls String c) {
     // todo: use com.intellij.openapi.util.text.HtmlBuilder
     return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), UIUtil.getLabelForeground(), // NON-NLS
-                                                         JBUI.CurrentTheme.Link.linkColor(), null) + "</head><body>" + // NON-NLS
+                                                         JBUI.CurrentTheme.Link.Foreground.ENABLED, null) + "</head><body>" + // NON-NLS
            formatTextWithLinks(project, c) + "</body></html>"; // NON-NLS
   }
 

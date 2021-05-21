@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
 import java.io.Closeable
@@ -20,9 +20,16 @@ private class ByteBufferAllocator {
 
   fun allocate(size: Int): ByteBuffer {
     var result = directByteBuffer
-    if (result == null || result.capacity() < size) {
+    if (result != null && result.capacity() < size) {
+      // clear references to object to make sure that it can be collected by GC
+      directByteBuffer = null
+      result = null
+    }
+
+    if (result == null) {
       result = ByteBuffer.allocateDirect(roundUpInt(size, 65_536))!!
       result.order(ByteOrder.LITTLE_ENDIAN)
+      directByteBuffer = result
     }
     result.rewind()
     result.limit(size)
@@ -56,7 +63,12 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
           return
         }
         isCompressed -> {
-          input = bufferAllocator.allocate(size)
+          try {
+            input = bufferAllocator.allocate(size)
+          }
+          catch (e: OutOfMemoryError) {
+            throw RuntimeException("Cannot allocate write buffer for $nameString (size=$size)", e)
+          }
         }
         else -> {
           input = bufferAllocator.allocate(headerSize + size)
@@ -79,7 +91,7 @@ internal class ZipFileWriter(channel: FileChannel, private val deflater: Deflate
     input.position(0)
 
     if (isCompressed) {
-      val output = inflateBufferAllocator!!.allocate(headerSize + size + (size / 2))
+      val output = inflateBufferAllocator!!.allocate(headerSize + size + 4096)
       output.position(headerSize)
 
       deflater!!.setInput(input)

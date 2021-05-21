@@ -65,12 +65,12 @@ public class JBZipFile implements Closeable {
    * (see <a href="http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html">supported Encodings</a>).
    * Defaults to the platform encoding.
    */
-  private final Charset encoding;
+  private final Charset myEncoding;
 
   /**
    * The actual data source.
    */
-  final RandomAccessFile archive;
+  final RandomAccessFile myArchive;
 
   private boolean myIsZip64;
 
@@ -172,11 +172,11 @@ public class JBZipFile implements Closeable {
                    @NotNull Charset encoding,
                    boolean readonly,
                    @NotNull ThreeState isZip64) throws IOException {
-    this.encoding = encoding;
+    myEncoding = encoding;
     myIsReadonly = readonly;
-    archive = new RandomAccessFile(f, readonly ? "r" : "rw");
+    myArchive = new RandomAccessFile(f, readonly ? "r" : "rw");
     try {
-      if (archive.length() > 0) {
+      if (myArchive.length() > 0) {
         populateFromCentralDirectory(isZip64);
       }
       else {
@@ -186,7 +186,7 @@ public class JBZipFile implements Closeable {
     }
     catch (Throwable e) {
       try {
-        archive.close();
+        myArchive.close();
       }
       catch (IOException e2) {
         // swallow, throw the original exception instead
@@ -208,7 +208,7 @@ public class JBZipFile implements Closeable {
    * @return null if using the platform's default character encoding.
    */
   public Charset getEncoding() {
-    return encoding;
+    return myEncoding;
   }
 
   /**
@@ -225,9 +225,9 @@ public class JBZipFile implements Closeable {
       }
 
       myOutputStream.finish();
-      archive.setLength(myOutputStream.getWritten());
+      myArchive.setLength(myOutputStream.getWritten());
     }
-    archive.close();
+    myArchive.close();
   }
 
   /**
@@ -293,11 +293,11 @@ public class JBZipFile implements Closeable {
     byte[] cfh = new byte[CFH_LEN];
 
     byte[] signatureBytes = new byte[WORD];
-    archive.readFully(signatureBytes);
+    myArchive.readFully(signatureBytes);
     long sig = ZipLong.getValue(signatureBytes);
     long cfhSig = ZipLong.getValue(JBZipOutputStream.CFH_SIG);
     while (sig == cfhSig) {
-      archive.readFully(cfh);
+      myArchive.readFully(cfh);
       int off = 0;
 
       int versionMadeBy = ZipShort.getValue(cfh, off);
@@ -366,7 +366,7 @@ public class JBZipFile implements Closeable {
       nameMap.put(ze.getName(), ze);
       entries.add(ze);
 
-      archive.readFully(signatureBytes);
+      myArchive.readFully(signatureBytes);
       sig = ZipLong.getValue(signatureBytes);
     }
   }
@@ -374,7 +374,7 @@ public class JBZipFile implements Closeable {
   private byte[] readBytes(int count) throws IOException {
     if (count > 0) {
       byte[] bytes = new byte[count];
-      archive.readFully(bytes);
+      myArchive.readFully(bytes);
       return bytes;
     }
     else {
@@ -446,18 +446,18 @@ public class JBZipFile implements Closeable {
    */
   private void positionAtCentralDirectory(@NotNull ThreeState isZip64) throws IOException {
     boolean found = false;
-    long off = archive.length() - MIN_EOCD_SIZE;
+    long off = myArchive.length() - MIN_EOCD_SIZE;
     if (off >= 0) {
-      archive.seek(off);
+      myArchive.seek(off);
       byte[] sig = JBZipOutputStream.EOCD_SIG;
-      int curr = archive.read();
+      int curr = myArchive.read();
       while (curr != -1) {
         if (curr == sig[0]) {
-          curr = archive.read();
+          curr = myArchive.read();
           if (curr == sig[1]) {
-            curr = archive.read();
+            curr = myArchive.read();
             if (curr == sig[2]) {
-              curr = archive.read();
+              curr = myArchive.read();
               if (curr == sig[3]) {
                 found = true;
                 break;
@@ -465,43 +465,43 @@ public class JBZipFile implements Closeable {
             }
           }
         }
-        archive.seek(--off);
-        curr = archive.read();
+        myArchive.seek(--off);
+        curr = myArchive.read();
       }
     }
     if (!found) {
       throw new ZipException("archive is not a ZIP archive");
     }
 
-    boolean searchForZip64EOCD = archive.getFilePointer() > ZIP64_EOCDL_LENGTH;
+    boolean searchForZip64EOCD = myArchive.getFilePointer() > ZIP64_EOCDL_LENGTH;
     if (searchForZip64EOCD) {
-      archive.seek(archive.getFilePointer() - ZIP64_EOCDL_LENGTH - WORD);
+      myArchive.seek(myArchive.getFilePointer() - ZIP64_EOCDL_LENGTH - WORD);
       myIsZip64 = Arrays.equals(readBytes(WORD), JBZipOutputStream.ZIP64_EOCD_LOC_SIG);
     }
 
     if (myIsZip64) {
       assert !isZip64.equals(ThreeState.NO);
 
-      archive.skipBytes(ZIP64_EOCDL_LOCATOR_OFFSET - WORD);
-      archive.seek(ZipUInt64.getLongValue(readBytes(DWORD)));
+      myArchive.skipBytes(ZIP64_EOCDL_LOCATOR_OFFSET - WORD);
+      myArchive.seek(ZipUInt64.getLongValue(readBytes(DWORD)));
       if (!Arrays.equals(readBytes(WORD), JBZipOutputStream.ZIP64_EOCD_SIG)) {
         throw new IOException("archive is not a ZIP64 archive");
       }
 
-      archive.skipBytes(ZIP64_EOCD_CFD_LOCATOR_OFFSET
-                - WORD /* signature has already been read */);
+      myArchive.skipBytes(ZIP64_EOCD_CFD_LOCATOR_OFFSET
+                          - WORD /* signature has already been read */);
       long value = ZipUInt64.getLongValue(readBytes(DWORD));
       currentCfdOffset = value;
-      archive.seek(value);
+      myArchive.seek(value);
     }
     else {
       assert !isZip64.equals(ThreeState.YES);
 
-      archive.seek(off + CFD_LOCATOR_OFFSET);
+      myArchive.seek(off + CFD_LOCATOR_OFFSET);
       byte[] cfdOffset = new byte[WORD];
-      archive.readFully(cfdOffset);
+      myArchive.readFully(cfdOffset);
       currentCfdOffset = ZipLong.getValue(cfdOffset);
-      archive.seek(currentCfdOffset);
+      myArchive.seek(currentCfdOffset);
     }
   }
 
@@ -533,11 +533,11 @@ public class JBZipFile implements Closeable {
    * @return String obtained by using the given encoding
    */
   private String getString(byte[] bytes) {
-    if (encoding == null) {
+    if (myEncoding == null) {
       return new String(bytes, Charset.defaultCharset());
     }
     else {
-      return new String(bytes, encoding);
+      return new String(bytes, myEncoding);
     }
   }
 

@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
@@ -83,15 +81,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     final Splitter splitter = new Splitter(false, 0.25f);
     CollectionListModel<Module> listDataModel = new CollectionListModel<>(modules);
     final JBList<Module> moduleList = new JBList<>(listDataModel);
-    new ListSpeedSearch<>(moduleList, o -> {
-      if (o == null) {
-        return getProjectConfigurableItemName();
-      }
-      else if (o instanceof Module) {
-        return ((Module)o).getName();
-      }
-      return null;
-    });
+    new ListSpeedSearch<>(moduleList, o -> o == null ? getProjectConfigurableItemName() : o.getName());
     moduleList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     moduleList.setCellRenderer(new ModuleListCellRenderer() {
       @Override
@@ -124,12 +114,9 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
       final JComponent component = configurable.createComponent();
       cardPanel.add(component, module.getName());
     }
-    moduleList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        final Module value = moduleList.getSelectedValue();
-        layout.show(cardPanel, value == null ? PROJECT_ITEM_KEY : value.getName());
-      }
+    moduleList.addListSelectionListener(__ -> {
+      final Module value = moduleList.getSelectedValue();
+      layout.show(cardPanel, value == null ? PROJECT_ITEM_KEY : value.getName());
     });
 
     if (moduleList.getItemsCount() > 0) {

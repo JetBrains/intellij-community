@@ -3,6 +3,8 @@ package org.jetbrains.yaml.schema;
 
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.jetbrains.jsonSchema.impl.JsonSchemaBasedLanguageInjector;
@@ -22,7 +24,8 @@ public class YamlJsonSchemaLanguageInjector implements MultiHostInjector {
     JsonSchemaInjectorBase.InjectedLanguageData language = JsonSchemaBasedLanguageInjector.getLanguageToInject(context, true);
     if (language != null) {
       registrar.startInjecting(language.language);
-      registrar.addPlace(language.prefix, language.postfix, (PsiLanguageInjectionHost)context, context.getTextRange().shiftLeft(context.getTextOffset()));
+      TextRange textRange = ElementManipulators.getValueTextRange(context);
+      registrar.addPlace(language.prefix, language.postfix, (PsiLanguageInjectionHost)context, textRange);
       registrar.doneInjecting();
     }
   }

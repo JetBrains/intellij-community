@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.impl.StructureViewWrapperImpl;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,12 +45,15 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
 
   public StructureViewFactoryImpl(@NotNull Project project) {
     myProject = project;
-    EXTENSION_POINT_NAME.addChangeListener(() -> {
-      myImplExtensions.clear();
-      if (myStructureViewWrapperImpl != null) {
-        myStructureViewWrapperImpl.rebuild();
+    project.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        myImplExtensions.clear();
+        if (myStructureViewWrapperImpl != null) {
+          myStructureViewWrapperImpl.rebuild();
+        }
       }
-    }, project);
+    });
   }
 
   @Override

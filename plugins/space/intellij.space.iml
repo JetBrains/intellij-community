@@ -222,5 +222,6 @@
     </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-compress" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
   </component>
 </module>

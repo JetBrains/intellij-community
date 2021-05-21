@@ -22,8 +22,9 @@ To register:
 
 ## Startup Activity
 
-An activity to be executed as part of project opening, under 'Loading Project' dialog. 
-Can't be registered by plugins. 
+An activity to be executed as part of project opening, on a pooled thread under `Loading Project` dialog, 
+after `ProjectComponent` initializations.
+This extension point can be only used by IJ Platform itself.
 
 To register: `StartupManager.registerStartupActivity` or
 

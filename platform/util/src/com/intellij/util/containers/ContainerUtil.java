@@ -4,7 +4,9 @@ package com.intellij.util.containers;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -168,7 +170,11 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <E> ArrayList<E> newArrayList(@NotNull Iterable<? extends E> iterable) {
-    return ContainerUtilRt.copy(new ArrayList<>(), iterable);
+    ArrayList<E> collection = new ArrayList<>();
+    for (E element : iterable) {
+      collection.add(element);
+    }
+    return collection;
   }
 
   /**
@@ -284,7 +290,10 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> iterable) {
-    return ContainerUtilRt.newHashSet(iterable);
+    Iterator<? extends T> iterator = iterable.iterator();
+    HashSet<T> set = new HashSet<T>();
+    while (iterator.hasNext()) set.add(iterator.next());
+    return set;
   }
 
   /**
@@ -304,8 +313,12 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> newHashOrEmptySet(@Nullable Iterable<? extends T> iterable) {
-    boolean empty = iterable == null || iterable instanceof Collection && ((Collection<?>)iterable).isEmpty();
-    return empty ? Collections.emptySet() : ContainerUtilRt.newHashSet(iterable);
+    boolean isEmpty = iterable == null || iterable instanceof Collection && ((Collection<?>)iterable).isEmpty();
+    if (isEmpty) {
+      return Collections.emptySet();
+    }
+
+    return newHashSet(iterable);
   }
 
   /**
@@ -319,7 +332,11 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Iterable<? extends T> elements) {
-    return ContainerUtilRt.copy(new LinkedHashSet<>(), elements);
+    LinkedHashSet<T> collection = new LinkedHashSet<>();
+    for (T element : elements) {
+      collection.add(element);
+    }
+    return collection;
   }
 
   /**
@@ -935,17 +952,6 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <T> List<T> filter(T @NotNull [] collection, @NotNull Condition<? super T> condition) {
     return findAll(collection, condition);
-  }
-
-  @Contract(pure=true)
-  public static int @NotNull [] filter(int @NotNull [] collection, @NotNull TIntProcedure condition) {
-    TIntArrayList result = new TIntArrayList();
-    for (int t : collection) {
-      if (condition.execute(t)) {
-        result.add(t);
-      }
-    }
-    return result.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : result.toNativeArray();
   }
 
   @Contract(pure = true)
@@ -1913,6 +1919,7 @@ public final class ContainerUtil {
   public static <T, V> @NotNull V @NotNull [] mapNotNull(T @NotNull [] array,
                                                          @NotNull Function<? super T, ? extends @Nullable V> mapping,
                                                          V @NotNull [] emptyArray) {
+    assert emptyArray.length == 0 : "You must pass an empty array";
     List<V> result = new ArrayList<>(array.length);
     for (T t : array) {
       V v = mapping.fun(t);
@@ -1921,7 +1928,6 @@ public final class ContainerUtil {
       }
     }
     if (result.isEmpty()) {
-      assert emptyArray.length == 0 : "You must pass an empty array";
       return emptyArray;
     }
     return result.toArray(emptyArray);

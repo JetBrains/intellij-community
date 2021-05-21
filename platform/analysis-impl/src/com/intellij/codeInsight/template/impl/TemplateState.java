@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbService;
@@ -75,6 +75,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   @Nullable private PairProcessor<? super String, ? super String> myProcessor;
   private boolean mySelectionCalculated;
   private boolean myStarted;
+
+  public static final Key<Boolean> TEMPLATE_RANGE_HIGHLIGHTER_KEY = Key.create("TemplateState.rangeHighlighterKey");
 
   TemplateState(@NotNull Project project, @Nullable final Editor editor, @NotNull Document document,
                 @NotNull TemplateStateProcessor processor) {
@@ -1088,28 +1090,30 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   private RangeHighlighter getSegmentHighlighter(int segmentNumber, @Nullable Variable var, boolean isSelected, boolean isEnd) {
     boolean newStyle = Registry.is("live.templates.highlight.all.variables");
+    boolean mightStop = mightStopAtVariable(var, segmentNumber);
     TextAttributesKey attributesKey = isEnd ? null :
                                       isSelected ? EditorColors.LIVE_TEMPLATE_ATTRIBUTES :
-                                      newStyle && mightStopAtVariable(var, segmentNumber) ? EditorColors.LIVE_TEMPLATE_INACTIVE_SEGMENT :
+                                      newStyle && mightStop ? EditorColors.LIVE_TEMPLATE_INACTIVE_SEGMENT :
                                       null;
 
     int start = getSegments().getSegmentStart(segmentNumber);
     int end = getSegments().getSegmentEnd(segmentNumber);
-    RangeHighlighterEx segmentHighlighter = (RangeHighlighterEx)getEditor().getMarkupModel()
-      .addRangeHighlighter(attributesKey, start, end, HighlighterLayer.ELEMENT_UNDER_CARET - 1, HighlighterTargetArea.EXACT_RANGE);
-    segmentHighlighter.setGreedyToLeft(true);
-    segmentHighlighter.setGreedyToRight(true);
+    MarkupModelEx markupModel = (MarkupModelEx)getEditor().getMarkupModel();
+    return markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, HighlighterLayer.ELEMENT_UNDER_CARET - 1,
+                                                              HighlighterTargetArea.EXACT_RANGE, false, segmentHighlighter -> {
+        segmentHighlighter.setGreedyToLeft(true);
+        segmentHighlighter.setGreedyToRight(true);
 
-    EditorColorsScheme scheme = getEditor().getColorsScheme();
-    TextAttributes attributes = segmentHighlighter.getTextAttributes(scheme);
-    if (attributes != null && attributes.getEffectType() == EffectType.BOXED && newStyle) {
-      TextAttributes clone = attributes.clone();
-      clone.setEffectType(EffectType.SLIGHTLY_WIDER_BOX);
-      clone.setBackgroundColor(scheme.getDefaultBackground());
-      segmentHighlighter.setTextAttributes(clone);
-    }
-
-    return segmentHighlighter;
+        EditorColorsScheme scheme = getEditor().getColorsScheme();
+        TextAttributes attributes = segmentHighlighter.getTextAttributes(scheme);
+        if (attributes != null && attributes.getEffectType() == EffectType.BOXED && newStyle) {
+          TextAttributes clone = attributes.clone();
+          clone.setEffectType(EffectType.SLIGHTLY_WIDER_BOX);
+          clone.setBackgroundColor(scheme.getDefaultBackground());
+          segmentHighlighter.setTextAttributes(clone);
+        }
+        segmentHighlighter.putUserData(TEMPLATE_RANGE_HIGHLIGHTER_KEY, mightStop);
+      });
   }
 
   private boolean mightStopAtVariable(@Nullable Variable var, int segmentNumber) {

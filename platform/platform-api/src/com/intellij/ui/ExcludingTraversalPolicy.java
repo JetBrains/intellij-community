@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -54,7 +53,7 @@ public final class ExcludingTraversalPolicy extends FocusTraversalPolicy {
   }
 
   private Component traverse(Container aContainer, Component aComponent, Function<? super Pair<Container, Component>, ? extends Component> func) {
-    Set<Component> loopGuard = new THashSet<>();
+    Set<Component> loopGuard = new HashSet<>();
     do {
       if (!loopGuard.add(aComponent)) return null;
       aComponent = func.fun(Pair.create(aContainer, aComponent));

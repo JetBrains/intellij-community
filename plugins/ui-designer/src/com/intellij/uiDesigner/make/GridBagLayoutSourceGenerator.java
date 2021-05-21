@@ -5,6 +5,7 @@ import com.intellij.uiDesigner.compiler.GridBagConverter;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -16,8 +17,8 @@ import java.awt.*;
  */
 public final class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
   private boolean myHaveGbc = false;
-  @NonNls private static final Int2ObjectOpenHashMap<String> myFillMap = new Int2ObjectOpenHashMap<>();
-  @NonNls private static final Int2ObjectOpenHashMap<String> myAnchorMap = new Int2ObjectOpenHashMap<>();
+  @NonNls private static final Int2ObjectMap<String> myFillMap = new Int2ObjectOpenHashMap<>();
+  @NonNls private static final Int2ObjectMap<String> myAnchorMap = new Int2ObjectOpenHashMap<>();
 
   static {
     myFillMap.put(GridBagConstraints.HORIZONTAL, "java.awt.GridBagConstraints.HORIZONTAL");
@@ -135,7 +136,7 @@ public final class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
   }
 
   private static void setIntField(final FormSourceCodeGenerator generator, @NonNls final String fieldName, final int value,
-                                  final Int2ObjectOpenHashMap<String> map) {
+                                  final Int2ObjectMap<String> map) {
     generator.append("gbc.");
     generator.append(fieldName);
     generator.append("=");

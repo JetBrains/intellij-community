@@ -1,6 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
-
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
@@ -185,6 +184,54 @@ class StoredPropertyStateTest {
 
     oldModificationCount = state.modificationCount
     list.remove("a")
+    assertThat(state.modificationCount).isNotEqualTo(oldModificationCount)
+    assertThat(state.isEqualToDefault()).isFalse()
+  }
+
+  @Test
+  fun `list modification count`() {
+    class TestOptions : BaseState() {
+      @get:XMap
+      val foo by list<NestedState>()
+    }
+
+    val state = TestOptions()
+    var oldModificationCount = state.modificationCount
+
+    val list = state.foo
+    list.clear()
+    list.add(NestedState())
+    list.add(NestedState())
+    assertThat(state.modificationCount).isNotEqualTo(oldModificationCount)
+    assertThat(state.isEqualToDefault()).isFalse()
+
+    val element = serialize(state)
+    assertThat(element).isEqualTo("""
+    <TestOptions>
+      <foo>
+        <list>
+          <NestedState />
+          <NestedState />
+        </list>
+      </foo>
+    </TestOptions>""")
+
+    oldModificationCount = state.modificationCount
+    list.clear()
+    assertThat(state.modificationCount).isNotEqualTo(oldModificationCount)
+    assertThat(state.isEqualToDefault()).isTrue()
+
+    val firstElement = NestedState()
+    list.add(firstElement)
+    list.add(NestedState())
+
+    oldModificationCount = state.modificationCount
+    firstElement.childProperty = "33"
+    assertThat(state.modificationCount).isNotEqualTo(oldModificationCount)
+    assertThat(state.isEqualToDefault()).isFalse()
+
+    oldModificationCount = state.modificationCount
+    assertThat(list.remove(firstElement)).isTrue()
     assertThat(state.modificationCount).isNotEqualTo(oldModificationCount)
     assertThat(state.isEqualToDefault()).isFalse()
   }

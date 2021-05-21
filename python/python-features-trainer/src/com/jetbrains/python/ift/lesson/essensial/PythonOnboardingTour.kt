@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
@@ -18,6 +19,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.wm.ToolWindowManager
@@ -40,6 +42,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.general.run.toggleBreakpointTask
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModified
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
@@ -104,8 +107,11 @@ class PythonOnboardingTour(module: Module) :
     searchEverywhereTasks()
 
     task {
+      val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
+      val welcomeScreenRemark = if (isSingleProject) PythonLessonsBundle.message("python.onboarding.return.to.welcome") else ""
       text(PythonLessonsBundle.message("python.onboarding.epilog",
                                        getCallBackActionId("CloseProject"),
+                                       welcomeScreenRemark,
                                        getCallBackActionId("NewDirectoryProject"),
                                        getCallBackActionId("OpenFile"),
                                        LearningUiManager.addCallback { LearningUiManager.resetModulesView() }))
@@ -134,6 +140,7 @@ class PythonOnboardingTour(module: Module) :
 
     actionTask("Debug") {
       buttonBalloon(PythonLessonsBundle.message("python.onboarding.balloon.start.debugging"))
+      restoreIfModified(sample)
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
@@ -162,12 +169,14 @@ class PythonOnboardingTour(module: Module) :
       gotItStep(Balloon.Position.above, 500,
                 PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
                                             strong(LessonsBundle.message("debug.workflow.lesson.name"))))
+      restoreIfModified(sample)
     }
 
     highlightButtonByIdTask("Stop")
     actionTask("Stop") {
       buttonBalloon(
         PythonLessonsBundle.message("python.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }
+      restoreIfModified(sample)
       PythonLessonsBundle.message("python.onboarding.stop.debugging", icon(AllIcons.Actions.Suspend))
     }
 
@@ -210,18 +219,20 @@ class PythonOnboardingTour(module: Module) :
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionMenuItem ->
         ui.text?.contains(runItem) ?: false
       }
+      restoreIfModified(sample)
     }
     task {
-      text(PythonLessonsBundle.message("python.onboarding.balloon.run.sample", strong(runItem), action("RunClass")))
-      toolWindowShowed("Run")
+      text(PythonLessonsBundle.message("python.onboarding.run.sample", strong(runItem), action("RunClass")))
+      checkToolWindowState("Run", true)
       stateCheck {
         configurations().isNotEmpty()
       }
+      restoreIfModified(sample)
     }
 
     task {
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionToolbarImpl ->
-        ui.place == "NavBarToolbar"
+        ui.place == "NavBarToolbar" || ui.place == "MainToolbar"
       }
     }
 
@@ -230,6 +241,7 @@ class PythonOnboardingTour(module: Module) :
 
       text(PythonLessonsBundle.message("python.onboarding.press.got.it.to.proceed", strong(UIBundle.message("got.it"))))
       gotItStep(Balloon.Position.below, 400, PythonLessonsBundle.message("python.onboarding.run.panel.description"))
+      restoreIfModified(sample)
     }
   }
 
@@ -246,6 +258,7 @@ class PythonOnboardingTour(module: Module) :
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow("Learn")?.isVisible == true
       }
+      restoreIfModified(sample)
     }
 
     prepareRuntimeTask {
@@ -341,7 +354,8 @@ class PythonOnboardingTour(module: Module) :
     }
 
     task("EditorChooseLookupItem") {
-      text(PythonLessonsBundle.message("python.onboarding.choose.values.item", code("values"), strong("var")))
+      text(PythonLessonsBundle.message("python.onboarding.choose.values.item",
+                                       code("values"), strong("val")))
       trigger(it) {
         checkEditorModification(completionPosition, "/len(values)")
       }
@@ -444,9 +458,13 @@ class PythonOnboardingTour(module: Module) :
         (item as? GotoActionModel.MatchedValue)?.value?.let { GotoActionItemProvider.getActionText(it) } == toggleCase
       }
       restoreIfModifiedOrMoved()
+      restoreState(delayMillis = defaultRestoreDelay) {
+        UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) == null
+      }
     }
 
     actionTask("EditorToggleCase") {
+      restoreByUi(delayMillis = defaultRestoreDelay)
       PythonLessonsBundle.message("python.onboarding.apply.action", strong(toggleCase), LessonUtil.rawEnter())
     }
   }

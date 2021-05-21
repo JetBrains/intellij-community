@@ -986,7 +986,9 @@ public final class ConfigImportHelper {
           else if (line.equals("-XX:+UseConcMarkSweepGC") || line.equals("-XX:UseG1GC")) {
               i.remove(); updated = true;
           }
-          else if (line.startsWith("-agentlib:yjpagent") || "-Xverify:none".equals(line) || "-noverify".equals(line)) {
+          else if ("-Xverify:none".equals(line) || "-noverify".equals(line) ||
+                   line.startsWith("-agentlib:yjpagent") ||
+                   line.startsWith("-agentpath:") && line.contains("yjpagent")) {
             i.remove(); updated = true;
           }
         }

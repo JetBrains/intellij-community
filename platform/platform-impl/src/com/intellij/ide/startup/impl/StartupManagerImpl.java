@@ -4,7 +4,6 @@ package com.intellij.ide.startup.impl;
 import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Activities;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
@@ -15,10 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -54,9 +50,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-@SuppressWarnings("IncorrectParentDisposable")
 @ApiStatus.Internal
 public class StartupManagerImpl extends StartupManagerEx {
+  /**
+   * Acts as {@link StartupActivity#POST_STARTUP_ACTIVITY}, but executed with 5 seconds delay after project opening.
+   */
+  private static final ExtensionPointName<StartupActivity.Background>
+    BACKGROUND_POST_STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.backgroundPostStartupActivity");
+
   private static final Logger LOG = Logger.getInstance(StartupManagerImpl.class);
   private static final long EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100);
 
@@ -167,6 +168,9 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
+  /**
+   * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
+   */
   private void runStartUpActivities(@Nullable ProgressIndicator indicator) {
     LOG.assertTrue(!myStartupActivitiesPassed);
 
@@ -327,7 +331,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private void runStartupActivity(@NotNull StartupActivity activity) {
-    if (!LightEdit.owns(myProject) || activity instanceof LightEditCompatible) {
+    if (!(myProject instanceof LightEditCompatible) || activity instanceof LightEditCompatible) {
       activity.runActivity(myProject);
     }
   }
@@ -418,7 +422,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
       long startTimeNano = System.nanoTime();
       List<StartupActivity.Background> activities = ReadAction.compute(() -> {
-        StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<>() {
+        BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<>() {
           @Override
           public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
             AppExecutorUtil.getAppScheduledExecutorService().execute(() -> {
@@ -426,7 +430,7 @@ public class StartupManagerImpl extends StartupManagerEx {
             });
           }
         }, myProject);
-        return StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
+        return BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
       });
 
       runBackgroundPostStartupActivities(activities);

@@ -94,9 +94,11 @@ class JavaInheritanceHierarchyLesson(module: Module)
       }
     }
 
-    actionTask("HideActiveWindow") {
+    task("HideActiveWindow") {
+      text(JavaLessonsBundle.message("java.inheritance.hierarchy.hide.find.tool.window", action(it), findToolWindow()))
+      checkToolWindowState("Find", false)
       restoreIfModifiedOrMoved()
-      JavaLessonsBundle.message("java.inheritance.hierarchy.hide.find.tool.window", action(it), findToolWindow())
+      test { actions(it) }
     }
 
     actionTask("MethodHierarchy") {
@@ -104,9 +106,11 @@ class JavaInheritanceHierarchyLesson(module: Module)
       JavaLessonsBundle.message("java.inheritance.hierarchy.open.method.hierarchy", action(it))
     }
 
-    actionTask("HideActiveWindow") {
+    task("HideActiveWindow") {
+      text(JavaLessonsBundle.message("java.inheritance.hierarchy.hide.method.hierarchy", hierarchyToolWindow(), action(it)))
+      checkToolWindowState("Hierarchy", false)
       restoreIfModifiedOrMoved()
-      JavaLessonsBundle.message("java.inheritance.hierarchy.hide.method.hierarchy", hierarchyToolWindow(), action(it))
+      test { actions(it) }
     }
 
     actionTask("TypeHierarchy") {

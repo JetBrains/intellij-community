@@ -48,6 +48,14 @@ public class SeparatorComponent extends JComponent {
     myVGap = 0;
   }
 
+  public void setVGap(int VGap) {
+    myVGap = VGap;
+  }
+
+  public void setHGap(int HGap) {
+    myHGap = HGap;
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     if (!isVisible()) return;

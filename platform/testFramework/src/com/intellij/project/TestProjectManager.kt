@@ -213,8 +213,8 @@ private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
   val leakers = StringBuilder()
   leakers.append("Too many projects leaked (hashCodes=$hashCodes): \n")
   LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
-                          Predicate { hashCodes.contains(System.identityHashCode(it)) },
-                          PairProcessor { leaked: ProjectImpl?, backLink: Any? ->
+                          { hashCodes.contains(System.identityHashCode(it)) },
+                          { leaked: ProjectImpl?, backLink: Any? ->
                             val hashCode = System.identityHashCode(leaked)
                             leakers.append("Leaked project found:").append(leaked)
                               .append(", hash=").append(hashCode)

@@ -49,7 +49,7 @@ public class PsiElement2UsageTargetAdapter
   private String myPresentableText;
   private Icon myIcon;
 
-  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options) {
+  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options, boolean update) {
     if (!(element instanceof NavigationItem)) {
       throw new IllegalArgumentException("Element is not a navigation item: " + element);
     }
@@ -57,11 +57,33 @@ public class PsiElement2UsageTargetAdapter
     PsiFile file = element.getContainingFile();
     myPointer = file == null ? SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element) :
                 SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(element, file);
-    update(element, file);
+    if (update) {
+      update(element, file);
+    }
   }
 
+  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, boolean update) {
+    this(element, new FindUsagesOptions(element.getProject()), update);
+  }
+
+  /**
+   * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, FindUsagesOptions, boolean)} to avoid
+   * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
+   * @param element
+   */
+  @Deprecated
+  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options) {
+    this(element, options, true);
+  }
+
+  /**
+   * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, boolean)} to avoid
+   * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
+   * @param element
+   */
+  @Deprecated
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {
-    this(element, new FindUsagesOptions(element.getProject()));
+    this(element, true);
   }
 
   @Override
@@ -169,10 +191,15 @@ public class PsiElement2UsageTargetAdapter
     return virtualFile == null ? null : new VirtualFile[]{virtualFile};
   }
 
+  @Deprecated
   public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements) {
+    return convert(psiElements, true);
+  }
+
+  public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements, boolean update) {
     PsiElement2UsageTargetAdapter[] targets = new PsiElement2UsageTargetAdapter[psiElements.length];
     for (int i = 0; i < targets.length; i++) {
-      targets[i] = new PsiElement2UsageTargetAdapter(psiElements[i]);
+      targets[i] = new PsiElement2UsageTargetAdapter(psiElements[i], update);
     }
 
     return targets;

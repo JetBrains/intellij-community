@@ -17,9 +17,14 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
   private final @Nullable ProjectFileIndex myIndex;
   private final boolean myIncludeVersions;
+  private final boolean myIncludeLibrarySources;
 
   public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate) {
     this(delegate, false);
+  }
+
+  public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate, boolean includeVersions) {
+    this(delegate, includeVersions, false);
   }
 
   /**
@@ -27,11 +32,12 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
    * (i.e. *.class files located under META-INF/versions/ directory).
    * Setting {@code includeVersions} parameter to {@code true} allows such files to pass the filter.
    */
-  public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate, boolean includeVersions) {
+  public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate, boolean includeVersions, boolean includeLibrarySources) {
     super(delegate);
     Project project = getProject();
     myIndex = project == null ? null : ProjectRootManager.getInstance(project).getFileIndex();
     myIncludeVersions = includeVersions;
+    myIncludeLibrarySources = includeLibrarySources;
   }
 
   @Override
@@ -49,7 +55,7 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     }
 
     return myIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) ||
-           myBaseScope.isForceSearchingInLibrarySources() && myIndex.isInLibrarySource(file);
+           (myIncludeLibrarySources || myBaseScope.isForceSearchingInLibrarySources()) && myIndex.isInLibrarySource(file);
   }
 
   private static boolean isVersioned(VirtualFile file, ProjectFileIndex index) {

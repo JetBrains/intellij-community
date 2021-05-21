@@ -58,6 +58,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -531,7 +532,7 @@ public class UsageViewImpl implements UsageViewEx {
    * and issue corresponding javax.swing.tree.DefaultTreeModel.fireTreeNodesChanged()
    */
   private void fireEventsForChangedNodes() {
-    IntArrayList indicesToFire = new IntArrayList();
+    IntList indicesToFire = new IntArrayList();
     List<Node> nodesToFire = new ArrayList<>();
 
     List<Map.Entry<Node, Collection<Node>>> changed;
@@ -568,7 +569,7 @@ public class UsageViewImpl implements UsageViewEx {
       modelToSwingNodeChanges.clear();
     }
 
-    IntArrayList indicesToFire = new IntArrayList();
+    IntList indicesToFire = new IntArrayList();
     List<Node> nodesToFire = new ArrayList<>();
 
     //first grouping changes by parent node

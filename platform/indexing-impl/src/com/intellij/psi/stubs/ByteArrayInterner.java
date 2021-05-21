@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ final class ByteArrayInterner {
       return Arrays.equals(o1, o2);
     }
   };
-  private final Object2IntOpenCustomHashMap<byte[]> arrayToStart = new Object2IntOpenCustomHashMap<>(BYTE_ARRAY_STRATEGY);
+  private final Object2IntMap<byte[]> arrayToStart = new Object2IntOpenCustomHashMap<>(BYTE_ARRAY_STRATEGY);
   final BufferExposingByteArrayOutputStream joinedBuffer = new BufferExposingByteArrayOutputStream();
 
   int internBytes(byte @NotNull [] bytes) {

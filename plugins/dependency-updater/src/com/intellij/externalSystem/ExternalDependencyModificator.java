@@ -1,5 +1,6 @@
 package com.intellij.externalSystem;
 
+import com.intellij.buildsystem.model.DeclaredDependency;
 import com.intellij.buildsystem.model.unified.UnifiedDependency;
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -27,7 +28,7 @@ public interface ExternalDependencyModificator {
 
   void deleteRepository(@NotNull Module module, @NotNull UnifiedDependencyRepository repository);
 
-  List<UnifiedDependency> declaredDependencies(@NotNull Module module);
+  List<DeclaredDependency> declaredDependencies(@NotNull Module module);
 
   List<UnifiedDependencyRepository> declaredRepositories(@NotNull Module module);
 }

@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.make;
 
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -12,7 +13,7 @@ import java.awt.*;
  * @author yole
  */
 public final class FlowLayoutSourceGenerator extends LayoutSourceGenerator {
-  @NonNls private static final Int2ObjectOpenHashMap<String> myAlignMap = new Int2ObjectOpenHashMap<>();
+  @NonNls private static final Int2ObjectMap<String> myAlignMap = new Int2ObjectOpenHashMap<>();
 
   static {
     myAlignMap.put(FlowLayout.CENTER, "FlowLayout.CENTER");

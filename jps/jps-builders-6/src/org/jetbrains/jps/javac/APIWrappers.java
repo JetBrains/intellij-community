@@ -47,8 +47,8 @@ public class APIWrappers {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> DiagnosticListener<T> newDiagnosticListenerWrapper(final DiagnosticListener<T> delegate, @NotNull Iterable<Processor> processors) {
-    return wrap(DiagnosticListener.class, new DiagnosticListenerWrapper<T>(delegate, processors));
+  public static <T extends FileObject> DiagnosticOutputConsumer newDiagnosticListenerWrapper(final DiagnosticOutputConsumer delegate, @NotNull Iterable<Processor> processors) {
+    return wrap(DiagnosticOutputConsumer.class, new DiagnosticListenerWrapper<T>(delegate, processors));
   }
 
   public interface WrapperDelegateAccessor<T> {
@@ -70,10 +70,10 @@ public class APIWrappers {
   }
 
   @SuppressWarnings("unchecked")
-  static class DiagnosticListenerWrapper<T> extends DynamicWrapper<DiagnosticListener<T>> implements DiagnosticListener<T>{
+  static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
     private final Iterable<Pair<String, String>> myNamesPairs;
 
-    DiagnosticListenerWrapper(DiagnosticListener<T> delegate, @NotNull Iterable<Processor> processors) {
+    DiagnosticListenerWrapper(DiagnosticOutputConsumer delegate, @NotNull Iterable<Processor> processors) {
       super(delegate);
       myNamesPairs = Iterators.filter(Iterators.map(processors, new Function<Processor, Pair<String, String>>() {
         @Override
@@ -81,6 +81,10 @@ public class APIWrappers {
           return processor instanceof WrapperDelegateAccessor<?> ? Pair.create(processor.getClass().getName(), ((WrapperDelegateAccessor<?>)processor).getWrapperDelegate().getClass().getName()) : null;
         }
       }), Iterators.<Pair<String, String>>notNullFilter());
+    }
+
+    public void outputLineAvailable(String line) {
+      getWrapperDelegate().outputLineAvailable(DiagnosticWrapper.adjustMessage(myNamesPairs, line));
     }
 
     @Override
@@ -98,9 +102,13 @@ public class APIWrappers {
     }
 
     public String getMessage(Locale locale) {
-      final String message = getWrapperDelegate().getMessage(locale);
+      return adjustMessage(myNamesMap, getWrapperDelegate().getMessage(locale));
+    }
+
+    @Nullable
+    static String adjustMessage(final Iterable<Pair<String, String>> namesMap, String message) {
       if (message != null) {
-        for (Pair<String, String> pair : myNamesMap) {
+        for (Pair<String, String> pair : namesMap) {
           final String replaced = message.replace(pair.getFirst(), pair.getSecond());
           if (!message.equals(replaced)) {
             return replaced;

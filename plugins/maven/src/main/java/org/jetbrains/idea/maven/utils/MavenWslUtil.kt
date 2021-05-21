@@ -2,11 +2,11 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.idea.maven.server.WslMavenDistribution
 import java.io.File
-import java.io.IOException
 
 object MavenWslUtil : MavenUtil() {
   @JvmStatic
@@ -17,73 +17,23 @@ object MavenWslUtil : MavenUtil() {
   @JvmStatic
   fun getWslDistribution(project: Project): WSLDistribution {
     val basePath = project.basePath ?: throw IllegalArgumentException("Project $project with null base path")
-    return WslDistributionManager.getInstance().distributionFromPath(basePath)
+    return WslPath.getDistributionByWindowsUncPath(basePath)
            ?: throw IllegalArgumentException("Distribution for path $basePath not found, check your WSL installation")
   }
 
   @JvmStatic
   fun tryGetWslDistribution(project: Project): WSLDistribution? {
-    return project.basePath?.let { WslDistributionManager.getInstance().distributionFromPath(it) }
-  }
-
-  @JvmStatic
-  fun WSLDistribution.resolveUserSettingsFile(overriddenUserSettingsFile: String?): File {
-    return if (!isEmptyOrSpaces(overriddenUserSettingsFile)) File(overriddenUserSettingsFile) else File(this.resolveM2Dir(), SETTINGS_XML)
-  }
-
-  /**
-   * return file in WLS style
-   */
-  @JvmStatic
-  fun WSLDistribution.resolveM2Dir(): File {
-    return File(this.userHome, DOT_M2_DIR)
+    return project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
   }
 
   /**
    * return file in windows-style ("\\wsl$\distrib-name\home\user\.m2\settings.xml")
    */
   @JvmStatic
-  fun WSLDistribution.resolveMavenHomeDirectory(overrideMavenHome: String?): File? {
-    if (overrideMavenHome != null) {
-      val home = this.getWindowsPath(overrideMavenHome)?.let(::File)
-      return if (isValidMavenHome(home)) home else null
-    }
-    val m2home = this.environment[ENV_M2_HOME]
-    if (m2home != null && !isEmptyOrSpaces(m2home)) {
-      val homeFromEnv = this.getWindowsPath(m2home)?.let(::File)
-      return if (isValidMavenHome(homeFromEnv)) homeFromEnv else null
-    }
-    var home = this.getWindowsPath("/usr/share/maven")?.let(::File)
-    if (isValidMavenHome(home)) {
-      return home
-    }
-
-    home = this.getWindowsPath("/usr/share/maven2")?.let(::File)
-    if (isValidMavenHome(home)) {
-      return home
-    }
-    return null
-  }
-
-  /**
-   * return file in wsl style
-   */
-  @JvmStatic
-  fun WSLDistribution.resolveLocalRepository(overriddenLocalRepository: String?,
-                                             overriddenMavenHome: String?,
-                                             overriddenUserSettingsFile: String?): File {
-    var result: File? = null
-    if (overriddenLocalRepository != null && !isEmptyOrSpaces(overriddenLocalRepository)) result = File(overriddenLocalRepository)
-    if (result == null) {
-      result = doResolveLocalRepository(this.resolveUserSettingsFile(overriddenUserSettingsFile),
-                                        this.resolveGlobalSettingsFile(overriddenMavenHome))
-    }
-    return try {
-      result.canonicalFile
-    }
-    catch (e: IOException) {
-      result
-    }
+  fun WSLDistribution.resolveUserSettingsFile(overriddenUserSettingsFile: String?): File {
+    val localFile = if (!isEmptyOrSpaces(overriddenUserSettingsFile)) File(overriddenUserSettingsFile)
+    else File(this.resolveM2Dir(), SETTINGS_XML)
+    return localFile
   }
 
   /**
@@ -95,6 +45,71 @@ object MavenWslUtil : MavenUtil() {
     return File(File(directory, CONF_DIR), SETTINGS_XML)
   }
 
+
+  @JvmStatic
+  fun WSLDistribution.resolveM2Dir(): File {
+    return this.getWindowsFile(File(this.userHome, DOT_M2_DIR))!!
+  }
+
+  /**
+   * return file in windows-style ("\\wsl$\distrib-name\home\user\.m2\settings.xml")
+   */
+  @JvmStatic
+  fun WSLDistribution.resolveMavenHomeDirectory(overrideMavenHome: String?): File? {
+    MavenLog.LOG.debug("resolving maven home on WSL with override = \"${overrideMavenHome}\"")
+    if (overrideMavenHome != null) {
+      val home = this.getWindowsPath(overrideMavenHome)?.let(::File)
+      if (isValidMavenHome(home)) {
+        MavenLog.LOG.debug("resolved maven home as ${home}")
+        return home
+      }
+      else {
+        MavenLog.LOG.debug("Maven home ${home} on WSL is invalid")
+        return null
+      }
+    }
+    val m2home = this.environment[ENV_M2_HOME]
+    if (m2home != null && !isEmptyOrSpaces(m2home)) {
+      val homeFromEnv = this.getWindowsPath(m2home)?.let(::File)
+      if (isValidMavenHome(homeFromEnv)) {
+        MavenLog.LOG.debug("resolved maven home using \$M2_HOME as ${homeFromEnv}")
+        return homeFromEnv
+      }
+      else {
+        MavenLog.LOG.debug("Maven home using \$M2_HOME is invalid")
+        return null
+      }
+    }
+    var home = this.getWindowsPath("/usr/share/maven")?.let(::File)
+    if (isValidMavenHome(home)) {
+      MavenLog.LOG.debug("Maven home found at /usr/share/maven")
+      return home
+    }
+
+    home = this.getWindowsPath("/usr/share/maven2")?.let(::File)
+    if (isValidMavenHome(home)) {
+      MavenLog.LOG.debug("Maven home found at /usr/share/maven2")
+      return home
+    }
+    MavenLog.LOG.debug("Maven home not found on ${this.presentableName}")
+    return null
+  }
+
+  /**
+   * return file in windows style
+   */
+  @JvmStatic
+  fun WSLDistribution.resolveLocalRepository(overriddenLocalRepository: String?,
+                                             overriddenMavenHome: String?,
+                                             overriddenUserSettingsFile: String?): File {
+    if (overriddenLocalRepository != null && !isEmptyOrSpaces(overriddenLocalRepository)) {
+      return File(overriddenLocalRepository)
+    }
+    return doResolveLocalRepository(this.resolveUserSettingsFile(overriddenUserSettingsFile),
+                                    this.resolveGlobalSettingsFile(overriddenMavenHome))?.let { this.getWindowsFile(it) }
+           ?: File(this.resolveM2Dir(), REPOSITORY_DIR)
+
+  }
   @JvmStatic
   fun WSLDistribution.getDefaultMavenDistribution(overriddenMavenHome: String? = null): WslMavenDistribution? {
     val file = this.resolveMavenHomeDirectory(overriddenMavenHome) ?: return null
@@ -102,7 +117,18 @@ object MavenWslUtil : MavenUtil() {
     return WslMavenDistribution(this, wslFile, "default")
   }
 
+  @JvmStatic
   fun getJdkPath(wslDistribution: WSLDistribution): String? {
-    return wslDistribution.getEnvironmentVariable("JAVA_HOME");
+    return wslDistribution.getEnvironmentVariable("JAVA_HOME")
+  }
+
+  @JvmStatic
+  fun WSLDistribution.getWindowsFile(wslFile: File): File? {
+    return FileUtil.toSystemIndependentName(wslFile.path).let(this::getWindowsPath)?.let(::File)
+  }
+
+  @JvmStatic
+  fun WSLDistribution.getWslFile(windowsFile: File): File? {
+    return windowsFile.path.let(this::getWslPath)?.let(::File)
   }
 }

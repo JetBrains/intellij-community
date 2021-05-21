@@ -20,7 +20,6 @@ import com.intellij.ui.treeStructure.Tree
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 import kotlin.test.assertFalse
@@ -33,7 +32,7 @@ private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
                             CONFIGURATION, TEMPORARY_CONFIGURATION, CONFIGURATION_TYPE, //JUnit
                             FOLDER, //4
                             CONFIGURATION, CONFIGURATION, FOLDER, //5
-                            CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN //Defaults
+                            CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION
 )
 
 @RunsInEdt

@@ -3,7 +3,13 @@ package com.intellij.externalSystem;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +41,23 @@ abstract public class MavenDependencyUpdaterTestBase extends MavenImportingTestC
     FileUtil.copyDir(myProjectDataDir, myProjectRoot.toNioPath().toFile());
     myProjectRoot.refresh(false, true);
     importProjectWithErrors();
+  }
+
+  protected XmlTag findDependencyTag(String group, String artifact, String version) {
+    PsiFile pom = PsiUtilBase.getPsiFile(myProject, myProjectPom);
+    return findDependencyTag(group, artifact, version, pom);
+  }
+
+  protected XmlTag findDependencyTag(String group, String artifact, String version, PsiFile pom) {
+    MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(pom, MavenDomProjectModel.class);
+    for (MavenDomDependency dependency : model.getDependencies().getDependencies()) {
+      if (dependency.getGroupId().getStringValue().equals(group) &&
+          dependency.getArtifactId().getStringValue().equals(artifact) &&
+          dependency.getVersion().getStringValue().equals(version)) {
+        return dependency.getXmlTag();
+      }
+    }
+    return null;
   }
 
   protected void assertFilesAsExpected() throws IOException {

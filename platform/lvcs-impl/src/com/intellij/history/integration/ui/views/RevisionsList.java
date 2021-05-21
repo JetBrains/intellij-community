@@ -26,7 +26,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
@@ -99,7 +98,7 @@ public final class RevisionsList {
   }
 
   public void updateData(HistoryDialogModel model) {
-    Set<Long> sel = new THashSet<>();
+    Set<Long> sel = new HashSet<>();
     MyModel m = (MyModel)table.getModel();
     for (int i : table.getSelectedRows()) {
       if (i >= m.getRowCount()) continue;

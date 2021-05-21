@@ -121,7 +121,7 @@ public final class PyNewStyleStringFormatParser {
     int autoFieldNumber = myImplicitlyNumberedFieldsCounter;
 
     // in the order of appearance inside a field
-    final IntArrayList attrAndLookupBounds = new IntArrayList();
+    final IntList attrAndLookupBounds=new IntArrayList();
     int conversionStart = -1;
     int formatSpecStart = -1;
     final List<Field> nestedFields = new ArrayList<>();

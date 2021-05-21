@@ -74,13 +74,10 @@ public final class InconsistentResourceBundleInspection extends GlobalSimpleInsp
   @Override
   public void readSettings(final @NotNull Element node) throws InvalidDataException {
     mySettings.clear();
-    for (final Object o : node.getChildren()) {
-      if (o instanceof Element) {
-        final Element e = (Element) o;
-        final String name = e.getAttributeValue("name");
-        final boolean value = Boolean.parseBoolean(e.getAttributeValue("value"));
-        mySettings.put(name, value);
-      }
+    for (final Element e : node.getChildren()) {
+      final String name = e.getAttributeValue("name");
+      final boolean value = Boolean.parseBoolean(e.getAttributeValue("value"));
+      mySettings.put(name, value);
     }
   }
 

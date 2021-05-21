@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -24,8 +25,10 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.BitUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
@@ -157,30 +160,36 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
           LOG.error("Error while indexing: " + inputData.getFileName() + " using prebuilt stub index", e);
         }
 
+        Stub stub;
         try {
-          Stub stub = StubTreeBuilder.buildStubTree(inputData, type);
-          if (stub == null) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("No stub present for " + inputData.getFile() + ", " + calculateIndexingStamp(inputData));
-            }
-            return null;
+          stub = StubTreeBuilder.buildStubTree(inputData, type);
+        } catch (Exception e) {
+          if (e instanceof ControlFlowException) ExceptionUtil.rethrowUnchecked(e);
+          throw new MapReduceIndexMappingException(e, type.getClassToBlameInCaseOfException());
+        }
+        if (stub == null) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("No stub present for " + inputData.getFile() + ", " + calculateIndexingStamp(inputData));
           }
-          SerializedStubTree serializedStubTree = SerializedStubTree.serializeStub(stub, mySerializationManager, myStubIndexesExternalizer);
+          return null;
+        }
+
+        SerializedStubTree serializedStubTree;
+        try {
+          serializedStubTree = SerializedStubTree.serializeStub(stub, mySerializationManager, myStubIndexesExternalizer);
           if (IndexDebugProperties.DEBUG) {
             assertDeserializedStubMatchesOriginalStub(serializedStubTree, stub);
           }
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Indexing stubs for " + inputData.getFile() + ", " + calculateIndexingStamp(inputData));
+            LOG.debug("Stub is built for " + inputData.getFile() + ", " + calculateIndexingStamp(inputData));
           }
-          return serializedStubTree;
+        } catch (Exception e) {
+          if (e instanceof ControlFlowException) ExceptionUtil.rethrowUnchecked(e);
+          ObjectStubSerializer<?, ? extends Stub> stubType = stub.getStubType();
+          Class<?> classToBlame = stubType != null ? stubType.getClass() : stub.getClass();
+          throw new MapReduceIndexMappingException(e, classToBlame);
         }
-        catch (ProcessCanceledException pce) {
-          throw pce;
-        }
-        catch (Throwable t) {
-          LOG.error("Error indexing:" + inputData.getFile(), t);
-          return null;
-        }
+        return serializedStubTree;
       }
     };
   }

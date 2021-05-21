@@ -17,6 +17,8 @@ import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 
@@ -28,7 +30,8 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-class JUnit5EventsTest {
+@RunWith(JUnitPlatform.class)
+public class JUnit5EventsTest {
 
   private JUnit5TestExecutionListener myExecutionListener;
   private StringBuffer myBuf;

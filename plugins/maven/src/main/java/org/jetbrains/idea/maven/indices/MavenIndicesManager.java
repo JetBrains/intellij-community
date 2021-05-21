@@ -352,10 +352,8 @@ public final class MavenIndicesManager implements Disposable {
     ensureInitialized();
     Set<MavenArchetype> result = new THashSet<>(myIndexer.getArchetypes());
     result.addAll(myUserArchetypes);
-    for (MavenSearchIndex index : myIndices.getIndices()) {
-      if (index instanceof MavenIndex) {
-        result.addAll(((MavenIndex)index).getArchetypes());
-      }
+    for (MavenIndex index : myIndices.getIndices()) {
+      result.addAll(index.getArchetypes());
     }
 
     for (MavenArchetypesProvider each : MavenArchetypesProvider.EP_NAME.getExtensionList()) {

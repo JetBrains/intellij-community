@@ -90,6 +90,8 @@ public abstract class LineStatusMarkerRenderer {
       if (myDisposed || myHighlighter.isValid()) return;
       disposeHighlighter(myHighlighter);
       myHighlighter = createGutterHighlighter();
+
+      updateHighlighters();
     }));
   }
 
@@ -145,7 +147,8 @@ public abstract class LineStatusMarkerRenderer {
 
       RangeHighlighter oldHighlighter = highlighterIt.hasNext() ? highlighterIt.peek() : null;
       MarkerData oldMarkerData = oldHighlighter != null ? oldHighlighter.getUserData(TOOLTIP_KEY) : null;
-      if (oldMarkerData != null && oldMarkerData.type == range.getType() &&
+      if (oldHighlighter != null && oldHighlighter.isValid() &&
+          oldMarkerData != null && oldMarkerData.type == range.getType() &&
           oldHighlighter.getStartOffset() == textRange.getStartOffset() &&
           oldHighlighter.getEndOffset() == textRange.getEndOffset()) {
         // reuse existing highlighter if possible

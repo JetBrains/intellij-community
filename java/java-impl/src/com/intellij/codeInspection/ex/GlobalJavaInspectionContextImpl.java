@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
@@ -41,7 +40,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UMethod;
@@ -50,7 +48,7 @@ import org.jetbrains.uast.UastContextKt;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
+public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
   private static final Logger LOG = Logger.getInstance(GlobalJavaInspectionContextImpl.class);
 
   private Map<SmartPsiElementPointer, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
@@ -63,38 +61,38 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
   @Override
   public void enqueueClassUsagesProcessor(RefClass refClass, UsagesProcessor p) {
-    if (myClassUsagesRequests == null) myClassUsagesRequests = new THashMap<>();
+    if (myClassUsagesRequests == null) myClassUsagesRequests = new HashMap<>();
     enqueueRequestImpl(refClass, myClassUsagesRequests, p);
 
   }
   @Override
   public void enqueueDerivedClassesProcessor(RefClass refClass, DerivedClassesProcessor p) {
-    if (myDerivedClassesRequests == null) myDerivedClassesRequests = new THashMap<>();
+    if (myDerivedClassesRequests == null) myDerivedClassesRequests = new HashMap<>();
     enqueueRequestImpl(refClass, myDerivedClassesRequests, p);
   }
 
   @Override
   public void enqueueDerivedMethodsProcessor(RefMethod refMethod, DerivedMethodsProcessor p) {
     if (refMethod.isConstructor() || refMethod.isStatic()) return;
-    if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new THashMap<>();
+    if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new HashMap<>();
     enqueueRequestImpl(refMethod, myDerivedMethodsRequests, p);
   }
 
   @Override
   public void enqueueFieldUsagesProcessor(RefField refField, UsagesProcessor p) {
-    if (myFieldUsagesRequests == null) myFieldUsagesRequests = new THashMap<>();
+    if (myFieldUsagesRequests == null) myFieldUsagesRequests = new HashMap<>();
     enqueueRequestImpl(refField, myFieldUsagesRequests, p);
   }
 
   @Override
   public void enqueueMethodUsagesProcessor(RefMethod refMethod, UsagesProcessor p) {
-    if (myMethodUsagesRequests == null) myMethodUsagesRequests = new THashMap<>();
+    if (myMethodUsagesRequests == null) myMethodUsagesRequests = new HashMap<>();
     enqueueRequestImpl(refMethod, myMethodUsagesRequests, p);
   }
 
   @Override
   public void enqueueQualifiedNameOccurrencesProcessor(RefClass refClass, Runnable c) {
-    if (myQNameUsagesRequests == null) myQNameUsagesRequests = new THashMap<>();
+    if (myQNameUsagesRequests == null) myQNameUsagesRequests = new HashMap<>();
     enqueueRequestImpl(refClass, myQNameUsagesRequests, c);
   }
 

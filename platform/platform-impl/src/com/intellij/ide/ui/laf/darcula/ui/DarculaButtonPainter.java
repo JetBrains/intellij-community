@@ -67,12 +67,15 @@ public class DarculaButtonPainter implements Border, UIResource {
             paintFocusOval(g2, (r.width - diam) / 2.0f, (r.height - diam) / 2.0f, diam, diam);
           }
           else if (isTag(c)) {
-            paintFocusTag(g2, r.width, r.height);
+            paintTag(g2, r.width, r.height, c.hasFocus(), computeOutlineFor(c));
           }
           else {
             Outline type = isDefaultButton((JComponent)c) ? Outline.defaultButton : Outline.focus;
             paintOutlineBorder(g2, r.width, r.height, arc, true, true, type);
           }
+        }
+        else if (isTag(c)) {
+          paintTag(g2, r.width, r.height, c.hasFocus(), computeOutlineFor(c));
         }
       }
 

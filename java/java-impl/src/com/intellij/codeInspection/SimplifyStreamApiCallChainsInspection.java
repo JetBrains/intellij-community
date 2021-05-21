@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.*;
 
+import static com.intellij.codeInspection.util.OptionalUtil.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -98,6 +99,14 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     staticCall(JAVA_UTIL_STREAM_LONG_STREAM, "iterate").parameterCount(2),
     staticCall(JAVA_UTIL_STREAM_DOUBLE_STREAM, "iterate").parameterCount(2));
 
+  private static final CallMatcher OPTIONAL_OR_ELSE_GET =
+    anyOf(
+      exactInstanceCall(JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1),
+      exactInstanceCall(OPTIONAL_INT, "orElseGet").parameterCount(1),
+      exactInstanceCall(OPTIONAL_LONG, "orElseGet").parameterCount(1),
+      exactInstanceCall(OPTIONAL_DOUBLE, "orElseGet").parameterCount(1)
+    );
+
   private static final CallMapper<CallChainSimplification> CALL_TO_FIX_MAPPER = new CallMapper<>(
     ReplaceCollectionStreamFix.handler(),
     ReplaceWithToArrayFix.handler(),
@@ -118,7 +127,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     EntrySetMapFix.handler(),
     CollectorToListSize.handler(),
     IterateTakeWhileFix.handler(),
-    FilterAndMapUseSameMethodChainFix.handler()
+    FilterAndMapUseSameMethodChainFix.handler(),
+    ReplaceWithOrElseThrowFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -2294,6 +2304,41 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       final PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(references.get(0));
       if (call == null || !call.getArgumentList().isEmpty()) return null;
       return call;
+    }
+  }
+
+  private static class ReplaceWithOrElseThrowFix implements CallChainSimplification {
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", "orElseThrow");
+    }
+
+    @Override
+    @NotNull
+    public @InspectionMessage String getMessage() {
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "orElseThrow");
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression orElseGetCall) {
+      ExpressionUtils.bindCallTo(orElseGetCall, "orElseThrow");
+      return orElseGetCall;
+    }
+
+    public static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(OPTIONAL_OR_ELSE_GET, call -> {
+        final PsiElement parameter = call.getArgumentList().getExpressions()[0];
+        final PsiLambdaExpression lambda = tryCast(parameter, PsiLambdaExpression.class);
+        if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
+        final PsiCodeBlock body = tryCast(lambda.getBody(), PsiCodeBlock.class);
+        if (body == null) return null;
+        final PsiStatement[] statements = body.getStatements();
+        if (statements.length != 1) return null;
+        if (!(statements[0] instanceof PsiThrowStatement)) return null;
+        return new ReplaceWithOrElseThrowFix();
+      });
     }
   }
 }

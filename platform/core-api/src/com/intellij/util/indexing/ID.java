@@ -85,14 +85,12 @@ public class ID<K, V> extends IndexId<K,V> {
     if (checkCallerPlugin && id != null) {
       PluginId actualPluginId = ourIdToPluginId.get(id);
 
-      String actualPluginIdStr = actualPluginId == null ? null : actualPluginId.getIdString();
-      String requiredPluginIdStr = requiredPluginId == null ? null : requiredPluginId.getIdString();
+      String actualPluginIdStr = actualPluginId == null ? "IDEA Core" : actualPluginId.getIdString();
+      String requiredPluginIdStr = requiredPluginId == null ? "IDEA Core" : requiredPluginId.getIdString();
 
       if (!Objects.equals(actualPluginIdStr, requiredPluginIdStr)) {
         Throwable registrationStackTrace = ourIdToRegistrationStackTrace.get(id);
-        String message = "ID with name '" + name +
-                         "' requested for plugin " + requiredPluginIdStr +
-                         " but registered for " + actualPluginIdStr + (registrationStackTrace == null ? " registration stack trace: " : "");
+        String message = getInvalidIdAccessMessage(name, actualPluginIdStr, requiredPluginIdStr, registrationStackTrace);
         if (registrationStackTrace != null) {
           throw new AssertionError(message, registrationStackTrace);
         } else {
@@ -101,6 +99,18 @@ public class ID<K, V> extends IndexId<K,V> {
       }
     }
     return id;
+  }
+
+  @NotNull
+  private static String getInvalidIdAccessMessage(@NotNull String name,
+                                                  @Nullable String actualPluginIdStr,
+                                                  @Nullable String requiredPluginIdStr,
+                                                  @Nullable Throwable registrationStackTrace) {
+    return "ID with name '" + name +
+           "' requested for plugin " + requiredPluginIdStr +
+           " but registered for " + actualPluginIdStr + " plugin. " +
+           "Please use an instance field to access corresponding ID." +
+           (registrationStackTrace == null ? " Registration stack trace: " : "");
   }
 
   @ApiStatus.Internal

@@ -1,19 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.project.stateStore
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@Service
 @State(
   name = "ProjectPluginTrackerManager",
   storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)],
@@ -21,39 +24,91 @@ import javax.swing.JComponent
 )
 @ApiStatus.Internal
 class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPluginTrackerManagerState>(ProjectPluginTrackerManagerState()) {
-
   companion object {
+    @JvmStatic
+    val instance
+      get() = service<ProjectPluginTrackerManager>()
 
     @JvmStatic
-    fun getInstance() = service<ProjectPluginTrackerManager>()
+    fun loadPlugins(pluginIds: Collection<PluginId>): Boolean = DynamicPlugins.loadPlugins(pluginIds.toPluginDescriptors())
 
     @JvmStatic
-    internal fun loadPlugins(candidatesToLoad: Collection<PluginId>) {
-      loadPlugins(
-        candidatesToLoad.findPluginById()
-      )
-    }
+    @JvmOverloads
+    fun unloadPlugins(
+      pluginIds: Collection<PluginId>,
+      project: Project? = null,
+      parentComponent: JComponent? = null,
+    ): Boolean = DynamicPlugins.unloadPlugins(
+      pluginIds.toPluginDescriptors(),
+      project,
+      parentComponent,
+    )
 
-    @JvmStatic
-    private fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
-      /*
-     model: enabled (descriptor, disabledList, load), enabled per project (descriptor, load)
-     project opening: enabled per project (descriptor, load)
-     project closing: disabled per project (descriptor, load iff not is disabled globally)
-     */
+    internal class EnableDisablePluginsActivity : StartupActivity {
 
-      return descriptors.isEmpty() ||
-             DynamicPlugins.loadPlugins(descriptors).requireRestartIfNecessary()
-    }
-
-    private fun Boolean.requireRestartIfNecessary(): Boolean {
-      if (!this) {
-        InstalledPluginsState.getInstance().isRestartRequired = true
+      init {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          throw ExtensionNotApplicableException.INSTANCE
+        }
       }
-      return this
+
+      override fun runActivity(project: Project) {
+        val tracker = instance.getPluginTracker(project)
+        val trackers = instance.openProjectsPluginTrackers(project)
+
+        val indicator = ProgressManager.getInstance().progressIndicator
+        ApplicationManager.getApplication().invokeLater(
+          Runnable {
+            indicator?.let {
+              it.text = IdeBundle.message("plugins.progress.loading.plugins.for.current.project.title", project.name)
+            }
+            loadPlugins(tracker.enabledPluginIds(trackers))
+
+            indicator?.let {
+              it.text = IdeBundle.message("plugins.progress.unloading.plugins.for.current.project.title", project.name)
+            }
+            unloadPlugins(
+              tracker.disabledPluginsIds,
+              project,
+              trackers,
+            )
+          },
+          project.disposed,
+        )
+      }
     }
 
-    private fun Collection<PluginId>.findPluginById() = mapNotNull { PluginManagerCore.getPlugin(it) }
+    @JvmStatic
+    private fun unloadPlugins(
+      pluginIds: Collection<PluginId>,
+      project: Project,
+      trackers: List<ProjectPluginTracker>,
+    ): Boolean = unloadPlugins(
+      pluginIds.filter(shouldUnload(trackers)),
+      project,
+    )
+
+    @JvmStatic
+    private fun shouldUnload(trackers: List<ProjectPluginTracker>) = { pluginId: PluginId ->
+      trackers.all { !it.isEnabled(pluginId) } &&
+      (DisabledPluginsState.isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
+    }
+
+    private fun ProjectPluginTracker.enabledPluginIds(trackers: List<ProjectPluginTracker>): Collection<PluginId> {
+      return trackers
+        .flatMap { it.disabledPluginIds() }
+        .union(enabledPluginsIds)
+    }
+
+    private fun ProjectPluginTracker.disabledPluginIds(trackers: List<ProjectPluginTracker> = listOf()): Collection<PluginId> {
+      return disabledPluginsIds
+        .filterNot { pluginId ->
+          DisabledPluginsState.isDisabled(pluginId) ||
+          trackers.isNotEmpty() && trackers.all { it.isDisabled(pluginId) }
+        }
+    }
+
+    private fun Collection<PluginId>.toPluginDescriptors() = mapNotNull { PluginManagerCore.getPlugin(it) }
   }
 
   private var applicationShuttingDown = false
@@ -66,16 +121,15 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
         override fun projectClosing(project: Project) {
           if (applicationShuttingDown) return
 
-          val tracker = createPluginTracker(project)
+          val tracker = getPluginTracker(project)
           val trackers = openProjectsPluginTrackers(project)
 
-          loadPlugins(
-            tracker.disabledPluginIds(trackers)
-          )
+          loadPlugins(tracker.disabledPluginIds(trackers))
 
           unloadPlugins(
             tracker.enabledPluginIds(trackers),
             project,
+            trackers,
           )
         }
       }
@@ -91,10 +145,9 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     )
   }
 
-  fun createPluginTracker(project: Project) = ProjectPluginTracker(
-    project.name,
-    state.findStateByProject(project),
-  )
+  fun getPluginTracker(project: Project): ProjectPluginTracker = state.findStateByProject(project)
+
+  val trackers get(): Map<String, ProjectPluginTracker> = state.trackers
 
   @JvmOverloads
   fun updatePluginsState(
@@ -113,10 +166,20 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
     fun stopTrackingPerProject() = state.stopTracking(pluginIds)
 
-    fun loadPlugins() = loadPlugins(descriptors)
+    fun loadPlugins() = DynamicPlugins.loadPlugins(descriptors)
 
-    fun unloadPlugins() = unloadPlugins(descriptors, project, parentComponent)
+    fun unloadPlugins(): Boolean {
+      val predicate = when (project) {
+        null -> { _: PluginId -> true }
+        else -> shouldUnload(openProjectsPluginTrackers(project))
+      }
 
+      return DynamicPlugins.unloadPlugins(
+        descriptors.filter { predicate.invoke(it.pluginId) },
+        project,
+        parentComponent,
+      )
+    }
     return when (action) {
       PluginEnableDisableAction.ENABLE_GLOBALLY -> {
         enablePlugins(true)
@@ -147,85 +210,51 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     }
   }
 
-  internal fun unloadPlugins(
-    candidatesToUnload: Collection<PluginId>,
-    project: Project,
-  ) {
-    unloadPlugins(
-      candidatesToUnload.findPluginById(),
-      project,
-    )
-  }
-
-  private fun unloadPlugins(
-    descriptors: Collection<IdeaPluginDescriptor>,
-    project: Project? = null,
-    parentComponent: JComponent? = null,
-  ): Boolean {
-    /*
-    model: disabled (descriptor, disabledList, unload iff not is used), enabled per project (descriptor, unload if not is used)
-    project opening: disabled per project (descriptor, unload if not is used)
-    project closing: enabled per project (descriptor, unload ???)
-     */
-
-    return descriptors.isEmpty() ||
-           DynamicPlugins.unloadPlugins(
-             descriptors.filter(shouldUnload(project)),
-             project,
-             parentComponent,
-           ).requireRestartIfNecessary()
-  }
-
   internal fun openProjectsPluginTrackers(project: Project?): List<ProjectPluginTracker> {
-    return ProjectManager
-      .getInstance()
-      .openProjects
+    return ProjectManager.getInstance().openProjects
+      .asSequence()
       .filterNot { it == project }
-      .map { createPluginTracker(it) }
+      .map { getPluginTracker(it) }
+      .toList()
   }
 
-  private fun shouldUnload(project: Project?): (IdeaPluginDescriptor) -> Boolean {
-    val trackers = openProjectsPluginTrackers(project)
-
-    return { descriptor ->
-      val pluginId = descriptor.pluginId
-      trackers.all { !it.isEnabled(pluginId) } &&
-      (DisabledPluginsState.isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
-    }
-  }
 }
 
+@ApiStatus.Internal
 class ProjectPluginTrackerManagerState : BaseState() {
 
-  @get:XCollection
-  var trackers by map<String, ProjectPluginTrackerState>()
+  @get:XCollection(propertyElementName = "trackers", style = XCollection.Style.v2)
+  internal val trackers by map<String, ProjectPluginTracker>()
 
-  fun startTracking(
-    project: Project,
-    pluginIds: Collection<PluginId>,
-    enable: Boolean,
-  ) {
+  fun startTracking(project: Project, pluginIds: Collection<PluginId>, enable: Boolean) {
     val updated = findStateByProject(project)
       .startTracking(pluginIds, enable)
 
-    if (updated) incrementModificationCount()
+    if (updated) {
+      incrementModificationCount()
+    }
   }
 
   fun stopTracking(pluginIds: Collection<PluginId>) {
     var updated = false
 
-    trackers.forEach { (_, state) ->
-      updated = state.stopTracking(pluginIds) || updated
+    trackers.values.forEach {
+      updated = it.stopTracking(pluginIds) || updated
     }
 
-    if (updated) incrementModificationCount()
+    if (updated) {
+      incrementModificationCount()
+    }
   }
 
-  internal fun findStateByProject(project: Project): ProjectPluginTrackerState {
+  internal fun findStateByProject(project: Project): ProjectPluginTracker {
     val workspaceId = if (project.isDefault) null else project.stateStore.projectWorkspaceId
-
-    return trackers.getOrPut(workspaceId ?: project.name) {
-      ProjectPluginTrackerState().also { incrementModificationCount() }
+    val projectName = project.name
+    return trackers.computeIfAbsent(workspaceId ?: projectName) {
+      ProjectPluginTracker().also {
+        it.projectName = projectName
+        incrementModificationCount()
+      }
     }
   }
 }

@@ -23,6 +23,6 @@ public class NonTrivialActionGroup extends DefaultActionGroup implements DumbAwa
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e, LaterInvocator.isInModalContext()));
+    e.getPresentation().setEnabledAndVisible(!ActionGroupUtil.isGroupEmpty(this, e, LaterInvocator.isInModalContext()));
   }
 }

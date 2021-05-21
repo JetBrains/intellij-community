@@ -21,6 +21,7 @@ import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -120,7 +121,7 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
     @NotNull
     @Override
     public Map<Integer, Void> map(@NotNull VcsShortCommitDetails inputData) {
-      Int2ObjectOpenHashMap<Void> result = new Int2ObjectOpenHashMap<>();
+      Int2ObjectMap<Void> result = new Int2ObjectOpenHashMap<>();
       try {
         result.put(myUserEnumerator.enumerate(inputData.getAuthor()), null);
       }

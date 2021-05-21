@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.BaseState
@@ -53,5 +53,26 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected
 }
 
 internal class ListStoredProperty<T : Any> : CollectionStoredProperty<T, SmartList<T>>(SmartList(), null) {
-  override fun getModificationCount() = value.modificationCount.toLong()
+  private var modCount = 0L
+  private var lastItemModCount = 0L
+
+  override fun getModificationCount(): Long {
+    modCount = value.modificationCount.toLong()
+    var itemModCount = 0L
+    for (item in value) {
+      if (item is BaseState) {
+        itemModCount += item.modificationCount
+      }
+      else {
+        // or all values are BaseState or not
+        return modCount
+      }
+    }
+
+    if (itemModCount != lastItemModCount) {
+      lastItemModCount = itemModCount
+      modCount++
+    }
+    return modCount
+  }
 }

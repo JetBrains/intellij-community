@@ -21,6 +21,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -40,7 +41,7 @@ import java.util.List;
 
 public final class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceParameterSettings> {
   private final IntroduceParameterInfo myInfo;
-  private final IntArrayList myParametersToRemove;
+  private final IntList myParametersToRemove;
 
   private JBCheckBox myDelegateCB;
 

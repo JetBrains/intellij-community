@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -535,7 +536,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   @JvmOverloads
   fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
-    val group = GearActionGroup()
+    val group = GearActionGroup(this)
     if (!skipHideAction) {
       group.addSeparator()
       group.add(HideAction())
@@ -578,7 +579,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     decorator?.background = color
   }
 
-  private inner class GearActionGroup : DefaultActionGroup(), DumbAware {
+  private inner class GearActionGroup(toolWindow: ToolWindow) : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
       templatePresentation.text = IdeBundle.message("show.options.menu")
@@ -601,7 +602,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       addAction(toggleToolbarGroup).setAsSecondary(true)
       addSeparator()
       add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
-      add(ToolWindowMoveAction.Group())
+      if (Registry.`is`("ide.new.stripes.ui")) {
+        add(SquareStripeButton.createMoveGroup(project, null, toolWindow))
+      } else {
+        add(ToolWindowMoveAction.Group())
+      }
       add(ResizeActionGroup())
       addSeparator()
       add(RemoveStripeButtonAction())

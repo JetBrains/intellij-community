@@ -154,8 +154,6 @@ internal open class SelectedEditorFilePath {
       updatePaths()
     }
 
-  private var simpleExtensions: List<TitleInfoProvider>? = null
-
   protected open fun installListeners() {
     val project = project ?: return
 
@@ -164,8 +162,8 @@ internal open class SelectedEditorFilePath {
     }
 
     val disp = Disposable {
-      disposable = null
       HelpTooltip.dispose(label)
+      unInstallListeners()
     }
 
     Disposer.register(project, disp)
@@ -177,10 +175,9 @@ internal open class SelectedEditorFilePath {
     })
     Registry.get(classKey).addListener(registryListener, disp)
 
-    simpleExtensions = getProviders()
-    simplePaths = simpleExtensions?.map { titleInfoProvider ->
+    simplePaths = getProviders().map { titleInfoProvider ->
       val partTitle = DefaultPartTitle(titleInfoProvider.borderlessPrefix, titleInfoProvider.borderlessSuffix)
-      titleInfoProvider.addUpdateListener(project) {
+      titleInfoProvider.addUpdateListener(project, disp) {
         partTitle.active = it.isActive(project)
         partTitle.longText = it.getValue(project)
 

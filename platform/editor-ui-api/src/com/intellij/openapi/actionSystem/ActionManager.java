@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +138,11 @@ public abstract class ActionManager {
    * @param actionPlace        the place where the panel will be used (see {@link ActionPlaces}).
    * @param messageActionGroup the action group from which the toolbar is created.
    * @return the created panel.
+   *
+   * @deprecated use {@link #createActionToolbar(String, ActionGroup, boolean)} or {@link com.intellij.ui.ToolbarDecorator} instead.
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @NotNull
   public abstract JComponent createButtonToolbar(@NotNull String actionPlace, @NotNull ActionGroup messageActionGroup);
 

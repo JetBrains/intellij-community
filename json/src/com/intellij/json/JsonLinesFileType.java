@@ -15,7 +15,7 @@ public class JsonLinesFileType extends LanguageFileType {
   public static final JsonLinesFileType INSTANCE = new JsonLinesFileType();
 
   private JsonLinesFileType() {
-    super(JsonLanguage.INSTANCE);
+    super(JsonLanguage.INSTANCE, true);
   }
 
   @Override

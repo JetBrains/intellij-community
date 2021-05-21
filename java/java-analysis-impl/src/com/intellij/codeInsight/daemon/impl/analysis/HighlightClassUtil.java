@@ -311,11 +311,11 @@ public final class HighlightClassUtil {
            firstChild.getText().startsWith("#!");
   }
 
-  static HighlightInfo checkClassContextualKeyword(@NotNull LanguageLevel level, @NotNull PsiIdentifier identifier) {
+  static HighlightInfo checkClassRestrictedKeyword(@NotNull LanguageLevel level, @NotNull PsiIdentifier identifier) {
     String className = identifier.getText();
-    if (isContextualKeyword(className, level)) {
+    if (isRestrictedIdentifier(className, level)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .descriptionAndTooltip(JavaErrorBundle.message("contextual.keyword", className))
+        .descriptionAndTooltip(JavaErrorBundle.message("restricted.identifier", className))
         .range(identifier)
         .create();
     }
@@ -327,7 +327,7 @@ public final class HighlightClassUtil {
    * @param level language level
    * @return true if given name cannot be used as a type name at given language level
    */
-  public static boolean isContextualKeyword(String typeName, @NotNull LanguageLevel level) {
+  public static boolean isRestrictedIdentifier(String typeName, @NotNull LanguageLevel level) {
     return PsiKeyword.VAR.equals(typeName) && HighlightingFeature.LVTI.isSufficient(level) ||
            PsiKeyword.YIELD.equals(typeName) && HighlightingFeature.SWITCH_EXPRESSION.isSufficient(level) ||
            PsiKeyword.RECORD.equals(typeName) && HighlightingFeature.RECORDS.isSufficient(level) ||

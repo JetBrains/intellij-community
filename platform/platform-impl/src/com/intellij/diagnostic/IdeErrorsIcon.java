@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.AnimatedIcon.Blinking;
+import com.intellij.util.SystemProperties;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +14,7 @@ final class IdeErrorsIcon extends JLabel {
   private final boolean myEnableBlink;
 
   IdeErrorsIcon(boolean enableBlink) {
-    myEnableBlink = enableBlink;
+    myEnableBlink = enableBlink && !SystemProperties.is("fatal.error.icon.disable.blinking");
   }
 
   void setState(MessagePool.State state) {

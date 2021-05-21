@@ -112,18 +112,18 @@ public final class DebugReflectionUtil {
 
   private static final Key<Boolean> REPORTED_LEAKED = Key.create("REPORTED_LEAKED");
 
-  public static boolean walkObjects(int maxDepth,
-                                    @NotNull Map<Object, String> startRoots,
-                                    @NotNull Class<?> lookFor,
-                                    @NotNull Predicate<Object> shouldExamineValue,
-                                    @NotNull PairProcessor<Object, ? super BackLink> leakProcessor) {
+  public static <V> boolean walkObjects(int maxDepth,
+                                        @NotNull Map<Object, String> startRoots,
+                                        @NotNull Class<V> lookFor,
+                                        @NotNull Predicate<Object> shouldExamineValue,
+                                        @NotNull PairProcessor<? super V, ? super BackLink<?>> leakProcessor) {
     IntSet visited = new IntOpenHashSet(100);
-    Deque<BackLink> toVisit = new ArrayDeque<>(100);
+    Deque<BackLink<?>> toVisit = new ArrayDeque<>(100);
 
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();
       String description = entry.getValue();
-      toVisit.addLast(new BackLink(startRoot, null, null) {
+      toVisit.addLast(new BackLink<Object>(startRoot, null, null) {
         @Override
         void print(@NotNull StringBuilder result) {
           super.print(result);
@@ -133,8 +133,7 @@ public final class DebugReflectionUtil {
     }
 
     while (true) {
-      BackLink backLink;
-      backLink = toVisit.pollFirst();
+      BackLink<?> backLink = toVisit.pollFirst();
       if (backLink == null) {
         return true;
       }
@@ -143,20 +142,20 @@ public final class DebugReflectionUtil {
         continue;
       }
       Object value = backLink.value;
-      if (lookFor.isAssignableFrom(value.getClass()) && markLeaked(value) && !leakProcessor.process(value, backLink)) {
+      if (lookFor.isAssignableFrom(value.getClass()) && markLeaked(value) && !leakProcessor.process((V)value, backLink)) {
         return false;
       }
 
       if (visited.add(System.identityHashCode(value))) {
-        queueStronglyReferencedValues(toVisit, value, shouldExamineValue, backLink);
+        queueStronglyReferencedValues(toVisit, value, backLink, shouldExamineValue);
       }
     }
   }
 
-  private static void queueStronglyReferencedValues(@NotNull Deque<? super BackLink> queue,
+  private static void queueStronglyReferencedValues(@NotNull Deque<? super BackLink<?>> queue,
                                                     @NotNull Object root,
-                                                    @NotNull Predicate<Object> shouldExamineValue,
-                                                    @NotNull BackLink backLink) {
+                                                    @NotNull BackLink<?> backLink,
+                                                    @NotNull Predicate<Object> shouldExamineValue) {
     Class<?> rootClass = root.getClass();
     for (Field field : getAllFields(rootClass)) {
       String fieldName = field.getName();
@@ -200,14 +199,14 @@ public final class DebugReflectionUtil {
 
   private static void queue(Object value,
                             Field field,
-                            @NotNull BackLink backLink,
-                            @NotNull Deque<? super BackLink> queue,
+                            @NotNull BackLink<?> backLink,
+                            @NotNull Deque<? super BackLink<?>> queue,
                             @NotNull Predicate<Object> shouldExamineValue) {
     if (value == null || isTrivial(value.getClass())) {
       return;
     }
     if (shouldExamineValue.test(value)) {
-      queue.addLast(new BackLink(value, field, backLink));
+      queue.addLast(new BackLink<>(value, field, backLink));
     }
   }
 
@@ -215,13 +214,13 @@ public final class DebugReflectionUtil {
     return !(leaked instanceof UserDataHolderEx) || ((UserDataHolderEx)leaked).replace(REPORTED_LEAKED, null, Boolean.TRUE);
   }
 
-  public static class BackLink {
-    @NotNull private final Object value;
+  public static class BackLink<V> {
+    @NotNull private final V value;
     private final Field field;
-    private final BackLink backLink;
+    private final BackLink<?> backLink;
     private final int depth;
 
-    BackLink(@NotNull Object value, @Nullable Field field, @Nullable BackLink backLink) {
+    BackLink(@NotNull V value, @Nullable Field field, @Nullable BackLink<?> backLink) {
       this.value = value;
       this.field = field;
       this.backLink = backLink;
@@ -231,7 +230,7 @@ public final class DebugReflectionUtil {
     @Override
     public String toString() {
       StringBuilder result = new StringBuilder();
-      BackLink backLink = this;
+      BackLink<?> backLink = this;
       while (backLink != null) {
         backLink.print(result);
         backLink = backLink.backLink;

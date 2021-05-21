@@ -36,6 +36,13 @@ data class JsonProjectIndexingHistory(
     val totalNumberOfFiles: Int,
     val totalNumberOfFilesIndexedByExtensions: Int,
     val totalFilesSize: JsonFileSize,
-    val indexingSpeed: JsonProcessingSpeed
-  )
+    val indexingSpeed: JsonProcessingSpeed,
+    val snapshotInputMappingStats: JsonSnapshotInputMappingStats
+  ) {
+    data class JsonSnapshotInputMappingStats(
+      val totalRequests: Long,
+      val totalMisses: Long,
+      val totalHits: Long
+    )
+  }
 }

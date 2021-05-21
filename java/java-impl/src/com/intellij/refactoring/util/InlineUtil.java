@@ -759,8 +759,8 @@ public final class InlineUtil {
       if (shouldBeFinal) {
         declareUsedLocalsFinal(initializer, true);
       }
-      for (PsiReference ref : refs) {
-        initializer = inlineInitializer(variable, initializer, (PsiJavaCodeReferenceElement)ref);
+      for (PsiJavaCodeReferenceElement ref : refs) {
+        initializer = inlineInitializer(variable, initializer, ref);
       }
       variable.getParent().delete();
     }

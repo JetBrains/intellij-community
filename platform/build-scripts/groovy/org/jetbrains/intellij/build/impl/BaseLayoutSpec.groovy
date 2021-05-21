@@ -53,7 +53,7 @@ class BaseLayoutSpec {
    * @relativeOutputPath path relative to 'lib' plugin directory
    */
   void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
-    layout.includedProjectLibraries << new ProjectLibraryData(libraryName, relativeOutputPath)
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath))
   }
 
   /**
@@ -63,8 +63,8 @@ class BaseLayoutSpec {
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   void withModuleLibrary(String libraryName, String moduleName, String relativeOutputPath) {
-    layout.includedModuleLibraries << new ModuleLibraryData(moduleName: moduleName, libraryName: libraryName,
-                                                            relativeOutputPath: relativeOutputPath)
+    layout.includedModuleLibraries.add(new ModuleLibraryData(moduleName: moduleName, libraryName: libraryName,
+                                                            relativeOutputPath: relativeOutputPath))
   }
 
   /**
@@ -87,7 +87,7 @@ class BaseLayoutSpec {
 
   /**
    * Include an artifact output to the plugin distribution.
-   * @param artifactName name of the project configuration  
+   * @param artifactName name of the project configuration
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   void withArtifact(String artifactName, String relativeOutputPath) {

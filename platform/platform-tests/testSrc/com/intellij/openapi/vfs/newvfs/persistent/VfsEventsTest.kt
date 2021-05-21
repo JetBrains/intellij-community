@@ -15,6 +15,7 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.FileContentUtilCore
 import com.intellij.util.io.zip.JBZipFile
 import org.junit.Assert
 import org.junit.Rule
@@ -26,9 +27,11 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.moveTo
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @RunsInEdt
@@ -160,6 +163,69 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     doTestModifiedJar()
   }
 
+  @Test
+  @Throws(IOException::class)
+  fun testNestedEventProcessing() {
+    val fileForNestedMove = tempDir.newVirtualFile("to-move.txt")
+    val nestedMoveTarget = tempDir.newVirtualDirectory("move-target")
+    val fireMove = AtomicBoolean(false)
+    val movePerformed = AtomicBoolean(false)
+
+    // execute nested event while async refresh below
+    project.messageBus.connect(testRootDisposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: MutableList<out VFileEvent>) {
+        if (fireMove.get() && !movePerformed.get()) {
+          movePerformed.set(true)
+          PersistentFS.getInstance().moveFile(this, fileForNestedMove, nestedMoveTarget)
+        }
+      }
+    })
+
+
+    val vDir = createDir()
+    val allVfsListeners = AllVfsListeners(project)
+    fireMove.set(true)
+    assertFalse { movePerformed.get() }
+
+    // execute async refresh
+    vDir.toNioPath().resolve("added.txt").writeText("JB")
+
+    vDir.forceAsyncRefresh()
+
+    allVfsListeners.assertEvents(2)
+  }
+
+  @Test
+  @Throws(IOException::class)
+  fun testNestedManualEventProcessing() {
+    val fileToReparse = tempDir.newVirtualFile("to-reparse.txt")
+    val fireReparse = AtomicBoolean(false)
+    val reparsePerformed = AtomicBoolean(false)
+
+    // execute nested event manually via vfs changes message bus publisher
+    project.messageBus.connect(testRootDisposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: MutableList<out VFileEvent>) {
+        if (fireReparse.get() && !reparsePerformed.get()) {
+          reparsePerformed.set(true)
+          FileContentUtilCore.reparseFiles(fileToReparse)
+        }
+      }
+    })
+
+
+    val vDir = createDir()
+    val allVfsListeners = AllVfsListeners(project)
+    fireReparse.set(true)
+    assertFalse { reparsePerformed.get() }
+
+    // execute async refresh
+    vDir.toNioPath().resolve("added.txt").writeText("JB")
+
+    vDir.forceAsyncRefresh()
+
+    allVfsListeners.assertEvents(2)
+  }
+
   private fun doTestAddedJar() {
     val vDir = createDir()
 
@@ -191,7 +257,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     vDir.forceAsyncRefresh()
 
     val allVfsListeners = AllVfsListeners(project)
-    jar.moveTo(childDir2.resolve(jar.fileName))
+    jar.moveTo(childDir2.resolve(jar.fileName), true)
     vDir.forceAsyncRefresh()
     allVfsListeners.assertEvents(3)
   }
@@ -295,10 +361,10 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
       val asyncEventsToString = asyncEvents.joinToString("\n    ") { it.toString() }
       val bulkEventsToString = bulkEvents.joinToString("\n    ") { it.toString() }
-      assertEquals(expectedEventCount, asyncEventsSize, "Unexpected VFS event count received by async listener: $asyncEventsToString")
       assertEquals(asyncEventsSize, bulkEventsSize, "Async & bulk listener events mismatch." +
                                                     "\n  Async events : $asyncEventsToString," +
                                                     "\n  Bulk events: $bulkEventsToString")
+      assertEquals(expectedEventCount, asyncEventsSize, "Unexpected VFS event count received by async listener: $asyncEventsToString")
 
       assertEquals(asyncEvents.toSet(), bulkEvents.toSet(), "Async & bulk listener events mismatch")
 

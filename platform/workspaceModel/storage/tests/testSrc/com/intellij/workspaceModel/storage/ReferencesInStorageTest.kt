@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert
@@ -24,7 +23,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `add entity`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val child = builder.addChildEntity(builder.addParentEntity("foo"))
     builder.assertConsistency()
     assertEquals("foo", child.parent.parentProperty)
@@ -35,10 +34,10 @@ class ReferencesInStorageTest {
 
   @Test
   fun `add entity via diff`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val parentEntity = builder.addParentEntity("foo")
 
-    val diff = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
+    val diff = createBuilderFrom(builder.toStorage())
     diff.addChildEntity(parentEntity = parentEntity)
     builder.addDiff(diff)
     builder.assertConsistency()
@@ -52,7 +51,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `add remove reference inside data class`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val parent1 = builder.addParentEntity("parent1")
     val parent2 = builder.addParentEntity("parent2")
     builder.assertConsistency()
@@ -73,7 +72,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `remove child entity`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val parent = builder.addParentEntity()
     builder.assertConsistency()
     val child = builder.addChildEntity(parent)
@@ -87,7 +86,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `remove parent entity`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val child = builder.addChildEntity(builder.addParentEntity())
     builder.removeEntity(child.parent)
     builder.assertConsistency()
@@ -97,10 +96,10 @@ class ReferencesInStorageTest {
 
   @Test
   fun `remove parent entity via diff`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val oldParent = builder.addParentEntity("oldParent")
     val oldChild = builder.addChildEntity(oldParent, "oldChild")
-    val diff = WorkspaceEntityStorageBuilderImpl.create()
+    val diff = createEmptyBuilder()
     val parent = diff.addParentEntity("newParent")
     diff.addChildEntity(parent, "newChild")
     diff.removeEntity(parent)
@@ -113,7 +112,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `remove parent entity with two children`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val child1 = builder.addChildEntity(builder.addParentEntity())
     builder.addChildEntity(parentEntity = child1.parent)
     builder.removeEntity(child1.parent)
@@ -124,7 +123,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `remove parent entity in DAG`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val parent = builder.addParentEntity()
     val child = builder.addChildEntity(parentEntity = parent)
     builder.addChildChildEntity(parent, child)
@@ -152,7 +151,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `remove parent entity referenced via two paths`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val parent = builder.addParentEntity()
     builder.addChildEntity(parent, "child", DataClass("data", builder.createReference(parent)))
     builder.assertConsistency()
@@ -164,7 +163,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `remove parent entity referenced via two paths via entity ref`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val parent = builder.addParentEntity()
     builder.addChildEntity(parent, "child", DataClass("data", parent.createReference()))
     builder.assertConsistency()
@@ -176,7 +175,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `modify parent property`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val child = builder.addChildEntity(builder.addParentEntity())
     val oldParent = child.parent
     val newParent = builder.modifyEntity(ModifiableParentEntity::class.java, child.parent) {
@@ -192,11 +191,11 @@ class ReferencesInStorageTest {
 
   @Test
   fun `modify parent property via diff`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val child = builder.addChildEntity(builder.addParentEntity())
     val oldParent = child.parent
 
-    val diff = WorkspaceEntityStorageBuilderImpl.from(builder)
+    val diff = createBuilderFrom(builder)
     diff.modifyEntity(ModifiableParentEntity::class.java, child.parent) {
       parentProperty = "changed"
     }
@@ -212,7 +211,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `modify child property`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val child = builder.addChildEntity(builder.addParentEntity())
     val oldParent = child.parent
     val newChild = builder.modifyEntity(ModifiableChildEntity::class.java, child) {
@@ -230,7 +229,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `modify reference to parent`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val child = builder.addChildEntity(builder.addParentEntity())
     val oldParent = child.parent
     val newParent = builder.addParentEntity("new")
@@ -252,7 +251,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `modify reference to parent via data class`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val parent1 = builder.addParentEntity("parent1")
     val oldParent = builder.addParentEntity("parent2")
     val child = builder.addChildEntity(parent1, "child", DataClass("data", builder.createReference(oldParent)))
@@ -272,7 +271,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `modify reference to parent via data class via entity ref`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val parent1 = builder.addParentEntity("parent1")
     val oldParent = builder.addParentEntity("parent2")
     val child = builder.addChildEntity(parent1, "child", DataClass("data", oldParent.createReference()))
@@ -292,14 +291,14 @@ class ReferencesInStorageTest {
 
   @Test
   fun `builder from storage`() {
-    val storage = WorkspaceEntityStorageBuilderImpl.create().apply {
+    val storage = createEmptyBuilder().apply {
       addChildEntity(addParentEntity())
     }.toStorage()
     storage.assertConsistency()
 
     assertEquals("parent", storage.singleParent().parentProperty)
 
-    val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
+    val builder = createBuilderFrom(storage)
     builder.assertConsistency()
 
     val oldParent = builder.singleParent()
@@ -328,7 +327,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `storage from builder`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val child = builder.addChildEntity(builder.addParentEntity())
 
     val snapshot = builder.toStorage()
@@ -355,7 +354,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `modify optional parent property`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val child = builder.addChildWithOptionalParentEntity(null)
     Assert.assertNull(child.optionalParent)
     val newParent = builder.addParentEntity()
@@ -376,7 +375,7 @@ class ReferencesInStorageTest {
 
   @Test
   fun `removing one to one parent`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val parentEntity = builder.addOoParentEntity()
     builder.addOoChildEntity(parentEntity)
 

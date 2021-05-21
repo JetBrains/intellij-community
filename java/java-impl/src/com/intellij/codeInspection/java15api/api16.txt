@@ -1,0 +1,84 @@
+jdk.jfr.consumer.MetadataEvent
+jdk.jfr.internal.Throttle
+jdk.net.ExtendedSocketOptions#SO_PEERCRED
+jdk.internal.vm.annotation.IntrinsicCandidate
+jdk.internal.util.Preconditions#checkIndex(long;long;java.util.function.BiFunction<java.lang.String,java.util.List<java.lang.Number>,X>;)
+jdk.internal.util.Preconditions#checkFromToIndex(long;long;long;java.util.function.BiFunction<java.lang.String,java.util.List<java.lang.Number>,X>;)
+jdk.internal.util.Preconditions#checkFromIndexSize(long;long;long;java.util.function.BiFunction<java.lang.String,java.util.List<java.lang.Number>,X>;)
+jdk.internal.ValueBased
+sun.reflect.annotation.TypeAnnotation.TypeAnnotationTarget#RECORD_COMPONENT
+java.net.StandardProtocolFamily#UNIX
+java.net.UnixDomainSocketAddress
+java.nio.IntBuffer#put(int;java.nio.IntBuffer;int;int;)
+java.nio.ByteBuffer#put(int;java.nio.ByteBuffer;int;int;)
+java.nio.CharBuffer#put(int;java.nio.CharBuffer;int;int;)
+java.nio.LongBuffer#put(int;java.nio.LongBuffer;int;int;)
+java.nio.FloatBuffer#put(int;java.nio.FloatBuffer;int;int;)
+java.nio.ShortBuffer#put(int;java.nio.ShortBuffer;int;int;)
+java.nio.DoubleBuffer#put(int;java.nio.DoubleBuffer;int;int;)
+java.lang.ref.Reference#refersTo(T;)
+java.lang.invoke.VarHandle#hasInvokeExactBehavior()
+java.lang.invoke.VarHandle#withInvokeExactBehavior()
+java.lang.invoke.VarHandle#withInvokeBehavior()
+java.lang.invoke.MethodHandles#classData(java.lang.invoke.MethodHandles.Lookup;java.lang.String;java.lang.Class<T>;)
+java.lang.invoke.MethodHandles#classDataAt(java.lang.invoke.MethodHandles.Lookup;java.lang.String;java.lang.Class<T>;int;)
+java.lang.invoke.MethodHandles.Lookup#ORIGINAL
+java.lang.invoke.MethodHandles.Lookup#defineHiddenClassWithClassData(byte[];java.lang.Object;boolean;java.lang.invoke.MethodHandles.Lookup.ClassOption[];)
+java.lang.invoke.MethodHandles#dropReturn(java.lang.invoke.MethodHandle;)
+java.lang.reflect.RecordComponent
+java.lang.reflect.InvocationHandler#invokeDefault(java.lang.Object;java.lang.reflect.Method;java.lang.Object[];)
+java.lang.runtime.ObjectMethods
+java.lang.Class#getRecordComponents()
+java.lang.Class#isRecord()
+java.lang.annotation.ElementType#RECORD_COMPONENT
+java.lang.Record
+java.lang.IndexOutOfBoundsException#IndexOutOfBoundsException(long;)
+java.time.format.DateTimeFormatterBuilder#appendDayPeriodText(TextStyle;)
+java.util.stream.Stream#mapMulti(java.util.function.BiConsumer<? super T,? super java.util.function.Consumer<R>>;)
+java.util.stream.Stream#mapMultiToInt(java.util.function.BiConsumer<? super T,? super java.util.function.IntConsumer>;)
+java.util.stream.Stream#mapMultiToLong(java.util.function.BiConsumer<? super T,? super java.util.function.LongConsumer>;)
+java.util.stream.Stream#mapMultiToDouble(java.util.function.BiConsumer<? super T,? super java.util.function.DoubleConsumer>;)
+java.util.stream.Stream#toList()
+java.util.stream.IntStream#mapMulti(java.util.stream.IntStream.IntMapMultiConsumer;)
+java.util.stream.IntStream.IntMapMultiConsumer
+java.util.stream.LongStream#mapMulti(java.util.stream.LongStream.LongMapMultiConsumer;)
+java.util.stream.LongStream.LongMapMultiConsumer
+java.util.stream.DoubleStream#mapMulti(java.util.stream.DoubleStream.DoubleMapMultiConsumer;)
+java.util.stream.DoubleStream.DoubleMapMultiConsumer
+java.util.Objects#checkIndex(long;long;)
+java.util.Objects#checkFromToIndex(long;long;long;)
+java.util.Objects#checkFromIndexSize(long;long;long;)
+java.util.IllegalFormatArgumentIndexException
+java.security.spec.MGF1ParameterSpec#SHA3_224
+java.security.spec.MGF1ParameterSpec#SHA3_256
+java.security.spec.MGF1ParameterSpec#SHA3_384
+java.security.spec.MGF1ParameterSpec#SHA3_512
+jdk.internal.jshell.tool.Selector
+java.util.logging.LogRecord#getLongThreadID()
+java.util.logging.LogRecord#setLongThreadID(long;)
+com.sun.source.tree.Tree.Kind#BINDING_PATTERN
+com.sun.source.tree.Tree.Kind#RECORD
+com.sun.source.tree.PatternTree
+com.sun.source.tree.TreeVisitor#visitBindingPattern(BindingPatternTree;P;)
+com.sun.source.tree.InstanceOfTree#getPattern()
+com.sun.source.tree.BindingPatternTree
+com.sun.source.util.DocTreeFactory#newReturnTree(boolean;java.util.List<? extends DocTree>;)
+com.sun.source.doctree.ReturnTree#isInline()
+javax.lang.model.util.Elements#recordComponentFor(ExecutableElement;)
+javax.lang.model.util.ElementFilter#recordComponentsIn(java.lang.Iterable<? extends Element>;)
+javax.lang.model.util.ElementFilter#recordComponentsIn(java.util.Set<? extends Element>;)
+javax.lang.model.util.ElementScanner14
+javax.lang.model.util.ElementKindVisitor6#visitTypeAsRecord(TypeElement;P;)
+javax.lang.model.util.ElementKindVisitor14
+javax.lang.model.util.SimpleElementVisitor14
+javax.lang.model.util.AbstractElementVisitor14
+javax.lang.model.element.ElementKind#RECORD
+javax.lang.model.element.ElementKind#RECORD_COMPONENT
+javax.lang.model.element.ElementKind#BINDING_VARIABLE
+javax.lang.model.element.TypeElement#getRecordComponents()
+javax.lang.model.element.ElementVisitor#visitRecordComponent(RecordComponentElement;P;)
+javax.lang.model.element.RecordComponentElement
+javax.lang.model.SourceVersion#RELEASE_16
+java.net.http.HttpRequest#newBuilder(java.net.http.HttpRequest;java.util.function.BiPredicate<java.lang.String,java.lang.String>;)
+java.net.http.HttpRequest.BodyPublishers#concat(java.net.http.HttpRequest.BodyPublisher[];)
+jdk.management.jfr.RemoteRecordingStream

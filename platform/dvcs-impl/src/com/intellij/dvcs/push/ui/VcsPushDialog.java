@@ -157,14 +157,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @NotNull
   protected JPanel createOptionsPanel() {
-    JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowy")) { //NON-NLS NON-NLS
-      @Override
-      public Component add(Component comp) {
-        JPanel wrapperPanel = new BorderLayoutPanel().addToCenter(comp);
-        wrapperPanel.setBorder(JBUI.Borders.empty(5, 15, 0, 0));
-        return super.add(wrapperPanel);
-      }
-    };
+    JPanel optionsPanel = new OptionsPanel();
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.DEFAULT) {
         optionsPanel.add(panel);
@@ -419,6 +412,19 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     @NotNull
     public String getName() {
       return requireNonNull(myRealAction.getTemplatePresentation().getTextWithMnemonic());
+    }
+  }
+
+  private static class OptionsPanel extends JPanel {
+    OptionsPanel() {
+      super(new MigLayout("ins 0 0, flowy"));
+    }
+
+    @Override
+    public Component add(Component comp) {
+      JPanel wrapperPanel = new BorderLayoutPanel().addToCenter(comp);
+      wrapperPanel.setBorder(JBUI.Borders.empty(5, 15, 0, 0));
+      return super.add(wrapperPanel);
     }
   }
 }

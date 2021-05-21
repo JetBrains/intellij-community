@@ -165,4 +165,8 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     checkHighlighting();
   }
 
+  public void testArraysEqualsPure() {
+    checkHighlighting();
+  }
+
 }

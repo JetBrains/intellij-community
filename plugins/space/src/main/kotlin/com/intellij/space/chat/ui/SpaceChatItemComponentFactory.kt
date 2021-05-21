@@ -6,7 +6,6 @@ import circlet.platform.client.resolve
 import circlet.principals.asUser
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.VerticalLayout
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.html
@@ -19,7 +18,6 @@ import com.intellij.space.chat.ui.message.SpaceMCMessageComponent
 import com.intellij.space.chat.ui.message.SpaceStyledMessageComponent
 import com.intellij.space.chat.ui.thread.SpaceChatReplyActionFactory
 import com.intellij.space.chat.ui.thread.createThreadComponent
-import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
@@ -30,7 +28,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
-import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
@@ -38,7 +35,6 @@ import icons.VcsCodeReviewIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import runtime.Ui
-import runtime.reactive.awaitLoaded
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -64,8 +60,8 @@ internal class SpaceChatItemComponentFactory(
     val component =
       when (val type = item.type) {
         is CodeDiscussion ->
-          codeDiscussionComponentFactory.createComponent(type.discussion, item.thread!!) ?: createUnsupportedMessageTypePanel(item.link)
-        is SimpleText -> createSimpleMessageComponent(item)
+          codeDiscussionComponentFactory.createComponent(item, type.discussion) ?: createUnsupportedMessageTypePanel(item.link)
+        is SimpleText -> SpaceChatEditableComponent(lifetime, createSimpleMessageComponent(item), item)
         is ReviewCompletionStateChanged -> SpaceStyledMessageComponent(createSimpleMessageComponent(item))
         is ReviewerChanged -> {
           val user = type.uid.resolve().link()
@@ -115,7 +111,7 @@ internal class SpaceChatItemComponentFactory(
       createAvatarIcon(item),
       createTitleComponent(item),
       SpaceChatMessagePendingHeader(item),
-      createEditableContent(component.addThreadComponentIfNeeded(item).addStartThreadField(item), item)
+      component.addThreadComponentIfNeeded(item).addStartThreadField(item)
     )
   }
 
@@ -204,44 +200,6 @@ internal class SpaceChatItemComponentFactory(
       add(this@addStartThreadField, VerticalLayout.FILL_HORIZONTAL)
       add(firstThreadMessageField, VerticalLayout.FILL_HORIZONTAL)
     }
-  }
-
-  private fun createEditableContent(content: JComponent, message: SpaceChatItem): JComponent {
-    val submittableModel = object : SubmittableTextFieldModelBase("") {
-      override fun submit() {
-        val editingVm = message.editingVm.value
-        val newText = document.text
-        if (editingVm != null) {
-          val id = editingVm.message.id
-          launch(lifetime, Ui) {
-            val chat = editingVm.channel.awaitLoaded(lifetime)
-            if (newText.isBlank()) {
-              chat?.deleteMessage(id)
-            }
-            else {
-              chat?.alterMessage(id, newText)
-            }
-          }
-        }
-        message.stopEditing()
-      }
-    }
-
-    val editingStateModel = SingleValueModelImpl(false)
-    message.editingVm.forEach(lifetime) { editingVm ->
-      if (editingVm == null) {
-        editingStateModel.value = false
-        return@forEach
-      }
-      val workspace = SpaceWorkspaceComponent.getInstance().workspace.value ?: return@forEach
-      runWriteAction {
-        submittableModel.document.setText(workspace.completion.editable(editingVm.message.text))
-      }
-      editingStateModel.value = true
-    }
-    return ToggleableContainer.create(editingStateModel, { content }, {
-      SubmittableTextField(SpaceBundle.message("chat.message.edit.action.text"), submittableModel, onCancel = { message.stopEditing() })
-    })
   }
 
   private fun createSimpleMessageComponent(message: SpaceChatItem): SpaceChatMarkdownTextComponent =

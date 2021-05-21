@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FastUtilHashingStrategies;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -94,8 +95,8 @@ class ListResult {
     // typically, when `newChildren` contains 5K entries + couple absent from `oldChildren`, and `oldChildren` contains 5K+couple entries, these maps will contain a couple of entries absent from each other
 
     // name -> index in result
-    Object2IntOpenCustomHashMap<CharSequence>
-      nameToIndex = new Object2IntOpenCustomHashMap<>(Math.max(oldChildren.size(), newChildren.size()), FastUtilHashingStrategies
+    Object2IntMap<CharSequence> nameToIndex =
+      new Object2IntOpenCustomHashMap<>(Math.max(oldChildren.size(), newChildren.size()), FastUtilHashingStrategies
       .getCharSequenceStrategy(isCaseSensitive));
     // distinguish between absence and the 0th index
     nameToIndex.defaultReturnValue(-1);

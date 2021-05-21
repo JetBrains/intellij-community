@@ -7,7 +7,6 @@ import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertFalse
@@ -38,7 +37,7 @@ class PerProjectPluginsTest {
     assertThat(descriptor).isNotNull
 
     val project = projectRule.project
-    val pluginTrackerManager = ProjectPluginTrackerManager.getInstance()
+    val pluginTrackerManager = ProjectPluginTrackerManager.instance
 
     val loaded = pluginTrackerManager.updatePluginsState(
       listOf(descriptor),

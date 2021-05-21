@@ -24,7 +24,7 @@ import java.util.Collection;
 
 public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
   private static final Logger LOG = Logger.getInstance(TMHInstrumentingBuilder.class);
-  private static final String INSTRUMENT_ANNOTATIONS_PROPERTY = "tmh.instrument.annotations";
+  static final String INSTRUMENT_ANNOTATIONS_PROPERTY = "tmh.instrument.annotations";
 
   public TMHInstrumentingBuilder() {
   }
@@ -42,7 +42,8 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
 
   @Override
   protected boolean isEnabled(CompileContext context, ModuleChunk chunk) {
-    return SystemProperties.getBooleanProperty(INSTRUMENT_ANNOTATIONS_PROPERTY, false);
+    return SystemProperties.getBooleanProperty(INSTRUMENT_ANNOTATIONS_PROPERTY, false) ||
+           Boolean.TRUE.toString().equals(context.getBuilderParameter(INSTRUMENT_ANNOTATIONS_PROPERTY));
   }
 
   @Override

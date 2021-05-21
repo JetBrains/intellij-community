@@ -16,6 +16,10 @@ public final class CommitIdByStringCondition implements Predicate<CommitId> {
 
   @Override
   public boolean test(CommitId commitId) {
-    return StringUtilRt.startsWithIgnoreCase(commitId.getHash().asString(), myHashString);
+    return matches(commitId, myHashString);
+  }
+
+  public static boolean matches(@NotNull CommitId commitId, @NotNull String prefix) {
+    return StringUtilRt.startsWithIgnoreCase(commitId.getHash().asString(), prefix);
   }
 }

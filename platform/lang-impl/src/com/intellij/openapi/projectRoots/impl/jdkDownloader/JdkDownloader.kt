@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -52,7 +53,7 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
           }
 
           val wslDistributions = WslDistributionManager.getInstance().installedDistributions
-          val projectWslDistribution = project?.basePath?.let { WslDistributionManager.getInstance().distributionFromPath(it) }
+          val projectWslDistribution = project?.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
 
           val mainModel = buildModel(JdkPredicate.default()) ?: return@computeInBackground null
           val wslModel = if (wslDistributions.isNotEmpty()) buildModel(JdkPredicate.forWSL()) else null

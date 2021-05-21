@@ -293,6 +293,13 @@ public final class JBCefClient implements JBCefDisposable {
             return handler.onConsoleMessage(browser, level, message, source, line);
           });
         }
+
+        @Override
+        public boolean onCursorChange(CefBrowser browser, int cursorType) {
+          return myDisplayHandler.handleBoolean(browser, handler -> {
+            return handler.onCursorChange(browser, cursorType);
+          });
+        }
       });
     });
   }
@@ -534,6 +541,13 @@ public final class JBCefClient implements JBCefDisposable {
         public boolean onBeforeBrowse(CefBrowser browser, CefFrame frame, CefRequest request, boolean user_gesture, boolean is_redirect) {
           return myRequestHandler.handleBoolean(browser, handler -> {
             return handler.onBeforeBrowse(browser, frame, request, user_gesture, is_redirect);
+          });
+        }
+
+        @Override
+        public boolean onOpenURLFromTab(CefBrowser browser, CefFrame frame, String target_url, boolean user_gesture) {
+          return myRequestHandler.handleBoolean(browser, handler -> {
+            return handler.onOpenURLFromTab(browser, frame, target_url, user_gesture);
           });
         }
 

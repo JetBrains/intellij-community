@@ -185,7 +185,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                                                       @NotNull PsiElement element,
                                                       @NotNull Editor editor,
                                                       @NotNull InlResult result) {
-    InlayPresentation text = factory.smallText(result.getRegularText());
+    InlayPresentation text = factory.smallTextWithoutBackground(result.getRegularText());
 
     return factory.referenceOnHover(text, (event, translated) -> result.onClick(editor, element, event));
   }

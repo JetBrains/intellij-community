@@ -2,6 +2,7 @@
 
 package com.intellij.workspaceModel.storage
 
+import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 
@@ -17,3 +18,10 @@ fun WorkspaceEntityStorage.checkConsistency() {
   }
 }
 
+internal fun createEmptyBuilder(): WorkspaceEntityStorageBuilderImpl {
+  return WorkspaceEntityStorageBuilderImpl.create(ConsistencyCheckingMode.SYNCHRONOUS)
+}
+
+internal fun createBuilderFrom(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilderImpl {
+  return WorkspaceEntityStorageBuilderImpl.from(storage, ConsistencyCheckingMode.SYNCHRONOUS)
+}

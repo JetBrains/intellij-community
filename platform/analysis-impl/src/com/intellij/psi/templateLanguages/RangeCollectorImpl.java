@@ -149,7 +149,6 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
    * but their contents are modified considering outer elements and RangeCollector is put to their user data to be applied when this
    * chameleon is expanded.
    *
-   * @param language
    * @param templateFileElement parsed template data language file without outer elements and with possible custom additions
    * @param sourceCode          original source code (include template data language and template language)
    */
@@ -386,9 +385,8 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     }
 
     ASTNode root = parser.apply(stringBuilder.toString());
-    DebugUtil.performPsiModification("lazy parseable outer elements insertion", () -> {
-      insertOuterElementsAndRemoveRanges((TreeElement)root, chars, SharedImplUtil.findCharTableByTree(chameleon), language);
-    });
+    DebugUtil.performPsiModification("lazy parseable outer elements insertion", () ->
+      insertOuterElementsAndRemoveRanges((TreeElement)root, chars, SharedImplUtil.findCharTableByTree(chameleon), language));
 
     return root;
   }

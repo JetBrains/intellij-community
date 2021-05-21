@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +152,7 @@ public abstract class RunAnythingGroup {
    * Joins {@link #myTitleIndex} and {@link #myMoreIndex} of all groups; using for navigating by 'TAB' between groups.
    */
   public static int[] getAllIndexes(@NotNull Collection<? extends RunAnythingGroup> groups) {
-    IntArrayList list = new IntArrayList();
+    IntList list = new IntArrayList();
     for (RunAnythingGroup runAnythingGroup : groups) {
       list.add(runAnythingGroup.myTitleIndex);
     }

@@ -54,6 +54,7 @@
     <vfs.asyncListener implementation="com.intellij.util.indexing.events.ChangedFilesCollector"/>
     <applicationInitializedListener implementation="com.intellij.util.indexing.FileBasedIndexLoader"/>
     <applicationService serviceImplementation="com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper" preload="notLightEdit"/>
+    <applicationService serviceImplementation="com.intellij.util.indexing.roots.ModuleIndexableFilesPolicy"/>
 
     <!-- required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload -->
     <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
@@ -830,7 +831,7 @@
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.codeInsight.editorActions.CopyHandler"/>
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.codeInsight.documentation.render.DocRenderCopyHandler"
                          id="docRender" order="first"/>
-    <editorActionHandler action="EditorCut" implementationClass="com.intellij.codeInsight.editorActions.CutHandler"/>
+    <editorActionHandler action="EditorCut" implementationClass="com.intellij.codeInsight.editorActions.CutHandler" id="editorCut"/>
     <editorActionHandler action="EditorJoinLines" implementationClass="com.intellij.codeInsight.editorActions.JoinLinesHandler"/>
     <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.editorActions.BackspaceHandler" id="backspace.lang"/>
     <editorActionHandler action="EditorDeleteToWordStart"
@@ -1089,6 +1090,8 @@
     <usageContextPanelProvider implementation="com.intellij.usageView.impl.UsageContextCallHierarchyPanel$Provider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.codeInsight.lookup.impl.LookupDocumentSavingVetoer"/>
     <toolsProvider implementation="com.intellij.tools.LocalToolsProvider"/>
+
+    <projectService serviceInterface="com.intellij.ide.tags.TagManager" serviceImplementation="com.intellij.ide.tags.TagManagerImpl"/>
 
     <favoritesListProvider implementation="com.intellij.ide.bookmarks.BookmarksFavoriteListProvider"/>
     <favoritesListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsFavoriteListProvider"/>

@@ -173,18 +173,14 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     return UIUtil.uiTraverser(null).withRoots(roots).preOrderDfsTraversal().filter(ActionToolbar.class);
   }
 
-  private static class OptionsGroup extends ActionGroup implements DumbAware {
+  private static class OptionsGroup extends NonTrivialActionGroup implements DumbAware {
 
     private final ToolWindow myToolWindow;
 
     OptionsGroup(ToolWindow toolWindow) {
-      super(IdeBundle.message("group.view.options"), true);
+      getTemplatePresentation().setText(IdeBundle.message("group.view.options"));
+      setPopup(true);
       myToolWindow = toolWindow;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e, LaterInvocator.isInModalContext()));
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
@@ -118,6 +119,17 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   companion object {
+    /**
+     * Setting this [client property][JComponent.putClientProperty] allows to specify 'effective' parent for a component which will be used
+     * to find a tool window to which component belongs (if any). This can prevent tool windows in non-default view modes (e.g. 'Undock')
+     * to close when focus is transferred to a component not in tool window hierarchy, but logically belonging to it (e.g. when component
+     * is added to the window's layered pane).
+     *
+     * @see ComponentUtil.putClientProperty
+     */
+    @JvmField
+    val PARENT_COMPONENT: Key<JComponent> = Key.create("tool.window.parent.component")
+
     @JvmStatic
     @ApiStatus.Internal
     fun getRegisteredMutableInfoOrLogError(decorator: InternalDecorator): WindowInfoImpl {
@@ -1276,6 +1288,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun notifyByBalloon(options: ToolWindowBalloonShowOptions) {
+    if (Registry.`is`("ide.new.stripes.ui")) {
+      notifySquareButtonByBalloon(options)
+      return
+    }
+
     val entry = idToEntry[options.toolWindowId]!!
     val existing = entry.balloon
     if (existing != null) {
@@ -1299,33 +1316,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       ToolWindowAnchor.RIGHT == anchor -> position.set(Balloon.Position.atLeft)
     }
 
-    val listenerWrapper = BalloonHyperlinkListener(options.listener)
-    @Suppress("HardCodedStringLiteral")
-    val content = options.htmlBody.replace("\n", "<br>")
-    val balloonBuilder = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(content, options.icon, options.type.titleForeground, options.type.popupBackground, listenerWrapper)
-      .setBorderColor(options.type.borderColor)
-      .setHideOnClickOutside(false)
-      .setHideOnFrameResize(false)
-
-    options.balloonCustomizer?.accept(balloonBuilder)
-
-    val balloon = balloonBuilder.createBalloon() as BalloonImpl
-    NotificationsManagerImpl.frameActivateBalloonListener(balloon, Runnable {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule({ balloon.setHideOnClickOutside(true) }, 100, TimeUnit.MILLISECONDS)
-    })
-
-    listenerWrapper.balloon = balloon
-    entry.balloon = balloon
-    Disposer.register(balloon, Disposable {
-      entry.toolWindow.isPlaceholderMode = false
-      stripe.updatePresentation()
-      stripe.revalidate()
-      stripe.repaint()
-      entry.balloon = null
-    })
-    Disposer.register(entry.disposable, balloon)
-
+    val balloon = createBalloon(options, entry)
     val button = stripe.getButtonFor(options.toolWindowId)
     LOG.assertTrue(button != null, ("Button was not found, popup won't be shown. $options"))
     if (button == null) {
@@ -1374,6 +1365,83 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       SwingUtilities.invokeLater(show)
     }
   }
+
+  fun notifySquareButtonByBalloon(options: ToolWindowBalloonShowOptions) {
+    val entry = idToEntry[options.toolWindowId]!!
+    val existing = entry.balloon
+    if (existing != null) {
+      Disposer.dispose(existing)
+    }
+
+    val anchor = entry.readOnlyWindowInfo.largeStripeAnchor
+    val position = Ref.create(Balloon.Position.atLeft)
+    when (anchor) {
+      ToolWindowAnchor.TOP -> position.set(Balloon.Position.atRight)
+      ToolWindowAnchor.RIGHT -> position.set(Balloon.Position.atRight)
+      ToolWindowAnchor.BOTTOM -> position.set(Balloon.Position.atLeft)
+      ToolWindowAnchor.LEFT -> position.set(Balloon.Position.atLeft)
+    }
+
+    val balloon = createBalloon(options, entry)
+    var button = toolWindowPane!!.getSquareStripeFor(entry.readOnlyWindowInfo.largeStripeAnchor)?.getButtonFor(options.toolWindowId) as ActionButton?
+    if (button == null || !button.isShowing) {
+      button = (toolWindowPane!!.getSquareStripeFor(ToolWindowAnchor.LEFT) as? ToolwindowLeftToolbar)?.moreButton!!
+      position.set(Balloon.Position.atLeft)
+    }
+    val show = Runnable {
+      val tracker = object : PositionTracker<Balloon>(button) {
+        override fun recalculateLocation(`object`: Balloon): RelativePoint? {
+          val otherEntry = idToEntry[options.toolWindowId] ?: return null
+          if (otherEntry.readOnlyWindowInfo.largeStripeAnchor != anchor) {
+            `object`.hide()
+            return null
+          }
+
+          return RelativePoint(button,
+                               Point(if (position.get() == Balloon.Position.atRight) 0 else button.bounds.width, button.height / 2))
+        }
+      }
+      if (!balloon.isDisposed) {
+        balloon.show(tracker, position.get())
+      }
+    }
+
+    if (button.isValid) {
+      show.run()
+    }
+    else {
+      SwingUtilities.invokeLater(show)
+    }
+  }
+
+  private fun createBalloon(options: ToolWindowBalloonShowOptions, entry: ToolWindowEntry): Balloon {
+    val listenerWrapper = BalloonHyperlinkListener(options.listener)
+
+    @Suppress("HardCodedStringLiteral")
+    val content = options.htmlBody.replace("\n", "<br>")
+    val balloonBuilder = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(content, options.icon, options.type.titleForeground, options.type.popupBackground, listenerWrapper)
+      .setBorderColor(options.type.borderColor)
+      .setHideOnClickOutside(false)
+      .setHideOnFrameResize(false)
+
+    options.balloonCustomizer?.accept(balloonBuilder)
+
+    val balloon = balloonBuilder.createBalloon() as BalloonImpl
+    NotificationsManagerImpl.frameActivateBalloonListener(balloon, Runnable {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule({ balloon.setHideOnClickOutside(true) }, 100, TimeUnit.MILLISECONDS)
+    })
+
+    listenerWrapper.balloon = balloon
+    entry.balloon = balloon
+    Disposer.register(balloon, Disposable {
+      entry.toolWindow.isPlaceholderMode = false
+      entry.balloon = null
+    })
+    Disposer.register(entry.disposable, balloon)
+    return balloon
+  }
+
 
   override fun getToolWindowBalloon(id: String) = idToEntry[id]?.balloon
 
@@ -2119,7 +2187,7 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
   val activeToolWindowComponent = activeToolWindow.getComponentIfInitialized()
   if (activeToolWindowComponent != null) {
     while (source != null && source !== activeToolWindowComponent) {
-      source = if (source.parent != null && source.parent is JComponent) source.parent as JComponent else null
+      source = ComponentUtil.getClientProperty(source, ToolWindowManagerImpl.PARENT_COMPONENT) ?: source.parent as? JComponent
     }
   }
   return source != null

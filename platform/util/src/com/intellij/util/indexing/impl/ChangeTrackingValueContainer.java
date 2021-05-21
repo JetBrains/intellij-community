@@ -22,6 +22,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -34,14 +35,9 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   protected ValueContainerImpl<Value> myAdded;
   protected TIntHashSet myInvalidated;
   protected volatile ValueContainerImpl<Value> myMerged;
-  private final Initializer<Value> myInitializer;
+  private final @Nullable Computable<? extends ValueContainer<Value>> myInitializer;
   
-  public interface Initializer<T> extends Computable<ValueContainer<T>> {
-    @NotNull
-    Object getLock();
-  }
-
-  public ChangeTrackingValueContainer(Initializer<Value> initializer) {
+  public ChangeTrackingValueContainer(@Nullable Computable<? extends ValueContainer<Value>> initializer) {
     myInitializer = initializer;
   }
 
@@ -91,7 +87,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     if (merged != null) {
       return merged;
     }
-    synchronized (myInitializer.getLock()) {
+    synchronized (this) {
       merged = myMerged;
       if (merged != null) {
         return merged;

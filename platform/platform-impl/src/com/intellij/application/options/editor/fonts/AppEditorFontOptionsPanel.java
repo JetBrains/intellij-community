@@ -36,7 +36,6 @@ import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -285,7 +284,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
   }
 
   private static boolean isAdvancedFontFamiliesUI() {
-    return SystemProperties.is("new.editor.font.selector");
+    return AppEditorFontOptions.NEW_FONT_SELECTOR;
   }
 
 

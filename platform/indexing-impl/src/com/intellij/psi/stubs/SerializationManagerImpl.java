@@ -18,7 +18,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -118,7 +119,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   @Override
-  public void flushNameStorage() {
+  public void flushNameStorage() throws IOException {
     mySerializerEnumerator.flush();
   }
 

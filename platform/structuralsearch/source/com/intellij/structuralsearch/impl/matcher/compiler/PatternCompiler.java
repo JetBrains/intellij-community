@@ -29,6 +29,7 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -336,7 +337,7 @@ public final class PatternCompiler {
                                             final int patternEndOffset,
                                             final int[] varEndOffsets,
                                             final boolean strict) {
-    final IntArrayList errorOffsets = new IntArrayList();
+    final IntList errorOffsets = new IntArrayList();
     final boolean[] containsErrorTail = {false};
     final IntSet varEndOffsetsSet = new IntOpenHashSet(varEndOffsets);
 

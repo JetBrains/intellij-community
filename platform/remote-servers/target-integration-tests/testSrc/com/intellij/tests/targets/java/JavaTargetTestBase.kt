@@ -321,11 +321,6 @@ abstract class JavaTargetTestBase(protected val executionMode: ExecutionMode) : 
                                                               "  <count name=\"failed\" value=\"1\" />\n" +
                                                               "  <count name=\"passed\" value=\"1\" />\n" +
                                                               "  <root name=\"&lt;default package&gt;\" location=\"java:suite://&lt;default package&gt;\" />\n" +
-                                                              "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
-                                                              "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\">\n" +
-                                                              "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
-                                                              "    </test>\n" +
-                                                              "  </suite>\n" +
                                                               "  <suite locationUrl=\"java:suite://AlsoTest\" name=\"AlsoTest\" status=\"failed\">\n" +
                                                               "    <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
                                                               "      <diff actual=\"5\" expected=\"4\" />\n" +
@@ -339,6 +334,11 @@ abstract class JavaTargetTestBase(protected val executionMode: ExecutionMode) : 
                                                               "\tat AlsoTest.testShouldFail(AlsoTest.java:12)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
+                                                              "    </test>\n" +
+                                                              "  </suite>\n" +
+                                                              "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
+                                                              "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\">\n" +
+                                                              "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
                                                               "    </test>\n" +
                                                               "  </suite>\n" +
                                                               "</testrun>")
@@ -403,11 +403,6 @@ abstract class JavaTargetTestBase(protected val executionMode: ExecutionMode) : 
                                                               "  <count name=\"failed\" value=\"1\" />\n" +
                                                               "  <count name=\"passed\" value=\"1\" />\n" +
                                                               "  <root name=\"&lt;default package&gt;\" location=\"java:suite://&lt;default package&gt;\" />\n" +
-                                                              "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
-                                                              "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\">\n" +
-                                                              "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
-                                                              "    </test>\n" +
-                                                              "  </suite>\n" +
                                                               "  <suite locationUrl=\"java:suite://AlsoTest\" name=\"AlsoTest\" status=\"failed\">\n" +
                                                               "    <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
                                                               "      <diff actual=\"5\" expected=\"4\" />\n" +
@@ -421,6 +416,11 @@ abstract class JavaTargetTestBase(protected val executionMode: ExecutionMode) : 
                                                               "\tat AlsoTest.testShouldFail(AlsoTest.java:12)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
                                                               "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
+                                                              "    </test>\n" +
+                                                              "  </suite>\n" +
+                                                              "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
+                                                              "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\">\n" +
+                                                              "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
                                                               "    </test>\n" +
                                                               "  </suite>\n" +
                                                               "</testrun>")
@@ -594,6 +594,9 @@ abstract class JavaTargetTestBase(protected val executionMode: ExecutionMode) : 
         testrun.removeAttribute("duration")
         testrun.getChild("root")?.removeChildren("output")
         testrun.removeChild("config")
+        testrun.sortChildren { o1, o2 ->
+          "${o1?.name} ${o1?.getAttributeValue("locationUrl")}".compareTo("${o2?.name} ${o2?.getAttributeValue("locationUrl")}")
+        }
         for (child in testrun.getChildren("suite")) {
           child.removeAttribute("duration")
           for (testChild in child.getChildren("test")) {

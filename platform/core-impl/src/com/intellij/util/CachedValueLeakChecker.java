@@ -56,14 +56,11 @@ final class CachedValueLeakChecker {
       return true;
     };
     Map<Object, @NonNls String> roots = Collections.singletonMap(root, "CachedValueProvider " + key);
-    DebugReflectionUtil.walkObjects(5, roots, PsiElement.class, shouldExamineValue, (value, backLink) -> {
-      if (value instanceof PsiElement) {
-        LOG.error(
-          "Incorrect CachedValue use. Provider references PSI, causing memory leaks and possible invalid element access, provider=" +
-          root + "\n" + backLink);
-        return false;
-      }
-      return true;
+    DebugReflectionUtil.walkObjects(5, roots, PsiElement.class, shouldExamineValue, (__, backLink) -> {
+      LOG.error(
+        "Incorrect CachedValue use. Provider references PSI, causing memory leaks and possible invalid element access, provider=" +
+        root + "\n" + backLink);
+      return false;
     });
   }
 }

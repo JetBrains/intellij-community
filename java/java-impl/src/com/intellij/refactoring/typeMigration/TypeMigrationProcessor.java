@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.java.JavaBundle;
@@ -28,7 +28,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -107,7 +106,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
         }
         if (optimizeImports) {
           final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-          final Set<PsiFile> affectedFiles = new THashSet<>();
+          final Set<PsiFile> affectedFiles = new HashSet<>();
           for (UsageInfo usage : usages) {
             final PsiFile usageFile = usage.getFile();
             if (usageFile != null) {

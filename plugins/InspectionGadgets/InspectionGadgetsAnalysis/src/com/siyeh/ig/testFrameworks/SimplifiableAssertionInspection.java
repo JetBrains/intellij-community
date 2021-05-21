@@ -12,10 +12,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.EqualityCheck;
-import com.siyeh.ig.psiutils.ImportUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -229,7 +226,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
           rhs = args[1];
         }
       }
-      if (!(lhs instanceof PsiLiteralExpression) && rhs instanceof PsiLiteralExpression) {
+      if (!ExpressionUtils.isEvaluatedAtCompileTime(lhs) && ExpressionUtils.isEvaluatedAtCompileTime(rhs)) {
         final PsiExpression temp = lhs;
         lhs = rhs;
         rhs = temp;
@@ -238,7 +235,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
         return;
       }
 
-      if (!assertHint.isMessageOnFirstPosition()) {
+      if (!assertHint.isExpectedActualOrder()) {
         final PsiExpression temp = lhs;
         lhs = rhs;
         rhs = temp;
@@ -315,7 +312,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
         return;
       }
       final IElementType tokenType = binaryExpression.getOperationTokenType();
-      if (!(lhs instanceof PsiLiteralExpression) && rhs instanceof PsiLiteralExpression) {
+      if (!(ExpressionUtils.isEvaluatedAtCompileTime(lhs)) && ExpressionUtils.isEvaluatedAtCompileTime(rhs)) {
         rhs = lhs;
       }
       @NonNls final String methodName = assertHint.getMethod().getName();
@@ -352,7 +349,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       PsiExpression lhs = firstArgument.getLOperand();
       PsiExpression rhs = firstArgument.getROperand();
       final IElementType tokenType = firstArgument.getOperationTokenType();
-      if (!(lhs instanceof PsiLiteralExpression) && rhs instanceof PsiLiteralExpression) {
+      if (!ExpressionUtils.isEvaluatedAtCompileTime(lhs) && ExpressionUtils.isEvaluatedAtCompileTime(rhs)) {
         final PsiExpression temp = lhs;
         lhs = rhs;
         rhs = temp;
@@ -427,7 +424,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
           else if (isAssertThatCouldBeFail(firstArgument, !assertTrue)) {
             registerMethodCallError(expression, "fail()");
           }
-          else if (assertTrue && assertTrueFalseHint.isMessageOnFirstPosition() && isArrayEqualityComparison(firstArgument)) {
+          else if (assertTrue && assertTrueFalseHint.isExpectedActualOrder() && isArrayEqualityComparison(firstArgument)) {
             registerMethodCallError(expression, "assertArrayEquals()");
           }
           else if (BoolUtils.isNegation(firstArgument)) {

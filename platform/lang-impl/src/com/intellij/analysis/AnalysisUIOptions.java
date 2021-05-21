@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.analysis;
 
@@ -29,6 +29,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public volatile boolean GROUP_BY_SEVERITY = false;
   public volatile boolean FILTER_RESOLVED_ITEMS = true;
   public boolean ANALYZE_TEST_SOURCES = true;
+  public boolean ANALYZE_INJECTED_CODE = true;
   @AnalysisScope.Type
   public int SCOPE_TYPE = AnalysisScope.PROJECT;
   public String CUSTOM_SCOPE_NAME = "";

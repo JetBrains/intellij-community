@@ -74,7 +74,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   private JBRadioButton myReplaceAllFieldsRadioButton;
   private JPanel myGetterPanel;
   private final IntroduceParameterInfo myInfo;
-  private final Object2IntOpenHashMap<JCheckBox> toRemoveCBs;
+  private final Object2IntMap<JCheckBox> toRemoveCBs;
 
   private GrMethodSignatureComponent mySignature;
   private GrParameterTablePanel myTable;
@@ -537,7 +537,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
   }
 
   private IntList getParametersToRemove() {
-    IntArrayList list = new IntArrayList();
+    IntList list=new IntArrayList();
     for (JCheckBox o : toRemoveCBs.keySet()) {
       if (o.isSelected()) {
         list.add(toRemoveCBs.getInt(o));

@@ -25,7 +25,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -613,6 +615,7 @@ public final class PathsVerifier {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           final String title = VcsBundle.message("patch.apply.overwrite.existing.title");
           List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
+          @SuppressWarnings("UnresolvedPropertyKey")
           Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
             files, title, VcsBundle.message("patch.apply.overwrite.existing.files.prompt"), title,
             VcsBundle.message("patch.apply.overwrite.existing.file.prompt"),

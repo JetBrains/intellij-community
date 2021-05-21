@@ -5,8 +5,6 @@ import circlet.client.api.ProjectKey
 import circlet.client.api.identifier
 import circlet.code.api.*
 import circlet.code.codeReview
-import circlet.platform.api.Batch
-import circlet.platform.api.BatchInfo
 import circlet.platform.api.InitializedChannel
 import circlet.platform.api.TID
 import circlet.platform.client.FluxSourceItem
@@ -21,6 +19,8 @@ import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.launch
 import libraries.coroutines.extra.nested
 import runtime.Ui
+import runtime.batch.Batch
+import runtime.batch.BatchInfo
 import runtime.reactive.*
 import runtime.reactive.property.mapInit
 

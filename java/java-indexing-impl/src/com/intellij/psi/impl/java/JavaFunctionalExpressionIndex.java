@@ -20,11 +20,11 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey;
@@ -58,7 +58,6 @@ import java.util.function.BiConsumer;
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<FunctionalExpressionKey, List<JavaFunctionalExpressionIndex.IndexEntry>> {
-  private static final Logger LOG = Logger.getInstance(JavaFunctionalExpressionIndex.class);
   public static final ID<FunctionalExpressionKey, List<IndexEntry>> INDEX_ID = ID.create("java.fun.expression");
   private static final KeyDescriptor<FunctionalExpressionKey> KEY_DESCRIPTOR = new KeyDescriptor<>() {
     @Override
@@ -452,10 +451,13 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
+    return new DefaultFileTypeSpecificWithProjectInputFilter(JavaFileType.INSTANCE) {
       @Override
-      public boolean acceptInput(@NotNull VirtualFile file) {
-        return super.acceptInput(file) && JavaFileElementType.isInSourceContent(file);
+      public boolean acceptInput(@NotNull IndexedFile file) {
+        Project project = file.getProject();
+        return super.acceptInput(file) &&
+               (JavaFileElementType.isInSourceContent(file.getFile())) ||
+               (project != null && FileIndexFacade.getInstance(project).isInSource(file.getFile()));
       }
     };
   }

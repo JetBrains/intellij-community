@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMemberFix;
@@ -15,7 +15,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,7 @@ public abstract class StaticMemberProcessor {
     final GlobalSearchScope scope = myPosition.getResolveScope();
     Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
     for (final String memberName : matcher.sortMatching(memberNames)) {
-      Set<PsiClass> classes = new THashSet<>();
+      Set<PsiClass> classes = new HashSet<>();
       for (final PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, myProject, scope)) {
         if (isStaticallyImportable(member)) {
           final PsiClass containingClass = member.getContainingClass();

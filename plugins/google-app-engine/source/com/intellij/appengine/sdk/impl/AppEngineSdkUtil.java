@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.sdk.impl;
 
 import com.intellij.appengine.JavaGoogleAppEngineBundle;
@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,7 +87,7 @@ public final class AppEngineSdkUtil {
         final String packageName = StringUtil.getPackageName(qualifiedName);
         Set<String> classNames = map.get(packageName);
         if (classNames == null) {
-          classNames = new THashSet<>();
+          classNames = new HashSet<>();
           map.put(packageName, classNames);
         }
         classNames.add(StringUtil.getShortName(qualifiedName));

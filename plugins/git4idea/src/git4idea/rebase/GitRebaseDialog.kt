@@ -6,6 +6,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -104,7 +106,7 @@ internal class GitRebaseDialog(private val project: Project,
     updateUi()
     init()
 
-    startTrackingValidation()
+    updateOkActionEnabled()
   }
 
   override fun createCenterPanel() = panel
@@ -173,6 +175,10 @@ internal class GitRebaseDialog(private val project: Project,
     if (!newBase.isNullOrEmpty() && isValidRevision(newBase)) {
       upstreamField.item = newBase
     }
+  }
+
+  private fun updateOkActionEnabled() {
+    isOKActionEnabled = listOf(::validateUpstream, ::validateOnto).mapNotNull { it() }.isEmpty()
   }
 
   private fun getTags() = tags[getSelectedRepo().root] ?: emptyList()
@@ -422,6 +428,11 @@ internal class GitRebaseDialog(private val project: Project,
     setPlaceholder(GitBundle.message("rebase.dialog.new.base"))
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
+    addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        updateOkActionEnabled()
+      }
+    })
   }
 
   private fun createUpstreamField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
@@ -430,6 +441,11 @@ internal class GitRebaseDialog(private val project: Project,
     setPlaceholder(GitBundle.message("rebase.dialog.target"))
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
+    addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        updateOkActionEnabled()
+      }
+    })
   }
 
   private fun createRepoField() = createRepositoryField(repositories, defaultRoot).apply {

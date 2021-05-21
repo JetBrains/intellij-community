@@ -902,10 +902,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, left);
     DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, right);
-    LongRangeSet leftRange = DfIntType.extractRange(memState.getDfType(leftLength));
-    LongRangeSet rightRange = DfIntType.extractRange(memState.getDfType(rightLength));
-    LongRangeSet resultRange = leftRange.plus(rightRange, false);
-    return factory.fromDfType(SpecialField.STRING_LENGTH.asDfType(intRange(resultRange), stringType));
+    DfType leftRange = memState.getDfType(leftLength);
+    DfType rightRange = memState.getDfType(rightLength);
+    DfType resultRange = leftRange instanceof DfIntType ? ((DfIntType)leftRange).eval(rightRange, LongRangeBinOp.PLUS) : INT;
+    return factory.fromDfType(SpecialField.STRING_LENGTH.asDfType(resultRange, stringType));
   }
 
   private DfaInstructionState @NotNull [] handleRelationBinop(BinopInstruction instruction,

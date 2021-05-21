@@ -1,6 +1,6 @@
 import java.lang.annotation.*;
 
-class <error descr="'record' is a contextual keyword and cannot be used for type declarations">record</error> {
+class <error descr="'record' is a restricted identifier and cannot be used for type declarations">record</error> {
   void x(<error descr="Illegal reference to restricted type 'record'">record</error> r) {}
 }
 record <error descr="Record has no header declared">NoComponentList</error> {}

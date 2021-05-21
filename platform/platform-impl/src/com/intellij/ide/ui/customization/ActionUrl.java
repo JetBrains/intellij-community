@@ -116,8 +116,8 @@ public class ActionUrl implements JDOMExternalizable {
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myGroupPath = new ArrayList<>();
-    for (Object o : element.getChildren(PATH)) {
-      myGroupPath.add(((Element)o).getAttributeValue(VALUE));
+    for (Element o : element.getChildren(PATH)) {
+      myGroupPath.add(o.getAttributeValue(VALUE));
     }
     @NlsSafe final String attributeValue = element.getAttributeValue(VALUE);
     if (element.getAttributeValue(IS_ACTION) != null) {

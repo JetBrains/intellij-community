@@ -13,6 +13,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.popup.async.AsyncPopupImpl;
 import com.intellij.ui.popup.async.AsyncPopupStep;
+import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
@@ -350,7 +351,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
       if (proceedKeyEvent(event, stroke)) return true;
     }
-    else if (!myKeyPressedReceived) {
+    else if (!myKeyPressedReceived && !(this instanceof ComboBoxPopup)) {
       // key was pressed while this popup wasn't active, ignore the event
       return false;
     }

@@ -4,14 +4,12 @@ package com.intellij.vcs.log.ui.table;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -27,7 +25,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 public final class GraphTableModel extends AbstractTableModel {
   private static final int UP_PRELOAD_COUNT = 20;
@@ -71,32 +68,6 @@ public final class GraphTableModel extends AbstractTableModel {
   @Override
   public String getColumnName(int column) {
     return getColumn(column).getLocalizedName();
-  }
-
-  public int getRowOfCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
-    if (!myLogData.getStorage().containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
-    return getRowOfCommitWithoutCheck(hash, root);
-  }
-
-  public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
-    Predicate<CommitId> hashByString = new CommitIdByStringCondition(partialHash);
-    Ref<Boolean> commitExists = new Ref<>(false);
-    CommitId commitId = myLogData.getStorage().findCommitId(commitId1 -> {
-      if (hashByString.test(commitId1)) {
-        commitExists.set(true);
-        return getRowOfCommitWithoutCheck(commitId1.getHash(), commitId1.getRoot()) >= 0;
-      }
-      return false;
-    });
-    return commitId != null
-           ? getRowOfCommitWithoutCheck(commitId.getHash(), commitId.getRoot())
-           : (commitExists.get() ? COMMIT_DOES_NOT_MATCH : COMMIT_NOT_FOUND);
-  }
-
-  private int getRowOfCommitWithoutCheck(@NotNull Hash hash, @NotNull VirtualFile root) {
-    int commitIndex = myLogData.getCommitIndex(hash, root);
-    Integer rowIndex = myDataPack.getVisibleGraph().getVisibleRowIndex(commitIndex);
-    return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
   }
 
   @NotNull

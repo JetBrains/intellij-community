@@ -276,12 +276,12 @@ public final class IntToIntBtree {
     }
   }
 
-  public void doClose() {
+  public void doClose() throws IOException {
     myCachedMappings = null;
     storage.close();
   }
 
-  public void doFlush() {
+  public void doFlush() throws IOException {
     flushCachedMappings();
     storage.force();
   }

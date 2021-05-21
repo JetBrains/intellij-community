@@ -971,7 +971,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       Set<VirtualFile> intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, processors, key);
       List<VirtualFile> allFilesForKeys = new ArrayList<>();
       processFilesContainingAllKeys(myManager.getProject(), commonScope, Processors.cancelableCollectProcessor(allFilesForKeys), key);
-      Object2IntOpenHashMap<VirtualFile> file2Mask = new Object2IntOpenHashMap<>();
+      Object2IntMap<VirtualFile> file2Mask=new Object2IntOpenHashMap<>();
       file2Mask.defaultReturnValue(-1);
       IntRef maskRef = new IntRef();
       for (VirtualFile file : allFilesForKeys) {

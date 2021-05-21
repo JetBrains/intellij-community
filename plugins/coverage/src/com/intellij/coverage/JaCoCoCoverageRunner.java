@@ -18,8 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.*;
-import com.intellij.util.PathUtil;
-import org.jacoco.agent.rt.RT;
+import org.jacoco.agent.AgentJar;
 import org.jacoco.core.analysis.*;
 import org.jacoco.core.tools.ExecFileLoader;
 import org.jacoco.report.DirectorySourceFileLocator;
@@ -194,7 +193,15 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      boolean isSampling,
                                      String sourceMapPath) {
     @NonNls StringBuilder argument = new StringBuilder("-javaagent:");
-    final String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(RT.class));
+
+    String path;
+    try {
+      path = AgentJar.extractToTempLocation().getAbsolutePath();
+    }
+    catch (IOException e) {
+      return;
+    }
+    final String agentPath = handleSpacesInAgentPath(path);
     if (agentPath == null) return;
     argument.append(agentPath);
     argument.append("=");

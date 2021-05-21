@@ -18,6 +18,7 @@ import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsLogUtil.jumpToRow
+import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
 import com.intellij.vcsUtil.VcsUtil
@@ -175,11 +176,10 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 }
 
 private fun VcsLogUiEx.jumpToNearestCommit(storage: VcsLogStorage, hash: Hash, root: VirtualFile, silently: Boolean) {
-  jumpTo(hash, { model: GraphTableModel, h: Hash? ->
+  jumpTo(hash, { visiblePack: VisiblePack, h: Hash? ->
     if (!storage.containsCommit(CommitId(h!!, root))) return@jumpTo GraphTableModel.COMMIT_NOT_FOUND
 
     val commitIndex: Int = storage.getCommitIndex(h, root)
-    val visiblePack = model.visiblePack
     var rowIndex = visiblePack.visibleGraph.getVisibleRowIndex(commitIndex)
     if (rowIndex == null) {
       rowIndex = findVisibleAncestorRow(commitIndex, visiblePack)

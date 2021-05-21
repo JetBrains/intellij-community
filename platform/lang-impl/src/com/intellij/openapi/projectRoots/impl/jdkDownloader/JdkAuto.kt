@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.BaseState
@@ -97,7 +98,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
     return object : UnknownSdkLookup {
       val projectWslDistribution by lazy {
-        project?.basePath?.let { WslDistributionManager.getInstance().distributionFromPath(it) }
+        project?.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
       }
 
       val projectInWsl by lazy {

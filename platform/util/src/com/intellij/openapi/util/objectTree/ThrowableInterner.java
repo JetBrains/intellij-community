@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
@@ -27,6 +28,7 @@ import java.util.Objects;
  * 1) too slow and 2) explodes Throwable retained size by polluting Throwable.stackTrace fields.
  */
 @ReviseWhenPortedToJDK("11")
+@ApiStatus.Internal
 public final class ThrowableInterner {
   private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new TObjectHashingStrategy<Throwable>() {
     @Override

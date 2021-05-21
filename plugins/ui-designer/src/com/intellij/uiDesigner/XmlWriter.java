@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.util.containers.BooleanStack;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -36,16 +37,9 @@ import java.util.Stack;
 public final class XmlWriter{
   private static final int INDENT = 2;
 
-  private final Stack<String> myElementNames;
-  private final Stack<Boolean> myElementHasBody;
-  @NonNls private final StringBuffer myBuffer;
-
-  public XmlWriter(){
-    myElementNames = new Stack<>();
-    myElementHasBody = new Stack<>();
-    myBuffer = new StringBuffer();
-    myBuffer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-  }
+  private final Stack<String> myElementNames = new Stack<>();
+  private final BooleanStack myElementHasBody = new BooleanStack();
+  @NonNls private final StringBuffer myBuffer = new StringBuffer("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 
   public String getText(){
     return myBuffer.toString();
@@ -70,11 +64,12 @@ public final class XmlWriter{
   }
 
   public void startElement(@NonNls final String elementName, final String namespace){
-    if (myElementNames.size() > 0) {
-      if(!myElementHasBody.peek().booleanValue()){
+    if (!myElementNames.isEmpty()) {
+      if(!myElementHasBody.peek()){
         myBuffer.append(">\n");
       }
-      myElementHasBody.set(myElementHasBody.size()-1,Boolean.TRUE);
+      myElementHasBody.pop();
+      myElementHasBody.push(true);
     }
 
     writeSpaces(myElementNames.size()*INDENT);
@@ -85,12 +80,12 @@ public final class XmlWriter{
     }
 
     myElementNames.push(elementName);
-    myElementHasBody.push(Boolean.FALSE);
+    myElementHasBody.push(false);
   }
 
   public void endElement() {
     final String elementName = myElementNames.peek();
-    final boolean hasBody = myElementHasBody.peek().booleanValue();
+    final boolean hasBody = myElementHasBody.peek();
 
     myElementNames.pop();
     myElementHasBody.pop();
@@ -138,12 +133,10 @@ public final class XmlWriter{
   public void writeElement(final Element element){
     startElement(element.getName());
     try {
-      for (final Object o1 : element.getAttributes()) {
-        final Attribute attribute = (Attribute)o1;
+      for (final Attribute attribute : element.getAttributes()) {
         addAttribute(attribute.getName(), attribute.getValue());
       }
-      for (final Object o : element.getChildren()) {
-        final Element child = (Element)o;
+      for (final Element child : element.getChildren()) {
         writeElement(child);
       }
     }
@@ -156,9 +149,7 @@ public final class XmlWriter{
    * Helper method
    */
   private void writeSpaces(final int count){
-    for (int i=0; i < count; i++) {
-      myBuffer.append(' ');
-    }
+    myBuffer.append(" ".repeat(count));
   }
 
   public void writeStringDescriptor(final StringDescriptor descriptor,

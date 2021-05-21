@@ -19,6 +19,7 @@ import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -391,7 +392,7 @@ public class MarkerType {
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
-      ClassInheritorsSearch.search(myClass, ReadAction.compute(myClass::getUseScope), true).forEach(
+      ClassInheritorsSearch.search(myClass, ReadAction.compute(() -> PsiSearchHelper.getInstance(myProject).getUseScope(myClass)), true).forEach(
         new CommonProcessors.CollectProcessor<>() {
           @Override
           public boolean process(final PsiClass o) {

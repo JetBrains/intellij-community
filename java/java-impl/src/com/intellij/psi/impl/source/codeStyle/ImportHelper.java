@@ -41,8 +41,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.NotNullList;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
@@ -103,7 +101,7 @@ public final class ImportHelper{
 
     List<Pair<String, Boolean>> resultList = sortItemsAccordingToSettings(names, mySettings);
 
-    final Map<String, Boolean> classesOrPackagesToImportOnDemand = new THashMap<>();
+    final Map<String, Boolean> classesOrPackagesToImportOnDemand = new HashMap<>();
     collectOnDemandImports(resultList, mySettings, classesOrPackagesToImportOnDemand);
 
     MultiMap<String, String> conflictingMemberNames = new MultiMap<>();
@@ -123,7 +121,7 @@ public final class ImportHelper{
     }
 
     Set<String> classesToUseSingle = findSingleImports(file, resultList, classesOrPackagesToImportOnDemand.keySet());
-    Set<String> toReimport = new THashSet<>();
+    Set<String> toReimport = new HashSet<>();
     calcClassesConflictingViaOnDemandImports(file, classesOrPackagesToImportOnDemand, file.getResolveScope(), toReimport);
     classesToUseSingle.addAll(toReimport);
 
@@ -228,7 +226,7 @@ public final class ImportHelper{
 
     List<String> onDemandImportsList = new ArrayList<>(onDemandImports);
     List<PsiClass> onDemandElements = ContainerUtil.map(onDemandImportsList, onDemandName -> facade.findClass(onDemandName, resolveScope));
-    Set<String> namesToUseSingle = new THashSet<>();
+    Set<String> namesToUseSingle = new HashSet<>();
     for (Pair<String, Boolean> pair : names) {
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
@@ -318,7 +316,7 @@ public final class ImportHelper{
     if (onDemands.size() < 2) return;
 
     // if we have classes x.A, x.B and there is an "import x.*" then classNames = {"x" -> ("A", "B")}
-    Map<String, Set<String>> classNames = new THashMap<>();
+    Map<String, Set<String>> classNames = new HashMap<>();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
     for (int i = onDemands.size()-1; i>=0; i--) {
       String onDemand = onDemands.get(i);
@@ -347,12 +345,12 @@ public final class ImportHelper{
       }
     }
 
-    final Set<String> conflicts = new THashSet<>();
+    final Set<String> conflicts = new HashSet<>();
     for (int i = 0; i < onDemands.size(); i++) {
       String on1 = onDemands.get(i);
       for (int j = i+1; j < onDemands.size(); j++) {
         String on2 = onDemands.get(j);
-        Set<String> intersection = new THashSet<>(classNames.get(on1));
+        Set<String> intersection = new HashSet<>(classNames.get(on1));
         intersection.retainAll(classNames.get(on2));
 
         conflicts.addAll(intersection);
@@ -383,7 +381,7 @@ public final class ImportHelper{
   private static StringBuilder buildImportListText(@NotNull List<? extends Pair<String, Boolean>> names,
                                                    @NotNull final Set<String> packagesOrClassesToImportOnDemand,
                                                    @NotNull final Set<String> namesToUseSingle) {
-    final Set<Pair<String, Boolean>> importedPackagesOrClasses = new THashSet<>();
+    final Set<Pair<String, Boolean>> importedPackagesOrClasses = new HashSet<>();
     @NonNls final StringBuilder buffer = new StringBuilder();
     for (Pair<String, Boolean> pair : names) {
       String name = pair.getFirst();
@@ -851,7 +849,7 @@ public final class ImportHelper{
   @NotNull
   // returns list of (name, isImportStatic) pairs
   private static Collection<Pair<String,Boolean>> collectNamesToImport(@NotNull PsiJavaFile file, List<? super PsiElement> comments){
-    Set<Pair<String,Boolean>> names = new THashSet<>();
+    Set<Pair<String,Boolean>> names = new HashSet<>();
 
     final JspFile jspFile = JspPsiUtil.getJspFile(file);
     collectNamesToImport(names, comments, file, jspFile);

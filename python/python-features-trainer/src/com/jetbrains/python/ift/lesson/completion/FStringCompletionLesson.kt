@@ -50,11 +50,11 @@ class FStringCompletionLesson(module: Module)
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-    task("\${my") {
+    task("{my") {
       text(PythonLessonsBundle.message("python.f.string.completion.type.prefix", code(it)))
       runtimeText {
         val prefixTyped = checkExpectedStateOfEditor(sample) { change ->
-          "\${my_car".startsWith(change) && change.startsWith(it)
+          "{my_car".startsWith(change) && change.startsWith(it)
         } == null
         if (prefixTyped) PythonLessonsBundle.message("python.f.string.completion.invoke.manually", action("CodeCompletion")) else null
       }
@@ -63,14 +63,14 @@ class FStringCompletionLesson(module: Module)
       }
       proposeRestore {
         checkExpectedStateOfEditor(sample) { change ->
-          "\${my_car".startsWith(change)
+          "{my_car".startsWith(change)
         }
       }
       test { type(it) }
     }
     task {
       text(PythonLessonsBundle.message("python.f.string.completion.complete.it", code(completionItem), action("EditorChooseLookupItem")))
-      val result = template.replace("<f-place>", "f").replace("<caret>", "\${$completionItem}")
+      val result = template.replace("<f-place>", "f").replace("<caret>", "{$completionItem}")
       restoreByUi()
       stateCheck {
         editor.document.text == result

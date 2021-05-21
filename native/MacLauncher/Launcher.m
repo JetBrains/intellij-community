@@ -77,7 +77,7 @@ BOOL appendBundle(NSString *path, NSMutableArray *sink) {
         NSLog(@"Can't find bundled java.The folder doesn't exist: %@", path);
     }
     else {
-        if ([path hasSuffix:@"jdk"] || [path hasSuffix:@"jre"] || [path hasSuffix:@"jbr"]) { // Android Studio: bundle under "jre"
+        if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"] || [path hasSuffix:@"jbr"]) {
             NSBundle *bundle = [NSBundle bundleWithPath:path];
             if (bundle != nil) {
                 [sink addObject:bundle];
@@ -119,7 +119,7 @@ NSArray *allVms() {
     NSMutableArray *jvmBundlePaths = [NSMutableArray array];
 
     NSBundle *bundle = [NSBundle mainBundle];
-    appendBundle([bundle.bundlePath stringByAppendingPathComponent:@"Contents/jre"], jvmBundlePaths); // Android Studio: bundle under "jre"
+    appendBundle([bundle.bundlePath stringByAppendingPathComponent:@"Contents/jbr"], jvmBundlePaths);
 
     if (jvmBundlePaths.count == 0 || !satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required)) {
         NSLog(@"Can't get bundled java version. It is probably corrupted.");
@@ -321,50 +321,75 @@ NSString *getDefaultFilePath(NSString *fileName) {
     return fullFileName;
 }
 
-NSString *getToolboxVMOptionsPath() {
-    return [NSString stringWithFormat:@"%@.vmoptions", [[NSBundle mainBundle] bundlePath]];
-}
-
-NSString *getApplicationVMOptionsPath() {
-    return getDefaultFilePath([NSString stringWithFormat:@"/bin/%@.vmoptions", getExecutable()]);
-}
-
-NSString *getUserVMOptionsPath() {
-    return [NSString stringWithFormat:@"%@/%@.vmoptions", getPreferencesFolderPath(), getExecutable()];
-}
-
-NSString *getOverrideVMOptionsPath() {
-    NSString *variable = [[getExecutable() uppercaseString] stringByAppendingString:@"_VM_OPTIONS"];
-    NSString *value = [[NSProcessInfo processInfo] environment][variable];
-    NSLog(@"Value of %@ is %@", variable, value);
-    return value == nil ? @"" : value;
-}
-
-// ANDROID STUDIO [START]: parseVMOptions() supports multiple .vmoptions files.
 NSArray *parseVMOptions() {
-    NSArray *files = @[getApplicationVMOptionsPath(),
-                       getUserVMOptionsPath(),
-                       getOverrideVMOptionsPath()];
+    NSString *vmOptionsFile = nil;
+    NSMutableArray *vmOptions = nil;
 
-    NSMutableArray *options = [NSMutableArray array];
-    NSMutableArray *used = [NSMutableArray array];
-
-    for (NSString *file in files) {
-        NSLog(@"Processing VMOptions file at %@", file);
-        NSArray *contents = [VMOptionsReader readFile:file];
-        if (contents != nil) {
-            NSLog(@"Done");
-            [used addObject:file];
-            [options addObjectsFromArray:contents];
-        } else {
-            NSLog(@"No content found");
+    // 1. $<IDE_NAME>_VM_OPTIONS
+    NSString *variable = [[getExecutable() uppercaseString] stringByAppendingString:@"_VM_OPTIONS"];
+    NSString *value = [[[NSProcessInfo processInfo] environment] objectForKey:variable];
+    if (value != nil) {
+        vmOptions = [VMOptionsReader readFile:value];
+        if (vmOptions != nil) {
+            vmOptionsFile = value;
         }
     }
-    [options addObject:[NSString stringWithFormat:@"-Djb.vmOptionsFile=%@", [used componentsJoinedByString:@","]]];
 
-    return options;
+    // 2. <IDE_HOME>.vmoptions || <IDE_HOME>/bin/<bin_name>.vmoptions + <IDE_HOME>.vmoptions (Toolbox)
+    if (vmOptionsFile == nil) {
+        NSString *candidate = [NSString stringWithFormat:@"%@.vmoptions", [[NSBundle mainBundle] bundlePath]];
+        vmOptions = [VMOptionsReader readFile:candidate];
+        if (vmOptions != nil) {
+            vmOptionsFile = candidate;
+            if (![vmOptions containsObject:@"-ea"]) {
+                candidate = getDefaultFilePath([NSString stringWithFormat:@"/bin/%@.vmoptions", getExecutable()]);
+                NSMutableArray *mainOptions = [VMOptionsReader readFile:candidate];
+                if (mainOptions != nil) {
+                    [mainOptions addObjectsFromArray:vmOptions];
+                    vmOptions = mainOptions;
+                }
+            }
+        }
+    }
+
+    // 3. <config_directory>/<bin_name>.vmoptions
+    if (vmOptionsFile == nil) {
+        NSString *candidate = [NSString stringWithFormat:@"%@/%@.vmoptions", getPreferencesFolderPath(), getExecutable()];
+        vmOptions = [VMOptionsReader readFile:candidate];
+        if (vmOptions != nil) {
+            vmOptionsFile = candidate;
+        }
+    }
+
+    // 4. <IDE_HOME>/bin/<bin_name>.vmoptions [+ <config_directory>/user.vmoptions]
+    if (vmOptionsFile == nil) {
+        NSString *candidate = getDefaultFilePath([NSString stringWithFormat:@"/bin/%@.vmoptions", getExecutable()]);
+        vmOptions = [VMOptionsReader readFile:candidate];
+        if (vmOptions != nil) {
+            vmOptionsFile = candidate;
+        }
+        candidate = [NSString stringWithFormat:@"%@/user.vmoptions", getPreferencesFolderPath()];
+        NSMutableArray *userVmOptions = [VMOptionsReader readFile:candidate];
+        if (userVmOptions != nil) {
+            [vmOptions addObjectsFromArray:userVmOptions];
+            vmOptionsFile = candidate;
+        }
+    }
+
+    if (vmOptionsFile != nil) {
+        [vmOptions addObject:[NSString stringWithFormat:@"-Djb.vmOptionsFile=%@", vmOptionsFile]];
+        return vmOptions;
+    }
+    else {
+        NSAlert *alert = [[NSAlert alloc] init];
+        [alert addButtonWithTitle:@"OK"];
+        [alert setMessageText:@"Cannot find VM options file"];
+        [alert setAlertStyle:NSAlertStyleWarning];
+        [alert runModal];
+        [alert release];
+        return nil;
+    }
 }
-// ANDROID STUDIO [END]
 
 NSString *getOverridePropertiesPath() {
     NSString *variable = [[getExecutable() uppercaseString] stringByAppendingString:@"_PROPERTIES"];
@@ -386,7 +411,11 @@ NSString *getOverridePropertiesPath() {
     NSMutableArray *args_array = [NSMutableArray array];
 
     [args_array addObject:classpathOption];
-    [args_array addObjectsFromArray:parseVMOptions()];
+
+    NSArray *vmOptions = parseVMOptions();
+    if (vmOptions != nil) {
+        [args_array addObjectsFromArray:vmOptions];
+    }
 
     NSString *properties = getOverridePropertiesPath();
     if (properties != nil) {

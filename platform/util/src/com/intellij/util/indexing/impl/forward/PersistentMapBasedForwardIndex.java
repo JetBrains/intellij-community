@@ -10,19 +10,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class PersistentMapBasedForwardIndex implements ForwardIndex {
-  @NotNull
-  private volatile PersistentMap<Integer, ByteArraySequence> myPersistentMap;
-  @NotNull
-  private final Path myMapFile;
+  private volatile @NotNull PersistentMap<Integer, ByteArraySequence> myPersistentMap;
+  private final @NotNull Path myMapFile;
   private final boolean myUseChunks;
   private final boolean myReadOnly;
+  private final @Nullable StorageLockContext myStorageLockContext;
 
   public PersistentMapBasedForwardIndex(@NotNull Path mapFile, boolean isReadOnly) throws IOException {
-    this(mapFile, true, isReadOnly);
+    this(mapFile, true, isReadOnly, null);
   }
 
-  public PersistentMapBasedForwardIndex(@NotNull Path mapFile, boolean useChunks, boolean isReadOnly) throws IOException {
-    myPersistentMap = createMap(mapFile, useChunks, isReadOnly);
+  public PersistentMapBasedForwardIndex(@NotNull Path mapFile,
+                                        boolean useChunks,
+                                        boolean isReadOnly,
+                                        @Nullable StorageLockContext storageLockContext) throws IOException {
+    myPersistentMap = createMap(mapFile, useChunks, isReadOnly, storageLockContext);
+    myStorageLockContext = storageLockContext;
     myMapFile = mapFile;
     myUseChunks = useChunks;
     myReadOnly = isReadOnly;
@@ -52,7 +55,7 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
   @Override
   public void clear() throws IOException {
     myPersistentMap.closeAndClean();
-    myPersistentMap = createMap(myMapFile, myUseChunks, myReadOnly);
+    myPersistentMap = createMap(myMapFile, myUseChunks, myReadOnly, myStorageLockContext);
   }
 
   @Override
@@ -65,11 +68,21 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
   }
 
   @NotNull
-  private static PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file, boolean useChunks, boolean isReadOnly) throws IOException {
-    return PersistentMapBuilder
-      .newBuilder(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE)
-      .hasChunks(useChunks)
-      .withReadonly(isReadOnly)
-      .build();
+  private static PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file,
+                                                                     boolean useChunks,
+                                                                     boolean isReadOnly,
+                                                                     @Nullable StorageLockContext storageLockContext) throws IOException {
+    assert PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null || storageLockContext == null;
+    PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext);
+    try {
+      return PersistentMapBuilder
+        .newBuilder(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE)
+        .hasChunks(useChunks)
+        .withReadonly(isReadOnly)
+        .build();
+    }
+    finally {
+      PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove();
+    }
   }
 }

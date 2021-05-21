@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -85,7 +86,7 @@ class JdkInstaller : JdkInstallerBase() {
   }
 
   override fun wslDistributionFromPath(targetDir: Path): WSLDistributionForJdkInstaller? {
-    val d = WslDistributionManager.getInstance().distributionFromPath(targetDir.toString()) ?: return null
+    val d = WslPath.getDistributionByWindowsUncPath(targetDir.toString()) ?: return null
     return wrap(d)
   }
 

@@ -18,7 +18,6 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -70,6 +69,15 @@ object LessonUtil {
   fun TaskContext.restoreIfModifiedOrMoved(sample: LessonSample? = null) {
     proposeRestore {
       checkPositionOfEditor(sample ?: previous.sample)
+    }
+  }
+
+  /**
+   * Checks that user edited sample text, moved caret to any place of editor or changed selection
+   */
+  fun TaskContext.restoreIfModified(sample: LessonSample? = null) {
+    proposeRestore {
+      checkExpectedStateOfEditor(sample ?: previous.sample, false)
     }
   }
 
@@ -203,12 +211,14 @@ fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
-fun TaskContext.toolWindowShowed(toolWindowId: String) {
+fun TaskContext.checkToolWindowState(toolWindowId: String, isShowing: Boolean) {
   addFutureStep {
-    subscribeForMessageBus(ToolWindowManagerListener.TOPIC, object: ToolWindowManagerListener {
-      override fun toolWindowShown(toolWindow: ToolWindow) {
-        if (toolWindow.id == toolWindowId)
+    subscribeForMessageBus(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(toolWindowManager: ToolWindowManager) {
+        val toolWindow = toolWindowManager.getToolWindow(toolWindowId)
+        if (toolWindow == null && !isShowing || toolWindow?.isVisible == isShowing) {
           completeStep()
+        }
       }
     })
   }
