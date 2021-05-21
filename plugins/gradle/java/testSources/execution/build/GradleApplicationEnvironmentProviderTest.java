@@ -134,10 +134,10 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
 
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
-      createBuildScriptBuilder()
+      new GradleBuildScriptBuilderEx()
         .withJavaPlugin()
         .withIdeaPlugin()
-        .withGradleIdeaExtPlugin()
+        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
         .addImport("org.jetbrains.gradle.ext.*")
         .addPostfix(
           "idea {",
