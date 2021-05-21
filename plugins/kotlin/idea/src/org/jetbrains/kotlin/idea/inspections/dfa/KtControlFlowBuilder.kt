@@ -49,6 +49,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         is KtSimpleNameExpression -> processReferenceExpression(expr)
         is KtIfExpression -> processIfExpression(expr)
         is KtWhileExpression -> processWhileExpression(expr)
+        is KtDoWhileExpression -> processDoWhileExpression(expr)
         is KtProperty -> processDeclaration(expr)
         else -> {
             // unsupported construct
@@ -91,6 +92,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
         addInstruction(EvalUnknownInstruction(anchor, 1))
+    }
+
+    private fun processDoWhileExpression(expr: KtDoWhileExpression) {
+        val offset = ControlFlow.FixedOffset(flow.instructionCount)
+        processExpression(expr.body)
+        addInstruction(PopInstruction())
+        processExpression(expr.condition)
+        addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
+        pushUnknown()
+        addInstruction(FinishElementInstruction(expr))
     }
 
     private fun processWhileExpression(expr: KtWhileExpression) {
@@ -240,6 +251,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         // TODO: support overloaded assignment
         addInstruction(SimpleAssignmentInstruction(KotlinExpressionAnchor(expr), factory.varFactory.createVariableValue(descriptor)))
+        addInstruction(FinishElementInstruction(expr))
     }
 
     private fun processShortCircuitExpression(expr: KtBinaryExpression, and: Boolean) {

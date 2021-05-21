@@ -4471,6 +4471,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/declaration.kt");
         }
 
+        @TestMetadata("doWhileStatement.kt")
+        public void testDoWhileStatement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/doWhileStatement.kt");
+        }
+
         @TestMetadata("doubleCompareInt.kt")
         public void testDoubleCompareInt() throws Exception {
             runTest("testData/inspectionsLocal/dfa/doubleCompareInt.kt");
