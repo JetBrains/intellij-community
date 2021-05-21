@@ -76,9 +76,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
     PsiMethod method = (PsiMethod) getPsiElement();
     PsiClass aClass = method.getContainingClass();
     if (method.isConstructor() ||
-        method.hasModifierProperty(PsiModifier.STATIC) ||
         method.hasModifierProperty(PsiModifier.FINAL) ||
-        method.hasModifierProperty(PsiModifier.PRIVATE) ||
         aClass == null ||
         aClass instanceof PsiAnonymousClass ||
         aClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -86,19 +84,21 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
       return null;
     }
 
-    myCbSearchForBase = createCheckbox(JavaBundle.message("find.what.search.for.base.methods.checkbox"),
-                                           getFindUsagesOptions().isSearchForBaseMethod, true);
+    if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      myCbSearchForBase = createCheckbox(JavaBundle.message("find.what.search.for.base.methods.checkbox"),
+                                         getFindUsagesOptions().isSearchForBaseMethod, true);
 
-    JComponent decoratedCheckbox = new ComponentPanelBuilder(myCbSearchForBase).
-      withComment(JavaBundle.message("find.what.search.for.base.methods.checkbox.comment")).createPanel();
-    decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-    findWhatPanel.add(decoratedCheckbox);
+      JComponent decoratedCheckbox = new ComponentPanelBuilder(myCbSearchForBase).
+        withComment(JavaBundle.message("find.what.search.for.base.methods.checkbox.comment")).createPanel();
+      decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+      findWhatPanel.add(decoratedCheckbox);
+    }
 
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       myCbImplementingMethods = addCheckboxToPanel(JavaBundle.message("find.what.implementing.methods.checkbox"),
                                                     getFindUsagesOptions().isImplementingMethods, findWhatPanel, true);
     }
-    else {
+    else if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
       myCbOverridingMethods = addCheckboxToPanel(JavaBundle.message("find.what.overriding.methods.checkbox"),
                                                  getFindUsagesOptions().isOverridingMethods, findWhatPanel, true);
     }
