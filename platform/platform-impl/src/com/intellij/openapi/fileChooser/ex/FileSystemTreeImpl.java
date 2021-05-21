@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -181,7 +181,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   @NotNull
   protected AsyncTreeModel createAsyncTreeModel(@NotNull FileTreeModel fileTreeModel) {
-    return new AsyncTreeModel(fileTreeModel, false, this);
+    return new AsyncTreeModel(fileTreeModel, true, this);
   }
 
   protected AbstractTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel,
