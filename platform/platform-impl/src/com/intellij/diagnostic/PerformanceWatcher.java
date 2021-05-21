@@ -5,6 +5,7 @@ import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -134,6 +135,7 @@ public final class PerformanceWatcher implements Disposable {
               String plugins = StreamEx.of(PluginManagerCore.getLoadedPlugins())
                 .filter(d -> d.isEnabled() && !d.isBundled())
                 .map(PluginInfoDetectorKt::getPluginInfoByDescriptor)
+                .filter(PluginInfo::isSafeToReport)
                 .map(i -> i.getId() + " (" + i.getVersion() + ")")
                 .joining("\n", "Extra plugins:\n", "");
               Attachment pluginsAttachment = new Attachment("plugins.txt", plugins);
