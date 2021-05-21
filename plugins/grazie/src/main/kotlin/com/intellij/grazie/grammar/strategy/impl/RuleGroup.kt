@@ -2,14 +2,12 @@
 package com.intellij.grazie.grammar.strategy.impl
 
 import com.intellij.grazie.utils.LinkedSet
-import org.jetbrains.annotations.ApiStatus
 
 @Suppress("DEPRECATION")
 @Deprecated(
   replaceWith = ReplaceWith("com.intellij.grazie.text.RuleGroup"),
   message = "Use a non-impl class"
 )
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 class RuleGroup(rules: LinkedSet<String>): com.intellij.grazie.text.RuleGroup(rules) {
   constructor(vararg rules: String) : this(LinkedSet<String>(rules.toSet()))
 
@@ -29,6 +27,8 @@ class RuleGroup(rules: LinkedSet<String>): com.intellij.grazie.text.RuleGroup(ru
     /** Rules that are usually disabled for literal strings */
     val LITERALS = CASING + PUNCTUATION
   }
+
+  fun getRules(): LinkedSet<String> = rules as LinkedSet<String>
 
   operator fun plus(other: RuleGroup) = RuleGroup((rules + other.rules) as LinkedSet<String>)
 }
