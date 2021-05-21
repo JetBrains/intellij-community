@@ -112,7 +112,13 @@ class CompositeResolverForModuleFactory(
             yieldAll(getExtensionsProvidersIfAny(moduleInfo, moduleContext, trace))
         }.toList()
 
-        return ResolverForModule(CompositePackageFragmentProvider(packageFragmentProviders), container)
+        return ResolverForModule(
+            CompositePackageFragmentProvider(
+                packageFragmentProviders,
+                "CompositeProvider@CompositeResolver for $moduleDescriptor"
+            ),
+            container
+        )
     }
 
     private fun getCommonProvidersIfAny(
