@@ -12,6 +12,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.incremental.*
+import org.jetbrains.jps.incremental.BuildOperations.deleteRecursively
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.ExitCode.*
 import org.jetbrains.jps.incremental.java.JavaBuilder
 import org.jetbrains.jps.model.JpsProject
@@ -396,6 +397,8 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
             kotlinDirtyFilesHolder.allRemovedFilesFiles
         )
 
+        cleanJsOutputs(context, kotlinChunk, incrementalCaches, kotlinDirtyFilesHolder)
+
         if (LOG.isDebugEnabled) {
             LOG.debug("Compiling files: ${kotlinDirtyFilesHolder.allDirtyFiles}")
         }
@@ -493,6 +496,43 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         }
 
         return OK
+    }
+
+    private fun cleanJsOutputs(
+        context: CompileContext,
+        kotlinChunk: KotlinChunk,
+        incrementalCaches: Map<KotlinModuleBuildTarget<*>, JpsIncrementalCache>,
+        kotlinDirtyFilesHolder: KotlinDirtySourceFilesHolder
+    ) {
+        for (target in kotlinChunk.targets) {
+            val cache = incrementalCaches[target] ?: continue
+
+            if (cache is IncrementalJsCache) {
+                val filesToDelete = mutableListOf<File>()
+                val dirtyFiles = kotlinDirtyFilesHolder.getDirtyFiles(target.jpsModuleBuildTarget).keys
+                val removedFiles = kotlinDirtyFilesHolder.getRemovedFiles(target.jpsModuleBuildTarget)
+
+                for (file: File in dirtyFiles + removedFiles) {
+                    filesToDelete.addAll(cache.getOutputsBySource(file).filter { it !in filesToDelete })
+                }
+
+                if (filesToDelete.isNotEmpty()) {
+                    val deletedForThisSource = mutableSetOf<String>()
+                    val parentDirs = mutableSetOf<File>()
+
+                    for (kjsmFile in filesToDelete) {
+                        deleteRecursively(kjsmFile.path, deletedForThisSource, parentDirs)
+                    }
+
+                    FSOperations.pruneEmptyDirs(context, parentDirs)
+
+                    val logger = context.loggingManager.projectBuilderLogger
+                    if (logger.isEnabled && deletedForThisSource.isNotEmpty()) {
+                        logger.logDeletedFiles(deletedForThisSource)
+                    }
+                }
+            }
+        }
     }
 
     // todo(1.2.80): got rid of ModuleChunk (replace with KotlinChunk)
