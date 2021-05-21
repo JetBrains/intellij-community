@@ -33,32 +33,3 @@ abstract class KotlinQuickFixAction<out T : PsiElement>(element: T) : QuickFixAc
 
     override fun startInWriteAction() = true
 }
-
-abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAction {
-    private val elementPointer = element.createSmartPointer()
-
-    protected val element: T?
-        get() = elementPointer.element
-
-    open val isCrossLanguageFix: Boolean = false
-
-    protected open fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile) = true
-
-    final override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
-            CREATE_BY_PATTERN_MAY_NOT_REFORMAT = true
-        }
-        try {
-            val element = element ?: return false
-            return element.isValid &&
-                    !element.project.isDisposed &&
-                    (file.manager.isInProject(file) || file is KtCodeFragment || (file is KtFile && file.isScript())) &&
-                    (file is KtFile || isCrossLanguageFix) &&
-                    isAvailableImpl(project, editor, file)
-        } finally {
-            CREATE_BY_PATTERN_MAY_NOT_REFORMAT = false
-        }
-    }
-
-    override fun startInWriteAction() = true
-}

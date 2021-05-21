@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 
 abstract class IdePlatformKind<Kind : IdePlatformKind<Kind>> {
     abstract fun supportsTargetPlatform(platform: TargetPlatform): Boolean
@@ -78,3 +77,12 @@ val TargetPlatform.idePlatformKind: IdePlatformKind<*>
             else -> error("Unknown platform $this")
         }
     }
+
+// TODO: replace with firstNotNullOfOrNull
+private inline fun <T, R : Any> Iterable<T>.firstNotNullResult(transform: (T) -> R?): R? {
+    for (element in this) {
+        val result = transform(element)
+        if (result != null) return result
+    }
+    return null
+}
