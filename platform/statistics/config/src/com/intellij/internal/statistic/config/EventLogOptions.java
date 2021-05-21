@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.config;
 
 import com.intellij.internal.statistic.StatisticsStringUtil;
@@ -13,6 +13,9 @@ public final class EventLogOptions {
   public static final String GROUP_ALERT_THRESHOLD = "groupAlertThreshold";
   public static final String MACHINE_ID_SALT = "id_salt";
   public static final String MACHINE_ID_SALT_REVISION = "id_salt_revision";
+  public static final String MACHINE_ID_DISABLED = "disabled";
+  public static final String MACHINE_ID_UNKNOWN = "unknown";
+  public static final int DEFAULT_ID_REVISION = 0;
   private final Map<String, String> myOptions;
 
   public EventLogOptions(Map<String, String> options) { myOptions = options; }

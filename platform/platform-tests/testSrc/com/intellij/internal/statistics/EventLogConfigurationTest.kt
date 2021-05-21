@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT
@@ -12,13 +12,13 @@ import kotlin.test.assertNotEquals
 
 class EventLogConfigurationTest : BasePlatformTestCase() {
   fun testMachineIdRegeneration() {
-    doTestRegenerate({ it.machineIdConfiguration }, hashMapOf(MACHINE_ID_SALT to "newSalt",
-                                                              MACHINE_ID_SALT_REVISION to "2"))
+    doTestRegenerate({ it.machineId }, hashMapOf(MACHINE_ID_SALT to "newSalt",
+                                                 MACHINE_ID_SALT_REVISION to "2"))
   }
 
   fun testNotRegenerateMachineIdForInitialValue() {
-    doTestNotRegenerate({ it.machineIdConfiguration }, hashMapOf(MACHINE_ID_SALT to "",
-                                                                 MACHINE_ID_SALT_REVISION to "0"))
+    doTestNotRegenerate({ it.machineId }, hashMapOf(MACHINE_ID_SALT to "",
+                                                    MACHINE_ID_SALT_REVISION to "0"))
   }
 
   private fun doTestRegenerate(function: (configuration: EventLogRecorderConfiguration) -> Any, values: Map<String, String>) {
