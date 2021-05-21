@@ -212,7 +212,17 @@ open class ArtifactBridge(
       else null
 
       val entity = diff.get(artifactId)
-      diff.addArtifactPropertiesEntity(entity, provider.id, tag, entity.entitySource)
+
+      val existingProperty = entity.customProperties.find { it.providerType == provider.id }
+
+      if (existingProperty == null) {
+        diff.addArtifactPropertiesEntity(entity, provider.id, tag, entity.entitySource)
+      }
+      else {
+        diff.modifyEntity(ModifiableArtifactPropertiesEntity::class.java, existingProperty) {
+          this.propertiesXmlTag = tag
+        }
+      }
     }
   }
 
