@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -406,10 +406,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         }
       }
     }
+
+    UIManager.LookAndFeelInfo laf = null;
     if (lafClassName != null) {
-      return findLaf(lafClassName);
+      laf = findLaf(lafClassName);
     }
-    return null;
+
+    if (laf == null && ("com.intellij.laf.win10.WinIntelliJLaf".equals(lafClassName) ||
+                        "com.intellij.laf.macos.MacIntelliJLaf".equals(lafClassName))) {
+      return defaultLightLaf.getValue();
+    }
+
+    return laf;
   }
 
   @Override
