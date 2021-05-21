@@ -1102,7 +1102,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("innerDeclarationsResolve")
         }
         testClass<AbstractPartialRawFirBuilderTestCase> {
-            model("partialRawBuilder", testMethod = "doRawFirTest")
+            model("partialRawBuilder", testMethodName = "doRawFirTest")
         }
     }
 
@@ -1115,7 +1115,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("idea/idea-fir-performance-tests/tests", "idea/idea-completion/testData") {
         testClass<AbstractHighLevelPerformanceBasicCompletionHandlerTest> {
-            model("handlers/basic", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS_IN_NAME)
+            model("handlers/basic", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
     }*/
 
@@ -1165,9 +1165,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractHighLevelQuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("quickfix/abstract", pattern = pattern)
-            model("quickfix/addExclExclCall", pattern = pattern, filenameStartsLowerCase = true)
-            model("quickfix/addInitializer", pattern = pattern, filenameStartsLowerCase = true)
-            model("quickfix/addPropertyAccessors", pattern = pattern, filenameStartsLowerCase = true)
+            model("quickfix/addExclExclCall", pattern = pattern)
+            model("quickfix/addInitializer", pattern = pattern)
+            model("quickfix/addPropertyAccessors", pattern = pattern)
             model("quickfix/expressions", pattern = pattern)
             model("quickfix/lateinit", pattern = pattern)
             model("quickfix/modifiers", pattern = pattern, isRecursive = false)
@@ -1175,12 +1175,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/replaceWithDotCall", pattern = pattern)
             model("quickfix/replaceWithSafeCall", pattern = pattern)
             model("quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
-            model("quickfix/when", pattern = pattern, filenameStartsLowerCase = true)
-            model("quickfix/wrapWithSafeLetCall", pattern = pattern, filenameStartsLowerCase = true)
+            model("quickfix/when", pattern = pattern)
+            model("quickfix/wrapWithSafeLetCall", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
-            model("quickfix/autoImports", pattern = """^(\w+)\.((before\.Main\.\w+))$""", testMethod = "doTestWithExtraFile")
+            model("quickfix/autoImports", pattern = Patterns.forRegex("""^(\w+)\.((before\.Main\.\w+))$"""), testMethodName = "doTestWithExtraFile")
         }
 
         testClass<AbstractHLInspectionTest> {
@@ -1217,7 +1217,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFirKeywordCompletionHandlerTest> {
-            model("handlers/keywords", pattern = KT_WITHOUT_DOTS_IN_NAME)
+            model("handlers/keywords", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractHighLevelWeigherTest> {
@@ -1229,7 +1229,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFirKeywordCompletionTest> {
-            model("keywords", recursive = false)
+            model("keywords", isRecursive = false)
         }
     }
 
@@ -1255,7 +1255,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("idea/idea-fir-fe10-binding/tests", "idea") {
         testClass<AbstractFe10BindingIntentionTest> {
-            val pattern = "^([\\w\\-_]+)\\.(kt|kts)$"
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/intentions/conventionNameCalls", pattern = pattern)
         }
     }
