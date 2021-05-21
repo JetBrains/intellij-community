@@ -1,5 +1,23 @@
 <html>
 <body>
-Reports mutable local variables (declared with a <code>var</code> keyword) that can be made immutable.
+Reports local variables declared with a <code>var</code> keyword that are never modified.
+<p>Kotlin encourages to declare practically immutable variables with a <code>val</code> keyword, ensuring that their value will never change.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun example() {
+      var primeNumbers = listOf(1, 2, 3, 5, 7, 11, 13)
+      var fibonacciNumbers = listOf(1, 1, 2, 3, 5, 8, 13)
+      print("Same numbers: " + primeNumbers.intersect(fibonacciNumbers))
+  }
+</code></pre>
+<p>A quick-fix is suggested to replace the <code>var</code> keyword with <code>val</code>:</p>
+<pre><code>
+  fun example() {
+      val primeNumbers = listOf(1, 2, 3, 5, 7, 11, 13)
+      val fibonacciNumbers = listOf(1, 1, 2, 3, 5, 8, 13)
+      print("Same numbers: " + primeNumbers.intersect(fibonacciNumbers))
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>
