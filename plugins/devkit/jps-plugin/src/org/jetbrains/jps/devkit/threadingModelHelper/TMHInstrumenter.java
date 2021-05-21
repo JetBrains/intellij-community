@@ -33,7 +33,8 @@ public final class TMHInstrumenter {
       new TMHAssertionGenerator.AssertEdt(),
       new TMHAssertionGenerator.AssertBackgroundThread(),
       new TMHAssertionGenerator.AssertReadAccess(),
-      new TMHAssertionGenerator.AssertWriteAccess()
+      new TMHAssertionGenerator.AssertWriteAccess(),
+      new TMHAssertionGenerator.AssertNoReadAccess()
     ), generateLineNumbers);
   }
 

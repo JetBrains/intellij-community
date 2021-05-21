@@ -22,6 +22,9 @@ public class ApplicationManager {
 
       @Override
       public void assertWriteAccessAllowed() {}
+
+      @Override
+      public void assertReadAccessNotAllowed() {}
     };
   }
 }

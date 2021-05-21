@@ -7,10 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import com.intellij.util.concurrency.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +33,7 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   private static final String READ_ACCESS_ASSERTION_MESSAGE =
     "Read access is allowed from inside read-action (or EDT) only";
   private static final String WRITE_ACCESS_ASSERTION_MESSAGE = "Write access is allowed inside write-action only";
+  private static final String NON_READ_ACCESS_ASSERTION_MESSAGE = "Read access is not allowed";
 
   public void testEdtActionOnEdt() {
     runEdtAction();
@@ -83,6 +81,24 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
     assertThrows(Throwable.class, WRITE_ACCESS_ASSERTION_MESSAGE, () -> waitResult(startInBackground(() -> runWriteAction())));
   }
 
+  public void _testNonReadActionOnEdt() {
+    assertThrows(Throwable.class, NON_READ_ACCESS_ASSERTION_MESSAGE, () -> runNonReadAction());
+  }
+
+  public void _testNonReadActionInBackground() {
+    assertNull(getExecutionException(startInBackground(() -> runNonReadAction())));
+  }
+
+  public void _testNonReadActionInBackgroundWithReadLock() {
+    assertThrows(Throwable.class, NON_READ_ACCESS_ASSERTION_MESSAGE,
+                 () -> waitResult(startInBackground(() -> ReadAction.run(() -> runNonReadAction()))));
+  }
+
+  public void _testNonReadActionInBackgroundWithWriteLock() {
+    assertThrows(Throwable.class, NON_READ_ACCESS_ASSERTION_MESSAGE,
+                 () -> waitResult(startInBackground(() -> WriteAction.run(() -> runNonReadAction()))));
+  }
+
   public void testEdtActionInBackgroundNoAssertion() throws ExecutionException {
     waitResult(startInBackground(() -> runEdtActionNoAssertion()));
   }
@@ -110,6 +126,9 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
 
   @RequiresWriteLock
   private static void runWriteAction() {}
+
+  @RequiresNoReadLock
+  private static void runNonReadAction() {}
 
   @RequiresEdt(generateAssertion = false)
   private static void runEdtActionNoAssertion() {}

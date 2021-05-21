@@ -5,4 +5,5 @@ public interface Application {
     void assertIsNonDispatchThread();
     void assertReadAccessAllowed();
     void assertWriteAccessAllowed();
+    void assertReadAccessNotAllowed();
 }

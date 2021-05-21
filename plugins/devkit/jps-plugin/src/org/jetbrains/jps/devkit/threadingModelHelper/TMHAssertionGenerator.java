@@ -147,4 +147,22 @@ class TMHAssertionGenerator {
       super(annotationClass, applicationManagerClass, applicationClass, new Method("assertWriteAccessAllowed", "()V"));
     }
   }
+
+  static class AssertNoReadAccess extends TMHAssertionGenerator {
+    private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresNoReadLock";
+
+    AssertNoReadAccess() {
+      this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
+    }
+
+    AssertNoReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+      this(Type.getType("L" + annotationClassName + ";"),
+           Type.getType("L" + applicationManagerClassName + ";"),
+           Type.getType("L" + applicationClassName + ";"));
+    }
+
+    AssertNoReadAccess(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
+      super(annotationClass, applicationManagerClass, applicationClass, new Method("assertReadAccessNotAllowed", "()V"));
+    }
+  }
 }
