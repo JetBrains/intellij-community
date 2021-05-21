@@ -2,29 +2,30 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.diagnostics.Diagnostic
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.dropEnclosingParenthesesIfPossible
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtFile
 
-class RemoveUselessElvisFix(element: KtBinaryExpression) : KotlinQuickFixAction<KtBinaryExpression>(element), CleanupFix {
+class RemoveUselessElvisFix(element: KtBinaryExpression) : KotlinPsiOnlyQuickFixAction<KtBinaryExpression>(element), CleanupFix {
     override fun getFamilyName(): String = KotlinBundle.message("remove.useless.elvis.operator")
 
     override fun getText(): String = familyName
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        dropEnclosingParenthesesIfPossible(element.replaced(element.left!!))
+        element.replaced(element.left!!).dropEnclosingParenthesesIfPossible()
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtBinaryExpression>? {
-            val expression = diagnostic.psiElement as? KtBinaryExpression ?: return null
-            return RemoveUselessElvisFix(expression)
+    companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
+            val expression = psiElement as? KtBinaryExpression ?: return emptyList()
+            return listOf(RemoveUselessElvisFix(expression))
         }
     }
 }
