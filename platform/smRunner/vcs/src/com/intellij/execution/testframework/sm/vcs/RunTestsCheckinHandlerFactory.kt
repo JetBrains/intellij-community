@@ -161,7 +161,11 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
           }
         }
       })
-      ProgramRunnerUtil.executeConfigurationAsync(environment, false, true) { onProcessStarted(it, continuation) }
+      ProgramRunnerUtil.executeConfigurationAsync(environment, false, true) {
+        if (it != null) {
+          onProcessStarted(it, continuation)
+        }
+      }
     } ?: return
 
     val form = console.component as? SMTestRunnerResultsForm
