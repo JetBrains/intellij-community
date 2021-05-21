@@ -5,7 +5,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/sealed.kt" />
         <problem_class severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Sealed sub-class without state and overridden equals</problem_class>
-        <description>Sealed sub-class has no state and no overridden equals</description>
+        <description>'sealed' subclass has no state and no overridden 'equals()'</description>
     </problem>
     <problem>
         <file>sealed.kt</file>
@@ -13,7 +13,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/sealed.kt" />
         <problem_class severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Sealed sub-class without state and overridden equals</problem_class>
-        <description>Sealed sub-class has no state and no overridden equals</description>
+        <description>'sealed' subclass has no state and no overridden 'equals()'</description>
     </problem>
     <problem>
         <file>sealed.kt</file>
@@ -21,7 +21,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/sealed.kt" />
         <problem_class severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Sealed sub-class without state and overridden equals</problem_class>
-        <description>Sealed sub-class has no state and no overridden equals</description>
+        <description>'sealed' subclass has no state and no overridden 'equals()'</description>
     </problem>
     <problem>
         <file>sealed.kt</file>
@@ -29,7 +29,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/sealed.kt" />
         <problem_class severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Sealed sub-class without state and overridden equals</problem_class>
-        <description>Sealed sub-class has no state and no overridden equals</description>
+        <description>'sealed' subclass has no state and no overridden 'equals()'</description>
     </problem>
     <problem>
         <file>sealed.kt</file>
@@ -37,7 +37,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/sealed.kt" />
         <problem_class severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Sealed sub-class without state and overridden equals</problem_class>
-        <description>Sealed sub-class has no state and no overridden equals</description>
+        <description>'sealed' subclass has no state and no overridden 'equals()'</description>
     </problem>
     <problem>
         <file>sealed.kt</file>
@@ -45,6 +45,6 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/sealed.kt" />
         <problem_class severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Sealed sub-class without state and overridden equals</problem_class>
-        <description>Sealed sub-class has no state and no overridden equals</description>
+        <description>'sealed' subclass has no state and no overridden 'equals()'</description>
     </problem>
 </problems>
