@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.RESOLVE_PROJECT
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
@@ -42,6 +43,7 @@ class ProjectAware(
     val importSpec = ImportSpecBuilder(project, systemId)
     if (!context.isExplicitReload) {
       importSpec.dontReportRefreshErrors()
+      importSpec.dontNavigateToError()
     }
     if (!ExternalSystemUtil.isTrusted(project, systemId)) {
       importSpec.usePreviewMode()

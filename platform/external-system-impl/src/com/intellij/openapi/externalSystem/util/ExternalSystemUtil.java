@@ -356,6 +356,7 @@ public final class ExternalSystemUtil {
     boolean isPreviewMode = importSpec.isPreviewMode();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
     boolean reportRefreshError = importSpec.isReportRefreshError();
+    ThreeState isNavigateToError = importSpec.isNavigateToError();
 
     File projectFile = new File(externalProjectPath);
     final String projectName;
@@ -499,6 +500,7 @@ public final class ExternalSystemUtil {
                                                ExternalSystemBundle.message("build.event.title.sync"));
                   contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
                   contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
+                  contentDescriptor.setNavigateToError(isNavigateToError);
                   contentDescriptor.setAutoFocusContent(reportRefreshError);
                   return contentDescriptor;
                 })
