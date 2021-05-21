@@ -97,6 +97,6 @@
     <orderEntry type="library" name="zip-signer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.remote.api" exported=""/>
+    <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
   </component>
 </module>
