@@ -154,11 +154,11 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
   private val inProgress = Collections.synchronizedSet(HashSet<InProgressEntry>())
 
-  private fun processNotStarted(environment: ExecutionEnvironment, activity: StructuredIdeActivity?) {
+  private fun processNotStarted(environment: ExecutionEnvironment, activity: StructuredIdeActivity?, e : Throwable? = null) {
     RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.FAILED_TO_START)
     val executorId = environment.executor.id
     inProgress.remove(InProgressEntry(executorId, environment.runner.runnerId))
-    project.messageBus.syncPublisher(EXECUTION_TOPIC).processNotStarted(executorId, environment)
+    project.messageBus.syncPublisher(EXECUTION_TOPIC).processNotStarted(executorId, environment, e)
   }
 
   /**
@@ -221,11 +221,11 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       project.messageBus.syncPublisher(EXECUTION_TOPIC).processStarting(executor.id, environment)
 
       fun handleError(e: Throwable) {
+        processNotStarted(environment, activity, e)
         if (e !is ProcessCanceledException) {
           ProgramRunnerUtil.handleExecutionError(project, environment, e, environment.runProfile)
           LOG.debug(e)
         }
-        processNotStarted(environment, activity)
       }
 
       try {
