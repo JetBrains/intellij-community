@@ -668,6 +668,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("completion-ranking-typescript-exp"),
     jetbrainsLibrary("debugger-memory-agent"),
     jetbrainsLibrary("file-prediction-model"),
+    jetbrainsLibrary("git-learning-project"),
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-markdown"),
     jetbrainsLibrary("intellij-test-discovery"),
