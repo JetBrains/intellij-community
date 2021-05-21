@@ -57,6 +57,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -752,7 +753,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       myOptionsPanel.removeAll();
-      final JPanel severityPanel = new JPanel(new GridBagLayout());
+      JPanel severityPanel = new JPanel(new GridBagLayout());
       final JPanel configPanelAnchor = new JPanel(new GridLayout());
 
       final Set<String> scopesNames = new HashSet<>();
@@ -901,16 +902,12 @@ public class SingleInspectionProfilePanel extends JPanel {
           });
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
-        severityPanel.add(new JBLabel(InspectionsBundle.message("inspection.scopes.and.severities")),
-                          new GridBagConstraints(0, 0, 1, 1, 1.0, 0,
-                                                 GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                 JBUI.insets(0, 0, UIUtil.DEFAULT_VGAP, 10),
-                                                 0, 0));
-        severityPanel.add(panel,
-                          new GridBagConstraints(0, 1, 1, 1, 0, 1.0,
-                                                 GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                 JBUI.insets(0, 0, 0, 0),
-                                                 0, 0));
+        severityPanel = UI.PanelFactory
+          .panel(panel)
+          .withLabel(InspectionsBundle.message("inspection.scopes.and.severities"))
+          .moveLabelOnTop()
+          .resizeY(true)
+          .createPanel();
         severityPanelWeightY = 0.3;
       }
       myOptionsPanel
