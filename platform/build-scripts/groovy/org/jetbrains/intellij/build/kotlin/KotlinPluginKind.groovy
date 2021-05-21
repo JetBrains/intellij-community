@@ -21,6 +21,12 @@ enum KotlinPluginKind {
        Couple.of("artifacts/kotlin-ocswift", "kotlin-ocswift"),
        Couple.of("artifacts/MobilePlugin", "Mobile")
      ]),
+  MI_AC(
+    "AppCodeMobilePlugin",
+    "kotlin.plugin.version",
+    "kotlin-ultimate.appcode-with-mobile",
+    "CIDR-appcode/appcode-kotlin-native/appcode-with-mobile/resources",
+  ),
   AC("AppCodeKotlinPlugin",
      "kotlin.plugin.version",
      "kotlin-ultimate.appcode-native",
