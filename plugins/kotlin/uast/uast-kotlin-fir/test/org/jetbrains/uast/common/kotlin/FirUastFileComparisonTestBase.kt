@@ -7,7 +7,7 @@ package org.jetbrains.uast.common.kotlin
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.test.KtAssert
-import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import java.io.File
 
 interface FirUastFileComparisonTestBase {

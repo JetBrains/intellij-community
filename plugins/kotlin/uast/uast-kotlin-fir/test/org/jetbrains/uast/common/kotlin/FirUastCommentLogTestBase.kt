@@ -5,7 +5,7 @@
 
 package org.jetbrains.uast.common.kotlin
 
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UComment
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.asRecursiveLogString
