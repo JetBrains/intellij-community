@@ -49,7 +49,12 @@ public final class MavenIndicesManager implements Disposable {
 
   private static final String LOCAL_REPOSITORY_ID = "local";
   private final @NotNull Project myProject;
-  private MavenServerDownloadListener myDownloadListener;
+  private MavenServerDownloadListener myDownloadListener = new MavenServerDownloadListener() {
+    @Override
+    public void artifactDownloaded(File file, String relativePath) {
+      addArtifact(file, relativePath);
+    }
+  };
 
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
@@ -109,16 +114,8 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   private boolean doInitIndicesFields() {
-    synchronized (this) {
-      if (myIndices != null) return true;
-    }
+    if (myIndices != null) return true;
     myIndexer = MavenServerManager.getInstance().createIndexer(myProject);
-    myDownloadListener = new MavenServerDownloadListener() {
-      @Override
-      public void artifactDownloaded(File file, String relativePath) {
-        addArtifact(file, relativePath);
-      }
-    };
     MavenServerManager.getInstance().addDownloadListener(myDownloadListener);
 
     myIndices = new MavenIndices(myIndexer, getIndicesDir().toFile(), new MavenSearchIndex.IndexListener() {
@@ -147,7 +144,7 @@ public final class MavenIndicesManager implements Disposable {
     }
   }
 
-  private synchronized void doShutdown() {
+  private void doShutdown() {
     if (myDownloadListener != null) {
       MavenServerManager mavenServerManager = MavenServerManager.getInstanceIfCreated();
       if (mavenServerManager != null) {
