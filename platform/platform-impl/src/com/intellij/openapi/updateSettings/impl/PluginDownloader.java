@@ -187,7 +187,7 @@ public final class PluginDownloader {
 
     // download plugin
     myFile = tryDownloadPlugin(indicator, showMessageOnError);
-    if (myFile != null) {
+    if (myFile != null && ApplicationManager.getApplication() != null) {
       if (Registry.is("marketplace.certificate.signature.check")) {
 
         if (isFromMarketplace()) {
