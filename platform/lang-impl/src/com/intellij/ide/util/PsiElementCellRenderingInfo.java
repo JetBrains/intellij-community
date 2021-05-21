@@ -1,29 +1,41 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.TextWithIcon;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Comparator;
 
 public interface PsiElementCellRenderingInfo<T extends PsiElement> {
 
-  default Icon getIcon(PsiElement element) {
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  default @Nullable Icon getIcon(@NotNull T element) {
     return element.getIcon(0);
   }
 
-  String getElementText(T element);
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @NlsSafe @NotNull String getPresentableText(@NotNull T element);
 
-  String getContainerText(T element, final String name);
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  default @NlsSafe @Nullable String getContainerText(@NotNull T element) {
+    return null;
+  }
 
   static <@NotNull T extends PsiElement>
   @NotNull Comparator<T> getComparator(@NotNull PsiElementCellRenderingInfo<? super T> renderingInfo) {
     return Comparator.comparing(element -> ReadAction.compute(() -> {
-      String elementText = renderingInfo.getElementText(element);
-      String containerText = renderingInfo.getContainerText(element, elementText);
+      String elementText = renderingInfo.getPresentableText(element);
+      String containerText = renderingInfo.getContainerText(element);
       TextWithIcon moduleTextWithIcon = PsiElementListCellRenderer.getModuleTextWithIcon(element);
       return (containerText == null ? elementText : elementText + " " + containerText) +
              (moduleTextWithIcon != null ? moduleTextWithIcon.getText() : "");

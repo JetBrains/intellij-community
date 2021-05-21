@@ -1,12 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtil.FormatMethodOptions;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -27,14 +31,18 @@ public final class PsiMethodRenderingInfo implements PsiElementCellRenderingInfo
   }
 
   @Override
-  public Icon getIcon(PsiElement element) {
-    return PsiElementCellRenderingInfo.super.getIcon(myShowMethodNames ? element : fetchContainer((PsiMethod)element));
+  public @Nullable Icon getIcon(@NotNull PsiMethod element) {
+    return myShowMethodNames
+           ? PsiElementCellRenderingInfo.super.getIcon(element)
+           : fetchContainer(element).getIcon(0);
   }
 
   @Override
-  public String getElementText(PsiMethod element) {
+  public @NotNull String getPresentableText(@NotNull PsiMethod element) {
     final PsiNamedElement container = fetchContainer(element);
-    String text = container instanceof PsiClass ? PsiClassRenderingInfo.INSTANCE.getElementText((PsiClass)container) : container.getName();
+    String text = container instanceof PsiClass
+                  ? PsiClassRenderingInfo.INSTANCE.getPresentableText((PsiClass)container)
+                  : container.getName();
     if (myShowMethodNames) {
       text += "." + PsiFormatUtil.formatMethod(element, PsiSubstitutor.EMPTY, myOptions, PsiFormatUtilBase.SHOW_TYPE);
     }
@@ -42,7 +50,7 @@ public final class PsiMethodRenderingInfo implements PsiElementCellRenderingInfo
   }
 
   @Override
-  public String getContainerText(PsiMethod element, String name) {
+  public @Nullable String getContainerText(@NotNull PsiMethod element) {
     return PsiClassRenderingInfo.getContainerTextStatic(element);
   }
 

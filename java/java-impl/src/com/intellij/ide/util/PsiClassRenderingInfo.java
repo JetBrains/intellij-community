@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.psi.PsiClass;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Internal
@@ -17,12 +18,12 @@ public final class PsiClassRenderingInfo implements PsiElementCellRenderingInfo<
   private PsiClassRenderingInfo() { }
 
   @Override
-  public String getElementText(PsiClass element) {
+  public @NotNull String getPresentableText(@NotNull PsiClass element) {
     return ClassPresentationUtil.getNameForClass(element, false);
   }
 
   @Override
-  public String getContainerText(PsiClass element, String name) {
+  public @Nullable String getContainerText(@NotNull PsiClass element) {
     return getContainerTextStatic(element);
   }
 
