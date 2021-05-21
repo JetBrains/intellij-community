@@ -7,9 +7,9 @@ import javax.swing.*;
 
 public class DelegatingPsiElementCellRenderer<T extends PsiElement> extends PsiElementListCellRenderer<T> {
 
-  private final PsiElementCellRenderingInfo<? super T> myRenderingInfo;
+  private final PsiElementRenderingInfo<? super T> myRenderingInfo;
 
-  public DelegatingPsiElementCellRenderer(PsiElementCellRenderingInfo<? super T> info) {
+  public DelegatingPsiElementCellRenderer(PsiElementRenderingInfo<? super T> info) {
     myRenderingInfo = info;
   }
 

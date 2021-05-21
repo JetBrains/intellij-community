@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -232,7 +232,7 @@ public class MarkerType {
       return !isAbstract || aClass == null ? null : getFunctionalImplementationTooltip(aClass);
     }
 
-    Comparator<PsiMethod> comparator = PsiElementCellRenderingInfo.getComparator(new PsiMethodRenderingInfo(false));
+    Comparator<PsiMethod> comparator = PsiElementRenderingInfo.getComparator(new PsiMethodRenderingInfo(false));
     Arrays.sort(overridings, comparator);
 
     return getImplementationTooltip(isAbstract ? "Is implemented in" : "Is overridden in", overridings);
@@ -302,7 +302,7 @@ public class MarkerType {
     PsiClass[] subclasses = processor.toArray(PsiClass.EMPTY_ARRAY);
     if (subclasses.length == 0) return getFunctionalImplementationTooltip(aClass);
 
-    Comparator<PsiClass> comparator = PsiElementCellRenderingInfo.getComparator(PsiClassRenderingInfo.INSTANCE);
+    Comparator<PsiClass> comparator = PsiElementRenderingInfo.getComparator(PsiClassRenderingInfo.INSTANCE);
     Arrays.sort(subclasses, comparator);
 
     return getImplementationTooltip(aClass.isInterface() ? "Is implemented by" : "Is subclassed by", subclasses);

@@ -14,7 +14,7 @@ import javax.swing.*;
 
 public class MethodOrFunctionalExpressionCellRenderer extends DelegatingPsiElementCellRenderer<NavigatablePsiElement> {
   public static class MethodOrFunctionalExpressionCellRenderingInfo
-    implements PsiElementCellRenderingInfo<NavigatablePsiElement> {
+    implements PsiElementRenderingInfo<NavigatablePsiElement> {
     private final PsiMethodRenderingInfo myMethodCellRenderer;
 
     public MethodOrFunctionalExpressionCellRenderingInfo(boolean showMethodNames, @PsiFormatUtil.FormatMethodOptions int options) {
@@ -35,7 +35,7 @@ public class MethodOrFunctionalExpressionCellRenderer extends DelegatingPsiEleme
 
     @Override
     public @Nullable Icon getIcon(@NotNull NavigatablePsiElement element) {
-      return element instanceof PsiMethod ? myMethodCellRenderer.getIcon((PsiMethod)element) : PsiElementCellRenderingInfo.super.getIcon(element);
+      return element instanceof PsiMethod ? myMethodCellRenderer.getIcon((PsiMethod)element) : PsiElementRenderingInfo.super.getIcon(element);
     }
   }
 

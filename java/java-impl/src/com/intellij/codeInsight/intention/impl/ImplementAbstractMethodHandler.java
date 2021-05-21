@@ -6,8 +6,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.PsiClassRenderingInfo;
-import com.intellij.ide.util.PsiElementCellRenderingInfo;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -171,10 +171,10 @@ public class ImplementAbstractMethodHandler {
   }
 
   private static class MyPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
-    private final PsiElementCellRenderingInfo<PsiClass> myInfo = PsiClassRenderingInfo.INSTANCE;
+    private final PsiElementRenderingInfo<PsiClass> myInfo = PsiClassRenderingInfo.INSTANCE;
 
     void sort(PsiElement[] result) {
-      final Comparator<PsiClass> comparator = PsiElementCellRenderingInfo.getComparator(myInfo);
+      final Comparator<PsiClass> comparator = PsiElementRenderingInfo.getComparator(myInfo);
       Arrays.sort(result, (o1, o2) -> {
         if (o1 instanceof PsiEnumConstant && o2 instanceof PsiEnumConstant) {
           return ((PsiEnumConstant)o1).getName().compareTo(((PsiEnumConstant)o2).getName());

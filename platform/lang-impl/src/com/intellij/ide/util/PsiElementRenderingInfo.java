@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Comparator;
 
-public interface PsiElementCellRenderingInfo<T extends PsiElement> {
+public interface PsiElementRenderingInfo<T extends PsiElement> {
 
   @RequiresReadLock
   @RequiresBackgroundThread
@@ -32,7 +32,7 @@ public interface PsiElementCellRenderingInfo<T extends PsiElement> {
   }
 
   static <@NotNull T extends PsiElement>
-  @NotNull Comparator<T> getComparator(@NotNull PsiElementCellRenderingInfo<? super T> renderingInfo) {
+  @NotNull Comparator<T> getComparator(@NotNull PsiElementRenderingInfo<? super T> renderingInfo) {
     return Comparator.comparing(element -> ReadAction.compute(() -> {
       String elementText = renderingInfo.getPresentableText(element);
       String containerText = renderingInfo.getContainerText(element);

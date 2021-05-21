@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Internal
-public final class PsiClassRenderingInfo implements PsiElementCellRenderingInfo<PsiClass> {
+public final class PsiClassRenderingInfo implements PsiElementRenderingInfo<PsiClass> {
 
-  public static final PsiElementCellRenderingInfo<PsiClass> INSTANCE = new PsiClassRenderingInfo();
+  public static final PsiElementRenderingInfo<PsiClass> INSTANCE = new PsiClassRenderingInfo();
 
   private PsiClassRenderingInfo() { }
 

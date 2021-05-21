@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 @Internal
-public final class PsiMethodRenderingInfo implements PsiElementCellRenderingInfo<PsiMethod> {
+public final class PsiMethodRenderingInfo implements PsiElementRenderingInfo<PsiMethod> {
 
   private final boolean myShowMethodNames;
   @FormatMethodOptions
@@ -33,7 +33,7 @@ public final class PsiMethodRenderingInfo implements PsiElementCellRenderingInfo
   @Override
   public @Nullable Icon getIcon(@NotNull PsiMethod element) {
     return myShowMethodNames
-           ? PsiElementCellRenderingInfo.super.getIcon(element)
+           ? PsiElementRenderingInfo.super.getIcon(element)
            : fetchContainer(element).getIcon(0);
   }
 
