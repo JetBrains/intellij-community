@@ -153,7 +153,7 @@ public class RendererTestGenerated extends AbstractRendererTest {
 
     @TestMetadata("vararg.kt")
     public void testVararg() throws Exception {
-        runTest("idea/idea-frontend-fir/testData/components/declarationRenderer/vararg.kt");
+        runTest("testData/components/declarationRenderer/vararg.kt");
     }
 
     @TestMetadata("where.kt")
