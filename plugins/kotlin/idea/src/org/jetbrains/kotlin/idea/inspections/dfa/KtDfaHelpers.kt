@@ -88,22 +88,20 @@ internal fun relationFromToken(token: IElementType): RelationType? = when (token
     else -> null
 }
 
-internal fun mathOpFromToken(token: IElementType, ref: KtOperationReferenceExpression): LongRangeBinOp? =
-    when (token) {
-        KtTokens.PLUS -> LongRangeBinOp.PLUS
-        KtTokens.MINUS -> LongRangeBinOp.MINUS
-        KtTokens.MUL -> LongRangeBinOp.MUL
-        KtTokens.DIV -> LongRangeBinOp.DIV
-        KtTokens.PERC -> LongRangeBinOp.MOD
-        else -> when (ref.text) {
-            "and" -> LongRangeBinOp.AND
-            "or" -> LongRangeBinOp.OR
-            "xor" -> LongRangeBinOp.XOR
-            "shl" -> LongRangeBinOp.SHL
-            "shr" -> LongRangeBinOp.SHR
-            "ushr" -> LongRangeBinOp.USHR
-            else -> null
-        }
+internal fun mathOpFromToken(ref: KtOperationReferenceExpression): LongRangeBinOp? =
+    when (ref.text) {
+        "+" -> LongRangeBinOp.PLUS
+        "-" -> LongRangeBinOp.MINUS
+        "*" -> LongRangeBinOp.MUL
+        "/" -> LongRangeBinOp.DIV
+        "%" -> LongRangeBinOp.MOD
+        "and" -> LongRangeBinOp.AND
+        "or" -> LongRangeBinOp.OR
+        "xor" -> LongRangeBinOp.XOR
+        "shl" -> LongRangeBinOp.SHL
+        "shr" -> LongRangeBinOp.SHR
+        "ushr" -> LongRangeBinOp.USHR
+        else -> null
     }
 
 internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = when(token) {

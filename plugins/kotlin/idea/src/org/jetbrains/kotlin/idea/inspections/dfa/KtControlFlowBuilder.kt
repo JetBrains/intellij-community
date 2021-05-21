@@ -16,6 +16,7 @@ import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.containers.FList
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -130,10 +131,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processBinaryRelationExpression(expr, relation, token == KtTokens.EXCLEQ || token == KtTokens.EQEQ)
             return
         }
-        val mathOp = mathOpFromToken(token, expr.operationReference)
-        if (mathOp != null) {
-            processMathExpression(expr, mathOp)
-            return
+        val leftType = expr.left?.getKotlinType()
+        if (leftType != null && KotlinBuiltIns.isPrimitiveTypeOrNullablePrimitiveType(leftType)) {
+            val mathOp = mathOpFromToken(expr.operationReference)
+            if (mathOp != null) {
+                processMathExpression(expr, mathOp)
+                return
+            }
         }
         if (token === KtTokens.ANDAND || token === KtTokens.OROR) {
             processShortCircuitExpression(expr, token === KtTokens.ANDAND)
@@ -143,9 +147,27 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processAssignmentExpression(expr)
             return
         }
+        if (token === KtTokens.ELVIS) {
+            processNullSafeOperator(expr)
+            return
+        }
         // TODO: support other operators
         broken = true
     }
+
+    private fun processNullSafeOperator(expr: KtBinaryExpression) {
+        processExpression(expr.left)
+        addInstruction(DupInstruction())
+        val offset = DeferredOffset()
+        addInstruction(ConditionalGotoInstruction(offset, DfTypes.NULL))
+        val endOffset = DeferredOffset()
+        addInstruction(GotoInstruction(endOffset))
+        setOffset(offset)
+        addInstruction(PopInstruction())
+        processExpression(expr.right)
+        setOffset(endOffset)
+    }
+
 
     private fun processAssignmentExpression(expr: KtBinaryExpression) {
         val left = expr.left
@@ -208,7 +230,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addImplicitConversion(right, resultType)
         }
         addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
-        // TODO: support overloaded operators
     }
 
     private fun addImplicitConversion(expression: KtExpression?, expectedType: KotlinType?) {
