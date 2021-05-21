@@ -317,9 +317,8 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
         @TestMetadata("importNullableTraitWithGenerics.before.Main.kt")
         public void testImportNullableTraitWithGenerics() throws Exception {
-            runTest("idea/testData/quickfix/autoImports/importNullableTraitWithGenerics.before.Main.kt");
+            runTest("testData/quickfix/autoImports/importNullableTraitWithGenerics.before.Main.kt");
         }
-
 
         @TestMetadata("ImportOperatorInvokeWithConvention.before.Main.kt")
         public void testImportOperatorInvokeWithConvention() throws Exception {
@@ -513,7 +512,7 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
         @TestMetadata("noImportForPrivateFunction.before.Main.kt")
         public void testNoImportForPrivateFunction() throws Exception {
-            runTest("idea/testData/quickfix/autoImports/noImportForPrivateFunction.before.Main.kt");
+            runTest("testData/quickfix/autoImports/noImportForPrivateFunction.before.Main.kt");
         }
 
         @TestMetadata("noImportInImports.before.Main.kt")
