@@ -67,9 +67,8 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     catch (ExecutionException e) {
       throw new IOException("Failed to run " + commandLine.getCommandLineString(), e);
     }
-    // Additional optimisation if locale is en_*
-    if (output.getExitCode() != 0 &&
-        output.getStdout().startsWith("Windows Subsystem for Linux has no installed distributions.")) {
+    // Windows Subsystem for Linux has no installed distributions
+    if (output.getExitCode() != 0 && output.getStdout().endsWith("https://aka.ms/wslstore")) {
       return Collections.emptyList();
     }
     if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
