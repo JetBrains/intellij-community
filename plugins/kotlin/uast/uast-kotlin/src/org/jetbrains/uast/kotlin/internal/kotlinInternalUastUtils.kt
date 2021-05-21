@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationArgumentVisitor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
@@ -69,6 +70,10 @@ import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
 import java.text.StringCharacterIterator
 
+val kotlinUastPlugin: UastLanguagePlugin by lz {
+    UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
+        ?: KotlinUastLanguagePlugin()
+}
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun String?.orAnonymous(kind: String = ""): String =
