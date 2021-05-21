@@ -50,8 +50,7 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
   }
 
   @Override
-  public @Nullable List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions()
-    throws IOException, IllegalStateException {
+  public @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions() throws IOException, IllegalStateException {
     checkEdtAndReadAction();
     Path wslExe = WSLDistribution.findWslExe();
     if (wslExe == null) {
@@ -72,13 +71,7 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
       return Collections.emptyList();
     }
     if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
-      String details = StringUtil.join(ContainerUtil.newArrayList(
-        "timeout: " + output.isTimeout(),
-        "exitCode: " + output.getExitCode(),
-        "stdout: " + output.getStdout(),
-        "stderr: " + output.getStderr()
-      ), ", ");
-      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + details);
+      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output);
     }
     return parseWslVerboseListOutput(output.getStdoutLines());
   }
@@ -138,13 +131,7 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
       throw new IOException("Failed to run " + commandLine.getCommandLineString(), e);
     }
     if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
-      String details = StringUtil.join(ContainerUtil.newArrayList(
-        "timeout: " + output.isTimeout(),
-        "exitCode: " + output.getExitCode(),
-        "stdout: " + output.getStdout(),
-        "stderr: " + output.getStderr()
-      ), ", ");
-      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + details);
+      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output);
     }
     List<@NlsSafe String> msIds = ContainerUtil.filter(output.getStdoutLines(true), distribution -> {
       return !INTERNAL_DISTRIBUTIONS.contains(distribution);
