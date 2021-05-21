@@ -1233,10 +1233,11 @@ public class JBUI {
         private static final Color FOREGROUND = JBColor.namedColor("List.selectionForeground", Label.foreground(true));
 
         public static @NotNull Color background(boolean focused) {
-          if (focused && UIUtil.isUnderDefaultMacTheme()) {
-            double alpha = getInt("List.selectedItemAlpha", 75);
-            if (0 <= alpha && alpha < 100) return ColorUtil.mix(Color.WHITE, BACKGROUND, alpha / 100.0);
-          }
+          //todo[kb] remove?
+          //if (focused && UIUtil.isUnderDefaultMacTheme()) {
+          //  double alpha = getInt("List.selectedItemAlpha", 75);
+          //  if (0 <= alpha && alpha < 100) return ColorUtil.mix(Color.WHITE, BACKGROUND, alpha / 100.0);
+          //}
           return focused ? BACKGROUND : Inactive.BACKGROUND;
         }
 
