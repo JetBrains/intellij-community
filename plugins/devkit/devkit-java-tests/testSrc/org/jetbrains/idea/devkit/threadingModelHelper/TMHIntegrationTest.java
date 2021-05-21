@@ -40,7 +40,7 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
     runEdtAction();
   }
 
-  public void _testEdtActionInBackground() {
+  public void testEdtActionInBackground() {
     Throwable exception = getExecutionException(startInBackground(() -> runEdtAction()));
     assertNotNull(exception);
     assertUserMessageContains(exception, EDT_ASSERTION_MESSAGE);
@@ -50,51 +50,51 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
    * This test doesn't fail because {@link Application#assertIsNonDispatchThread()} does nothing in the unit test mode.
    * Still the test assures that the method exists.
    */
-  public void _testBackgroundActionOnEdt() {
+  public void testBackgroundActionOnEdt() {
     runBackgroundAction();
   }
 
-  public void _testBackgroundActionInBackground() {
+  public void testBackgroundActionInBackground() {
     assertNull(getExecutionException(startInBackground(() -> runBackgroundAction())));
   }
 
-  public void _testReadActionOnEdt() {
+  public void testReadActionOnEdt() {
     runReadAction();
   }
 
-  public void _testReadActionInBackgroundWithReadLock() {
+  public void testReadActionInBackgroundWithReadLock() {
     assertNull(getExecutionException(startInBackground(() -> ReadAction.run(() -> runReadAction()))));
   }
 
-  public void _testReadActionInBackground() {
+  public void testReadActionInBackground() {
     assertThrows(Throwable.class, READ_ACCESS_ASSERTION_MESSAGE, () -> waitResult(startInBackground(() -> runReadAction())));
   }
 
-  public void _testWriteActionOnEdtWithWriteLock() {
+  public void testWriteActionOnEdtWithWriteLock() {
     WriteAction.run(() -> runWriteAction());
   }
 
-  public void _testWriteActionOnEdt() {
+  public void testWriteActionOnEdt() {
     assertThrows(Throwable.class, WRITE_ACCESS_ASSERTION_MESSAGE, () -> runWriteAction());
   }
 
-  public void _testWriteActionInBackground() {
+  public void testWriteActionInBackground() {
     assertThrows(Throwable.class, WRITE_ACCESS_ASSERTION_MESSAGE, () -> waitResult(startInBackground(() -> runWriteAction())));
   }
 
-  public void _testEdtActionInBackgroundNoAssertion() throws ExecutionException {
+  public void testEdtActionInBackgroundNoAssertion() throws ExecutionException {
     waitResult(startInBackground(() -> runEdtActionNoAssertion()));
   }
 
-  public void _testBackgroundActionOnEdtNoAssertion() {
+  public void testBackgroundActionOnEdtNoAssertion() {
     runBackgroundActionNoAssertion();
   }
 
-  public void _testReadActionInBackgroundNoAssertion() throws ExecutionException {
+  public void testReadActionInBackgroundNoAssertion() throws ExecutionException {
     waitResult(startInBackground(() -> runReadActionNoAssertion()));
   }
 
-  public void _testWriteActionInBackgroundNoAssertion() throws ExecutionException {
+  public void testWriteActionInBackgroundNoAssertion() throws ExecutionException {
     waitResult(startInBackground(() -> runWriteActionNoAssertion()));
   }
 
