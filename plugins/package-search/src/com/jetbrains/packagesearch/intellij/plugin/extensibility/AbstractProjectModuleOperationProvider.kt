@@ -8,16 +8,12 @@ import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 
 abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationProvider {
 
-    override fun addDependencyToProject(
+    override fun addDependencyToModule(
         operationMetadata: DependencyOperationMetadata,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
         val dependency = UnifiedDependency(
             operationMetadata.groupId,
@@ -28,18 +24,18 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
 
         try {
             runWriteAction {
-                DependencyModifierService.getInstance(project).declaredDependencies(operationMetadata.module.nativeModule)
+                DependencyModifierService.getInstance(module.nativeModule.project).declaredDependencies(operationMetadata.module.nativeModule)
                     .firstOrNull {
                         it.coordinates.groupId == dependency.coordinates.groupId &&
                             it.coordinates.artifactId == dependency.coordinates.artifactId
                     }
                     ?.also {
-                        DependencyModifierService.getInstance(project).updateDependency(
+                        DependencyModifierService.getInstance(module.nativeModule.project).updateDependency(
                             operationMetadata.module.nativeModule, it.unifiedDependency,
                             dependency
                         )
                     }
-                    ?: DependencyModifierService.getInstance(project)
+                    ?: DependencyModifierService.getInstance(module.nativeModule.project)
                         .addDependency(operationMetadata.module.nativeModule, dependency)
             }
             return emptyList()
@@ -48,10 +44,9 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
         }
     }
 
-    override fun removeDependencyFromProject(
+    override fun removeDependencyFromModule(
         operationMetadata: DependencyOperationMetadata,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
         val dependency = UnifiedDependency(
             operationMetadata.groupId,
@@ -62,7 +57,7 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
 
         try {
             runWriteAction {
-                DependencyModifierService.getInstance(project).removeDependency(operationMetadata.module.nativeModule, dependency)
+                DependencyModifierService.getInstance(module.nativeModule.project).removeDependency(operationMetadata.module.nativeModule, dependency)
             }
             return emptyList()
         } catch (e: Exception) {
@@ -70,10 +65,9 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
         }
     }
 
-    override fun updateDependencyInProject(
+    override fun updateDependencyInModule(
         operationMetadata: DependencyOperationMetadata,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
         val oldDependency = UnifiedDependency(
             operationMetadata.groupId,
@@ -90,7 +84,7 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
 
         try {
             runWriteAction {
-                DependencyModifierService.getInstance(project)
+                DependencyModifierService.getInstance(module.nativeModule.project)
                     .updateDependency(operationMetadata.module.nativeModule, oldDependency, newDependency)
             }
             return emptyList()
@@ -99,26 +93,16 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
         }
     }
 
-    override fun listDependenciesInProject(project: Project, virtualFile: VirtualFile): Collection<UnifiedDependency> = runReadAction {
-        ModuleUtilCore.findModuleForFile(virtualFile, project)
-            ?.let {
-                DependencyModifierService.getInstance(project)
-                    .declaredDependencies(it)
-                    .map { dep -> dep.unifiedDependency }
-            } ?: emptyList()
+    override fun listDependenciesInModule(module: ProjectModule): Collection<UnifiedDependency> = runReadAction {
+        DependencyModifierService.getInstance(module.nativeModule.project)
+            .declaredDependencies(module.nativeModule)
+            .map { dep -> dep.unifiedDependency }
     }
 
-    override fun addRepositoryToProject(
-        repository: UnifiedDependencyRepository,
-        project: Project,
-        virtualFile: VirtualFile
-    ): List<OperationFailure<out OperationItem>> {
-        val module = runReadAction { ModuleUtilCore.findModuleForFile(virtualFile, project) }
-            ?: return listOf(OperationFailure(OperationType.ADD, repository, IllegalArgumentException()))
-
+    override fun addRepositoryToModule(repository: UnifiedDependencyRepository, module: ProjectModule): List<OperationFailure<out OperationItem>> {
         try {
             runWriteAction {
-                DependencyModifierService.getInstance(project).addRepository(module, repository)
+                DependencyModifierService.getInstance(module.nativeModule.project).addRepository(module.nativeModule, repository)
             }
             return emptyList()
         } catch (e: Exception) {
@@ -126,17 +110,13 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
         }
     }
 
-    override fun removeRepositoryFromProject(
+    override fun removeRepositoryFromModule(
         repository: UnifiedDependencyRepository,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
-        val module = runReadAction { ModuleUtilCore.findModuleForFile(virtualFile, project) }
-            ?: return listOf(OperationFailure(OperationType.ADD, repository, IllegalArgumentException()))
-
         try {
             runWriteAction {
-                DependencyModifierService.getInstance(project).deleteRepository(module, repository)
+                DependencyModifierService.getInstance(module.nativeModule.project).deleteRepository(module.nativeModule, repository)
             }
             return emptyList()
         } catch (e: Exception) {
@@ -144,9 +124,7 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
         }
     }
 
-    override fun listRepositoriesInProject(project: Project, virtualFile: VirtualFile): Collection<UnifiedDependencyRepository> = runReadAction {
-        ModuleUtilCore.findModuleForFile(virtualFile, project)
-            ?.let { DependencyModifierService.getInstance(project).declaredRepositories(it) }
-            ?: emptyList()
+    override fun listRepositoriesInModule(module: ProjectModule): Collection<UnifiedDependencyRepository> = runReadAction {
+        DependencyModifierService.getInstance(module.nativeModule.project).declaredRepositories(module.nativeModule)
     }
 }

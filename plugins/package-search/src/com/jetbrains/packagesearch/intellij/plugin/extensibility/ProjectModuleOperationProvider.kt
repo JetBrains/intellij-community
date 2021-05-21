@@ -6,11 +6,9 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleOperationProvider
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Extension point that allows to modify the dependencies of a specific project.
@@ -54,70 +52,63 @@ interface ProjectModuleOperationProvider {
     fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean
 
     /**
-     * Adds a dependency to the given [project] using [operationMetadata] by modifying the given [virtualFile].
+     * Adds a dependency to the given [module] using [operationMetadata].
      * @return A list containing all failures encountered during the operation. If the list is empty, the operation was successful.
      */
-    fun addDependencyToProject(
+    fun addDependencyToModule(
         operationMetadata: DependencyOperationMetadata,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>>
 
     /**
-     * Removes a dependency from the given [project] using [operationMetadata] by modifying the given [virtualFile].
+     * Removes a dependency from the given [module] using [operationMetadata].
      * @return A list containing all failures encountered during the operation. If the list is empty, the operation was successful.
      */
-    fun removeDependencyFromProject(
+    fun removeDependencyFromModule(
         operationMetadata: DependencyOperationMetadata,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>>
 
     /**
-     * Modify a dependency in the given [project] using [operationMetadata] by modifying the given [virtualFile].
+     * Modify a dependency in the given [module] using [operationMetadata].
      * @return A list containing all failures encountered during the operation. If the list is empty, the operation was successful.
      */
-    fun updateDependencyInProject(
+    fun updateDependencyInModule(
         operationMetadata: DependencyOperationMetadata,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>>
 
     /**
-     * Lists all dependencies in the given [virtualFile] in the given [project].
+     * Lists all dependencies in the given [module].
      * @return A [Collection]<[UnifiedDependency]> found in the project.
      */
-    fun listDependenciesInProject(
-        project: Project,
-        virtualFile: VirtualFile
+    fun listDependenciesInModule(
+        module: ProjectModule
     ): Collection<UnifiedDependency>
 
     /**
-     * Adds the [repository] to the given [project] by modifying the given [virtualFile].
+     * Adds the [repository] to the given [module].
      * @return A list containing all failures encountered during the operation. If the list is empty, the operation was successful.
      */
-    fun addRepositoryToProject(
+    fun addRepositoryToModule(
         repository: UnifiedDependencyRepository,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>>
 
     /**
-     * Removes the [repository] from the given [project] by modifying the given [virtualFile].
+     * Removes the [repository] from the given [module].
      * @return A list containing all failures encountered during the operation. If the list is empty, the operation was successful.
      */
-    fun removeRepositoryFromProject(
+    fun removeRepositoryFromModule(
         repository: UnifiedDependencyRepository,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>>
 
     /**
-     * Lists all repositories in the given [virtualFile] in the given [project].
+     * Lists all repositories in the given [module].
      * @return A [Collection]<[UnifiedDependencyRepository]> found the project.
      */
-    fun listRepositoriesInProject(
-        project: Project,
-        virtualFile: VirtualFile
+    fun listRepositoriesInModule(
+        module: ProjectModule
     ): Collection<UnifiedDependencyRepository>
 }

@@ -3,11 +3,11 @@ package com.jetbrains.packagesearch.intellij.plugin.extensions.gradle
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.packageSearchGradleConfigurationForProject
 
@@ -30,28 +30,26 @@ internal open class GradleProjectModuleOperationProvider : AbstractProjectModule
     override fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean =
         projectModuleType is GradleProjectModuleType
 
-    override fun addDependencyToProject(
+    override fun addDependencyToModule(
         operationMetadata: DependencyOperationMetadata,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
         requireNotNull(operationMetadata.newScope) {
             PackageSearchBundle.getMessage("packagesearch.packageoperation.error.gradle.missing.configuration")
         }
-        saveAdditionalScopeToConfigurationIfNeeded(project, operationMetadata.newScope)
+        saveAdditionalScopeToConfigurationIfNeeded(module.nativeModule.project, operationMetadata.newScope)
 
-        return super.addDependencyToProject(operationMetadata, project, virtualFile)
+        return super.addDependencyToModule(operationMetadata, module)
     }
 
-    override fun removeDependencyFromProject(
+    override fun removeDependencyFromModule(
         operationMetadata: DependencyOperationMetadata,
-        project: Project,
-        virtualFile: VirtualFile
+        module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
         requireNotNull(operationMetadata.currentScope) {
             PackageSearchBundle.getMessage("packagesearch.packageoperation.error.gradle.missing.configuration")
         }
-        return super.removeDependencyFromProject(operationMetadata, project, virtualFile)
+        return super.removeDependencyFromModule(operationMetadata, module)
     }
 
     private fun saveAdditionalScopeToConfigurationIfNeeded(project: Project, scopeName: String) {

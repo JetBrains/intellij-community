@@ -88,7 +88,7 @@ internal class PackageSearchDataService(
 
     private val dataProvider = ProjectDataProvider(PackageSearchApiClient(ServerURLs.base))
     private val operationFactory = PackageSearchOperationFactory()
-    private val operationExecutor = ModuleOperationExecutor(project)
+    private val operationExecutor = ModuleOperationExecutor()
     private val operationFailureRenderer = OperationFailureRenderer()
 
     private var knownRepositoriesRemoteInfo = listOf<ApiRepository>()
@@ -401,7 +401,7 @@ internal class PackageSearchDataService(
         logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
 
         ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-            ?.listDependenciesInProject(project, buildFile)
+            ?.listDependenciesInModule(this)
             ?.toList()
             ?: emptyList()
     }
@@ -496,7 +496,7 @@ internal class PackageSearchDataService(
 
     private fun ProjectModule.declaredRepositories(): List<UnifiedDependencyRepository> = runReadAction {
         val declaredRepositories = (ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-            ?.listRepositoriesInProject(project, buildFile)
+            ?.listRepositoriesInModule(this)
             ?.toList()
             ?: emptyList())
 
