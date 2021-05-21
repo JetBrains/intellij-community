@@ -1002,7 +1002,7 @@
     <rename.inplace.resolveSnapshotProvider language="JAVA" implementationClass="com.intellij.refactoring.rename.inplace.JavaResolveSnapshotProvider"/>
     <renameHandler implementation="com.intellij.refactoring.rename.DirectoryAsPackageRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.RenameWrongRefHandler"/>
-    <gotoTargetRendererProvider implementation="com.intellij.codeInsight.navigation.JavaGotoTargetRendererProvider"/>
+    <gotoTargetPresentationProvider implementation="com.intellij.codeInsight.navigation.JavaGotoTargetPresentationProvider"/>
     <typeDeclarationProvider implementation="com.intellij.codeInsight.navigation.actions.JavaTypeDeclarationProvider"/>
     <navbar implementation="com.intellij.ide.navigationToolbar.JavaNavBarExtension"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler"/>
