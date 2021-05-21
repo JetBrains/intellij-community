@@ -22,9 +22,7 @@ public abstract class KotlinTrySurrounderBase extends KotlinStatementsSurrounder
 
     @Nullable
     @Override
-    protected TextRange surroundStatements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement container,
-            @NotNull PsiElement[] statements)
-    {
+    protected TextRange surroundStatements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement container, @NotNull PsiElement[] statements) {
         statements = MoveDeclarationsOutHelperKt.move(container, statements, true);
 
         if (statements.length == 0) {
@@ -45,7 +43,6 @@ public abstract class KotlinTrySurrounderBase extends KotlinStatementsSurrounder
         container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
         tryExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(tryExpression);
-        if (tryExpression == null) return null;
 
         return getTextRangeForCaret(tryExpression);
     }
