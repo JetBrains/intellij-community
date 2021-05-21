@@ -25,28 +25,6 @@ public class StatementParser {
 
   private static final TokenSet TRY_CLOSERS_SET = TokenSet.create(JavaTokenType.CATCH_KEYWORD, JavaTokenType.FINALLY_KEYWORD);
 
-  // Indicator tokens that may be used only with expression when yield considered as reference
-  // not all of them - LPARENTH also may indicate expression, but with condition
-  private static final TokenSet YIELD_EXPR_INDICATOR_TOKENS = TokenSet.create(
-    JavaTokenType.DOT, JavaTokenType.DOUBLE_COLON,
-    JavaTokenType.EQ, JavaTokenType.NE,
-    JavaTokenType.GT, JavaTokenType.GE, JavaTokenType.LT, JavaTokenType.LE,
-    // + and - may be prefix in yield, so they are not here
-    JavaTokenType.PLUSEQ,
-    JavaTokenType.MINUSEQ,
-    JavaTokenType.ASTERISK, JavaTokenType.ASTERISKEQ,
-    JavaTokenType.DIV, JavaTokenType.DIVEQ,
-    JavaTokenType.PERC, JavaTokenType.PERCEQ,
-    JavaTokenType.XOR, JavaTokenType.XOREQ,
-    JavaTokenType.OR, JavaTokenType.OREQ,
-    JavaTokenType.AND, JavaTokenType.ANDEQ,
-    JavaTokenType.LTLT, JavaTokenType.LTLTEQ,
-    JavaTokenType.GTGT, JavaTokenType.GTGTEQ,
-    JavaTokenType.GTGTGT, JavaTokenType.GTGTGTEQ,
-    JavaTokenType.QUEST,
-    JavaTokenType.LBRACKET
-  );
-
   private final JavaParser myParser;
 
   public StatementParser(@NotNull JavaParser javaParser) {
