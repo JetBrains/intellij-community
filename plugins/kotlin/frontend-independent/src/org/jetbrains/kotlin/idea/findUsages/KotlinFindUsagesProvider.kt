@@ -39,7 +39,7 @@ open class KotlinFindUsagesProviderBase : FindUsagesProvider {
         }
     }
 
-    protected val KtDeclaration.containerDescription: String?
+    val KtDeclaration.containerDescription: String?
         get() {
             containingClassOrObject?.let { return getDescriptiveName(it) }
             (parent as? KtFile)?.parent?.let { return getDescriptiveName(it) }

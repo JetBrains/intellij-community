@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.JComponent
 
 class BooleanLiteralArgumentInspection(

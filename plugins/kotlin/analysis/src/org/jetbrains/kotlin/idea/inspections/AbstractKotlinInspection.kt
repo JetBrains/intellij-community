@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 
 abstract class AbstractKotlinInspection : LocalInspectionTool() {
-    protected fun ProblemsHolder.registerProblemWithoutOfflineInformation(
+    fun ProblemsHolder.registerProblemWithoutOfflineInformation(
         element: PsiElement,
         description: String,
         isOnTheFly: Boolean,
@@ -23,7 +23,7 @@ abstract class AbstractKotlinInspection : LocalInspectionTool() {
         registerProblemWithoutOfflineInformation(element, description, isOnTheFly, highlightType, null, *fixes)
     }
 
-    protected fun ProblemsHolder.registerProblemWithoutOfflineInformation(
+    fun ProblemsHolder.registerProblemWithoutOfflineInformation(
         element: PsiElement,
         description: String,
         isOnTheFly: Boolean,
