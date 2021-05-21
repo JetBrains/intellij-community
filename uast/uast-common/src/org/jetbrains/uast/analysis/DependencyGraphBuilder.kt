@@ -204,12 +204,16 @@ internal class DependencyGraphBuilder private constructor(
     }
   }
 
-  override fun visitLocalVariable(node: ULocalVariable): Boolean = checkedDepthCall(node) {
+  override fun visitVariable(node: UVariable): Boolean = checkedDepthCall(node) {
+    if (node !is ULocalVariable && !(node is UParameter && node.uastParent is UMethod)) {
+      return@checkedDepthCall super.visitVariable(node)
+    }
+
     ProgressManager.checkCanceled()
     node.uastInitializer?.accept(this)
-    val name = node.name
+    val name = node.name ?: return@checkedDepthCall super.visitVariable(node)
     currentScope.declare(node)
-    val initializer = node.uastInitializer ?: return@checkedDepthCall super.visitLocalVariable(node)
+    val initializer = node.uastInitializer ?: return@checkedDepthCall super.visitVariable(node)
     val initElements = initializer.extractBranchesResultAsDependency().inlineElementsIfPossible().elements
     currentScope[name] = initElements
     updatePotentialEqualReferences(name, initElements)
@@ -386,12 +390,12 @@ internal class DependencyGraphBuilder private constructor(
   // Ignore field nodes
   override fun visitField(node: UField): Boolean = true
 
-  override fun visitMethod(node: UMethod): Boolean {
-    for (uastParameter in node.uastParameters) {
-      currentScope.declare(uastParameter)
-    }
-    return super.visitMethod(node)
-  }
+  //override fun visitMethod(node: UMethod): Boolean {
+  //  for (uastParameter in node.uastParameters) {
+  //    currentScope.declare(uastParameter)
+  //  }
+  //  return super.visitMethod(node)
+  //}
 
   private fun inlineCall(selector: UExpression, parent: UElement?): Set<UExpression> {
     val call = selector as? UCallExpression ?: return emptySet()
