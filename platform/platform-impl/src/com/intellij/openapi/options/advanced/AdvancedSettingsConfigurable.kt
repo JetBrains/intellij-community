@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.advanced
 
  import com.intellij.ide.ui.search.SearchUtil
@@ -8,10 +8,12 @@ package com.intellij.openapi.options.advanced
  import com.intellij.openapi.options.UiDslConfigurable
  import com.intellij.openapi.util.NlsSafe
  import com.intellij.ui.CollectionComboBoxModel
+ import com.intellij.ui.ColorUtil
  import com.intellij.ui.DocumentAdapter
  import com.intellij.ui.SearchTextField
  import com.intellij.ui.layout.*
  import com.intellij.util.Alarm
+ import com.intellij.util.ui.JBUI
  import com.intellij.util.ui.UIUtil
  import javax.swing.*
  import javax.swing.event.DocumentEvent
@@ -143,13 +145,20 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
     val visibleGroupPanels = mutableSetOf<JPanel>()
     for (settingsRow in settingsRows) {
       val textWords = searchableOptionsRegistrar.getProcessedWords(settingsRow.text)
-      val matches = textWords.containsAll(filterWords) || searchText in settingsRow.id
+      val textMatches = textWords.containsAll(filterWords)
+      val idMatches = searchText in settingsRow.id
+      val matches = textMatches || idMatches
       settingsRow.row.visible = matches
       settingsRow.row.subRowsVisible = matches
       if (matches) {
         settingsRow.groupPanel.isVisible = true
         visibleGroupPanels.add(settingsRow.groupPanel)
-        updateMatchText(settingsRow.component, settingsRow.text, searchText)
+        val idColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.ContextHelp.FOREGROUND)
+        val baseText = if (idMatches && !textMatches)
+          """${settingsRow.text}<br><pre><font color="$idColor">${settingsRow.id}"""
+        else
+          settingsRow.text
+        updateMatchText(settingsRow.component, baseText, searchText)
       }
     }
     for (groupPanel in groupPanels) {
