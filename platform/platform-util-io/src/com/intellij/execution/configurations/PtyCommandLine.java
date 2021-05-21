@@ -39,7 +39,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     return Registry.is(RUN_PROCESSES_WITH_PTY);
   }
 
-  private final PtyCommandLineOptions.Builder myOptionsBuilder = new PtyCommandLineOptions.Builder().consoleMode(true);
+  private final PtyCommandLineOptions.Builder myOptionsBuilder = PtyCommandLineOptions.DEFAULT.builder().consoleMode(true);
   private boolean myWindowsAnsiColorEnabled = !Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode");
   private boolean myUnixOpenTtyToPreserveOutputAfterTermination = true;
 
@@ -56,7 +56,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   }
 
   public boolean isConsoleMode() {
-    return myOptionsBuilder.getConsoleMode();
+    return myOptionsBuilder.consoleMode();
   }
 
   public PtyCommandLine withInitialColumns(int initialColumns) {

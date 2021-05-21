@@ -10,19 +10,19 @@ class PtyCommandLineOptions private constructor(val consoleMode: Boolean,
     return "consoleMode=$consoleMode, useCygwinLaunch=$useCygwinLaunch, initialColumns=$initialColumns, initialRows=$initialRows"
   }
 
-  class Builder() {
-    var consoleMode: Boolean = false
-      private set
-    var useCygwinLaunch = false
-      private set
-    var initialColumns = -1
-      private set
-    var initialRows = -1
-      private set
+  fun builder(): Builder {
+    return Builder(consoleMode, useCygwinLaunch, initialColumns, initialRows)
+  }
 
-    constructor(options: PtyCommandLineOptions) : this() {
-      set(options)
-    }
+  companion object {
+    @JvmField
+    val DEFAULT = PtyCommandLineOptions(false, false, -1, -1)
+  }
+
+  class Builder internal constructor(private var consoleMode: Boolean,
+                                     private var useCygwinLaunch: Boolean,
+                                     private var initialColumns: Int,
+                                     private var initialRows: Int) {
 
     /**
      * @param consoleMode `true` means that started process output will be shown using `ConsoleViewImpl`:
@@ -32,17 +32,25 @@ class PtyCommandLineOptions private constructor(val consoleMode: Boolean,
      * `false` means that started process output will be shown using `TerminalExecutionConsole` that is based on a terminal emulator.
      */
     fun consoleMode(consoleMode: Boolean) = apply { this.consoleMode = consoleMode }
+    fun consoleMode() = consoleMode
     fun useCygwinLaunch(useCygwinLaunch: Boolean) = apply { this.useCygwinLaunch = useCygwinLaunch }
+    fun useCygwinLaunch() = useCygwinLaunch
     fun initialColumns(initialColumns: Int) = apply { this.initialColumns = initialColumns }
+    fun initialColumns() = initialColumns
     fun initialRows(initialRows: Int) = apply { this.initialRows = initialRows }
+    fun initialRows() = initialRows
 
     fun build() = PtyCommandLineOptions(consoleMode, useCygwinLaunch, initialColumns, initialRows)
 
-    fun set(options: PtyCommandLineOptions) {
+    fun set(options: PtyCommandLineOptions) = apply {
       consoleMode = options.consoleMode
       useCygwinLaunch = options.useCygwinLaunch
       initialColumns = options.initialColumns
       initialRows = options.initialRows
+    }
+
+    override fun toString(): String {
+      return "consoleMode=$consoleMode, useCygwinLaunch=$useCygwinLaunch, initialColumns=$initialColumns, initialRows=$initialRows"
     }
   }
 }
