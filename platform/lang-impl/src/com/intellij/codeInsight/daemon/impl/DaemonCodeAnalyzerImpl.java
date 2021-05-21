@@ -973,7 +973,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     app.assertIsDispatchThread();
 
     // editors in modal context
-    List<Editor> editors = myEditorTracker.getActiveEditors();
+    List<? extends Editor> editors = myEditorTracker.getActiveEditors();
     Collection<FileEditor> activeTextEditors;
     if (editors.isEmpty()) {
       activeTextEditors = Collections.emptyList();
