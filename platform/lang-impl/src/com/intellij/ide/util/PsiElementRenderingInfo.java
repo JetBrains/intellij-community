@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
+import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
@@ -40,5 +41,10 @@ public interface PsiElementRenderingInfo<T extends PsiElement> {
       return (containerText == null ? elementText : elementText + " " + containerText) +
              (moduleTextWithIcon != null ? moduleTextWithIcon.getText() : "");
     }));
+  }
+
+  static <T extends PsiElement>
+  @NotNull TargetPresentation targetPresentation(@NotNull T element, @NotNull PsiElementRenderingInfo<? super T> renderingInfo) {
+    return PsiElementListCellRenderer.targetPresentation(element, renderingInfo);
   }
 }
