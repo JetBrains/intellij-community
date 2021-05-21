@@ -84,7 +84,7 @@ public final class DfaPsiUtil {
       return Nullability.UNKNOWN;
     }
 
-    if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
+    if (owner instanceof PsiEnumConstant) {
       return Nullability.NOT_NULL;
     }
     if (owner instanceof PsiMethod && isEnumPredefinedMethod((PsiMethod)owner)) {
