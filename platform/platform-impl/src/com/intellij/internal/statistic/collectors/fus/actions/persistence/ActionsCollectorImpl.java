@@ -222,9 +222,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
     // we try to avoid as many problems as possible, because
     // 1. non-async dataContext can fail due to advanced event-count, or freeze EDT on slow GetDataRules
     // 2. async dataContext can fail due to slow GetDataRules prohibition on EDT
-    DataContext dataContext = Utils.isAsyncDataContext(event.getDataContext()) ?
-                              Utils.freezeDataContext(event.getDataContext(), null) :
-                              DataContext.EMPTY_CONTEXT;
+    DataContext dataContext = dataId -> Utils.getRawDataIfCached(event.getDataContext(), dataId);
 
     Language hostFileLanguage = getHostFileLanguage(dataContext, project);
     data.add(EventFields.CurrentFile.with(hostFileLanguage));

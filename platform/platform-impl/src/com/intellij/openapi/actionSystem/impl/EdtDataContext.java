@@ -142,6 +142,11 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     return null;
   }
 
+  @Nullable Object getRawDataIfCached(@NotNull String dataId) {
+    Object data = myCachedData.get(dataId);
+    return data == NullResult.INSTANCE ? null : data;
+  }
+
   @Override
   public <T> @Nullable T getUserData(@NotNull Key<T> key) {
     return myUserData.get().get(key);

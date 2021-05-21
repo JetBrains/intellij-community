@@ -128,6 +128,11 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
     return answer;
   }
 
+  @Nullable Object getRawDataIfCached(@NotNull String dataId) {
+    Object data = myCachedData.get(dataId);
+    return data == NullResult.Initial || data == NullResult.Final ? null : data;
+  }
+
   static {
     for (KeyedLazyInstance<GetDataRule> instance : GetDataRule.EP_NAME.getExtensionList()) {
       DataKey.create(instance.getKey()); // initialize data keys with rules
