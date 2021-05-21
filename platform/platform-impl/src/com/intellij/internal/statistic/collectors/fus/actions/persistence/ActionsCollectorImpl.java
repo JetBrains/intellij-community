@@ -29,13 +29,10 @@ import java.awt.event.InputEvent;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class ActionsCollectorImpl extends ActionsCollector {
   public static final String DEFAULT_ID = "third.party";
 
-  private static final ActionsBuiltInAllowedlist ourAllowedlist = ActionsBuiltInAllowedlist.getInstance();
+  private static final ActionsBuiltInAllowedlist ourAllowedList = ActionsBuiltInAllowedlist.getInstance();
   private static final Map<AnActionEvent, Stats> ourStats = ContainerUtil.createWeakMap();
 
   @Override
@@ -45,7 +42,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   /** @noinspection unused*/
   public static void recordCustomActionInvoked(@Nullable Project project, @Nullable String actionId, @Nullable InputEvent event, @NotNull Class<?> context) {
-    String recorded = StringUtil.isNotEmpty(actionId) && ourAllowedlist.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
+    String recorded = StringUtil.isNotEmpty(actionId) && ourAllowedList.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
     ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(project, recorded, new FusInputEvent(event, null));
   }
 
@@ -91,8 +88,10 @@ public class ActionsCollectorImpl extends ActionsCollector {
   public static @NotNull List<@NotNull EventPair<?>> actionEventData(@NotNull AnActionEvent event) {
     List<EventPair<?>> data = new ArrayList<>();
     data.add(EventFields.InputEvent.with(FusInputEvent.from(event)));
-    data.add(EventFields.ActionPlace.with(event.getPlace()));
-    data.add(ActionsEventLogGroup.CONTEXT_MENU.with(event.isFromContextMenu()));
+
+    String place = event.getPlace();
+    data.add(EventFields.ActionPlace.with(place));
+    data.add(ActionsEventLogGroup.CONTEXT_MENU.with(ActionPlaces.isPopupPlace(place)));
     return data;
   }
 
@@ -145,27 +144,27 @@ public class ActionsCollectorImpl extends ActionsCollector {
       return action.getClass().getName();
     }
     if (actionId == null) {
-      actionId = ourAllowedlist.getDynamicActionId(action);
+      actionId = ourAllowedList.getDynamicActionId(action);
     }
     return actionId != null ? actionId : action.getClass().getName();
   }
 
   public static boolean canReportActionId(@NotNull String actionId) {
-    return ourAllowedlist.isAllowedActionId(actionId);
+    return ourAllowedList.isAllowedActionId(actionId);
   }
 
   @Override
   public void onActionConfiguredByActionId(@NotNull AnAction action, @NotNull String actionId) {
-    ourAllowedlist.registerDynamicActionId(action, actionId);
+    ourAllowedList.registerDynamicActionId(action, actionId);
   }
 
   /** @noinspection unused*/
   public static void onActionLoadedFromXml(@NotNull AnAction action, @NotNull String actionId, @Nullable IdeaPluginDescriptor plugin) {
-    ourAllowedlist.addActionLoadedFromXml(actionId, plugin);
+    ourAllowedList.addActionLoadedFromXml(actionId, plugin);
   }
 
   public static void onActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {
-    ourAllowedlist.addActionsLoadedFromKeymapXml(keymap, actionIds);
+    ourAllowedList.addActionsLoadedFromKeymapXml(keymap, actionIds);
   }
 
   /** @noinspection unused*/
@@ -174,7 +173,6 @@ public class ActionsCollectorImpl extends ActionsCollector {
     ourStats.put(event, stats);
   }
 
-  /** @noinspection unused*/
   public static void onAfterActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
     Stats stats = ourStats.remove(event);
     long durationMillis = stats != null ? TimeoutUtil.getDurationMillis(stats.start) : -1;
