@@ -148,9 +148,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     @Override
     public void addNotify() {
       super.addNotify();
+      //noinspection RedundantSuppression
       if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
         long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
-        //noinspection HardCodedStringLiteral
+        //noinspection HardCodedStringLiteral, UnresolvedPluginConfigReference
         new Notification("", "Context menu invocation took " + time + "ms", NotificationType.INFORMATION).notify(null);
       }
     }
