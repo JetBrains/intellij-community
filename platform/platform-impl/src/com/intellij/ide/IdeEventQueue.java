@@ -899,7 +899,7 @@ public final class IdeEventQueue extends EventQueue {
       maybeReady();
       KeyEvent ke = e instanceof KeyEvent ? (KeyEvent)e : null;
       boolean consumed = ke == null || ke.isConsumed();
-      if (e instanceof MouseEvent && ((MouseEvent)e).isPopupTrigger()) {
+      if (e instanceof MouseEvent && (((MouseEvent)e).isPopupTrigger() || e.getID() == MouseEvent.MOUSE_PRESSED)) {
         myPopupTriggerTime = System.currentTimeMillis();
       }
       super.dispatchEvent(e);
