@@ -8,11 +8,11 @@ import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceRes
 import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.internal.statistic.utils.getPluginInfoById
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 
@@ -47,14 +47,14 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
     private val PLUGIN_REMOVED = EVENT_GROUP.registerEvent("plugin.was.removed", EventFields.PluginInfo)
 
     @JvmStatic
-    fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) = THIRD_PARTY_ACCEPTANCE_CHECK.log(result)
+    fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) = THIRD_PARTY_ACCEPTANCE_CHECK.getIfInitializedOrNull()?.log(result)
 
     @JvmStatic
     fun pluginsStateChanged(project: Project?, pluginIds: List<PluginId>, action: PluginEnableDisableAction) = pluginIds
-      .forEach { PLUGIN_STATE_CHANGED.log(project, getPluginInfoById(it), action) }
+      .forEach { PLUGIN_STATE_CHANGED.getIfInitializedOrNull()?.log(project, getPluginInfoById(it), action) }
 
     @JvmStatic
-    fun pluginRemoved(pluginId: PluginId) = PLUGIN_REMOVED.log(getPluginInfoById(pluginId))
+    fun pluginRemoved(pluginId: PluginId) = PLUGIN_REMOVED.getIfInitializedOrNull()?.log(getPluginInfoById(pluginId))
 
     @JvmStatic
     fun pluginInstallationStarted(
@@ -63,21 +63,19 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
       previousVersion: String? = null
     ) {
       val pluginInfo = getPluginInfoByDescriptor(descriptor)
-      PLUGIN_INSTALLATION_STARTED.log(source, pluginInfo, if (pluginInfo.isSafeToReport()) previousVersion else null)
+      PLUGIN_INSTALLATION_STARTED.getIfInitializedOrNull()?.log(source, pluginInfo, if (pluginInfo.isSafeToReport()) previousVersion else null)
     }
 
     @JvmStatic
     fun pluginInstallationFinished(descriptor: IdeaPluginDescriptor) = getPluginInfoByDescriptor(descriptor).let {
-      PLUGIN_INSTALLATION_FINISHED.log(it)
+      PLUGIN_INSTALLATION_FINISHED.getIfInitializedOrNull()?.log(it)
     }
 
-    fun signatureCheckResult(descriptor: IdeaPluginDescriptor, result: SignatureVerificationResult) = PLUGIN_SIGNATURE_CHECK_RESULT.log(
-      getPluginInfoByDescriptor(descriptor), result
-    )
+    fun signatureCheckResult(descriptor: IdeaPluginDescriptor, result: SignatureVerificationResult) =
+      PLUGIN_SIGNATURE_CHECK_RESULT.getIfInitializedOrNull()?.log(getPluginInfoByDescriptor(descriptor), result)
 
-    fun signatureWarningShown(descriptor: IdeaPluginDescriptor, result: DialogAcceptanceResultEnum) = PLUGIN_SIGNATURE_WARNING.log(
-      getPluginInfoByDescriptor(descriptor), result
-    )
+    fun signatureWarningShown(descriptor: IdeaPluginDescriptor, result: DialogAcceptanceResultEnum) =
+      PLUGIN_SIGNATURE_WARNING.getIfInitializedOrNull()?.log(getPluginInfoByDescriptor(descriptor), result)
   }
 
   private data class PluginVersionEventField(override val name: String): PrimitiveEventField<String?>() {
@@ -91,3 +89,6 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
     }
   }
 }
+
+// We don't want to log actions when app did not initialized yet (e.g. migration process)
+private fun <T: BaseEventId> T.getIfInitializedOrNull(): T? = if (ApplicationManager.getApplication() == null) null else this
