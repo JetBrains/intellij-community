@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.OpenFileHyperlinkInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -13,58 +15,66 @@ import java.util.stream.Collectors;
 public class MavenConsoleFilterProviderTest extends CodeInsightFixtureTestCase {
 
   private Filter @NotNull [] filters;
+  private String javaFilePath;
+  private String ktFilePath;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     filters = new MavenConsoleFilterProvider().getDefaultFilters(myFixture.getProject());
+    javaFilePath = myFixture.configureByText("main.java",
+                                             "public class Test {ff\n" +
+                                             "    public static void main(String[] args) {}\n" +
+                                             "}")
+      .getVirtualFile()
+      .getCanonicalPath();
+
+    ktFilePath = myFixture.configureByText("main.kt",
+                                           "fun main(args: Array<String>) {ff\n" +
+                                           "}")
+      .getVirtualFile()
+      .getCanonicalPath();
   }
 
   public void testMavenFilterKtOk() {
-    assertSuccess("[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt: (1, 32) Unresolved reference: ff", 8, 61);
+    assertSuccess("[ERROR] " + getFilePath(ktFilePath) + ": (1, 32) Unresolved reference: ff", ktFilePath, getStartOffset(8));
   }
 
   public void testMavenFilterJavaOk() {
-    assertSuccess("[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt:[1,32] Unresolved reference: ff", 8, 61);
+    assertSuccess("[ERROR] " + getFilePath(ktFilePath) + ":[1,32] Unresolved reference: ff", ktFilePath, getStartOffset(8));
   }
 
   public void testMavenFilterJavaOk2() {
-    assertSuccess("[ERROR] /home/IdeaProjects/demo/src/main/java/com/example/demo/DemoApplication.java:[9,1]" +
-                  " class, interface, or enum expected", 8, 83);
+    assertSuccess("[ERROR] " + getFilePath(javaFilePath) + ":[9,1] class, interface, or enum expected", javaFilePath, getStartOffset(8));
   }
 
   public void testMavenFilterKtBad() {
-    assertError("[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt: [1,32] Unresolved reference: ff");
+    assertError("[ERROR] " + getFilePath(ktFilePath) + ": [1,32] Unresolved reference: ff");
   }
 
   public void testMavenFilterKtBad2() {
-    assertError("[ERROR] /home/IdeaProjects/jb/kt-demo/src/main/kotlin/main.kt:(1,32) Unresolved reference: ff");
+    assertError("[ERROR] " + getFilePath(ktFilePath) + ":(1,32) Unresolved reference: ff");
   }
 
-  public void testMavenFilterJavaWinOk() {
-    assertSuccess("[ERROR] /C:/Users/Admin/IdeaProjects/test/src/main/java/test/Test.java:[2,1] class, interface, or enum expected", 9, 70);
+  private static String getFilePath(String path) {
+    return (SystemInfo.isWindows) ? "/" + path : path;
   }
 
-  public void testMavenFilterJavaWinBad() {
-    assertError("[ERROR] /C:/Users/Admin/IdeaProjects/test/src/main/java/test/Test.java: [2,1] class, interface, or enum expected");
+  private static int getStartOffset(int offset) {
+    return (SystemInfo.isWindows) ? offset + 1 : offset;
   }
 
-  public void testMavenFilterKtWinOk() {
-    assertSuccess("[ERROR] /C:/Users/Admin/IdeaProjects/test/src/main/java/test/Test.kt: (2, 1) class, interface, or enum expected", 9, 68);
-  }
-
-  public void testMavenFilterKtWinBad() {
-    assertError("[ERROR] /C:/Users/Admin/IdeaProjects/test/src/main/java/test/Test.kt: (2,1) class, interface, or enum expected");
-  }
-
-  private void assertSuccess(String line, int expectedStart, int expectedEnd) {
+  private void assertSuccess(String line, String expectedPath, int expectedStart) {
     List<Filter.Result> results = applyFilter(line);
     Assert.assertEquals(1, results.size());
     Filter.Result filterResult = results.get(0);
     List<Filter.ResultItem> resultItems = filterResult.getResultItems();
     Assert.assertEquals(1, resultItems.size());
-    Assert.assertEquals(expectedStart, resultItems.get(0).getHighlightStartOffset());
-    Assert.assertEquals(expectedEnd, resultItems.get(0).getHighlightEndOffset());
+    Filter.ResultItem resultItem = resultItems.get(0);
+    Assert.assertTrue(resultItem.getHyperlinkInfo() instanceof OpenFileHyperlinkInfo);
+    Assert.assertEquals(expectedPath, ((OpenFileHyperlinkInfo)resultItem.getHyperlinkInfo()).getVirtualFile().getCanonicalPath());
+    Assert.assertEquals(expectedStart, resultItem.getHighlightStartOffset());
+    Assert.assertEquals(expectedStart + expectedPath.length(), resultItem.getHighlightEndOffset());
   }
 
   private void assertError(String line) {
