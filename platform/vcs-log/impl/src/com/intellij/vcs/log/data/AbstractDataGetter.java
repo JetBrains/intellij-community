@@ -99,7 +99,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Override
   @NotNull
   public T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes) {
-    assert EventQueue.isDispatchThread();
+    LOG.assertTrue(EventQueue.isDispatchThread());
     T details = getCommitDataIfAvailable(hash);
     if (details != null) {
       return details;
@@ -115,7 +115,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Override
   public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<? super List<T>> consumer,
                               @NotNull Consumer<? super Throwable> errorConsumer, @Nullable ProgressIndicator indicator) {
-    assert EventQueue.isDispatchThread();
+    LOG.assertTrue(EventQueue.isDispatchThread());
     loadCommitsData(getCommitsMap(hashes), consumer, errorConsumer, indicator);
   }
 
