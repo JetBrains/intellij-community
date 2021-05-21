@@ -1014,6 +1014,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  @Override
+  public void assertReadAccessNotAllowed() {
+    if (isReadAccessAllowed()) {
+      LOG.error(
+        "Read access is not allowed",
+        "Current thread: " + describe(Thread.currentThread()), "; dispatch thread: " + EventQueue.isDispatchThread() +"; isDispatchThread(): "+isDispatchThread(),
+        "SystemEventQueueThread: " + describe(getEventQueueThread()));
+    }
+  }
+
   private static String describe(Thread o) {
     return o == null ? "null" : o + " " + System.identityHashCode(o);
   }
