@@ -130,7 +130,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processBinaryRelationExpression(expr, relation, token == KtTokens.EXCLEQ || token == KtTokens.EQEQ)
             return
         }
-        val mathOp = mathOpFromToken(token)
+        val mathOp = mathOpFromToken(token, expr.operationReference)
         if (mathOp != null) {
             processMathExpression(expr, mathOp)
             return
@@ -204,7 +204,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(left)
         addImplicitConversion(left, resultType)
         processExpression(right)
-        addImplicitConversion(right, resultType)
+        if (!mathOp.isShift) {
+            addImplicitConversion(right, resultType)
+        }
         addInstruction(NumericBinaryInstruction(mathOp, KotlinExpressionAnchor(expr)))
         // TODO: support overloaded operators
     }
