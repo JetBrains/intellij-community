@@ -142,11 +142,13 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
     val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     val filterWords = searchableOptionsRegistrar.getProcessedWords(searchText)
+    val filterWordsUnstemmed = searchText.split(' ')
     val visibleGroupPanels = mutableSetOf<JPanel>()
     for (settingsRow in settingsRows) {
       val textWords = searchableOptionsRegistrar.getProcessedWords(settingsRow.text)
+      val idWords = settingsRow.id.split('.')
       val textMatches = textWords.containsAll(filterWords)
-      val idMatches = searchText in settingsRow.id
+      val idMatches = idWords.containsAll(filterWordsUnstemmed)
       val matches = textMatches || idMatches
       settingsRow.row.visible = matches
       settingsRow.row.subRowsVisible = matches
