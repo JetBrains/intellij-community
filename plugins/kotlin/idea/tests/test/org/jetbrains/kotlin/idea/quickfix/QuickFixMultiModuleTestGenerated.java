@@ -505,26 +505,21 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         }
     }
 
-    @TestMetadata("idea/testData/multiModuleQuickFix/createActualExplicitApi")
-    @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/createActualExplicitApi")
     public static class CreateActualExplicitApi extends AbstractQuickFixMultiModuleTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        public void testAllFilesPresentInCreateActualExplicitApi() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/multiModuleQuickFix/createActualExplicitApi"), Pattern.compile("^([^\\.]+)$"), null, true);
-        }
-
         @TestMetadata("class")
         public void testClass() throws Exception {
-            runTest("idea/testData/multiModuleQuickFix/createActualExplicitApi/class/");
+            runTest("testData/multiModuleQuickFix/createActualExplicitApi/class/");
         }
 
         @TestMetadata("function")
         public void testFunction() throws Exception {
-            runTest("idea/testData/multiModuleQuickFix/createActualExplicitApi/function/");
+            runTest("testData/multiModuleQuickFix/createActualExplicitApi/function/");
         }
     }
 
