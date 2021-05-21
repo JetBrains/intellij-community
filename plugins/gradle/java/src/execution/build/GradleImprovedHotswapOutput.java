@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
 
+@ApiStatus.Internal
 class GradleImprovedHotswapOutput {
   private static final Logger LOG = Logger.getInstance(GradleImprovedHotswapOutput.class);
 
@@ -65,7 +67,7 @@ class GradleImprovedHotswapOutput {
       return outputs;
     }
     catch (IOException e) {
-      LOG.warn("Can not create temp file to collect Gradle tasks output paths", e);
+      LOG.warn("Can not load temp file with collected Gradle tasks output paths", e);
       return Collections.emptyList();
     }
   }

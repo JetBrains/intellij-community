@@ -1,11 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.build;
 
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.ProjectTaskContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -14,6 +15,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@ApiStatus.Experimental
 public final class GradleImprovedHotswapDetection {
   private GradleImprovedHotswapDetection() {
     // static class cannot be constructed constructor
@@ -48,7 +50,7 @@ public final class GradleImprovedHotswapDetection {
   }
 
   public static boolean isEnabled() {
-    return Experiments.getInstance().isFeatureEnabled("gradle.improved.hotswap.detection");
+    return Registry.is("gradle.improved.hotswap.detection", false);
   }
 
   // Utility class to lazily load the GradleImprovedHotswapDetectionInitScript.groovy resource

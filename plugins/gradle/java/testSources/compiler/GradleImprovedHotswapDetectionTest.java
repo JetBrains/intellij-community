@@ -1,28 +1,29 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.compiler;
 
-import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskListener;
 import com.intellij.task.ProjectTaskManager;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTestCase {
   @Language("Java")
-  public static final String APP_JAVA =
+  private static final String APP_JAVA =
     "package my.pack;\n" +
     "public class App {\n" +
     "  public int method() { return 42; }\n" +
@@ -30,7 +31,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
 
   // App.java with a new method added
   @Language("Java")
-  public static final String APP_JAVA_WITH_NEW_METHOD =
+  private static final String APP_JAVA_WITH_NEW_METHOD =
     "package my.pack;\n" +
     "public class App extends Impl {\n" +
     "  public int method() { return 42; }\n" +
@@ -39,7 +40,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
 
   // App.java with new added NewInnerClass inner class
   @Language("Java")
-  public static final String APP_JAVA_WITH_INNER_CLASS =
+  private static final String APP_JAVA_WITH_INNER_CLASS =
     "package my.pack;\n" +
     "public class App extends Impl {\n" +
     "  public int method() { return 42; }\n" +
@@ -50,7 +51,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
 
   // the NewInnerClass method changed from 'doNothing' to 'doSomething'
   @Language("Java")
-  public static final String APP_JAVA_WITH_MODIFIED_INNER_CLASS =
+  private static final String APP_JAVA_WITH_MODIFIED_INNER_CLASS =
     "package my.pack;\n" +
     "public class App extends Impl {\n" +
     "  public int method() { return 42; }\n" +
@@ -60,13 +61,13 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     "}";
 
   @Language("Java")
-  public static final String IMPL_JAVA =
+  private static final String IMPL_JAVA =
     "package my.pack;\n" +
     "import my.pack.Api;\n" +
     "public class Impl extends Api {}";
 
   @Language("Java")
-  public static final String IMPL_JAVA_WITH_NEW_METHOD =
+  private static final String IMPL_JAVA_WITH_NEW_METHOD =
     "package my.pack;\n" +
     "import my.pack.Api;\n" +
     "public class Impl extends Api {\n" +
@@ -82,14 +83,14 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   private String apiJar;
   private String implJar;
 
-  private boolean defaultFeatureValue;
   private VirtualFile appFile;
   private VirtualFile implFile;
   private final List<String> dirtyOutputRoots = new ArrayList<>();
   private final Map<String, Collection<String>> generatedFiles = new HashMap<>();
 
-  @Before
-  public void before() throws IOException {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
     String langPart = isGradleOlderThan("4.0") ? "build/classes" : "build/classes/java";
 
     mainRoot = langPart + "/main";
@@ -102,15 +103,17 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     implJar = "impl/build/libs/impl.jar";
 
     clearOutputs();
-    defaultFeatureValue = Experiments.getInstance().isFeatureEnabled("gradle.improved.hotswap.detection");
-    Experiments.getInstance().setFeatureEnabled("gradle.improved.hotswap.detection", true);
+    Registry.get("gradle.improved.hotswap.detection").setValue(true);
     createProject();
     subscribeToProject();
   }
 
-  @After
-  public void after() {
-    Experiments.getInstance().setFeatureEnabled("gradle.improved.hotswap.detection", defaultFeatureValue);
+  @Override
+  public void tearDown() throws Exception {
+    new RunAll(
+      Registry.get("gradle.improved.hotswap.detection")::resetToDefault,
+      super::tearDown
+    ).run();
   }
 
   @Test
@@ -296,7 +299,6 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
 
     assertThat(dirtyOutputRoots).containsExactly("build/resources/main");
     assertThat(generatedFiles).containsOnly(Map.entry("build/resources/main", Set.of("runtime.properties")));
-
   }
 
   private void subscribeToProject() {
@@ -310,14 +312,17 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
       @Override
       public void finished(@NotNull ProjectTaskManager.Result result) {
         result.getContext().getDirtyOutputPaths()
-           .ifPresent(paths -> paths
-             .map(PathUtil::toSystemIndependentName)
-             .map(path -> relativePath(path))
-             .forEach(dirtyOutputRoots::add));
+          .ifPresent(paths -> paths
+            .map(path -> relativePath(path))
+            .forEach(dirtyOutputRoots::add));
 
         result.getContext().getGeneratedFilesRoots()
           .forEach(generatedRoot -> {
-            generatedFiles.put(relativePath(generatedRoot), new HashSet<>(result.getContext().getGeneratedFilesRelativePaths(generatedRoot)));
+            Set<String> generatedFilesRelativePaths = result.getContext().getGeneratedFilesRelativePaths(generatedRoot)
+              .stream()
+              .map(path -> PathUtil.toSystemIndependentName(path))
+              .collect(Collectors.toSet());
+            generatedFiles.put(relativePath(generatedRoot), generatedFilesRelativePaths);
           });
       }
     });
@@ -383,9 +388,10 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     generatedFiles.clear();
   }
 
-  private String relativePath(String path) {
-    Path projectPath = Path.of(getProjectPath());
-    Path filePath = Path.of(path);
-    return projectPath.relativize(filePath).toString();
+  @Nullable
+  private String relativePath(@NotNull String path) {
+    String basePath = PathUtil.toSystemIndependentName(getProjectPath());
+    String filePath = PathUtil.toSystemIndependentName(path);
+    return FileUtil.getRelativePath(basePath, filePath, '/');
   }
 }

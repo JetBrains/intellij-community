@@ -973,10 +973,6 @@
       <description>New project wizard</description>
     </experimentalFeature>
 
-    <experimentalFeature id="gradle.improved.hotswap.detection" percentOfUsers="0">
-      <description>Improved Hotswap Detection when building with Gradle</description>
-    </experimentalFeature>
-
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
 
     <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>
