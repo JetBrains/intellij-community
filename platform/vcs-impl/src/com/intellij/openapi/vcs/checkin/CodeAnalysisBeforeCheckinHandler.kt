@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.codeInsight.CodeSmellInfo
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.nls.NlsMessages.formatAndList
 import com.intellij.lang.annotation.HighlightSeverity
@@ -203,6 +204,7 @@ class ProfileChooser(commitPanel: CheckinProjectPanel,
       group.add(object : AnAction() {
         init {
           templatePresentation.setText(profile.displayName, false)
+          templatePresentation.icon = if (profileProperty.get() == profile.name) AllIcons.Actions.Checked else null
         }
         override fun actionPerformed(e: AnActionEvent) {
           profileProperty.set(profile.name)
