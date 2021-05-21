@@ -4,6 +4,8 @@ package com.intellij.ide.actions.searcheverywhere.statistics
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLCache
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLCache.Companion.removeCache
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger.log
@@ -67,7 +69,9 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     data.putAll(buildCommonFeaturesMap(seSessionId, indexes, closePopup, elements.size, symbolsTyped,
                                        backspacesTyped, symbolsInQuery, tabId, myProject))
     val currentTime = System.currentTimeMillis()
-    
+
+    // put listVersions: pattern length to elements in listModel
+    getListVersionsAndMlIdsAndDisposeCache(seSessionId, indexes, elements)
     // put data for every item
     data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
       getListItemsNames(it, currentTime).toMap()
@@ -145,6 +149,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val LOCAL_MIN_USAGE_COUNT_KEY = "minUsage"
     private const val GLOBAL_MAX_USAGE_COUNT_KEY = "globalMaxUsage"
     private const val GLOBAL_MIN_USAGE_COUNT_KEY = "globalMinUsage"
+    private const val LIST_VERSIONS_KEY = "listVersions"
+    private const val SELECTED_ML_IDS_KEY = "selectedMlIds"
 
     // action features
     private const val IS_ACTION_DATA_KEY = "isAction"
@@ -258,6 +264,23 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         data[OPEN_FILE_TYPES_KEY] = fem.openFiles.map { file -> file.fileType.name }.distinct()
       }
 
+      return data
+    }
+    
+    private fun getListVersionsAndMlIdsAndDisposeCache(seSessionId: Int, indexes: IntArray, 
+                                                       elements: List<SearchEverywhereFoundElementInfo>): Map<String, Any> {
+      val data = mutableMapOf<String, Any>()
+      val cache = SearchEverywhereMLCache.getCache(seSessionId)
+      data[LIST_VERSIONS_KEY] = cache.listVersions
+      // get mlId for each selected element
+      val selectedMlIds = indexes.map {
+        val obj = with(elements[it]) { ((element as? MatchedValue)?.value as? GotoActionModel.ActionWrapper)?.action ?: this }
+        cache.getMLId(obj)
+      }
+
+      data[SELECTED_ML_IDS_KEY] = selectedMlIds
+      // dispose it here otherwise it will be disposed before this place if we dispose in SearchEverywhereUI.dispose 
+      removeCache(seSessionId) 
       return data
     }
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.buildCommonFeaturesMap
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.fillActionItemInfo
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -8,6 +9,7 @@ import com.intellij.openapi.project.Project
 import java.util.*
 
 class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
+  val listVersions: MutableList<Pair<Int, List<Int>>> = ArrayList()
   private var idCounter = 0
   private val elementIds = IdentityHashMap<Any, Int>()
   private val elementIdsToWeights = mutableMapOf<Int, Double>()
@@ -35,8 +37,16 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
     return elementIds.computeIfAbsent(element) { idCounter++ }
   }
 
+  fun listRebuilt(patternLength: Int, infos: List<SearchEverywhereFoundElementInfo>) {
+    listVersions.add(patternLength to infos.map {
+      val obj = ((it.element as? GotoActionModel.MatchedValue)?.value as? GotoActionModel.ActionWrapper)?.action ?: it
+      getMLId(obj)
+    })
+  }
+
   companion object {
     private val sessionIdsToCaches = mutableMapOf<Int, SearchEverywhereMLCache>()
+
     @JvmStatic
     fun getCache(sessionId: Int): SearchEverywhereMLCache {
       return sessionIdsToCaches.computeIfAbsent(sessionId) { SearchEverywhereMLCache(sessionId) }

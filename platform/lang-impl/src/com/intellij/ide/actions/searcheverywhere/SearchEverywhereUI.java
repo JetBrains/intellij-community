@@ -462,6 +462,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
     }
 
+    SearchEverywhereMLCache.getCache(mySessionId).listRebuilt(rawPattern.length(), myListModel.getFoundElementsInfo());
+
     myListModel.expireResults();
     contributors.forEach(contributor -> myListModel.setHasMore(contributor, false));
     String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
