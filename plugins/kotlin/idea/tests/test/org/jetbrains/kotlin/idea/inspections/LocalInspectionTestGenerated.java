@@ -15677,7 +15677,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @TestMetadata("unusedClassExplicitApi.kt")
         public void testUnusedClassExplicitApi() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unusedSymbol/unusedClassExplicitApi.kt");
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedClassExplicitApi.kt");
         }
 
         @TestMetadata("unusedEnumEntry.kt")
@@ -15687,12 +15687,12 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @TestMetadata("unusedExtensionExplicitApi.kt")
         public void testUnusedExtensionExplicitApi() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unusedSymbol/unusedExtensionExplicitApi.kt");
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedExtensionExplicitApi.kt");
         }
 
         @TestMetadata("unusedFunctionExplicitApi.kt")
         public void testUnusedFunctionExplicitApi() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unusedSymbol/unusedFunctionExplicitApi.kt");
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedFunctionExplicitApi.kt");
         }
 
         @TestMetadata("usedEnumFunction.kt")

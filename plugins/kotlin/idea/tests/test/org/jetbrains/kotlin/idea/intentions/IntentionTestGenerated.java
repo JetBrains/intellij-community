@@ -3881,12 +3881,12 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @TestMetadata("notForSealedPrimaryConstructor.kt")
             public void testNotForSealedPrimaryConstructor() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/internal/notForSealedPrimaryConstructor.kt");
+                runTest("testData/intentions/changeVisibility/internal/notForSealedPrimaryConstructor.kt");
             }
 
             @TestMetadata("notForSealedSecondaryConstructor.kt")
             public void testNotForSealedSecondaryConstructor() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/internal/notForSealedSecondaryConstructor.kt");
+                runTest("testData/intentions/changeVisibility/internal/notForSealedSecondaryConstructor.kt");
             }
 
             @TestMetadata("propertySetter.kt")
@@ -4137,32 +4137,32 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @TestMetadata("notForAnnotationPrimaryConstructor.kt")
             public void testNotForAnnotationPrimaryConstructor() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/protected/notForAnnotationPrimaryConstructor.kt");
+                runTest("testData/intentions/changeVisibility/protected/notForAnnotationPrimaryConstructor.kt");
             }
 
             @TestMetadata("notForFinalClass1.kt")
             public void testNotForFinalClass1() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/protected/notForFinalClass1.kt");
+                runTest("testData/intentions/changeVisibility/protected/notForFinalClass1.kt");
             }
 
             @TestMetadata("notForFinalClass2.kt")
             public void testNotForFinalClass2() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/protected/notForFinalClass2.kt");
+                runTest("testData/intentions/changeVisibility/protected/notForFinalClass2.kt");
             }
 
             @TestMetadata("notForFinalClass3.kt")
             public void testNotForFinalClass3() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/protected/notForFinalClass3.kt");
+                runTest("testData/intentions/changeVisibility/protected/notForFinalClass3.kt");
             }
 
             @TestMetadata("notForFinalClass4.kt")
             public void testNotForFinalClass4() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/protected/notForFinalClass4.kt");
+                runTest("testData/intentions/changeVisibility/protected/notForFinalClass4.kt");
             }
 
             @TestMetadata("notForFinalClass5.kt")
             public void testNotForFinalClass5() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/protected/notForFinalClass5.kt");
+                runTest("testData/intentions/changeVisibility/protected/notForFinalClass5.kt");
             }
 
             @TestMetadata("notForNonValParameter.kt")
@@ -4187,7 +4187,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @TestMetadata("primaryConstructor.kt")
             public void testPrimaryConstructor() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/protected/primaryConstructor.kt");
+                runTest("testData/intentions/changeVisibility/protected/primaryConstructor.kt");
             }
 
             @TestMetadata("propertySetter.kt")
@@ -4225,12 +4225,12 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @TestMetadata("notForSealedPrimaryConstructor.kt")
             public void testNotForSealedPrimaryConstructor() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/public/notForSealedPrimaryConstructor.kt");
+                runTest("testData/intentions/changeVisibility/public/notForSealedPrimaryConstructor.kt");
             }
 
             @TestMetadata("notForSealedSecondaryConstructor.kt")
             public void testNotForSealedSecondaryConstructor() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/public/notForSealedSecondaryConstructor.kt");
+                runTest("testData/intentions/changeVisibility/public/notForSealedSecondaryConstructor.kt");
             }
 
             @TestMetadata("primaryConstructor.kt")
@@ -4279,31 +4279,26 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             }
         }
 
-        @TestMetadata("idea/testData/intentions/changeVisibility/publicExplicitApi")
-        @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/changeVisibility/publicExplicitApi")
         public static class PublicExplicitApi extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            public void testAllFilesPresentInPublicExplicitApi() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/intentions/changeVisibility/publicExplicitApi"), Pattern.compile("^([\\w\\-_]+)\\.(kt|kts)$"), null, true);
-            }
-
             @TestMetadata("primaryConstructor.kt")
             public void testPrimaryConstructor() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/publicExplicitApi/primaryConstructor.kt");
+                runTest("testData/intentions/changeVisibility/publicExplicitApi/primaryConstructor.kt");
             }
 
             @TestMetadata("propertyPrivateSetter.kt")
             public void testPropertyPrivateSetter() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/publicExplicitApi/propertyPrivateSetter.kt");
+                runTest("testData/intentions/changeVisibility/publicExplicitApi/propertyPrivateSetter.kt");
             }
 
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
-                runTest("idea/testData/intentions/changeVisibility/publicExplicitApi/simple.kt");
+                runTest("testData/intentions/changeVisibility/publicExplicitApi/simple.kt");
             }
         }
     }
