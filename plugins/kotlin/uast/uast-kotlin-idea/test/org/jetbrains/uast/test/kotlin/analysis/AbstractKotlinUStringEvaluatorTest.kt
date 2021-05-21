@@ -9,6 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.*
+import org.jetbrains.uast.analysis.UNeDfaConfiguration
 import org.jetbrains.uast.analysis.UStringEvaluator
 import kotlin.test.fail as kotlinFail
 
@@ -36,7 +37,7 @@ abstract class AbstractKotlinUStringEvaluatorTest : KotlinLightCodeInsightFixtur
         @Language("kotlin") source: String,
         expected: String,
         additionalSetup: () -> Unit = {},
-        configuration: () -> UStringEvaluator.Configuration = { UStringEvaluator.Configuration() },
+        configuration: () -> UNeDfaConfiguration<PartiallyKnownString> = { UNeDfaConfiguration() },
         additionalAssertions: (PartiallyKnownString) -> Unit = {}
     ) {
         additionalSetup()

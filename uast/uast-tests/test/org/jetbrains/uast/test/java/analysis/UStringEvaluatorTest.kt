@@ -13,7 +13,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.castSafelyTo
 import junit.framework.TestCase
 import org.jetbrains.uast.*
-import org.jetbrains.uast.analysis.UStringEvaluator
+import org.jetbrains.uast.analysis.*
 
 class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
   fun `test simple string`() = doTest(
@@ -155,7 +155,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc'{'def'|'xyz'}",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         parameterUsagesDepth = 2,
         usagesSearchScope = LocalSearchScope(file)
       )
@@ -180,7 +180,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc'{'def''fed'|'xyz'NULL}",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         parameterUsagesDepth = 2,
         usagesSearchScope = LocalSearchScope(file)
       )
@@ -203,7 +203,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc'{''|'xyz'}",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = psiMethod().withName("b")
       )
@@ -227,7 +227,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc'{'aaa'|'xyz''my''var''1'}",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = psiMethod().withName("a", "b")
       )
@@ -246,9 +246,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "'abc'{'xyz'{'abc'NULL}}",
+    "'abc''xyz''abc'NULL",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 3,
         methodsToAnalyzePattern = psiMethod().withName("a", "b")
       )
@@ -263,9 +263,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "'a'{'a'{'a'{'a'NULLNULL'b''b''b'}NULL'b''b'}NULL'b'}NULL",
+    "'a''a''a''a'NULLNULL'b''b''b'NULL'b''b'NULL'b'NULL",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 4,
         methodsToAnalyzePattern = psiMethod().withName("a", "b")
       )
@@ -284,9 +284,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "'abc'{'xyz'{'abc'{'xyz'NULLNULL'a''b''a'}NULL'a''b'}NULL'a'}NULL",
+    "'abc''xyz''abc''xyz'NULLNULL'a''b''a'NULL'a''b'NULL'a'NULL",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 4,
         methodsToAnalyzePattern = psiMethod().withName("a", "b")
       )
@@ -305,9 +305,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "'('{'['{'('{'['NULL']'}')'}']'}')'",
+    "'(''[''(''['NULL']'')'']'')'",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 4,
         methodsToAnalyzePattern = psiMethod().withName("a", "b")
       )
@@ -338,9 +338,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "{{{{'a''b''c''d''e'}}}}",
+    "'a''b''c''d''e'",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 5,
         methodsToAnalyzePattern = psiMethod().withName("a", "b", "c", "d", "e")
       )
@@ -348,7 +348,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
   )
 
   fun `test custom evaluator`() {
-    val myAnnoValueProvider = UStringEvaluator.DeclarationValueProvider { declaration ->
+    val myAnnoValueProvider = DeclarationValueEvaluator { declaration ->
       val myAnnotation = declaration.uAnnotations.firstOrNull { anno -> anno.qualifiedName == "MyAnno" }
       myAnnotation?.findAttributeValue("value")?.castSafelyTo<ULiteralExpression>()?.takeIf { it.isString }?.let { literal ->
         PartiallyKnownString(StringEntry.Known(literal.value as String, literal.sourcePsi!!, TextRange(0, literal.sourcePsi!!.textLength)))
@@ -379,7 +379,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       """.trimIndent(),
       "'value'NULL",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           valueProviders = listOf(myAnnoValueProvider)
         )
       }
@@ -402,9 +402,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "{'b''a'}NULL",
+    "'b''a'NULL",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = psiMethod().withName("b")
       )
@@ -428,13 +428,13 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     """'abacaba''\m/'NULL'\m/''my-string'' is cool''\m/''aaa'""",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodEvaluators = mapOf(
           callExpression().withResolvedMethod(
             psiMethod().withName("join").definedInClass("Strings").withModifiers(PsiModifier.STATIC), false
-          ) to UStringEvaluator.MethodCallEvaluator body@{ uStringEvaluator: UStringEvaluator,
-                                                           configuration: UStringEvaluator.Configuration,
-                                                           joinCall: UCallExpression ->
+          ) to MethodCallEvaluator body@{ uStringEvaluator: UNeDfaValueEvaluator<PartiallyKnownString>,
+                                          configuration: UNeDfaConfiguration<PartiallyKnownString>,
+                                          joinCall: UCallExpression ->
             val separator = joinCall.getArgumentForParameter(0)?.let { uStringEvaluator.calculateValue(it, configuration) }
                             ?: return@body null
 
@@ -466,21 +466,23 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       
         String a() {
           String a0 = "a";
-          ${(1..1000).map { """String a$it = a${it - 1} + (true ? "a" : b());""" }.joinToString("\n          ") { it }}
-          return a1000 + <caret> (true ? "a" : b());
+          ${(1..500).map { """String a$it = a${it - 1} + (true ? "a" : b());""" }.joinToString("\n          ") { it }}
+          return a500 + <caret> (true ? "a" : b());
         }
       }
     """.trimIndent())
 
     val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement() ?: fail("Cannot find UElement at caret")
 
-    val expected = "'a'${"{'a'|{'b'}}".repeat(1001)}"
-    PlatformTestUtil.startPerformanceTest("calculate value of many assignments", 2000) {
-      val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+    myFixture.doHighlighting()
+
+    val expected = "'a'${"{'a'|'b'}".repeat(501)}"
+    PlatformTestUtil.startPerformanceTest("calculate value of many assignments", 1000) {
+      val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = psiMethod().withName("b")
       )) ?: fail("Cannot evaluate string")
       TestCase.assertEquals(expected, pks.debugConcatenation)
-    }.attempts(1).assertTiming()
+    }.attempts(2).assertTiming()
   }
 }

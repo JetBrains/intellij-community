@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.kotlin.analysis
 
+import org.jetbrains.uast.analysis.UNeDfaConfiguration
 import org.jetbrains.uast.analysis.UStringBuilderEvaluator
-import org.jetbrains.uast.analysis.UStringEvaluator
 
 class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTest() {
     fun `test simple buildString`() = doTest(
@@ -17,7 +17,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''e'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -39,7 +39,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f''g''h'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -60,7 +60,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'1''a'{|'c'}'d'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -78,7 +78,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -96,7 +96,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -115,7 +115,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''-''c''d'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -134,7 +134,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''-''c''d'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -154,7 +154,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -174,7 +174,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -195,7 +195,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -216,7 +216,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -238,7 +238,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -258,7 +258,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -278,7 +278,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -299,7 +299,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -322,7 +322,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -345,7 +345,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -368,7 +368,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }
@@ -391,7 +391,7 @@ class KotlinUStringEvaluatorStringBuilderTest : AbstractKotlinUStringEvaluatorTe
         """.trimIndent(),
         "'a''b''c''d''e''f'",
         configuration = {
-            UStringEvaluator.Configuration(
+            UNeDfaConfiguration(
                 builderEvaluators = listOf(UStringBuilderEvaluator)
             )
         }

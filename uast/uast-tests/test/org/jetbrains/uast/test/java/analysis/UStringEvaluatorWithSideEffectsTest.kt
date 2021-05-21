@@ -6,9 +6,12 @@ import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
+import com.intellij.testFramework.PlatformTestUtil
+import junit.framework.TestCase
 import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.analysis.UStringBuilderEvaluator
-import org.jetbrains.uast.analysis.UStringEvaluator
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.analysis.*
+import org.jetbrains.uast.getUastParentOfType
 
 class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
   fun `test StringBuilder toString evaluate`() {
@@ -38,7 +41,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
       """.trimIndent(),
       """'I am StringBuilder''. Hi!''a'{'x'|'z''y'}'c''d''b'""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -68,7 +71,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'a'{'x'|'y'}'c''b'",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(UStringBuilderEvaluator)
       )
     }
@@ -90,7 +93,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
       """'a''b''c''d''e'""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -127,7 +130,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
       """'a'{|'c'}'\m/'{|'e'}""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -150,7 +153,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
       """'a''b''c''d''e'""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -176,7 +179,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
       """'a'{'b'|'c'}""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -202,7 +205,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
       """{'a''b'|'c'}""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -229,7 +232,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
       """'a''b''c'""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -261,7 +264,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
       """'a''b'{'c''d'|'c''e'|'f'}""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -287,7 +290,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
       """.trimIndent(),
       """'a''b'{|'c''d'}""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -310,7 +313,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'a'",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
       )
     }
@@ -338,7 +341,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'aaa'{'d'|'e'}",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
       )
     }
@@ -372,7 +375,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'a'{'1'|'c'|'d'}",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
       )
     }
@@ -394,7 +397,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'b''c'",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
       )
     }
@@ -420,7 +423,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'0''aaa''bbb''d'",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
       )
     }
@@ -459,7 +462,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
       """.trimIndent(),
       """{'p1'|'p2'|NULL'p3_2''---''p3_1'}'-s1''---''s2'""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator),
           parameterUsagesDepth = 3,
           usagesSearchScope = LocalSearchScope(myFixture.file)
@@ -468,12 +471,45 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
-  private class CloneAwareStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator<PartiallyKnownString?> by UStringBuilderEvaluator {
-    override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration, Boolean) -> PartiallyKnownString?>
-      get() = UStringBuilderEvaluator.methodDescriptions + mapOf(
-        PsiJavaPatterns.psiMethod().withName("clone") to { _, partiallyKnownString, _, _, _ ->
-          partiallyKnownString
+  fun `test many appends`() {
+    val size = 400
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String b() {
+          return "b";
         }
+      
+        String a() {
+          StringBuilder sb = new StringBuilder();
+          ${(1..size).map { """sb.append("a").append(b())""" }.joinToString("\n          ") { it }}
+          return /*<caret>*/ sb.toString() ;
+        }
+      }
+    """.trimIndent())
+
+    myFixture.doHighlighting()
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.getUastParentOfType<UReturnExpression>()?.returnExpression
+                         ?: fail("Cannot find UElement at caret")
+
+    val expected = "'a''b'".repeat(size)
+    PlatformTestUtil.startPerformanceTest("calculate value of many assignments", 1000) {
+      val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
+        methodCallDepth = 2,
+        methodsToAnalyzePattern = PsiJavaPatterns.psiMethod().withName("b"),
+        builderEvaluators = listOf(UStringBuilderEvaluator),
+      )) ?: fail("Cannot evaluate string")
+      TestCase.assertEquals(expected, pks.debugConcatenation)
+    }.attempts(2).assertTiming()
+  }
+
+  private class CloneAwareStringBuilderEvaluator : BuilderLikeExpressionEvaluator<PartiallyKnownString> by UStringBuilderEvaluator {
+    override val methodDescriptions: Map<ElementPattern<PsiMethod>, BuilderMethodEvaluator<PartiallyKnownString>>
+      get() = UStringBuilderEvaluator.methodDescriptions + mapOf(
+        PsiJavaPatterns.psiMethod().withName("clone") to
+          BuilderMethodEvaluator { _, partiallyKnownString, _, _, _ ->
+            partiallyKnownString
+          }
       )
   }
 }

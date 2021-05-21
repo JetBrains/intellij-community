@@ -3,14 +3,12 @@ package org.jetbrains.uast.test.java.analysis
 
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
-import com.intellij.psi.util.parentOfType
 import org.intellij.lang.annotations.Language
-import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.analysis.UNeDfaConfiguration
 import org.jetbrains.uast.analysis.UStringEvaluator
 import org.jetbrains.uast.getUastParentOfType
 import org.jetbrains.uast.test.java.AbstractJavaUastLightTest
-import org.jetbrains.uast.toUElement
 
 abstract class AbstractStringEvaluatorTest : AbstractJavaUastLightTest() {
   protected val PartiallyKnownString.debugConcatenation: String
@@ -33,7 +31,7 @@ abstract class AbstractStringEvaluatorTest : AbstractJavaUastLightTest() {
     @Language("Java", prefix = """@SuppressWarnings("ALL")""") source: String,
     expected: String,
     additionalSetup: () -> Unit = {},
-    configuration: () -> UStringEvaluator.Configuration = { UStringEvaluator.Configuration() },
+    configuration: () -> UNeDfaConfiguration<PartiallyKnownString> = { UNeDfaConfiguration() },
     additionalAssertions: (PartiallyKnownString) -> Unit = {}
   ) {
     additionalSetup()

@@ -10,14 +10,14 @@ import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
 import org.jetbrains.uast.*
 
-object UStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator<PartiallyKnownString?> {
+object UStringBuilderEvaluator : BuilderLikeExpressionEvaluator<PartiallyKnownString> {
   override val buildMethod: ElementPattern<PsiMethod>
     get() = PsiJavaPatterns.psiMethod().withName("toString").definedInClass("java.lang.StringBuilder")
 
-  override val dslBuildMethodDescriptor: UStringEvaluator.DslMethodDescriptor<PartiallyKnownString?>
-    get() = UStringEvaluator.DslMethodDescriptor(
+  override val dslBuildMethodDescriptor: DslLikeMethodDescriptor<PartiallyKnownString>
+    get() = DslLikeMethodDescriptor(
       PsiJavaPatterns.psiMethod().withName("buildString").definedInClass("kotlin.text.StringsKt__StringBuilderKt"),
-      UStringEvaluator.DslLambdaDescriptor(UStringEvaluator.LambdaPlace.Last, 0) { PartiallyKnownString(listOf()) }
+      DslLambdaDescriptor(DslLambdaPlace.Last, 0) { PartiallyKnownString(listOf()) }
     )
 
   override val allowSideEffects: Boolean
@@ -30,10 +30,10 @@ object UStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator
            qualifiedChain.drop(1).all { callPattern.accepts(it) }
   }
 
-  override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration, Boolean) -> PartiallyKnownString?>
+  override val methodDescriptions: Map<ElementPattern<PsiMethod>, BuilderMethodEvaluator<PartiallyKnownString>>
     get() = mapOf(
       PsiJavaPatterns.psiMethod().withName("append").definedInClass("java.lang.StringBuilder") to
-        { call, currentResult, stringEvaluator, config, isStrict ->
+        BuilderMethodEvaluator { call, currentResult, stringEvaluator, config, isStrict ->
           val entries = currentResult?.segments?.toMutableList()
                         ?: mutableListOf<StringEntry>(StringEntry.Unknown(call.sourcePsi!!, TextRange(0, 1)))
           val argument = call.getArgumentForParameter(0)?.let { argument -> stringEvaluator.calculateValue(argument, config) }
@@ -53,7 +53,7 @@ object UStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator
           PartiallyKnownString(entries)
         },
       PsiJavaPatterns.psiMethod().definedInClass("java.lang.StringBuilder").constructor(true) to
-        { call, _, stringEvaluator, config, _ ->
+        BuilderMethodEvaluator { call, _, stringEvaluator, config, _ ->
           call.getArgumentForParameter(0)?.let { argument ->
             stringEvaluator.calculateValue(argument, config)
           } ?: PartiallyKnownString(listOf())
