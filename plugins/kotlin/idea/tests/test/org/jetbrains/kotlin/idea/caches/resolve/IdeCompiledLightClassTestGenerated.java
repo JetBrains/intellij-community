@@ -120,7 +120,7 @@ public class IdeCompiledLightClassTestGenerated extends AbstractIdeCompiledLight
 
     @TestMetadata("LocalFunctions.kt")
     public void testLocalFunctions() throws Exception {
-        runTest("compiler/testData/asJava/lightClasses/LocalFunctions.kt");
+        runTest("testData/compiler/asJava/lightClasses/LocalFunctions.kt");
     }
 
     @TestMetadata("NestedObjects.kt")

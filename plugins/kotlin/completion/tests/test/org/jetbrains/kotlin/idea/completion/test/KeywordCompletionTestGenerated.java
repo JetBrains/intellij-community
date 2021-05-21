@@ -600,7 +600,7 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
 
     @TestMetadata("ThisInCompanion.kt")
     public void testThisInCompanion() throws Exception {
-        runTest("idea/idea-completion/testData/keywords/ThisInCompanion.kt");
+        runTest("testData/keywords/ThisInCompanion.kt");
     }
 
     @TestMetadata("ThisPrefixMatching.kt")
