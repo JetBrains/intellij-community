@@ -17080,11 +17080,11 @@ com/thoughtworks/xstream/io/HierarchicalStreamReader.class:lib\3rd-party.jar
 com/intellij/database/dataSource/DataSourceStorage$Listener.class:plugins\DatabaseTools\lib\database-impl.jar
 com/thoughtworks/xstream/io/HierarchicalStreamWriter.class:lib\3rd-party.jar
 com/intellij/database/model/RawConnectionConfig.class:plugins\DatabaseTools\lib\database-openapi.jar
-com/intellij/database/dataSource/DatabaseConnectionPointCore.class:plugins\DatabaseTools\lib\database-impl.jar
+com/intellij/database/dataSource/DatabaseConnectionPoint.class:plugins\DatabaseTools\lib\database-impl.jar
 org/angular2/index/Angular2MetadataPipeIndex.class:plugins\AngularJS\lib\AngularJS.jar
 com/intellij/database/model/DatabaseSystem.class:plugins\DatabaseTools\lib\database-openapi.jar
 com/intellij/database/dataSource/AbstractDataSource.class:plugins\DatabaseTools\lib\database-impl.jar
-com/intellij/database/dataSource/LocalDataSourceCore.class:plugins\DatabaseTools\lib\database-impl.jar
+com/intellij/database/dataSource/LocalDataSource.class:plugins\DatabaseTools\lib\database-impl.jar
 org/angular2/index/Angular2MetadataClassNameIndex.class:plugins\AngularJS\lib\AngularJS.jar
 com/intellij/database/dataSource/DatabaseConnectionPoint.class:plugins\DatabaseTools\lib\database-impl.jar
 com/intellij/database/dataSource/LocalDataSource.class:plugins\DatabaseTools\lib\database-impl.jar

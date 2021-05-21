@@ -17199,11 +17199,11 @@ com/intellij/lang/javascript/flow/FlowJSServerService.class:plugins/JavaScriptLa
 com/intellij/database/dataSource/DataSourceStorage$Prj.class:plugins/DatabaseTools/lib/database-impl.jar
 com/intellij/database/model/RawConnectionConfig.class:plugins/DatabaseTools/lib/database-openapi.jar
 com/intellij/psi/impl/include/FileIncludeIndex$2.class:lib/platform-impl.jar
-com/intellij/database/dataSource/DatabaseConnectionPointCore.class:plugins/DatabaseTools/lib/database-impl.jar
+com/intellij/database/dataSource/DatabaseConnectionPoint.class:plugins/DatabaseTools/lib/database-impl.jar
 com/intellij/database/model/DatabaseSystem.class:plugins/DatabaseTools/lib/database-openapi.jar
 com/intellij/database/dataSource/AbstractDataSource.class:plugins/DatabaseTools/lib/database-impl.jar
 com/intellij/psi/impl/include/FileIncludeIndex$1.class:lib/platform-impl.jar
-com/intellij/database/dataSource/LocalDataSourceCore.class:plugins/DatabaseTools/lib/database-impl.jar
+com/intellij/database/dataSource/LocalDataSource.class:plugins/DatabaseTools/lib/database-impl.jar
 com/intellij/lang/javascript/flow/lsp/FlowJSLspService.class:plugins/JavaScriptLanguage/lib/JavaScriptLanguage.jar
 com/intellij/lang/javascript/flow/FlowJSCliService.class:plugins/JavaScriptLanguage/lib/JavaScriptLanguage.jar
 com/intellij/openapi/util/io/UniqueNameBuilder.class:lib/util.jar

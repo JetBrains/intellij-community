@@ -17183,13 +17183,13 @@ org/jetbrains/plugins/sass/extensions/SassRubyIntegrationHelper.class:plugins/sa
 com/intellij/lang/javascript/flow/FlowJSCliService.class:plugins/JavaScriptLanguage/lib/JavaScriptLanguage.jar
 org/jetbrains/plugins/sass/extensions/SassRubyIntegrationHelperImpl.class:plugins/sass/lib/sass.jar
 com/intellij/database/model/RawConnectionConfig.class:plugins/DatabaseTools/lib/database-openapi.jar
-com/intellij/database/dataSource/DatabaseConnectionPointCore.class:plugins/DatabaseTools/lib/database-impl.jar
+com/intellij/database/dataSource/DatabaseConnectionPoint.class:plugins/DatabaseTools/lib/database-impl.jar
 com/intellij/execution/ExecutionMode.class:lib/platform-impl.jar
 com/intellij/database/model/DatabaseSystem.class:plugins/DatabaseTools/lib/database-openapi.jar
 com/intellij/openapi/util/io/UniqueNameBuilder.class:lib/util.jar
 com/intellij/database/dataSource/AbstractDataSource.class:plugins/DatabaseTools/lib/database-impl.jar
 com/intellij/execution/ExecutionModes$SameThreadMode.class:lib/platform-impl.jar
-com/intellij/database/dataSource/LocalDataSourceCore.class:plugins/DatabaseTools/lib/database-impl.jar
+com/intellij/database/dataSource/LocalDataSource.class:plugins/DatabaseTools/lib/database-impl.jar
 com/intellij/openapi/util/io/UniqueNameBuilder$Node.class:lib/util.jar
 org/jetbrains/plugins/sass/extensions/SassExtensionFunctionsIndex$1.class:plugins/sass/lib/sass.jar
 org/jrubyparser/NodeVisitor.class:plugins/sass/lib/jrubyparser-0.5.4.jar
