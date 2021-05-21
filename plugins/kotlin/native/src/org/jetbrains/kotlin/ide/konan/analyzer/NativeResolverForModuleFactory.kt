@@ -63,7 +63,10 @@ class NativeResolverForModuleFactory(
             )
 
         if (klibPackageFragmentProvider != null) {
-            packageFragmentProvider = CompositePackageFragmentProvider(listOf(packageFragmentProvider, klibPackageFragmentProvider))
+            packageFragmentProvider = CompositePackageFragmentProvider(
+                listOf(packageFragmentProvider, klibPackageFragmentProvider),
+                "CompositeProvider@NativeResolver for $moduleDescriptor"
+            )
         }
 
         return ResolverForModule(packageFragmentProvider, container)
