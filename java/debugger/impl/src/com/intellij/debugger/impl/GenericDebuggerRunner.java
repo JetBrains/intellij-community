@@ -16,7 +16,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.runners.JvmPatchableProgramRunner;
-import com.intellij.execution.target.RunTargetsEnabled;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -64,9 +63,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
-        state instanceof TargetEnvironmentAwareRunProfileState &&
-        RunTargetsEnabled.get() &&
-        ((TargetEnvironmentAwareRunProfile)runProfile).needPrepareTarget()) {
+        state instanceof TargetEnvironmentAwareRunProfileState) {
       executionManager.startRunProfileWithPromise(environment, state, (ignored) -> {
         return doExecuteAsync((TargetEnvironmentAwareRunProfileState)state, environment);
       });

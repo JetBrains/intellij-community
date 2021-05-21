@@ -41,6 +41,11 @@ import org.jetbrains.org.objectweb.asm.Opcodes
  */
 @CompileStatic
 abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
+  @Override
+  protected boolean runInDispatchThread() {
+    return false
+  }
+
   @Override protected void setUp() {
     new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
     super.setUp()
