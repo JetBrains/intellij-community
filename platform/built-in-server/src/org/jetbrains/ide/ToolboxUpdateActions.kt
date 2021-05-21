@@ -81,7 +81,6 @@ internal class ToolboxUpdateAction(
   }
 
   override fun markAsRead() {
-    super.markAsRead()
     registry.markAsRead(actionId)
   }
 

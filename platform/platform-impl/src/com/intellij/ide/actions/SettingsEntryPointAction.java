@@ -320,6 +320,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   public static abstract class UpdateAction extends DumbAwareAction {
+    private boolean myNewAction = true;
+
     protected UpdateAction() {
     }
 
@@ -332,10 +334,11 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     public boolean isNewAction() {
-      return true;
+      return myNewAction;
     }
 
     public void markAsRead() {
+      myNewAction = false;
     }
   }
 }
