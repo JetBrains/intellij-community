@@ -53,9 +53,9 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     })
   }
 
-  fun getFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile {
+  fun getFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile? {
     try {
-      return cache.get(Key(root, filePath))!!
+      return cache.get(Key(root, filePath))
     }
     catch (e: Exception) {
       val cause = e.cause
@@ -66,14 +66,13 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
   }
 
-  private fun createIndexVirtualFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile {
-    val stagedFile = readMetadataFromGit(root, filePath)
-    val length = if (stagedFile != null) readLengthFromGit(root, stagedFile.blobHash) else 0
-    val isExecutable = stagedFile?.isExecutable ?: false
-    return GitIndexVirtualFile(project, root, filePath, stagedFile?.hash(), length, isExecutable)
+  private fun createIndexVirtualFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile? {
+    val stagedFile = readMetadataFromGit(root, filePath) ?: return null
+    val length = readLengthFromGit(root, stagedFile.blobHash)
+    return GitIndexVirtualFile(project, root, filePath, stagedFile.hash(), length, stagedFile.isExecutable)
   }
 
-  private fun createIndexVirtualFile(key: Key): GitIndexVirtualFile {
+  private fun createIndexVirtualFile(key: Key): GitIndexVirtualFile? {
     if (!ApplicationManager.getApplication().isDispatchThread) return createIndexVirtualFile(key.root, key.filePath)
 
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
