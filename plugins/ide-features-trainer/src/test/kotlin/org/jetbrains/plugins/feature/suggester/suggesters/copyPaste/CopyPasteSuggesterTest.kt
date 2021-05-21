@@ -41,7 +41,7 @@ class CopyPasteSuggesterTest : FeatureSuggesterTest() {
         }
     }
 
-    fun `testCopy text that contained in clipboard at third index and dont't get suggestion`() {
+    fun `testCopy text that contained in clipboard at third index and don't get suggestion`() {
 
         copyBetweenLogicalPositions(lineStartIndex = 26, columnStartIndex = 31, lineEndIndex = 26, columnEndIndex = 0)
         copyBetweenLogicalPositions(lineStartIndex = 27, columnStartIndex = 58, lineEndIndex = 27, columnEndIndex = 0)

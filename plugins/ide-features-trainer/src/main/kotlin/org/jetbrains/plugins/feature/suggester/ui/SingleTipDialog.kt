@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.Window
 import javax.swing.JComponent
 
+@Suppress("MagicNumber")
 class SingleTipDialog(parent: Window, tip: TipAndTrickBean) : DialogWrapper(parent, true) {
     companion object {
         private const val LAST_TIME_TIPS_WERE_SHOWN = "lastTimeTipsWereShown"
@@ -51,7 +52,7 @@ class SingleTipDialog(parent: Window, tip: TipAndTrickBean) : DialogWrapper(pare
 
     override fun getStyle(): DialogStyle = DialogStyle.COMPACT
 
-    override fun createCenterPanel(): JComponent? = tipPanel
+    override fun createCenterPanel(): JComponent = tipPanel
 
     override fun createSouthPanel(): JComponent? {
         val component = super.createSouthPanel()

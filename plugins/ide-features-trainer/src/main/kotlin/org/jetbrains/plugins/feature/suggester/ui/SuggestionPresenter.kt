@@ -23,7 +23,7 @@ interface SuggestionPresenter {
     fun showSuggestion(project: Project, suggestion: PopupSuggestion)
 }
 
-@Suppress("UnstableApiUsage")
+@Suppress("UnstableApiUsage", "DialogTitleCapitalization")
 class NotificationSuggestionPresenter :
     SuggestionPresenter {
     private val notificationGroup: NotificationGroup = NotificationGroupManager.getInstance()

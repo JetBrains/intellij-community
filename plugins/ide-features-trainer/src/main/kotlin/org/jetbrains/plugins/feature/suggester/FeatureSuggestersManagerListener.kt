@@ -6,7 +6,7 @@ import java.util.EventListener
 interface FeatureSuggestersManagerListener : EventListener {
 
     companion object {
-        val TOPIC = Topic<FeatureSuggestersManagerListener>(
+        val TOPIC = Topic(
             "FeatureSuggester events",
             FeatureSuggestersManagerListener::class.java,
             Topic.BroadcastDirection.TO_CHILDREN

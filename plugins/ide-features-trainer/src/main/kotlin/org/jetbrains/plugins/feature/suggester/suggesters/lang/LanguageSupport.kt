@@ -5,12 +5,13 @@ import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 
+@Suppress("TooManyFunctions")
 interface LanguageSupport {
     companion object {
-        val EP_NAME: ExtensionPointName<LanguageExtensionPoint<LanguageSupport>> =
+        private val EP_NAME: ExtensionPointName<LanguageExtensionPoint<LanguageSupport>> =
             ExtensionPointName.create("org.intellij.featureSuggester.languageSupport")
 
-        val extensions: List<LanguageExtensionPoint<LanguageSupport>>
+        private val extensions: List<LanguageExtensionPoint<LanguageSupport>>
             get() = EP_NAME.extensionList
 
         fun getForLanguage(language: Language): LanguageSupport? {

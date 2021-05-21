@@ -38,7 +38,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         return "src/test/resources/testData"
     }
 
-    fun subscribeToSuggestions(suggestionFound: (PopupSuggestion) -> Unit) {
+    private fun subscribeToSuggestions(suggestionFound: (PopupSuggestion) -> Unit) {
         project.messageBus.connect()
             .subscribe(
                 FeatureSuggestersManagerListener.TOPIC,
@@ -66,7 +66,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         editor.caretModel.moveToLogicalPosition(LogicalPosition(lineIndex, columnIndex))
     }
 
-    fun moveCaretToOffset(offset: Int) {
+    private fun moveCaretToOffset(offset: Int) {
         editor.caretModel.moveToOffset(offset)
     }
 
@@ -85,7 +85,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         editor.selectionModel.removeSelection()
     }
 
-    fun cutCurrentSelection() {
+    private fun cutCurrentSelection() {
         myFixture.performEditorAction("EditorCut")
         commitAllDocuments()
     }
@@ -172,7 +172,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         return findResults
     }
 
-    fun findInFile(
+    private fun findInFile(
         psiFile: PsiFile,
         findModel: FindModel,
         fromOffset: Int = 0,
@@ -216,7 +216,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         }
     }
 
-    fun commitAllDocuments() {
+    private fun commitAllDocuments() {
         PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
 
@@ -262,7 +262,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         type(finishType.value.toString())
     }
 
-    fun getLookup(): LookupImpl? {
+    private fun getLookup(): LookupImpl? {
         return LookupManager.getInstance(project).activeLookup as LookupImpl?
     }
 

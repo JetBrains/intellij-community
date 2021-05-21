@@ -17,6 +17,7 @@ import javax.swing.border.EmptyBorder
 
 private typealias ActionListener = (ActionEvent) -> Unit
 
+@Suppress("MagicNumber", "DialogTitleCapitalization")
 class FeatureSuggestersPanel(
     suggestingActionNames: Iterable<String>,
     private val settings: FeatureSuggesterSettings

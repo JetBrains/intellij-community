@@ -31,7 +31,7 @@ class FeatureSuggesterConfigurable : Configurable, Configurable.WithEpDependenci
         panel.loadFromSettings()
     }
 
-    override fun createComponent(): JComponent? {
+    override fun createComponent(): JComponent {
         return panel
     }
 

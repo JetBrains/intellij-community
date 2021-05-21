@@ -18,6 +18,7 @@ import java.awt.Dimension
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@Suppress("MagicNumber")
 class SingleTipPanel(tip: TipAndTrickBean) : JPanel() {
     companion object {
         private val DIVIDER_COLOR = JBColor(0xd9d9d9, 0x515151)
@@ -56,5 +57,5 @@ class SingleTipPanel(tip: TipAndTrickBean) : JPanel() {
         poweredByLabel.isVisible = !StringUtil.isEmpty(poweredByLabel.text)
     }
 
-    override fun getPreferredSize(): Dimension? = JBDimension(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+    override fun getPreferredSize(): Dimension = JBDimension(DEFAULT_WIDTH, DEFAULT_HEIGHT)
 }
