@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClass
 import junit.framework.TestCase

@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFileAnnotationList
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.util.findElementByCommentPrefix
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
 import java.io.File
 
 abstract class AbstractFirOnAirResolveTest : KotlinLightCodeInsightFixtureTestCase() {
