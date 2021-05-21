@@ -51,7 +51,6 @@ public final class ClassLoaderConfigurationData {
       PluginId.getId("com.intellij.spring.data"),
       PluginId.getId("com.intellij.spring.boot.run.tests"),
       PluginId.getId("com.intellij.spring.boot"),
-      PluginId.getId("com.jetbrains.space"),
       PluginId.getId("com.intellij.spring"),
     });
   }
