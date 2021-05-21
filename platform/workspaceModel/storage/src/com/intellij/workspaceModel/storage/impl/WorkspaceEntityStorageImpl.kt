@@ -67,7 +67,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override val entitiesByType: MutableEntitiesBarrel,
   override val refs: MutableRefsTable,
   override val indexes: MutableStorageIndexes,
-  consistencyCheckingMode: ConsistencyCheckingMode
+  consistencyCheckingMode: ConsistencyCheckingMode,
+  @Volatile
+  private var trackStackTrace: Boolean = false
 ) : WorkspaceEntityStorageBuilder, AbstractEntityStorage(consistencyCheckingMode) {
 
   internal val changeLog = WorkspaceBuilderChangeLog()
@@ -84,6 +86,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
   private var stackTrace: String? = null
   @Volatile
   private var threadId: Long? = null
+  @Volatile
+  private var threadName: String? = null
 
   override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
                                                                                  source: EntitySource,
@@ -813,22 +817,30 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   private fun lockWrite() {
+    val currentThread = Thread.currentThread()
     if (writingFlag.getAndSet(true)) {
-      if (threadId != null && threadId != Thread.currentThread().id) {
+      if (threadId != null && threadId != currentThread.id) {
         LOG.error("""
-            Concurrent write to builder.
-            Previous stack trace: $stackTrace
+            Concurrent write to builder from the following threads
+            First Thread: $threadName
+            Second Thread: ${currentThread.name}
+            ${if (trackStackTrace) "Previous stack trace: $stackTrace" else ""}
           """.trimIndent())
+        trackStackTrace = true
       }
     }
-    stackTrace = ExceptionUtil.currentStackTrace()
-    threadId = Thread.currentThread().id
+    if (trackStackTrace) {
+      stackTrace = ExceptionUtil.currentStackTrace()
+    }
+    threadId = currentThread.id
+    threadName = currentThread.name
   }
 
   private fun unlockWrite() {
     writingFlag.set(false)
     stackTrace = null
     threadId = null
+    threadName = null
   }
 
   private fun WorkspaceEntityData<*>.hasPersistentId(): Boolean {
@@ -887,7 +899,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType.toImmutable())
           val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
           val copiedIndexes = storage.indexes.toMutable()
-          WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndexes, consistencyCheckingMode)
+          WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndexes, consistencyCheckingMode, storage.trackStackTrace)
         }
       }
     }
