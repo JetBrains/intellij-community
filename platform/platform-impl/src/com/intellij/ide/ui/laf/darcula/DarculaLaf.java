@@ -204,6 +204,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Nullable
   protected String getSystemPrefix() {
+    if (isLoadFromJsonEnabled()) {
+      return null;
+    }
     String osSuffix = SystemInfoRt.isMac ? "mac" : SystemInfoRt.isWindows ? "windows" : "linux";
     return getPrefix() + "_" + osSuffix;
   }
@@ -272,7 +275,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected void loadDefaults(UIDefaults defaults) {
-    if (Boolean.parseBoolean(System.getProperty("ide.load.laf.as.json", "true"))) {
+    if (isLoadFromJsonEnabled()) {
       loadDefaultsFromJson(defaults);
     }
     else {
@@ -280,12 +283,23 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
   }
 
+  private boolean isLoadFromJsonEnabled() {
+    return Boolean.parseBoolean(System.getProperty("ide.load.laf.as.json", "true"));
+  }
+
   protected void loadDefaultsFromJson(UIDefaults defaults) {
-    String filename = getPrefix() + ".theme.json";
+    loadDefaultsFromJson(defaults, getPrefix());
+    if (getSystemPrefix() != null) {
+      loadDefaultsFromJson(defaults, getSystemPrefix());
+    }
+  }
+
+  private void loadDefaultsFromJson(UIDefaults defaults, String prefix) {
+    String filename = prefix + ".theme.json";
     try (InputStream stream = getClass().getResourceAsStream(filename)) {
-     assert stream != null : "Can't load " + filename;
-     UITheme theme = UITheme.loadFromJson(stream, "Darcula", getClass().getClassLoader(), Function.identity());
-     theme.applyProperties(defaults);
+      assert stream != null : "Can't load " + filename;
+      UITheme theme = UITheme.loadFromJson(stream, "Darcula", getClass().getClassLoader(), Function.identity());
+      theme.applyProperties(defaults);
     }
     catch (IOException e) {
       log(e);
