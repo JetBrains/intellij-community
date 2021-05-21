@@ -34,6 +34,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   private static final String NEXT_RUN_KEY_BUILD = "NextRunPlatformUpdateBuild";
   private static final String NEXT_RUN_KEY_VERSION = "NextRunPlatformUpdateVersion";
 
+  private static boolean myNewPlatformUpdate;
   private static @Nullable String myNextRunPlatformUpdateVersion;
   private static @Nullable PlatformUpdates.Loaded myPlatformUpdateInfo;
   private static @Nullable Collection<? extends IdeaPluginDescriptor> myIncompatiblePlugins;
@@ -64,6 +65,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         myNextRunPlatformUpdateVersion = properties.getValue(NEXT_RUN_KEY_VERSION);
 
         if (myNextRunPlatformUpdateVersion != null) {
+          myNewPlatformUpdate = true;
           updateState();
         }
         else {
@@ -135,6 +137,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
   private static void setPlatformUpdateInfo(@Nullable PlatformUpdates.Loaded platformUpdateInfo) {
     myPlatformUpdateInfo = platformUpdateInfo;
+    myNewPlatformUpdate = platformUpdateInfo != null;
 
     PropertiesComponent properties = PropertiesComponent.getInstance();
     if (platformUpdateInfo == null) {
@@ -206,14 +209,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     Collection<UpdateAction> actions = new ArrayList<>();
 
     if (myNextRunPlatformUpdateVersion != null) {
-      actions.add(new UpdateAction(IdeBundle.message("settings.entry.point.update.ide.action",
-                                                     ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                     myNextRunPlatformUpdateVersion)) {
-        @Override
-        public boolean isIdeUpdate() {
-          return true;
-        }
-
+      actions.add(new IdeUpdateAction(myNextRunPlatformUpdateVersion) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Project project = e.getProject();
@@ -249,7 +245,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
                               pluginResults.getPluginNods(),
                               null);
 
-            UpdateSettingsEntryPointActionProvider.actionPerformed(project);
+            super.actionPerformed(e);
           }
           else {
             if (platformUpdateInfo instanceof PlatformUpdates.ConnectionError) {
@@ -269,19 +265,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
       });
     }
     else if (myPlatformUpdateInfo != null) {
-      actions.add(new UpdateAction(IdeBundle.message("settings.entry.point.update.ide.action",
-                                                     ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                     myPlatformUpdateInfo.getNewBuild().getVersion())) {
-        @Override
-        public boolean isIdeUpdate() {
-          return true;
-        }
-
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          UpdateSettingsEntryPointActionProvider.actionPerformed(e.getProject());
-        }
-      });
+      actions.add(new IdeUpdateAction(myPlatformUpdateInfo.getNewBuild().getVersion()));
     }
     // todo[AL/RS] separate action for plugins compatible with both old and new builds
     else if (myUpdatedPlugins != null) {
@@ -322,14 +306,34 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     return actions;
   }
 
-  private static void actionPerformed(@Nullable Project project) {
-    UpdateInfoDialog dialog = new UpdateInfoDialog(project,
-                                                   Objects.requireNonNull(myPlatformUpdateInfo),
-                                                   true,
-                                                   myUpdatedPlugins,
-                                                   myIncompatiblePlugins);
-    if (dialog.showAndGet()) {
-      newPlatformUpdate();
+  private static class IdeUpdateAction extends UpdateAction {
+    protected IdeUpdateAction(@NotNull String version) {
+      super(IdeBundle.message("settings.entry.point.update.ide.action", ApplicationNamesInfo.getInstance().getFullProductName(), version));
+    }
+
+    @Override
+    public boolean isIdeUpdate() {
+      return true;
+    }
+
+    @Override
+    public boolean isNewAction() {
+      return myNewPlatformUpdate;
+    }
+
+    @Override
+    public void markAsRead() {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      myNewPlatformUpdate = false;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      UpdateInfoDialog dialog = new UpdateInfoDialog(e.getProject(), Objects.requireNonNull(myPlatformUpdateInfo),
+                                                     true, myUpdatedPlugins, myIncompatiblePlugins);
+      if (dialog.showAndGet()) {
+        newPlatformUpdate();
+      }
     }
   }
 }
