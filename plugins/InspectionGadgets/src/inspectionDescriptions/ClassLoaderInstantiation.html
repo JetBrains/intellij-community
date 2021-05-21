@@ -4,9 +4,10 @@ Reports any instantiations of the <code>java.lang.ClassLoader</code> class.
 <p>While often benign, any instantiations of <code>ClassLoader</code> should be closely examined in any security audit.</p>
 <p>Example:</p>
 <pre>
-  class Main {
-    {
-      new ClassLoader(){};
+  Class&lt;?&gt; loadExtraClass(String name) throws ClassNotFoundException, IOException {
+    try(URLClassLoader loader =
+        new URLClassLoader(new URL[]{new URL("extraClasses/")})) {
+      return loader.loadClass(name);
     }
   }
 </pre>

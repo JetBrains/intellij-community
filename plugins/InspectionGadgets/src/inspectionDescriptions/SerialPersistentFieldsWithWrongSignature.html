@@ -8,8 +8,12 @@ is not declared as <code>private static final ObjectStreamField[]</code>.
 </p>
 <p>Example:</p>
 <pre>
-  class Main implements Serializable {
-    ObjectStreamField[] serialPersistentFields;
+  class List implements Serializable {
+    List next;
+
+    ObjectStreamField[] serialPersistentFields
+                 = {new ObjectStreamField("next", List.class)};
+
   }
 </pre>
 <!-- tooltip end -->

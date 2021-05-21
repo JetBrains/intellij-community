@@ -1,15 +1,26 @@
 <html>
 <body>
-Reports type cast expressions which are surrounded by an <code>instanceof</code> check for a different type.
+Reports type cast expressions which:
+<ul>
+  <li>are surrounded by an <code>instanceof</code> check for a different type.</li>
+  <li>are known to be of a different type.</li>
+</ul>
 While it is possible that this was intended, such a construct is most likely an error, and will
 result in a <code>java.lang.ClassCastException</code> at runtime.
 <p>Example:</p>
 <pre>
-  int f(Object o){
-    if (o instanceof String) {
-      return (Integer) o;
+  class Main {
+    int whenCharSequenceCastToNumber(Object o){
+      if (o instanceof CharSequence) {
+        return ((Number) o).intValue();
+      }
+      return 0;
     }
-    return 0;
+
+    int earlyReturnWhenNotCharSequence(Object o){
+      if (!(o instanceof CharSequence)) return 0;
+      return ((Number)o).intValue();
+    }
   }
 </pre>
 <!-- tooltip end -->

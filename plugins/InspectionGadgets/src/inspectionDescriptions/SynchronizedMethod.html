@@ -15,12 +15,13 @@ There are several reasons a <code>synchronized</code> modifier on a method may b
     Keeping track of what is locking a particular object gets harder.
   </li>
   <li>
-    The DOS (denial-of-service) attack becomes feasible either on purpose or unknowingly when inheriting the method's class.
+    The DoS (denial-of-service) attack becomes feasible either on purpose or unknowingly when inheriting the method's class.
   </li>
 </ol>
 <p>
   As an alternative, consider synchronizing on a <code>private final</code> lock object, access to which can be completely controlled.
 </p>
+<p>The quick-fix is provided to wrap the method body with <code>synchronized(this)</code>.</p>
 <p>Example:</p>
 <pre>
   class Main {

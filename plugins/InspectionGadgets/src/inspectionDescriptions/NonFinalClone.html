@@ -4,7 +4,7 @@ Reports <code>clone()</code> methods which are not declaring the <code>final</co
 <p>
   Since <code>clone()</code> can be used to instantiate objects without using a constructor, allowing the <code>clone()</code>
   method to be overridden may result in corrupted objects, and possible security exploits. This may be prevented by making the
-  <code>clone()</code> method <code>final</code>.
+  <code>clone()</code> method or the enclosing class itself <code>final</code>.
 </p>
 <p>Example:</p>
 <pre>

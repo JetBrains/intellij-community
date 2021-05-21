@@ -3,7 +3,7 @@
 Reports method parameters that are named identically to the visible fields of the method's class
 or surrounding classes if it is a parameter inside of an inner or anonymous class.
 Such a parameter name may be confusing.
-<p>The quick-fix can't be performed in an automatic way, instead it prompts for a new name for a parameter.</p>
+<p>The quick-fix is suggested to rename the parameter.</p>
 <p>Example:</p>
 <pre>
   class Main {
@@ -14,19 +14,9 @@ Such a parameter name may be confusing.
     }
   }
 </pre>
-<p>After the quick-fix is applied:</p>
-<pre>
-  class Main {
-    private final int value;
-
-    public Main(int input) {
-        this.value = input;
-    }
-  }
-</pre>
 <!-- tooltip end -->
 <p>
-  Use the Options panel below to configure the inspection:
+  Use the "Options" panel below to configure the inspection:
 </p>
 <ol>
   <li>Enable the first checkbox to ignore parameters of simple setters.</li>

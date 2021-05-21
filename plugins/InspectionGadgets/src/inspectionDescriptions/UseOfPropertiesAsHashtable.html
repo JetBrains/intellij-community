@@ -14,7 +14,11 @@ on a <code>java.util.Properties</code> object.
   For reasons lost to history, <code>java.util.Properties</code> inherits <code>java.util.Hashtable</code>,
   but using those methods is discouraged to prevent corruption of properties values of types other than <code>String</code>.
 </p>
-
+<p>
+  Although <code>java.util.Properties#putAll</code> overrides <code>java.util.Hashtable#putAll</code> it doesn't get reported
+  because the method's parameter of the <code>java.util.Map</code> type is defined with unbounded type parameters
+  and <code>java.util.Hashtable#putAll</code>'s parameter is declared with bounded type parameters.
+</p>
 <p>Example:</p>
 <pre>
   Object f(Properties props) {

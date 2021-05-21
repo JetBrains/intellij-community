@@ -14,10 +14,14 @@ Reports <code>java.util.concurrent.ThreadLocalRandom</code> instances which migh
 <p>Example:</p>
 <pre>
   class Main {
-    void f(ThreadLocalRandom r) {}
+    void printRandomNumbersAsync() {
+      ThreadLocalRandom random = ThreadLocalRandom.current();
+      CompletableFuture.supplyAsync(() -&gt; generateNumbers(random))
+        .thenAccept(numbers -&gt; System.out.println(Arrays.toString(numbers)));
+    }
 
-    void m() {
-        f(ThreadLocalRandom.current());
+    private int[] generateNumbers(Random random) {
+      return random.ints(1000, 0, 100).toArray();
     }
   }
 </pre>
