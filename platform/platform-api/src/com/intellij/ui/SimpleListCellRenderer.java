@@ -53,8 +53,8 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
       isSelected = true;
     }
     else {
-      bg = isSelected ? list.getSelectionBackground() : list.getBackground();
-      fg = isSelected ? list.getSelectionForeground() : list.getForeground();
+      bg = UIUtil.getListBackground(isSelected, cellHasFocus);
+      fg = UIUtil.getListForeground(isSelected, cellHasFocus);
     }
     setBackground(bg);
     setForeground(fg);
