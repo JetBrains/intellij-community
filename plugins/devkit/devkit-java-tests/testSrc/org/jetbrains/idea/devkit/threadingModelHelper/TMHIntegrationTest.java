@@ -28,12 +28,13 @@ import java.util.concurrent.*;
  * </ul>
  * Note that if this happens, you need to update the instrumenter and install the updated version of the devkit to IDEA.
  * <p/>
+ *
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
  */
 public class TMHIntegrationTest extends LightPlatformTestCase {
   private static final String EDT_ASSERTION_MESSAGE = "Access is allowed from event dispatch thread with IW lock only.";
   private static final String READ_ACCESS_ASSERTION_MESSAGE =
-    "Read access is allowed from event dispatch thread or inside read-action only";
+    "Read access is allowed from inside read-action (or EDT) only";
   private static final String WRITE_ACCESS_ASSERTION_MESSAGE = "Write access is allowed inside write-action only";
 
   public void testEdtActionOnEdt() {
