@@ -8,11 +8,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
-public interface DebugToolWindowContentExtractor {
-  ExtensionPointName<DebugToolWindowContentExtractor> EP_NAME = ExtensionPointName.create("com.intellij.debugToolWindowContentExtractor");
-  Key<Boolean> ENABLE_DEBUG_TAB = Key.create("DebugToolWindowContentExtractor.EnableDebugTab");
+public interface ToolWindowContentExtractor {
+  ExtensionPointName<ToolWindowContentExtractor> EP_NAME = ExtensionPointName.create("com.intellij.toolWindowContentExtractor");
+  Key<Boolean> SYNC_TAB_TO_GUEST = Key.create("ToolWindowContentExtractor.SyncTabToGuest");
   
   boolean isApplicable(@NotNull Content content);
   
-  boolean isEnabled(@NotNull Content content);
+  boolean syncContentToGuests(@NotNull Content content);
 }

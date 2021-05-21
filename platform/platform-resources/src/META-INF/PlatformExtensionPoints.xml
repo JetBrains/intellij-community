@@ -214,7 +214,7 @@
 
     <extensionPoint name="toolWindowExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor" dynamic="true"/>
 
-    <extensionPoint name="debugToolWindowContentExtractor" interface="com.intellij.ui.viewModel.extraction.DebugToolWindowContentExtractor" dynamic="true"/>
+    <extensionPoint name="toolWindowContentExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor" dynamic="true"/>
 
     <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate" dynamic="true"/>
 
