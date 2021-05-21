@@ -113,10 +113,10 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
   data class ItemInfo(val id: String?, val contributorId: String, val additionalData: Map<String, Any>) {
     fun toMap(): Map<String, Any> {
       val result: HashMap<String, Any> = hashMapOf(
-        "contributorId" to contributorId
+        CONTRIBUTOR_ID_KEY to contributorId
       )
       if (additionalData.isNotEmpty()) {
-        result["additionalData"] = additionalData
+        result[ADDITIONAL_DATA_KEY] = additionalData
       }
       id?.let {
         result += "id" to it
@@ -172,7 +172,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val GLOBAL_USAGE_COUNT_KEY = "globalUsage"
     private const val USERS_RATIO_DATA_KEY = "usersRatio"
     private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
-
+    internal const val ADDITIONAL_DATA_KEY = "additionalData"
+    internal const val CONTRIBUTOR_ID_KEY = "contributorId"
     private fun withUpperBound(value: Int): Int {
       if (value > 100) return 101
       return value

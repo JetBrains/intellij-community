@@ -20,6 +20,7 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
     model = SearchEverywhereActionsRankingModel(provider)
   }
 
+  @Suppress("UNCHECKED_CAST")
   fun getMLWeight(element: Any, contributorId: String, project: Project?, seTabId: String): Double {
     val mlId = getMLId(element)
     return elementIdsToWeights.computeIfAbsent(mlId) {
@@ -28,7 +29,8 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
       }
       val features = mutableMapOf<String, Any>()
       features.putAll(buildCommonFeaturesMap(seSessionId, intArrayOf(), false, -1, -1, -1, -1, seTabId, project))
-      features.putAll(fillActionItemInfo(0, System.nanoTime(), element, contributorId).toMap())
+      val additionalData = fillActionItemInfo(0, System.nanoTime(), element, contributorId).additionalData
+      features.putAll(additionalData)
       model.predict(features)
     }
   }
