@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
-import com.intellij.codeInspection.dataFlow.java.inst.BooleanBinaryInstruction
-import com.intellij.codeInspection.dataFlow.java.inst.JvmPushInstruction
-import com.intellij.codeInspection.dataFlow.java.inst.NumericBinaryInstruction
-import com.intellij.codeInspection.dataFlow.java.inst.PrimitiveConversionInstruction
+import com.intellij.codeInspection.dataFlow.java.inst.*
 import com.intellij.codeInspection.dataFlow.lang.ir.*
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.DeferredOffset
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet
+import com.intellij.codeInspection.dataFlow.types.DfBooleanType
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
@@ -16,7 +16,6 @@ import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.containers.FList
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -39,11 +38,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return flow
     }
 
-    private fun processExpression(expr: KtExpression?) = when (expr) {
+    private fun processExpression(expr: KtExpression?) : Unit = when (expr) {
         null -> pushUnknown()
         is KtBlockExpression -> processBlock(expr)
+        is KtParenthesizedExpression -> processExpression(expr.expression)
         is KtReturnExpression -> processReturnExpression(expr)
         is KtBinaryExpression -> processBinaryExpression(expr)
+        is KtPrefixExpression -> processPrefixExpression(expr)
         is KtConstantExpression -> processConstantExpression(expr)
         is KtSimpleNameExpression -> processReferenceExpression(expr)
         is KtIfExpression -> processIfExpression(expr)
@@ -53,6 +54,43 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             // unsupported construct
             broken = true
         }
+    }
+
+    private fun processPrefixExpression(expr: KtPrefixExpression) {
+        val operand = expr.baseExpression
+        processExpression(operand)
+        val anchor = KotlinExpressionAnchor(expr)
+        if (operand != null) {
+            val dfType = operand.getKotlinType().toDfType()
+            val descriptor = KtLocalVariableDescriptor.create(operand)
+            val ref = expr.operationReference.text
+            if (dfType is DfIntegralType) {
+                when (ref) {
+                    "++", "--" -> {
+                        if (descriptor != null) {
+                            addInstruction(PushValueInstruction(dfType.meetRange(LongRangeSet.point(1))))
+                            addInstruction(NumericBinaryInstruction(if (ref == "++") LongRangeBinOp.PLUS else LongRangeBinOp.MINUS, null))
+                            addInstruction(SimpleAssignmentInstruction(anchor, factory.varFactory.createVariableValue(descriptor)))
+                            return
+                        }
+                    }
+                    "+" -> {
+                        return
+                    }
+                    "-" -> {
+                        addInstruction(PushValueInstruction(dfType.meetRange(LongRangeSet.point(0))))
+                        addInstruction(SwapInstruction())
+                        addInstruction(NumericBinaryInstruction(LongRangeBinOp.MINUS, anchor))
+                        return
+                    }
+                }
+            }
+            if (dfType is DfBooleanType && ref == "!") {
+                addInstruction(NotInstruction(anchor))
+                return
+            }
+        }
+        addInstruction(EvalUnknownInstruction(anchor, 1))
     }
 
     private fun processWhileExpression(expr: KtWhileExpression) {
@@ -131,8 +169,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processBinaryRelationExpression(expr, relation, token == KtTokens.EXCLEQ || token == KtTokens.EQEQ)
             return
         }
-        val leftType = expr.left?.getKotlinType()
-        if (leftType != null && KotlinBuiltIns.isPrimitiveTypeOrNullablePrimitiveType(leftType)) {
+        val leftType = expr.left?.getKotlinType()?.toDfType() ?: DfType.TOP
+        if (leftType is DfIntegralType) {
             val mathOp = mathOpFromToken(expr.operationReference)
             if (mathOp != null) {
                 processMathExpression(expr, mathOp)
@@ -152,7 +190,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             return
         }
         // TODO: support other operators
-        broken = true
+        processExpression(expr.left)
+        processExpression(expr.right)
+        addInstruction(EvalUnknownInstruction(KotlinExpressionAnchor(expr), 2))
+        addInstruction(FlushFieldsInstruction())
     }
 
     private fun processNullSafeOperator(expr: KtBinaryExpression) {
@@ -167,7 +208,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(expr.right)
         setOffset(endOffset)
     }
-
 
     private fun processAssignmentExpression(expr: KtBinaryExpression) {
         val left = expr.left

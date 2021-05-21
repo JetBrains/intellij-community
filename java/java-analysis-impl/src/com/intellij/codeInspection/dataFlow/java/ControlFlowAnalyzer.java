@@ -1998,7 +1998,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
           generateBoxingUnboxingInstructionFor(operand, unboxed == null ? type : unboxed);
           if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
-            addInstruction(new NotInstruction(expression));
+            addInstruction(new NotInstruction(new JavaExpressionAnchor(expression)));
           }
           else if (expression.getOperationTokenType() == JavaTokenType.MINUS && (PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
             addInstruction(new PushValueInstruction(DfTypes.defaultValue(type)));

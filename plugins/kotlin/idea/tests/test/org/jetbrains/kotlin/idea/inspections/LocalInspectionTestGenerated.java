@@ -4461,6 +4461,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicRange.kt");
         }
 
+        @TestMetadata("booleanNot.kt")
+        public void testBooleanNot() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/booleanNot.kt");
+        }
+
         @TestMetadata("declaration.kt")
         public void testDeclaration() throws Exception {
             runTest("testData/inspectionsLocal/dfa/declaration.kt");
@@ -4491,6 +4496,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/plusRange.kt");
         }
 
+        @TestMetadata("prefixDecrement.kt")
+        public void testPrefixDecrement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/prefixDecrement.kt");
+        }
+
+        @TestMetadata("prefixIncrement.kt")
+        public void testPrefixIncrement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/prefixIncrement.kt");
+        }
+
         @TestMetadata("returnExpression.kt")
         public void testReturnExpression() throws Exception {
             runTest("testData/inspectionsLocal/dfa/returnExpression.kt");
@@ -4504,6 +4519,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("shiftLeft.kt")
         public void testShiftLeft() throws Exception {
             runTest("testData/inspectionsLocal/dfa/shiftLeft.kt");
+        }
+
+        @TestMetadata("unaryMinus.kt")
+        public void testUnaryMinus() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/unaryMinus.kt");
         }
 
         @TestMetadata("whileStatement.kt")

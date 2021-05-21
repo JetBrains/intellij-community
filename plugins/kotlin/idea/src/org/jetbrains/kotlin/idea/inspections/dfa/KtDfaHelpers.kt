@@ -22,16 +22,17 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 
-internal fun getDfType(type : KotlinType) : DfType {
+internal fun KotlinType?.toDfType() : DfType {
     return when {
-        type.isBoolean() -> DfTypes.BOOLEAN
-        type.isByte() -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
-        type.isChar() -> DfTypes.intRange(LongRangeSet.range(Character.MIN_VALUE.toLong(), Character.MAX_VALUE.toLong()))
-        type.isShort() -> DfTypes.intRange(LongRangeSet.range(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()))
-        type.isInt() -> DfTypes.INT
-        type.isLong() -> DfTypes.LONG
-        type.isFloat() -> DfTypes.FLOAT
-        type.isDouble() -> DfTypes.DOUBLE
+        this == null -> DfType.TOP
+        isBoolean() -> DfTypes.BOOLEAN
+        isByte() -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
+        isChar() -> DfTypes.intRange(LongRangeSet.range(Character.MIN_VALUE.toLong(), Character.MAX_VALUE.toLong()))
+        isShort() -> DfTypes.intRange(LongRangeSet.range(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()))
+        isInt() -> DfTypes.INT
+        isLong() -> DfTypes.LONG
+        isFloat() -> DfTypes.FLOAT
+        isDouble() -> DfTypes.DOUBLE
         else -> DfType.TOP
     }
 }

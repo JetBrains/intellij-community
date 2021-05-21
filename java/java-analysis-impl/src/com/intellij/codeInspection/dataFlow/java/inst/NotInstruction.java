@@ -3,12 +3,11 @@
 package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.psi.PsiPrefixExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -18,8 +17,8 @@ import static com.intellij.codeInspection.dataFlow.types.DfTypes.FALSE;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.TRUE;
 
 public class NotInstruction extends ExpressionPushingInstruction {
-  public NotInstruction(PsiPrefixExpression anchor) {
-    super(new JavaExpressionAnchor(anchor));
+  public NotInstruction(DfaAnchor anchor) {
+    super(anchor);
   }
 
   @Override
