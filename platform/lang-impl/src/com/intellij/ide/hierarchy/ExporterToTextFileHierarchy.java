@@ -34,7 +34,7 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
     String childIndent;
     if (node.getParent() != null) {
       childIndent = indent + "    ";
-      HierarchyNodeDescriptor descriptor = myHierarchyBrowserBase.getDescriptor((DefaultMutableTreeNode)node);
+      HierarchyNodeDescriptor descriptor = HierarchyBrowserBase.getDescriptor((DefaultMutableTreeNode)node);
       if (descriptor != null) {
         buf.append(indent).append(descriptor.getHighlightedText().getText()).append(lineSeparator);
       }
