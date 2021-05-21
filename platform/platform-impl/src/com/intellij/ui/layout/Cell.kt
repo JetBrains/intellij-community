@@ -1,13 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -508,6 +506,11 @@ abstract class Cell : BaseBuilder {
     return textFieldWithBrowseButton(property::get, property::set, browseDialogTitle, project, fileChooserDescriptor, fileChosen)
       .withGraphProperty(property)
       .applyToComponent { bind(property) }
+  }
+
+  fun actionButton(action: AnAction): CellBuilder<ActionButton> {
+    val actionButton = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    return actionButton()
   }
 
   fun gearButton(vararg actions: AnAction): CellBuilder<JComponent> {
