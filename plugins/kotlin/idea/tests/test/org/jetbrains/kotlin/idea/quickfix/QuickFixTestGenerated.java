@@ -8010,6 +8010,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testUselessElvis() throws Exception {
             runTest("testData/quickfix/expressions/uselessElvis.kt");
         }
+
+        @TestMetadata("uselessElvisRightIsNull.kt")
+        public void testUselessElvisRightIsNull() throws Exception {
+            runTest("idea/testData/quickfix/expressions/uselessElvisRightIsNull.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
