@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.*
 
@@ -33,8 +32,8 @@ interface KotlinFindUsagesSupport {
         fun checkSuperMethods(
             declaration: KtDeclaration,
             ignore: Collection<PsiElement>?,
-            @Nls actionString: String
-        ): List<PsiElement> = getInstance(declaration.project).checkSuperMethods(declaration, ignore, actionString)
+            searchForBase: Boolean
+        ): List<PsiElement> = getInstance(declaration.project).checkSuperMethods(declaration, ignore, searchForBase)
 
         fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope =
             getInstance(project).sourcesAndLibraries(delegate, project)
@@ -53,7 +52,7 @@ interface KotlinFindUsagesSupport {
     fun checkSuperMethods(
         declaration: KtDeclaration,
         ignore: Collection<PsiElement>?,
-        @Nls actionString: String
+        searchForBase: Boolean
     ): List<PsiElement>
 
     fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope

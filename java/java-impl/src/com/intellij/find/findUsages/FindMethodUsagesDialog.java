@@ -75,16 +75,13 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
 
     PsiMethod method = (PsiMethod) getPsiElement();
     PsiClass aClass = method.getContainingClass();
-    if (method.isConstructor() ||
-        method.hasModifierProperty(PsiModifier.FINAL) ||
-        aClass == null ||
-        aClass instanceof PsiAnonymousClass ||
-        aClass.hasModifierProperty(PsiModifier.FINAL)) {
+    if (aClass == null) {
       myHasFindWhatPanel = false;
       return null;
     }
 
-    if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+    if (!method.hasModifierProperty(PsiModifier.STATIC) &&
+        !method.hasModifierProperty(PsiModifier.PRIVATE)) {
       myCbSearchForBase = createCheckbox(JavaBundle.message("find.what.search.for.base.methods.checkbox"),
                                          getFindUsagesOptions().isSearchForBaseMethod, true);
 
@@ -98,7 +95,12 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
       myCbImplementingMethods = addCheckboxToPanel(JavaBundle.message("find.what.implementing.methods.checkbox"),
                                                     getFindUsagesOptions().isImplementingMethods, findWhatPanel, true);
     }
-    else if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+    else if (!(aClass instanceof PsiAnonymousClass) &&
+             !aClass.hasModifierProperty(PsiModifier.FINAL) &&
+             !method.isConstructor() &&
+             !method.hasModifierProperty(PsiModifier.FINAL) &&
+             !method.hasModifierProperty(PsiModifier.STATIC) &&
+             !method.hasModifierProperty(PsiModifier.PRIVATE)) {
       myCbOverridingMethods = addCheckboxToPanel(JavaBundle.message("find.what.overriding.methods.checkbox"),
                                                  getFindUsagesOptions().isOverridingMethods, findWhatPanel, true);
     }
