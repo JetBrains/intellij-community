@@ -35,6 +35,7 @@
     "Borders.ContrastBorderColor": "#c9c9c9",
 
     "Button": {
+      "background": "#ececec",
       "border": "com.intellij.laf.macos.MacIntelliJButtonBorder",
       "UI": "com.intellij.laf.macos.MacIntelliJButtonUI"
     },
