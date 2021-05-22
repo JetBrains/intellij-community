@@ -139,7 +139,9 @@ final class MacDmgBuilder {
         zipfileset(dir: macAdditionalDirPath, prefix: zipRoot)
       }
     }
-    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP) || !isMac()) {
+
+    def signMacArtifacts = !buildContext.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
+    if (signMacArtifacts || !isMac()) {
       ftpAction("mkdir") {}
       try {
         signMacZip(sitFile, jreArchivePath, notarize)
@@ -160,7 +162,9 @@ final class MacDmgBuilder {
       if (customizer.publishArchive) {
         buildContext.notifyArtifactBuilt(sitFile.path)
       }
-      buildDmgLocally(sitFile, targetName)
+      buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
+        buildDmgLocally(sitFile, targetName)
+      }
     }
   }
 
