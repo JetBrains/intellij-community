@@ -283,7 +283,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
   }
 
-  private boolean isLoadFromJsonEnabled() {
+  private static boolean isLoadFromJsonEnabled() {
     return Boolean.parseBoolean(System.getProperty("ide.load.laf.as.json", "true"));
   }
 
