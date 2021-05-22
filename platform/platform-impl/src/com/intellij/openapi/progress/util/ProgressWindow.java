@@ -224,7 +224,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         initializeOnEdtIfNeeded();
         // guarantee AWT event after the future is done will be pumped and loop exited
         stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
-        IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, stopCondition, event -> {
+        IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
           if (isCancellationEvent(event)) {
             cancel();
             return true;
@@ -262,7 +262,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     initializeOnEdtIfNeeded();
     myDialog.show();
     if (myDialog != null) {
-      myDialog.myRepaintRunnable.run();
+      myDialog.getRepaintRunnable().run();
     }
   }
 
@@ -375,7 +375,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public boolean isPopupWasShown() {
-    return myDialog != null && myDialog.myPopup != null && myDialog.myPopup.isShowing();
+    return myDialog != null && myDialog.getPopup() != null && myDialog.getPopup().isShowing();
   }
 
   private void enableCancelButton(boolean enable) {
