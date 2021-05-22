@@ -32,9 +32,10 @@ object TeamCity {
         message { "testSuiteStarted name='$name'" }
         try {
             block()
-            message { "testSuiteFinished name='$name'" }
-        } catch (e: Throwable){
+        } catch (e: Throwable) {
             testFailed(name, e)
+        } finally {
+            message { "testSuiteFinished name='$name'" }
         }
     }
 

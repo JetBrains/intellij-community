@@ -17,11 +17,14 @@ class ExternalProject(val path: String, val openWith: ProjectOpenAction) {
         val KOTLIN_AUTO = ExternalProject(KOTLIN_PROJECT_PATH, autoOpenAction(KOTLIN_PROJECT_PATH))
 
         fun autoOpenAction(path: String): ProjectOpenAction {
-            return if (exists(path, ".idea", "modules.xml"))
-                ProjectOpenAction.EXISTING_IDEA_PROJECT
-            else
-                ProjectOpenAction.GRADLE_PROJECT
+            return when {
+                exists(path, "build.gradle") || exists(path, "build.gradle.kts")  -> ProjectOpenAction.GRADLE_PROJECT
+                exists(path, ".idea", "modules.xml") -> ProjectOpenAction.EXISTING_IDEA_PROJECT
+                else -> ProjectOpenAction.GRADLE_PROJECT
+            }
         }
+
+        fun autoOpenProject(path: String): ExternalProject = ExternalProject(path, autoOpenAction(path))
     }
 }
 

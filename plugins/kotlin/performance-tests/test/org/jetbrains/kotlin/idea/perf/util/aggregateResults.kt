@@ -3,11 +3,13 @@
 package org.jetbrains.kotlin.idea.perf.util
 
 import java.io.File
-import java.util.*
 
 fun main(args: Array<String>) {
-    val argFile = File(args[0])
-    val groupBy = argFile.listFiles()
+    uploadAggregateResults(File(args[0]))
+}
+
+internal fun uploadAggregateResults(file: File) {
+    val groupBy = file.listFiles()
         .filter { it.length() > 0 && it.name.startsWith("stats-") && it.extension == "json" }
         .groupBy { it.name.replace("stats-", "").split("_")[0] }
 
