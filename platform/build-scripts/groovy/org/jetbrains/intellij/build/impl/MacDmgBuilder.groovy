@@ -147,7 +147,9 @@ final class MacDmgBuilder {
         if (customizer.publishArchive) {
           buildContext.notifyArtifactBuilt(sitFile.path)
         }
-        buildDmg(targetName)
+        buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
+          buildDmg(targetName)
+        }
       }
       finally {
         deleteRemoteDir()
