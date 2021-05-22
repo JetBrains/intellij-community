@@ -130,12 +130,12 @@ public final class ImmutableZipFile implements Closeable {
       }
     }
 
-    ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
     // ensure table is even length
     if (entryCount == 65535) {
       // it means that more than 65k entries - estimate number of entries
       entryCount = centralDirPosition / 47 /* min 46 for entry and 1 for filename */;
     }
+    ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
 
     int entrySetLength = entryCount * 2 /* expand factor */;
     ImmutableZipEntry[] entrySet = new ImmutableZipEntry[entrySetLength];
