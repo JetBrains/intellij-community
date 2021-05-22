@@ -26,7 +26,7 @@ import kotlin.collections.HashSet
 class UastLocalUsageDependencyGraph private constructor(
   val dependents: Map<UElement, Set<Dependent>>,
   val dependencies: Map<UElement, Set<Dependency>>,
-  val scopesObjectsStates: Map<UExpression, UScopeObjectsState>,
+  val scopesObjectsStates: Map<UElement, UScopeObjectsState>,
   private val psiAnchor: PsiElement?
 ) {
   val uAnchor: UElement?

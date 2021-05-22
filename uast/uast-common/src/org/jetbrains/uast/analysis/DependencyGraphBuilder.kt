@@ -17,7 +17,7 @@ internal class DependencyGraphBuilder private constructor(
   val dependents: MutableMap<UElement, MutableSet<Dependent>> = mutableMapOf(),
   val dependencies: MutableMap<UElement, MutableSet<Dependency>> = mutableMapOf(),
   private val implicitReceivers: MutableMap<UCallExpression, UThisExpression> = mutableMapOf(),
-  val scopesStates: MutableMap<UExpression, UScopeObjectsState> = mutableMapOf(),
+  val scopesStates: MutableMap<UElement, UScopeObjectsState> = mutableMapOf(),
   private val inlinedVariables: MutableMap<ULambdaExpression, Pair<String, String>> = mutableMapOf()
 ) : AbstractUastVisitor() {
 
@@ -387,15 +387,9 @@ internal class DependencyGraphBuilder private constructor(
   // Ignore class nodes
   override fun visitClass(node: UClass): Boolean = true
 
-  // Ignore field nodes
-  override fun visitField(node: UField): Boolean = true
-
-  //override fun visitMethod(node: UMethod): Boolean {
-  //  for (uastParameter in node.uastParameters) {
-  //    currentScope.declare(uastParameter)
-  //  }
-  //  return super.visitMethod(node)
-  //}
+  override fun afterVisitMethod(node: UMethod) {
+    scopesStates[node] = currentScope.toUScopeObjectsState()
+  }
 
   private fun inlineCall(selector: UExpression, parent: UElement?): Set<UExpression> {
     val call = selector as? UCallExpression ?: return emptySet()
@@ -452,8 +446,8 @@ internal class DependencyGraphBuilder private constructor(
         ?.second
 
     fun identToReferenceInfo(element: UElement, identifier: String): Pair<String, UReferenceExpression?>? {
-      return (identifier.takeIf { id -> id in scope } ?: getInlined(element,
-                                                                    identifier))?.let { id -> id to null } // simple reference => same references
+      return (identifier.takeIf { id -> id in scope } ?: getInlined(element, identifier))
+        ?.let { id -> id to null } // simple reference => same references
     }
 
     val potentialEqualReferences = initElements

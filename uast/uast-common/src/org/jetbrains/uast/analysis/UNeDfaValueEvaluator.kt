@@ -24,8 +24,34 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
   }
 
   fun calculateValue(element: UElement, configuration: UNeDfaConfiguration<T> = UNeDfaConfiguration()): T? {
-    val graph = element.getContainingUMethod()?.let { UastLocalUsageDependencyGraph.getGraphByUElement(it) } ?: return null
+    val parentElement = element.getContainingUMethod() ?: element.getContainingUVariable() as? UField
+    val graph = parentElement?.let { UastLocalUsageDependencyGraph.getGraphByUElement(it) } ?: return null
     return calculate(graph, element, configuration)
+  }
+
+  fun calculateContainingBuilderValue(
+    element: UElement,
+    configuration: UNeDfaConfiguration<T> = UNeDfaConfiguration()
+  ): T? {
+    val graph = element.getContainingUMethod()?.let { UastLocalUsageDependencyGraph.getGraphByUElement(it) } ?: return null
+
+    val deque = ArrayDeque<UElement>()
+    deque += element
+
+    while (deque.isNotEmpty()) {
+      val currentElement = deque.removeFirst()
+      if (currentElement is UCallExpression) {
+        configuration.getBuilderEvaluatorForCall(currentElement)?.let { builder ->
+          // TODO: provide objects to analyze only necessary branches, e.g. if our element in one of if branches
+          return BuilderEvaluator(graph, configuration, builder).calculateBuilder(currentElement, null, null)
+        }
+      }
+      for (dependent in graph.dependents[currentElement].orEmpty()) {
+        deque += dependent.element
+      }
+    }
+
+    return null
   }
 
   private fun calculate(graph: UastLocalUsageDependencyGraph,
@@ -44,7 +70,7 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
     if (graph.dependencies[element] == null && element is UReferenceExpression) {
       val declaration = element.resolveToUElement()
       val value = when {
-        declaration is UField && declaration.isFinal && declaration.isStatic -> {
+        declaration is UField && configuration.isAppropriateField(declaration) -> {
           listOfNotNull(UastLocalUsageDependencyGraph.getGraphByUElement(declaration)?.let { graphForField ->
             declaration.uastInitializer?.let { initializer ->
               calculate(graphForField, initializer, configuration)
@@ -133,12 +159,18 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
     }
     return Plow.of<PsiReference> { processor -> ReferencesSearch.search(method.sourcePsi!!, scope).forEach(processor) }
       .limit(3)
-      .mapNotNull { it.element.parent.toUElement() as? UCallExpression }
+      .mapNotNull {
+        when (val uElement = it.element.parent.toUElement()) {
+          is UCallExpression -> uElement
+          is UQualifiedReferenceExpression -> uElement.selector as? UCallExpression
+          else -> null
+        }
+      }
       .mapNotNull {
         it.getArgumentForParameter(parameterIndex)?.let { argument ->
           argument.getContainingUMethod()?.let { currentMethod ->
             UastLocalUsageDependencyGraph.getGraphByUElement(currentMethod)?.let { graph ->
-              valueFromArgumentProvider(graph, argument, configuration.copy(methodCallDepth = configuration.parameterUsagesDepth - 1))
+              valueFromArgumentProvider(graph, argument, configuration.copy(parameterUsagesDepth = configuration.parameterUsagesDepth - 1))
             }
           }
         }
@@ -189,8 +221,7 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
         provePossibleDependency(it.dependencyEvidence, builderEvaluator)
       } ?: return null
 
-      declarationEvaluator = {
-        declaration ->
+      declarationEvaluator = { declaration ->
         if (declaration == parameter) {
           dslMethodDescriptor.lambdaDescriptor.lambdaArgumentValueProvider()
         }
@@ -252,6 +283,14 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
             BuilderEvaluator(usageGraph, usageConfiguration, builderEvaluator).calculateBuilder(argument, null, null)
           }
           return usagesResults.singleOrNull() ?: strategy.constructValueFromList(element, usagesResults)
+        }
+        if (declaration is UField && configuration.isAppropriateField(declaration)) {
+          val declarationResult = listOfNotNull(UastLocalUsageDependencyGraph.getGraphByUElement(declaration)?.let { graphForField ->
+            declaration.uastInitializer?.let { initializer ->
+              BuilderEvaluator(graphForField, configuration, builderEvaluator).calculateBuilder(initializer, null, null)
+            }
+          })
+          return declarationResult.singleOrNull() ?: strategy.constructUnknownValue(element)
         }
       }
 

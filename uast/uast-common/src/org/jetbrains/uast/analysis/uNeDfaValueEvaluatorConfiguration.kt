@@ -64,7 +64,8 @@ data class UNeDfaConfiguration<T : Any>(
   val usagesSearchScope: SearchScope = LocalSearchScope.EMPTY,
   val methodsToAnalyzePattern: ElementPattern<PsiMethod> = PlatformPatterns.alwaysFalse(),
   val methodEvaluators: Map<ElementPattern<UCallExpression>, MethodCallEvaluator<T>> = emptyMap(),
-  val builderEvaluators: List<BuilderLikeExpressionEvaluator<T>> = emptyList()
+  val builderEvaluators: List<BuilderLikeExpressionEvaluator<T>> = emptyList(),
+  val calculateNonStaticPrivateFields: Boolean = false,
 ) {
   internal fun getEvaluatorForCall(callExpression: UCallExpression): MethodCallEvaluator<T>? {
     return methodEvaluators.entries.firstOrNull { (pattern, _) -> pattern.accepts(callExpression) }?.value
@@ -82,6 +83,9 @@ data class UNeDfaConfiguration<T : Any>(
         evaluator.dslBuildMethodDescriptor?.let { evaluator to it }
       }
   }
+
+  internal fun isAppropriateField(field: UField): Boolean =
+    field.isFinal && (field.isStatic || field.visibility == UastVisibility.PRIVATE && calculateNonStaticPrivateFields)
 }
 
 fun interface DeclarationValueEvaluator<T : Any> {
