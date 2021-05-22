@@ -10,8 +10,12 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.FilePath
@@ -37,9 +41,15 @@ import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.NonNls
 import java.io.ByteArrayInputStream
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git index file system refresher", 1)
+  private val disposable = Disposer.newDisposable("Git Index File System")
+
+  @Volatile
+  private var isShutDown = false
+
   private val cache = Caffeine.newBuilder()
     .weakValues()
     .build<Key, GitIndexVirtualFile>(CacheLoader { key ->
@@ -47,10 +57,22 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     })
 
   init {
-    val connection: MessageBusConnection = project.messageBus.connect(this)
+    val connection: MessageBusConnection = project.messageBus.connect(disposable)
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
       LOG.debug("Scheduling refresh for repository ${repository.root.name}")
       refresh { it.root == repository.root }
+    })
+    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectClosing(p: Project) {
+        if (project == p) {
+          isShutDown = true
+          Disposer.dispose(disposable)
+          executor.shutdown()
+          ProgressManager.getInstance().runProcessWithProgressSynchronously({ executor.awaitTermination(100, TimeUnit.MILLISECONDS) },
+                                                                            GitBundle.message("stage.vfs.shutdown.process"),
+                                                                            false, project)
+        }
+      }
     })
   }
 
@@ -68,6 +90,8 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   private fun createIndexVirtualFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile? {
+    if (isShutDown) return null
+
     val stagedFile = readMetadataFromGit(root, filePath) ?: return null
     val length = readLengthFromGit(root, stagedFile.blobHash)
     return GitIndexVirtualFile(project, root, filePath, stagedFile.hash(), length, stagedFile.isExecutable)
@@ -88,15 +112,20 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   private fun refresh(filesToRefresh: List<GitIndexVirtualFile>) {
+    if (isShutDown) return
+
     LOG.debug("Starting async refresh for ${filesToRefresh.joinToString { it.path }}")
 
-    executor.submit {
+    BackgroundTaskUtil.execute(executor, disposable) {
       val fileDataList = mutableListOf<IndexFileData>()
       for (file in filesToRefresh) {
         readFromGit(file)?.let { fileDataList.add(it) }
       }
-      if (fileDataList.isEmpty()) return@submit
+      if (fileDataList.isEmpty()) return@execute
+      ProgressManager.getInstance().progressIndicator?.checkCanceled()
       writeInEdtAndWait {
+        if (isShutDown) return@writeInEdtAndWait
+
         val events = fileDataList.map { it.event }
         ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
         fileDataList.forEach { it.apply() }
