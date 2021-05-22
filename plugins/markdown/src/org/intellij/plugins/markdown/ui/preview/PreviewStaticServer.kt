@@ -68,6 +68,23 @@ class PreviewStaticServer : HttpRequestHandler() {
       return getInstance().addAuthToken(url).toExternalForm()
     }
 
+    /**
+     * The types for which ";charset=utf-8" will be appened (only if guessed by [guessContentType]).
+     */
+    private val typesForExplicitUtfCharset = arrayOf(
+      "application/javascript",
+      "text/html",
+      "text/css",
+      "image/svg+xml"
+    )
+
+    private fun guessContentType(resourceName: String): String {
+      val type = getContentType(resourceName)
+      return if (type in typesForExplicitUtfCharset) {
+        "$type; charset=utf-8"
+      } else type
+    }
+
     private fun sendResource(
       request: HttpRequest,
       channel: Channel,
@@ -92,7 +109,7 @@ class PreviewStaticServer : HttpRequestHandler() {
           headers()[HttpHeaderNames.CONTENT_TYPE] = resource.type
         }
         else {
-          headers()[HttpHeaderNames.CONTENT_TYPE] = getContentType(resourceName)
+          headers()[HttpHeaderNames.CONTENT_TYPE] = guessContentType(resourceName)
         }
         headers()[HttpHeaderNames.CACHE_CONTROL] = "private, must-revalidate"
         headers()[HttpHeaderNames.LAST_MODIFIED] = Date(lastModified)

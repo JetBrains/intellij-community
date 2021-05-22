@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -36,6 +37,7 @@ public interface BuildTargetIndex extends BuildTargetRegistry {
    * @deprecated use {@link #getDependencies(BuildTarget, CompileContext)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context);
 
   @NotNull

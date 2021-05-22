@@ -18,7 +18,6 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -111,7 +110,7 @@ public class DivideByZeroInspection extends BaseInspection {
       return constantValue == 0.0;
     }
     DfType dfType = CommonDataflow.getDfType(expression);
-    Number val = DfConstantType.getConstantOfType(dfType, Number.class);
+    Number val = dfType.getConstantOfType(Number.class);
     return val != null && val.doubleValue() == 0.0;
   }
 

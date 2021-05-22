@@ -10,6 +10,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -108,5 +109,14 @@ public class TitledSeparator extends JPanel {
     mySeparator.setEnabled(enabled);
 
     mySeparator.setForeground(enabled ? ENABLED_SEPARATOR_FOREGROUND : DISABLED_SEPARATOR_FOREGROUND);
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = super.getAccessibleContext();
+      accessibleContext.setAccessibleName(myLabel.getText());
+    }
+    return accessibleContext;
   }
 }

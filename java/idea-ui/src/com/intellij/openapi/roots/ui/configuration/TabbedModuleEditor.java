@@ -37,7 +37,7 @@ public abstract class TabbedModuleEditor extends ModuleEditor {
 
   private TabbedPaneWrapper myTabbedPane;
 
-  public TabbedModuleEditor(Project project, ModulesProvider modulesProvider, @NotNull Module module) {
+  public TabbedModuleEditor(@NotNull Project project, @NotNull ModulesConfigurator modulesProvider, @NotNull Module module) {
     super(project, modulesProvider, module);
   }
 

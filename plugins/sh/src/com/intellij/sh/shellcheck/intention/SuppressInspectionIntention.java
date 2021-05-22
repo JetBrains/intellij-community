@@ -44,6 +44,7 @@ public class SuppressInspectionIntention implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (editor == null) return;
     Document document = editor.getDocument();
     int lineStartOffset = DocumentUtil.getLineStartOffset(myOffset, document);
     CharSequence indent = DocumentUtil.getIndent(document, lineStartOffset);

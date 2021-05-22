@@ -9,18 +9,14 @@ import com.intellij.testGuiFramework.impl.button
 import com.intellij.testGuiFramework.impl.jList
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
-import training.commands.kotlin.TaskTestContext
+import training.dsl.*
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
+import training.learn.course.KLesson
 import training.ui.LearningUiHighlightingManager
 import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 
-abstract class CommonRunConfigurationLesson(module: Module, id: String, languageId: String)
-  : KLesson(id, LessonsBundle.message("run.configuration.lesson.name"), module, languageId) {
+abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBundle.message("run.configuration.lesson.name")) {
   protected abstract val sample: LessonSample
   protected abstract val demoConfigurationName: String
 

@@ -61,7 +61,7 @@ interface InlayPresentationFactory {
     fun onHoverFinished()
   }
 
-  interface ClickListener {
+  fun interface ClickListener {
     fun onClick(event: MouseEvent, translated: Point)
   }
 

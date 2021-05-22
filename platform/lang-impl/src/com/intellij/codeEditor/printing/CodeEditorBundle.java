@@ -3,12 +3,14 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.editor.EditorBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated use {@link EditorBundle} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public final class CodeEditorBundle {
   @NotNull
   public static String message(@NotNull String key, Object @NotNull ... params) {

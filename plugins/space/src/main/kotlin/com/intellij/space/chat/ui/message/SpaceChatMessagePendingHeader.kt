@@ -4,8 +4,8 @@ package com.intellij.space.chat.ui.message
 import com.intellij.icons.AllIcons
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.UIUtil
 import javax.swing.JPanel
@@ -19,7 +19,7 @@ internal class SpaceChatMessagePendingHeader(private val item: SpaceChatItem) : 
     val infoLabel = JBLabel(SpaceBundle.message("chat.message.pending.text"), AllIcons.General.Note, SwingConstants.LEFT).apply {
       foreground = UIUtil.getContextHelpForeground()
     }
-    val postNowLabel = LinkLabel<Any?>(SpaceBundle.message("chat.message.pending.post.action"), null) { _, _ ->
+    val postNowLabel = ActionLink(SpaceBundle.message("chat.message.pending.post.action")) {
       item.chat.publishMessage(item.id)
     }
     add(infoLabel)

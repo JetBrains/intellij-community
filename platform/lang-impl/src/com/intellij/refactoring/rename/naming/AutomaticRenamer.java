@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
@@ -13,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author dsl
@@ -28,7 +30,8 @@ public abstract class AutomaticRenamer {
   }
 
   public boolean hasAnythingToRename() {
-    return myRenames.values().stream().anyMatch(Objects::nonNull);
+    return myRenames.values().stream().anyMatch(Objects::nonNull) &&
+           myRenames.keySet().stream().anyMatch(Predicate.not(SyntheticElement.class::isInstance));
   }
 
   public void findUsages(List<UsageInfo> result, final boolean searchInStringsAndComments, final boolean searchInNonJavaFiles) {

@@ -53,7 +53,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -162,7 +161,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private String myLastPreformedActionId;
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn;
-  private boolean myTransparentOnlyUpdate;
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
   private int myAnonymousGroupIdCounter;
 
@@ -435,39 +433,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void addTimerListener(int delay, @NotNull final TimerListener listener) {
-    _addTimerListener(listener, false);
-  }
-
-  @Override
-  public void removeTimerListener(@NotNull TimerListener listener) {
-    _removeTimerListener(listener, false);
-  }
-
-  @Override
-  public void addTransparentTimerListener(int delay, @NotNull TimerListener listener) {
-    _addTimerListener(listener, true);
-  }
-
-  @Override
-  public void removeTransparentTimerListener(@NotNull TimerListener listener) {
-    _removeTimerListener(listener, true);
-  }
-
-  private void _addTimerListener(final TimerListener listener, boolean transparent) {
+  public void addTimerListener(int unused, @NotNull final TimerListener listener) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (myTimer == null) {
       myTimer = new MyTimer();
       myTimer.start();
     }
 
-    myTimer.addTimerListener(listener, transparent);
+    myTimer.listeners.add(listener);
   }
 
-  private void _removeTimerListener(TimerListener listener, boolean transparent) {
+  @Override
+  public void removeTimerListener(@NotNull TimerListener listener) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (LOG.assertTrue(myTimer != null)) {
-      myTimer.removeTimerListener(listener, transparent);
+      myTimer.listeners.remove(listener);
     }
   }
 
@@ -1451,11 +1431,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public boolean isTransparentOnlyActionsUpdateNow() {
-    return myTransparentOnlyUpdate;
-  }
-
-  @Override
   public void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable) {
     myActionPopupMenuListeners.add(listener);
     Disposer.register(parentDisposable, () -> myActionPopupMenuListeners.remove(listener));
@@ -1743,8 +1718,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private final class MyTimer extends Timer implements ActionListener {
-    private final List<TimerListener> myTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-    private final List<TimerListener> myTransparentTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+    final List<TimerListener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myLastTimePerformed;
 
     private MyTimer() {
@@ -1771,14 +1745,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       return "Action manager timer";
     }
 
-    void addTimerListener(@NotNull TimerListener listener, boolean transparent) {
-      (transparent ? myTransparentTimerListeners : myTimerListeners).add(listener);
-    }
-
-    void removeTimerListener(@NotNull TimerListener listener, boolean transparent) {
-      (transparent ? myTransparentTimerListeners : myTimerListeners).remove(listener);
-    }
-
     @Override
     public void actionPerformed(ActionEvent e) {
       if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) {
@@ -1788,33 +1754,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       final int lastEventCount = myLastTimePerformed;
       myLastTimePerformed = ActivityTracker.getInstance().getCount();
 
-      if (myLastTimePerformed == lastEventCount && !Registry.is("actionSystem.always.update.toolbar.actions")) {
+      if (myLastTimePerformed == lastEventCount) {
         return;
       }
-
-      boolean transparentOnly = myLastTimePerformed == lastEventCount;
-
-      try {
-        myTransparentOnlyUpdate = transparentOnly;
-        Set<TimerListener> notified = new HashSet<>();
-        notifyListeners(myTransparentTimerListeners, notified);
-
-        if (transparentOnly) {
-          return;
-        }
-
-        notifyListeners(myTimerListeners, notified);
-      }
-      finally {
-        myTransparentOnlyUpdate = false;
-      }
-    }
-
-    private void notifyListeners(final List<? extends TimerListener> timerListeners, final Set<? super TimerListener> notified) {
-      for (TimerListener listener : timerListeners) {
-        if (notified.add(listener)) {
-          runListenerAction(listener);
-        }
+      for (TimerListener listener : listeners) {
+        runListenerAction(listener);
       }
     }
 

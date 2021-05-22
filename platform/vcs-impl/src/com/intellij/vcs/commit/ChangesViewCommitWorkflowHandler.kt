@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.application.subscribe
@@ -8,8 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
@@ -62,7 +60,7 @@ internal class ChangesViewCommitWorkflowHandler(
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
-    workflow.addCommitListener(CommitStateCleaner(), this)
+    workflow.addCommitListener(GitCommitStateCleaner(), this)
 
     addCommitAuthorListener(this, this)
 
@@ -76,6 +74,7 @@ internal class ChangesViewCommitWorkflowHandler(
     setupDumbModeTracking()
     ProjectManager.TOPIC.subscribe(this, this)
     setupCommitHandlersTracking()
+    setupCommitChecksResultTracking()
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
     currentChangeList = workflow.getAffectedChangeList(emptySet())
@@ -91,6 +90,8 @@ internal class ChangesViewCommitWorkflowHandler(
         }
       }
     })
+
+    DelayedCommitMessageProvider.init(project, ui, ::getCommitMessageFromPolicy)
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
@@ -181,10 +182,16 @@ internal class ChangesViewCommitWorkflowHandler(
   private fun changeListChanged(oldChangeList: LocalChangeList?, newChangeList: LocalChangeList?) {
     oldChangeList?.let { commitMessagePolicy.save(it, getCommitMessage(), false) }
 
-    val newCommitMessage = newChangeList?.let { commitMessagePolicy.getCommitMessage(it) { getIncludedChanges() } }
+    val newCommitMessage = newChangeList?.let(::getCommitMessageFromPolicy)
     setCommitMessage(newCommitMessage)
 
     newChangeList?.let { commitOptions.changeListChanged(it) }
+  }
+
+  private fun getCommitMessageFromPolicy(changeList: LocalChangeList? = currentChangeList): String? {
+    if (changeList == null) return null
+
+    return commitMessagePolicy.getCommitMessage(changeList) { getIncludedChanges() }
   }
 
   private fun changeListDataChanged() {
@@ -235,21 +242,37 @@ internal class ChangesViewCommitWorkflowHandler(
 
   // save state on project close
   // using this method ensures change list comment and commit options are updated before project state persisting
-  override fun projectClosingBeforeSave(project: Project) = dispose()
+  override fun projectClosingBeforeSave(project: Project) {
+    saveStateBeforeDispose()
+    disposeCommitOptions()
+    currentChangeList = null
+  }
 
   // save state on other events - like "settings changed to use commit dialog"
   override fun dispose() {
     saveStateBeforeDispose()
     disposeCommitOptions()
+
+    super.dispose()
   }
 
   private fun saveStateBeforeDispose() {
     saveCommitOptions(false)
     saveCommitMessage(false)
-    currentChangeList = null
   }
 
   interface ActivityListener : EventListener {
     fun activityStateChanged()
+  }
+
+  private inner class GitCommitStateCleaner : CommitStateCleaner() {
+
+    private fun initCommitMessage() = setCommitMessage(getCommitMessageFromPolicy())
+
+    override fun onSuccess(commitMessage: String) {
+      initCommitMessage()
+
+      super.onSuccess(commitMessage)
+    }
   }
 }

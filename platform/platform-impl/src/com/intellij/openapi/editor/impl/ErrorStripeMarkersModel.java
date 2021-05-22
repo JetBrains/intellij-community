@@ -1,13 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.ErrorStripeEvent;
-import com.intellij.openapi.editor.ex.ErrorStripeListener;
-import com.intellij.openapi.editor.ex.MarkupIterator;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -25,7 +22,7 @@ import java.util.NoSuchElementException;
 /**
  * A mirror of highlighters which should be rendered on the error stripe.
  */
-class ErrorStripeMarkersModel {
+final class ErrorStripeMarkersModel {
   private static final Logger LOG = Logger.getInstance(ErrorStripeMarkersModel.class);
 
   private final EditorImpl myEditor;
@@ -37,16 +34,17 @@ class ErrorStripeMarkersModel {
 
   private Disposable myActiveDisposable;
 
-  ErrorStripeMarkersModel(@NotNull EditorImpl editor) {
+  ErrorStripeMarkersModel(@NotNull EditorImpl editor, @NotNull Disposable parentDisposable) {
     myEditor = editor;
     myTree = new ErrorStripeRangeMarkerTree(myEditor.getDocument());
     myTreeForLines = new ErrorStripeRangeMarkerTree(myEditor.getDocument());
-  }
 
-  void dispose() {
-    myTree.dispose(myEditor.getDocument());
-    myTreeForLines.dispose(myEditor.getDocument());
-    setActive(false);
+    Disposer.register(parentDisposable, () -> {
+      DocumentEx document = myEditor.getDocument();
+      myTree.dispose(document);
+      myTreeForLines.dispose(document);
+      setActive(false);
+    });
   }
 
   void setActive(boolean value) {

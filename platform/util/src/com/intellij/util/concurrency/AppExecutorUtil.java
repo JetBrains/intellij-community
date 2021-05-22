@@ -101,4 +101,9 @@ public final class AppExecutorUtil {
                                                                                         @NotNull Comparator<? super Runnable> comparator) {
     return new BoundedTaskExecutor(name, backendExecutor, maxThreads, true, new PriorityBlockingQueue<>(11, comparator));
   }
+
+  @ApiStatus.Internal
+  public static void shutdownApplicationScheduledExecutorService() {
+    ((AppScheduledExecutorService)AppScheduledExecutorService.getInstance()).shutdownAppScheduledExecutorService();
+  }
 }

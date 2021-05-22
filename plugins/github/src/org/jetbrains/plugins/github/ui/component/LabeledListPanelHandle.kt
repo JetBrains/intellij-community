@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.component
 
 import com.intellij.icons.AllIcons
@@ -15,7 +15,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.WrapLayout
 import com.intellij.util.ui.codereview.InlineIconButton
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModel
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.util.getEDTExecutor
@@ -29,7 +29,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.properties.Delegates
 
-internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetailsModel,
+internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRMetadataModel,
                                                   @NlsContexts.Label emptyText: String, @NlsContexts.Label notEmptyText: String) {
 
   private var isBusy by Delegates.observable(false) { _, _, _ ->
@@ -87,7 +87,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
   }
 
   init {
-    model.addAndInvokeDetailsChangedListener(::updateList)
+    model.addAndInvokeChangesListener(::updateList)
     updateControls()
   }
 
@@ -96,7 +96,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
   }
 
   private fun updateControls() {
-    editButton.isVisible = !isBusy && model.isMetadataEditingAllowed
+    editButton.isVisible = !isBusy && model.isEditingAllowed
     progressLabel.isVisible = isBusy
     errorIcon.isVisible = adjustmentError != null
     val title = GithubBundle.message("pull.request.adjustment.failed")

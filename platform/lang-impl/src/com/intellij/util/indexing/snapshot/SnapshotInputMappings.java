@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.snapshot;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +22,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,8 +86,8 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
     return myHashIdForwardIndexAccessor;
   }
 
-  public Path getInputIndexStorageFile() {
-    return IndexInfrastructure.getIndexRootDir(myIndexId).toPath().resolve("fileIdToHashId");
+  public Path getInputIndexStorageFile() throws IOException {
+    return IndexInfrastructure.getIndexRootDir(myIndexId).resolve("fileIdToHashId");
   }
 
   @NotNull
@@ -151,11 +154,11 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
     }
   }
 
-  @NotNull
-  private ByteArraySequence serializeData(@NotNull Map<Key, Value> data) throws IOException {
+  private @NotNull ByteArraySequence serializeData(@NotNull Map<Key, Value> data) throws IOException {
     if (myMapExternalizer != null) {
       return AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size() * 4);
-    } else {
+    }
+    else {
       assert myValueExternalizer != null;
       return AbstractForwardIndexAccessor.serializeToByteSeq(ContainerUtil.getFirstItem(data.values()), myValueExternalizer, 4);
     }
@@ -255,9 +258,9 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
 
   @NotNull
   private PersistentMapBasedForwardIndex createContentsIndex() throws IOException {
-    final File saved = new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values");
+    Path saved = IndexInfrastructure.getPersistentIndexRootDir(myIndexId).resolve("values");
     try {
-      return new PersistentMapBasedForwardIndex(saved.toPath(), false);
+      return new PersistentMapBasedForwardIndex(saved, false);
     }
     catch (IOException ex) {
       IOUtil.deleteAllFilesStartingWith(saved);
@@ -266,22 +269,21 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   }
 
   private PersistentHashMap<Integer, String> createIndexingTrace() throws IOException {
-    final File mapFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "indextrace");
+    Path mapFile = IndexInfrastructure.getIndexRootDir(myIndexId).resolve("indextrace");
     try {
-      return new PersistentHashMap<>(mapFile.toPath(), EnumeratorIntegerDescriptor.INSTANCE,
-                                     new DataExternalizer<>() {
-                                       @Override
-                                       public void save(@NotNull DataOutput out, String value) throws IOException {
-                                         out.write((byte[])CompressionUtil.compressStringRawBytes(value));
-                                       }
+      return new PersistentHashMap<>(mapFile, EnumeratorIntegerDescriptor.INSTANCE, new DataExternalizer<>() {
+        @Override
+        public void save(@NotNull DataOutput out, String value) throws IOException {
+          out.write((byte[])CompressionUtil.compressStringRawBytes(value));
+        }
 
-                                       @Override
-                                       public String read(@NotNull DataInput in) throws IOException {
-                                         byte[] b = new byte[((InputStream)in).available()];
-                                         in.readFully(b);
-                                         return (String)CompressionUtil.uncompressStringRawBytes(b);
-                                       }
-                                     }, 4096);
+        @Override
+        public String read(@NotNull DataInput in) throws IOException {
+          byte[] b = new byte[((InputStream)in).available()];
+          in.readFully(b);
+          return (String)CompressionUtil.uncompressStringRawBytes(b);
+        }
+      }, 4096);
     }
     catch (IOException ex) {
       IOUtil.deleteAllFilesStartingWith(mapFile);

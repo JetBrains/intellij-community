@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -1041,6 +1041,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testRegisterAdditionalExtensionForExistingFileType() throws IOException {
+    initStandardFileTypes();
     String name = ".veryUnknownFileExt";
     File tempFile = createTempFile(name, "This is a text file");
     VirtualFile vFile = getVirtualFile(tempFile);
@@ -1073,6 +1074,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     Disposable disposable = registerFileType(bean);
 
     assertInstanceOf(FileTypeManager.getInstance().findFileTypeByName("Haskell"), MyHaskellFileType.class);
+    assertInstanceOf(FileTypeManager.getInstance().getFileTypeByFileName("foo.hs"), MyHaskellFileType.class);
 
     ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
   }

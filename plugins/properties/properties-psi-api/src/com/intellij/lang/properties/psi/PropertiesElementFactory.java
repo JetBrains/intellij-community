@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +51,7 @@ public final class PropertiesElementFactory {
    * @deprecated use {@link #createProperty(Project, String, String, Character)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static IProperty createProperty(@NotNull Project project,
                                          @NonNls @NotNull String name,
@@ -111,6 +113,7 @@ public final class PropertiesElementFactory {
    * @deprecated use {@link #escapeValue(String, char, PropertyKeyValueFormat)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static String escapeValue(String value, char delimiter) {
     return escapeValue(value, delimiter, PropertyKeyValueFormat.PRESENTABLE);
   }

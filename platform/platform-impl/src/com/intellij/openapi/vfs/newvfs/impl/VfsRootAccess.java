@@ -26,10 +26,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -198,6 +195,7 @@ public final class VfsRootAccess {
 
   /** @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @TestOnly
   public static void allowRootAccess(String @NotNull ... roots) {
     DeprecatedMethodException.report("Use `allowRootAccess(Disposable, String...)` instead");

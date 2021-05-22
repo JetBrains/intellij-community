@@ -871,7 +871,7 @@ public class CFGBuilder {
       }
       // Revert order
       add(new SpliceInstruction(expressions.length, IntStreamEx.ofIndices(expressions).toArray()));
-      GotoInstruction gotoInstruction = new GotoInstruction(null);
+      GotoInstruction gotoInstruction = new GotoInstruction(null, false);
       gotoInstruction.setOffset(myAnalyzer.getInstructionCount());
       dup().push(factory.getSentinel()).compare(JavaTokenType.EQEQ);
       ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);

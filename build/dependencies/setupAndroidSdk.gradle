@@ -49,7 +49,7 @@ ext.kotlin_version = kotlinPluginBuild.substring(
   4, // number of chars in "203-" string (or "202-" string or any other platform identifier with dash string)
   kotlinVersionLen
 )
-ext.android_m2_version = "27.1.0.0"
+ext.android_m2_version = "27.1.0.0" // 27.1.1.0 is not published because there are no changes comparing to current version
 ext.android_sdk_version = "${osFamily}.4.0.0.0"
 
 dependencies {

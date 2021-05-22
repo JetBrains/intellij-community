@@ -6,7 +6,6 @@ import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -168,7 +167,7 @@ public class DfaExpressionFactory {
   private DfaValue getQualifierValue(PsiExpression qualifierExpression) {
     DfaValue qualifierValue = getExpressionDfaValue(qualifierExpression);
     if (qualifierValue == null) return null;
-    PsiVariable constVar = DfConstantType.getConstantOfType(qualifierValue.getDfType(), PsiVariable.class);
+    PsiVariable constVar = qualifierValue.getDfType().getConstantOfType(PsiVariable.class);
     if (constVar != null) {
       return myFactory.getVarFactory().createVariableValue(constVar);
     }
@@ -181,7 +180,7 @@ public class DfaExpressionFactory {
     // If static final field is referred from the same or inner/nested class,
     // we consider that it might be uninitialized yet as some class initializers may call its methods or
     // even instantiate objects of this class and call their methods
-    if (!DfConstantType.isConst(constValue.getDfType(), var)) return false;
+    if (!constValue.getDfType().isConst(var)) return false;
     if (!(var instanceof PsiField) || var instanceof PsiEnumConstant) return false;
     return PsiTreeUtil.getTopmostParentOfType(refExpr, PsiClass.class) == PsiTreeUtil.getTopmostParentOfType(var, PsiClass.class);
   }
@@ -235,7 +234,8 @@ public class DfaExpressionFactory {
     PsiType type = expression.getType();
     if (expression instanceof PsiArrayInitializerExpression) {
       int length = ((PsiArrayInitializerExpression)expression).getInitializers().length;
-      return myFactory.fromDfType(SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(length), type));
+      return myFactory.fromDfType(SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(length))
+                                    .meet(DfTypes.typedObject(type, Nullability.NOT_NULL)));
     }
     DfType dfType = DfTypes.typedObject(type, NullabilityUtil.getExpressionNullability(expression));
     if (type instanceof PsiPrimitiveType && targetType instanceof PsiPrimitiveType && !type.equals(targetType)) {
@@ -369,7 +369,8 @@ public class DfaExpressionFactory {
 
     @Override
     public boolean isStable() {
-      return PsiUtil.isJvmLocalVariable(myVariable) || myVariable.hasModifierProperty(PsiModifier.FINAL);
+      return PsiUtil.isJvmLocalVariable(myVariable) || 
+             (myVariable.hasModifierProperty(PsiModifier.FINAL) && !DfaUtil.hasInitializationHacks(myVariable));
     }
 
     @NotNull
@@ -380,8 +381,7 @@ public class DfaExpressionFactory {
         return factory.getObjectType(type, DfaPsiUtil.getElementNullability(type, myVariable));
       }
       if (PsiUtil.isJvmLocalVariable(myVariable) ||
-          (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC) &&
-           (!myVariable.hasModifierProperty(PsiModifier.FINAL) || !DfaUtil.hasInitializationHacks((PsiField)myVariable)))) {
+          (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {
         return factory.getVarFactory().createVariableValue(this);
       }
       return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);

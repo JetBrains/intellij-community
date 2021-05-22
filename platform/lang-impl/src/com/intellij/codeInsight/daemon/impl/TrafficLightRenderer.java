@@ -45,6 +45,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +72,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
    * @deprecated Please use {@link #TrafficLightRenderer(Project, Document)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public TrafficLightRenderer(Project project, Document document, PsiFile psiFile) {
     this(project, document);
     DeprecatedMethodException.report("Please use TrafficLightRenderer(Project, Document) instead");

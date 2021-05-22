@@ -16,6 +16,7 @@
 package com.intellij.debugger;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import org.jetbrains.annotations.ApiStatus;
 
 public class NoDataException extends Exception implements ControlFlowException {
   @SuppressWarnings({"deprecation"})
@@ -23,6 +24,7 @@ public class NoDataException extends Exception implements ControlFlowException {
 
   /** @deprecated Use shared {@link NoDataException#INSTANCE} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public NoDataException() { }
 
   @Override

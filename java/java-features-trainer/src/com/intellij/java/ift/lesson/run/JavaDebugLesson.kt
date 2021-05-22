@@ -5,13 +5,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.testGuiFramework.impl.button
-import training.commands.kotlin.TaskTestContext
-import training.learn.interfaces.Module
+import training.dsl.LessonContext
+import training.dsl.TaskTestContext
+import training.dsl.highlightButtonById
 import training.learn.lesson.general.run.CommonDebugLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.highlightButtonById
 
-class JavaDebugLesson(module: Module) : CommonDebugLesson(module, "java.debug.workflow", "JAVA") {
+class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
   private val demoClassName = JavaRunLessonsUtils.demoClassName
   override val configurationName: String = demoClassName
   override val sample = JavaRunLessonsUtils.demoSample

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
+import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -15,6 +16,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
@@ -24,6 +26,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
@@ -37,20 +40,23 @@ import com.intellij.psi.impl.source.tree.injected.changesHandler.range
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.refactoring.extractMethod.newImpl.*
-import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
+import com.intellij.util.SmartList
 import org.jetbrains.annotations.NonNls
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.util.*
 
-class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
-  : InplaceRefactoring(editor, null, extractOptions.project) {
+class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters, val extractor: InplaceExtractMethodProvider, private val popupProvider: ExtractMethodPopupProvider)
+  : InplaceRefactoring(editor, null, context.targetClass.project) {
 
   companion object {
     private val INPLACE_METHOD_EXTRACTOR = Key<InplaceMethodExtractor>("InplaceMethodExtractor")
@@ -68,13 +74,11 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     initPopupOptionsAdvertisement()
   }
 
-  private val fragmentsToRevert = mutableListOf<FragmentState>()
-
   private val caretToRevert: Int = editor.caretModel.currentCaret.offset
 
   private val selectionToRevert: TextRange? = ExtractMethodHelper.findEditorSelection(editor)
 
-  private val extractedRange = enclosingTextRangeOf(extractOptions.elements.first(), extractOptions.elements.last())
+  private val textToRevert: String = editor.document.text
 
   private lateinit var methodNameRange: RangeMarker
 
@@ -85,29 +89,16 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   private val disposable = Disposer.newDisposable()
 
   fun prepareCodeForTemplate() {
-    val project = extractOptions.project
+    val project = myProject
     val document = editor.document
 
-    val elements = extractOptions.elements
-    val callRange = document.createGreedyRangeMarker(enclosingTextRangeOf(elements.first(), elements.last()))
-    val callText = document.getText(callRange.range)
-    val replacedCall = FragmentState(callRange, callText)
-    fragmentsToRevert.add(replacedCall)
+    val rangeToExtract = document.createGreedyRangeMarker(context.range)
 
-    val startSibling = extractOptions.anchor.nextSibling
-    val endSibling = PsiTreeUtil.skipWhitespacesForward(startSibling) ?: startSibling
-    val methodRange = document.createGreedyRangeMarker(enclosingTextRangeOf(startSibling, endSibling))
-    val methodText = document.getText(methodRange.range)
-    val replacedMethod = FragmentState(methodRange, methodText)
-    fragmentsToRevert.add(replacedMethod)
+    val (method, callExpression) = extractMethod(extractor, context)
 
-    val javaFile = extractOptions.anchor.containingFile as PsiJavaFile
-    val importRange = document.createGreedyRangeMarker(javaFile.importList?.textRange ?: TextRange(0, 0))
-    val replacedImport = FragmentState(importRange, document.getText(importRange.range))
-    fragmentsToRevert.add(replacedImport)
-    fragmentsToRevert.forEach { Disposer.register(disposable, it) }
+    val highlighting = createMethodHighlighting(method)
+    Disposer.register(disposable, highlighting)
 
-    val (method, callExpression) = extractMethod(document, extractOptions)
     methodCallExpressionRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
     Disposer.register(disposable, { methodCallExpressionRange.dispose() })
     methodNameRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
@@ -118,7 +109,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val preview = EditorCodePreview.create(editor)
     Disposer.register(disposable, preview)
 
-    val callLines = findLines(document, callRange.range)
+    val callLines = findLines(document, rangeToExtract.range)
     val file = method.containingFile.virtualFile
     preview.addPreview(callLines) { navigate(project, file, methodCallExpressionRange.endOffset)}
 
@@ -126,12 +117,25 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     preview.addPreview(methodLines) { navigate(project, file, methodNameRange.endOffset) }
   }
 
-  private fun extractMethod(document: Document, extractOptions: ExtractOptions): Pair<PsiMethod, PsiMethodCallExpression> {
-    val (callElements, method) = MethodExtractor().extractMethod(extractOptions)
-    val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
+  private fun createMethodHighlighting(method: PsiMethod): Disposable {
+    val project = method.project
+    val highlighters = SmartList<RangeHighlighter>()
+    val manager = HighlightManager.getInstance(project)
+    manager.addOccurrenceHighlight(editor, method.startOffset, method.endOffset, DiffColors.DIFF_INSERTED, 0, highlighters)
+    return Disposable {
+      highlighters.forEach { highlighter -> manager.removeSegmentHighlighter(editor, highlighter) }
+    }
+  }
+
+  fun extractMethod(extractor: InplaceExtractMethodProvider, parameters: ExtractParameters): Pair<PsiMethod, PsiMethodCallExpression> {
+    val project = parameters.targetClass.project
+    val file = parameters.targetClass.containingFile
+    val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: throw IllegalStateException()
+
+    val (method, call) = extractor.extract(parameters)
     val methodPointer = SmartPointerManager.createPointer(method)
-    val callPointer = SmartPointerManager.createPointer(callExpression)
-    val manager = PsiDocumentManager.getInstance(extractOptions.project)
+    val callPointer = SmartPointerManager.createPointer(call)
+    val manager = PsiDocumentManager.getInstance(project)
     manager.doPostponedOperationsAndUnblockDocument(document)
     manager.commitDocument(document)
     return Pair(methodPointer.element!!, callPointer.element!!)
@@ -230,14 +234,12 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   override fun revertState() {
     super.revertState()
     WriteCommandAction.runWriteCommandAction(myProject) {
-      fragmentsToRevert.forEach { fragment ->
-        editor.document.replaceString(fragment.range.startOffset, fragment.range.endOffset, fragment.text)
-      }
+      editor.document.setText(textToRevert)
       PsiDocumentManager.getInstance(myProject).commitDocument(editor.document)
-      editor.caretModel.moveToOffset(caretToRevert)
-      if (selectionToRevert != null) {
-        editor.selectionModel.setSelection(selectionToRevert.startOffset, selectionToRevert.endOffset)
-      }
+    }
+    editor.caretModel.moveToOffset(caretToRevert)
+    if (selectionToRevert != null) {
+      editor.selectionModel.setSelection(selectionToRevert.startOffset, selectionToRevert.endOffset)
     }
   }
 
@@ -260,7 +262,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
                                                                       templateElement) { logStatisticsOnHide(popupProvider) }
     setActiveExtractor(editor, this)
 
-    Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(extractOptions.project).reset() })
+    Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(myProject).reset() })
 
     templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
       override fun templateFinished(template: Template, brokenOff: Boolean) {
@@ -271,10 +273,20 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   private fun afterTemplateFinished(brokenOff: Boolean) {
-    if (! brokenOff){
-      InplaceExtractMethodCollector.executed.log(extractOptions.methodName != getMethodName())
+    if (! brokenOff && validationPassed){
+      InplaceExtractMethodCollector.executed.log(context.methodName != getMethodName())
       installGotItTooltips()
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+      val extractedMethod = findExtractedMethod()
+      if (extractedMethod != null) {
+        extractor.postprocess(editor, extractedMethod)
+      }
     }
+  }
+
+  private fun findExtractedMethod(): PsiMethod? {
+    val file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.document) ?: return null
+    return PsiTreeUtil.findElementOfClassAtOffset(file, methodNameRange.startOffset, PsiMethod::class.java, false)
   }
 
   private fun logStatisticsOnShow(editor: Editor, mouseEvent: MouseEvent? = null){
@@ -314,10 +326,12 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   private fun getMethodName() = editor.document.getText(TextRange(methodNameRange.startOffset, methodNameRange.endOffset))
 
+  var validationPassed = false
+
   private fun installMethodNameValidation(templateState: TemplateState) {
     templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
 
-      var restartOptions: ExtractOptions? = null
+      var errorMethodName: String? = null
       var errorMessage: @NonNls String? = null
 
       override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
@@ -334,7 +348,10 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
           else -> null
         }
         if (errorMessage != null) {
-          restartOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic)
+          errorMethodName = getMethodName()
+          performCleanup()
+        } else {
+          validationPassed = true
         }
       }
 
@@ -349,12 +366,12 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
       private fun restartWithInvalidName(){
         ApplicationManager.getApplication().invokeLater {
           val message = errorMessage
-          val options = restartOptions
-          if (message != null && options != null) {
+          val methodName = errorMethodName
+          if (message != null && methodName != null) {
             WriteCommandAction.runWriteCommandAction(myProject) {
-              val extractor = InplaceMethodExtractor(editor, options.copy(methodName = "extracted"), popupProvider)
+              val extractor = InplaceMethodExtractor(editor, context.copy(methodName = "extracted"), extractor, popupProvider)
               extractor.performInplaceRefactoring(linkedSetOf())
-              extractor.setMethodName(options.methodName)
+              extractor.setMethodName(methodName)
               CommonRefactoringUtil.showErrorHint(myProject, editor, message, ExtractMethodHandler.getRefactoringName(), null)
             }
           }
@@ -365,32 +382,31 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   fun restartInDialog(isLinkUsed: Boolean = false) {
     InplaceExtractMethodCollector.openExtractDialog.log(myProject, isLinkUsed)
-    val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic)
-    MethodExtractor().doDialogExtract(newOptions)
+    val updatedContext = context.update(getMethodName(), popupProvider.annotate, popupProvider.makeStatic)
+    performCleanup()
+    extractor.extractInDialog(updatedContext)
   }
 
-  private fun revertAndMapOptions(annotate: Boolean?, makeStatic: Boolean?): ExtractOptions {
+  private fun ExtractParameters.update(methodName: String, annotate: Boolean?, static: Boolean?): ExtractParameters {
     if (annotate != null) {
-      PropertiesComponent.getInstance(extractOptions.project).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, annotate, true)
+      PropertiesComponent.getInstance(myProject).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, annotate, true)
     }
 
-    val methodNameRange = TemplateManagerImpl.getTemplateState(editor)?.currentVariableRange ?: throw IllegalStateException()
-    val methodName = editor.document.getText(methodNameRange)
-    val containingClass = extractOptions.anchor.containingClass ?: throw IllegalStateException()
-    performCleanup()
-
-    val elements = ExtractSelector().suggestElementsToExtract(containingClass.containingFile, extractedRange)
-    val analyzer = CodeFragmentAnalyzer(elements)
-    var options = findExtractOptions(elements).copy(methodName = methodName)
-    options = ExtractMethodPipeline.withTargetClass(analyzer, options, containingClass)!!
-    options = if (makeStatic == true) ExtractMethodPipeline.withForcedStatic(analyzer, options)!! else options
-    return options
+    var context = this.copy(methodName = methodName)
+    if (annotate != null) {
+      context = context.copy(annotate = annotate)
+    }
+    if (static != null) {
+      context = context.copy(static = static)
+    }
+    return context
   }
 
   private fun restartInplace() {
-    val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic)
+    val updatedContext = context.update(getMethodName(), popupProvider.annotate, popupProvider.makeStatic)
+    performCleanup()
     WriteCommandAction.runWriteCommandAction(myProject) {
-      InplaceMethodExtractor(editor, newOptions, popupProvider).performInplaceRefactoring(linkedSetOf())
+      InplaceMethodExtractor(editor, updatedContext, extractor, popupProvider).performInplaceRefactoring(linkedSetOf())
     }
   }
 
@@ -406,20 +422,12 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   override fun getCommandName(): String = ExtractMethodHandler.getRefactoringName()
 
-  private data class FragmentState(val range: RangeMarker, val text: String) : Disposable {
-    override fun dispose() {
-      range.dispose()
-    }
-  }
-
   private fun Document.createGreedyRangeMarker(range: TextRange): RangeMarker {
     return createRangeMarker(range).also {
       it.isGreedyToLeft = true
       it.isGreedyToRight = true
     }
   }
-
-  private fun enclosingTextRangeOf(start: PsiElement, end: PsiElement): TextRange = start.textRange.union(end.textRange)
 
   private fun IntRange.trimToLength(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
 

@@ -4,6 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.ui.IdeUICustomization
 
 /**
  * @author Konstantin Bulenkov
@@ -12,4 +13,11 @@ class CloseAllProjectsAction : CloseProjectsActionBase() {
   override fun canClose(project: Project, currentProject: Project) = true
 
   override fun shouldShow(e: AnActionEvent) = ProjectManager.getInstance().openProjects.size > 1
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    e.presentation.text = IdeUICustomization.getInstance().projectMessage("action.close.all.projects.text")
+    e.presentation.description = IdeUICustomization.getInstance().projectMessage("action.close.all.projects.description")
+  }
 }

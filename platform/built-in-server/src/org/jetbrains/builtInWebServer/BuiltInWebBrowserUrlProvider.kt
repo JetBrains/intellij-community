@@ -3,11 +3,12 @@
 
 package org.jetbrains.builtInWebServer
 
-import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.ide.browsers.OpenInBrowserRequest
 import com.intellij.ide.browsers.WebBrowserUrlProvider
+import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
@@ -16,6 +17,7 @@ import com.intellij.util.BuiltinWebServerAccess
 import com.intellij.util.SmartList
 import com.intellij.util.Url
 import com.intellij.util.Urls
+import org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService
 import org.jetbrains.ide.BuiltInServerManager
 import java.io.IOException
 
@@ -69,7 +71,14 @@ fun getBuiltInServerUrls(info: PathInfo, project: Project, currentAuthority: Str
   }
 
   val authority = currentAuthority ?: "localhost:$effectiveBuiltInServerPort"
-  val query = if (appendAccessToken) "?$TOKEN_PARAM_NAME=${acquireToken()}" else ""
+  val appendReloadOnSave = Registry.get("ide.built.in.web.server.reload.on.save").asBoolean()
+  val queryBuilder = StringBuilder()
+  if (appendAccessToken || appendReloadOnSave) queryBuilder.append('?')
+  if (appendAccessToken) queryBuilder.append(TOKEN_PARAM_NAME).append('=').append(acquireToken())
+  if (appendAccessToken && appendReloadOnSave) queryBuilder.append('&')
+  if (appendReloadOnSave) queryBuilder.append(WebServerPageConnectionService.RELOAD_URL_PARAM)
+  val query = queryBuilder.toString()
+
   val urls = SmartList(Urls.newHttpUrl(authority, "/$userToken/${project.name}/$path"))
 
   val path2 = info.rootLessPathIfPossible

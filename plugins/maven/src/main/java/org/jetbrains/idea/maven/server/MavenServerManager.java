@@ -252,6 +252,7 @@ public final class MavenServerManager implements Disposable {
    */
   @Nullable
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String getCurrentMavenVersion() {
     return null;
   }
@@ -360,7 +361,7 @@ public final class MavenServerManager implements Disposable {
                                              @Nullable String workingDirectory,
                                              @NotNull String multiModuleProjectDirectory) {
 
-    return new MavenEmbedderWrapper(null) {
+    return new MavenEmbedderWrapper(project, null) {
       @NotNull
       @Override
       protected MavenServerEmbedder create() throws RemoteException {
@@ -425,7 +426,7 @@ public final class MavenServerManager implements Disposable {
   }
 
   public static MavenServerSettings convertSettings(Project project, MavenGeneralSettings settings) {
-    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project.getBasePath());
+    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
     MavenServerSettings result = new MavenServerSettings();
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
@@ -469,6 +470,7 @@ public final class MavenServerManager implements Disposable {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String getMavenEmbedderVMOptions() {
     return "";
   }
@@ -478,6 +480,7 @@ public final class MavenServerManager implements Disposable {
    * @deprecated use MavenImportingSettings.setVmOptionsForImporter
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
   }
 

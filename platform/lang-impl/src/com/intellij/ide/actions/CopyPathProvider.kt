@@ -23,11 +23,6 @@ import java.awt.datatransfer.StringSelection
 
 abstract class CopyPathProvider : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    if (!CopyPathsAction.isCopyReferencePopupAvailable()) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
     val dataContext = e.dataContext
     val editor = CommonDataKeys.EDITOR.getData(dataContext)
     val project = e.project

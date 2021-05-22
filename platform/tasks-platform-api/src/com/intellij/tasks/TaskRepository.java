@@ -110,6 +110,7 @@ public abstract class TaskRepository {
    * @deprecated use #createCancellableConnection()
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void testConnection() throws Exception {
   }
 
@@ -230,6 +231,7 @@ public abstract class TaskRepository {
    * @deprecated Use {@link #setTaskState(Task, CustomTaskState)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     throw new UnsupportedOperationException("Setting task to state " + state + " is not supported");
   }

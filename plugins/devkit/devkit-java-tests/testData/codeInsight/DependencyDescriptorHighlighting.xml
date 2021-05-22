@@ -1,0 +1,14 @@
+<idea-plugin package="<error descr="Cannot resolve package java">java</error>.<error descr="Cannot resolve package lang">lang</error>">
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <dependencies>
+    <module name="<error descr="Cannot resolve module descriptor 'module.name.xml' in source roots of module 'module.name'">module.name</error>" package="<error descr="Invalid value: 'java.lang'">java.lang</error>"/>
+    <module name="<error descr="Cannot resolve module descriptor 'INVALID_VALUE.xml' in source roots of module 'INVALID_VALUE'">INVALID_VALUE</error>"
+            package=<error descr="Invalid value: ''">""</error>/>
+
+    <plugin id="<error descr="Cannot resolve plugin 'plugin.id' in dependencies (Reference: Plugin Dependencies)">plugin.id</error>"/>
+    <plugin id=<error descr="Value must not be empty">""</error>/>
+  </dependencies>
+</idea-plugin>

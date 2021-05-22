@@ -286,6 +286,10 @@ public class PropertyUtilBase {
     return GetterFlavour.NOT_A_GETTER;
   }
 
+  public static boolean hasAccessorName(PsiMethod method) {
+    String methodName = method.getName();
+    return isSetterName(methodName) || getMethodNameGetterFlavour(methodName) != GetterFlavour.NOT_A_GETTER;
+  }
 
   @Contract("null -> false")
   public static boolean isSimplePropertyGetter(@Nullable PsiMethod method) {

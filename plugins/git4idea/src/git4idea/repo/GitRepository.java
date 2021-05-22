@@ -9,6 +9,7 @@ import git4idea.GitLocalBranch;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.status.GitStagingAreaHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +56,7 @@ public interface GitRepository extends Repository {
    * @deprecated Use #getRepositoryFiles(), since there will be two administrative directories if user uses git worktrees.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   VirtualFile getGitDir();
 

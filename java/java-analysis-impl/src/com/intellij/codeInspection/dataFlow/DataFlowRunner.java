@@ -61,21 +61,19 @@ public class DataFlowRunner {
   }
 
   public DataFlowRunner(@NotNull Project project, @Nullable PsiElement context) {
-    this(project, context, false, ThreeState.NO);
+    this(project, context, ThreeState.NO);
   }
 
   /**
    * @param project current project
    * @param context analysis context element (code block, class, expression, etc.); used to determine whether we can trust
  *                field initializers (e.g. we usually cannot if context is a constructor)
-   * @param unknownMembersAreNullable if true every parameter or method return value without nullity annotation is assumed to be nullable
    * @param ignoreAssertions if true, assertion statements will be ignored, as if JVM is started with -da.
    */
   public DataFlowRunner(@NotNull Project project,
                         @Nullable PsiElement context,
-                        boolean unknownMembersAreNullable,
                         @NotNull ThreeState ignoreAssertions) {
-    myValueFactory = new DfaValueFactory(project, context, unknownMembersAreNullable);
+    myValueFactory = new DfaValueFactory(project, context);
     myIgnoreAssertions = ignoreAssertions;
   }
 
@@ -293,6 +291,10 @@ public class DataFlowRunner {
               if (loopNumber[branching.getIndex()] != 0) {
                 incomingStates.putValue(branching, state.getMemoryState().createCopy());
               }
+            }
+            if (nextInstruction.getIndex() < instruction.getIndex() && 
+                (!(instruction instanceof GotoInstruction) || ((GotoInstruction)instruction).shouldWidenBackBranch())) {
+              state.getMemoryState().widen();
             }
             queue.offer(state);
           }

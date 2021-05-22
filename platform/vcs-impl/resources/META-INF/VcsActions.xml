@@ -33,7 +33,10 @@
             use-shortcut-of="Refresh"/>
     <action id="Vcs.ShowDiffWithLocal.Before" class="com.intellij.openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction"/>
     <action id="Vcs.ShowDiffWithLocal" class="com.intellij.openapi.vcs.history.actions.ShowDiffAfterWithLocalAction"/>
-    <action id="Vcs.VcsClone" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction"/>
+    <action id="Vcs.VcsClone" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction">
+      <synonym key="action.Vcs.VcsClone.text.synonym1"/>
+      <synonym key="action.Vcs.VcsClone.text.synonym2"/>
+    </action>
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
     <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons.Actions.CheckOut">
       <keyboard-shortcut first-keystroke="control T" keymap="$default"/>

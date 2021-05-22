@@ -4,14 +4,13 @@ package com.jetbrains.python.ift.lesson.completion
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
 import com.jetbrains.python.ift.PythonLessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
-import training.learn.lesson.kimpl.parseLessonSample
+import training.dsl.LessonContext
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.parseLessonSample
+import training.learn.course.KLesson
 
-class FStringCompletionLesson(module: Module)
-  : KLesson("completion.f.string", PythonLessonsBundle.message("python.f.string.completion.lesson.name"), module, "Python") {
+class FStringCompletionLesson
+  : KLesson("completion.f.string", PythonLessonsBundle.message("python.f.string.completion.lesson.name")) {
   private val template = """
     import sys
     

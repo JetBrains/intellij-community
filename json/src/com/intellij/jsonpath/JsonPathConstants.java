@@ -3,11 +3,16 @@ package com.intellij.jsonpath;
 
 import com.google.common.collect.ImmutableMap;
 
+import java.util.List;
 import java.util.Map;
 
 public final class JsonPathConstants {
   private JsonPathConstants() {
   }
+
+  public static final List<String> STANDARD_NAMED_OPERATORS = List.of(
+    "in", "nin", "subsetof", "anyof", "noneof", "size", "empty", "contains"
+  );
 
   public static final Map<String, String> STANDARD_FUNCTIONS = ImmutableMap.<String, String>builder()
     .put("concat", "string")

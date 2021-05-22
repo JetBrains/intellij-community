@@ -3,10 +3,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
@@ -45,6 +42,7 @@ public abstract class ExecutionTarget {
    * @deprecated implement {@link #canRun(RunConfiguration)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean canRun(@NotNull RunnerAndConfigurationSettings configuration) {
     return canRun(configuration.getConfiguration());
   }

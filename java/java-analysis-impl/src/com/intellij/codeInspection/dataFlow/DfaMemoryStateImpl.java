@@ -364,7 +364,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight) {
-    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaBoxedValue) && !(dfaLeft.getDfType() instanceof DfConstantType)) {
+    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaWrappedValue) && !(dfaLeft.getDfType() instanceof DfConstantType)) {
       return false;
     }
     return !isNull(dfaLeft) && !isNull(dfaRight) &&
@@ -533,13 +533,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean isNull(DfaValue dfaValue) {
-    return getDfType(dfaValue) == DfTypes.NULL;
+  public boolean isNull(DfaValue value) {
+    return getDfType(value) == DfTypes.NULL;
   }
 
   @Override
-  public boolean isNotNull(DfaValue dfaVar) {
-    return !getDfType(dfaVar).isSuperType(DfTypes.NULL);
+  public boolean isNotNull(DfaValue value) {
+    return !getDfType(value).isSuperType(DfTypes.NULL);
   }
 
   @Override
@@ -1113,20 +1113,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private static @Nullable RelationType getFloatingConstantRelation(DfType leftType, DfType rightType) {
-    Number value1 = DfConstantType.getConstantOfType(leftType, Number.class);
-    Number value2 = DfConstantType.getConstantOfType(rightType, Number.class);
+    Number value1 = leftType.getConstantOfType(Number.class);
+    Number value2 = rightType.getConstantOfType(Number.class);
     if (value1 == null || value2 == null) return null;
     double double1 = value1.doubleValue();
     double double2 = value2.doubleValue();
     if (double1 == 0.0 && double2 == 0.0) return RelationType.EQ;
     int cmp = Double.compare(double1, double2);
     return cmp == 0 ? RelationType.EQ : cmp < 0 ? RelationType.LT : RelationType.GT;
-  }
-
-  @Override
-  public boolean checkNotNullable(@NotNull DfaValue value) {
-    DfaNullability nullability = DfaNullability.fromDfType(getDfType(value));
-    return nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
   }
 
   public @NotNull DfType getBinOpRange(DfaBinOpValue binOp) {
@@ -1163,8 +1157,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public @NotNull DfType getUnboxedDfType(@NotNull DfaValue value) {
-    if (value instanceof DfaBoxedValue) {
-      return getDfType(((DfaBoxedValue)value).getWrappedValue());
+    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == SpecialField.UNBOX) {
+      return getDfType(((DfaWrappedValue)value).getWrappedValue());
     }
     if (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
       return getDfType(SpecialField.UNBOX.createValue(myFactory, value));
@@ -1222,10 +1216,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaVariableValue) {
       return canonicalize((DfaVariableValue)value);
     }
-    if (value instanceof DfaBoxedValue) {
-      DfaBoxedValue boxedValue = (DfaBoxedValue)value;
+    if (value instanceof DfaWrappedValue) {
+      DfaWrappedValue boxedValue = (DfaWrappedValue)value;
       DfaValue canonicalized = canonicalize(boxedValue.getWrappedValue());
-      return Objects.requireNonNull(myFactory.getBoxedFactory().createBoxed(canonicalized, boxedValue.getType()));
+      if (canonicalized == boxedValue.getWrappedValue()) return boxedValue;
+      return myFactory.getWrapperFactory().createWrapper(boxedValue.getDfType(), boxedValue.getSpecialField(), canonicalized);
     }
     return value;
   }
@@ -1662,5 +1657,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       return flushCalls ? QualifierStatus.SHOULD_FLUSH_CALLS : QualifierStatus.SHOULD_NOT_FLUSH;
     }
+  }
+
+  @Override
+  public void widen() {
+    myVariableTypes.replaceAll((var, type) -> type.widen());
   }
 }

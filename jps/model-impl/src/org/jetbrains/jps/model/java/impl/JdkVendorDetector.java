@@ -19,6 +19,7 @@ public final class JdkVendorDetector {
   static final Vendor LIBERICA = new Vendor("liberica",   "BellSoft Liberica JDK",     true);
   static final Vendor SAP      = new Vendor("sapmachine", "SAP SapMachine",            true);
   static final Vendor AZUL     = new Vendor("azul",       "Azul Zulu Community\u2122", true);
+  static final Vendor JBR      = new Vendor("jbr",        "JetBrains Runtime",         true);
   // @formatter:on
 
   private static final VendorCase[] VENDOR_CASES = {
@@ -29,6 +30,7 @@ public final class JdkVendorDetector {
     new VendorCase(SAP,      new PropertyPattern("IMPLEMENTOR", "^SAP(\\s.*)?$")),
     new VendorCase(SAP,      new PropertyPattern("IMPLEMENTOR_VERSION", "^SapMachine.*$")),
     new VendorCase(AZUL,     new PropertyPattern("IMPLEMENTOR", "^Azul(\\s.*)?$")),
+    new VendorCase(JBR,      new PropertyPattern("IMPLEMENTOR", "^.*JetBrains.*$")),
     new VendorCase(ORACLE,   new PropertyPattern("SOURCE", "^.*\\shotspot:[0-9A-Fa-f]+.*$")
                          ,   new PropertyPattern("JAVA_VERSION", "^1\\.7\\..*$")),
     new VendorCase(ORACLE,   new PropertyPattern("SOURCE", "^.*\\shotspot:[0-9A-Fa-f]+.*$")

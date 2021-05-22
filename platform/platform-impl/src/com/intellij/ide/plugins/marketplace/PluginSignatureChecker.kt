@@ -2,11 +2,12 @@
 package com.intellij.ide.plugins.marketplace
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.certificates.PluginCertificateStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.zip.signer.verifier.InvalidSignatureResult
 import org.jetbrains.zip.signer.verifier.MissingSignatureResult
 import org.jetbrains.zip.signer.verifier.SuccessfulVerificationResult
@@ -15,6 +16,7 @@ import java.io.File
 import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
 
+@ApiStatus.Internal
 object PluginSignatureChecker {
 
   private val LOG = Logger.getInstance(PluginSignatureChecker::class.java)
@@ -30,25 +32,47 @@ object PluginSignatureChecker {
     }
   }
 
+  private val certificateStore = PluginCertificateStore.instance
+
+  @JvmStatic
+  fun isSignedByAnyCertificates(pluginName: String, pluginFile: File): Boolean {
+    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("jetbrains.certificate.not.found"))
+    val certificates = certificateStore.customTrustManager.certificates.orEmpty() + jbCert
+    return isSignedBy(pluginName, pluginFile, *certificates.toTypedArray())
+  }
+
+  @JvmStatic
+  fun isSignedByCustomCertificates(pluginName: String, pluginFile: File): Boolean {
+    val certificates = certificateStore.customTrustManager.certificates
+    if (certificates.isEmpty()) return true
+    return isSignedBy(pluginName, pluginFile, *certificates.toTypedArray())
+  }
+
   @JvmStatic
   fun isSignedByJetBrains(pluginName: String, pluginFile: File): Boolean {
     val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("jetbrains.certificate.not.found"))
-    val errorMessage = verifyPluginAndGetErrorMessage(pluginFile, jbCert)
+    return isSignedBy(pluginName, pluginFile, jbCert)
+  }
+
+  private fun isSignedBy(pluginName: String, pluginFile: File, vararg certificate: Certificate): Boolean {
+    val errorMessage = verifyPluginAndGetErrorMessage(pluginFile, *certificate)
     if (errorMessage != null) {
       return processSignatureWarning(pluginName, errorMessage)
     }
     return true
   }
 
-  private fun verifyPluginAndGetErrorMessage(file: File, certificate: Certificate): String? {
+  private fun verifyPluginAndGetErrorMessage(file: File, vararg certificates: Certificate): String? {
     return when (val verificationResult = ZipVerifier.verify(file)) {
       is InvalidSignatureResult -> verificationResult.errorMessage
       is MissingSignatureResult -> IdeBundle.message("plugin.signature.not.signed")
-      is SuccessfulVerificationResult ->
-        if (!verificationResult.isSignedBy(certificate)) {
-          IdeBundle.message("plugin.signature.not.signed.by.jetbrains")
+      is SuccessfulVerificationResult -> {
+        val isSigned = certificates.any { certificate -> verificationResult.isSignedBy(certificate) }
+        if (!isSigned) {
+          IdeBundle.message("plugin.signature.not.signed.by")
         }
         else null
+      }
     }
   }
 

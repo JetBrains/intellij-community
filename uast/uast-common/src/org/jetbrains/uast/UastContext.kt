@@ -18,7 +18,7 @@ package org.jetbrains.uast
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.Contract
 import org.jetbrains.uast.util.ClassSet
@@ -107,7 +107,7 @@ object UastFacade : UastLanguagePlugin {
     fun onPluginsChanged()
   }
 
-  private val exposedListeners = Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap<UastPluginListener, Boolean>())
+  private val exposedListeners = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakIdentityMap<UastPluginListener, Boolean>())
 
   init {
     UastLanguagePlugin.extensionPointName.addChangeListener({ exposedListeners.forEach(UastPluginListener::onPluginsChanged) }, null);

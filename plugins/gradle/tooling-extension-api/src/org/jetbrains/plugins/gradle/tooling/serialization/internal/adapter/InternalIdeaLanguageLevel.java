@@ -3,7 +3,9 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.gradle.tooling.model.idea.IdeaLanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class InternalIdeaLanguageLevel implements IdeaLanguageLevel {
   private final String level;
 

@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public final class InternalIdeaSourceDirectory implements IdeaSourceDirectory {
   private File directory;
   private boolean generated;

@@ -18,6 +18,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
    * @deprecated Use {@link #PsiResolveHelperImpl(Project)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public PsiResolveHelperImpl(@NotNull PsiManager manager) {
     myManager = manager;
   }

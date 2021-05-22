@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.ModuleDescriptorPackageConverter;
 
 import java.util.List;
 
@@ -27,16 +29,18 @@ public interface IdeaPlugin extends DomElement {
   }
 
   @SubTag("product-descriptor")
-  @Nullable
+  @NotNull
   ProductDescriptor getProductDescriptor();
 
   @SubTag("content")
-  @Nullable
+  @NotNull
+  @Stubbed
   @ApiStatus.Experimental
   ContentDescriptor getContent();
 
   @SubTag("dependencies")
-  @Nullable
+  @NotNull
+  @Stubbed
   @ApiStatus.Experimental
   DependencyDescriptor getDependencies();
 
@@ -75,7 +79,9 @@ public interface IdeaPlugin extends DomElement {
   GenericAttributeValue<Boolean> getRequireRestart();
 
   @NotNull
-  GenericAttributeValue<String> getPackage();
+  @Stubbed
+  @Convert(ModuleDescriptorPackageConverter.ForIdeaPlugin.class)
+  GenericAttributeValue<PsiPackage> getPackage();
 
   @NotNull
   @Stubbed
@@ -192,71 +198,4 @@ public interface IdeaPlugin extends DomElement {
   @Deprecated
   @NotNull
   List<Helpset> getHelpsets();
-
-  interface ContentDescriptor extends DomElement {
-    @NotNull
-    @Stubbed
-    @SubTagList("module")
-    List<DependencyDescriptor.ModuleDescriptor> getModuleEntry();
-
-    @SubTagList("module")
-    DependencyDescriptor.ModuleDescriptor addModuleEntry();
-
-    @Presentation(icon = "AllIcons.Nodes.Module")
-    interface ModuleDescriptor extends DomElement {
-      @NotNull
-      @Required
-      @Stubbed
-      @NameValue
-      GenericAttributeValue<String> getName();
-
-      @NotNull
-      @Required
-      @Stubbed
-      @NameValue
-      GenericAttributeValue<String> getPackage();
-    }
-  }
-
-  interface DependencyDescriptor extends DomElement {
-    @NotNull
-    @Stubbed
-    @SubTagList("module")
-    List<ModuleDescriptor> getModuleEntry();
-
-    @SubTagList("module")
-    ModuleDescriptor addModuleEntry();
-
-    @NotNull
-    @Stubbed
-    @SubTagList("plugin")
-    List<PluginDescriptor> getPlugin();
-
-    @SubTagList("module")
-    PluginDescriptor addPlugin();
-
-    @Presentation(icon = "AllIcons.Nodes.Module")
-    interface ModuleDescriptor extends DomElement {
-      @NotNull
-      @Required
-      @Stubbed
-      @NameValue
-      GenericAttributeValue<String> getName();
-
-      @NotNull
-      @Required
-      @Stubbed
-      @NameValue
-      GenericAttributeValue<String> getPackage();
-    }
-
-    @Presentation(icon = "AllIcons.Nodes.Plugin")
-    interface PluginDescriptor extends DomElement {
-      @NotNull
-      @Required
-      @Stubbed
-      @NameValue
-      GenericAttributeValue<String> getId();
-    }
-  }
 }

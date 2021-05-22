@@ -2,6 +2,9 @@
 package com.intellij.execution.wsl;
 
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class WSLCommandLineOptions {
+
+  static final @NlsSafe String DEFAULT_SHELL = "/bin/sh";
+
   private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
   private boolean myExecuteCommandInInteractiveShell = false;
@@ -17,6 +23,8 @@ public final class WSLCommandLineOptions {
   private String myRemoteWorkingDirectory;
   private boolean myPassEnvVarsUsingInterop = false;
   private final List<String> myInitShellCommands = new ArrayList<>();
+  private boolean myExecuteCommandInDefaultShell = false;
+  private @Nls @NotNull String myShellPath = DEFAULT_SHELL;
 
   public boolean isLaunchWithWslExe() {
     return myLaunchWithWslExe && Experiments.getInstance().isFeatureEnabled("wsl.execute.with.wsl.exe");
@@ -68,6 +76,36 @@ public final class WSLCommandLineOptions {
   public @NotNull WSLCommandLineOptions setExecuteCommandInLoginShell(boolean executeCommandInLoginShell) {
     myExecuteCommandInLoginShell = executeCommandInLoginShell;
     if (myExecuteCommandInLoginShell) myExecuteCommandInShell = true;
+    return this;
+  }
+
+  boolean isExecuteCommandInDefaultShell() {
+    return myExecuteCommandInDefaultShell;
+  }
+
+  /**
+   * Executes command in default shell. Please note that shell expansion is enabled in this case,
+   * so it's not suitable for running arbitrary command lines.
+   *
+   * @param executeCommandInDefaultShell
+   * @return
+   */
+  @SuppressWarnings("SameParameterValue")
+  @ApiStatus.Experimental
+  @NotNull WSLCommandLineOptions setExecuteCommandInDefaultShell(boolean executeCommandInDefaultShell) {
+    myExecuteCommandInDefaultShell = executeCommandInDefaultShell;
+    return this;
+  }
+
+  public @Nls @NotNull String getShellPath() {
+    return myShellPath;
+  }
+
+  public @NotNull WSLCommandLineOptions setShellPath(@Nls @NotNull String shellPath) {
+    if (shellPath.isBlank()) {
+      throw new AssertionError("Wrong shell: " + shellPath);
+    }
+    myShellPath = shellPath;
     return this;
   }
 

@@ -8,16 +8,14 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.testGuiFramework.impl.button
 import com.intellij.util.ui.UIUtil
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.*
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.course.KLesson
 import javax.swing.JDialog
 
-class JavaRenameLesson(module: Module)
-  : KLesson("Refactorings.Rename", LessonsBundle.message("rename.lesson.name"), module, "JAVA") {
+class JavaRenameLesson
+  : KLesson("Refactorings.Rename", LessonsBundle.message("rename.lesson.name")) {
   private val initialName = "stylus"
 
   private val template = """

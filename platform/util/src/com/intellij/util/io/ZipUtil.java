@@ -147,6 +147,7 @@ public final class ZipUtil {
    * @deprecated {@link #extract(Path, Path, FilenameFilter, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter, boolean overwrite) throws IOException {
     new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir.toPath(), filter)).overwrite(overwrite).extract(outputDir);
   }

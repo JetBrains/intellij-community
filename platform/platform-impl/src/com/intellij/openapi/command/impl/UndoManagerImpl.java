@@ -596,6 +596,14 @@ public class UndoManagerImpl extends UndoManager {
     clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(document));
   }
 
+  @ApiStatus.Internal
+  public void clearDocumentReferences(@NotNull Document document) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myUndoStacksHolder.clearDocumentReferences(document);
+    myRedoStacksHolder.clearDocumentReferences(document);
+    myMerger.clearDocumentReferences(document);
+  }
+
   @Override
   public String toString() {
     return "UndoManager for " + ObjectUtils.notNull(myProject, "application");

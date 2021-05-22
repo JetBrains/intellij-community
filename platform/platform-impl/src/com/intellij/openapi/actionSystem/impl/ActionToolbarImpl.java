@@ -15,10 +15,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -169,9 +169,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myDecorateButtons = decorateButtons;
     myUpdater = new ToolbarUpdater(this) {
       @Override
-      protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
+      protected void updateActionsImpl(boolean forced) {
         if (!ApplicationManager.getApplication().isDisposed()) {
-          ActionToolbarImpl.this.updateActionsImpl(transparentOnly, forced);
+          ActionToolbarImpl.this.updateActionsImpl(forced);
         }
       }
     };
@@ -1096,7 +1096,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myUpdater.updateActions(true, false, includeInvisible);
   }
 
-  private boolean myAlreadyUpdated;
   private boolean myHideDisabled = false;
 
   public void setHideDisabled(boolean hideDisabled) {
@@ -1104,13 +1103,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     updateActionsImmediately();
   }
 
-  private void updateActionsImpl(boolean transparentOnly, boolean forced) {
-    DataContext dataContext = getDataContext();
-    boolean async = myAlreadyUpdated && Registry.is("actionSystem.update.actions.asynchronously") && ourToolbars.contains(this) && isShowing();
+  private void updateActionsImpl(boolean forced) {
+    DataContext dataContext = Utils.wrapDataContext(getDataContext());
     ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
-                                              Utils.wrapDataContext(dataContext),
-                                              myPlace, false, true, transparentOnly);
-    if (async) {
+                                              dataContext, myPlace, false, true);
+    if (Utils.isAsyncDataContext(dataContext)) {
       if (myLastUpdate != null) myLastUpdate.cancel();
 
       myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled);
@@ -1118,7 +1115,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     else {
       actionsUpdated(forced, updater.expandActionGroupWithTimeout(myActionGroup, myHideDisabled));
-      myAlreadyUpdated = true;
     }
     if (mySecondaryActionsButton != null) {
       mySecondaryActionsButton.update();
@@ -1148,6 +1144,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
       if (shouldRebuildUI) {
         revalidate();
+        JBPopup popup = this instanceof PopupToolbar ? PopupUtil.getPopupContainerFor(this) : null;
+        if (popup != null) {
+          popup.setSize(newSize);
+        }
       }
       else {
         Container parent = getParent();
@@ -1374,6 +1374,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     public Container getParent() {
       Container parent = super.getParent();
       return parent != null ? parent : myParent;
+    }
+
+    @Override
+    public @NotNull Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      size.width = Math.max(size.width, DEFAULT_MINIMUM_BUTTON_SIZE.width);
+      size.height = Math.max(size.height, DEFAULT_MINIMUM_BUTTON_SIZE.height);
+      return size;
     }
 
     @Override

@@ -95,6 +95,7 @@ public interface PlatformIcons {
    * @deprecated use {@link #CONTENT_ROOT_ICON_CLOSED}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   Icon CONTENT_ROOT_ICON_OPEN = CONTENT_ROOT_ICON_CLOSED;
 
   Icon UP_DOWN_ARROWS = AllIcons.Ide.UpDown;
@@ -114,5 +115,6 @@ public interface PlatformIcons {
    * @deprecated use {@link #FOLDER_ICON}
    */
   @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;
 }

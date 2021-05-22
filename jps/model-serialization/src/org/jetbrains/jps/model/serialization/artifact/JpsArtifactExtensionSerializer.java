@@ -16,6 +16,7 @@
 package org.jetbrains.jps.model.serialization.artifact;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -44,6 +45,7 @@ public abstract class JpsArtifactExtensionSerializer<E extends JpsElement> {
    * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void saveExtension(@NotNull E extension, @NotNull Element optionsTag) {
   }
 }

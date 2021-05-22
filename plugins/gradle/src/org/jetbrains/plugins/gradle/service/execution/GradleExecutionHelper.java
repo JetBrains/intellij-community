@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -113,7 +114,7 @@ public class GradleExecutionHelper {
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
         String userDir = null;
-        if (!GradleEnvironment.ADJUST_USER_DIR) {
+        if (!Registry.is("gradle.tooling.use.external.process", false) && !GradleEnvironment.ADJUST_USER_DIR) {
           try {
             userDir = System.getProperty("user.dir");
             if (userDir != null) System.setProperty("user.dir", projectDir);
@@ -497,6 +498,18 @@ public class GradleExecutionHelper {
     });
   }
 
+  @ApiStatus.Internal
+  public static void attachTargetPathMapperInitScript(@NotNull GradleExecutionSettings executionSettings) {
+    try {
+      File initScriptFile = writeToFileGradleInitScript(
+        "if(!ext.has('mapPath')) ext.mapPath = { path -> path }\n", "ijmapper");
+      executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
+    }
+    catch (IOException e) {
+      LOG.warn("Can't generate IJ gradle init script", e);
+    }
+  }
+
   @Nullable
   public static String getBuildSrcDefaultInitScript() {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/buildSrcInit.gradle");
@@ -627,6 +640,9 @@ public class GradleExecutionHelper {
       else if (ch == '"') {
         stringBuilder.append("\\\"");
       }
+      else if (ch == '$') {
+        stringBuilder.append("\\$");
+      }
       else {
         stringBuilder.append(ch);
       }
@@ -669,7 +685,7 @@ public class GradleExecutionHelper {
     buf.append('[');
     for (Iterator<String> it = jarPaths.iterator(); it.hasNext(); ) {
       String jarPath = it.next();
-      buf.append('\"').append(jarPath).append('\"');
+      buf.append("mapPath(\"").append(jarPath).append("\")");
       if (it.hasNext()) {
         buf.append(',');
       }

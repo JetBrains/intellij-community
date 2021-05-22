@@ -3,19 +3,23 @@ package com.intellij.coverage;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
+import com.intellij.execution.target.java.JavaTargetParameter;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
 import com.intellij.rt.coverage.util.ProjectDataLoader;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public final class IDEACoverageRunner extends JavaCoverageRunner {
@@ -66,38 +70,81 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      final boolean collectLineInfo,
                                      final boolean isSampling,
                                      @Nullable String sourceMapPath) {
-    @NonNls StringBuilder argument = new StringBuilder("-javaagent:");
     String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(ProjectData.class));
     if (agentPath == null) return;
-    argument.append(agentPath);
-    argument.append("=");
+    javaParameters.getTargetDependentParameters().asTargetParameters().add(request -> {
+      return createArgumentTargetParameter(agentPath, sessionDataFilePath,
+                                           patterns, excludePatterns,
+                                           collectLineInfo, isSampling, sourceMapPath);
+    });
+  }
+
+  @Nullable
+  private static JavaTargetParameter createArgumentTargetParameter(String agentPath,
+                                                                   String sessionDataFilePath,
+                                                                   String @Nullable [] patterns,
+                                                                   String[] excludePatterns,
+                                                                   boolean collectLineInfo,
+                                                                   boolean isSampling,
+                                                                   String sourceMapPath) {
+    HashSet<String> uploadPaths = ContainerUtil.newHashSet(sessionDataFilePath, agentPath);
+    HashSet<String> downloadPaths = ContainerUtil.newHashSet(sessionDataFilePath);
     try {
       final File tempFile = createTempFile();
       tempFile.deleteOnExit();
-      write2file(tempFile, sessionDataFilePath);
-      write2file(tempFile, String.valueOf(collectLineInfo));
-      write2file(tempFile, Boolean.FALSE.toString()); //append unloaded
-      write2file(tempFile, Boolean.FALSE.toString());//merge with existing
-      write2file(tempFile, String.valueOf(isSampling));
-      if (sourceMapPath != null) {
-        write2file(tempFile, Boolean.TRUE.toString());
-        write2file(tempFile, sourceMapPath);
-      }
-      if (patterns != null) {
-        writePatterns(tempFile, patterns);
-      }
-      if (excludePatterns != null) {
-        write2file(tempFile, "-exclude");
-        writePatterns(tempFile, excludePatterns);
-      }
-      argument.append(tempFile.getCanonicalPath());
+      Ref<Boolean> writeOnceRef = new Ref<>(false);
+      uploadPaths.add(tempFile.getCanonicalPath());
+
+      return new JavaTargetParameter.Builder(uploadPaths, downloadPaths)
+        .fixed("-javaagent:")
+        .resolved(agentPath)
+        .fixed("=")
+        .resolved(tempFile.getCanonicalPath())
+        .doWithResolved(sessionDataFilePath, targetSessionDataPath -> {
+          if (!writeOnceRef.get()) {
+            try {
+              writeOptionsToFile(tempFile, targetSessionDataPath, patterns, excludePatterns, collectLineInfo, isSampling, sourceMapPath);
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+            finally {
+              writeOnceRef.set(true);
+            }
+          }
+          return Unit.INSTANCE;
+        })
+        .build();
     }
     catch (IOException e) {
       LOG.info("Coverage was not enabled", e);
-      return;
+      return null;
     }
+  }
 
-    javaParameters.getVMParametersList().add(argument.toString());
+  private static void writeOptionsToFile(File file,
+                                         String sessionDataFilePath,
+                                         String @Nullable [] patterns,
+                                         String[] excludePatterns,
+                                         boolean collectLineInfo,
+                                         boolean isSampling,
+                                         String sourceMapPath) throws IOException {
+    write2file(file, sessionDataFilePath);
+    write2file(file, String.valueOf(collectLineInfo));
+    write2file(file, Boolean.FALSE.toString()); //append unloaded
+    write2file(file, Boolean.FALSE.toString());//merge with existing
+    write2file(file, String.valueOf(isSampling));
+    if (sourceMapPath != null) {
+      write2file(file, Boolean.TRUE.toString());
+      write2file(file, sourceMapPath);
+    }
+    if (patterns != null) {
+      writePatterns(file, patterns);
+    }
+    if (excludePatterns != null) {
+      write2file(file, "-exclude");
+      writePatterns(file, excludePatterns);
+    }
   }
 
   private static void writePatterns(File tempFile, String[] patterns) throws IOException {

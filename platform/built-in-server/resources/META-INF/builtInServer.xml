@@ -32,6 +32,10 @@
     <httpRequestHandler implementation="org.jetbrains.ide.StartUpMeasurementService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.OpenSettingsService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.InstallPluginService"/>
+    <httpRequestHandler implementation="org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService$WebServerPageRequestHandler"/>
+    <registryKey description="Enables automatic reloading of a web page loaded from built-in web server when a related file is changed and saved."
+                 key="ide.built.in.web.server.reload.on.save"
+                 defaultValue="false"/>
 
     <jbProtocolCommand implementation="org.jetbrains.ide.OpenSettingsJbProtocolService"/>
 

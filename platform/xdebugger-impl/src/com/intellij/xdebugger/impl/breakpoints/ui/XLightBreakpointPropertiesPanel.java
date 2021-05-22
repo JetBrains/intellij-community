@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -53,9 +53,9 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   }
 
   private void createUIComponents() {
-    myRestoreLink = LinkLabel.create(XDebuggerBundle.message("xbreakpoints.restore.label"), () -> WriteAction.run(
-      () -> ((XBreakpointManagerImpl)XDebuggerManager.getInstance(myBreakpoint.getProject()).getBreakpointManager())
-        .restoreLastRemovedBreakpoint()));
+    myRestoreLink = new ActionLink(XDebuggerBundle.message("xbreakpoints.restore.label"), e -> {
+      WriteAction.run(() -> ((XBreakpointManagerImpl)XDebuggerManager.getInstance(myBreakpoint.getProject()).getBreakpointManager()).restoreLastRemovedBreakpoint());
+    });
   }
 
   public interface Delegate {
@@ -88,7 +88,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   private JPanel myConditionCheckboxPanel;
   private JPanel myLanguageChooserPanel;
   private JPanel myConditionExpressionPanel;
-  private LinkLabel myRestoreLink;
+  private ActionLink myRestoreLink;
   private final List<XBreakpointCustomPropertiesPanel> myCustomPanels;
 
   private final List<XBreakpointPropertiesSubPanel> mySubPanels = new ArrayList<>();

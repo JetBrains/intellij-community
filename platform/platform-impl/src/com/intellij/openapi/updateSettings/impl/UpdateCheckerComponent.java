@@ -87,7 +87,7 @@ final class UpdateCheckerComponent {
   private void appStarted() {
     UpdateSettings settings = UpdateSettings.getInstance();
     updateDefaultChannel(settings);
-    if (settings.isCheckNeeded()) {
+    if (settings.isCheckNeeded() || settings.isPluginsCheckNeeded()) {
       scheduleFirstCheck(settings);
     }
   }
@@ -131,7 +131,10 @@ final class UpdateCheckerComponent {
   }
 
   private void checkUpdates() {
-    UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck());
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (settings.isCheckNeeded() || settings.isPluginsCheckNeeded()) {
+      UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck());
+    }
   }
 
   static final class MyActivity implements StartupActivity.DumbAware {

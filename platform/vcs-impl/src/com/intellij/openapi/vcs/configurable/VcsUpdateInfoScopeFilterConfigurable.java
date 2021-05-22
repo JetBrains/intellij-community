@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +72,7 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     panel.add(myCheckbox);
     panel.add(myComboBox);
     panel.add(Box.createHorizontalStrut(UIUtil.DEFAULT_HGAP));
-    panel.add(LinkLabel.create(VcsBundle.message("configurable.vcs.manage.scopes"), () -> {
+    panel.add(new ActionLink(VcsBundle.message("configurable.vcs.manage.scopes"), e -> {
       Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(panel));
       if (settings != null) {
         settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES));

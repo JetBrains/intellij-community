@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
@@ -51,10 +52,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -144,6 +142,7 @@ public final class PluginManagerConfigurable
    * @deprecated use {@link PluginManagerConfigurable}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public PluginManagerConfigurable(PluginManagerUISettings uiSettings) {
     this();
   }
@@ -257,6 +256,14 @@ public final class PluginManagerConfigurable
       }
     });
     actions.addSeparator();
+    actions.add(new DumbAwareAction(IdeBundle.message("plugin.manager.custom.certificates")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginCertificateManager())) {
+          resetPanels();
+        }
+      }
+    });
     actions.add(new InstallFromDiskAction());
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));
@@ -272,36 +279,7 @@ public final class PluginManagerConfigurable
 
     DataContext context = DataManager.getInstance().getDataContext(component);
 
-    JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actions, context, false, false, false, true, null, -1, null, null) {
-      @Override
-      protected ListCellRenderer getListElementRenderer() {
-        return new PopupListElementRenderer(this) {
-          @Override
-          protected SeparatorWithText createSeparator() {
-            return new SeparatorWithText() {
-              {
-                setTextForeground(JBColor.BLACK);
-                setCaptionCentered(false);
-              }
-
-              @Override
-              protected void paintLine(Graphics g, int x, int y, int width) {
-              }
-            };
-          }
-
-          @Override
-          protected void setSeparatorFont(Font font) {
-            mySeparatorComponent.setFont(font);
-          }
-
-          @Override
-          protected Border getDefaultItemComponentBorder() {
-            return new EmptyBorder(JBInsets.create(UIUtil.getListCellVPadding(), 15));
-          }
-        };
-      }
-    };
+    JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actions, context, false, false, false, true, null, -1, null, null);
     popup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {

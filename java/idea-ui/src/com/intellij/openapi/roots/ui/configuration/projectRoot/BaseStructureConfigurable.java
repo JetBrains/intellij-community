@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzerListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -42,6 +43,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   protected StructureConfigurableContext myContext;
 
   protected final Project myProject;
+  protected final ProjectStructureConfigurable myProjectStructureConfigurable;
 
   protected boolean myUiDisposed = true;
 
@@ -49,13 +51,18 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   protected boolean myAutoScrollEnabled = true;
 
-  protected BaseStructureConfigurable(Project project, MasterDetailsState state) {
+  protected BaseStructureConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable, MasterDetailsState state) {
     super(state);
-    myProject = project;
+    myProject = projectStructureConfigurable.getProject();
+    myProjectStructureConfigurable = projectStructureConfigurable;
   }
 
-  protected BaseStructureConfigurable(@NotNull Project project) {
-    myProject = project;
+  protected BaseStructureConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable) {
+    this(projectStructureConfigurable, new MasterDetailsState());
+  }
+
+  public ProjectStructureConfigurable getProjectStructureConfigurable() {
+    return myProjectStructureConfigurable;
   }
 
   public void init(StructureConfigurableContext context) {
@@ -69,6 +76,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         myTree.repaint();
       }
     });
+    Disposer.register(myProjectStructureConfigurable, this);
   }
 
   @Override
@@ -169,7 +177,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
 
     MyFindUsagesAction(JComponent parentComponent) {
-      super(parentComponent, myProject);
+      super(parentComponent, myProjectStructureConfigurable);
     }
 
     @Override
@@ -181,11 +189,6 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       } else {
         return false;
       }
-    }
-
-    @Override
-    protected StructureConfigurableContext getContext() {
-      return myContext;
     }
 
     @Override

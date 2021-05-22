@@ -3,11 +3,13 @@ package training.lang
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
@@ -23,14 +25,24 @@ class LangManager : PersistentStateComponent<LangManager.State> {
       .filter { courseCanBeUsed(it.language) }
       .toList()
 
+  val languages: List<LanguageExtensionPoint<LangSupport>>
+    get() = supportedLanguagesExtensions.filter { Language.findLanguageByID(it.language) != null }
+
   private var myState = State(null)
 
   private var myLangSupport: LangSupport? by WeakReferenceDelegator()
 
   init {
-    val languages = supportedLanguagesExtensions.filter { Language.findLanguageByID(it.language) != null }
     val productName = ApplicationNamesInfo.getInstance().productName
-    val onlyLang = languages.singleOrNull() ?: languages.singleOrNull { it.instance.defaultProductName == productName }
+    val onlyLang =
+      languages.singleOrNull() ?:
+      languages.singleOrNull { it.instance.defaultProductName == productName } ?:
+      languages.firstOrNull()?.also {
+        if (!ApplicationManager.getApplication().isUnitTestMode) {
+          logger<LangManager>().warn("No default language for $productName. Selected ${it.language}.")
+        }
+      }
+
     if (onlyLang != null) {
       myLangSupport = onlyLang.instance
       myState.languageName = onlyLang.language

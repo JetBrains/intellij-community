@@ -5,10 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 
@@ -63,18 +60,21 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
    * @deprecated use {@link ChangeListManager#editName}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void setName(@NotNull String name);
 
   /**
    * @deprecated use {@link ChangeListManager#editComment}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void setComment(@Nullable String comment);
 
   /**
    * @deprecated use {@link ChangeListManager#setReadOnly}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void setReadOnly(boolean isReadOnly);
 
   public static @NotNull @NlsSafe String getDefaultName() {

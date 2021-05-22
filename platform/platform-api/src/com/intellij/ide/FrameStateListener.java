@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Listener for receiving notifications when the IDE window is activated or deactivated.
@@ -26,6 +27,7 @@ public interface FrameStateListener {
    * @deprecated use {@link FrameStateListener} directly
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   abstract class Adapter implements FrameStateListener {
   }
 }

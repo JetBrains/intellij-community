@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRe
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.Strings;
@@ -104,7 +105,7 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     final String existing = persistence.getCachedEventsScheme();
     if (Strings.isNotEmpty(existing)) {
       try {
-        return EventGroupRemoteDescriptors.create(existing);
+        return EventLogMetadataUtils.parseGroupRemoteDescriptors(existing);
       }
       catch (EventLogMetadataParseException e) {
         LOG.warn("Failed parsing test cached events scheme", e);

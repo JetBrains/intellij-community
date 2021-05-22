@@ -60,9 +60,9 @@ private class MockSdkType : SdkType("Mock") {
 
   override fun suggestHomePath(): String? = null
 
-  override fun isValidSdkHome(path: String?): Boolean = false
+  override fun isValidSdkHome(path: String): Boolean = false
 
-  override fun suggestSdkName(currentSdkName: String?, sdkHome: String?): String = ""
+  override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String = ""
 
   override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
 

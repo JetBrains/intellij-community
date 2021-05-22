@@ -1,0 +1,14 @@
+<idea-plugin <warning descr="Usage of API reserved for JetBrains internal use">package="<error descr="Cannot resolve package java">java</error>.<error descr="Cannot resolve package lang">lang</error>"</warning>>
+  <id>com.intellij.myPlugin</id>
+  <vendor>Someone Else</vendor>
+  <version>1.0</version>
+
+  <warning descr="Usage of API reserved for JetBrains internal use"><dependencies>
+    <module name="<error descr="Cannot resolve module descriptor 'module.name.xml' in source roots of module 'module.name'">module.name</error>" package="<error descr="Invalid value: 'java.lang'">java.lang</error>"/>
+  </dependencies></warning>
+
+  <warning descr="Usage of API reserved for JetBrains internal use"><content>
+    <module name="<error descr="Cannot resolve module descriptor 'module.name.xml' in source roots of module 'module.name'">module.name</error>" package="<error descr="Invalid value: 'java.lang'">java.lang</error>"/>
+  </content></warning>
+
+</idea-plugin>

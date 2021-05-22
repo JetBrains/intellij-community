@@ -37,16 +37,9 @@ public class JBUI {
    * @deprecated use {@link JBUIScale#sysScale()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static float sysScale() {
     return JBUIScale.sysScale();
-  }
-
-  /**
-   * @deprecated use {@link JBUIScale#sysScale(Graphics2D)}
-   */
-  @Deprecated
-  public static float sysScale(@Nullable Graphics2D g) {
-    return JBUIScale.sysScale(g);
   }
 
   /**
@@ -208,6 +201,7 @@ public class JBUI {
    * @deprecated use {@link JBUIScale#isUsrHiDPI()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean isHiDPI() {
     return JBUIScale.isUsrHiDPI();
   }
@@ -660,6 +654,7 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       @NotNull
       public static Color tabSelectedBackground() {
         return Registry.is("toolwindow.active.tab.use.contrast.background")
@@ -672,6 +667,7 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       @NotNull
       public static Color tabHoveredBackground() {
         return hoverInactiveBackground();
@@ -681,6 +677,7 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       @NotNull
       public static Color tabHoveredBackground(boolean active) {
         return active ? hoverBackground() : hoverInactiveBackground();
@@ -710,17 +707,9 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       public static int tabVerticalPadding() {
         return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
-      }
-
-      /**
-       * @deprecated obsolete UI
-       */
-      @NotNull
-      @Deprecated
-      public static Border tabBorder() {
-        return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(1));
       }
 
       public static int underlineHeight() {
@@ -819,6 +808,10 @@ public class JBUI {
 
       public static Color separatorTextColor() {
         return JBColor.namedColor("Popup.separatorForeground", Color.gray);
+      }
+
+      public static int minimumHintWidth() {
+        return JBUIScale.scale(170);
       }
     }
 
@@ -931,7 +924,7 @@ public class JBUI {
     }
 
     public static final class Advertiser {
-      private static final JBInsets DEFAULT_AD_INSETS = JBInsets.create(1, 5);
+      private static final JBInsets DEFAULT_AD_INSETS = JBInsets.create(8, 8);
 
       @NotNull
       public static Color foreground() {

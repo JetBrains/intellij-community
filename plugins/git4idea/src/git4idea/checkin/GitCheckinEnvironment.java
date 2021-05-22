@@ -56,11 +56,14 @@ import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
+import git4idea.repo.GitCommitTemplateTracker;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
@@ -94,6 +97,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   private Date myNextCommitAuthorDate;
   private boolean myNextCommitSignOff;
   private boolean myNextCommitSkipHook;
+  private boolean myNextCleanupCommitMessage;
 
   public GitCheckinEnvironment(@NotNull Project project) {
     myProject = project;
@@ -116,6 +120,9 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     LinkedHashSet<String> messages = new LinkedHashSet<>();
     GitRepositoryManager manager = getRepositoryManager(myProject);
     Set<GitRepository> repositories = map2SetNotNull(Arrays.asList(filesToCheckin), manager::getRepositoryForFileQuick);
+    String commitTemplate = GitCommitTemplateTracker.getInstance(myProject).getTemplateContent();
+    if (commitTemplate != null) return commitTemplate;
+
     for (GitRepository repository : repositories) {
       File mergeMsg = repository.getRepositoryFiles().getMergeMessageFile();
       File squashMsg = repository.getRepositoryFiles().getSquashMessageFile();
@@ -182,6 +189,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     myNextCommitAuthor = getCommitAuthor(commitContext);
     myNextCommitAuthorDate = getCommitAuthorDate(commitContext);
     myNextCommitSignOff = isSignOffCommit(commitContext);
+    myNextCleanupCommitMessage = GitCommitTemplateTracker.getInstance(myProject).exists();
   }
 
   @NotNull
@@ -262,7 +270,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
         try {
           runWithMessageFile(myProject, root, message, messageFile -> {
             List<FilePath> files = getPaths(changes);
-            commit(myProject, root, files, messageFile);
+            commit(myProject, root, files, messageFile, GitCommitTemplateTracker.getInstance(myProject).exists(repository));
           });
         }
         catch (VcsException ex) {
@@ -366,7 +374,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
   @NotNull
   private GitCommitOptions createCommitOptions() {
-    return new GitCommitOptions(myNextCommitAmend, myNextCommitSignOff, myNextCommitSkipHook, myNextCommitAuthor, myNextCommitAuthorDate);
+    return new GitCommitOptions(myNextCommitAmend, myNextCommitSignOff, myNextCommitSkipHook, myNextCommitAuthor, myNextCommitAuthorDate,
+                                myNextCleanupCommitMessage);
   }
 
   @NotNull
@@ -1006,12 +1015,19 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     return rc;
   }
 
-  private void commit(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files, @NotNull File messageFile)
+  private void commit(@NotNull Project project,
+                      @NotNull VirtualFile root,
+                      @NotNull Collection<? extends FilePath> files,
+                      @NotNull File messageFile,
+                      boolean cleanupMessage)
     throws VcsException {
     boolean amend = myNextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
       handler.setStdoutSuppressed(false);
+      if (cleanupMessage) {
+        handler.addParameters("--cleanup=strip");
+      }
       if (myNextCommitSignOff) {
         handler.addParameters("--signoff");
       }

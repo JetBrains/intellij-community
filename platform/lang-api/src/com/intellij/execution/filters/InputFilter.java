@@ -28,7 +28,7 @@ public interface InputFilter {
   /**
    * @param text        the text to be filtered.
    * @param contentType the content type of filtered text
-   * @return            <tt>null</tt>, if there was no match, otherwise, a list of not null pairs, e.g. {@code ("my prompt", ConsoleViewContentType.SYSTEM_OUTPUT)}
+   * @return            {@code null}, if there was no match, otherwise, a list of not null pairs, e.g. {@code ("my prompt", ConsoleViewContentType.SYSTEM_OUTPUT)}
    */
   @Nullable
   List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull String text, @NotNull ConsoleViewContentType contentType);

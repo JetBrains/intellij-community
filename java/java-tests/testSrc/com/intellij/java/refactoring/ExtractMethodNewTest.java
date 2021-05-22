@@ -1871,10 +1871,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
 
     if (doRefactor) {
-      processor.testTargetClass(targetClass);
+      processor.setTargetClass(targetClass);
       processor.testPrepare(returnType, makeStatic);
       if (methodVisibility != null) processor.setMethodVisibility(methodVisibility);
-      processor.testNullability();
+      processor.prepareNullability();
       for (int param : disabledParams) {
         processor.doNotPassParameter(param);
       }

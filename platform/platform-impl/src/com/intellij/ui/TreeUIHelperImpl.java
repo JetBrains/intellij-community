@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ui.treeStructure.Tree;
@@ -12,10 +12,12 @@ import javax.swing.tree.TreePath;
 /**
  * @author yole
  */
-public class TreeUIHelperImpl extends TreeUIHelper {
+final class TreeUIHelperImpl extends TreeUIHelper {
   @Override
   public void installToolTipHandler(final JTree tree) {
-    if (tree instanceof Tree) return;
+    if (tree instanceof Tree) {
+      return;
+    }
     new TreeExpandableItemsHandler(tree);
   }
 

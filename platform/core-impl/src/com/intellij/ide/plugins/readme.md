@@ -16,14 +16,13 @@ If package is specified:
 
  * All module dependencies of plugin must also specify package, and it must be different. For example, if `com.example` is set for main plugin descriptor, `com.example` cannot be used for any module dependency. Classes in modules specified in [dependencies](#the-dependencies-element), must be in a different package.
  * Icon class generator uses specified package for icon class but not `icons`. If you already have icon class, recommended moving existing icon class before running icon class generator to ensure that all references to icon class are updated by IntelliJ IDEA refactoring. Also, icon class generator uses the same icon class name as before if old one is detected in place.
- * Plugin module cannot have module-level libraries. It is technical limitation for time being.
 
 ## The `content` element
 The `content` element determines content of the plugin. Plugin consists of modules. Module, where `plugin.xml` is located, is implicitly added, and you don't have to specify it.
 
 ```xml
 <content>
-  <module name="intellij.platform.commercial.verifier" package="com.intellij.ultimate"/>
+  <module name="intellij.clouds.docker.file" package="com.intellij.docker.dockerFile"/>
 </content>
 ```
 
@@ -38,7 +37,7 @@ The `content` element determines content of the plugin. Plugin consists of modul
 | package   | string | required | The package of the module. Duplicates the `package` specified in the referenced module, but for now it is required for technical reasons. |
 
 There is an important difference between content specified for a plugin and for a module.
- * For a plugin, the referenced module _is not added_ to classpath but just forms plugin content. Still, if some another plugin depends on this plugin, it can use classloader of that module.
+ * For a plugin, the referenced module _is not added_ to classpath but just forms plugin content. Still, if some another plugin depends on this plugin, it can use classloader of that module. For time being, included into plugin module, doesn’t have own classloader, but it will be changed in the future and explicit dependency on plugin’s module must be added if needed.
  * For a module, the referenced module doesn't have own classloader and is added directly to classpath. In the future `content` will be prohibited for modules, but for now it is way to include some module directly to classpath.
 
 ## The `dependencies` element
@@ -76,7 +75,7 @@ is still used.
 |-----------|--------|----------|-------------------------|
 | name      | string | required | The name of the module. |
 
-The module must have descriptor file with the same name as module, e.g. for module `intellij.clouds.docker.compose` must be a descriptor file `intellij.clouds.docker.compose.xml` in a module root.
+The module must have descriptor file with the same name as module, e.g. for module `intellij.clouds.docker.compose` must be a descriptor file `intellij.clouds.docker.compose.xml` in the module root.
 
 Module dependency is always optional. If module depends on an unavailable plugin, it will be not loaded.
 In this meaning for now module dependency makes sense only for plugins, but not for modules. It will be changed in the future, when all plugins will act as a module.

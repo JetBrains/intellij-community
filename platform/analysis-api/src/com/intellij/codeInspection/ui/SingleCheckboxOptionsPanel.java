@@ -18,38 +18,25 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
 
-public class SingleCheckboxOptionsPanel extends JPanel {
+public class SingleCheckboxOptionsPanel extends InspectionOptionsPanel {
 
     public SingleCheckboxOptionsPanel(@NotNull @NlsContexts.Checkbox String label,
                                       @NotNull InspectionProfileEntry owner,
                                       @NonNls String property) {
-        super(new GridBagLayout());
         final boolean selected = getPropertyValue(owner, property);
         final JCheckBox checkBox = new JCheckBox(label, selected);
-        checkBox.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
         final ButtonModel model = checkBox.getModel();
         final SingleCheckboxChangeListener listener =
                 new SingleCheckboxChangeListener(owner, property, model);
         model.addChangeListener(listener);
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.weightx = 1.0;
-        constraints.weighty = 1.0;
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        add(checkBox, constraints);
+        add(checkBox);
     }
 
     private static boolean getPropertyValue(InspectionProfileEntry owner,

@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.layout.*
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ui.JBImageIcon
@@ -19,7 +16,6 @@ import javax.imageio.ImageIO
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.SwingConstants
 
 class GitRebaseHelpPopupPanel : JPanel() {
 
@@ -52,12 +48,8 @@ class GitRebaseHelpPopupPanel : JPanel() {
     }
   }
 
-  private fun createHelpLink() = LinkLabel<Any?>(GitBundle.message("rebase.help.link"),
-                                                 AllIcons.Ide.External_link_arrow,
-                                                 LinkListener { _, _ -> BrowserUtil.browse("https://git-scm.com/docs/git-rebase") }).apply {
-    iconTextGap = 0
-    setHorizontalTextPosition(SwingConstants.LEFT)
-  }
+  private fun createHelpLink() = BrowserLink(GitBundle.message("rebase.help.link"),
+                                             "https://git-scm.com/docs/git-rebase")
 
   private fun createImageComponent(imagePath: String): JComponent {
     val suitableImagePath = chooseImage(imagePath)

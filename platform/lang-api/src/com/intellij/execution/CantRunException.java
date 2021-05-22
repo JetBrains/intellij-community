@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ public class CantRunException extends ExecutionException {
 
   /** @deprecated please use {@link #jdkMisconfigured(Sdk)} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static CantRunException jdkMisconfigured(@NotNull Sdk jdk, @NotNull Module module) {
     return jdkMisconfigured(jdk);
   }

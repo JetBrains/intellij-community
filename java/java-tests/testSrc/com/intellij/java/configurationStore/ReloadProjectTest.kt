@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.configurationStore
 
-import com.intellij.configurationStore.StoreReloadManager
+import com.intellij.facet.FacetManager
+import com.intellij.facet.mock.MockFacetType
+import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.ConfigurationErrorDescription
@@ -16,7 +18,7 @@ import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
 import com.intellij.testFramework.*
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
-import com.intellij.util.CommonProcessors
+import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
@@ -37,6 +39,10 @@ class ReloadProjectTest {
   @JvmField
   @Rule
   val disposable = DisposableRule()
+
+  @JvmField
+  @Rule
+  val logging = TestLoggerFactory.createTestWatcher()
 
   private val testDataRoot
     get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/reloading")
@@ -100,6 +106,21 @@ class ReloadProjectTest {
       assertThat(errors.single().description).contains("foo.iml")
     }
 
+  }
+
+  @Test
+  fun `reload facet in module with custom storage`() {
+    CustomModuleRootsSerializer.EP_NAME.point.registerExtension(SampleCustomModuleRootsSerializer(), disposable.disposable)
+    registerFacetType(MockFacetType(), disposable.disposable)
+    loadProjectAndCheckResults("facet-in-module-with-custom-storage/initial") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      assertThat(module.name).isEqualTo("foo")
+      val initialFacet = FacetManager.getInstance(module).getFacetByType(MockFacetType.ID)!!
+      assertThat(initialFacet.configuration.data).isEqualTo("my-data")
+      copyFilesAndReload(project, "facet-in-module-with-custom-storage/update")
+      val changedFacet = FacetManager.getInstance(module).getFacetByType(MockFacetType.ID)!!
+      assertThat(changedFacet.configuration.data).isEqualTo("changed-data")
+    }
   }
 
   private suspend fun copyFilesAndReload(project: Project, relativePath: String) {

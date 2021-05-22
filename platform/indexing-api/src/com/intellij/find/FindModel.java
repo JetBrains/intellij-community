@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -507,6 +508,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @deprecated and not used anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setOpenInNewTab(boolean showInNewTab) {
   }
 
@@ -517,6 +519,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @deprecated and not used anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isOpenInNewTabEnabled() {
     return true;
   }
@@ -528,6 +531,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @deprecated and not used anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setOpenInNewTabEnabled(boolean showInNewTabEnabled) {
   }
 
@@ -535,6 +539,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @deprecated and not used anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isOpenInNewTabVisible() {
     return true;
   }
@@ -543,6 +548,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @deprecated and not used anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setOpenInNewTabVisible(boolean showInNewTabVisible) {
   }
 

@@ -10,7 +10,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SimpleDiffModel {
   @NotNull private final SimpleDiffViewer myViewer;
@@ -87,7 +89,7 @@ public class SimpleDiffModel {
     LineRange lineRange = DiffUtil.getAffectedLineRange(e);
     int shift = DiffUtil.countLinesShift(e);
 
-    List<SimpleDiffChange> invalidated = new ArrayList<>();
+    Set<SimpleDiffChange> invalidated = new HashSet<>();
     for (SimpleDiffChange change : myValidChanges) {
       if (change.processDocumentChange(lineRange.start, lineRange.end, shift, side)) {
         invalidated.add(change);

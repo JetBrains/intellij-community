@@ -168,7 +168,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
     return false;
   }
 
-  static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
+  public static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
     CharFilter.Result filtersDecision = getFilterDecision(charTyped, lookup);
     if (filtersDecision != null) {
       return filtersDecision;

@@ -4,6 +4,8 @@ package com.intellij.internal.statistic.actions;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
 import com.intellij.internal.statistic.eventLog.filters.LogEventMetadataFilter;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules;
@@ -189,7 +191,8 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     updateResultRequest("{}");
 
     try {
-      EventGroupsFilterRules<EventLogBuild> scheme = EventGroupsFilterRules.create(myEventsSchemeEditor.getDocument().getText());
+      EventGroupRemoteDescriptors groups = EventLogMetadataUtils.parseGroupRemoteDescriptors(myEventsSchemeEditor.getDocument().getText());
+      EventGroupsFilterRules<EventLogBuild> scheme = EventGroupsFilterRules.create(groups, EventLogBuild.EVENT_LOG_BUILD_PRODUCER);
       String parsed = parseLogAndFilter(new LogEventMetadataFilter(scheme), myEventLogPanel.getText());
       updateResultRequest(parsed.trim());
     }

@@ -2,22 +2,16 @@ package de.plushnikov.intellij.plugin.processor.modifier;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
 /**
  * @author Alexej Kubarev
  */
-public class ValModifierTest extends LightJavaCodeInsightFixtureTestCase {
+public class ValModifierTest extends AbstractLombokLightCodeInsightTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/lombok/testData/augment/modifier";
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.addClass("package lombok;\npublic @interface val { }");
+    return super.getBasePath() + "/augment/modifier";
   }
 
   public void testValModifiers() {

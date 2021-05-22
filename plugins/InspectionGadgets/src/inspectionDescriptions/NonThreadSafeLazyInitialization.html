@@ -1,16 +1,38 @@
 <html>
 <body>
-Reports <b>static</b> variables being lazily initialized
-in a non-thread-safe manner. Lazy initialization of <b>static</b> variables should be done
-in an appropriate synchronization construct, to prevent different threads from
+Reports <code>static</code> variables being lazily initialized
+in a non-thread-safe manner. Lazy initialization of <code>static</code> variables should be done
+with an appropriate synchronization construct, to prevent different threads from
 performing conflicting initialization.
 <p>
-If applicable, a quickfix is suggested
-which introduces the static holder pattern described in
-<a href="http://en.wikipedia.org/wiki/Initialization_on_demand_holder_idiom">
-http://en.wikipedia.org/wiki/Initialization_on_demand_holder_idiom
-</a>
-where the JVM guarantees the thread safety of such initializations.
+When applicable, a quickfix is suggested which introduces the
+<a href="https://en.wikipedia.org/wiki/Initialization_on_demand_holder_idiom">lazy initialization holder class idiom</a>.
+  This idiom makes use of the fact that the JVM guarantees that a class will not be initialized until it is used.
+<p>Unsafe lazy initialization example:
+<pre><code>
+<b>class</b> X {
+  <b>private static</b> List&lt;String&gt; list;
+
+  <b>public</b> List&lt;String&gt; getList() {
+    <b>if</b> (list == null) {
+      list = List.of("one", "two", "tree");
+    }
+    <b>return</b> list;
+  }
+}
+</code></pre>
+<p>Lazy initialization holder class idiom example:
+<pre><code>
+<b>class</b> X {
+  <b>private static final class</b> ListHolder {
+    <b>static final</b> List&lt;String&gt; list = List.of("one", "two", "tree");
+  }
+
+  <b>public</b> List&lt;String&gt; getList() {
+    <b>return</b> ListHolder.list;
+  }
+}
+</code></pre>
 <!-- tooltip end -->
 <p>
 

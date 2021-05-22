@@ -15,21 +15,16 @@ import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.ift.PythonLessonsBundle
 import org.jetbrains.annotations.Nullable
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskTestContext
+import training.dsl.*
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.dropMnemonic
-import training.learn.lesson.kimpl.parseLessonSample
+import training.learn.course.KLesson
 import java.util.regex.Pattern
 import javax.swing.JButton
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
-class PythonRenameLesson(module: Module)
-  : KLesson("Rename", LessonsBundle.message("rename.lesson.name"), module, "Python") {
+class PythonRenameLesson
+  : KLesson("Rename", LessonsBundle.message("rename.lesson.name")) {
   private val template = """
       class Championship:
           def __init__(self):

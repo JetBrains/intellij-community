@@ -4,40 +4,59 @@ package com.intellij.ide.actions;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.ProjectIndexableFilesFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
  * @author peter
  */
 final class DirectoryPathMatcher {
-  @NotNull private final GotoFileModel myModel;
-  @Nullable private final List<Pair<VirtualFile, String>> myFiles;
-  @NotNull final String dirPattern;
-  private final GlobalSearchScope myAllScope;
+  private final @NotNull GotoFileModel myModel;
+  private final @Nullable List<Pair<VirtualFile, String>> myFiles;
+  private final @NotNull Predicate<VirtualFile> myProjectFileFilter;
+
+  final @NotNull String dirPattern;
 
   private DirectoryPathMatcher(@NotNull GotoFileModel model, @Nullable List<Pair<VirtualFile, String>> files, @NotNull String pattern) {
     myModel = model;
     myFiles = files;
     dirPattern = pattern;
-    myAllScope = GlobalSearchScope.allScope(myModel.getProject());
+
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    Project project = model.getProject();
+    ProjectIndexableFilesFilter projectIndexableFilesFilter = fileBasedIndex instanceof FileBasedIndexImpl
+                                                              ? ((FileBasedIndexImpl)fileBasedIndex).projectIndexableFiles(project)
+                                                              : null;
+    if (projectIndexableFilesFilter == null) {
+      var allScope = GlobalSearchScope.allScope(project);
+      myProjectFileFilter = vFile -> allScope.contains(vFile);
+    }
+    else {
+      myProjectFileFilter = vFile -> projectIndexableFilesFilter.containsFileId(((VirtualFileWithId)vFile).getId());
+    }
   }
 
   @Nullable
@@ -117,7 +136,6 @@ final class DirectoryPathMatcher {
 
     VirtualFile[] array = ContainerUtil.map2Array(myFiles, VirtualFile.class, p -> p.first);
     return GlobalSearchScopesCore.directoriesScope(myModel.getProject(), true, array).intersectWith(fileSearchScope);
-
   }
 
   private void processProjectFilesUnder(VirtualFile root, Processor<? super VirtualFile> consumer) {
@@ -125,7 +143,7 @@ final class DirectoryPathMatcher {
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        return myAllScope.contains(file) && consumer.process(file);
+        return myProjectFileFilter.test(file) && consumer.process(file);
       }
 
       @Nullable

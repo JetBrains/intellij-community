@@ -47,7 +47,7 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
     }
 
     @Override
-    protected EditorEx createEditor() {
+    protected @NotNull EditorEx createEditor() {
       final EditorEx ex = super.createEditor();
       ex.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
       ex.setHorizontalScrollbarVisible(true);

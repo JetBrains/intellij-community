@@ -44,11 +44,6 @@ public class RunAnythingItemBase extends RunAnythingItem {
   @NotNull
   @Override
   public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
-    Component oldComponent = createComponent(isSelected);
-    if (oldComponent != null) {
-      return oldComponent;
-    }
-
     JPanel component = new JPanel(new BorderLayout());
     Color background = UIUtil.getListBackground(isSelected, true);
     component.setBackground(background);

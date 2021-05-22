@@ -9,9 +9,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SeparatorComponent;
-import com.intellij.ui.SeparatorOrientation;
+import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GridBag;
@@ -32,7 +30,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   protected JComponent myRightPart;
   protected JComponent myLeftPart;
-  protected JComponent mySeparator;
+  protected JComponent myNextStepButtonSeparator;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter<>() {
@@ -70,6 +68,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       }
     });
     myPopup = aPopup;
+  }
+
+  @Override
+  protected SeparatorWithText createSeparator() {
+    return new GroupHeaderSeparator(getDefaultItemComponentBorder().getBorderInsets(new JLabel()));
   }
 
   @Override
@@ -111,8 +114,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     int leftRightInset = (ListPopupImpl.NEXT_STEP_AREA_WIDTH - AllIcons.Icons.Ide.NextStep.getIconWidth()) / 2;
     right.add(myNextStepLabel, BorderLayout.CENTER);
 
-    mySeparator = createLineSeparator();
-    left.add(mySeparator, BorderLayout.EAST);
+    myNextStepButtonSeparator = createNextStepButtonSeparator();
+    left.add(myNextStepButtonSeparator, BorderLayout.EAST);
 
     JPanel result = new JPanel();
     result.setLayout(new GridBagLayout());
@@ -143,7 +146,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   }
 
   @NotNull
-  private static JComponent createLineSeparator() {
+  private static JComponent createNextStepButtonSeparator() {
     SeparatorComponent separator = new SeparatorComponent(JBColor.namedColor("Menu.separatorColor", JBColor.lightGray), SeparatorOrientation.VERTICAL);
     separator.setHGap(0);
     separator.setVGap(2);
@@ -161,6 +164,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   @Override
   protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
+    if (mySeparatorComponent.isVisible() && mySeparatorComponent instanceof GroupHeaderSeparator) {
+      ((GroupHeaderSeparator)mySeparatorComponent).setHideLine(myCurrentIndex == 0);
+    }
+
     ListPopupStep<Object> step = myPopup.getListStep();
     boolean isSelectable = step.isSelectable(value);
     myTextLabel.setEnabled(isSelectable);
@@ -169,7 +176,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     setSelected(myTextLabel, isSelected && isSelectable);
     myLeftPart.setOpaque(false);
     myRightPart.setOpaque(false);
-    mySeparator.setVisible(false);
+    myNextStepButtonSeparator.setVisible(false);
 
     boolean nextStepButtonSelected = false;
     if (step.hasSubstep(value)) {
@@ -185,7 +192,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         setSelected(myTextLabel, isSelected && !nextStepButtonSelected, isSelected);
         setSelected(myRightPart, isSelected && nextStepButtonSelected, isSelected);
         myNextStepLabel.setIcon(isSelectable & isSelected && nextStepButtonSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
-        mySeparator.setVisible(!isSelected);
+        myNextStepButtonSeparator.setVisible(!isSelected);
       }
       else {
         myNextStepLabel.setIcon(isSelectable & isSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);

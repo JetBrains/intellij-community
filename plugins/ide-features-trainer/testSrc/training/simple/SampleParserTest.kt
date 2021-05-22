@@ -5,7 +5,7 @@ package training.simple
 
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
-import training.learn.lesson.kimpl.parseLessonSample
+import training.dsl.parseLessonSample
 
 class SampleParserTest : UsefulTestCase() {
   fun testStartCaretTag1() {

@@ -47,6 +47,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
   @Nullable private volatile LoadDeferrer myLoadDeferrer;
   @NotNull private volatile String myLastRequestedUrl = "";
+  @Nullable private volatile ErrorPage myErrorPage;
 
   private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
     new LazyInitializer.NotNullValue<>() {
@@ -107,6 +108,12 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myCefClient = cefClient;
     myCefBrowser = cefBrowser;
     myIsDefaultClient = isDefaultClient;
+    myErrorPage = new ErrorPage() {
+      @Override
+      public @NotNull String create(@NotNull CefLoadHandler.ErrorCode errorCode, @NotNull String errorText, @NotNull String failedUrl) {
+        return ErrorPage.super.create(errorCode, errorText, failedUrl);
+      }
+    };
 
     if (isNewBrowserCreated) {
       cefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
@@ -129,8 +136,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         @Override
         public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
           // do not show error page if another URL has already been requested to load
-          if (myLastRequestedUrl.equals(failedUrl)) {
-            UIUtil.invokeLaterIfNeeded(() -> loadErrorPage(errorText, failedUrl));
+          ErrorPage errorPage = myErrorPage;
+          if (errorPage != null && myLastRequestedUrl.equals(failedUrl)) {
+            String html = errorPage.create(errorCode, errorText, failedUrl);
+            UIUtil.invokeLaterIfNeeded(() -> loadHTML(html));
           }
         }
       }, getCefBrowser());
@@ -311,37 +320,60 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     getCefBrowser().loadURL(url);
   }
 
-  private void loadErrorPage(@NotNull String errorText, @NotNull String failedUrl) {
-    int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.1);
-    int headerFontSize = fontSize + JBUIScale.scale(3);
-    int headerPaddingTop = headerFontSize / 5;
-    int lineHeight = headerFontSize * 2;
-    int iconPaddingRight = JBUIScale.scale(12);
-    Color bgColor = JBColor.background();
-    String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
-    Color fgColor = JBColor.foreground();
-    String fgWebColor = String.format("#%02x%02x%02x", fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue());
+  /**
+   * Used to create an error page.
+   */
+  public interface ErrorPage {
+    /**
+     * Returns an error page html.
+     */
+    @NotNull
+    default String create(@NotNull @SuppressWarnings("unused") CefLoadHandler.ErrorCode errorCode,
+                          @NotNull String errorText,
+                          @NotNull String failedUrl)
+    {
+      int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.1);
+      int headerFontSize = fontSize + JBUIScale.scale(3);
+      int headerPaddingTop = headerFontSize / 5;
+      int lineHeight = headerFontSize * 2;
+      int iconPaddingRight = JBUIScale.scale(12);
+      Color bgColor = JBColor.background();
+      String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
+      Color fgColor = JBColor.foreground();
+      String fgWebColor = String.format("#%02x%02x%02x", fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue());
 
-    String html = ERROR_PAGE_READER.get();
-    html = html.replace("${lineHeight}", String.valueOf(lineHeight));
-    html = html.replace("${iconPaddingRight}", String.valueOf(iconPaddingRight));
-    html = html.replace("${fontSize}", String.valueOf(fontSize));
-    html = html.replace("${headerFontSize}", String.valueOf(headerFontSize));
-    html = html.replace("${headerPaddingTop}", String.valueOf(headerPaddingTop));
-    html = html.replace("${bgWebColor}", bgWebColor);
-    html = html.replace("${fgWebColor}", fgWebColor);
-    html = html.replace("${errorText}", errorText);
-    html = html.replace("${failedUrl}", failedUrl);
+      String html = ERROR_PAGE_READER.get();
+      html = html.replace("${lineHeight}", String.valueOf(lineHeight));
+      html = html.replace("${iconPaddingRight}", String.valueOf(iconPaddingRight));
+      html = html.replace("${fontSize}", String.valueOf(fontSize));
+      html = html.replace("${headerFontSize}", String.valueOf(headerFontSize));
+      html = html.replace("${headerPaddingTop}", String.valueOf(headerPaddingTop));
+      html = html.replace("${bgWebColor}", bgWebColor);
+      html = html.replace("${fgWebColor}", fgWebColor);
+      html = html.replace("${errorText}", errorText);
+      html = html.replace("${failedUrl}", failedUrl);
 
-    ScaleContext ctx = ScaleContext.create();
-    ctx.update(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
-    // Reset sys scale to prevent raster downscaling on passing the image to jcef.
-    // Overriding is used to prevent scale change during further intermediate context transformations.
-    ctx.overrideScale(SYS_SCALE.of(1.0));
+      ScaleContext ctx = ScaleContext.create();
+      ctx.update(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
+      // Reset sys scale to prevent raster downscaling on passing the image to jcef.
+      // Overriding is used to prevent scale change during further intermediate context transformations.
+      ctx.overrideScale(SYS_SCALE.of(1.0));
 
-    html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
+      html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
 
-    loadHTML(html);
+      return html;
+    }
+  }
+
+  /**
+   * Overrides the error page to display in the browser on load error.
+   * <p></p>
+   * Passing {@code null} prevents the browser from displaying an error page.
+   *
+   * @param errorPage the error page producer, or null
+   */
+  public void setErrorPage(@Nullable ErrorPage errorPage) {
+    myErrorPage = errorPage;
   }
 
   private final class LoadDeferrer {

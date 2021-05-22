@@ -29,6 +29,8 @@ import java.security.cert.Certificate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
@@ -127,17 +129,25 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private final int instanceId;
   private volatile int state = ACTIVE;
 
+  private final @Nullable ResolveScopeManager resolveScopeManager;
+
+  public interface ResolveScopeManager {
+    boolean isDefinitelyAlienClass(String name, String packagePrefix);
+  }
+
   public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot,
                            @NotNull ClassLoader coreLoader,
+                           @Nullable ResolveScopeManager resolveScopeManager,
                            @Nullable String packagePrefix,
                            @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
     super(builder, resourceFileFactory, isParallelCapable);
 
     instanceId = instanceIdProducer.incrementAndGet();
 
+    this.resolveScopeManager = resolveScopeManager;
     this.parents = parents;
     this.pluginDescriptor = pluginDescriptor;
     pluginId = pluginDescriptor.getPluginId();
@@ -313,7 +323,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   @Override
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
-    if (packagePrefix != null && isDefinitelyAlienClass(name, packagePrefix)) {
+    if (resolveScopeManager != null && resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix)) {
       return null;
     }
 
@@ -352,88 +362,78 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private void logClass(@NotNull String name, @NotNull Writer logStream, @Nullable LinkageError exception) {
     try {
       // must be as one write call since write is performed from multiple threads
-      String specifier = getClass() == PluginClassLoader.class ? "m" : "s = " + ((IdeaPluginDescriptor)pluginDescriptor).getDescriptorPath();
-      logStream.write(name + " [" + specifier + "] " + pluginId.getIdString() + (packagePrefix == null ? "" : (':' + packagePrefix)) + '\n' + (exception == null ? "" : exception.getMessage()));
+      String descriptorPath = ((IdeaPluginDescriptor)pluginDescriptor).getDescriptorPath();
+      String specifier = descriptorPath == null ? "m" : "sub = " + descriptorPath;
+      logStream.write(name + " [" + specifier + "] " + pluginId.getIdString() + (packagePrefix == null ? "" : (':' + packagePrefix))
+                      + '\n' + (exception == null ? "" : exception.getMessage()));
     }
     catch (IOException ignored) {
     }
   }
 
-  protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
-    // packed into plugin jar
-    return !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier");
-  }
-
   @Override
   public final @Nullable URL findResource(@NotNull String name) {
-    String canonicalPath = toCanonicalPath(name);
-    Resource resource = classPath.findResource(canonicalPath);
-    if (resource != null) return resource.getURL();
-
-    URL result = doFindResource(canonicalPath);
-    if (result == null && canonicalPath.startsWith("/")) {
-      Logger.getInstance(PluginClassLoader.class).error(
-        "Do not request resource from classloader using path with leading slash", new IllegalArgumentException(name));
-      result = doFindResource(canonicalPath.substring(1));
-    }
-    return result;
-  }
-
-  private @Nullable URL doFindResource(String canonicalPath) {
-    for (ClassLoader classloader : getAllParents()) {
-      if (classloader instanceof PluginClassLoader) {
-        Resource resource = ((PluginClassLoader)classloader).classPath.findResource(canonicalPath);
-        if (resource != null) {
-          return resource.getURL();
-        }
-      }
-      else {
-        URL resourceUrl = classloader.getResource(canonicalPath);
-        if (resourceUrl != null) {
-          return resourceUrl;
-        }
-      }
-    }
-    return null;
+    return findResource(name, Resource::getURL, ClassLoader::getResource);
   }
 
   @Override
   public final @Nullable InputStream getResourceAsStream(@NotNull String name) {
-    String canonicalPath = toCanonicalPath(name);
-
-    Resource resource = classPath.findResource(canonicalPath);
-    if (resource != null) {
+    Function<Resource, InputStream> f1 = resource -> {
       try {
         return resource.getInputStream();
       }
       catch (IOException e) {
         Logger.getInstance(PluginClassLoader.class).error(e);
+        return null;
       }
+    };
+    BiFunction<ClassLoader, String, InputStream> f2 = (cl, path) -> {
+      try {
+        return cl.getResourceAsStream(path);
+      }
+      catch (Exception e) {
+        Logger.getInstance(PluginClassLoader.class).error(e);
+        return null;
+      }
+    };
+    return findResource(name, f1, f2);
+  }
+
+  private <T> @Nullable T findResource(String name, Function<Resource, T> f1, BiFunction<ClassLoader, String, T> f2) {
+    String canonicalPath = toCanonicalPath(name);
+    T result = doFindResource(canonicalPath, f1, f2);
+    if (result == null && canonicalPath.startsWith("/")) {
+      //noinspection SpellCheckingInspection
+      if (!canonicalPath.startsWith("/org/bridj/")) {
+        String message = "Do not request resource from classloader using path with leading slash";
+        Logger.getInstance(PluginClassLoader.class).error(message, new IllegalArgumentException(name));
+      }
+      result = doFindResource(canonicalPath.substring(1), f1, f2);
+    }
+    return result;
+  }
+
+  private <T> @Nullable T doFindResource(String canonicalPath, Function<Resource, T> f1, BiFunction<ClassLoader, String, T> f2) {
+    Resource resource = classPath.findResource(canonicalPath);
+    if (resource != null) {
+      return f1.apply(resource);
     }
 
     for (ClassLoader classloader : getAllParents()) {
       if (classloader instanceof PluginClassLoader) {
         resource = ((PluginClassLoader)classloader).classPath.findResource(canonicalPath);
         if (resource != null) {
-          try {
-            return resource.getInputStream();
-          }
-          catch (IOException e) {
-            Logger.getInstance(PluginClassLoader.class).error(e);
-          }
+          return f1.apply(resource);
         }
       }
       else {
-        InputStream stream = classloader.getResourceAsStream(canonicalPath);
-        if (stream != null) {
-          return stream;
+        T t = f2.apply(classloader, canonicalPath);
+        if (t != null) {
+          return t;
         }
       }
     }
 
-    if (name.startsWith("/")) {
-      throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash (path=" + name + ")");
-    }
     return null;
   }
 
@@ -449,8 +449,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
         try {
           resources.add(classloader.getResources(name));
         }
-        catch (IOException ignore) {
-        }
+        catch (IOException ignore) { }
       }
     }
     return new DeepEnumeration(resources);
@@ -572,8 +571,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       try {
         logStream.flush();
       }
-      catch (IOException ignore) {
-      }
+      catch (IOException ignore) { }
     }
   }
 }

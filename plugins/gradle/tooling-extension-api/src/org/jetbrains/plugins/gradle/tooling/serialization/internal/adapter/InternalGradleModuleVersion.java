@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.GradleModuleVersion;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class InternalGradleModuleVersion implements GradleModuleVersion {
   private String myGroup;
   private String myName;

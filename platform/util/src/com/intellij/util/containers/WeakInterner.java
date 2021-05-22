@@ -4,6 +4,7 @@ package com.intellij.util.containers;
 import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -22,6 +23,7 @@ public class WeakInterner<T> extends Interner<T> {
    * @deprecated Use {@link Interner#createWeakInterner()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public WeakInterner() {
     myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   }

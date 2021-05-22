@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.jna.JnaLoader;
@@ -21,7 +21,7 @@ import java.awt.event.AWTEventListener;
  * The desired effect is achieved by setting system-wide 'foreground lock timeout' value to zero. This is a duration that should pass after
  * user input in one window before another window is allowed to steal focus.
  */
-public class WinFocusStealer implements AWTEventListener {
+public final class WinFocusStealer implements AWTEventListener {
   private static final Logger LOG = Logger.getInstance(WinFocusStealer.class);
   private static final int DEFAULT_TIMEOUT_MS = 200000; // default registry value on Windows 10 as of time this code is written
   private final boolean myEnabled;

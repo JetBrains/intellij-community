@@ -7,8 +7,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.refreshProject
@@ -30,6 +29,8 @@ private val LOG = Logger.getInstance(GradleCommandLineProjectConfigurator::class
 
 private val gradleLogWriter = BufferedWriter(FileWriter(PathManager.getLogPath() + "/gradle-import.log"))
 
+private val GRADLE_OUTPUT_LOG = Logger.getInstance("GradleOutput")
+
 class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigurator {
   override fun getName() = "gradle"
 
@@ -37,6 +38,9 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
     Registry.get("external.system.auto.import.disabled").setValue(true)
+    val progressManager = ExternalSystemProgressNotificationManager.getInstance()
+    progressManager.addNotificationListener(LoggingNotificationListener())
+    Unit
   }
 
   override fun configureProject(project: Project, context: ConfiguratorContext) {
@@ -44,9 +48,9 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     val state = GradleImportHintService.getInstance(project).state
 
     if (state.skip) return
-    val finishStatus = AtomicReference(FinishStatus.INITIAL)
+    val externalSystemState = AtomicReference(ExternalSystemState.INITIAL)
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
-    progressManager.addNotificationListener(TaskNotificationListener(finishStatus))
+    progressManager.addNotificationListener(StateNotificationListener(externalSystemState))
 
     if (state.projectsToImport.isNotEmpty()) {
       for (projectPath in state.projectsToImport) {
@@ -72,8 +76,8 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     if (FileUtil.findFirstThatExist(gradleGroovyDslFile, kotlinDslGradleFile) == null) return
 
     refreshProject(basePath, getImportSpecBuilder(project))
-    val status = finishStatus.get()
-    if (status != FinishStatus.SUCCESS && status != FinishStatus.INITIAL) {
+    val status = externalSystemState.get()
+    if (status != ExternalSystemState.SUCCESS && status != ExternalSystemState.INITIAL) {
       throw IllegalStateException("Gradle project import failure. Project import status: $status")
     }
   }
@@ -81,45 +85,42 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
   private fun getImportSpecBuilder(project: Project): ImportSpecBuilder =
     ImportSpecBuilder(project, GradleConstants.SYSTEM_ID).use(MODAL_SYNC)
 
-  class TaskNotificationListener(private val finishStatus: AtomicReference<FinishStatus>) : ExternalSystemTaskNotificationListener {
+  class StateNotificationListener(private val externalSystemState: AtomicReference<ExternalSystemState>) :
+    ExternalSystemTaskNotificationListenerAdapter() {
     override fun onSuccess(id: ExternalSystemTaskId) {
-      finishStatus.set(FinishStatus.SUCCESS)
-      gradleLogWriter.close()
+      externalSystemState.set(ExternalSystemState.SUCCESS)
       LOG.info("Gradle import success")
     }
 
     override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
-      finishStatus.set(FinishStatus.FAILURE)
-      gradleLogWriter.close()
+      externalSystemState.set(ExternalSystemState.FAILURE)
       LOG.error("Gradle import failure", e)
     }
 
-    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-      gradleLogWriter.write((if (stdOut) "" else "STDERR: ") + text)
-    }
-
-    override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
-    }
-
     override fun onCancel(id: ExternalSystemTaskId) {
-      finishStatus.set(FinishStatus.CANCELLED)
+      externalSystemState.set(ExternalSystemState.CANCELLED)
       LOG.error("Gradle import canceled")
     }
 
-    override fun onEnd(id: ExternalSystemTaskId) {
-      gradleLogWriter.close()
-    }
-
-    override fun beforeCancel(id: ExternalSystemTaskId) {
-    }
-
     override fun onStart(id: ExternalSystemTaskId) {
-      finishStatus.set(FinishStatus.STARTED)
+      externalSystemState.set(ExternalSystemState.STARTED)
       LOG.info("Gradle import started")
     }
   }
 
-  enum class FinishStatus {
+  class LoggingNotificationListener() : ExternalSystemTaskNotificationListenerAdapter() {
+    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+      val gradleText = (if (stdOut) "" else "STDERR: ") + text
+      gradleLogWriter.write(gradleText)
+      GRADLE_OUTPUT_LOG.debug(gradleText)
+    }
+
+    override fun onEnd(id: ExternalSystemTaskId) {
+      gradleLogWriter.flush()
+    }
+  }
+
+  enum class ExternalSystemState {
     INITIAL,
     STARTED,
     CANCELLED,

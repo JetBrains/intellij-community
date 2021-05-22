@@ -3,6 +3,7 @@ package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
@@ -79,6 +80,7 @@ public final class OutputFileObject extends JpsFileObject {
    * @deprecated In general, an output object may be generated from several source files. Use {@link OutputFileObject#getSourceFiles()} method instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public File getSourceFile() {
     final Iterator<File> it = getSourceFiles().iterator();

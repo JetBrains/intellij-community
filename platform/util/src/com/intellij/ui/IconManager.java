@@ -47,6 +47,7 @@ public interface IconManager {
    */
   @Deprecated
   @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags) {
     return loadRasterizedIcon(path.startsWith("/") ? path.substring(1) : path, aClass.getClassLoader(), cacheKey, flags);
   }

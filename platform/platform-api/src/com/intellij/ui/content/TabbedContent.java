@@ -67,10 +67,5 @@ public interface TabbedContent extends Content {
   @Nls
   String getTitlePrefix();
 
-  @Deprecated
-  default void setTitlePrefix(String titlePrefix) {
-    throw new UnsupportedOperationException("Setting title prefix is not supported");
-  }
-
   void split();
 }

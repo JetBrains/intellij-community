@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -19,6 +20,7 @@ import java.util.function.BiConsumer;
  * and then executing them in the owned ThreadPoolExecutor.
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool is unbounded.
  */
+@ApiStatus.Internal
 public final class AppScheduledExecutorService extends SchedulingWrapper {
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   @NotNull private final String myName;
@@ -97,7 +99,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     return ContainerUtil.concat(super.doShutdownNow(), ((BackendThreadPoolExecutor)backendExecutorService).superShutdownNow());
   }
 
-  public void shutdownAppScheduledExecutorService() {
+  void shutdownAppScheduledExecutorService() {
     // LowMemoryWatcher starts background threads so stop it now to avoid RejectedExecutionException
     Disposer.dispose(myLowMemoryWatcherManager);
     delayQueue.shutdown(); // shutdown delay queue first to avoid rejected execution exceptions in Alarm

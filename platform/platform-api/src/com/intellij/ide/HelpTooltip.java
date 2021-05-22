@@ -17,7 +17,8 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.components.BrowserLink;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -117,7 +118,7 @@ public class HelpTooltip {
   private @TooltipTitle String title;
   private @NlsSafe String shortcut;
   private @Tooltip String description;
-  private LinkLabel<?> link;
+  private ActionLink link;
   private boolean neverHide;
   private Alignment alignment = Alignment.CURSOR;
 
@@ -230,7 +231,7 @@ public class HelpTooltip {
    * @return {@code this}
    */
   public HelpTooltip setLink(@NlsContexts.LinkLabel String linkText, Runnable linkAction) {
-    link = LinkLabel.create(linkText, () -> {
+    link = new ActionLink(linkText, e -> {
       hidePopup(true);
       linkAction.run();
     });
@@ -246,7 +247,7 @@ public class HelpTooltip {
    * @return {@code this}
    */
   public HelpTooltip setBrowserLink(@NlsContexts.LinkLabel String linkLabel, URL url) {
-    link = new LinkLabel<>(linkLabel, AllIcons.Ide.External_link_arrow, (__, ___) -> BrowserUtil.browse(url));
+    link = new BrowserLink(linkLabel, url.toExternalForm());
     link.setHorizontalTextPosition(SwingConstants.LEFT);
     return this;
   }

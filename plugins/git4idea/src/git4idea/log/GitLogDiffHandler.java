@@ -113,8 +113,10 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
       String dialogTitle = GitBundle.message("git.log.diff.handler.paths.diff.title", leftRevision.toShortString(),
                                              rightRevisionTitle,
                                              getTitleForPaths(root, affectedPaths));
+      CompareWithLocalDialog.LocalContent localContentSide = isWithLocal ? CompareWithLocalDialog.LocalContent.AFTER
+                                                                         : CompareWithLocalDialog.LocalContent.NONE;
 
-      CompareWithLocalDialog.showDialog(myProject, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
+      CompareWithLocalDialog.showDialog(myProject, dialogTitle, localContentSide, () -> {
         if (isWithLocal) {
           return GitChangeUtils.getDiffWithWorkingDir(myProject, root, leftRevision.asString(), filePaths, false);
         }

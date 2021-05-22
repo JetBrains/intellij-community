@@ -17,13 +17,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.CommitMessageI;
@@ -42,6 +42,8 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,12 +68,14 @@ import static javax.swing.BorderFactory.createEmptyBorder;
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI, LafManagerListener {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
 
+  private final @NotNull LoadingDecorator myLoadingDecorator;
+
+  private final @Nullable @Nls String myMessagePlaceholder;
+
   private static final @NotNull EditorCustomization COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION = editor -> {
     editor.setBackgroundColor(null); // to use background from set color scheme
     editor.setColorsScheme(getCommitMessageColorScheme());
   };
-  private static final @NotNull EditorCustomization DISABLE_FIND_REPLACE_ACTIONS = editor ->
-    editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, true);
 
   @NotNull
   private static EditorColorsScheme getCommitMessageColorScheme() {
@@ -91,13 +95,26 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     this(project, true, true, true);
   }
 
-  public CommitMessage(@NotNull Project project, boolean withSeparator, boolean showToolbar, boolean runInspections) {
-    super(new BorderLayout());
+  public CommitMessage(@NotNull Project project,
+                       boolean withSeparator,
+                       boolean showToolbar,
+                       boolean runInspections) {
+    this(project, withSeparator, showToolbar, runInspections, null);
+  }
 
+  public CommitMessage(@NotNull Project project,
+                       boolean withSeparator,
+                       boolean showToolbar,
+                       boolean runInspections,
+                       @Nullable @Nls String messagePlaceholder) {
+    super(new BorderLayout());
+    myMessagePlaceholder = messagePlaceholder;
     myEditorField = createCommitMessageEditor(project, runInspections);
     myEditorField.getDocument().putUserData(DATA_KEY, this);
+    myEditorField.setPlaceholder(myMessagePlaceholder);
 
-    add(myEditorField, BorderLayout.CENTER);
+    myLoadingDecorator = new LoadingDecorator(myEditorField, this, 0);
+    add(myLoadingDecorator.getComponent(), BorderLayout.CENTER);
 
     if (withSeparator) {
       mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent());
@@ -119,6 +136,20 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     updateOnInspectionProfileChanged(project);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, this);
+  }
+
+  @Override
+  public void stopLoading() {
+    myLoadingDecorator.stopLoading();
+    myEditorField.setEnabled(true);
+    myEditorField.setPlaceholder(myMessagePlaceholder);
+  }
+
+  @Override
+  public void startLoading() {
+    myEditorField.setEnabled(false);
+    myEditorField.setPlaceholder(null);
+    myLoadingDecorator.startLoading(false);
   }
 
   private void updateOnInspectionProfileChanged(@NotNull Project project) {
@@ -172,6 +203,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
    * @deprecated Use {@link CommitMessage} component.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static EditorTextField createCommitTextEditor(@NotNull Project project, @SuppressWarnings("unused") boolean forceSpellCheckOn) {
     return createCommitMessageEditor(project, false);
   }
@@ -184,7 +216,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
     features.add(COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION);
-    features.add(DISABLE_FIND_REPLACE_ACTIONS);
     if (runInspections) {
       features.add(ErrorStripeEditorCustomization.ENABLED);
       features.add(new InspectionCustomization(project));

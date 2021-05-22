@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.settings
 
 import circlet.client.api.englishFullName
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -19,7 +17,7 @@ import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.GridBag
@@ -27,7 +25,10 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import libraries.klogging.logger
 import java.awt.GridBagLayout
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 val log = logger<SpaceSettingsPanel>()
 
@@ -39,20 +40,10 @@ class SpaceSettingsPanel :
 
   private val accountPanel = BorderLayoutPanel()
 
-  private val linkLabel: LinkLabel<Any> = LinkLabel<Any>(
-    SpaceBundle.message("settings.panel.configure.git.ssh.keys.http.password.link"),
-    AllIcons.Ide.External_link_arrow,
-    null
-  ).apply {
-    iconTextGap = 0
-    setHorizontalTextPosition(SwingConstants.LEFT)
-  }
-
   init {
     SpaceWorkspaceComponent.getInstance().loginState.forEach(lifetime) { st ->
       accountPanel.removeAll()
       accountPanel.addToCenter(createView(st))
-      updateUi(st)
       accountPanel.revalidate()
       accountPanel.repaint()
     }
@@ -69,7 +60,7 @@ class SpaceSettingsPanel :
       cell(isFullWidth = true) {
         label(SpaceBundle.message("settings.panel.clone.repositories.with.label"))
         comboBox(EnumComboBoxModel(CloneType::class.java), settings::cloneType)
-        linkLabel()
+        createConfigureHttpAndSshLink()()
       }
     }
   }
@@ -115,19 +106,22 @@ class SpaceSettingsPanel :
     }
   }
 
-  private fun updateUi(st: SpaceLoginState) {
-    when (st) {
-      is SpaceLoginState.Connected -> {
-        linkLabel.isVisible = true
-        val profile = SpaceWorkspaceComponent.getInstance().workspace.value?.me?.value ?: return
-        val gitConfigPage = SpaceUrls.git(profile.username)
-        linkLabel.setListener({ _, _ -> BrowserUtil.browse(gitConfigPage) }, null)
-      }
-      else -> {
-        linkLabel.isVisible = false
-        linkLabel.setListener(null, null)
-      }
+  private fun createConfigureHttpAndSshLink(): JComponent {
+    val contentPanel = BorderLayoutPanel().apply {
+      isOpaque = false
     }
+    SpaceWorkspaceComponent.getInstance().workspace.forEach(lifetime) {
+      contentPanel.removeAll()
+      if (it != null) {
+        val url = SpaceUrls.git(it.me.value.username)
+        val browserLink = BrowserLink(SpaceBundle.message("settings.panel.configure.git.ssh.keys.http.password.link"), url)
+        contentPanel.addToCenter(browserLink)
+      }
+      contentPanel.isVisible = it != null
+      contentPanel.revalidate()
+      contentPanel.repaint()
+    }
+    return contentPanel
   }
 
   companion object {

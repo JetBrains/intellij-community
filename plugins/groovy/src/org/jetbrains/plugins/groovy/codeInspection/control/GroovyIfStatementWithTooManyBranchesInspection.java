@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.plugins.groovy.codeInspection.utils.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
 

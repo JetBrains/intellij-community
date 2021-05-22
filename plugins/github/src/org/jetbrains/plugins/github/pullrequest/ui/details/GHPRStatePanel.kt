@@ -8,7 +8,6 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
 import icons.VcsCodeReviewIcons
@@ -50,6 +49,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
       val statusComponent = createStatusComponent()
 
       val buttonsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
+        isOpaque = false
         for (button in createButtons()) {
           add(button)
         }
@@ -70,8 +70,6 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
       }
 
       return NonOpaquePanel(VerticalLayout(JBUIScale.scale(4))).apply {
-        border = JBUI.Borders.emptyLeft(4)
-
         add(statusComponent, VerticalLayout.FILL_HORIZONTAL)
         add(actionsPanel, VerticalLayout.FILL_HORIZONTAL)
       }
@@ -107,6 +105,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
             text = GithubBundle.message("pull.request.repo.access.required")
           }
           JPanel(VerticalLayout(JBUIScale.scale(STATUSES_GAP))).apply {
+            isOpaque = false
             add(stateLabel, VerticalLayout.FILL_HORIZONTAL)
             add(accessDeniedLabel, VerticalLayout.FILL_HORIZONTAL)
           }
@@ -146,6 +145,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
                                 SwingConstants.LEFT)
         val accessDeniedLabel = createAccessDeniedLabel(isDraft)
         return JPanel(VerticalLayout(JBUIScale.scale(STATUSES_GAP))).apply {
+          isOpaque = false
           add(stateLabel)
           add(accessDeniedLabel)
         }
@@ -196,6 +196,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         val accessDeniedLabel = createAccessDeniedLabel(isDraft)
 
         return JPanel(VerticalLayout(JBUIScale.scale(STATUSES_GAP))).apply {
+          isOpaque = false
           add(statusChecks)
           add(requiredReviewsLabel)
           add(conflictsLabel)

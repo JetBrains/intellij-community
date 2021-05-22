@@ -221,17 +221,19 @@ private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '
 function_definition ::= &(function | word '(') function_definition_inner {
   mixin="com.intellij.sh.psi.impl.ShFunctionDefinitionMixin"
 }
-private function_definition_inner ::= word argument_list newlines block
-                                     | function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines block
+private function_definition_inner ::= word argument_list newlines (block | parentheses_block)
+                                     | function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines (block | parentheses_block)
                                      { pin(".*")="function|argument_list" }
 
 private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
-private argument_list_recover ::= !('\n'| '{')
+private argument_list_recover ::= !('\n'| '{' | '(')
 
 conditional_command ::=  '[[' condition* (']]'|']'  <<differentBracketsWarning>>)
                        | '['  condition* ( ']'|']]' <<differentBracketsWarning>>) {pin(".*")=1}
 
 private any_block ::= block | do_block
+
+parentheses_block ::= '('  block_compound_list ')' { pin=1 }
 do_block ::= do  block_compound_list done {
   pin(".*")=1
   implements="com.intellij.sh.psi.ShLazyDoBlock"
@@ -250,7 +252,7 @@ block_compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_o
   elementType=compound_list
   recoverWhile=block_compound_list_recover
 }
-private block_compound_list_recover ::= !('{' | '\n' | '}' | do | done)
+private block_compound_list_recover ::= !('{' | '\n' | '}' | do | done | '(' | ')')
 
 simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {pin=1}
 generic_command_directive ::= simple_command_element_inner {extends=simple_command}

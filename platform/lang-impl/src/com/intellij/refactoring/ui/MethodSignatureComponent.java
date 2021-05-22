@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,7 +41,7 @@ public class MethodSignatureComponent extends EditorTextField {
   }
 
   @Override
-  protected EditorEx createEditor() {
+  protected @NotNull EditorEx createEditor() {
     EditorEx editor = super.createEditor();
     final String fileName = getFileName();
     if (fileName != null) {

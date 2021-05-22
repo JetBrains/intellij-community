@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.classpath.ChangeLibraryLevelActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -67,7 +66,7 @@ public class ChangeLibraryLevelAction extends ChangeLibraryLevelActionBase {
     if (!myCopy) {
       mySourceConfigurable.removeLibrary(libraryElement);
     }
-    ProjectStructureConfigurable.getInstance(myProject).selectProjectOrGlobalLibrary(newLibrary, true);
+    myTargetConfigurable.getProjectStructureConfigurable().selectProjectOrGlobalLibrary(newLibrary, true);
   }
 
   @Override

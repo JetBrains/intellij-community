@@ -34,7 +34,10 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
@@ -53,7 +56,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.*;
+import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.LOCAL;
+import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.LOCAL_PRIORITY;
 import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenInspectionFinished;
 
 public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
@@ -138,10 +142,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
         if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
           if (ourToolsWithInformationProblems.add(shortName)) {
-            LOG.error("Tool #" + shortName + " registers INFORMATION level problem in batch mode on " + getFile() + ". " +
-                      "INFORMATION level 'warnings' are invisible in the editor and should not become visible in batch mode. " +
-                      "Moreover, cause INFORMATION level fixes act more like intention actions, they could e.g. change semantics and " +
-                      "thus should not be suggested for batch transformations");
+            String message = "Tool #" + shortName + " registers INFORMATION level problem in batch mode on " + getFile() + ". " +
+                             "INFORMATION level 'warnings' are invisible in the editor and should not become visible in batch mode. " +
+                             "Moreover, cause INFORMATION level fixes act more like intention actions, they could e.g. change semantics and " +
+                             "thus should not be suggested for batch transformations";
+            LocalInspectionEP extension = toolWrapper.getExtension();
+            if (extension != null) {
+              LOG.error(new PluginException(message, extension.getPluginDescriptor().getPluginId()));
+            }
+            else {
+              LOG.error(message);
+            }
           }
           continue;
         }

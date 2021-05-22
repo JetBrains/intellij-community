@@ -22,6 +22,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.xdebugger.XDebugProcess;
@@ -121,7 +122,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       return descriptor;
     }
     if (state instanceof PatchedRunnableState) {
-      final RemoteConnection connection = doPatch(new JavaParameters(), environment.getRunnerSettings(), true);
+      RemoteConnection connection =
+        doPatch(new JavaParameters(), environment.getRunnerSettings(), true, environment.getProject());
       return attachVirtualMachine(state, environment, connection, true);
     }
     if (state instanceof RemoteState) {
@@ -188,19 +190,29 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
 
   // used externally
   @Override
-  public void patch(@NotNull JavaParameters javaParameters, @Nullable RunnerSettings settings, @NotNull RunProfile runProfile, boolean beforeExecution) throws ExecutionException {
-    doPatch(javaParameters, Objects.requireNonNull(settings), beforeExecution);
-    JavaProgramPatcher.runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
+  public void patch(@NotNull JavaParameters javaParameters,
+                    @Nullable RunnerSettings settings,
+                    @NotNull RunProfile runProfile,
+                    boolean beforeExecution) throws ExecutionException {
+    doPatch(javaParameters, Objects.requireNonNull(settings), beforeExecution,
+            runProfile instanceof RunConfiguration ? ((RunConfiguration)runProfile).getProject() : null);
+    JavaProgramPatcher
+      .runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
   }
 
-  private static RemoteConnection doPatch(@NotNull JavaParameters javaParameters, @NotNull RunnerSettings settings, boolean beforeExecution)
+  private static RemoteConnection doPatch(@NotNull JavaParameters javaParameters,
+                                          @NotNull RunnerSettings settings,
+                                          boolean beforeExecution,
+                                          @Nullable Project project)
     throws ExecutionException {
     GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings);
     if (StringUtil.isEmpty(debuggerSettings.getDebugPort())) {
-      debuggerSettings.setDebugPort(DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));
+      debuggerSettings.setDebugPort(
+        DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));
     }
     return new RemoteConnectionBuilder(debuggerSettings.LOCAL, debuggerSettings.getTransport(), debuggerSettings.getDebugPort())
       .asyncAgent(beforeExecution)
+      .project(project)
       .memoryAgent(beforeExecution && DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
       .create(javaParameters);
   }

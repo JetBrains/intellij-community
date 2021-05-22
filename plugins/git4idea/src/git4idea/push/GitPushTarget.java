@@ -117,7 +117,7 @@ public class GitPushTarget implements PushTarget {
   }
 
   @Nullable
-  static GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull GitLocalBranch sourceBranch) {
+  public static GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull GitLocalBranch sourceBranch) {
     List<String> specs = remote.getPushRefSpecs();
     if (specs.isEmpty()) return null;
 

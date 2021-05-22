@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.model.Symbol;
+import com.intellij.model.SymbolResolveResult;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -178,6 +180,9 @@ public final class IdempotenceChecker {
       }
       return whichIsField("size", existing, fresh, checkCollectionSizes(((Map<?,?>)existing).size(), ((Map<?,?>)fresh).size()));
     }
+    if (isExpectedToHaveSaneEquals(existing) && !existing.equals(fresh)) {
+      return reportProblem(existing, fresh);
+    }
     if (existing instanceof PsiNamedElement) {
       return checkPsiEquivalence((PsiElement)existing, (PsiElement)fresh);
     }
@@ -190,9 +195,6 @@ public final class IdempotenceChecker {
         return whichIsField("element", existing, fresh, s);
       }
       return null;
-    }
-    if (isExpectedToHaveSaneEquals(existing) && !existing.equals(fresh)) {
-      return reportProblem(existing, fresh);
     }
     return null;
   }
@@ -233,7 +235,9 @@ public final class IdempotenceChecker {
   }
 
   private static boolean isExpectedToHaveSaneEquals(@NotNull Object existing) {
-    return existing instanceof Comparable;
+    return existing instanceof Comparable
+           || existing instanceof Symbol
+           || existing instanceof SymbolResolveResult;
   }
 
   @Contract("null,_->!null;_,null->!null")

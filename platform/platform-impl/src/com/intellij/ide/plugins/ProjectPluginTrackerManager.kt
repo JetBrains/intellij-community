@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.externalDependencies.DependencyOnPlugin
+import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -53,60 +55,38 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       }
 
       override fun runActivity(project: Project) {
-        val tracker = instance.getPluginTracker(project)
-        val trackers = instance.openProjectsPluginTrackers(project)
+        val manager = instance
+        val tracker = manager.getPluginTracker(project)
+        val projects = openProjectsExcludingCurrent(project)
 
-        val indicator = ProgressManager.getInstance().progressIndicator
-        ApplicationManager.getApplication().invokeLater(
-          Runnable {
+        val pluginIdsToLoad = tracker.enabledPluginsIds
+          .union(manager.locallyDisabledAndGloballyEnabledPlugins(projects))
+
+        val pluginIdsToUnload = tracker.disabledPluginsIds
+
+        if (pluginIdsToLoad.isNotEmpty() ||
+            pluginIdsToUnload.isNotEmpty()) {
+          val indicator = ProgressManager.getInstance().progressIndicator
+          ApplicationManager.getApplication().invokeAndWait {
             indicator?.let {
               it.text = IdeBundle.message("plugins.progress.loading.plugins.for.current.project.title", project.name)
             }
-            loadPlugins(tracker.enabledPluginIds(trackers))
+            loadPlugins(pluginIdsToLoad)
 
             indicator?.let {
               it.text = IdeBundle.message("plugins.progress.unloading.plugins.for.current.project.title", project.name)
             }
-            unloadPlugins(
-              tracker.disabledPluginsIds,
+            manager.unloadPlugins(
+              pluginIdsToUnload,
               project,
-              trackers,
+              projects,
             )
-          },
-          project.disposed,
-        )
+          }
+        }
       }
     }
 
-    @JvmStatic
-    private fun unloadPlugins(
-      pluginIds: Collection<PluginId>,
-      project: Project,
-      trackers: List<ProjectPluginTracker>,
-    ): Boolean = unloadPlugins(
-      pluginIds.filter(shouldUnload(trackers)),
-      project,
-    )
-
-    @JvmStatic
-    private fun shouldUnload(trackers: List<ProjectPluginTracker>) = { pluginId: PluginId ->
-      trackers.all { !it.isEnabled(pluginId) } &&
-      (DisabledPluginsState.isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
-    }
-
-    private fun ProjectPluginTracker.enabledPluginIds(trackers: List<ProjectPluginTracker>): Collection<PluginId> {
-      return trackers
-        .flatMap { it.disabledPluginIds() }
-        .union(enabledPluginsIds)
-    }
-
-    private fun ProjectPluginTracker.disabledPluginIds(trackers: List<ProjectPluginTracker> = listOf()): Collection<PluginId> {
-      return disabledPluginsIds
-        .filterNot { pluginId ->
-          DisabledPluginsState.isDisabled(pluginId) ||
-          trackers.isNotEmpty() && trackers.all { it.isDisabled(pluginId) }
-        }
-    }
+    internal fun openProjectsExcludingCurrent(project: Project?) = ProjectManager.getInstance().openProjects.filterNot { it == project }
 
     private fun Collection<PluginId>.toPluginDescriptors() = mapNotNull { PluginManagerCore.getPlugin(it) }
   }
@@ -122,14 +102,20 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
           if (applicationShuttingDown) return
 
           val tracker = getPluginTracker(project)
-          val trackers = openProjectsPluginTrackers(project)
+          val projects = openProjectsExcludingCurrent(project)
 
-          loadPlugins(tracker.disabledPluginIds(trackers))
+          val pluginIdsToLoad = if (projects.isNotEmpty())
+            emptyList()
+          else
+            tracker.disabledPluginsIds.filterNot { DisabledPluginsState.isDisabled(it) }
+          loadPlugins(pluginIdsToLoad)
 
+          val pluginIdsToUnload = tracker.enabledPluginsIds
+            .union(locallyDisabledPlugins(projects))
           unloadPlugins(
-            tracker.enabledPluginIds(trackers),
+            pluginIdsToUnload,
             project,
-            trackers,
+            projects,
           )
         }
       }
@@ -171,7 +157,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     fun unloadPlugins(): Boolean {
       val predicate = when (project) {
         null -> { _: PluginId -> true }
-        else -> shouldUnload(openProjectsPluginTrackers(project))
+        else -> shouldUnload(openProjectsExcludingCurrent(project))
       }
 
       return DynamicPlugins.unloadPlugins(
@@ -210,14 +196,42 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     }
   }
 
-  internal fun openProjectsPluginTrackers(project: Project?): List<ProjectPluginTracker> {
-    return ProjectManager.getInstance().openProjects
-      .asSequence()
-      .filterNot { it == project }
+  private fun unloadPlugins(
+    pluginIds: Collection<PluginId>,
+    project: Project,
+    projects: List<Project>,
+  ): Boolean = unloadPlugins(
+    pluginIds.filter(shouldUnload(projects)),
+    project,
+  )
+
+  private fun locallyDisabledPlugins(projects: List<Project>): Collection<PluginId> {
+    return projects
       .map { getPluginTracker(it) }
-      .toList()
+      .flatMap { it.disabledPluginsIds }
   }
 
+  private fun locallyDisabledAndGloballyEnabledPlugins(projects: List<Project>): Collection<PluginId> {
+    return locallyDisabledPlugins(projects)
+      .filterNot { DisabledPluginsState.isDisabled(it) }
+  }
+
+  private fun shouldUnload(openProjects: List<Project>) = object : (PluginId) -> Boolean {
+
+    private val trackers = openProjects
+      .map { getPluginTracker(it) }
+
+    private val requiredPluginIds = openProjects
+      .map { ExternalDependenciesManager.getInstance(it) }
+      .flatMap { it.getDependencies(DependencyOnPlugin::class.java) }
+      .mapTo(HashSet()) { it.pluginId }
+
+    override fun invoke(pluginId: PluginId): Boolean {
+      return !requiredPluginIds.contains(pluginId.idString) &&
+             !trackers.any { it.isEnabled(pluginId) } &&
+             (DisabledPluginsState.isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
+    }
+  }
 }
 
 @ApiStatus.Internal

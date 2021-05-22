@@ -265,7 +265,7 @@ public final class SdkConfigurationUtil {
   }
 
   @NotNull
-  public static String createUniqueSdkName(@NotNull SdkType type, String home, final Collection<? extends Sdk> sdks) {
+  public static String createUniqueSdkName(@NotNull SdkType type, @NotNull String home, final Collection<? extends Sdk> sdks) {
     return createUniqueSdkName(type.suggestSdkName(null, home), sdks);
   }
 

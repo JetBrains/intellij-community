@@ -178,11 +178,11 @@ class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName)
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun isValidSdkHome(path: String?): Boolean {
+  override fun isValidSdkHome(path: String): Boolean {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun suggestSdkName(currentSdkName: String?, sdkHome: String?): String {
+  override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 

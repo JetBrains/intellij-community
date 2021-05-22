@@ -3,11 +3,13 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.navigation.TargetPopupPresentation;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SyntheticElement;
+import com.intellij.refactoring.InplaceRefactoringContinuation;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.Renamer;
@@ -36,8 +38,15 @@ public class RenameElementAction extends AnAction implements UpdateInBackground 
 
   @ApiStatus.Internal
   public boolean isAvailable(@NotNull DataContext dataContext) {
-    return dataContext.getData(CommonDataKeys.PROJECT) != null
-           && SlowOperations.allowSlowOperations(() -> getAvailableRenamers(dataContext).findAny().isPresent());
+    Project project = dataContext.getData(CommonDataKeys.PROJECT);
+    if (project == null) {
+      return false;
+    }
+    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+    if (editor != null && InplaceRefactoringContinuation.hasInplaceContinuation(editor, RenameElementAction.class)) {
+      return true;
+    }
+    return SlowOperations.allowSlowOperations(() -> getAvailableRenamers(dataContext).findAny().isPresent());
   }
 
   @Override
@@ -45,6 +54,10 @@ public class RenameElementAction extends AnAction implements UpdateInBackground 
     DataContext dataContext = e.getDataContext();
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
     if (project == null) {
+      return;
+    }
+    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+    if (editor != null && InplaceRefactoringContinuation.tryResumeInplaceContinuation(project, editor, RenameElementAction.class)) {
       return;
     }
 

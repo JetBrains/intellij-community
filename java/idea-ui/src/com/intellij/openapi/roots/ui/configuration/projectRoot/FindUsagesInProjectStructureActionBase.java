@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.PlaceInProjectStructure;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
@@ -44,13 +44,13 @@ import java.util.Collection;
 
 public abstract class FindUsagesInProjectStructureActionBase extends AnAction implements DumbAware {
   private final JComponent myParentComponent;
-  private final Project myProject;
+  private final ProjectStructureConfigurable myProjectStructureConfigurable;
 
-  public FindUsagesInProjectStructureActionBase(JComponent parentComponent, Project project) {
+  public FindUsagesInProjectStructureActionBase(JComponent parentComponent, ProjectStructureConfigurable projectStructureConfigurable) {
     super(ProjectBundle.message("find.usages.action.text"), ProjectBundle.message("find.usages.action.text"), AllIcons.Actions.Find);
     registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), parentComponent);
     myParentComponent = parentComponent;
-    myProject = project;
+    myProjectStructureConfigurable = projectStructureConfigurable;
   }
 
   @Override
@@ -102,7 +102,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
           return true;
         }
       };
-    new ListPopupImpl(myProject, step) {
+    new ListPopupImpl(myProjectStructureConfigurable.getProject(), step) {
       @Override
       protected ListCellRenderer getListElementRenderer() {
         return new ListCellRendererWithRightAlignedComponent<ProjectStructureElementUsage>() {
@@ -123,7 +123,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
   protected abstract ProjectStructureElement getSelectedElement();
 
   protected StructureConfigurableContext getContext() {
-    return ModuleStructureConfigurable.getInstance(myProject).getContext();
+    return myProjectStructureConfigurable.getContext();
   }
 
   protected abstract RelativePoint getPointToShowResults();

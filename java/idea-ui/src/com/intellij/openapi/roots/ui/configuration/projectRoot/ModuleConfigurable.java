@@ -39,7 +39,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     myModuleGrouper = moduleGrouper;
     myConfigurator = modulesConfigurator;
     myModuleName = myConfigurator.getModuleModel().getActualName(myModule);
-    myContext = ModuleStructureConfigurable.getInstance(myModule.getProject()).getContext();
+    myContext = modulesConfigurator.getContext();
     myProjectStructureElement = new ModuleProjectStructureElement(myContext, myModule);
   }
 

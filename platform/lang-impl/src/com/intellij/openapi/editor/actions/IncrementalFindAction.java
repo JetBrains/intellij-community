@@ -21,7 +21,6 @@ import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
@@ -47,7 +46,7 @@ public class IncrementalFindAction extends EditorAction {
 
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (!editor.isOneLineMode()) {
         EditorSearchSession search = EditorSearchSession.get(editor);
         if (search != null) {
@@ -83,7 +82,7 @@ public class IncrementalFindAction extends EditorAction {
       if (SEARCH_DISABLED.get(editor, false)) {
         return false;
       }
-      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       return project != null && !editor.isOneLineMode();
     }
   }

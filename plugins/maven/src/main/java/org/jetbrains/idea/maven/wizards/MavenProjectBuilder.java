@@ -116,7 +116,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   }
 
   @Nullable
-  public Sdk suggestProjectSdk() {
+  public Sdk suggestProjectSdk(@NotNull Project project) {
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     ProjectRootManager defaultProjectManager = ProjectRootManager.getInstance(defaultProject);
     Sdk defaultProjectSdk = defaultProjectManager.getProjectSdk();
@@ -125,6 +125,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     SdkType sdkType = ExternalSystemJdkUtil.getJavaSdkType();
     return projectJdkTable.getSdksOfType(sdkType).stream()
       .filter(it -> it.getHomePath() != null && JdkUtil.checkForJre(it.getHomePath()))
+      .filter(it -> MavenWslUtil.tryGetWslDistributionForPath(it.getHomePath()) == MavenWslUtil.tryGetWslDistribution(project))
       .max(sdkType.versionComparator())
       .orElse(null);
   }
@@ -132,7 +133,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   private void setupProjectSdk(@NotNull Project project) {
     if (ProjectRootManager.getInstance(project).getProjectSdk() == null) {
       ApplicationManager.getApplication().runWriteAction(() -> {
-        Sdk projectSdk = suggestProjectSdk();
+        Sdk projectSdk = suggestProjectSdk(project);
         if (projectSdk == null) return;
         NewProjectUtil.applyJdkToProject(project, projectSdk);
       });
@@ -148,7 +149,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       LOG.debug(String.format("Cannot import project for %s", project.toString()));
       return Collections.emptyList();
     }
-    setupProjectSdk(project);
 
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
 
@@ -180,6 +180,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles);
     manager.waitForReadingCompletion();
+    setupProjectSdk(project);
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode() &&
         !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -220,6 +221,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
    * @deprecated Use {@link #setRootDirectory(Project, Path)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean setRootDirectory(@Nullable Project projectToUpdate, @NotNull String root) {
     return setRootDirectory(projectToUpdate, Paths.get(root));
   }
@@ -260,7 +262,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
     return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       @Override
@@ -365,6 +367,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
    * @deprecated Use {@link #getRootPath()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public @Nullable VirtualFile getRootDirectory() {
     Path rootPath = getRootPath();
     return rootPath == null ? null : VfsUtil.findFile(rootPath, false);

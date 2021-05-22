@@ -3,11 +3,13 @@ package com.intellij.diagnostic;
 
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 public final class ReportMessages {
   /** @deprecated Please use {@code DiagnosticBundle.message("error.report.title")} instead. */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final String ERROR_REPORT = "Error Report";
 
   /** @deprecated Please use {@code DiagnosticBundle.message("error.report.title")} instead. */

@@ -15,6 +15,7 @@ import com.intellij.execution.configurations.coverage.CoverageFragment;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.notification.Notification;
@@ -89,7 +90,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     if (runnerSettings instanceof CoverageRunnerData && coverageRunner != null) {
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
       coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
-      coverageConfig.appendCoverageArgument(configuration, params);
+      appendCoverageArgument(configuration, params, coverageConfig);
 
       final Sdk jdk = params.getJdk();
       if (jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_7) && coverageRunner instanceof JavaCoverageRunner && !((JavaCoverageRunner)coverageRunner).isJdk7Compatible()) {
@@ -100,6 +101,24 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
                                                     coverageRunner.getPresentableName()),
                                                   NotificationType.WARNING));
       }
+    }
+  }
+
+  private void appendCoverageArgument(@NotNull RunConfigurationBase configuration,
+                                      @NotNull JavaParameters params,
+                                      JavaCoverageEnabledConfiguration coverageConfig) {
+    JavaParameters coverageParams = new JavaParameters();
+    coverageConfig.appendCoverageArgument(configuration, coverageParams);
+
+    boolean usesTarget = configuration instanceof TargetEnvironmentAwareRunProfile
+                         && ((TargetEnvironmentAwareRunProfile)configuration).needPrepareTarget();
+    if (!usesTarget) {
+      // workaround for custom configuration extensions that do not support targets and use JavaParameters in its own specific way
+      // (like javaee, see PatchedLocalState)
+      params.getVMParametersList().addAll(coverageParams.getTargetDependentParameters().toLocalParameters());
+    }
+    else {
+      coverageParams.getTargetDependentParameters().asTargetParameters().forEach(params.getTargetDependentParameters().asTargetParameters()::add);
     }
   }
 

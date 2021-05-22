@@ -15,9 +15,12 @@
  */
 package com.intellij.execution;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated Please use {@link RunManagerListener} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class RunManagerAdapter implements RunManagerListener {
 }

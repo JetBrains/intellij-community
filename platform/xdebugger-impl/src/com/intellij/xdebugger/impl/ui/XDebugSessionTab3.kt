@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
@@ -15,6 +16,8 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.PersistentThreeComponentSplitter
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Pair.create
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
@@ -23,6 +26,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
+import com.intellij.util.Producer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.*
@@ -153,7 +157,6 @@ class XDebugSessionTab3(
   override fun addVariablesAndWatches(session: XDebugSessionImpl) {
     val variablesView: XVariablesView?
     val watchesView: XVariablesView?
-    val layoutDisposable = Disposer.newDisposable(ui.contentManager, "debugger layout disposable")
     if (isWatchesInVariables) {
       variablesView = XWatchesViewImpl(session, true, true, false)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
@@ -243,6 +246,11 @@ class XDebugSessionTab3(
     val toolbar = DefaultActionGroup()
     toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
+
+    myUi.options.setTitleProducer(Producer {
+      val icon = if (session.isStopped) session.runProfile?.icon else ExecutionUtil.getLiveIndicator(session.runProfile?.icon)
+      return@Producer create(icon, StringUtil.shortenTextWithEllipsis(session.sessionName, 15, 0) + ":")
+    })
   }
 
   private fun setHeaderState() {
@@ -253,22 +261,20 @@ class XDebugSessionTab3(
       val headerVisible = toolWindow.isHeaderVisible
       val topRightToolbar = DefaultActionGroup().apply {
         if (headerVisible) return@apply
-        var list = toolWindow.decorator.headerToolbar.actions.filter { it != null && it !is TabListAction }
-        if (list.last() is Separator) {
-          list = list.dropLast(1)
-        }
-        addAll(list)
-        if (singleContent == null) return@apply
+        addAll(toolWindow.decorator.headerToolbar.actions.filter { it != null && it !is TabListAction })
+      }
+      myUi.options.setTopRightToolbar(topRightToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-        add(object : AnAction(XDebuggerBundle.message("session.tab.close.debug.session"), null, AllIcons.Actions.Cancel) {
+      val topMiddleToolbar = DefaultActionGroup().apply {
+        if (singleContent == null || headerVisible) return@apply
+
+        add(object : AnAction(XDebuggerBundle.message("session.tab.close.debug.session"), null, AllIcons.Actions.Close) {
           override fun actionPerformed(e: AnActionEvent) {
             toolWindow.contentManager.removeContent(singleContent, true)
           }
         })
-        addSeparator()
       }
-      myUi.options.setTopRightToolbar(topRightToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
-      myUi.options.setTopMiddleToolbar(DefaultActionGroup(), ActionPlaces.DEBUGGER_TOOLBAR)
+      myUi.options.setTopMiddleToolbar(topMiddleToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
       toolWindow.decorator.isHeaderVisible = headerVisible
 
@@ -392,7 +398,7 @@ class XDebugSessionTab3(
         is XDebuggerThreadsList -> component.isEmpty
         is XDebuggerFramesList -> component.isEmpty
         is XDebuggerTree -> component.isEmpty
-        else -> false;
+        else -> false
       }
     }
   }

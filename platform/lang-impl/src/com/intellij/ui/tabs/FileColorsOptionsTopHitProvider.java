@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.ui.AppearanceOptionsTopHitProvider;
@@ -9,53 +9,58 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.FileColorManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-public final class FileColorsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
-  @NotNull
+final class FileColorsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return AppearanceOptionsTopHitProvider.ID;
   }
 
-  @NotNull
   @Override
-  public Collection<OptionDescription> getOptions(@NotNull Project project) {
-    FileColorManager manager = FileColorManager.getInstance(project);
-    if (manager != null) {
-      BooleanOptionDescription enabled = new Option(manager, LangBundle.message("label.file.colors.enabled"), "isEnabled", "setEnabled");
-      return !enabled.isOptionEnabled()
-             ? Collections.singletonList(enabled)
-             : Collections.unmodifiableCollection(Arrays.asList(
-               enabled,
-               new Option(manager, LangBundle.message("label.use.file.colors.in.editor.tabs"), "isEnabledForTabs", "setEnabledForTabs"),
-               new Option(manager, LangBundle.message("label.use.file.colors.in.project.view"), "isEnabledForProjectView", "setEnabledForProjectView")));
-    }
-    return Collections.emptyList();
-  }
-
-  private static class Option extends PublicMethodBasedOptionDescription {
-    private final FileColorManager myManager;
-
-    Option(FileColorManager manager, @NlsContexts.Label String option, String getter, String setter) {
-      super(option, "reference.settings.ide.settings.file-colors", getter, setter);
-      myManager = manager;
+  public @NotNull Collection<OptionDescription> getOptions(@NotNull Project project) {
+    BooleanOptionDescription enabled = new PublicMethodBasedOptionDescription(LangBundle.message("label.file.colors.enabled"),
+                                                                              "reference.settings.ide.settings.file-colors",
+                                                                              "isEnabled", "setEnabled",
+                                                                              () -> FileColorManager.getInstance(project)) {
+      @Override
+      protected void fireUpdated() {
+        UISettings.getInstance().fireUISettingsChanged();
+      }
+    };
+    if (!enabled.isOptionEnabled()) {
+      return Collections.singletonList(enabled);
     }
 
-    @Override
-    public Object getInstance() {
-      return myManager;
-    }
+    return List.of(
+      enabled,
+      new BooleanOptionDescription(LangBundle.message("label.use.file.colors.in.editor.tabs"), "reference.settings.ide.settings.file-colors") {
+        @Override
+        public boolean isOptionEnabled() {
+          return FileColorManagerImpl._isEnabledForTabs();
+        }
 
-    @Override
-    protected void fireUpdated() {
-      UISettings.getInstance().fireUISettingsChanged();
-    }
+        @Override
+        public void setOptionState(boolean value) {
+          FileColorManagerImpl.setEnabledForTabs(value);
+        }
+      },
+      new BooleanOptionDescription(LangBundle.message("label.use.file.colors.in.project.view"), "reference.settings.ide.settings.file-colors") {
+        @Override
+        public boolean isOptionEnabled() {
+          return FileColorManagerImpl._isEnabledForProjectView();
+        }
+
+        @Override
+        public void setOptionState(boolean value) {
+          FileColorManagerImpl.setEnabledForProjectView(value);
+        }
+      }
+    );
   }
 }

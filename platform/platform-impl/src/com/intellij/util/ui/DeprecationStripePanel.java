@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.impl.welcomeScreen.BottomLineBorder;
-import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.ui.components.AnActionLink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ public class DeprecationStripePanel extends JPanel {
   }
 
   public DeprecationStripePanel withAlternativeAction(@NotNull @NlsContexts.LinkLabel String linkText, @NotNull AnAction action) {
-    add(new ActionLink(linkText, action));
+    add(new AnActionLink(linkText, action));
     return this;
   }
 

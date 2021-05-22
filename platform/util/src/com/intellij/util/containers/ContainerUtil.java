@@ -121,6 +121,7 @@ public final class ContainerUtil {
    * @deprecated Use {@link IdentityHashMap#IdentityHashMap()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static @NotNull <K, V> IdentityHashMap<K, V> newIdentityHashMap() {
     return new IdentityHashMap<>();
   }
@@ -130,6 +131,7 @@ public final class ContainerUtil {
    */
   @Contract(pure = true)
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull <T> LinkedList<T> newLinkedList() {
     return new LinkedList<>();
   }
@@ -268,6 +270,7 @@ public final class ContainerUtil {
    * @deprecated Use {@link SmartList(T)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull <T> List<T> newSmartList(T element) {
     return new SmartList<>(element);
   }
@@ -301,6 +304,7 @@ public final class ContainerUtil {
    */
   @Contract(pure = true)
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Collection<? extends T> collection) {
     return new HashSet<>(collection);
   }
@@ -370,6 +374,7 @@ public final class ContainerUtil {
    */
   @SafeVarargs
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(pure = true)
   public static @NotNull <T> THashSet<T> newTroveSet(T @NotNull ... elements) {
     return new THashSet<>(Arrays.asList(elements));
@@ -379,6 +384,7 @@ public final class ContainerUtil {
    * @deprecated Use {@link THashSet#THashSet(Collection, TObjectHashingStrategy)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy, T @NotNull ... elements) {
@@ -389,6 +395,7 @@ public final class ContainerUtil {
    * @deprecated Use {@link it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(pure = true)
   public static @NotNull <K,V> THashMap<K,V> newIdentityTroveMap() {
     return new THashMap<>(identityStrategy());
@@ -398,6 +405,7 @@ public final class ContainerUtil {
    * @deprecated Use {@link TreeSet#TreeSet()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(pure = true)
   public static @NotNull <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
     return new TreeSet<>();
@@ -790,6 +798,7 @@ public final class ContainerUtil {
    * @deprecated Use {@link Collections#emptyList()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(pure = true)
   public static @NotNull <T> Iterable<T> emptyIterable() {
     return Collections.emptyList();
@@ -2448,6 +2457,7 @@ public final class ContainerUtil {
    */
   @Contract(value = " -> new", pure = true)
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull <T> Stack<T> newStack() {
     return new Stack<>();
   }
@@ -2590,6 +2600,7 @@ public final class ContainerUtil {
    * or {@link CollectionFactory#createConcurrentWeakIdentityMap()} (int, float, int)}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakMap(int initialCapacity,
                                                                             float loadFactor,
                                                                             int concurrencyLevel,
@@ -2619,6 +2630,7 @@ public final class ContainerUtil {
    * @deprecated use {@link #addIfNotNull(Collection, Object)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<? super T> result) {
     addIfNotNull(result,element);
   }
@@ -2706,6 +2718,7 @@ public final class ContainerUtil {
    * @deprecated use {@link List#toArray(Object[])} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(mutates = "param2")
   public static <T> T @NotNull [] toArray(@NotNull List<T> collection, T @NotNull [] array) {
     return collection.toArray(array);
@@ -2715,6 +2728,7 @@ public final class ContainerUtil {
    * @deprecated use {@link Collection#toArray(Object[])} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(mutates = "param2")
   public static <T> T @NotNull [] toArray(@NotNull Collection<? extends T> c, T @NotNull [] sample) {
     return c.toArray(sample);

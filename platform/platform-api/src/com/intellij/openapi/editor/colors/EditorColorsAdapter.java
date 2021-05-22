@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated Use {@link EditorColorsListener} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class EditorColorsAdapter implements EditorColorsListener {
 }

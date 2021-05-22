@@ -15,14 +15,13 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import javax.swing.text.InternationalFormatter;
-import java.awt.*;
 import java.text.NumberFormat;
 import java.util.regex.Pattern;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ConventionOptionsPanel extends JPanel {
+public class ConventionOptionsPanel extends InspectionOptionsPanel {
 
   private static final Logger LOG = Logger.getInstance(ConventionOptionsPanel.class);
   public ConventionOptionsPanel(@NotNull final InspectionProfileEntry owner,
@@ -36,7 +35,6 @@ public class ConventionOptionsPanel extends JPanel {
                                 @NonNls final String minLengthProperty, @NonNls final String maxLengthProperty,
                                 @NonNls final String regexProperty, @NonNls final String regexPatternProperty,
                                 JComponent... extraOptions) {
-    super(new GridBagLayout());
     final JLabel patternLabel = new JLabel(InspectionsBundle.message("label.pattern"));
     final JLabel minLengthLabel = new JLabel(InspectionsBundle.message("label.min.length"));
     final JLabel maxLengthLabel = new JLabel(InspectionsBundle.message("label.max.length"));
@@ -91,55 +89,13 @@ public class ConventionOptionsPanel extends JPanel {
     final Document maxLengthDocument = maxLengthField.getDocument();
     maxLengthDocument.addDocumentListener(listener);
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 0.0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    add(patternLabel, constraints);
+    row(patternLabel, regexField);
+    row(minLengthLabel, minLengthField);
+    row(maxLengthLabel,  maxLengthField);
 
-    constraints.gridx = 1;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.insets.right = 0;
-    add(regexField, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.weightx = 0.0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    add(minLengthLabel, constraints);
-
-    constraints.gridx = 1;
-    constraints.gridy = 1;
-    constraints.weightx = 1;
-    constraints.insets.right = 0;
-    add(minLengthField, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 2;
-    constraints.weightx = 0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    add(maxLengthLabel, constraints);
-
-    constraints.gridx = 1;
-    constraints.gridy = 2;
-    constraints.weightx = 1;
-    constraints.insets.right = 0;
-    add(maxLengthField, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridwidth = 2;
     for (JComponent extraOption : extraOptions) {
-      constraints.gridy++;
-      add(extraOption, constraints);
+      add(extraOption);
     }
-
-    constraints.gridy++;
-    constraints.weighty = 1.0;
-    add(new JPanel(), constraints);
   }
 
   private static void setPropertyIntegerValue(Object owner, String property, Integer value) {

@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @see com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport
@@ -41,17 +38,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   private final ThreadRegistry myThreadRegistry = new ThreadRegistry();
 
-  /**
-   * Indicates that this {@link ClientModeMultiProcessDebugger} has connected
-   * at least to one (the main one) Python debugging process.
-   * <p>
-   * <i>As Python debugging process does not start the underlying Python script
-   * before we send him {@link RunCommand} so the first process we connected to
-   * is the main Python script process.</i>
-   */
-  private final AtomicBoolean myConnected = new AtomicBoolean(false);
-
-  private final CountDownLatch myConnectedLatch = new CountDownLatch(1);
+  private final ClientModeDebuggerStatusHolder myDebuggerStatusHolder = new ClientModeDebuggerStatusHolder();
 
   private final CompositeRemoteDebuggerCloseListener myCompositeListener = new CompositeRemoteDebuggerCloseListener();
 
@@ -106,12 +93,9 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     }
 
     // notify `waitForConnect()` that we connected
-    if (myConnected.compareAndSet(false, true)) {
+    if (myDebuggerStatusHolder.onConnected()) {
       // add close listeners for the first accepted debugger
       debugger.addCloseListener(myCompositeListener);
-
-      // must be counted down only the first time
-      myConnectedLatch.countDown();
     }
     else {
       // for consequent processes we should init them by ourselves
@@ -134,17 +118,21 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   public void waitForConnect() throws Exception {
     Thread.sleep(500L);
 
+    myDebuggerStatusHolder.onConnecting();
+
     // increment the number of debugger connection request initially
     myExecutor.incrementRequests();
 
     // waiting for the first connected thread
-    if (!myConnectedLatch.await(60, TimeUnit.SECONDS)) {
-      throw new IOException("Connection to the debugger script at " + myHost + ":" + myPort + " timed out");
+    if (!myDebuggerStatusHolder.awaitWhileConnecting()) {
+      throw new PyDebuggerException("The process terminated before IDE established connection with Python debugger script");
     }
   }
 
   @Override
   public void close() {
+    myDebuggerStatusHolder.onDisconnectionInitiated();
+
     myExecutor.dispose();
 
     for (ProcessDebugger d : allDebuggers()) {
@@ -160,6 +148,8 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public void disconnect() {
+    myDebuggerStatusHolder.onDisconnectionInitiated();
+
     myExecutor.dispose();
 
     for (ProcessDebugger d : allDebuggers()) {

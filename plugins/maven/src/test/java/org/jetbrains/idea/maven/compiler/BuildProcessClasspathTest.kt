@@ -6,15 +6,13 @@ import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.jps.cmdline.ClasspathBootstrap
 import org.junit.Test
 import java.io.File
 
 class BuildProcessClasspathTest : BareTestFixtureTestCase() {
   @Test fun testBuildProcessClasspath() {
-    val baseCp = ClasspathBootstrap.getBuildProcessApplicationClasspath()
-    val pluginsCp = BuildProcessClasspathManager(testRootDisposable).getBuildProcessPluginsClasspath(DefaultProjectFactory.getInstance().defaultProject)
-    val libs = (baseCp.asSequence() + pluginsCp.asSequence()).map { LightJavaModule.moduleName(File(it).name) }.toSet()
+    val classpath = BuildProcessClasspathManager(testRootDisposable).getBuildProcessClasspath(DefaultProjectFactory.getInstance().defaultProject)
+    val libs = classpath.mapTo(HashSet()) { LightJavaModule.moduleName(File(it).name) }
     assertThat(libs).contains("intellij.maven.jps", "plexus.utils")
   }
 }

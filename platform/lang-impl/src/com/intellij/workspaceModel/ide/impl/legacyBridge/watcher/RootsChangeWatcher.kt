@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
@@ -13,11 +14,12 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
@@ -32,6 +34,7 @@ import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -44,20 +47,19 @@ internal class RootsChangeWatcher(val project: Project) {
   private val virtualFileUrlWatcher = VirtualFileUrlWatcher.getInstance(project)
 
   init {
-    project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    VirtualFileManager.getInstance().addAsyncFileListener(object : AsyncFileListener {
+      @Volatile
       var result: ProjectRootManagerImpl.RootsChangeType? = null
-      override fun before(events: MutableList<out VFileEvent>) {
-        result = null
+      val changedUrlsList = ContainerUtil.createConcurrentList<Pair<String, String>>()
+      val changedModuleStorePaths = ContainerUtil.createConcurrentList<Pair<Module, Path>>()
 
-        val rootChangeForbidden = isRootChangeForbidden()
+      override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier {
+        result = null
+        changedUrlsList.clear()
+        changedModuleStorePaths.clear()
+
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
         events.forEach { event ->
-          if (rootChangeForbidden) {
-            val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
-            if (oldUrl != newUrl) virtualFileUrlWatcher.onVfsChange(oldUrl, newUrl)
-            return@forEach
-          }
-
           when (event) {
             is VFileDeleteEvent -> calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(event.file.url),
                                                                     ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED)
@@ -82,25 +84,33 @@ internal class RootsChangeWatcher(val project: Project) {
                                                                   virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(event.path)),
                                                                   ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED)
             is VFilePropertyChangeEvent, is VFileMoveEvent -> {
+              if (event is VFilePropertyChangeEvent) propertyChanged(event)
               val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
               if (oldUrl != newUrl) {
                 calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(oldUrl), ProjectRootManagerImpl.RootsChangeType.GENERIC)
                 calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(newUrl), ProjectRootManagerImpl.RootsChangeType.GENERIC)
-                virtualFileUrlWatcher.onVfsChange(oldUrl, newUrl)
+                changedUrlsList.add(Pair(oldUrl, newUrl))
               }
             }
           }
         }
-        fireRootsChangeEvent(true)
-      }
 
-      override fun after(events: List<VFileEvent>) {
-        events.forEach { event ->
-          if (event is VFilePropertyChangeEvent) propertyChanged(event)
-          val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
-          if (oldUrl != newUrl) updateModuleName(oldUrl, newUrl)
+        return object : AsyncFileListener.ChangeApplier {
+          override fun beforeVfsChange() {
+            changedUrlsList.forEach { (oldUrl, newUrl) -> virtualFileUrlWatcher.onVfsChange(oldUrl, newUrl) }
+            fireRootsChangeEvent(true)
+          }
+
+          override fun afterVfsChange() {
+            changedUrlsList.forEach { (oldUrl, newUrl) -> updateModuleName(oldUrl, newUrl) }
+            changedModuleStorePaths.forEach { (module, path) ->
+              module.stateStore.setPath(path)
+              ClasspathStorage.modulePathChanged(module)
+            }
+            if (changedModuleStorePaths.isNotEmpty()) moduleManager.incModificationCount()
+            fireRootsChangeEvent()
+          }
         }
-        fireRootsChangeEvent()
       }
 
       fun isUnderJarDirectory(storage: WorkspaceEntityStorage, virtualFileUrl: VirtualFileUrl): Boolean {
@@ -127,7 +137,6 @@ internal class RootsChangeWatcher(val project: Project) {
       }
 
       private fun isRootChangeForbidden(): Boolean {
-        ApplicationManager.getApplication().assertWriteAccessAllowed()
         if (project.isDisposed) return true
         val projectRootManager = ProjectRootManager.getInstance(project)
         if (projectRootManager !is ProjectRootManagerBridge) return true
@@ -135,6 +144,7 @@ internal class RootsChangeWatcher(val project: Project) {
       }
 
       private fun fireRootsChangeEvent(beforeRootsChanged: Boolean = false) {
+        ApplicationManager.getApplication().assertWriteAccessAllowed()
         if (result != null && !isRootChangeForbidden()) {
           val projectRootManager = ProjectRootManager.getInstance(project) as ProjectRootManagerBridge
           if (beforeRootsChanged)
@@ -163,18 +173,15 @@ internal class RootsChangeWatcher(val project: Project) {
         val parentPath = event.file.parent?.path ?: return
         val newAncestorPath = "$parentPath/${event.newValue}"
         val oldAncestorPath = "$parentPath/${event.oldValue}"
-        var someModulePathIsChanged = false
         for (module in moduleManager.modules) {
           if (!module.isLoaded || module.isDisposed) continue
 
           val moduleFilePath = module.moduleFilePath
           if (FileUtil.isAncestor(oldAncestorPath, moduleFilePath, true)) {
-            module.stateStore.setPath(Paths.get(newAncestorPath, FileUtil.getRelativePath(oldAncestorPath, moduleFilePath, '/')))
-            ClasspathStorage.modulePathChanged(module)
-            someModulePathIsChanged = true
+            changedModuleStorePaths.add(
+              Pair(module, Paths.get(newAncestorPath, FileUtil.getRelativePath(oldAncestorPath, moduleFilePath, '/'))))
           }
         }
-        if (someModulePathIsChanged) moduleManager.incModificationCount()
       }
 
       private fun String.isImlFile() = Files.getFileExtension(this) == ModuleFileType.DEFAULT_EXTENSION
@@ -196,7 +203,7 @@ internal class RootsChangeWatcher(val project: Project) {
         }
         return oldUrl to newUrl
       }
-    })
+    }, project)
   }
 
   companion object {

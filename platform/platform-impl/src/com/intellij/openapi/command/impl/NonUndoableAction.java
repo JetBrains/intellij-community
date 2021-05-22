@@ -26,7 +26,7 @@ class NonUndoableAction implements UndoableAction {
   private final DocumentReference[] myRefs;
   private final boolean myGlobal;
 
-  protected NonUndoableAction(@NotNull DocumentReference ref, boolean isGlobal) {
+  NonUndoableAction(@NotNull DocumentReference ref, boolean isGlobal) {
     myGlobal = isGlobal;
     myRefs = new DocumentReference[]{ref};
     if (LOG.isDebugEnabled()) {

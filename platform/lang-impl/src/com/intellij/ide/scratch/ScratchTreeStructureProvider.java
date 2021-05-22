@@ -41,6 +41,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,6 +182,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
    * @deprecated Use modify method instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static AbstractTreeNode<?> createRootNode(@NotNull Project project, ViewSettings settings) {
     return new MyProjectNode(project, settings);
   }

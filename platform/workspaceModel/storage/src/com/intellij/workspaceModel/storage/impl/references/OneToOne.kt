@@ -1,13 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.references
 
-import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ConnectionId.ConnectionType.ONE_TO_ONE
 import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
-import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
-import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import com.intellij.workspaceModel.storage.impl.ConnectionId.ConnectionType.ONE_TO_ONE
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -64,6 +59,7 @@ class OneToOneChild private constructor() {
   }
 }
 
+// TODO: 08.02.2021 It may cause issues if we'll attach two children to the same parent
 class MutableOneToOneParent private constructor() {
   class NotNull<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase, ModifParent : ModifiableWorkspaceEntityBase<Parent>>(
     private val parentClass: Class<Parent>,

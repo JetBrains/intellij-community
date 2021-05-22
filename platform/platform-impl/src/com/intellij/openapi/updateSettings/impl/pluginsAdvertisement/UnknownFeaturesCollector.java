@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.execution.RunManager;
@@ -23,7 +23,7 @@ public final class UnknownFeaturesCollector implements PersistentStateComponent<
   private final Set<UnknownFeature> myIgnoredUnknownFeatures = new HashSet<>();
 
   public static UnknownFeaturesCollector getInstance(Project project) {
-    return ServiceManager.getService(project, UnknownFeaturesCollector.class);
+    return project.getService(UnknownFeaturesCollector.class);
   }
 
   public void registerUnknownRunConfiguration(@NotNull String configurationId, @Nullable String factoryName) {

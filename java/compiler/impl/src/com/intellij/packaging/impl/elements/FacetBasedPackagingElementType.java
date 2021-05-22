@@ -14,6 +14,7 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
    * Please use the constructor that accepts a messagePointer for {@link PackagingElementType#myPresentableName}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected FacetBasedPackagingElementType(@NotNull @NonNls String id,
                                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName,
                                            FacetTypeId<F> facetType) {

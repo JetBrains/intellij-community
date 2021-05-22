@@ -3,6 +3,7 @@ package org.jetbrains.yaml.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -150,7 +151,7 @@ public class YAMLScalarLiteralEscaperTest extends BasePlatformTestCase {
     assertNotNull(elementLiteralEscaper);
 
     final StringBuilder builder = new StringBuilder();
-    assertTrue(elementLiteralEscaper.decode(scalarElement.getTextRange(), builder));
+    assertTrue(elementLiteralEscaper.decode(ElementManipulators.getValueTextRange(scalarElement), builder));
     assertEquals(scalarElement.getTextValue(), builder.toString());
 
     int[] offsets = new int[builder.length() + 1];

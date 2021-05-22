@@ -5,19 +5,19 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCreationService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
-internal class GHPRDataContext(val gitRemoteCoordinates: GitRemoteUrlCoordinates,
-                               val searchHolder: GHPRSearchQueryHolder,
+internal class GHPRDataContext(val searchHolder: GHPRSearchQueryHolder,
                                val listLoader: GHListLoader<GHPullRequestShort>,
                                val listUpdatesChecker: GHPRListUpdatesChecker,
                                val dataProviderRepository: GHPRDataProviderRepository,
                                val securityService: GHPRSecurityService,
                                val repositoryDataService: GHPRRepositoryDataService,
+                               val creationService: GHPRCreationService,
                                val avatarIconsProvider: GHAvatarIconsProvider,
                                val filesManager: GHPRFilesManager) : Disposable {
 

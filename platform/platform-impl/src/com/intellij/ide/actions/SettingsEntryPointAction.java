@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -26,11 +25,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.PluginUpdateDialog;
-import com.intellij.openapi.updateSettings.impl.UpdateInfoDialog;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.updateSettings.impl.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
@@ -59,8 +58,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Alexander Lobas
  */
-public final class SettingsEntryPointAction extends AnAction implements DumbAware, RightAlignedToolbarAction,
-                                                                  AnAction.TransparentUpdate, TooltipDescriptionProvider {
+public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
   private boolean myShowPopup = true;
 
   public SettingsEntryPointAction() {
@@ -147,7 +145,7 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
 
       String name = size == 1
                     ? IdeBundle.message("settings.entry.point.update.plugin.action", myUpdatedPlugins.iterator().next().getPluginName())
-                    : IdeBundle.message("settings.entry.point.update.plugins.action");
+                    : IdeBundle.message("settings.entry.point.update.plugins.action", size);
       group.add(new DumbAwareAction(name, null, AllIcons.Ide.Notification.PluginUpdate) {
         @Override
         public void update(@NotNull AnActionEvent e) {
@@ -165,37 +163,6 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
           }
         }
       });
-      if (size > 1) {
-        StringBuilder result = new StringBuilder();
-        int count = 0;
-
-        for (PluginDownloader plugin : myUpdatedPlugins) {
-          if (result.length() > 0) {
-            result.append(", ");
-          }
-          result.append(plugin.getPluginName());
-          count++;
-          if (count == 2) {
-            int delta = size - count;
-            if (delta > 0) {
-              result.append(" ").append(IdeBundle.message("settings.entry.point.update.plugins.more.action", delta));
-            }
-            break;
-          }
-        }
-
-        @NlsSafe String actionName = result.toString();
-        group.add(new AnAction(actionName) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-          }
-
-          @Override
-          public void update(@NotNull AnActionEvent e) {
-            e.getPresentation().setEnabled(false);
-          }
-        });
-      }
     }
 
     group.addSeparator();
@@ -244,6 +211,9 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
       myUpdatesService = PluginUpdatesService.connectWithUpdates(descriptors -> {
         if (ContainerUtil.isEmpty(descriptors)) {
           newPluginsUpdate(null, null);
+          return;
+        }
+        if (!UpdateSettings.getInstance().isPluginsCheckNeeded()) {
           return;
         }
         List<PluginDownloader> downloaders = new ArrayList<>();

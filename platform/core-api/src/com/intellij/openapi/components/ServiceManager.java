@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ public final class ServiceManager {
    * @deprecated Use {@link ComponentManager#getServiceIfCreated(Class)}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     Application app = ApplicationManager.getApplication();
     return app == null ? null : app.getServiceIfCreated(serviceClass);

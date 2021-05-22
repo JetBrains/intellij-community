@@ -2,7 +2,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.containers.ClassMap;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import java.util.*;
 class CustomCodeStyleSettingsManager {
 
 
-  private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<>();
+  private final Map<String, CustomCodeStyleSettings> myCustomSettings = new HashMap<>();
   private final CodeStyleSettings myRootSettings;
   private final Map<String, Element> myUnknownCustomElements = new HashMap<>();
 
@@ -22,10 +22,11 @@ class CustomCodeStyleSettingsManager {
   }
 
 
-  void addCustomSettings(@Nullable CustomCodeStyleSettings settings) {
-    if (settings != null) {
+  void addCustomSettings(@NotNull CodeStyleSettings rootSettings, @NotNull CustomCodeStyleSettingsFactory factory) {
+    CustomCodeStyleSettings customSettings = factory.createCustomSettings(rootSettings);
+    if (customSettings != null) {
       synchronized (myCustomSettings) {
-        myCustomSettings.put(settings.getClass(), settings);
+        myCustomSettings.put(customSettings.getClass().getName(), customSettings);
       }
     }
   }
@@ -34,7 +35,7 @@ class CustomCodeStyleSettingsManager {
   <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> aClass) {
     synchronized (myCustomSettings) {
       //noinspection unchecked
-      T result = (T)myCustomSettings.get(aClass);
+      T result = (T)myCustomSettings.get(aClass.getName());
       if (result == null) {
         throw new RuntimeException("Unable to get registered settings of #" + aClass.getSimpleName() + " (" + aClass.getName() + ")");
       }
@@ -46,7 +47,7 @@ class CustomCodeStyleSettingsManager {
   <T extends CustomCodeStyleSettings> T getCustomSettingsIfCreated(@NotNull Class<T> aClass) {
     synchronized (myCustomSettings) {
       //noinspection unchecked
-      return (T)myCustomSettings.get(aClass);
+      return (T)myCustomSettings.get(aClass.getName());
     }
   }
 
@@ -59,6 +60,9 @@ class CustomCodeStyleSettingsManager {
           restoreCustomSettings(customSettings);
           return;
         }
+      }
+      synchronized (myCustomSettings) {
+        myCustomSettings.put(customSettings.getClass().getName(), customSettings);
       }
     }
   }
@@ -73,7 +77,7 @@ class CustomCodeStyleSettingsManager {
     }
     customSettings.readExternal(tempElement);
     synchronized (myCustomSettings) {
-      myCustomSettings.put(customSettings.getClass(), customSettings);
+      myCustomSettings.put(customSettings.getClass().getName(), customSettings);
       customSettings.getKnownTagNames().forEach(myUnknownCustomElements::remove);
     }
   }
@@ -82,14 +86,14 @@ class CustomCodeStyleSettingsManager {
     CustomCodeStyleSettings defaultSettings = factory.createCustomSettings(CodeStyleSettings.getDefaults());
     if (defaultSettings != null) {
       synchronized (myCustomSettings) {
-        CustomCodeStyleSettings customSettings = myCustomSettings.get(defaultSettings.getClass());
+        CustomCodeStyleSettings customSettings = myCustomSettings.get(defaultSettings.getClass().getName());
         if (customSettings != null) {
           Element tempElement = new Element("temp");
           customSettings.writeExternal(tempElement, defaultSettings);
           for (Element child : tempElement.getChildren()) {
             myUnknownCustomElements.put(child.getName(), JDOMUtil.internElement(child));
           }
-          myCustomSettings.remove(customSettings.getClass());
+          myCustomSettings.remove(customSettings.getClass().getName());
         }
       }
     }
@@ -97,9 +101,13 @@ class CustomCodeStyleSettingsManager {
 
   void copyFrom(@NotNull CodeStyleSettings source) {
     synchronized (myCustomSettings) {
+      Pair<Collection<CustomCodeStyleSettings>,Map<String,Element>> maps = source.getCustomCodeStyleSettingsManager().getMaps();
       myCustomSettings.clear();
-      for (final CustomCodeStyleSettings customSettings : source.getCustomSettingsValues()) {
-        myCustomSettings.put(customSettings.getClass(), customSettings.copyWith(myRootSettings));
+      for (CustomCodeStyleSettings customSettings : maps.first) {
+        myCustomSettings.put(customSettings.getClass().getName(), customSettings.copyWith(myRootSettings));
+      }
+      for (String tagName : maps.second.keySet()) {
+        myUnknownCustomElements.put(tagName, JDOMUtil.internElement(maps.second.get(tagName).clone()));
       }
     }
   }
@@ -117,6 +125,16 @@ class CustomCodeStyleSettingsManager {
   Collection<CustomCodeStyleSettings> getAllSettings() {
     synchronized (myCustomSettings) {
       return Collections.unmodifiableCollection(myCustomSettings.values());
+    }
+  }
+
+  @NotNull
+  private Pair<Collection<CustomCodeStyleSettings>, Map<String,Element>> getMaps() {
+    synchronized (myCustomSettings) {
+      return Pair.create(
+        new ArrayList<>(myCustomSettings.values()),
+        new HashMap<>(myUnknownCustomElements)
+      );
     }
   }
 

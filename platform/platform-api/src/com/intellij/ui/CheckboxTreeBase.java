@@ -19,6 +19,7 @@ import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -235,6 +236,7 @@ public class CheckboxTreeBase extends Tree {
      */
     @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     public void customizeCellRenderer(JTree tree,
                                       Object value,
                                       boolean selected,
@@ -258,6 +260,7 @@ public class CheckboxTreeBase extends Tree {
    * @deprecated Don't use this enum. Left for API compatibility.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public enum NodeState {
     FULL, CLEAR, PARTIAL
   }

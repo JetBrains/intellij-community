@@ -26,6 +26,7 @@ import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.List;
  * might produce wrong results - IDEA-75504
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class TextCompareProcessor {
   private static final Logger LOG = Logger.getInstance(TextCompareProcessor.class);
   @NotNull private final ComparisonPolicy myComparisonPolicy;

@@ -120,12 +120,14 @@ class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolderUpdateLi
   private fun processIgnored(ignoredPaths: Collection<FilePath>) {
     val sourceRoots = getProjectSourceRoots()
     val fileIndex = ProjectFileIndex.getInstance(project)
+    val shelfPath = ShelveChangesManager.getShelfPath(project)
+
     val ignoredDirs =
       ignoredPaths
         .asSequence()
         .filter(FilePath::isDirectory)
         //shelf directory usually contains in project and excluding it prevents local history to work on it
-        .filterNot(::containsShelfDirectoryOrUnderIt)
+        .filterNot { containsShelfDirectoryOrUnderIt(it, shelfPath) }
         .mapNotNull(FilePath::getVirtualFile)
         .filterNot { runReadAction { fileIndex.isExcluded(it) } }
         //do not propose to exclude if there is a source root inside
@@ -161,12 +163,13 @@ class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolderUpdateLi
     }
   }
 
-  private fun getProjectSourceRoots() =
-    runReadAction { OrderEnumerator.orderEntries(project).withoutSdk().withoutLibraries().sources().usingCache().roots }
-  private fun containsShelfDirectoryOrUnderIt(filePath: FilePath) =
-    FileUtil.isAncestor(ShelveChangesManager.getShelfPath(project), filePath.path, false)
-    || FileUtil.isAncestor(filePath.path, ShelveChangesManager.getShelfPath(project), false)
+  private fun getProjectSourceRoots(): Set<VirtualFile> = runReadAction {
+    OrderEnumerator.orderEntries(project).withoutSdk().withoutLibraries().sources().usingCache().roots.toHashSet()
+  }
 
+  private fun containsShelfDirectoryOrUnderIt(filePath: FilePath, shelfPath: String) =
+    FileUtil.isAncestor(shelfPath, filePath.path, false) ||
+    FileUtil.isAncestor(filePath.path, shelfPath, false)
 }
 
 private fun allowShowNotification() = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)

@@ -3,8 +3,10 @@ package com.intellij.openapi.preview;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.ApiStatus;
 
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public interface PreviewManager {
   final class SERVICE {
     /**

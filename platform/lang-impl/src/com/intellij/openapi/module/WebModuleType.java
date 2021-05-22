@@ -2,6 +2,7 @@ package com.intellij.openapi.module;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,6 +13,7 @@ public class WebModuleType extends WebModuleTypeBase<ModuleBuilder> {
    * @deprecated use {@link WebModuleTypeBase#getInstance} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static WebModuleType getInstance() {
     return (WebModuleType)WebModuleTypeBase.getInstance();

@@ -3,6 +3,7 @@ package org.editorconfig
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 
 @Suppress("MemberVisibilityCanBePrivate")
 object EditorConfigRegistry {
@@ -24,6 +25,7 @@ object EditorConfigRegistry {
   @JvmStatic
   @Deprecated("Calling this C# is too narrow. Use shouldSupportDotNet instead",
               ReplaceWith("shouldSupportDotNet()", "org.editorconfig.EditorConfigRegistry.shouldSupportDotNet"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun shouldSupportCSharp() = shouldSupportDotNet()
 
   @JvmStatic

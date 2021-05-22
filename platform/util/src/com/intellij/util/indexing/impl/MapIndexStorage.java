@@ -241,11 +241,10 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   @Override
   public void clear() throws StorageException{
     try {
-      myMap.close();
+      myMap.closeAndDelete();
     }
     catch (Exception ignored) { }
     try {
-      IOUtil.deleteAllFilesStartingWith(getStorageFile().toFile());
       initMapAndCache();
     }
     catch (IOException e) {

@@ -3,19 +3,28 @@ package com.intellij.execution.ui.layout;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.Content;
+import com.intellij.util.Producer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+
 
 public interface LayoutViewOptions {
 
   String STARTUP = "startup";
+
+  LayoutViewOptions setTitleProducer(@Nullable Producer<@NotNull Pair<@Nullable Icon, @NotNull String>> titleProducer);
 
   /**
    * @deprecated use {@link #setTopLeftToolbar(ActionGroup, String)}
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   LayoutViewOptions setTopToolbar(@NotNull ActionGroup actions, @NotNull String place);
 
   @NotNull

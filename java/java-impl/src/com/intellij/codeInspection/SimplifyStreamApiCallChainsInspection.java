@@ -1976,11 +1976,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   }
 
   static class EntrySetMapFix implements CallChainSimplification {
-    private final String myMapMethod;
+    private final @NotNull String myMapMethod;
     private final boolean myDeleteMap;
-    private final String[] myNames;
+    private final @NotNull String @NotNull [] myNames;
 
-    EntrySetMapFix(String entryMethod, boolean deleteMap) {
+    EntrySetMapFix(@NotNull String entryMethod, boolean deleteMap) {
       myMapMethod = entryMethod.equals("getKey") ? "keySet" : "values";
       myDeleteMap = deleteMap;
       myNames = myMapMethod.equals("keySet") ? new String[]{"k", "key"} : new String[]{"v", "value"};
@@ -1993,7 +1993,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return CommonQuickFixBundle.message("fix.can.replace.with.x", "." + "().stream()");
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "." + myMapMethod + "().stream()");
     }
 
     @Override
@@ -2323,22 +2323,38 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public PsiElement simplify(PsiMethodCallExpression orElseGetCall) {
+      final PsiLambdaExpression lambda =
+        tryCast(skipParenthesizedExprDown(orElseGetCall.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
+      final PsiExpression thrownException = getThrownException(lambda);
+      if (thrownException == null) return null;
+      final PsiElement body = lambda.getBody();
+      assert body != null;
       ExpressionUtils.bindCallTo(orElseGetCall, "orElseThrow");
+      new CommentTracker().replaceAndRestoreComments(body, thrownException);
+      LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(lambda);
       return orElseGetCall;
     }
 
     public static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(OPTIONAL_OR_ELSE_GET, call -> {
-        final PsiElement parameter = call.getArgumentList().getExpressions()[0];
-        final PsiLambdaExpression lambda = tryCast(parameter, PsiLambdaExpression.class);
-        if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
-        final PsiCodeBlock body = tryCast(lambda.getBody(), PsiCodeBlock.class);
-        if (body == null) return null;
-        final PsiStatement[] statements = body.getStatements();
-        if (statements.length != 1) return null;
-        if (!(statements[0] instanceof PsiThrowStatement)) return null;
+        final PsiLambdaExpression lambda =
+            tryCast(skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
+        final PsiExpression thrownException = getThrownException(lambda);
+        if (thrownException == null) return null;
         return new ReplaceWithOrElseThrowFix();
       });
+    }
+
+    @Nullable
+    private static PsiExpression getThrownException(@Nullable PsiLambdaExpression lambda) {
+      if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
+      final PsiCodeBlock body = tryCast(lambda.getBody(), PsiCodeBlock.class);
+      if (body == null) return null;
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length != 1) return null;
+      final PsiThrowStatement throwStatement = tryCast(statements[0], PsiThrowStatement.class);
+      if (throwStatement == null) return null;
+      return throwStatement.getException();
     }
   }
 }

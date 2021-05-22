@@ -58,6 +58,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
    * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public StartBuildEventImpl withProcessHandler(@Nullable BuildProcessHandler processHandler,
                                                 @Nullable Consumer<? super ConsoleView> attachedConsoleConsumer) {
     myBuildDescriptor.withProcessHandler(processHandler, attachedConsoleConsumer);
@@ -68,6 +69,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
    * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public StartBuildEventImpl withRestartAction(@NotNull AnAction anAction) {
     myBuildDescriptor.withRestartAction(anAction);
     return this;
@@ -77,6 +79,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
    * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public StartBuildEventImpl withRestartActions(AnAction... actions) {
     Arrays.stream(actions).forEach(myBuildDescriptor::withRestartAction);
     return this;
@@ -86,6 +89,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
    * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public StartBuildEventImpl withContentDescriptorSupplier(Supplier<? extends RunContentDescriptor> contentDescriptorSupplier) {
     myBuildDescriptor.withContentDescriptor(contentDescriptorSupplier);
     return this;
@@ -95,6 +99,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
    * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public StartBuildEventImpl withExecutionFilter(@NotNull Filter filter) {
     myBuildDescriptor.withExecutionFilter(filter);
     return this;
@@ -104,6 +109,7 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
    * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public StartBuildEventImpl withExecutionFilters(Filter... filters) {
     Arrays.stream(filters).forEach(myBuildDescriptor::withExecutionFilter);
     return this;

@@ -69,7 +69,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
-                        headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl" preload="notHeadless" order="first"/>
+                        headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl" preload="true" order="first"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.WindowManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.WindowManagerImpl"

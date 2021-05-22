@@ -80,6 +80,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
    * (as long as they're multiple of 4), though examples in PEP 8 itself use mostly normal indent. Nonetheless, some users prefer to have 
    * the same indentation level for arguments as for parameters.
    */
+  public boolean USE_CONTINUATION_INDENT_FOR_PARAMETERS = true;
   public boolean USE_CONTINUATION_INDENT_FOR_ARGUMENTS = false;
   public boolean USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = false;
 

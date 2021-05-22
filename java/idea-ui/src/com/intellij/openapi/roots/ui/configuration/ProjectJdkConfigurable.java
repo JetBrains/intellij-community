@@ -49,6 +49,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private JdkComboBox myCbProjectJdk;
   private JPanel myJdkPanel;
   private final Project myProject;
+  private final ProjectStructureConfigurable myProjectStructureConfigurable;
   private final ProjectSdksModel myJdksModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
@@ -74,8 +75,9 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
 
   private boolean myFreeze = false;
 
-  public ProjectJdkConfigurable(Project project, final ProjectSdksModel jdksModel) {
-    myProject = project;
+  public ProjectJdkConfigurable(ProjectStructureConfigurable projectStructureConfigurable, final ProjectSdksModel jdksModel) {
+    myProject = projectStructureConfigurable.getProject();
+    myProjectStructureConfigurable = projectStructureConfigurable;
     myJdksModel = jdksModel;
     myJdksModel.addListener(myListener);
   }
@@ -144,7 +146,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   }
 
   private void clearCaches() {
-    final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
+    final ModuleStructureConfigurable rootConfigurable = myProjectStructureConfigurable.getModulesConfig();
     Module[] modules = rootConfigurable.getModules();
     for (Module module : modules) {
       final StructureConfigurableContext context = rootConfigurable.getContext();

@@ -36,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,7 +192,8 @@ public class EditorComposite implements Disposable {
     return wrapper;
   }
 
-  private JComponent createEditorComponent(final FileEditor editor) {
+  @NotNull
+  private JComponent createEditorComponent(@NotNull FileEditor editor) {
     JPanel component = new JPanel(new BorderLayout());
     JComponent comp = editor.getComponent();
     if (!FileEditorManagerImpl.isDumbAware(editor)) {
@@ -221,10 +223,12 @@ public class EditorComposite implements Disposable {
   /**
    * Sets new "pinned" state
    */
-  void setPinned(final boolean pinned){
+  void setPinned(final boolean pinned) {
     myPinned = pinned;
-    ObjectUtils.consumeIfCast(getComponent().getParent(), JComponent.class,
-                              component -> component.putClientProperty(JBTabsImpl.PINNED, myPinned ? Boolean.TRUE : null));
+    Container parent = getComponent().getParent();
+    if (parent instanceof JComponent) {
+      ((JComponent)parent).putClientProperty(JBTabsImpl.PINNED, myPinned ? Boolean.TRUE : null);
+    }
   }
 
   public boolean isPreview() {
@@ -235,7 +239,7 @@ public class EditorComposite implements Disposable {
     myPreview = preview;
   }
 
-  private void fireSelectedEditorChanged(final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor){
+  private void fireSelectedEditorChanged(@NotNull FileEditor oldSelectedEditor, @NotNull FileEditor newSelectedEditor) {
     if ((!EventQueue.isDispatchThread() || !myFileEditorManager.isInsideChange()) && !Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
       myFileEditorManager.notifyPublisher(() -> {
         final FileEditorManagerEvent event = new FileEditorManagerEvent(myFileEditorManager, myFile, oldSelectedEditor, myFile, newSelectedEditor);
@@ -261,7 +265,7 @@ public class EditorComposite implements Disposable {
     if (mySelectedEditor == null) return null;
 
     final Component component = myFocusWatcher.getFocusedComponent();
-    if(!(component instanceof JComponent) || !component.isShowing() || !component.isEnabled() || !component.isFocusable()){
+    if (!(component instanceof JComponent) || !component.isShowing() || !component.isEnabled() || !component.isFocusable()) {
       return getSelectedEditor().getPreferredFocusedComponent();
     }
     return (JComponent)component;
@@ -275,6 +279,7 @@ public class EditorComposite implements Disposable {
     return myFile;
   }
 
+  @NotNull
   public FileEditorManager getFileEditorManager() {
     return myFileEditorManager;
   }
@@ -297,13 +302,8 @@ public class EditorComposite implements Disposable {
 
   @NotNull
   List<JComponent> getTopComponents(@NotNull FileEditor editor) {
-    return getTopBottomComponents(editor, true);
-  }
-
-  @NotNull
-  private List<JComponent> getTopBottomComponents(@NotNull FileEditor editor, boolean top) {
-    SmartList<JComponent> result = new SmartList<>();
-    JComponent container = top ? myTopComponents.get(editor) : myBottomComponents.get(editor);
+    List<JComponent> result = new SmartList<>();
+    JComponent container = myTopComponents.get(editor);
     for (Component each : container.getComponents()) {
       if (each instanceof NonOpaquePanel) {
         result.add(((NonOpaquePanel)each).getTargetComponent());
@@ -333,7 +333,7 @@ public class EditorComposite implements Disposable {
     manageTopOrBottomComponent(editor, component, false, true);
   }
 
-  private void manageTopOrBottomComponent(FileEditor editor, JComponent component, boolean top, boolean remove) {
+  private void manageTopOrBottomComponent(@NotNull FileEditor editor, @NotNull JComponent component, boolean top, boolean remove) {
     final JComponent container = top ? myTopComponents.get(editor) : myBottomComponents.get(editor);
     assert container != null;
 
@@ -416,17 +416,19 @@ public class EditorComposite implements Disposable {
    * @deprecated use {@link #getSelectedWithProvider()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @NotNull
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
     FileEditorWithProvider info = getSelectedWithProvider();
     return Pair.create(info.getFileEditor(), info.getProvider());
   }
 
-  void setSelectedEditor(final int index){
-    if(myEditors.length == 1){
+  void setSelectedEditor(final int index) {
+    if (myEditors.length == 1) {
       // nothing to do
       LOG.assertTrue(myTabbedPaneWrapper == null);
     }
-    else{
+    else {
       LOG.assertTrue(myTabbedPaneWrapper != null);
       myTabbedPaneWrapper.setSelectedIndex(index);
     }
@@ -449,17 +451,10 @@ public class EditorComposite implements Disposable {
   }
 
   /**
-   * @return {@code true} if the composite contains at least one
-   * modified myEditor
+   * @return {@code true} if the composite contains at least one modified myEditor
    */
-  public boolean isModified(){
-    final FileEditor[] editors = getEditors();
-    for (FileEditor editor : editors) {
-      if (editor.isModified()) {
-        return true;
-      }
-    }
-    return false;
+  public boolean isModified() {
+    return ContainerUtil.exists(getEditors(), editor -> editor.isModified());
   }
 
   /**
@@ -477,7 +472,7 @@ public class EditorComposite implements Disposable {
     }
   }
 
-  public static boolean isEditorComposite(@Nullable Component component) {
+  public static boolean isEditorComposite(@NotNull Component component) {
     return component instanceof MyComponent;
   }
 
@@ -518,23 +513,21 @@ public class EditorComposite implements Disposable {
     }
 
     @Override
-    public final Object getData(@NotNull String dataId){
+    public final Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
         return getSelectedEditor();
       }
-      else if(CommonDataKeys.VIRTUAL_FILE.is(dataId)){
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         return myFile.isValid() ? myFile : null;
       }
-      else if(CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)){
-        return myFile.isValid() ? new VirtualFile[] {myFile} : null;
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        return myFile.isValid() ? new VirtualFile[]{myFile} : null;
       }
-      else{
-        JComponent component = getPreferredFocusedComponent();
-        if(component instanceof DataProvider && component != this){
-          return ((DataProvider)component).getData(dataId);
-        }
-        return null;
+      JComponent component = getPreferredFocusedComponent();
+      if (component instanceof DataProvider && component != this) {
+        return ((DataProvider)component).getData(dataId);
       }
+      return null;
     }
   }
 
@@ -574,7 +567,6 @@ public class EditorComposite implements Disposable {
       Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
       return color == null ? EditorColors.GUTTER_BACKGROUND.getDefaultColor() : color;
     }
-
   }
 
   @NotNull

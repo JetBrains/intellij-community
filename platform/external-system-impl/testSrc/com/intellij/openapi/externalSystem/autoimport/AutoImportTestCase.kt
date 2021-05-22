@@ -77,7 +77,8 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   }
 
   protected fun createIoFile(relativePath: String): VirtualFile {
-    val file = File(projectPath, relativePath)
+    val file = getFile(relativePath)
+    refreshIoFiles(file.path)
     FileUtil.ensureExists(file.parentFile)
     FileUtil.ensureCanCreateFile(file)
     if (!file.createNewFile()) {
@@ -97,7 +98,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
   private fun getPath(relativePath: String) = "$projectPath/$relativePath"
 
-  private fun getFile(relativePath: String) = File(projectPath, relativePath)
+  private fun getFile(relativePath: String) = File(getPath(relativePath))
 
   private fun VirtualFile.updateIoFile(action: File.() -> Unit) {
     File(path).apply(action)
@@ -134,6 +135,9 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
       copy(null, parent, newFile.name)
     }
 
+  protected fun VirtualFile.move(newParentRelativePath: String) =
+    move(findOrCreateDirectory(newParentRelativePath))
+
   protected fun VirtualFile.move(parent: VirtualFile) =
     runWriteAction { move(null, parent) }
 
@@ -167,10 +171,19 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     runWriteAction { VfsUtil.saveText(this, VfsUtil.loadText(this) + string) }
 
   protected fun VirtualFile.replaceString(old: String, new: String) =
-    runWriteAction { VfsUtil.saveText(this, VfsUtil.loadText(this).replace(old, new)) }
+    runWriteAction { VfsUtil.saveText(this, VfsUtil.loadText(this).replaceFirst(old, new)) }
 
   protected fun VirtualFile.delete() =
     runWriteAction { delete(null) }
+
+  fun VirtualFile.modify(modificationType: ModificationType = ModificationType.INTERNAL) {
+    when (modificationType) {
+      ModificationType.INTERNAL -> appendLine("println 'hello'")
+      ModificationType.EXTERNAL -> appendLineInIoFile("println 'hello'")
+    }
+  }
+
+  protected fun VirtualFile.revert() = replaceString("println 'hello'\n", "")
 
   protected fun VirtualFile.asDocument(): Document {
     val fileDocumentManager = FileDocumentManager.getInstance()
@@ -189,6 +202,20 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
       val endOffset = startOffset + old.length
       replaceString(startOffset, endOffset, new)
     }
+
+  protected fun Document.appendLine(line: String) =
+    appendString(line + "\n")
+
+  protected fun Document.appendString(string: String) =
+    runWriteAction { setText(text + string) }
+
+  fun Document.modify() {
+    appendLine("println 'hello'")
+  }
+
+  protected fun registerSettingsFile(projectAware: MockProjectAware, relativePath: String) {
+    projectAware.registerSettingsFile(getPath(relativePath))
+  }
 
   protected fun register(projectAware: ExternalSystemProjectAware, activate: Boolean = true, parentDisposable: Disposable? = null) {
     if (parentDisposable != null) {
@@ -234,10 +261,12 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
   protected fun assertProjectAware(projectAware: MockProjectAware,
                                    refresh: Int? = null,
+                                   settingsAccess: Int? = null,
                                    subscribe: Int? = null,
                                    unsubscribe: Int? = null,
                                    event: String) {
     if (refresh != null) assertCountEvent(refresh, projectAware.refreshCounter.get(), "project refresh", event)
+    if (settingsAccess != null) assertCountEvent(settingsAccess, projectAware.settingsAccessCounter.get(), "access to settings", event)
     if (subscribe != null) assertCountEvent(subscribe, projectAware.subscribeCounter.get(), "subscribe", event)
     if (unsubscribe != null) assertCountEvent(unsubscribe, projectAware.unsubscribeCounter.get(), "unsubscribe", event)
   }
@@ -305,6 +334,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     simpleTest("settings.groovy", "") {
       assertState(
         refresh = 1,
+        settingsAccess = 2,
         notified = false,
         subscribe = 2,
         unsubscribe = 0,
@@ -328,7 +358,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
       val projectAware = MockProjectAware(projectId)
       val file = findOrCreateVirtualFile(fileRelativePath)
       content?.let { file.replaceContent(it) }
-      projectAware.settingsFiles.add(file.path)
+      projectAware.registerSettingsFile(file.path)
       register(projectAware, parentDisposable = it)
       SimpleTestBench(projectAware).test(file)
     }
@@ -360,7 +390,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     return projectTrackerTest(state) {
       val projectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)
       val autoImportAware = object : ExternalSystemAutoImportAware {
-        override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String? {
+        override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String {
           return fileRelativePath
         }
 
@@ -403,9 +433,9 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun removeProjectAware() = remove(projectAware.projectId)
 
-    fun registerSettingsFile(file: VirtualFile) = projectAware.settingsFiles.add(file.path)
+    fun registerSettingsFile(file: VirtualFile) = projectAware.registerSettingsFile(file.path)
 
-    fun registerSettingsFile(relativePath: String) = projectAware.settingsFiles.add(getPath(relativePath))
+    fun registerSettingsFile(relativePath: String) = projectAware.registerSettingsFile(getPath(relativePath))
 
     fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.onceDuringRefresh(action)
 
@@ -413,11 +443,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun setRefreshCollisionPassType(type: RefreshCollisionPassType) = projectAware.refreshCollisionPassType.set(type)
 
-    fun resetAssertionCounters() {
-      projectAware.refreshCounter.set(0)
-      projectAware.subscribeCounter.set(0)
-      projectAware.unsubscribeCounter.set(0)
-    }
+    fun resetAssertionCounters() = projectAware.resetAssertionCounters()
 
     fun createSettingsVirtualFile(relativePath: String): VirtualFile {
       registerSettingsFile(relativePath)
@@ -428,20 +454,21 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
       val projectId = ExternalSystemProjectId(projectAware.projectId.systemId, "$projectPath/$name")
       val projectAware = MockProjectAware(projectId)
       Disposer.newDisposable().use {
-        register(projectAware, parentDisposable = it)
         val file = findOrCreateVirtualFile("$name/$fileRelativePath")
-        projectAware.settingsFiles.add(file.path)
+        projectAware.registerSettingsFile(file.path)
+        register(projectAware, parentDisposable = it)
         SimpleTestBench(projectAware).test(file)
       }
     }
 
     fun assertState(refresh: Int? = null,
+                    settingsAccess: Int? = null,
                     subscribe: Int? = null,
                     unsubscribe: Int? = null,
                     autoReloadType: AutoReloadType = SELECTIVE,
                     notified: Boolean,
                     event: String) {
-      assertProjectAware(projectAware, refresh, subscribe, unsubscribe, event)
+      assertProjectAware(projectAware, refresh, settingsAccess, subscribe, unsubscribe, event)
       assertProjectTrackerSettings(autoReloadType, event = event)
       when (notified) {
         true -> assertNotificationAware(projectAware.projectId, event = event)
@@ -469,12 +496,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     projectAware: MockProjectAware,
     private val settingsFile: VirtualFile
   ) : SimpleTestBench(projectAware) {
-    fun modifySettingsFile(modificationType: ModificationType = ModificationType.INTERNAL) {
-      when (modificationType) {
-        ModificationType.INTERNAL -> settingsFile.appendLine("println 'hello'")
-        ModificationType.EXTERNAL -> settingsFile.appendLineInIoFile("println 'hello'")
-      }
-    }
+    fun modifySettingsFile(modificationType: ModificationType = ModificationType.INTERNAL) = settingsFile.modify(modificationType)
   }
 
   inner class DummyExternalSystemTestBench(val projectAware: ProjectAwareWrapper) {

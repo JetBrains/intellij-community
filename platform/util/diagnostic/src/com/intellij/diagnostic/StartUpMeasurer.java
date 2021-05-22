@@ -83,7 +83,7 @@ public final class StartUpMeasurer {
 
   /**
    * The instant events correspond to something that happens but has no duration associated with it.
-   * See https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#heading=h.lenwiilchoxp
+   * See <a href="https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#heading=h.lenwiilchoxp">this document</a> for details.
    *
    * Scope is not supported, reported as global.
    */

@@ -13,9 +13,9 @@ class PagedFileStorageCache {
   private int myLastPage = UNKNOWN_PAGE;
   private int myLastPage2 = UNKNOWN_PAGE;
   private int myLastPage3 = UNKNOWN_PAGE;
-  private ByteBufferWrapper myLastBuffer;
-  private ByteBufferWrapper myLastBuffer2;
-  private ByteBufferWrapper myLastBuffer3;
+  private DirectBufferWrapper myLastBuffer;
+  private DirectBufferWrapper myLastBuffer2;
+  private DirectBufferWrapper myLastBuffer3;
   private int myLastChangeCount;
   private int myLastChangeCount2;
   private int myLastChangeCount3;
@@ -30,7 +30,7 @@ class PagedFileStorageCache {
   }
 
   @Nullable
-  synchronized ByteBufferWrapper getPageFromCache(long page, int mappingChangeCount, boolean readOnly) {
+  synchronized DirectBufferWrapper getPageFromCache(long page, int mappingChangeCount, boolean readOnly) {
     if (myLastPage == page) {
       ByteBuffer buf = myLastBuffer.getCachedBuffer();
       if (buf != null && myLastChangeCount == mappingChangeCount) {
@@ -50,7 +50,7 @@ class PagedFileStorageCache {
     return null;
   }
 
-  synchronized void updateCache(long page, ByteBufferWrapper byteBufferWrapper, int mappingChangeCount) {
+  synchronized void updateCache(long page, DirectBufferWrapper byteBufferWrapper, int mappingChangeCount) {
     if (myLastPage != page) {
       myLastPage3 = myLastPage2;
       myLastBuffer3 = myLastBuffer2;

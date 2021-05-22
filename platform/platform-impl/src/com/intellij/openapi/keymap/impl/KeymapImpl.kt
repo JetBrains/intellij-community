@@ -153,20 +153,6 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     }
   }
 
-  @Deprecated("Please use {@link #deriveKeymap(String)} instead. " +
-              "New method was introduced to ensure that you don't forget to set new keymap name.")
-  fun deriveKeymap(): KeymapImpl {
-    val name = try {
-      name
-    }
-    catch (e: Exception) {
-      // avoid possible NPE
-      "unnamed"
-    }
-
-    return deriveKeymap("$name (copy)")
-  }
-
   fun copy(): KeymapImpl {
     dataHolder?.let {
       return KeymapImpl(name, it)

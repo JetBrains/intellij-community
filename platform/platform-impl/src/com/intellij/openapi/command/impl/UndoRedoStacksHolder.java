@@ -47,11 +47,7 @@ final class UndoRedoStacksHolder {
       result = addWeaklyTrackedEmptyStack(file, myNonlocalVirtualFilesWithStacks);
     }
     else {
-      result = myDocumentStacks.get(r);
-      if (result == null) {
-        result = new LinkedList<>();
-        myDocumentStacks.put(r, result);
-      }
+      result = myDocumentStacks.computeIfAbsent(r, __ -> new LinkedList<>());
     }
 
     return result;
@@ -67,7 +63,7 @@ final class UndoRedoStacksHolder {
   }
 
   @NotNull
-  private <T extends UserDataHolder> LinkedList<UndoableGroup> addWeaklyTrackedEmptyStack(@NotNull T holder, @NotNull Collection<T> allHolders) {
+  private <T extends UserDataHolder> LinkedList<UndoableGroup> addWeaklyTrackedEmptyStack(@NotNull T holder, @NotNull Collection<? super T> allHolders) {
     LinkedList<UndoableGroup> result = holder.getUserData(STACK_IN_DOCUMENT_KEY);
     if (result == null) {
       holder.putUserData(STACK_IN_DOCUMENT_KEY, result = new LinkedList<>());
@@ -179,6 +175,17 @@ final class UndoRedoStacksHolder {
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);
   }
 
+  // remove all references to document to avoid memory leaks
+  void clearDocumentReferences(@NotNull Document document) {
+    myDocumentsWithStacks.remove(document);
+    // DocumentReference created from file is not equal to ref created from document from that file, so have to check for leaking both
+    DocumentReference referenceFile = DocumentReferenceManager.getInstance().create(document);
+    DocumentReference referenceDoc = new DocumentReferenceByDocument(document);
+    myDocumentStacks.remove(referenceFile);
+    myDocumentStacks.remove(referenceDoc);
+    myGlobalStack.removeIf(group -> group.getAffectedDocuments().contains(referenceFile) || group.getAffectedDocuments().contains(referenceDoc));
+  }
+
   private static void convertTemporaryActionsToPermanent(LinkedList<UndoableGroup> each) {
     for (int i = each.size() - 1; i >= 0; i--) {
       UndoableGroup group1 = each.get(i);
@@ -228,8 +235,8 @@ final class UndoRedoStacksHolder {
   private List<LinkedList<UndoableGroup>> getAffectedStacks(boolean global, @NotNull Collection<? extends DocumentReference> refs) {
     List<LinkedList<UndoableGroup>> result = new ArrayList<>(refs.size() + 1);
     if (global) result.add(myGlobalStack);
-    for (DocumentReference each : refs) {
-      result.add(getStack(each));
+    for (DocumentReference ref : refs) {
+      result.add(getStack(ref));
     }
     return result;
   }

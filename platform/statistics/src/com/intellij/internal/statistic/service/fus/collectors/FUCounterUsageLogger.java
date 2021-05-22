@@ -189,6 +189,7 @@ public final class FUCounterUsageLogger {
    * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void logEvent(@NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);

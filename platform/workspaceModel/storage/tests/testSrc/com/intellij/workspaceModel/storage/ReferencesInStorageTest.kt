@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 private fun WorkspaceEntityStorage.singleParent() = entities(ParentEntity::class.java).single()
@@ -386,5 +387,26 @@ class ReferencesInStorageTest {
 
     assertEmpty(parents)
     assertEmpty(children)
+  }
+
+  @Test
+  fun `add one to one entities`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addOoParentEntity()
+    builder.addOoParentEntity()
+    builder.addOoChildEntity(parentEntity)
+
+    builder.assertConsistency()
+  }
+
+  @Test
+  @Ignore("Not property supported yet")
+  fun `add child to a single parent`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addOoParentEntity()
+    builder.addOoChildEntity(parentEntity)
+    builder.addOoChildEntity(parentEntity)
+
+    builder.assertConsistency()
   }
 }

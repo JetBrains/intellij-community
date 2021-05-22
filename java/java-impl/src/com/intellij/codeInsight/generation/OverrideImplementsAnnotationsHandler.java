@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ public interface OverrideImplementsAnnotationsHandler {
    * @deprecated Use {@link #getAnnotations(PsiFile)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(pure = true)
   String[] getAnnotations(Project project);
 
@@ -42,6 +44,7 @@ public interface OverrideImplementsAnnotationsHandler {
    * @deprecated Use {@link #getAnnotations(PsiFile)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(pure = true)
   default String @NotNull [] annotationsToRemove(Project project, @NotNull String fqName) {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;

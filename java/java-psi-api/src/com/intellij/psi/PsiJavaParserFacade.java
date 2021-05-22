@@ -5,6 +5,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -237,6 +238,7 @@ public interface PsiJavaParserFacade {
 
   /** @deprecated use {@link #createModuleFromText(String, PsiElement)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default PsiJavaModule createModuleFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
     return createModuleFromText(text, null);
   }

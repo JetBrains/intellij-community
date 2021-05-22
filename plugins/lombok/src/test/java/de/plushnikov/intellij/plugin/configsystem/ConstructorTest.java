@@ -50,4 +50,8 @@ public class ConstructorTest extends AbstractLombokConfigSystemTestCase {
   public void testAddConstructorProperties$RequiredArgsConstructorTest() {
     doTest();
   }
+
+  public void testCopyableAnnotations$FooServiceTest() {
+    doTest();
+  }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.pooledThreadSingleAlarm
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
@@ -169,7 +170,8 @@ class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
   }
 
   @Suppress("unused", "DeprecatedCallableAddReplaceWith")
-  @Deprecated("Do not use it")
+  @get:Deprecated("Do not use it")
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   // public - backward compatibility
   val memoryProvider: PasswordStorage
     get() = memoryHelperProvider.value as PasswordStorage

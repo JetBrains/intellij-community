@@ -2,10 +2,13 @@
 package com.intellij.refactoring.psi;
 
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated use message choice format directly
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public final class MyUsageViewUtil {
 
     public static String getUsageCountInfo(int usagesCount, int filesCount, String referenceWord) {

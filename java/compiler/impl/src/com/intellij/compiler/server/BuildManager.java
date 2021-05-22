@@ -1393,8 +1393,7 @@ public final class BuildManager implements Disposable {
 
     cmdLine.addParameter(launcherClass.getName());
 
-    final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
-    cp.addAll(myClasspathManager.getBuildProcessPluginsClasspath(project));
+    final List<String> cp = myClasspathManager.getBuildProcessClasspath(project);
     cmdLine.addClasspathParameter(cp, isProfilingMode ? Collections.singletonList("yjp-controller-api-redist.jar") : Collections.emptyList());
 
     cmdLine.addParameter(BuildMain.class.getName());

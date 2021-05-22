@@ -2,14 +2,17 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.BuildIdentifier;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
+import java.io.Serializable;
 
-public final class InternalBuildIdentifier implements BuildIdentifier {
+@ApiStatus.Internal
+public final class InternalBuildIdentifier implements BuildIdentifier, Serializable {
   private final File rootDir;
 
   public InternalBuildIdentifier(File rootDir) {
-    this.rootDir = rootDir.getAbsoluteFile();
+    this.rootDir = rootDir;
   }
 
   @Override

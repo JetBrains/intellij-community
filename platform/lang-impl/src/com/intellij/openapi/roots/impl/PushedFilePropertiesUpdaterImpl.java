@@ -49,6 +49,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RunnableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -354,9 +355,9 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         ProgressManager.getInstance().runProcess(taskProcessor, ProgressWrapper.wrap(progress));
       }));
     }
-    taskProcessor.run();
 
     for (Future<?> result : results) {
+      ((RunnableFuture<?>)result).run();
       ProgressIndicatorUtils.awaitWithCheckCanceled(result);
     }
   }

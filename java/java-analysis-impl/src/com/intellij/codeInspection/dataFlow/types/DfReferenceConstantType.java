@@ -19,14 +19,25 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   private final @NotNull Mutability myMutability;
   private final @Nullable SpecialField mySpecialField;
   private final @NotNull DfType mySpecialFieldType;
+  private final boolean myDropConstantOnWiden;
   
-  DfReferenceConstantType(@NotNull Object constant, @NotNull PsiType psiType, @NotNull TypeConstraint type) {
+  DfReferenceConstantType(@NotNull Object constant, @NotNull PsiType psiType, @NotNull TypeConstraint type, boolean dropConstantOnWiden) {
     super(constant);
     myPsiType = psiType;
     myConstraint = type;
     myMutability = constant instanceof PsiModifierListOwner ? Mutability.getMutability((PsiModifierListOwner)constant) : Mutability.UNKNOWN;
     mySpecialField = SpecialField.fromQualifierType(psiType);
     mySpecialFieldType = mySpecialField == null ? BOTTOM : mySpecialField.fromConstant(constant);
+    myDropConstantOnWiden = dropConstantOnWiden;
+  }
+
+  @Override
+  public DfType widen() {
+    if (myDropConstantOnWiden) {
+      return new DfGenericObjectType(Set.of(), myConstraint, DfaNullability.NOT_NULL, myMutability, 
+                                     mySpecialField, mySpecialFieldType.widen(), false);
+    }
+    return this;
   }
 
   @NotNull
@@ -39,7 +50,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
       if (type.isSuperType(this)) return this;
       TypeConstraint constraint = type.getConstraint().meet(myConstraint);
       if (constraint != TypeConstraints.BOTTOM) {
-        DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), myPsiType, constraint);
+        DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), myPsiType, constraint, myDropConstantOnWiden);
         if (type.isSuperType(subConstant)) return subConstant;
       }
     }

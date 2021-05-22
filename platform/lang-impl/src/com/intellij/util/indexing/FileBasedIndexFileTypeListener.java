@@ -5,20 +5,25 @@ import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 final class FileBasedIndexFileTypeListener implements FileTypeListener {
   @Override
   public void fileTypesChanged(@NotNull final FileTypeEvent event) {
-    Set<ID<?, ?>> indexesToRebuild = new HashSet<>();
-    for (FileBasedIndexExtension<?, ?> extension : FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList()) {
-      if (IndexVersion.versionDiffers(extension.getName(), FileBasedIndexImpl.getIndexExtensionVersion(extension)) != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
-        indexesToRebuild.add(extension.getName());
-      }
+    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+
+    if (fileBasedIndex.getRegisteredIndexes() == null) {
+      return;
     }
 
-    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    Collection<ID<?, ?>> indexesToRebuild = FileBasedIndexExtension.EXTENSION_POINT_NAME
+      .extensions()
+      .filter(ex -> IndexVersion.versionDiffers(ex.getName(), FileBasedIndexImpl.getIndexExtensionVersion(ex)) !=
+                    IndexVersion.IndexVersionDiff.UP_TO_DATE)
+      .map(ex -> ex.getName())
+      .collect(Collectors.toList());
+
     String rebuiltIndexesLog = indexesToRebuild.isEmpty()
                                ? ""
                                : "; indexes " + indexesToRebuild + " will be rebuild completely due to version change";

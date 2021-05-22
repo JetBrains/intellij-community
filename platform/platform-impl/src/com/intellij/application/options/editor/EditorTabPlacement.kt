@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -32,18 +32,20 @@ internal fun Cell.tabPlacementComboBox(model: ComboBoxModel<Int>): CellBuilder<C
                   })
 }
 
-private fun asOptionDescriptor(i: Int) = object : NotABooleanOptionDescription(TAB_PLACEMENT + " | " + i.asTabPlacement(), ID) {
-  override fun isOptionEnabled() = ui.editorTabPlacement == i
+private fun asOptionDescriptor(i: Int): BooleanOptionDescription {
+  return object : BooleanOptionDescription(TAB_PLACEMENT + " | " + i.asTabPlacement(), ID), NotABooleanOptionDescription {
+    override fun isOptionEnabled() = ui.editorTabPlacement == i
 
-  override fun setOptionState(enabled: Boolean) {
-    ui.editorTabPlacement = next(ui.editorTabPlacement, enabled)
-    UISettings.instance.fireUISettingsChanged()
-  }
+    override fun setOptionState(enabled: Boolean) {
+      ui.editorTabPlacement = next(ui.editorTabPlacement, enabled)
+      UISettings.instance.fireUISettingsChanged()
+    }
 
-  private fun next(prev: Int, enabled: Boolean) = when {
-    prev != i && enabled -> i
-    prev == i -> if (i == TABS_NONE) TOP else TABS_NONE
-    else -> prev
+    private fun next(prev: Int, enabled: Boolean) = when {
+      prev != i && enabled -> i
+      prev == i -> if (i == TABS_NONE) TOP else TABS_NONE
+      else -> prev
+    }
   }
 }
 

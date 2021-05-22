@@ -79,6 +79,7 @@ public class MergeChangeCollector {
    * @deprecated Use {@link #collect(UpdatedFiles)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void collect(@NotNull UpdatedFiles updatedFiles, List<? super VcsException> exceptions) {
     try {
       collect(updatedFiles);

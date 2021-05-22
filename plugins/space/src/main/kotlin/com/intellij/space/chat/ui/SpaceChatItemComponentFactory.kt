@@ -16,13 +16,11 @@ import com.intellij.space.chat.ui.message.MessageTitleComponent
 import com.intellij.space.chat.ui.message.SpaceChatMessagePendingHeader
 import com.intellij.space.chat.ui.message.SpaceMCMessageComponent
 import com.intellij.space.chat.ui.message.SpaceStyledMessageComponent
-import com.intellij.space.chat.ui.thread.SpaceChatReplyActionFactory
-import com.intellij.space.chat.ui.thread.createThreadComponent
+import com.intellij.space.chat.ui.thread.createCollapsedThreadComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.codereview.SingleValueModelImpl
@@ -35,10 +33,7 @@ import icons.VcsCodeReviewIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import runtime.Ui
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SwingConstants
+import javax.swing.*
 
 internal class SpaceChatItemComponentFactory(
   private val project: Project,
@@ -48,8 +43,6 @@ internal class SpaceChatItemComponentFactory(
 ) : TimelineItemComponentFactory<SpaceChatItem> {
 
   private val codeDiscussionComponentFactory = SpaceChatCodeDiscussionComponentFactory(project, lifetime, server)
-
-  private val replyActionFactory = SpaceChatReplyActionFactory()
 
   /**
    * Method should return [HoverableJPanel] because it is used to implement hovering properly
@@ -146,12 +139,11 @@ internal class SpaceChatItemComponentFactory(
   }
 
   private fun JComponent.addThreadComponentIfNeeded(message: SpaceChatItem): JComponent {
-    val thread = message.thread
-    return if (thread == null || message.type is CodeDiscussion) {
+    return if (message.type is CodeDiscussion) {
       this
     }
     else {
-      val threadComponent = createThreadComponent(project, lifetime, thread, replyActionFactory)
+      val threadComponent = createCollapsedThreadComponent(project, lifetime, message, null)
       JPanel(VerticalLayout(0)).apply {
         isOpaque = false
         add(this@addThreadComponentIfNeeded, VerticalLayout.FILL_HORIZONTAL)
@@ -177,8 +169,7 @@ internal class SpaceChatItemComponentFactory(
           isBusy = true
           launch(lifetime, Ui) {
             startThreadVm.startThread(document.text)
-            // keep model busy because message will be fully redrawn with new thread
-            // or hidden if thread already is existed
+            isBusy = false
           }
         }
       }
@@ -255,7 +246,7 @@ internal class SpaceChatItemComponentFactory(
       add(messagePanel, VerticalLayout.FILL_HORIZONTAL)
     }
 
-    private fun userAvatar(avatar: Icon) = LinkLabel<Any>("", avatar)
+    private fun userAvatar(avatar: Icon) = JLabel(avatar)
 
     override fun hoverStateChanged(isHovered: Boolean) {
       title ?: return

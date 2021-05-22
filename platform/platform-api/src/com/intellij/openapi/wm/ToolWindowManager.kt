@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.BalloonBuilder
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -36,6 +37,7 @@ abstract class ToolWindowManager {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun registerToolWindow(id: String,
                          component: JComponent,
                          anchor: ToolWindowAnchor,
@@ -82,6 +84,7 @@ abstract class ToolWindowManager {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun registerToolWindow(id: String,
                          canCloseContent: Boolean,
                          anchor: ToolWindowAnchor,

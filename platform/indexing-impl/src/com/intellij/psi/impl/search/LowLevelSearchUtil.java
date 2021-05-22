@@ -240,7 +240,7 @@ public final class LowLevelSearchUtil {
    * @deprecated Use {@link #processTexts(CharSequence, int, int, StringSearcher, IntPredicate)}
    */
   @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.1")
+  @ScheduledForRemoval(inVersion = "2021.2")
   public static boolean processTextOccurrences(@NotNull CharSequence text,
                                                int startOffset,
                                                int endOffset,

@@ -256,6 +256,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * @deprecated Use {@link #createTextAttributesKey(String, TextAttributesKey)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setFallbackAttributeKey(@Nullable TextAttributesKey fallbackAttributeKey) {
   }
 

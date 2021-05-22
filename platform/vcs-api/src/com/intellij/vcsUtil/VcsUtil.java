@@ -224,6 +224,7 @@ public class VcsUtil {
    * @deprecated use {@link #getFilePath(String, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull FilePath getFilePathForDeletedFile(@NotNull @NonNls String path, boolean isDirectory) {
     return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
   }
@@ -242,6 +243,7 @@ public class VcsUtil {
    * @deprecated use {@link StatusBar.Info#set(String, Project)} directly.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void showStatusMessage(@NotNull Project project, @Nullable @Nls String message) {
     SwingUtilities.invokeLater(() -> {
       if (project.isOpen()) {
@@ -334,6 +336,7 @@ public class VcsUtil {
    * and other run methods from the ProgressManager.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean runVcsProcessWithProgress(@NotNull VcsRunnable runnable,
                                                   @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                   boolean canBeCanceled,

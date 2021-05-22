@@ -52,6 +52,9 @@
                        descriptionKey="configurable.group.other.settings.description"/>
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
+    <applicationService
+      serviceImplementation="com.intellij.ide.plugins.certificates.PluginCertificateStore"
+    />
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter" serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
     <applicationService serviceImplementation="com.intellij.diagnostic.DebugLogManager" preload="true"/>
@@ -877,6 +880,8 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <notificationGroup id="JDK Update" displayType="BALLOON"/>
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" />
 
+    <notificationGroup id="Runtime Chooser" displayType="BALLOON" bundle="messages.LangBundle" key="notification.title.choose.ide.runtime" />
+
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterStartup" />
 
     <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
@@ -1040,8 +1045,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <preloadingActivity implementation="com.intellij.ide.SystemHealthMonitor"/>
 
-    <experimentalFeature id="copy.reference.popup" percentOfUsers="100"/>
-
     <registryKey key="run.anything.context.recent.directory.number" defaultValue="5"
                  description="Defines storing Run Anything context combobox directories number."/>
 
@@ -1166,6 +1169,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <notificationGroup id="Language Plugins Notifications" displayType="BALLOON"/>
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowToolbarActivity"/>
+    <applicationService serviceImplementation="com.intellij.terminal.TerminalUiSettingsManager"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

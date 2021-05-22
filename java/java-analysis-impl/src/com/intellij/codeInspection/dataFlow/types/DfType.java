@@ -18,6 +18,14 @@ public interface DfType {
    * @return true if this type is the supertype of other.
    */
   boolean isSuperType(@NotNull DfType other);
+
+  /**
+   * @param constant
+   * @return true given constant value may be contained by this supertype
+   */
+  default boolean containsConstant(@NotNull DfConstantType<?> constant) {
+    return isSuperType(constant);
+  }
   
   default boolean isMergeable(@NotNull DfType other) {
     return isSuperType(other);
@@ -40,11 +48,35 @@ public interface DfType {
   DfType meet(@NotNull DfType other);
 
   /**
+   * @return the widened version of this type; should be called on back-branches.
+   */
+  default DfType widen() {
+    return this;
+  }
+
+  /**
    * @return a type that contains all the values of the corresponding JVM type except the values of given type;
    * may return null if the corresponding type is not supported by our type system. 
    */
   @Nullable
   default DfType tryNegate() {
+    return null;
+  }
+
+  /**
+   * @param constant constant to compare to
+   * @return true if this type represents a constant with given value
+   */
+  default boolean isConst(@Nullable Object constant) {
+    return false;
+  }
+
+  /**
+   * @param clazz desired constant class
+   * @param <C> type of the constant
+   * @return the constant of given type; null if this type does not represent a constant of supplied type.
+   */
+  default <C> @Nullable C getConstantOfType(@NotNull Class<C> clazz) {
     return null;
   }
   

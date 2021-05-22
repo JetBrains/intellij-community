@@ -296,19 +296,17 @@ public final class GitVFSListener extends VcsVFSListener {
   private void performBackgroundOperation(@NotNull Collection<? extends FilePath> files,
                                           @NotNull @NlsContexts.ProgressTitle String operationTitle,
                                           @NotNull LongOperationPerRootExecutor executor) {
-    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, files);
-
     GitVcs.runInBackground(new Task.Backgroundable(myProject, operationTitle) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
+        GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, files).forEach((root, filePaths) -> {
           try {
-            executor.execute(e.getKey(), e.getValue());
+            executor.execute(root, filePaths);
           }
           catch (final VcsException ex) {
             GitVcsConsoleWriter.getInstance(myProject).showMessage(ex.getMessage());
           }
-        }
+        });
       }
     });
   }

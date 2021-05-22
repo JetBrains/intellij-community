@@ -15,6 +15,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -61,8 +63,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 
 /**
  * Use {@code editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);} to disable search/replace component.
@@ -369,7 +369,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public void addNotify() {
-    Disposable uiDisposable = UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
+    Disposable uiDisposable = PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
     if (uiDisposable != null) {
       // If this component is added to a dialog (for example, the settings dialog),
       // then we have to release the editor simultaneously on close.
@@ -389,7 +389,19 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
       Disposer.register(myDisposable, ()->ProjectManager.getInstance().removeProjectManagerListener(myProject, listener));
     }
-
+    Disposer.register(myDisposable, () -> {
+      // remove traces of this editor from UndoManager to avoid leaks
+      if (myDocument != null) {
+        if (getProject() != null) {
+          ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearDocumentReferences(myDocument);
+        }
+        ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(myDocument);
+      }
+      // try some cleaning of potentially leaking references
+      myDocumentListeners.clear();
+      myFocusListeners.clear();
+      myMouseListeners.clear();
+    });
     if (myEditor != null) {
       releaseEditorLater();
     }
@@ -517,6 +529,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
   }
 
+  @NotNull
   protected EditorEx createEditor() {
     Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();

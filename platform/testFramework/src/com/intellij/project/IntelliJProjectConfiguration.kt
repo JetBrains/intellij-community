@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.project
 
 import com.intellij.application.options.PathMacrosImpl
@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Path
 
 /**
  * Provides access to IntelliJ project configuration so the tests from IntelliJ project sources may locate project and module libraries without
@@ -88,6 +89,11 @@ class IntelliJProjectConfiguration {
     fun loadIntelliJProject(projectHome: String): JpsProject {
       val m2Repo = FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), ".m2/repository").absolutePath)
       return JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo))
+    }
+
+    @JvmStatic
+    fun loadIntelliJProject(projectHome: Path): JpsProject {
+      return loadIntelliJProject(projectHome.toString())
     }
   }
 

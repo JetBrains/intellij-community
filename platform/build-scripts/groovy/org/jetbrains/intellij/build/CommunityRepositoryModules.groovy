@@ -67,7 +67,6 @@ final class CommunityRepositoryModules {
     "intellij.platform.elevation.client",
     "intellij.platform.elevation.common",
     "intellij.platform.elevation.daemon",
-    "intellij.platform.elevation.rpc",
     "intellij.platform.execution.impl",
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
@@ -191,6 +190,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.common")
       withModule("intellij.gradle.toolingExtension")
       withModule("intellij.gradle.toolingExtension.impl")
+      withModule("intellij.gradle.toolingProxy")
       withProjectLibrary("Gradle")
     },
 /* Android Studio: exclude dependencyUpdater
@@ -277,6 +277,9 @@ Android Studio: exclude smali */
       bundlingRestrictions.includeInEapOnly = true
     },
 Android Studio: exclude intellij.statsCollector */
+    plugin("intellij.ml.models.local") {
+      bundlingRestrictions.includeInEapOnly = true
+    },
     plugin("intellij.jps.cache"),
 /* Android Studio: exclude intellij.space
     plugin("intellij.space") {
@@ -286,6 +289,10 @@ Android Studio: exclude intellij.statsCollector */
 Android Studio: exclude intellij.space */
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
+    },
+    plugin("intellij.android.jpsBuildPlugin") {
+      withModule("intellij.android.jpsBuildPlugin.common")
+      withModule("intellij.android.jpsBuildPlugin.jps", "jps/android-jps-plugin.jar", null)
     }
   ]
 
@@ -319,7 +326,6 @@ Android Studio: exclude intellij.space */
 
       withModule("intellij.android.common", "android-common.jar", null)
       withModule("intellij.android.buildCommon", "build-common.jar", null)
-      withModule("intellij.android.rt", "android-rt.jar", null)
 
       withModule("intellij.android.core", "android.jar", null)
       withModule("intellij.android.adb", "android.jar")
@@ -415,7 +421,6 @@ Android Studio: exclude intellij.space */
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
       withModule("android.sdktools.usb-devices", "sdk-tools.jar")
 
-      withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
       withModule("intellij.android.jps.model")
 
       withProjectLibrary("kxml2") //todo[nik] move to module libraries

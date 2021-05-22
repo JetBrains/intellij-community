@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -234,22 +235,24 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       consoleViewImpl = null;
     }
     if (consoleViewImpl != null) {
-      consoleViewImpl.performWhenNoDeferredOutput(() -> {
-        if (!ApplicationManager.getApplication().isDispatchThread()) return;
+      UIUtil.invokeLaterIfNeeded(() -> {
+        consoleViewImpl.performWhenNoDeferredOutput(() -> {
+          if (!ApplicationManager.getApplication().isDispatchThread()) return;
 
-        Document document = consoleViewImpl.getEditor().getDocument();
-        int line = isGreeting ? 0 : document.getLineCount() - 2;
-        if (CharArrayUtil.regionMatches(document.getCharsSequence(), document.getLineStartOffset(line), text)) {
-          final FoldingModel foldingModel = consoleViewImpl.getEditor().getFoldingModel();
-          foldingModel.runBatchFoldingOperation(() -> {
-            FoldRegion region = foldingModel.addFoldRegion(document.getLineStartOffset(line),
-                                                           document.getLineEndOffset(line) + 1,
-                                                           StringUtil.trimLog(text, limit));
-            if (region != null) {
-              region.setExpanded(false);
-            }
-          });
-        }
+          Document document = consoleViewImpl.getEditor().getDocument();
+          int line = isGreeting ? 0 : document.getLineCount() - 2;
+          if (CharArrayUtil.regionMatches(document.getCharsSequence(), document.getLineStartOffset(line), text)) {
+            final FoldingModel foldingModel = consoleViewImpl.getEditor().getFoldingModel();
+            foldingModel.runBatchFoldingOperation(() -> {
+              FoldRegion region = foldingModel.addFoldRegion(document.getLineStartOffset(line),
+                                                             document.getLineEndOffset(line) + 1,
+                                                             StringUtil.trimLog(text, limit));
+              if (region != null) {
+                region.setExpanded(false);
+              }
+            });
+          }
+        });
       });
     }
   }

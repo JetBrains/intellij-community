@@ -4090,4 +4090,33 @@ public enum LevelCode {
       }
       """.trimIndent())
   }
+
+  fun testIdea153525() {
+    settings.LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    doTextTest(
+      """
+      public class Test {
+      void foo () {
+          bar (event ->{for (Listener l : listeners) {
+            notify ();
+        }
+          });
+      }
+      }
+      """.trimIndent(),
+
+      """
+      public class Test {
+          void foo() {
+              bar(event ->
+                  {
+                  for (Listener l : listeners) {
+                      notify();
+                  }
+                  });
+          }
+      }
+      """.trimIndent()
+    )
+  }
 }

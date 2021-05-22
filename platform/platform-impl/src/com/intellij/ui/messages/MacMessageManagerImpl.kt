@@ -3,6 +3,7 @@
 
 package com.intellij.ui.messages
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -60,6 +61,7 @@ private class MessageInfo(val title: String,
   val message = MacMessageHelper.stripHtmlMessage(message)
 
   val window: Window
+  val visibleWindow: Window
   val nativeWindow: ID
   var mainHandler = {}
 
@@ -75,7 +77,8 @@ private class MessageInfo(val title: String,
     else {
       this.window = popupWindow
     }
-    this.nativeWindow = MacUtil.getWindowFromJavaWindow(getVisibleWindow(this.window))
+    this.visibleWindow = getVisibleWindow(this.window)
+    this.nativeWindow = MacUtil.getWindowFromJavaWindow(this.visibleWindow)
   }
 }
 
@@ -193,6 +196,7 @@ private class NativeMacMessageManager : MacMessages() {
                                 defaultOptionIndex: Int,
                                 doNotAskDialogOption: DoNotAskOption?,
                                 fallback: () -> Int): Int {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     val info = MessageInfo(title, message, buttons, errorStyle, window, defaultOptionIndex, doNotAskDialogOption)
 
     if (myInfo != null) {
@@ -255,6 +259,11 @@ private class NativeMacMessageManager : MacMessages() {
     return fallback()
   }
 
+  private fun ourParentIsTopLevelWindowWithoutChildren(): Boolean {
+    val window = myInfo!!.visibleWindow
+    return window.parent == null && window.ownedWindows.all { it == myDialog || !it.isVisible }
+  }
+
   private val SHOW_ALERT = object : Callback {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String, params: ID) {
@@ -304,7 +313,8 @@ private class NativeMacMessageManager : MacMessages() {
 
       val ownerWindow = getActualWindow(info.nativeWindow)
 
-      if (ownerWindow == null) {
+      if (ownerWindow == null ||
+          !ourParentIsTopLevelWindowWithoutChildren() /* prevent z-order issues with other children of our parent */) {
         setResult(alert, Foundation.invoke(alert, "runModal"))
       }
       else {

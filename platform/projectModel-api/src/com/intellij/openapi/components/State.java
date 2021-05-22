@@ -50,6 +50,7 @@ public @interface State {
    * @deprecated Use {@link #additionalExportDirectory()}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   String additionalExportFile() default "";
 
   Class<? extends NameGetter> presentableName() default NameGetter.class;

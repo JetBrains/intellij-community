@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -43,6 +43,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.PresentableEnumUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHighlightingListener {
-
   private static final long TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
   private static final Logger LOG = Logger.getInstance(CodeStyleAbstractPanel.class);
@@ -300,6 +300,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    * @see LanguageCodeStyleSettingsProvider#createFileFromText(Project, String)
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected PsiFile createFileFromText(Project project, String text) {
     Language language = getDefaultLanguage();
     if (language != null) {
@@ -575,19 +576,21 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return myEditor;
   }
 
-  @NotNull
-  protected CodeStyleSettings getSettings() {
+  protected @NotNull CodeStyleSettings getSettings() {
     return mySettings;
   }
 
-  @NotNull
-  public Set<String> processListOptions() {
+  public @NotNull Set<String> processListOptions() {
     return Collections.emptySet();
   }
 
-  @NotNull
-  public OptionsContainingConfigurable getOptionIndexer() {
-    return () -> this.processListOptions();
+  public @NotNull OptionsContainingConfigurable getOptionIndexer() {
+    return new OptionsContainingConfigurable() {
+      @Override
+      public @NotNull Set<String> processListOptions() {
+        return CodeStyleAbstractPanel.this.processListOptions();
+      }
+    };
   }
 
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {

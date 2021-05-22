@@ -1,16 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.model.BranchableUsageInfo;
 import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -22,11 +20,14 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -37,7 +38,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
@@ -61,6 +61,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 
 /**
@@ -669,56 +670,108 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           lastDeletionUsageInfos.putValue(moduleDescriptor, modifyStatementInfo);
         }
         else if (modifyStatementInfo.isDeletion()) {
-          deleteModuleStatement(moduleDescriptor, modifyStatementInfo.getModuleStatement());
+          deleteModuleStatements(moduleDescriptor, Set.of(modifyStatementInfo.getModuleStatement().getText()));
         }
       }
     }
     if (lastDeletionUsageInfos.isEmpty()) return;
-    PsiJavaModule firstModule = lastDeletionUsageInfos.entrySet().iterator().next().getKey();
-    NotificationGroupManager.getInstance().getNotificationGroup("Remove redundant exports/opens")
-      .createNotification(JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.notification.title"),
-                          null,
-                          JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.notification.content"),
-                          NotificationType.INFORMATION)
-      .addAction(new NotificationAction(RefactoringBundle.message("yes.button")) {
+    PsiJavaModule firstModule = lastDeletionUsageInfos.keySet().iterator().next();
+    Project project = firstModule.getProject();
+    String projectPath = project.getBasePath();
+    if (projectPath == null) return;
+    MultiMap<String, String> packageStatementsByModulePath = MultiMap.createSet();
+    for (var entry : lastDeletionUsageInfos.entrySet()) {
+      for (ModifyModuleStatementUsageInfo usageInfo : entry.getValue()) {
+        PsiPackageAccessibilityStatement packageStatement = usageInfo.getModuleStatement();
+        if (packageStatement == null) continue;
+        VirtualFile moduleFile = entry.getKey().getContainingFile().getVirtualFile();
+        if (moduleFile != null) {
+          packageStatementsByModulePath.putValue(moduleFile.getPath(), packageStatement.getText());
+        }
+      }
+    }
+    NotificationGroupManager.getInstance().getNotificationGroup("Remove redundant exports/opens").createNotification(
+      JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.notification.title", lastDeletionUsageInfos.size()),
+      null,
+      createNotificationContent(projectPath, lastDeletionUsageInfos.keySet()),
+      NotificationType.INFORMATION,
+      new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          PsiJavaModule moduleDescriptor = findModuleByPath(project, event.getDescription());
+          if (moduleDescriptor != null) {
+            moduleDescriptor.navigate(true);
+          }
+        }
+      })
+      .addAction(new NotificationAction(JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.action.name")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e,
                                     @NotNull Notification notification) {
-          WriteCommandAction.writeCommandAction(e.getProject())
+          WriteCommandAction.writeCommandAction(project)
             .withName(JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.command.name"))
             .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
             .withGlobalUndo()
             .run(() -> {
-              for (var entry : lastDeletionUsageInfos.entrySet()) {
-                PsiJavaModule moduleDescriptor = entry.getKey();
-                for (ModifyModuleStatementUsageInfo modifyStatementInfo : entry.getValue()) {
-                  if (modifyStatementInfo.getModuleStatement() == null) continue;
-                  deleteModuleStatement(moduleDescriptor, modifyStatementInfo.getModuleStatement());
+              for (var entry : packageStatementsByModulePath.entrySet()) {
+                PsiJavaModule moduleDescriptor = findModuleByPath(project, entry.getKey());
+                if (moduleDescriptor != null) {
+                  deleteModuleStatements(moduleDescriptor, (Set<String>)entry.getValue());
                 }
               }
             });
           notification.expire();
         }
       })
-      .notify(firstModule.getProject());
+      .notify(project);
   }
 
-  private static void deleteModuleStatement(@NotNull PsiJavaModule moduleDescriptor,
-                                            @NotNull PsiPackageAccessibilityStatement statementToDelete) {
-    Iterable<PsiPackageAccessibilityStatement> statements = null;
-    if (statementToDelete.getRole() == Role.EXPORTS) {
-      statements = moduleDescriptor.getExports();
+  private static void deleteModuleStatements(@NotNull PsiJavaModule moduleDescriptor, @NotNull Set<String> packageStatementsText) {
+    List<PsiPackageAccessibilityStatement> packageStatements = new SmartList<>();
+    for (PsiPackageAccessibilityStatement exportStatement : moduleDescriptor.getExports()) {
+      packageStatements.add(exportStatement);
     }
-    else if (statementToDelete.getRole() == Role.OPENS) {
-      statements = moduleDescriptor.getOpens();
+    for (PsiPackageAccessibilityStatement openStatement : moduleDescriptor.getOpens()) {
+      packageStatements.add(openStatement);
     }
-    assert statements != null;
-    for (PsiPackageAccessibilityStatement statement : statements) {
-      if (statement.getText().equals(statementToDelete.getText())) {
-        statement.delete();
-        break;
+    for (PsiPackageAccessibilityStatement packageStatement : packageStatements) {
+      if (packageStatementsText.contains(packageStatement.getText())) {
+        packageStatement.delete();
       }
     }
+  }
+
+  private static @NlsSafe @NotNull String createNotificationContent(@NotNull String projectPath, @NotNull Set<PsiJavaModule> moduleDescriptors) {
+    // we may have several JPMS-modules with the same name
+    MultiMap<String, String> modulesPathsByName = new MultiMap<>();
+    for (PsiJavaModule moduleDescriptor : moduleDescriptors) {
+      VirtualFile moduleFile = moduleDescriptor.getContainingFile().getVirtualFile();
+      if (moduleFile != null) {
+        modulesPathsByName.putValue(moduleDescriptor.getName(), moduleFile.getPath());
+      }
+    }
+    HtmlBuilder contentBuilder = new HtmlBuilder();
+    for (var entry : modulesPathsByName.entrySet()) {
+      @NlsSafe String moduleName = entry.getKey();
+      Collection<String> modulePaths = entry.getValue();
+      if (modulePaths.size() == 1) {
+        contentBuilder.appendLink(modulePaths.iterator().next(), PsiJavaModule.MODULE_INFO_FILE + " (" + moduleName + ")").br();
+        continue;
+      }
+      for (@NlsSafe String modulePath : modulePaths) {
+        // here we reduce an absolute module path to relative path to place it in the notification content
+        String relativeModulePath = FileUtil.getRelativePath(projectPath, modulePath, '/');
+        contentBuilder.appendLink(modulePath, relativeModulePath + " (" + moduleName + ")").br();
+      }
+    }
+    return contentBuilder.toString();
+  }
+
+  @Nullable
+  private static PsiJavaModule findModuleByPath(@NotNull Project project, @NotNull String modulePath) {
+    VirtualFile moduleFile = LocalFileSystem.getInstance().findFileByPath(modulePath);
+    if (moduleFile == null) return null;
+    return JavaModuleGraphUtil.findDescriptorByFile(moduleFile, project);
   }
 
   private void afterMovement(List<RefactoringElementListener> listeners,

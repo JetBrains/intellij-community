@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import git4idea.branch.GitBranchUtil
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDirectionPanel
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesPanel
 import org.jetbrains.plugins.github.util.GithubGitHelper
 
 class GHPRUpdateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.branch.update.action"),

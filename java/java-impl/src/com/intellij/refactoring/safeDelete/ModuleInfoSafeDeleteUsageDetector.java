@@ -8,6 +8,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.ModifyModuleStatement
 import com.intellij.refactoring.move.moveClassesOrPackages.ModuleInfoUsageDetector;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteModuleStatementsUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ public class ModuleInfoSafeDeleteUsageDetector extends ModuleInfoUsageDetector {
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     MultiMap<PsiJavaModule, PsiDirectory> sourceDirsByModuleDescriptor = groupDirsByModuleDescriptor(mySourceClassesByDir.keySet());
+    List<ModifyModuleStatementUsageInfo> moduleStatementUsages = new SmartList<>();
     for (var entry : sourceDirsByModuleDescriptor.entrySet()) {
       PsiJavaModule sourceModuleDescriptor = entry.getKey();
       Collection<PsiDirectory> sourceDirs = entry.getValue();
@@ -43,11 +45,15 @@ public class ModuleInfoSafeDeleteUsageDetector extends ModuleInfoUsageDetector {
         // if a package doesn't contain any other classes except moved ones then we need to delete a corresponding export statement
         Collection<PsiClass> sourceClasses = mySourceClassesByDir.get(sourceDir);
         if (dirContainsOnlyClasses(sourceDir, sourceClasses)) {
-          List<ModifyModuleStatementUsageInfo> moduleStatementUsages = ContainerUtil
-            .map(sourceStatements, statement -> ModifyModuleStatementUsageInfo.createLastDeletionInfo(statement, sourceModuleDescriptor));
-          usageInfos.add(new SafeDeleteModuleStatementsUsageInfo(sourceStatements.get(0), moduleStatementUsages));
+          moduleStatementUsages.addAll(
+            ContainerUtil.map(sourceStatements, statement -> ModifyModuleStatementUsageInfo.createLastDeletionInfo(statement, sourceModuleDescriptor)));
         }
       }
+    }
+    if (moduleStatementUsages.isEmpty()) return;
+    PsiPackageAccessibilityStatement firstModuleStatement = moduleStatementUsages.get(0).getModuleStatement();
+    if (firstModuleStatement != null) {
+      usageInfos.add(new SafeDeleteModuleStatementsUsageInfo(firstModuleStatement, moduleStatementUsages));
     }
   }
 

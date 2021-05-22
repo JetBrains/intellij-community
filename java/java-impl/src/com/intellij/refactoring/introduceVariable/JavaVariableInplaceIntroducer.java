@@ -467,7 +467,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     finally {
       myDeleteSelf = true;
     }
-    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
     initOccurrencesMarkers();
     return variable;
   }

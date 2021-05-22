@@ -154,9 +154,7 @@ public class RemoteDebugger implements ProcessDebugger {
                                final boolean execute,
                                boolean trimResult)
     throws PyDebuggerException {
-    final EvaluateCommand command = new EvaluateCommand(this, threadId, frameId, expression, execute, trimResult);
-    command.execute();
-    return command.getValue();
+    return executeCommand(new EvaluateCommand(this, threadId, frameId, expression, execute, trimResult)).getValue();
   }
 
   @Override
@@ -167,26 +165,21 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public XValueChildrenList loadFrame(final String threadId, final String frameId) throws PyDebuggerException {
-    final GetFrameCommand command = new GetFrameCommand(this, threadId, frameId);
-    command.execute();
-    return command.getVariables();
+    return executeCommand(new GetFrameCommand(this, threadId, frameId)).getVariables();
   }
 
   @Override
   public List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
     throws PyDebuggerException {
-    GetSmartStepIntoVariantsCommand command = new GetSmartStepIntoVariantsCommand(this, threadId, frameId, startContextLine, endContextLine);
-    command.execute();
-    return command.getVariants();
+    return executeCommand(new GetSmartStepIntoVariantsCommand(this, threadId, frameId, startContextLine, endContextLine))
+      .getVariants();
   }
 
   // todo: don't generate temp variables for qualified expressions - just split 'em
   @Override
   public XValueChildrenList loadVariable(final String threadId, final String frameId, final PyDebugValue var) throws PyDebuggerException {
     setTempVariable(threadId, frameId, var);
-    final GetVariableCommand command = new GetVariableCommand(this, threadId, frameId, var);
-    command.execute();
-    return command.getVariables();
+    return executeCommand(new GetVariableCommand(this, threadId, frameId, var)).getVariables();
   }
 
   @Override
@@ -198,9 +191,7 @@ public class RemoteDebugger implements ProcessDebugger {
                                    int rows,
                                    int cols,
                                    String format) throws PyDebuggerException {
-    final GetArrayCommand command = new GetArrayCommand(this, threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
-    command.execute();
-    return command.getArray();
+    return executeCommand(new GetArrayCommand(this, threadId, frameId, var, rowOffset, colOffset, rows, cols, format)).getArray();
   }
 
   @Override
@@ -217,7 +208,7 @@ public class RemoteDebugger implements ProcessDebugger {
                             final String frameId,
                             final PyReferringObjectsValue var,
                             final PyDebugCallback<XValueChildrenList> callback) {
-    RunCustomOperationCommand cmd = new GetReferrersCommand(this, threadId, frameId, var);
+    GetReferrersCommand cmd = new GetReferrersCommand(this, threadId, frameId, var);
 
     cmd.execute(new PyDebugCallback<List<PyDebugValue>>() {
       @Override
@@ -245,26 +236,21 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private PyDebugValue doChangeVariable(final String threadId, final String frameId, final String varName, final String value)
     throws PyDebuggerException {
-    final ChangeVariableCommand command = new ChangeVariableCommand(this, threadId, frameId, varName, value);
-    command.execute();
-    return command.getNewValue();
+    return executeCommand(new ChangeVariableCommand(this, threadId, frameId, varName, value)).getNewValue();
   }
 
   @Override
   public void loadFullVariableValues(@NotNull String threadId,
                                      @NotNull String frameId,
                                      @NotNull List<PyFrameAccessor.PyAsyncValue<String>> vars) throws PyDebuggerException {
-    final LoadFullValueCommand command = new LoadFullValueCommand(this, threadId, frameId, vars);
-    command.execute();
+    executeCommand(new LoadFullValueCommand(this, threadId, frameId, vars));
   }
 
   @Override
   @Nullable
   public String loadSource(String path) {
-    LoadSourceCommand command = new LoadSourceCommand(this, path);
     try {
-      command.execute();
-      return command.getContent();
+      return executeCommand(new LoadSourceCommand(this, path)).getContent();
     }
     catch (PyDebuggerException e) {
       return "#Couldn't load source of file " + path;
@@ -458,7 +444,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public void run() throws PyDebuggerException {
-    new RunCommand(this).execute();
+    executeCommand(new RunCommand(this));
   }
 
   @Override
@@ -479,29 +465,12 @@ public class RemoteDebugger implements ProcessDebugger {
                                @NotNull XSourcePosition sourcePosition,
                                @Nullable String functionName,
                                @NotNull PyDebugCallback<Pair<Boolean, String>> callback) {
-    final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, sourcePosition, functionName, callback);
-    try {
-      command.execute();
-    }
-    catch (PyDebuggerException e) {
-      if (isConnected()) {
-        LOG.error(e);
-      }
-    }
+    executeCommandSafely(new SetNextStatementCommand(this, threadId, sourcePosition, functionName, callback));
   }
 
   @Override
   public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
-    final SetBreakpointCommand command =
-      new SetBreakpointCommand(this, type, file, line);
-    try {
-      command.execute();
-    }
-    catch (PyDebuggerException e) {
-      if (isConnected()) {
-        LOG.error(e);
-      }
-    }
+    executeCommandSafely(new SetBreakpointCommand(this, type, file, line));
     myTempBreakpoints.put(Pair.create(file, line), type);
   }
 
@@ -789,6 +758,48 @@ public class RemoteDebugger implements ProcessDebugger {
   public void fireExitEvent() {
     for (RemoteDebuggerCloseListener listener : myCloseListeners) {
       listener.detached();
+    }
+  }
+
+  /**
+   * Executes the command and returns it.
+   * <p>
+   * If the command execution throws an exception and the debugger is in
+   * "connected" state then the exception is rethrown. If the debugger is not
+   * connected at this moment then the exception is ignored.
+   *
+   * @param command
+   */
+  private <T extends AbstractCommand<?>> T executeCommand(@NotNull T command) throws PyDebuggerException {
+    try {
+      command.execute();
+    }
+    catch (PyDebuggerException e) {
+      if (isConnected()) {
+        throw e;
+      }
+    }
+    return command;
+  }
+
+  /**
+   * Executes the command safely. In case of {@link PyDebuggerException}, the
+   * exception is only logged.
+   * <p>
+   * If the command execution throws an exception and the debugger is in
+   * "connected" state then the error is logged. If the debugger is not
+   * connected at this moment then the exception is ignored.
+   *
+   * @param command
+   */
+  private <T extends AbstractCommand<?>> void executeCommandSafely(@NotNull T command) {
+    try {
+      command.execute();
+    }
+    catch (PyDebuggerException e) {
+      if (isConnected()) {
+        LOG.error(command);
+      }
     }
   }
 }

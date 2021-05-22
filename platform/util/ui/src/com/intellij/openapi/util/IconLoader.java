@@ -134,6 +134,7 @@ public final class IconLoader {
    * @deprecated use {@link JBImageIcon}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull Icon getIcon(@NotNull Image image) {
     return new JBImageIcon(image);
   }
@@ -196,6 +197,7 @@ public final class IconLoader {
    * @deprecated Use {@link #findIcon(String, Class, boolean, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @Nullable Icon findIcon(@NonNls @NotNull String path, boolean strict) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) {
@@ -1375,7 +1377,11 @@ public final class IconLoader {
       return getScaleContextSupport(((RetrievableIcon)icon).retrieveIcon());
     }
     if (icon instanceof CompositeIcon) {
-      return getScaleContextSupport(Objects.requireNonNull(((CompositeIcon)icon).getIcon(0)));
+      CompositeIcon compositeIcon = (CompositeIcon)icon;
+      if (compositeIcon.getIconCount() == 0) return null;
+      Icon innerIcon = compositeIcon.getIcon(0);
+      if (innerIcon == null) return null;
+      return getScaleContextSupport(innerIcon);
     }
     return null;
   }

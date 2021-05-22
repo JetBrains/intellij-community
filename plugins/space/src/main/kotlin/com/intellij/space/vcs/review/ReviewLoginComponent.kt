@@ -9,7 +9,7 @@ import com.intellij.space.settings.SpaceSettingsPanel
 import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.list.SpaceReviewsListVmImpl
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
 import libraries.coroutines.extra.Lifetime
@@ -34,7 +34,7 @@ internal class ReviewLoginComponent(
   init {
     isLoggedIn.forEach(lifetime) { isLoggedIn ->
       if (!isLoggedIn) {
-        val loginLabel = LinkLabel.create(SpaceBundle.message("action.com.intellij.space.actions.SpaceLoginAction.text")) {
+        val loginLabel = ActionLink(SpaceBundle.message("action.com.intellij.space.actions.SpaceLoginAction.text")) {
           SpaceSettingsPanel.openSettings(null)
         }
         view.setContent(loginLabel)

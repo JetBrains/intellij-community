@@ -20,6 +20,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -195,6 +196,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
    * @deprecated Use {@link #ThreeComponentsSplitter(Disposable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ThreeComponentsSplitter() {
     this(false, false, null, true);
   }
@@ -207,6 +209,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
    * @deprecated Use {@link #ThreeComponentsSplitter(Disposable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ThreeComponentsSplitter(boolean vertical) {
     this(vertical, false, null, true);
   }
@@ -219,6 +222,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
    * @deprecated Use {@link #ThreeComponentsSplitter(Disposable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ThreeComponentsSplitter(boolean vertical, boolean onePixelDividers) {
     this(vertical, onePixelDividers, null, true);
   }

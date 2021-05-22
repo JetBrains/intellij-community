@@ -14,6 +14,7 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public class RollbackLineStatusAction extends LineStatusActionBase {
    * @deprecated Use {@link #rollback(LineStatusTrackerI, Range, Editor)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Range range, @Nullable Editor editor) {
     rollback((LineStatusTrackerI<?>)tracker, range, editor);
   }

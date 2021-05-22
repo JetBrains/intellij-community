@@ -78,6 +78,8 @@
     <ignoredFileProvider implementation="com.jetbrains.python.sdk.configuration.PyTemporarilyIgnoredFileProvider"/>
 
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
+
+    <startPagePromoter id="PyOnboardingTourPromoter" implementation="com.jetbrains.python.PyOnboardingTourPromoter"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

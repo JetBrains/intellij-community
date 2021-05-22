@@ -1,5 +1,0 @@
-query($repoOwner: String!, $repoName: String!) {
-    repository(owner: $repoOwner, name: $repoName) {
-        ...repositoryPermission
-    }
-}

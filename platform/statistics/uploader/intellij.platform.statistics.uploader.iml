@@ -13,6 +13,6 @@
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.config" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.statistics.validator"/>
+    <orderEntry type="library" name="ap-validation" level="project" />
   </component>
 </module>

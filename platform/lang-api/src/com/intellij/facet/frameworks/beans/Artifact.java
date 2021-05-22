@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus;
 @Deprecated
 @ApiStatus.Internal
 @Tag("artifact")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class Artifact {
   public static final Artifact[] EMPTY_ARRAY = new Artifact[0];
   

@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.ScaleContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -32,6 +33,7 @@ public final class RetinaImage { // [tav] todo: create HiDPIImage class
    * @deprecated use {@link #createFrom(Image, double, ImageObserver)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull Image createFrom(@NotNull Image image, int scale, ImageObserver observer) {
     return createFrom(image, (float)scale, observer);
   }

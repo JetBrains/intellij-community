@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -19,8 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InterruptThreadAction extends DebuggerAction{
-
+final class InterruptThreadAction extends DebuggerAction{
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DebuggerTreeNodeImpl[] nodes = getSelectedNodes(e.getDataContext());
@@ -54,7 +53,7 @@ public class InterruptThreadAction extends DebuggerAction{
             }
             if (unsupported) {
               final Project project = debugProcess.getProject();
-              XDebuggerManagerImpl.NOTIFICATION_GROUP
+              XDebuggerManagerImpl.getNotificationGroup()
                 .createNotification(JavaDebuggerBundle.message("thread.operation.interrupt.is.not.supported.by.vm"), MessageType.INFO).notify(project);
             }
           }

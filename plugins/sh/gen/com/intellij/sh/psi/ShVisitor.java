@@ -245,6 +245,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitArithmeticExpansion(o);
   }
 
+  public void visitParenthesesBlock(@NotNull ShParenthesesBlock o) {
+    visitCompositeElement(o);
+  }
+
   public void visitParenthesesCondition(@NotNull ShParenthesesCondition o) {
     visitCondition(o);
   }

@@ -17,11 +17,13 @@
 package com.intellij.usageView;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated Use {@link com.intellij.find.findUsages.FindUsagesManager} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public interface FindUsagesCommand {
   /**
    * elements to search should be used when refreshing since

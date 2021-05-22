@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,6 +167,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void fillState(@NotNull State otherState) {
     otherState.recentTasks.clear();
     otherState.availableProjects = state.availableProjects;

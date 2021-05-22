@@ -175,9 +175,14 @@ public final class PluginDownloader {
     try {
       myFile = downloadPlugin(indicator);
       if (Registry.is("marketplace.certificate.signature.check")) {
-        // Don't check signature for plugins from non-jetbrains custom repositories
+
         if (myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)) {
           if (!PluginSignatureChecker.isSignedByJetBrains(getPluginName(), myFile)) {
+            myShownErrors = true;
+            return null;
+          }
+        } else {
+          if (!PluginSignatureChecker.isSignedByCustomCertificates(getPluginName(), myFile)) {
             myShownErrors = true;
             return null;
           }

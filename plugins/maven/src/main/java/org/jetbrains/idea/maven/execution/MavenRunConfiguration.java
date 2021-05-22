@@ -124,7 +124,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
-    return new JavaCommandLineStateImpl(env, getName());
+    return new MavenCommandLineState(env, this);
   }
 
   @NotNull
@@ -357,22 +357,22 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
   }
 
-  private class JavaCommandLineStateImpl extends JavaCommandLineState implements RemoteConnectionCreator {
+  protected static class MavenCommandLineState extends JavaCommandLineState implements RemoteConnectionCreator {
 
-    @NlsSafe private final String myName;
+    private final MavenRunConfiguration myConfiguration;
     private RemoteConnectionCreator myRemoteConnectionCreator;
 
-    protected JavaCommandLineStateImpl(@NotNull ExecutionEnvironment environment, @NlsSafe String name) {
+    protected MavenCommandLineState(@NotNull ExecutionEnvironment environment, @NotNull MavenRunConfiguration configuration) {
       super(environment);
-      myName = name;
+      myConfiguration = configuration;
     }
 
     @Override
     protected JavaParameters createJavaParameters() throws ExecutionException {
       if (getEnvironment().getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory) {
-        JavaParameters parameters = MavenRunConfiguration.this.createJavaParameters(getEnvironment().getProject());
+        JavaParameters parameters = myConfiguration.createJavaParameters(getEnvironment().getProject());
         JavaRunConfigurationExtensionManager.getInstance().updateJavaParameters(
-          MavenRunConfiguration.this,
+          myConfiguration,
           parameters,
           getEnvironment().getRunnerSettings(),
           getEnvironment().getExecutor()
@@ -395,9 +395,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       descriptor.withExecutionEnvironment(getEnvironment());
       StartBuildEventImpl startBuildEvent = new StartBuildEventImpl(descriptor, "");
       boolean withResumeAction =
-        MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this);
+        MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration);
+      Project project = myConfiguration.getProject();
       MavenBuildEventProcessor eventProcessor =
-        new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), viewManager, descriptor, taskId,
+        new MavenBuildEventProcessor(project, project.getBasePath(), viewManager, descriptor, taskId,
                                      targetFileMapper, getStartBuildEventSupplier(runner, processHandler, startBuildEvent, withResumeAction)
 
         );
@@ -416,10 +417,11 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
 
       if (buildView == null) {
-        MavenLog.LOG.warn("buildView is null for " + myName);
+        MavenLog.LOG.warn("buildView is null for " + myConfiguration.getName());
       }
+      Project project = myConfiguration.getProject();
       MavenBuildEventProcessor eventProcessor =
-        new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), buildView, descriptor, taskId, targetFileMapper, ctx ->
+        new MavenBuildEventProcessor(project, project.getBasePath(), buildView, descriptor, taskId, targetFileMapper, ctx ->
           new StartBuildEventImpl(descriptor, ""));
 
       processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
@@ -428,7 +430,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       AnAction[] actions = buildView != null ?
                            new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)} : AnAction.EMPTY_ARRAY;
       DefaultExecutionResult res = new DefaultExecutionResult(buildView, processHandler, actions);
-      if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
+      if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration)) {
         MavenResumeAction resumeAction =
           new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment(), eventProcessor.getParsingContext());
         res.setRestartActions(resumeAction);
@@ -478,8 +480,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       String targetWorkingDirectory = targetedCommandLineBuilder.build().getWorkingDirectory();
       String workingDir =
         targetWorkingDirectory != null ? targetFileMapper.apply(targetWorkingDirectory) : getEnvironment().getProject().getBasePath();
-      ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, getProject());
-      DefaultBuildDescriptor descriptor = new DefaultBuildDescriptor(taskId, myName, workingDir, System.currentTimeMillis());
+      ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, myConfiguration.getProject());
+      DefaultBuildDescriptor descriptor = new DefaultBuildDescriptor(taskId, myConfiguration.getName(), workingDir, System.currentTimeMillis());
       if (MavenRunConfigurationType.isDelegate(getEnvironment())) {
         return doDelegateBuildExecute(executor, runner, taskId, descriptor, processHandler, targetFileMapper);
       }
@@ -495,8 +497,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       if (console == null) {
         return null;
       }
-      ExternalSystemRunConfigurationViewManager viewManager = getProject().getService(ExternalSystemRunConfigurationViewManager.class);
-      return new BuildView(getProject(), console, descriptor, "build.toolwindow.run.selection.state",
+      Project project = myConfiguration.getProject();
+      ExternalSystemRunConfigurationViewManager viewManager = project.getService(ExternalSystemRunConfigurationViewManager.class);
+      return new BuildView(project, console, descriptor, "build.toolwindow.run.selection.state",
                            viewManager) {
         @Override
         public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
@@ -516,8 +519,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       if (configuration == null) {
         throw new CantRunException(RunnerBundle.message("cannot.find.target.environment.configuration"));
       }
-      return new MavenCommandLineSetup(getProject(), myName, request, configuration)
-        .setupCommandLine(mySettings)
+      return new MavenCommandLineSetup(myConfiguration.getProject(), myConfiguration.getName(), request, configuration)
+        .setupCommandLine(myConfiguration.mySettings)
         .getCommandLine();
     }
 
@@ -548,14 +551,14 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
                                                                           targetedCommandLineBuilder.getFilesToDeleteOnTermination());
       ProcessTerminatedListener.attach(handler);
       JavaRunConfigurationExtensionManager.getInstance()
-        .attachExtensionsToProcess(MavenRunConfiguration.this, handler, getRunnerSettings());
+        .attachExtensionsToProcess(myConfiguration, handler, getRunnerSettings());
       return handler;
     }
 
     public RemoteConnectionCreator getRemoteConnectionCreator() {
       if (myRemoteConnectionCreator == null) {
         try {
-          myRemoteConnectionCreator = MavenRunConfiguration.this.createRemoteConnectionCreator(getJavaParameters());
+          myRemoteConnectionCreator = myConfiguration.createRemoteConnectionCreator(getJavaParameters());
         }
         catch (ExecutionException e) {
           throw new RuntimeException("Cannot create java parameters", e);

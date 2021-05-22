@@ -1152,6 +1152,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           myRemovedMappingTracker.add(matcher, oldFileType.getName(), true);
         }
       }
+      else if (oldFileType instanceof AbstractFileType && result.approved) {
+        myPatternsTable.addAssociation(matcher, fileType);
+      }
 
       myInitialAssociations.addAssociation(matcher, fileType);
     }

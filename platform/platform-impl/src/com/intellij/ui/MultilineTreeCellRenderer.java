@@ -533,5 +533,17 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
       return AccessibleRole.LABEL;
     }
   }
+
+  public Icon getIcon() {
+    return myIcon;
+  }
+
+  public String getPrefix() {
+    return myPrefix;
+  }
+
+  public String[] getLines() {
+    return myLines;
+  }
 }
 

@@ -23,6 +23,7 @@ public interface IndexableFileSet {
    */
   @SuppressWarnings("unused")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
     DeprecatedMethodException.report("Unsupported method is not used anymore");
   }

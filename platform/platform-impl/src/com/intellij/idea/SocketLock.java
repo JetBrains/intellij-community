@@ -202,7 +202,7 @@ public final class SocketLock {
   }
 
   /**
-   * <p>According to https://stackoverflow.com/a/12652718/3463676, file locks should be removed on process segfault.
+   * <p>According to <a href="https://stackoverflow.com/a/12652718/3463676">Stack Overflow</a>, file locks should be removed on process segfault.
    * According to {@link FileLock} documentation, file locks are marked as invalid on JVM termination.</p>
    *
    * <p>Unlocking of port files (via {@link #unlockPortFiles}) happens either after builtin server init, or on app termination.</p>

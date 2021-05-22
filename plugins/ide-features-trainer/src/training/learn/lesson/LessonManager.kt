@@ -12,11 +12,11 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
-import training.commands.kotlin.TaskContext
-import training.learn.interfaces.Lesson
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonExecutor
-import training.learn.lesson.kimpl.OpenPassedContext
+import training.dsl.TaskContext
+import training.dsl.impl.LessonExecutor
+import training.dsl.impl.OpenPassedContext
+import training.learn.course.KLesson
+import training.learn.course.Lesson
 import training.ui.*
 import training.ui.views.LearnPanel
 import training.util.createNamedSingleThreadExecutor

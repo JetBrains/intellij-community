@@ -21,13 +21,13 @@ import com.intellij.util.Query
 import com.intellij.util.codeInsight.CommentUtilCore
 
 internal fun buildQuery(project: Project, target: RenameTarget, options: RenameOptions): Query<UsagePointer> {
-  return buildInnerQuery(project, target, options).mapping {
+  return buildUsageQuery(project, target, options).mapping {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     it.createPointer()
   }
 }
 
-private fun buildInnerQuery(project: Project, target: RenameTarget, options: RenameOptions): Query<out RenameUsage> {
+internal fun buildUsageQuery(project: Project, target: RenameTarget, options: RenameOptions): Query<out RenameUsage> {
   ApplicationManager.getApplication().assertReadAccessAllowed()
   val queries = ArrayList<Query<out RenameUsage>>()
   queries += searchRenameUsages(project, target, options.searchScope)
@@ -139,8 +139,9 @@ private fun Query<out TextOccurrence>.mapToUsages(
   searchString: String,
   textReplacement: TextReplacement
 ): Query<out RenameUsage> {
+  val fileUpdater = fileRangeUpdater(textReplacement)
   return mapping { occurrence: TextOccurrence ->
     val rangeInElement = TextRange.from(occurrence.offsetInElement, searchString.length)
-    TextRenameUsage(PsiUsage.textUsage(occurrence.element, rangeInElement), textReplacement)
+    TextRenameUsage(PsiUsage.textUsage(occurrence.element, rangeInElement), fileUpdater)
   }
 }

@@ -58,7 +58,7 @@ fun <O> buildUsageViewQuery(project: Project,
                             handler: UsageHandler<O>,
                             allOptions: AllSearchOptions<O>): Query<out UVUsage> {
   return buildQuery(project, target, handler, allOptions).transforming {
-    if (it is PsiUsage) {
+    if (it is PsiUsage && !it.declaration) {
       listOf(Psi2UsageInfo2UsageAdapter(PsiUsage2UsageInfo(it)))
     }
     else {
@@ -67,10 +67,12 @@ fun <O> buildUsageViewQuery(project: Project,
   }
 }
 
-private fun <O> buildQuery(project: Project,
-                           target: SearchTarget,
-                           handler: UsageHandler<O>,
-                           allOptions: AllSearchOptions<O>): Query<out Usage> {
+internal fun <O> buildQuery(
+  project: Project,
+  target: SearchTarget,
+  handler: UsageHandler<O>,
+  allOptions: AllSearchOptions<O>
+): Query<out Usage> {
   val queries = ArrayList<Query<out Usage>>()
   val (options, textSearch, customOptions) = allOptions
   if (options.isUsages) {

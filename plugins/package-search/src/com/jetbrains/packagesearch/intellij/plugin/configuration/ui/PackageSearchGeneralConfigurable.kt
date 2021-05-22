@@ -4,7 +4,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
@@ -73,11 +73,9 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
 
         // Reset defaults
         builder.addComponent(JLabel())
-        builder.addComponent(
-            LinkLabel<Any>(
-                PackageSearchBundle.message("packagesearch.configuration.restore.defaults"),
-                null
-            ) { _, _ -> restoreDefaults() })
+        builder.addComponent(ActionLink(PackageSearchBundle.message("packagesearch.configuration.restore.defaults")) {
+          restoreDefaults()
+        })
 
         builder.addComponentFillVertically(JPanel(), 0)
 

@@ -20,18 +20,15 @@ import com.intellij.util.ui.UIUtil
 import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.data.TableCell
 import org.fest.swing.fixture.JTextComponentFixture
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
-import training.commands.kotlin.TaskTestContext
+import training.dsl.*
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
+import training.learn.course.KLesson
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
 
-class FindInFilesLesson(module: Module, lang: String, override val existedFile: String)
-  : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name"), module, lang) {
+class FindInFilesLesson(override val existedFile: String)
+  : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     resetFindSettings()

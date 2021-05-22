@@ -1,17 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 final class DescriptorLoadingContext implements AutoCloseable {
+  @SuppressWarnings("SpellCheckingInspection")
+  private static final Map<String, String> ZIP_OPTIONS = Collections.singletonMap("zipinfo-time", "false");
+
   private final Map<Path, FileSystem> openedFiles = new HashMap<>();
   final DescriptorListLoadingContext parentContext;
   final boolean isBundled;
@@ -32,14 +35,15 @@ final class DescriptorLoadingContext implements AutoCloseable {
     this.pathResolver = pathResolver;
   }
 
-  @ReviseWhenPortedToJDK("13")
   @NotNull FileSystem open(@NotNull Path file) throws IOException {
-    FileSystem result = openedFiles.get(file);
-    if (result == null) {
-      //noinspection RedundantCast,RedundantSuppression
-      openedFiles.put(file, (result = FileSystems.newFileSystem(file, (ClassLoader)null)));
-    }
-    return result;
+    return openedFiles.computeIfAbsent(file, it -> {
+      try {
+        return parentContext.zipFsProvider.newFileSystem(it, ZIP_OPTIONS);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
   }
 
   @Override
@@ -53,8 +57,7 @@ final class DescriptorLoadingContext implements AutoCloseable {
     }
   }
 
-  @NotNull
-  public DescriptorLoadingContext copy(boolean isEssential) {
+  public @NotNull DescriptorLoadingContext copy(boolean isEssential) {
     return new DescriptorLoadingContext(parentContext, isBundled, isEssential, pathResolver);
   }
 }

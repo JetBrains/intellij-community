@@ -237,7 +237,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     } else {
       sf = getSpecialField();
       if (sf != type.getSpecialField()) return BOTTOM;
-      sfType = sf == null ? BOTTOM : getSpecialFieldType().meet(type.getSpecialFieldType());
+      sfType = getSpecialFieldType().meet(type.getSpecialFieldType());
     }
     if (sf != null && sfType == BOTTOM) return BOTTOM;
     Set<Object> notValues = myNotValues;
@@ -258,6 +258,15 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
       }
     }
     return new DfGenericObjectType(notValues, constraint, nullability, mutability, sf, sfType, locality);
+  }
+
+  @Override
+  public DfType widen() {
+    DfType wideSpecialField = mySpecialFieldType.widen();
+    if (!wideSpecialField.equals(mySpecialFieldType)) {
+      return new DfGenericObjectType(myNotValues, myConstraint, myNullability, myMutability, mySpecialField, wideSpecialField, myLocal);
+    }
+    return this;
   }
 
   private static DfEphemeralReferenceType checkEphemeral(TypeConstraint constraint, Set<Object> notValues) {

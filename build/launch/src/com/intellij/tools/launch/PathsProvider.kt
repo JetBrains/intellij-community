@@ -28,8 +28,8 @@ interface PathsProvider {
   val javaHomeFolder: File
     get() = File(SystemProperties.getJavaHome())
 
-  val mavenHomeFolder: File
-    get() = File(System.getProperty("user.home"), ".m2")
+  val mavenRepositoryFolder: File
+    get() = File(System.getProperty("user.home")).resolve(".m2/repository")
 
   val communityBinFolder: File
     get() = communityRootFolder.resolve("bin")

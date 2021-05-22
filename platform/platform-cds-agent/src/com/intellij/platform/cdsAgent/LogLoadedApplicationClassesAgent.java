@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  * other dependencies)
  * <p>
  * Java Agent to log all loaded class in CDS supported format
- * [JEP 310](https://openjdk.java.net/jeps/310)
+ * <a href="https://openjdk.java.net/jeps/310">JEP 310</a>
  */
 public final class LogLoadedApplicationClassesAgent {
   public static final String TARGET_FILE = "JB_CDS_TARGET_FILE";

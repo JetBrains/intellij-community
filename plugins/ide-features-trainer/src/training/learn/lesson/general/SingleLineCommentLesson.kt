@@ -4,15 +4,14 @@ package training.learn.lesson.general
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
+import training.learn.course.KLesson
 
-class SingleLineCommentLesson(module: Module, lang: String, private val sample: LessonSample)
-  : KLesson("Comment line", LessonsBundle.message("comment.line.lesson.name"), module, lang) {
+class SingleLineCommentLesson(private val sample: LessonSample)
+  : KLesson("Comment line", LessonsBundle.message("comment.line.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {

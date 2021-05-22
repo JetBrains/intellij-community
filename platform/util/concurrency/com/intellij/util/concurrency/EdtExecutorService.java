@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
@@ -22,6 +23,8 @@ public abstract class EdtExecutorService extends AbstractExecutorService {
   }
 
   public abstract void execute(@NotNull Runnable command, @NotNull ModalityState modalityState);
+  public abstract void execute(@NotNull Runnable command, @NotNull ModalityState modalityState, @NotNull Condition<?> expired);
+
   @NotNull
   public abstract Future<?> submit(@NotNull Runnable command, @NotNull ModalityState modalityState);
   @NotNull

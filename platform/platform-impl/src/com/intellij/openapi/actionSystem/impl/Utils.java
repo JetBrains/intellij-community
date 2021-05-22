@@ -4,7 +4,9 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,10 +44,14 @@ public final class Utils {
   @NotNull
   public static DataContext wrapDataContext(@NotNull DataContext dataContext) {
     if (dataContext instanceof DataManagerImpl.MyDataContext &&
-        Registry.is("actionSystem.update.actions.asynchronously")) {
+        Registry.is("actionSystem.update.actions.async")) {
       return new PreCachedDataContext(dataContext);
     }
     return dataContext;
+  }
+
+  public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
+    return dataContext instanceof PreCachedDataContext;
   }
 
   /**
@@ -53,39 +59,33 @@ public final class Utils {
    */
   public static List<AnAction> expandActionGroup(boolean isInModalContext,
                                                  @NotNull ActionGroup group,
-                                                 PresentationFactory presentationFactory,
+                                                 @NotNull PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
-                                                 String place){
-    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, null);
+                                                 @NotNull String place){
+    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, null, false);
   }
 
   public static List<AnAction> expandActionGroup(boolean isInModalContext,
                                                  @NotNull ActionGroup group,
-                                                 PresentationFactory presentationFactory,
+                                                 @NotNull PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
-                                                 String place, ActionGroupVisitor visitor) {
-    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, visitor, false);
-  }
-
-  public static List<AnAction> expandActionGroup(boolean isInModalContext,
-                                                 @NotNull ActionGroup group,
-                                                 PresentationFactory presentationFactory,
-                                                 @NotNull DataContext context,
-                                                 String place, ActionGroupVisitor visitor,
+                                                 @NotNull String place,
+                                                 @Nullable ActionGroupVisitor visitor,
                                                  boolean isContextMenuAction) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, isContextMenuAction, false, false, visitor)
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, isContextMenuAction, false, visitor)
       .expandActionGroup(group, group instanceof CompactActionGroup);
   }
 
   public static CancellablePromise<List<AnAction>> expandActionGroupAsync(boolean isInModalContext,
                                                                           @NotNull ActionGroup group,
-                                                                          PresentationFactory presentationFactory,
+                                                                          @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
-                                                                          String place, @Nullable Utils.ActionGroupVisitor visitor) {
+                                                                          @NotNull String place,
+                                                                          @Nullable Utils.ActionGroupVisitor visitor) {
     if (!(context instanceof PreCachedDataContext)) {
       context = new PreCachedDataContext(context);
     }
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, visitor)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
 
@@ -95,7 +95,7 @@ public final class Utils {
                                                  @NotNull DataContext context,
                                                  String place, ActionGroupVisitor visitor,
                                                  int timeoutMs) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, visitor)
       .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup, timeoutMs);
   }
 
@@ -112,11 +112,22 @@ public final class Utils {
                        boolean useDarkIcons) {
     final boolean checked = group instanceof CheckedActionGroup;
 
-    ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false, false);
+    ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false);
     List<AnAction> list = DO_FULL_EXPAND ?
                           updater.expandActionGroupFull(group, group instanceof CompactActionGroup) :
                           updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
+    fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
+  }
 
+  private static void fillMenuInner(JComponent component,
+                                    List<AnAction> list,
+                                    boolean checked,
+                                    boolean enableMnemonics,
+                                    PresentationFactory presentationFactory,
+                                    @NotNull DataContext context,
+                                    String place,
+                                    boolean isWindowMenu,
+                                    boolean useDarkIcons) {
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();
 
@@ -135,43 +146,13 @@ public final class Utils {
       if (action instanceof Separator) {
         final String text = ((Separator)action).getText();
         if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
-          JPopupMenu.Separator separator = new JPopupMenu.Separator() {
-            private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
-
-            @Override
-            public void doLayout() {
-              super.doLayout();
-              if (myMenu != null) {
-                myMenu.setBounds(getBounds());
-              }
-            }
-
-            @Override
-            protected void paintComponent(Graphics g) {
-              if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel()) {
-                g.setColor(component.getBackground());
-                g.fillRect(0, 0, getWidth(), getHeight());
-              }
-              if (myMenu != null) {
-                myMenu.paint(g);
-              }
-              else {
-                super.paintComponent(g);
-              }
-            }
-
-            @Override
-            public Dimension getPreferredSize() {
-              return myMenu != null ? myMenu.getPreferredSize() : super.getPreferredSize();
-            }
-          };
+          JPopupMenu.Separator separator = createSeparator(text);
           component.add(separator);
           children.add(separator);
         }
       }
       else if (action instanceof ActionGroup &&
-               !(updater.canBePerformedCached((ActionGroup)action) &&
-                 action instanceof AlwaysPerformingActionGroup || !updater.hasVisibleChildren((ActionGroup)action))) {
+               !Boolean.TRUE.equals(presentation.getClientProperty("actionGroup.perform.only"))) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
@@ -193,7 +174,6 @@ public final class Utils {
     }
 
     if (fixMacScreenMenu) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         for (Component each : children) {
           if (each.getParent() != null && each instanceof ActionMenuItem) {
@@ -227,6 +207,40 @@ public final class Utils {
     }
   }
 
+  @NotNull
+  private static JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text) {
+    return new JPopupMenu.Separator() {
+      private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
+
+      @Override
+      public void doLayout() {
+        super.doLayout();
+        if (myMenu != null) {
+          myMenu.setBounds(getBounds());
+        }
+      }
+
+      @Override
+      protected void paintComponent(Graphics g) {
+        if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel()) {
+          g.setColor(getParent().getBackground());
+          g.fillRect(0, 0, getWidth(), getHeight());
+        }
+        if (myMenu != null) {
+          myMenu.paint(g);
+        }
+        else {
+          super.paintComponent(g);
+        }
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        return myMenu != null ? myMenu.getPreferredSize() : super.getPreferredSize();
+      }
+    };
+  }
+
   private static void replaceIconIn(Component menuItem, Icon icon) {
     Icon from = icon == null ? ActionMenuItem.EMPTY_ICON : null;
 
@@ -255,6 +269,18 @@ public final class Utils {
     }
 
     return icon != null && icon != ActionMenuItem.EMPTY_ICON;
+  }
+
+  @NotNull
+  public static UpdateSession getOrCreateUpdateSession(@NotNull AnActionEvent e) {
+    UpdateSession updater = e.getUpdateSession();
+    if (updater == null) {
+      ActionUpdater actionUpdater = new ActionUpdater(
+        LaterInvocator.isInModalContext(), new PresentationFactory(), e.getDataContext(),
+        e.getPlace(), e.isFromContextMenu(), e.isFromActionToolbar());
+      updater = actionUpdater.asUpdateSession();
+    }
+    return updater;
   }
 
   public interface ActionGroupVisitor {

@@ -154,7 +154,7 @@
               <text resource-bundle="messages/XDebuggerBundle" key="xbreakpoints.breakpoint.name"/>
             </properties>
           </component>
-          <component id="17177" class="com.intellij.ui.components.labels.LinkLabel" binding="myRestoreLink" custom-create="true">
+          <component id="17177" class="com.intellij.ui.components.ActionLink" binding="myRestoreLink" custom-create="true">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>

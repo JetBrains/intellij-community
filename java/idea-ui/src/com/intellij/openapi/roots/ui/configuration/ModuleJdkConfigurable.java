@@ -25,7 +25,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
@@ -43,6 +42,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
   private JPanel myJdkPanel;
   private ClasspathEditor myModuleEditor;
   private final ProjectSdksModel myJdksModel;
+  private final ProjectStructureConfigurable myProjectStructureConfigurable;
   private boolean myFreeze = false;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
@@ -66,9 +66,10 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     }
   };
 
-  public ModuleJdkConfigurable(ClasspathEditor moduleEditor, ProjectSdksModel jdksModel) {
+  public ModuleJdkConfigurable(ClasspathEditor moduleEditor, ProjectStructureConfigurable projectStructureConfigurable) {
     myModuleEditor = moduleEditor;
-    myJdksModel = jdksModel;
+    myJdksModel = projectStructureConfigurable.getProjectJdksModel();
+    myProjectStructureConfigurable = projectStructureConfigurable;
     myJdksModel.addListener(myListener);
     init();
   }
@@ -134,8 +135,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
 
   private void clearCaches() {
     final Module module = getRootModel().getModule();
-    final Project project = module.getProject();
-    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+    final StructureConfigurableContext context = myProjectStructureConfigurable.getContext();
     context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, module));
   }
 

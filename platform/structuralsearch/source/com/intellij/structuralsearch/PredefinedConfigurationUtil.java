@@ -5,10 +5,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 public final class PredefinedConfigurationUtil {
 
@@ -18,6 +15,7 @@ public final class PredefinedConfigurationUtil {
    * instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @NotNull
   public static Configuration createSearchTemplateInfo(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name,
                                                        @NonNls @NotNull String criteria, @NotNull String category) {
@@ -29,6 +27,7 @@ public final class PredefinedConfigurationUtil {
    * Use {@link #createConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @NotNull
   public static Configuration createSearchTemplateInfo(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name,
                                                        @NonNls @NotNull String criteria,
@@ -117,6 +116,7 @@ public final class PredefinedConfigurationUtil {
    * Use {@link #createNonRecursiveConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static Configuration createSearchTemplateInfoSimple(@Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                              @NonNls String criteria, String category) {
     final Configuration info = createSearchTemplateInfo(name, criteria, category);

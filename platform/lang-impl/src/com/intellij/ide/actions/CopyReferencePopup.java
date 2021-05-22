@@ -33,15 +33,6 @@ public class CopyReferencePopup extends NonTrivialActionGroup implements AlwaysP
   private static final int DEFAULT_WIDTH = JBUIScale.scale(500);
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    if (!CopyPathsAction.isCopyReferencePopupAvailable()) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-    super.update(e);
-  }
-
-  @Override
   public boolean canBePerformed(@NotNull DataContext context) {
     return true;
   }

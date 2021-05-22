@@ -662,4 +662,21 @@ public final class PyPsiUtils {
       return element.getText();
     }
   }
+
+  @Nullable
+  public static PsiComment findSameLineComment(@NotNull PsiElement elem) {
+    // If `elem` is a compound multi-line element, stick to its first line nonetheless
+    PsiElement next = PsiTreeUtil.getDeepestFirst(elem);
+    do {
+      if (next instanceof PsiComment) {
+        return (PsiComment)next;
+      }
+      if (next != elem && next.textContains('\n')) {
+        break;
+      }
+      next = PsiTreeUtil.nextLeaf(next);
+    }
+    while (next != null);
+    return null;
+  }
 }

@@ -51,7 +51,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
   public JUnitTestKindFragment(Project project, ConfigurationModuleSelector moduleSelector) {
     super("junit.test.kind", null, null, new JPanel(new GridBagLayout()), 90, null, null, configuration -> true);
     myModel = new JUnitConfigurationModel(project);
-    myModel.setListener(kind -> kindChanged(kind));
+    myModel.setListener((oldKind, kind) -> kindChanged(oldKind, kind));
     myModuleSelector = moduleSelector;
     myTypeChooser = new ComboBox<>();
     CommandLinePanel.setMinimumWidth(component(), 500);
@@ -148,12 +148,15 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     return component == null ? null : myHints.get(component);
   }
 
-  private void kindChanged(int kind) {
+  private void kindChanged(int oldKind, int kind) {
     myTypeChooser.setItem(kind);
     Arrays.stream(myFields).forEach(field -> field.setVisible(false));
     myFields[kind].setVisible(true);
     if (METHOD == kind) {
       myFields[CLASS].setVisible(true);
+    }
+    if (PATTERN == kind  && (oldKind == CLASS || oldKind == METHOD) && StringUtil.isEmpty(((TextAccessor)myFields[PATTERN]).getText())) {
+      ((TextAccessor)myFields[PATTERN]).setText(getClassName());
     }
     fireEditorStateChanged();
   }

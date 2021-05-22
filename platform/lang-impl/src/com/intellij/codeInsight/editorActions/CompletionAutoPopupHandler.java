@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -59,7 +60,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   /**
    * @deprecated can be emulated with {@link AppUIExecutor}
    */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void runLaterWithCommitted(@NotNull Project project, @SuppressWarnings("unused") Document document, @NotNull Runnable runnable) {
     AppUIExecutor.onUiThread().later().withDocumentsCommitted(project).execute(runnable);
   }

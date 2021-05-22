@@ -64,6 +64,7 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
   IntelliJPlatformProduct.PYCHARM -> "com.jetbrains.intellij.pycharm" to "pycharmPY"
   IntelliJPlatformProduct.PYCHARM_PC -> "com.jetbrains.intellij.pycharm" to "pycharmPC"
   IntelliJPlatformProduct.RIDER -> "com.jetbrains.intellij.rider" to "riderRD"
+  IntelliJPlatformProduct.GOIDE -> "com.jetbrains.intellij.goland" to "goland"
 
   IntelliJPlatformProduct.RUBYMINE,
   IntelliJPlatformProduct.PYCHARM_DS,
@@ -73,7 +74,6 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
   IntelliJPlatformProduct.APPCODE,
   IntelliJPlatformProduct.MOBILE_IDE,
   IntelliJPlatformProduct.DBE,
-  IntelliJPlatformProduct.GOIDE,
   IntelliJPlatformProduct.ANDROID_STUDIO,
   IntelliJPlatformProduct.INTELLIJ_CLIENT,
   IntelliJPlatformProduct.IDEA_IE -> null

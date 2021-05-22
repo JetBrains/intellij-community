@@ -176,11 +176,15 @@ class AutoImportTest : AutoImportTestCase() {
     simpleTest("settings.groovy", "println 'hello'") { settingsFile ->
       assertState(refresh = 1, notified = false, event = "register project without cache")
 
-      val scriptFile = createVirtualFile("script.groovy")
+      val configFile = createVirtualFile("config.groovy")
       assertState(refresh = 1, notified = false, event = "create unregistered settings")
-      scriptFile.replaceContent("println('hello')")
+      configFile.replaceContent("println('hello')")
       assertState(refresh = 1, notified = false, event = "modify unregistered settings")
-      registerSettingsFile(scriptFile)
+
+      val scriptFile = createSettingsVirtualFile("script.groovy")
+      assertState(refresh = 1, notified = true, event = "created new settings file")
+      scriptFile.replaceContent("println('hello')")
+      assertState(refresh = 1, notified = true, event = "modify settings file")
       settingsFile.replaceString("hello", "hi")
       assertState(refresh = 1, notified = true, event = "modification")
       settingsFile.replaceString("hi", "hello")
@@ -213,8 +217,8 @@ class AutoImportTest : AutoImportTestCase() {
     val scriptFile1 = createVirtualFile("script1.groovy")
     val scriptFile2 = createVirtualFile("script2.groovy")
 
-    projectAware1.settingsFiles.add(scriptFile1.path)
-    projectAware2.settingsFiles.add(scriptFile2.path)
+    projectAware1.registerSettingsFile(scriptFile1.path)
+    projectAware2.registerSettingsFile(scriptFile2.path)
 
     register(projectAware1)
     register(projectAware2)
@@ -511,7 +515,7 @@ class AutoImportTest : AutoImportTestCase() {
 
     val settingsFile = createIoFile("project.groovy")
     projectAware.onceDuringRefresh {
-      projectAware.settingsFiles.add(settingsFile.path)
+      projectAware.registerSettingsFile(settingsFile.path)
       settingsFile.replaceContentInIoFile("println 'generated project'")
     }
     forceRefreshProject(projectId)
@@ -590,27 +594,29 @@ class AutoImportTest : AutoImportTestCase() {
     assertNotificationAware(projectId2, event = "register project 2")
     assertActivationStatus(projectId1, event = "register project 2")
 
+    registerSettingsFile(projectAware1, "settings.groovy")
+    registerSettingsFile(projectAware2, "sub-project/settings.groovy")
     val settingsFile1 = createIoFile("settings.groovy")
     val settingsFile2 = createIoFile("sub-project/settings.groovy")
-    projectAware1.settingsFiles.add(settingsFile1.path)
-    projectAware2.settingsFiles.add(settingsFile2.path)
+    assertProjectAware(projectAware1, refresh = 2, event = "externally created both settings files, but project 2 is inactive")
+    assertProjectAware(projectAware2, refresh = 0, event = "externally created both settings files, but project 2 is inactive")
 
     settingsFile1.replaceContentInIoFile("println 'hello'")
     settingsFile2.replaceContentInIoFile("println 'hello'")
-    assertProjectAware(projectAware1, refresh = 2, event = "externally modified both settings files, but project 2 is inactive")
+    assertProjectAware(projectAware1, refresh = 3, event = "externally modified both settings files, but project 2 is inactive")
     assertProjectAware(projectAware2, refresh = 0, event = "externally modified both settings files, but project 2 is inactive")
     assertNotificationAware(projectId2, event = "externally modified both settings files, but project 2 is inactive")
     assertActivationStatus(projectId1, event = "externally modified both settings files, but project 2 is inactive")
 
     settingsFile1.replaceString("hello", "Hello world!")
     settingsFile2.replaceString("hello", "Hello world!")
-    assertProjectAware(projectAware1, refresh = 2, event = "internally modify settings")
+    assertProjectAware(projectAware1, refresh = 3, event = "internally modify settings")
     assertProjectAware(projectAware2, refresh = 0, event = "internally modify settings")
     assertNotificationAware(projectId1, projectId2, event = "internally modify settings")
     assertActivationStatus(projectId1, event = "internally modify settings")
 
     refreshProject()
-    assertProjectAware(projectAware1, refresh = 3, event = "refresh project")
+    assertProjectAware(projectAware1, refresh = 4, event = "refresh project")
     assertProjectAware(projectAware2, refresh = 1, event = "refresh project")
     assertNotificationAware(event = "refresh project")
     assertActivationStatus(projectId1, projectId2, event = "refresh project")
@@ -801,6 +807,79 @@ class AutoImportTest : AutoImportTestCase() {
       }
       refreshProject()
       assertState(refresh = 4, notified = false, event = "project reload")
+    }
+  }
+
+  @Test
+  fun `test settings files cache`() {
+    simpleTest {
+      assertState(refresh = 1, settingsAccess = 2, notified = false, event = "register project without cache")
+      resetAssertionCounters()
+
+      val settings1File = createSettingsVirtualFile("settings1.groovy")
+      val settings2File = createSettingsVirtualFile("settings2.groovy")
+      assertState(refresh = 0, settingsAccess = 2, notified = true, event = "settings files creation")
+
+      val configFile1 = createVirtualFile("file1.config")
+      val configFile2 = createVirtualFile("file2.config")
+      assertState(refresh = 0, settingsAccess = 4, notified = true, event = "non settings files creation")
+
+      refreshProject()
+      assertState(refresh = 1, settingsAccess = 6, notified = false, event = "project reload")
+
+      configFile1.modify(INTERNAL)
+      configFile2.modify(INTERNAL)
+      configFile1.modify(EXTERNAL)
+      configFile2.modify(EXTERNAL)
+      assertState(refresh = 1, settingsAccess = 6, notified = false, event = "non settings files modification")
+
+      settings1File.modify(INTERNAL)
+      settings2File.modify(INTERNAL)
+      assertState(refresh = 1, settingsAccess = 6, notified = true, event = "internal settings files modification")
+
+      refreshProject()
+      assertState(refresh = 2, settingsAccess = 8, notified = false, event = "project reload")
+
+      settings1File.modify(EXTERNAL)
+      assertState(refresh = 3, settingsAccess = 10, notified = false, event = "external settings file modification")
+
+      registerSettingsFile("settings3.groovy")
+      val settings3File = settings2File.copy("settings3.groovy")
+      assertState(refresh = 3, settingsAccess = 11, notified = true, event = "copy settings file")
+
+      settings1File.modify(INTERNAL)
+      settings2File.modify(INTERNAL)
+      settings3File.modify(INTERNAL)
+      assertState(refresh = 3, settingsAccess = 11, notified = true, event = "internal settings files modification")
+
+      refreshProject()
+      assertState(refresh = 4, settingsAccess = 13, notified = false, event = "project reload")
+
+      settings3File.modify(INTERNAL)
+      assertState(refresh = 4, settingsAccess = 13, notified = true, event = "internal settings file modification")
+
+      settings3File.revert()
+      assertState(refresh = 4, settingsAccess = 13, notified = false, event = "revert modification in settings file")
+
+      registerSettingsFile("settings4.groovy")
+      configFile1.rename("settings4.groovy")
+      assertState(refresh = 4, settingsAccess = 14, notified = true, event = "rename config file into settings file")
+
+      configFile1.modify(INTERNAL)
+      assertState(refresh = 4, settingsAccess = 14, notified = true, event = "modify settings file")
+
+      configFile1.rename("file1.config")
+      assertState(refresh = 4, settingsAccess = 15, notified = false, event = "revert config file rename")
+
+      registerSettingsFile("my-dir/file1.config")
+      configFile1.move("my-dir")
+      assertState(refresh = 4, settingsAccess = 16, notified = true, event = "move config file")
+
+      configFile1.modify(INTERNAL)
+      assertState(refresh = 4, settingsAccess = 16, notified = true, event = "modify config file")
+
+      configFile1.move(".")
+      assertState(refresh = 4, settingsAccess = 17, notified = false, event = "revert config file move")
     }
   }
 }

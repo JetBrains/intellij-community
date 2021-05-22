@@ -12,15 +12,19 @@ import java.io.IOException;
 final class SubPluginClassLoader extends PluginClassLoader {
   private final String[] packagePrefixes;
 
+  static {
+    registerAsParallelCapable();
+  }
+
   SubPluginClassLoader(@NotNull IdeaPluginDescriptorImpl pluginDescriptor,
                        @NotNull UrlClassLoader.Builder urlClassLoaderBuilder,
                        @NotNull ClassLoader @NotNull [] parents,
                        @NotNull String @NotNull [] packagePrefixes,
                        @NotNull ClassLoader coreLoader,
                        @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
-    super(urlClassLoaderBuilder, parents, pluginDescriptor, pluginDescriptor.getPluginPath(), coreLoader, pluginDescriptor.packagePrefix,
-          resourceFileFactory);
+    super(urlClassLoaderBuilder, parents, pluginDescriptor, pluginDescriptor.getPluginPath(), coreLoader, null, null, resourceFileFactory);
 
+    assert pluginDescriptor.packagePrefix == null;
     this.packagePrefixes = packagePrefixes;
   }
 

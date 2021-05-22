@@ -39,6 +39,7 @@
     <settingsControlProvider implementation="org.jetbrains.plugins.gradle.service.settings.JavaGradleSettingsControlProvider"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
+    <targetEnvironmentAware implementation="org.jetbrains.plugins.gradle.execution.target.JavaGradleTargetEnvironmentAware" />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

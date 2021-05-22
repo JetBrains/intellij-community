@@ -39,10 +39,9 @@ internal class MermaidCodeGeneratingProviderExtension(
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
     val hash = MarkdownUtil.md5(raw, "") + determineTheme()
     val key = getUniqueFile("mermaid", hash, "svg").toFile()
-    if (key.exists()) {
-      return "<img src=\"${key.toURI()}\"/>"
-    }
-    return "<div class=\"mermaid\" cache-id=\"$hash\" id=\"$hash\">$raw</div>"
+    return if (key.exists()) {
+      "<img src=\"${key.toURI()}\"/>"
+    } else createRawContentElement(hash, raw)
   }
 
   fun store(key: String, content: ByteArray) {
@@ -96,6 +95,14 @@ internal class MermaidCodeGeneratingProviderExtension(
   }
 
   override val resourceProvider: ResourceProvider = this
+
+  private fun escapeContent(content: String): String {
+    return content.replace("<", "&lt;").replace(">", "&gt;")
+  }
+
+  private fun createRawContentElement(hash: String, content: String): String {
+    return "<div class=\"mermaid\" cache-id=\"$hash\" id=\"$hash\">${escapeContent(content)}</div>"
+  }
 
   private fun storeFileEvent(data: String) {
     if (data.isEmpty()) {

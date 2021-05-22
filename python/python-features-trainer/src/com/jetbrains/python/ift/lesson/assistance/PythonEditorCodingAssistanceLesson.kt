@@ -3,13 +3,12 @@ package com.jetbrains.python.ift.lesson.assistance
 
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
-import training.commands.kotlin.TaskContext
-import training.learn.interfaces.Module
+import training.dsl.LessonSample
+import training.dsl.TaskContext
 import training.learn.lesson.general.assistance.EditorCodingAssistanceLesson
-import training.learn.lesson.kimpl.LessonSample
 
-class PythonEditorCodingAssistanceLesson(module: Module, lang: String, sample: LessonSample) :
-  EditorCodingAssistanceLesson(module, lang, sample) {
+class PythonEditorCodingAssistanceLesson(sample: LessonSample) :
+  EditorCodingAssistanceLesson(sample) {
   override val errorIntentionText: String
     get() = PyPsiBundle.message("QFIX.auto.import.import.name", "math")
   private val errorAlternateIntentionText: String

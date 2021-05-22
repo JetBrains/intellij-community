@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.ClickListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ public final class TrackRunningTestUtil {
 
   /** @deprecated use {@link #installStopListeners(JTree, Disposable, Consumer)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void installStopListeners(JTree tree, Disposable parentDisposable, Pass<? super AbstractTestProxy> setSelection) {
     installStopListeners(tree, parentDisposable, (Consumer<? super AbstractTestProxy>)setSelection);
   }

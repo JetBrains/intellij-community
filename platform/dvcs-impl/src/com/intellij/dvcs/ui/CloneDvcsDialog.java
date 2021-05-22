@@ -61,6 +61,7 @@ import static com.intellij.util.ui.UI.PanelFactory;
  * or {@link com.intellij.openapi.vcs.ui.VcsCloneComponent}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class CloneDvcsDialog extends DialogWrapper {
 
   private ComboBox<String> myRepositoryUrlCombobox;
@@ -391,6 +392,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
    * @deprecated use {@link #getRepositoryHostingServices()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void prependToHistory(@NotNull final String item) {
     myRepositoryUrlComboboxModel.add(item);
   }

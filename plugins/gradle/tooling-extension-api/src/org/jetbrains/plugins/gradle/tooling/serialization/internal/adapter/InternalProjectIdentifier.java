@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.ProjectIdentifier;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public final class InternalProjectIdentifier implements ProjectIdentifier {
   private final InternalBuildIdentifier build;
   private final String projectPath;

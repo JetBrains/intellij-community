@@ -2,11 +2,13 @@
 package git4idea.commands;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated Use the {@link GitLineHandlerListener}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class GitLineHandlerAdapter implements GitLineHandlerListener {
   @Override
   public void onLineAvailable(final String line, final Key outputType) {

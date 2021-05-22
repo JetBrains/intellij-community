@@ -16,11 +16,13 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated use {@link BackgroundableActionLock}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class BackgroundableActionEnabledHandler {
   private final Project myProject;
   private final VcsBackgroundableActions myAction;

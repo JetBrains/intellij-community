@@ -64,7 +64,7 @@ public class MultilineEditor extends JPanel {
         this.myModel = model;
         myEditorTextField = new EditorTextField(document, project, fileType) {
           @Override
-          protected EditorEx createEditor() {
+          protected @NotNull EditorEx createEditor() {
               final EditorEx editor = super.createEditor();
 
               editor.setHorizontalScrollbarVisible(true);

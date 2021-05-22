@@ -65,11 +65,6 @@ public final class ControlFlow {
     addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
 
     myLoopNumbers = LoopAnalyzer.calcInLoop(this);
-    for (int i = 0; i < myInstructions.size(); i++) {
-      if (myLoopNumbers[i] > 0 && myInstructions.get(i) instanceof BinopInstruction) {
-        ((BinopInstruction)myInstructions.get(i)).widenOperationInLoop();
-      }
-    }
   }
 
   public void removeVariable(@Nullable PsiVariable variable) {

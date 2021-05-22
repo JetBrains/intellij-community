@@ -21,8 +21,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -30,10 +32,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.*;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
 
 public final class GuiUtils {
@@ -62,6 +62,7 @@ public final class GuiUtils {
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static JPanel constructDirectoryBrowserField(final JTextField field, final String objectName) {
     return constructFieldWithBrowseButton(field, new ActionListener() {
       @SuppressWarnings("HardCodedStringLiteral")
@@ -78,6 +79,7 @@ public final class GuiUtils {
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static JPanel makeTitledPanel(JComponent aComponent, @NlsContexts.BorderTitle String aTitle) {
     JPanel result = makePaddedPanel(aComponent, false, true, false, true);
     return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle));
@@ -91,11 +93,13 @@ public final class GuiUtils {
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static BorderLayout createBorderLayout() {
     return new BorderLayout(paddingInsideDialog.left, paddingInsideDialog.top);
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static GridLayout createGridLayout(int aRows, int aColumns) {
     return new GridLayout(aRows, aColumns, paddingInsideDialog.left, paddingInsideDialog.top);
   }
@@ -272,6 +276,7 @@ public final class GuiUtils {
    */
   @SuppressWarnings("RedundantThrows")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void runOrInvokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
     ApplicationManager.getApplication().invokeAndWait(runnable);
   }
@@ -333,5 +338,25 @@ public final class GuiUtils {
         }
       }
     });
+  }
+
+  /**
+   * removes all children and parent references, listeners from {@code container} to avoid possible memory leaks
+   */
+  public static void removePotentiallyLeakingReferences(@NotNull Container container) {
+    assert SwingUtilities.isEventDispatchThread();
+    AWTAccessor.getComponentAccessor().setParent(container, null);
+    container.removeAll();
+    for (ComponentListener c : container.getComponentListeners()) container.removeComponentListener(c);
+    for (FocusListener c : container.getFocusListeners()) container.removeFocusListener(c);
+    for (HierarchyListener c : container.getHierarchyListeners()) container.removeHierarchyListener(c);
+    for (HierarchyBoundsListener c : container.getHierarchyBoundsListeners()) container.removeHierarchyBoundsListener(c);
+    for (KeyListener c : container.getKeyListeners()) container.removeKeyListener(c);
+    for (MouseListener c : container.getMouseListeners()) container.removeMouseListener(c);
+    for (MouseMotionListener c : container.getMouseMotionListeners()) container.removeMouseMotionListener(c);
+    for (MouseWheelListener c : container.getMouseWheelListeners()) container.removeMouseWheelListener(c);
+    for (InputMethodListener c : container.getInputMethodListeners()) container.removeInputMethodListener(c);
+    for (PropertyChangeListener c : container.getPropertyChangeListeners()) container.removePropertyChangeListener(c);
+    for (ContainerListener c : container.getContainerListeners()) container.removeContainerListener(c);
   }
 }

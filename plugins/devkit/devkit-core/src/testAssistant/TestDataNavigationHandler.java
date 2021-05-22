@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -114,6 +114,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     });
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
+      .setNamerForFiltering(element -> Objects.requireNonNull(ContainerUtil.getFirstItem(element.getTitleFragments())).first)
       .setItemChoosenCallback(() -> {
         TestDataNavigationElement selectedElement = list.getSelectedValue();
         if (selectedElement != null) {

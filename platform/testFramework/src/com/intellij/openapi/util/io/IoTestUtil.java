@@ -4,9 +4,9 @@ package com.intellij.openapi.util.io;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -151,7 +151,7 @@ public final class IoTestUtil {
   }
 
   public static void assumeWslPresence() throws AssumptionViolatedException {
-    assumeTrue("'wsl.exe' not found in %Path%", PathEnvironmentVariableUtil.findInPath("wsl.exe") != null);
+    assumeTrue("'wsl.exe' not found in %Path%", WSLDistribution.findWslExe() != null);
   }
 
   @NotNull

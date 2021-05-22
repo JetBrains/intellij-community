@@ -51,7 +51,7 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
                                           .put("tomcat (local)", false)
                                           .put("tomcat (local) ", true).build());
 
-    s.myGeneralSettings = new MavenGeneralSettings();
+    s.myGeneralSettings = new MavenGeneralSettings(myProject);
     s.myGeneralSettings.setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy.WARN);
     s.myGeneralSettings.setFailureBehavior(MavenExecutionOptions.FailureMode.AT_END);
     s.myGeneralSettings.setOutputLevel(MavenExecutionOptions.LoggingLevel.FATAL);

@@ -4,10 +4,32 @@ package com.intellij.codeInspection.dataFlow.types;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 class DfLongConstantType extends DfConstantType<Long> implements DfLongType {
-  DfLongConstantType(long value) {
+  private final @Nullable LongRangeSet myWideRange;
+  
+  DfLongConstantType(long value, @Nullable LongRangeSet wideRange) {
     super(value);
+    myWideRange = wideRange;
+  }
+
+  @NotNull
+  @Override
+  public LongRangeSet getWideRange() {
+    return myWideRange == null ? getRange() : myWideRange;
+  }
+
+  @Override
+  public boolean isSuperType(@NotNull DfType other) {
+    return DfLongType.super.isSuperType(other);
+  }
+
+  @Override
+  public @NotNull DfType meet(@NotNull DfType other) {
+    return DfLongType.super.meet(other);
   }
 
   @NotNull
@@ -20,5 +42,10 @@ class DfLongConstantType extends DfConstantType<Long> implements DfLongType {
   @Override
   public LongRangeSet getRange() {
     return LongRangeSet.point(getValue());
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return this == obj || super.equals(obj) && Objects.equals(((DfLongConstantType)obj).myWideRange, myWideRange);
   }
 }

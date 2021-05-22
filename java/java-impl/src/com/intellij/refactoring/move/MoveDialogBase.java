@@ -4,6 +4,7 @@ package com.intellij.refactoring.move;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ public abstract class MoveDialogBase extends RefactoringDialog {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected String getMovePropertySuffix() {
     return getClass().getName();
   }
@@ -26,6 +28,7 @@ public abstract class MoveDialogBase extends RefactoringDialog {
    * @deprecated use {@link MoveDialogBase#MoveDialogBase(Project, boolean, boolean)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected @Nls String getCbTitle() {
     return null;
   }
@@ -36,6 +39,7 @@ public abstract class MoveDialogBase extends RefactoringDialog {
    * @deprecated use {@link MoveDialogBase#MoveDialogBase(Project, boolean, boolean)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected JCheckBox initOpenInEditorCb() {
     myOpenEditorCb = new JCheckBox(getCbTitle(), PropertiesComponent.getInstance().getBoolean(getRefactoringId() + ".OpenInEditor", true));
     return myOpenEditorCb;
@@ -47,6 +51,7 @@ public abstract class MoveDialogBase extends RefactoringDialog {
    * @deprecated use {@link MoveDialogBase#MoveDialogBase(Project, boolean, boolean)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected void saveOpenInEditorOption() {
     if (myOpenEditorCb != null) {
       PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", myOpenEditorCb.isSelected(), true);

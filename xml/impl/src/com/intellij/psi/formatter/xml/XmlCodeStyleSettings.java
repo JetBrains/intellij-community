@@ -72,9 +72,6 @@ public class XmlCodeStyleSettings extends CustomCodeStyleSettings {
   @Property(externalName = "keep_whitespaces_around_cdata")
   public int XML_WHITE_SPACE_AROUND_CDATA = WS_AROUND_CDATA_PRESERVE;
 
-  @Deprecated
-  public boolean XML_LEGACY_SETTINGS_IMPORTED = false;
-
   public XmlCodeStyleSettings(CodeStyleSettings container) {
     super("XML", container);
   }

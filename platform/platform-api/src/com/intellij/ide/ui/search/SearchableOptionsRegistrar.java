@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,7 +40,7 @@ public abstract class SearchableOptionsRegistrar{
 
   public abstract @NotNull Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable);
 
-  public abstract Set<String> getProcessedWordsWithoutStemming(@NotNull String text);
+  public abstract @NotNull Set<String> getProcessedWordsWithoutStemming(@NotNull String text);
 
   public abstract Set<String> getProcessedWords(@NotNull String text);
 }

@@ -36,8 +36,13 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor {
   @NotNull
   @Override
   public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+    return getDefaultUnixPythons(null);
+  }
+
+  @NotNull
+  public static Set<String> getDefaultUnixPythons(@Nullable String rootPrefix) {
     Set<String> candidates = new HashSet<>();
-    collectUnixPythons("/usr/bin", candidates);
+    collectUnixPythons((rootPrefix != null ? rootPrefix : "") + "/usr/bin", candidates);
     return candidates;
   }
 

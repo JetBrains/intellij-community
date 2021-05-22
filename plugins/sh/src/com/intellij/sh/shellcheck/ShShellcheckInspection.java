@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -56,9 +57,11 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
       JDOMExternalizerUtil.writeCustomField(node, SHELLCHECK_SETTINGS_TAG, joinedString);
     }
 
-    Project project = ProjectUtil.guessCurrentProject(myOptionsPanel);
-    EditorNotifications editorNotifications = EditorNotifications.getInstance(project);
-    editorNotifications.updateAllNotifications();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      Project project = ProjectUtil.guessCurrentProject(myOptionsPanel);
+      EditorNotifications editorNotifications = EditorNotifications.getInstance(project);
+      editorNotifications.updateAllNotifications();
+    }
   }
 
   @Nullable

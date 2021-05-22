@@ -86,7 +86,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
     //if the files already unversioned, there is no need to check it for ignore
     val unversioned = ChangeListManager.getInstance(repository.project).unversionedFilesPaths
-    filesToCheck.removeAll(unversioned)
+    unversioned.forEach(filesToCheck::remove)
 
     if (filesToCheck.isNotEmpty()) {
       removeIgnoredFiles(filesToCheck)

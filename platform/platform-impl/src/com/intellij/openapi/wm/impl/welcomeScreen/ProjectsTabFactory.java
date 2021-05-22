@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.ui.DocumentAdapter;
@@ -60,12 +61,29 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
     return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.projects.title"),
                                                            WelcomeScreenEventCollector.TabType.TabNavProject) {
 
+      private JPanel createBottomPanelForEmptyState() {
+        JPanel vPanel = new NonOpaquePanel();
+        vPanel.setLayout(new BoxLayout(vPanel, BoxLayout.PAGE_AXIS));
+        StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
+        boolean hasPromotion = false;
+        for (StartPagePromoter x : extensions) {
+          JPanel promotion = x.getPromotionForInitialState();
+          if (promotion == null) continue;
+          vPanel.add(promotion);
+          hasPromotion = true;
+        }
+        JPanel notification = createNotificationsPanel(parentDisposable);
+        if (!hasPromotion) return notification;
+        vPanel.add(notification);
+        return vPanel;
+      }
+
       @Override
       protected JComponent buildComponent() {
         JPanel mainPanel;
         if (RecentProjectListActionProvider.getInstance().getActions(false, true).isEmpty()) {
           mainPanel = JBUI.Panels.simplePanel(new EmptyStateProjectsPanel(parentDisposable))
-            .addToBottom(createNotificationsPanel(parentDisposable))
+            .addToBottom(createBottomPanelForEmptyState())
             .withBackground(getMainAssociatedComponentBackground());
         }
         else {

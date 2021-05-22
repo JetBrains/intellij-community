@@ -3,10 +3,10 @@ package com.intellij.lang.properties.xml;
 
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.lang.properties.PropertiesIcons;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
-import icons.PropertiesIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

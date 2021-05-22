@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,11 +38,13 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.MathUtil;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +90,7 @@ public class JBTabsImpl extends JComponent
   public final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<>();
   public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<>();
   public final ActionToolbar myMoreToolbar;
-  @Deprecated
+  public final NonOpaquePanel myTitleWrapper = new NonOpaquePanel();
   public Dimension myHeaderFitSize;
 
   private Insets myInnerInsets = JBUI.emptyInsets();
@@ -228,6 +231,7 @@ public class JBTabsImpl extends JComponent
    * @deprecated Do not pass ActionManager.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public JBTabsImpl(@Nullable Project project, @SuppressWarnings("unused") @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     this(project, focusManager, parent);
   }
@@ -431,6 +435,10 @@ public class JBTabsImpl extends JComponent
     myMoreToolbar.getComponent().setOpaque(false);
     myMoreToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     add(myMoreToolbar.getComponent());
+    add(myTitleWrapper);
+    Disposer.register(myParentDisposable, () -> {
+      setTitleProducer(null);
+    });
     final double[] directionAccumulator = new double[]{0};
     addMouseWheelListener(event -> {
 
@@ -592,8 +600,11 @@ public class JBTabsImpl extends JComponent
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
-      entry.getKey().revalidate();
-      entry.getValue().updateActionLabelPosition();
+      TabInfo info = entry.getKey();
+      TabLabel label = entry.getValue();
+
+      info.revalidate();
+      label.setTabActions(info.getTabLabelActions());
     }
     boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
     boolean newHideTabsIfNeeded = uiSettings.getHideTabsIfNeeded();
@@ -949,6 +960,22 @@ public class JBTabsImpl extends JComponent
     return lastLayout != null ? lastLayout.moreRect : null;
   }
 
+  private Rectangle getTitleRect() {
+    SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
+    return lastLayout != null ? lastLayout.titleRect : null;
+  }
+
+  @Override
+  public void setTitleProducer(@Nullable Producer<Pair<Icon, String>> titleProducer) {
+    myTitleWrapper.removeAll();
+    if (titleProducer != null) {
+      ActionToolbar toolbar = ActionManager.getInstance()
+        .createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, new DefaultActionGroup(new TitleAction(titleProducer)), true);
+      toolbar.setMiniMode(true);
+      myTitleWrapper.setContent(toolbar.getComponent());
+    }
+  }
+
   @Override
   public boolean canShowMorePopup() {
     if (NEW_TABS) {
@@ -989,6 +1016,9 @@ public class JBTabsImpl extends JComponent
   @Nullable
   private JComponent getToFocus() {
     final TabInfo info = getSelectedInfo();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("selected info: " + info);
+    }
 
     if (info == null) return null;
 
@@ -996,14 +1026,25 @@ public class JBTabsImpl extends JComponent
 
     if (isRequestFocusOnLastFocusedComponent() && info.getLastFocusOwner() != null && !isMyChildIsFocusedNow()) {
       toFocus = info.getLastFocusOwner();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("last focus owner: " + toFocus);
+      }
     }
 
     if (toFocus == null) {
       toFocus = info.getPreferredFocusableComponent();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("preferred focusable component: " + toFocus);
+      }
+
       if (toFocus == null) {
         return null;
       }
       final JComponent policyToFocus = myFocusManager.getFocusTargetFor(toFocus);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("focus target: " + policyToFocus);
+      }
+
       if (policyToFocus != null) {
         toFocus = policyToFocus;
       }
@@ -1752,6 +1793,21 @@ public class JBTabsImpl extends JComponent
           } else {
             myMoreToolbar.getComponent().setBounds(new Rectangle());
           }
+          Rectangle titleRect = getTitleRect();
+          if (titleRect != null) {
+            Dimension preferredSize = myTitleWrapper.getPreferredSize();
+            Rectangle bounds = new Rectangle(titleRect);
+            JBInsets.removeFrom(bounds, getLayoutInsets());
+            int xDiff = (bounds.width - preferredSize.width) / 2;
+            int yDiff = (bounds.height - preferredSize.height) / 2;
+            bounds.x += xDiff;
+            bounds.width -= 2 * xDiff;
+            bounds.y += yDiff;
+            bounds.height -= 2 * yDiff;
+            myTitleWrapper.setBounds(bounds);
+          } else {
+            myTitleWrapper.setBounds(new Rectangle());
+          }
           myTableLayout.myLastTableLayout = null;
           OnePixelDivider divider = mySplitter.getDivider();
           if (divider.getParent() == this) {
@@ -1887,6 +1943,7 @@ public class JBTabsImpl extends JComponent
    * @deprecated You should implement {@link JBTabsBorder} interface
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
   }
 
@@ -3076,11 +3133,6 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  @Deprecated
-  public int getInterTabSpaceLength() {
-    return getTabHGap();
-  }
-
   public int getTabHGap() {
     return -myBorder.getThickness();
   }
@@ -3549,6 +3601,7 @@ public class JBTabsImpl extends JComponent
    * @deprecated unused. You should move the painting logic to an implementation of {@link JBTabPainter} interface }
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public int getActiveTabUnderlineHeight() {
     return 0;
   }
@@ -3557,6 +3610,7 @@ public class JBTabsImpl extends JComponent
    * @deprecated Not used.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void dispose() {
   }
 
@@ -3564,6 +3618,7 @@ public class JBTabsImpl extends JComponent
    * @deprecated unused in current realization.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected static class ShapeInfo {
     public ShapeInfo() {
     }
@@ -3578,5 +3633,51 @@ public class JBTabsImpl extends JComponent
     public Insets insets;
     public Color from;
     public Color to;
+  }
+
+  private class TitleAction extends AnAction implements CustomComponentAction {
+    private final Producer<Pair<Icon, String>> myTitleProvider;
+    private final JLabel myLabel = new JLabel() {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        size.height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT);
+        return size;
+      }
+
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setFont(new TabLabel(JBTabsImpl.this, new TabInfo(null)).getLabelComponent().getFont());
+        setBorder(JBUI.Borders.empty(0, 5, 0, 6));
+      }
+    };
+
+    private TitleAction(@NotNull Producer<Pair<Icon, String>> titleProvider) {
+      myTitleProvider = titleProvider;
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      update();
+      return myLabel;
+    }
+
+    private void update() {
+      Pair<Icon, String> pair = myTitleProvider.produce();
+      myLabel.setIcon(pair.first);
+      //noinspection HardCodedStringLiteral
+      myLabel.setText(pair.second);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      //do nothing
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      update();
+    }
   }
 }

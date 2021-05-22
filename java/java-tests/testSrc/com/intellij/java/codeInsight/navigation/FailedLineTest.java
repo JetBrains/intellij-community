@@ -15,6 +15,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestStackTraceParser;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -79,6 +80,7 @@ public class FailedLineTest extends LightJavaCodeInsightFixtureTestCase {
       form.getTestsRootNode().addChild(test);
       test.setTestFailed("oops", "stacktrace", true);
 
+      ApplicationManager.getApplication().invokeLater(() -> DumbServiceImpl.getInstance(getProject()).setDumb(false));
       form.onTestingFinished(form.getTestsRootNode());
       AppExecutorUtil.getAppExecutorService().awaitTermination(1, TimeUnit.SECONDS);
     }

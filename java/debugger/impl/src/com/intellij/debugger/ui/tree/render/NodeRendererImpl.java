@@ -135,6 +135,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
    * @deprecated Override {@link #calcIdLabel(ValueDescriptor, DebugProcess, DescriptorLabelListener)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public String getIdLabel(Value value, DebugProcess process) {
     return DEPRECATED_VALUE;

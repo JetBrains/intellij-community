@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.Locale;
 
 /**
@@ -26,5 +28,6 @@ public final class SystemInfoRt {
   private static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   /** @deprecated inexact, please use {@code com.intellij.util.system.CpuArch} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final boolean is64Bit = !(ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32"));
 }

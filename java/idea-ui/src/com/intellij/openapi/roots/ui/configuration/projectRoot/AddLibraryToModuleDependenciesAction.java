@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator;
 import org.jetbrains.annotations.NotNull;
 
 public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
@@ -43,7 +44,7 @@ public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
     boolean visible = false;
     if (element instanceof LibraryProjectStructureElement) {
       final LibraryEx library = (LibraryEx)((LibraryProjectStructureElement)element).getLibrary();
-      visible = !LibraryEditingUtil.getSuitableModules(ModuleStructureConfigurable.getInstance(myProject), library.getKind(), library).isEmpty();
+      visible = !LibraryEditingUtil.getSuitableModules(myConfigurable.getProjectStructureConfigurable().getModulesConfig(), library.getKind(), library).isEmpty();
     }
     e.getPresentation().setVisible(visible);
   }
@@ -53,6 +54,7 @@ public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
     final LibraryProjectStructureElement element = (LibraryProjectStructureElement)myConfigurable.getSelectedElement();
     if (element == null) return;
     final Library library = element.getLibrary();
-    LibraryEditingUtil.showDialogAndAddLibraryToDependencies(library, myProject, false);
+    ProjectStructureValidator.showDialogAndAddLibraryToDependencies(library, myConfigurable.getProjectStructureConfigurable(),
+                                                                    false);
   }
 }

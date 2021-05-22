@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
@@ -90,13 +90,8 @@ internal enum class ImageType(private val suffix: String) {
   BASIC(""), RETINA("@2x"), DARCULA("_dark"), RETINA_DARCULA("@2x_dark");
 
   companion object {
-    fun getBasicName(file: Path, prefix: List<String>): String {
-      return getBasicName(file.fileName.toString(), prefix)
-    }
-
-    fun getBasicName(suffix: String, prefix: List<String>): String {
-      val name = FileUtilRt.getNameWithoutExtension(suffix)
-      return stripSuffix((prefix + name).joinToString("/"))
+    fun getBasicName(suffix: String, prefix: String): String {
+      return "$prefix/${stripSuffix(FileUtilRt.getNameWithoutExtension(suffix))}"
     }
 
     fun fromFile(file: Path): ImageType {
@@ -104,15 +99,16 @@ internal enum class ImageType(private val suffix: String) {
     }
 
     private fun fromName(name: String): ImageType {
-      if (name.endsWith(RETINA_DARCULA.suffix)) return RETINA_DARCULA
-      if (name.endsWith(RETINA.suffix)) return RETINA
-      if (name.endsWith(DARCULA.suffix)) return DARCULA
-      return BASIC
+      return when {
+        name.endsWith(RETINA_DARCULA.suffix) -> RETINA_DARCULA
+        name.endsWith(RETINA.suffix) -> RETINA
+        name.endsWith(DARCULA.suffix) -> DARCULA
+        else -> BASIC
+      }
     }
 
     fun stripSuffix(name: String): String {
-      val type = fromName(name)
-      return name.removeSuffix(type.suffix)
+      return name.removeSuffix(fromName(name).suffix)
     }
   }
 }

@@ -126,7 +126,7 @@ public abstract class TextFieldCompletionProvider implements TextCompletionProvi
       }
 
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         EditorEx result = super.createEditor();
         if (editorConstructionCallback != null) {
           editorConstructionCallback.consume(result);

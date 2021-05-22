@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.Decompressor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,6 +179,7 @@ public final class StartupActionScriptManager {
      * @deprecated Use {@link #CopyCommand(Path, Path)}
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     public CopyCommand(@NotNull File source, @NotNull File destination) {
       this.source = source.getAbsolutePath();
       this.destination = destination.getAbsolutePath();

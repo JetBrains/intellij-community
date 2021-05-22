@@ -368,6 +368,9 @@ public abstract class AnAction implements PossiblyDumbAware {
     return myWorksInInjected;
   }
 
+  /** @deprecated not used anymore */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isTransparentUpdate() {
     return this instanceof TransparentUpdate;
   }
@@ -433,6 +436,9 @@ public abstract class AnAction implements PossiblyDumbAware {
     return mySynonyms;
   }
 
+  /** @deprecated not used anymore */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public interface TransparentUpdate {
   }
 

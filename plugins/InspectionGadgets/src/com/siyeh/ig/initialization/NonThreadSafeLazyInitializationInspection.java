@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 
 /**
@@ -47,8 +48,7 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "non.thread.safe.lazy.initialization.problem.descriptor");
+    return InspectionGadgetsBundle.message("non.thread.safe.lazy.initialization.problem.descriptor");
   }
 
   @Override
@@ -60,9 +60,13 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
     if (!field.hasModifierProperty(PsiModifier.STATIC)) {
       return false;
     }
+    final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
     final int[] writeCount = new int[1];
     return ReferencesSearch.search(field).forEach(reference -> {
       final PsiElement element = reference.getElement();
+      if (!PsiTreeUtil.isAncestor(containingClass, element, true)) {
+        return false;
+      }
       if (!(element instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)element)) {
         return true;
       }
@@ -97,23 +101,20 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       return false;
     }
     final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
-    final PsiElement target = referenceExpression.resolve();
-    if (!field.equals(target)) {
+    if (!field.equals(referenceExpression.resolve())) {
       return false;
     }
-    final Collection<PsiReferenceExpression> referenceChildren =
-      PsiTreeUtil.findChildrenOfType(assignmentExpression.getRExpression(), PsiReferenceExpression.class);
-    for (PsiReferenceExpression child : referenceChildren) {
-      final PsiElement target2 = child.resolve();
-      if (!(target2 instanceof PsiMember)) {
-        return false;
-      }
-      final PsiMember member = (PsiMember)target2;
-      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
-        return false;
-      }
+    final boolean safe = PsiTreeUtil.processElements(assignmentExpression.getRExpression(), PsiReferenceExpression.class, ref -> {
+      final PsiElement target = ref.resolve();
+      return !(target instanceof PsiLocalVariable) && !(target instanceof PsiParameter);
+    });
+    if (!safe) {
+      return false;
     }
-    return true;
+    PsiElement[] elements = {assignmentExpression.getRExpression()};
+    final HashSet<PsiField> usedFields = new HashSet<>();
+    final PsiClass targetClass = field.getContainingClass();
+    return ExtractMethodProcessor.canBeStatic(targetClass, expressionStatement, elements, usedFields) && usedFields.isEmpty();
   }
 
   private static class IntroduceHolderFix extends InspectionGadgetsFix {
@@ -140,7 +141,7 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       @NonNls final String text = "private static final class " + holderName + " {}";
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(field.getProject());
       final PsiClass holder = elementFactory.createClassFromText(text, field).getInnerClasses()[0];
-      final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+      final PsiMember method = PsiTreeUtil.getParentOfType(expression, PsiMember.class);
       if (method == null) {
         return;
       }
@@ -149,7 +150,7 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       final PsiModifierList modifierList = newField.getModifierList();
       assert modifierList != null;
       modifierList.setModifierProperty(PsiModifier.FINAL, true);
-      if (!PsiUtil.isLanguageLevel11OrHigher(holderClass)) {
+      if (PsiUtil.isLanguageLevel11OrHigher(holderClass)) {
         modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
       }
       newField.setInitializer(rhs);
@@ -166,10 +167,9 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       }
       field.delete();
 
-      if (!isOnTheFly()) {
-        return;
+      if (isOnTheFly()) {
+        invokeInplaceRename(holderClass, holderName, suggestHolderName(field));
       }
-      invokeInplaceRename(holderClass, holderName, suggestHolderName(field));
     }
 
     private static void invokeInplaceRename(PsiNameIdentifierOwner nameIdentifierOwner, final String... suggestedNames) {
@@ -252,26 +252,17 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
     }
 
     private static boolean isInSynchronizedContext(PsiElement element) {
-      final PsiSynchronizedStatement syncBlock =
-        PsiTreeUtil.getParentOfType(element,
-                                    PsiSynchronizedStatement.class);
+      final PsiSynchronizedStatement syncBlock = PsiTreeUtil.getParentOfType(element, PsiSynchronizedStatement.class);
       if (syncBlock != null) {
         return true;
       }
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(element,
-                                    PsiMethod.class);
-      return method != null &&
-             method.hasModifierProperty(PsiModifier.SYNCHRONIZED)
-             && method.hasModifierProperty(PsiModifier.STATIC);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      return method != null && method.hasModifierProperty(PsiModifier.SYNCHRONIZED) && method.hasModifierProperty(PsiModifier.STATIC);
     }
 
     private static boolean isInStaticInitializer(PsiElement element) {
-      final PsiClassInitializer initializer =
-        PsiTreeUtil.getParentOfType(element,
-                                    PsiClassInitializer.class);
-      return initializer != null &&
-             initializer.hasModifierProperty(PsiModifier.STATIC);
+      final PsiClassInitializer initializer = PsiTreeUtil.getParentOfType(element, PsiClassInitializer.class);
+      return initializer != null && initializer.hasModifierProperty(PsiModifier.STATIC);
     }
   }
 }

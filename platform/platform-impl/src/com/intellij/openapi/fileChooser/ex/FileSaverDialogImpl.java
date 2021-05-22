@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
@@ -59,6 +60,42 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   @Override
   public @Nullable VirtualFileWrapper save(@Nullable Path baseDir, @Nullable String filename) {
     return save(baseDir == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir), filename);
+  }
+
+  @Override
+  protected void init() {
+    super.init();
+
+    // ensure that in the tree only the folder is selected once the user starts editing the file field
+    myFileName.getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void insertUpdate(DocumentEvent e) {
+        changed();
+      }
+
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+        changed();
+      }
+
+      @Override
+      public void changedUpdate(DocumentEvent e) {
+        changed();
+      }
+
+      private void changed() {
+        // when the file name changes AND has focus, then this is the user editing and not an automatic update after selecting a file.
+        if (myFileName.hasFocus()) {
+          // if the selected item is a file (not a directory), change the selection to the parent folder.
+          // this is the symmetric logic as in FileSaverDialogImpl.getFile()
+          if (myFileSystemTree.getSelectedFile() != null && !myFileSystemTree.getSelectedFile().isDirectory()) {
+            // now switch to parent folder of the file
+            myFileSystemTree.select(myFileSystemTree.getSelectedFile().getParent(), () -> {
+            });
+          }
+        }
+      }
+    });
   }
 
   @Override

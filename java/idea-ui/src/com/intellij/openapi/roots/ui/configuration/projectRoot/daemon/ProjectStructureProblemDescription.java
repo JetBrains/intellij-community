@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,7 @@ public class ProjectStructureProblemDescription {
    * @deprecated use the constructor with {@link HtmlChunk} for description.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                                             @Nullable @DetailedDescription String description,
                                             @NotNull PlaceInProjectStructure place,
@@ -75,6 +77,7 @@ public class ProjectStructureProblemDescription {
    * @deprecated use the constructor with {@link HtmlChunk} for description.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                                             @Nullable @DetailedDescription String description,
                                             @NotNull PlaceInProjectStructure place,

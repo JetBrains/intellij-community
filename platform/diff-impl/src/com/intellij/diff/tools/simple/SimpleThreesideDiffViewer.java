@@ -46,9 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
+import java.util.*;
 
 public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   @NotNull private final SimpleThreesideTextDiffProvider myTextDiffProvider;
@@ -218,7 +216,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     LineRange lineRange = DiffUtil.getAffectedLineRange(e);
     int shift = DiffUtil.countLinesShift(e);
 
-    List<SimpleThreesideDiffChange> invalid = new ArrayList<>();
+    Set<SimpleThreesideDiffChange> invalid = new HashSet<>();
     for (SimpleThreesideDiffChange change : myDiffChanges) {
       if (change.processChange(lineRange.start, lineRange.end, shift, side)) {
         invalid.add(change);

@@ -119,7 +119,7 @@ class DefaultLinkButtonUI : BasicButtonUI() {
     }
     if (g is Graphics2D && isFocused(button)) {
       g.color = Link.FOCUSED_BORDER_COLOR
-      val bounds = button.paintBounds()
+      val bounds = layout.bounds.also { JBInsets.addTo(it, button.focusInsets()) }
       val round = Registry.intValue("ide.link.button.focus.round.arc", 4)
       RectanglePainter.DRAW.paint(g, bounds.x, bounds.y, bounds.width, bounds.height, scale(round))
     }
@@ -163,8 +163,11 @@ private class Layout(button: AbstractButton, viewBounds: Rectangle, val fm: Font
     get() = iconBounds.union(textBounds)
 }
 
-private fun AbstractButton.viewBounds() = paintBounds().also { JBInsets.removeFrom(it, focusInsets()) }
-private fun AbstractButton.paintBounds() = Rectangle(width, height).also { JBInsets.removeFrom(it, insets) }
+private fun AbstractButton.viewBounds() = Rectangle(width, height).also {
+  JBInsets.removeFrom(it, insets)
+  JBInsets.removeFrom(it, focusInsets())
+}
+
 private fun AbstractButton.focusInsets(): Insets? {
   if (!isFocusPainted) return null
   val margin = scale(1)

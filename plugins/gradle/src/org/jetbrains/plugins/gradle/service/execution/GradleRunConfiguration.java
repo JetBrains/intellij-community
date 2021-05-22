@@ -3,8 +3,12 @@ package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.LocatableRunConfigurationOptions;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.LanguageRuntimeType;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
@@ -19,10 +23,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleIdeManager;
+import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-public class GradleRunConfiguration extends ExternalSystemRunConfiguration implements SMRunnerConsolePropertiesProvider {
+public class GradleRunConfiguration extends ExternalSystemRunConfiguration implements SMRunnerConsolePropertiesProvider,
+                                                                                      TargetEnvironmentAwareRunProfile {
 
   public static final String DEBUG_FLAG_NAME = "GradleScriptDebugEnabled";
   public static final String DEBUG_ALL_NAME = "DebugAllEnabled";
@@ -54,6 +60,12 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     putUserData(DEBUG_FLAG_KEY, Boolean.valueOf(isDebugServerProcess()));
     putUserData(DEBUG_ALL_KEY, Boolean.valueOf(isDebugAllEnabled));
     return super.getState(executor, env);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull LocatableRunConfigurationOptions getOptions() {
+    return super.getOptions();
   }
 
   @Override
@@ -101,5 +113,25 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
 
   public void setDebugAllEnabled(boolean debugAllEnabled) {
     isDebugAllEnabled = debugAllEnabled;
+  }
+
+  @Override
+  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
+    return true;
+  }
+
+  @Override
+  public @Nullable LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return LanguageRuntimeType.EXTENSION_NAME.findExtension(GradleRuntimeType.class);
+  }
+
+  @Override
+  public @Nullable String getDefaultTargetName() {
+    return getOptions().getRemoteTarget();
+  }
+
+  @Override
+  public void setDefaultTargetName(@Nullable String targetName) {
+    getOptions().setRemoteTarget(targetName);
   }
 }

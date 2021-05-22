@@ -27,6 +27,7 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -190,6 +191,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final Ref<Language> refErrorLanguage = new Ref<>();
     final Ref<Boolean> refProcessCanceled = new Ref<>();
     final Ref<Boolean> anyException = new Ref<>();
+    final Ref<Boolean> indexNotReadyException = new Ref<>();
 
     DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
@@ -202,6 +204,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
       catch (ProcessCanceledException e) {
         refProcessCanceled.set(Boolean.TRUE);
+      }
+      catch (IndexNotReadyException e) {
+        indexNotReadyException.set(Boolean.TRUE);
       }
       catch (Throwable e) {
         anyException.set(Boolean.TRUE);
@@ -218,7 +223,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       Messages.showErrorDialog(myProject, RefactoringBundle.message("unsupported.refs.found", refErrorLanguage.get().getDisplayName()), RefactoringBundle.message("error.title"));
       return;
     }
-    if (DumbService.isDumb(myProject)) {
+    if (!indexNotReadyException.isNull() || DumbService.isDumb(myProject)) {
       DumbService.getInstance(myProject).showDumbModeNotification(RefactoringBundle.message("refactoring.dumb.mode.notification"));
       return;
     }

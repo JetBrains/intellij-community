@@ -4,13 +4,14 @@ package com.intellij.codeInspection.classCanBeRecord;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
+import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -60,15 +61,16 @@ public class ClassCanBeRecordInspection extends BaseInspection {
 
   @Override
   public @Nullable JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
-    panel.add(new SingleCheckboxOptionsPanel(JavaBundle.message("class.can.be.record.suggest.renaming.accessors"), this,
-                                             "suggestAccessorsRenaming"));
+    JPanel panel = new InspectionOptionsPanel();
+    panel.add(new CheckBox(JavaBundle.message("class.can.be.record.suggest.renaming.accessors"), this,
+                           "suggestAccessorsRenaming"));
 
     panel.add(new JLabel(JavaBundle.message("class.can.be.record.conversion.weakens.member")));
     ButtonGroup butGr = new ButtonGroup();
     for (ConversionStrategy strategy : ConversionStrategy.values()) {
       JRadioButton radioBut = new JRadioButton(strategy.getMessage(), strategy == myConversionStrategy);
       radioBut.addActionListener(e -> myConversionStrategy = strategy);
+      radioBut.setBorder(JBUI.Borders.emptyLeft(20));
       butGr.add(radioBut);
       panel.add(radioBut);
     }

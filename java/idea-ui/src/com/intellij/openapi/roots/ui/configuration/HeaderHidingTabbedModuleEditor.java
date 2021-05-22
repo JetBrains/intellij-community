@@ -14,7 +14,7 @@ import javax.swing.*;
  */
 public abstract class HeaderHidingTabbedModuleEditor extends TabbedModuleEditor {
 
-  public HeaderHidingTabbedModuleEditor(Project project, ModulesProvider modulesProvider, @NotNull Module module) {
+  public HeaderHidingTabbedModuleEditor(@NotNull Project project, @NotNull ModulesConfigurator modulesProvider, @NotNull Module module) {
     super(project, modulesProvider, module);
   }
 

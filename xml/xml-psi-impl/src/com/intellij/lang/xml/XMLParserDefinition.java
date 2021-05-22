@@ -18,6 +18,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class XMLParserDefinition implements ParserDefinition {
@@ -80,6 +81,7 @@ public class XMLParserDefinition implements ParserDefinition {
    * @deprecated use {@link XMLParserDefinition#canStickTokensTogether(ASTNode, ASTNode)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static SpaceRequirements canStickTokensTogetherByLexerInXml(final ASTNode left,
                                                                                       final ASTNode right,
                                                                                       final Lexer lexer,

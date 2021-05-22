@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -127,6 +127,11 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
     myVariables.add(variable);
     return variable;
+  }
+
+  @Override
+  public void addVariable(@NotNull Variable variable) {
+    myVariables.add(variable);
   }
 
   @Override

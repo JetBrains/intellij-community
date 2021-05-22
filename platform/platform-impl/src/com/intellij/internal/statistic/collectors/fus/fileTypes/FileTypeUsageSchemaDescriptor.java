@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface FileTypeUsageSchemaDescriptor {
@@ -10,6 +11,7 @@ public interface FileTypeUsageSchemaDescriptor {
    * @deprecated use {@link FileTypeUsageSchemaDescriptor#describes(Project, VirtualFile)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default boolean describes(@NotNull VirtualFile file) {
     return false;
   }

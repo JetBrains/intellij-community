@@ -201,7 +201,7 @@ class ReadMostlyRWLock {
   private static final int SPIN_TO_WAIT_FOR_LOCK = 100;
 
   void writeIntentLock() {
-    //checkWriteThreadAccess();
+    checkWriteThreadAccess();
     for (int iter=0; ;iter++) {
       if (writeIntent.compareAndSet(false, true)) {
         assert !writeRequested;

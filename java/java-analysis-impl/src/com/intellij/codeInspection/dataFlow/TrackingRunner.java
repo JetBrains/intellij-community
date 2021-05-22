@@ -60,9 +60,8 @@ public final class TrackingRunner extends DataFlowRunner {
 
   private TrackingRunner(@NotNull PsiElement context,
                          PsiExpression expression,
-                         boolean unknownMembersAreNullable,
                          boolean ignoreAssertions) {
-    super(context.getProject(), context, unknownMembersAreNullable, ThreeState.fromBoolean(ignoreAssertions));
+    super(context.getProject(), context, ThreeState.fromBoolean(ignoreAssertions));
     myExpression = expression;
   }
 
@@ -121,13 +120,12 @@ public final class TrackingRunner extends DataFlowRunner {
   }
 
   @Nullable
-  public static CauseItem findProblemCause(boolean unknownAreNullables,
-                                           boolean ignoreAssertions,
+  public static CauseItem findProblemCause(boolean ignoreAssertions,
                                            PsiExpression expression,
                                            DfaProblemType type) {
     PsiElement body = DfaUtil.getDataflowContext(expression);
     if (body == null) return null;
-    TrackingRunner runner = new TrackingRunner(body, expression, unknownAreNullables, ignoreAssertions);
+    TrackingRunner runner = new TrackingRunner(body, expression, ignoreAssertions);
     if (!runner.analyze(expression, body)) return null;
     return runner.findProblemCause(expression, type);
   }
@@ -537,7 +535,7 @@ public final class TrackingRunner extends DataFlowRunner {
     if (value instanceof DfaVariableValue) {
       MemoryStateChange change = history.findRelation(
         (DfaVariableValue)value, rel -> rel.myRelationType == RelationType.EQ &&
-            DfConstantType.isConst(rel.myCounterpart.getDfType(), expectedValue), false);
+                                        rel.myCounterpart.getDfType().isConst(expectedValue), false);
       if (change != null) {
         PsiExpression varSourceExpression = change.getExpression();
         Instruction instruction = change.myInstruction;
@@ -629,7 +627,7 @@ public final class TrackingRunner extends DataFlowRunner {
             }
           }
           if (push.myInstruction instanceof PushValueInstruction &&
-              DfConstantType.isConst(((PushValueInstruction)push.myInstruction).getValue(), value) &&
+              ((PushValueInstruction)push.myInstruction).getValue().isConst(value) &&
               ((PushValueInstruction)push.myInstruction).getExpression() == expression) {
             push = push.getPrevious();
           }
@@ -664,7 +662,7 @@ public final class TrackingRunner extends DataFlowRunner {
           if (push != null &&
               ((push.myInstruction instanceof ConditionalGotoInstruction &&
                 ((ConditionalGotoInstruction)push.myInstruction).isTarget(value, history.myInstruction)) ||
-               DfConstantType.isConst(push.myTopOfStack.getDfType(), value))) {
+               push.myTopOfStack.getDfType().isConst(value))) {
             int andVal = and ? 1 : 0;
             CauseItem cause = new CauseItem(
               JavaAnalysisBundle.message("dfa.find.cause.operand.of.boolean.expression.is.the.same", i + 1, andVal == 1 ? 0 : 1, value),
@@ -1230,7 +1228,7 @@ public final class TrackingRunner extends DataFlowRunner {
       }
       if (owner instanceof PsiField && getFactory().canTrustFieldInitializer((PsiField)owner)) {
         Pair<PsiExpression, Nullability> fieldNullability =
-          NullabilityUtil.getNullabilityFromFieldInitializers((PsiField)owner, Nullability.UNKNOWN);
+          NullabilityUtil.getNullabilityFromFieldInitializers((PsiField)owner);
         if (fieldNullability.second == DfaNullability.toNullability(nullability)) {
           PsiExpression initializer = fieldNullability.first;
           if (initializer != null) {

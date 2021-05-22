@@ -37,10 +37,10 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
 
     if (s.getGeneralSettings() == null) {
       MavenGeneralSettings settings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
-      myPanel.getData(settings);
+      myPanel.initializeFormData(settings, myProject);
     }
     else {
-      myPanel.getData(s.getGeneralSettings());
+      myPanel.initializeFormData(s.getGeneralSettings(), myProject);
     }
   }
 

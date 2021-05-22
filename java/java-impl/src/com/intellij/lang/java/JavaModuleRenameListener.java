@@ -65,7 +65,7 @@ public class JavaModuleRenameListener implements ModuleListener {
       }
     }
 
-    if (!renamer.getElements().isEmpty()) {
+    if (renamer.hasAnythingToRename()) {
       AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(project, renamer);
       dialog.showOptionsPanel();
 

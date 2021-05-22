@@ -61,26 +61,6 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        @Override
-                       public boolean visitElement(@NotNull UElement node) {
-                         UNamedExpression namedExpr = ObjectUtils.tryCast(node, UNamedExpression.class);
-                         if (namedExpr == null) return false;
-                         UAnnotation ann = ObjectUtils.tryCast(namedExpr.getUastParent(), UAnnotation.class);
-                         if (ann == null) return false;
-                         String annFqn = ann.getQualifiedName();
-                         if (annFqn == null) return false;
-                         PsiMethod annMethod = UastUtils.getAnnotationMethod(namedExpr);
-                         if (annMethod == null) return false;
-                         RefMethod annRefMethod = ObjectUtils.tryCast(refFrom.getRefManager().getReference(annMethod), RefMethod.class);
-                         if (annRefMethod == null) return false;
-                         RefJavaElementImpl annRefClass = ObjectUtils.tryCast(
-                           annRefMethod.getRefManager().getReference(annMethod.getContainingClass()), RefJavaElementImpl.class);
-                         if (annRefClass != null) {
-                           annRefClass.addReference(annRefMethod, annMethod.getOriginalElement(), decl, false, true, null);
-                         }
-                         return false;
-                       }
-
-                       @Override
                        public boolean visitTypeReferenceExpression(@NotNull UTypeReferenceExpression node) {
                          PsiType type = node.getType();
                          visitTypeRefs(type);

@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public final class InternalDecorator extends JPanel implements Queryable, DataProvider, ComponentWithMnemonics {
+public final class InternalDecorator extends ToolwindowHeaderDecorator implements Queryable, DataProvider, ComponentWithMnemonics {
   private final ToolWindowImpl toolWindow;
 
   @Nullable
@@ -52,15 +52,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
    */
   static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
 
-  // see ToolWindowViewModeAction and ToolWindowMoveAction
-  public static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
-  public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
-  public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
-
   private final ToolWindowHeader header;
 
   InternalDecorator(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUi contentUi, @NotNull JComponent decoratorChild) {
-    super(new BorderLayout());
+    setLayout(new BorderLayout());
 
     this.toolWindow = toolWindow;
 
@@ -95,6 +90,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     setBorder(new InnerPanelBorder(toolWindow));
   }
 
+  @Override
   public ActionToolbar getHeaderToolbar() {
     return header.getToolbar();
   }
@@ -278,14 +274,17 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return toolWindow;
   }
 
+  @Override
   public int getHeaderHeight() {
     return header.getPreferredSize().height;
   }
 
+  @Override
   public void setHeaderVisible(boolean value) {
     header.setVisible(value);
   }
 
+  @Override
   public boolean isHeaderVisible() {
     return header.isVisible();
   }

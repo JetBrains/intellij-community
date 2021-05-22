@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
@@ -38,7 +38,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   @CompileStatic(TypeCheckingMode.SKIP)
-  void copyFilesForOsDistribution(@NotNull Path unixDistPath) {
+  void copyFilesForOsDistribution(@NotNull Path unixDistPath, JvmArchitecture arch = null) {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
 
     Path distBinDir = unixDistPath.resolve("bin")
@@ -65,6 +65,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(Path osSpecificDistPath) {
+    copyFilesForOsDistribution(osSpecificDistPath)
     buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledJre) {
         buildContext.executeStep("Build Linux .tar.gz without bundled JRE", BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {

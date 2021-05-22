@@ -602,10 +602,10 @@ public final class ChangeListWorker {
                                        @NotNull List<String> afterChangeListsIds) {
     myReadOnlyChangesCacheInvalidated.set(true);
 
-    HashSet<String> removed = new HashSet<>(beforeChangeListsIds);
-    removed.removeAll(afterChangeListsIds);
-    HashSet<String> added = new HashSet<>(afterChangeListsIds);
-    added.removeAll(beforeChangeListsIds);
+    Set<String> removed = new HashSet<>(beforeChangeListsIds);
+    afterChangeListsIds.forEach(removed::remove);
+    Set<String> added = new HashSet<>(afterChangeListsIds);
+    beforeChangeListsIds.forEach(added::remove);
 
     if (!removed.isEmpty() || !added.isEmpty()) {
       // We can't take CLM.LOCK here, so LocalChangeList will be created in delayed notificator itself

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
@@ -23,7 +23,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -299,7 +299,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       panel.add(Box.createVerticalStrut(10));
       for (Configurable current : group.getConfigurables()) {
         //noinspection DialogTitleCapitalization (title case is OK here)
-        LinkLabel<?> label = LinkLabel.create(current.getDisplayName(), () -> openLink(current));
+        ActionLink label = new ActionLink(current.getDisplayName(), e -> { openLink(current); });
         label.setBorder(JBUI.Borders.empty(1, 17, 3, 1));
         panel.add(label);
       }

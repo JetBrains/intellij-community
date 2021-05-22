@@ -149,13 +149,9 @@ public abstract class ActionManager {
   @Nullable
   public abstract AnAction getActionOrStub(@NotNull @NonNls String id);
 
-  public abstract void addTimerListener(int delay, @NotNull TimerListener listener);
+  public abstract void addTimerListener(int unused, @NotNull TimerListener listener);
 
   public abstract void removeTimerListener(@NotNull TimerListener listener);
-
-  public abstract void addTransparentTimerListener(int delay, @NotNull TimerListener listener);
-
-  public abstract void removeTransparentTimerListener(@NotNull TimerListener listener);
 
   @NotNull
   public abstract ActionCallback tryToExecute(@NotNull AnAction action, @NotNull InputEvent inputEvent, @Nullable Component contextComponent,
@@ -165,12 +161,14 @@ public abstract class ActionManager {
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addAnActionListener(AnActionListener listener);
 
   /**
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addAnActionListener(AnActionListener listener, Disposable parentDisposable) {
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, listener);
   }
@@ -179,6 +177,7 @@ public abstract class ActionManager {
    * @deprecated Use {@link AnActionListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removeAnActionListener(AnActionListener listener);
 
   @Nullable

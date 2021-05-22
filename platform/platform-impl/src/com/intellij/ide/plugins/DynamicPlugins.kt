@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -277,6 +277,11 @@ object DynamicPlugins {
       if (subDescriptor == null) {
         // <depends optional="true">XPathView</depends> Here subDescriptor will be null.
         return@processLoadedOptionalDependenciesOnPlugin true
+      }
+
+      if (!ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(mainDescriptor.pluginId, subDescriptor.packagePrefix)) {
+        dependencyMessage = "Plugin ${subDescriptor.pluginId} that optionally depends on ${descriptor.pluginId} does not have a separate classloader for the dependency"
+        return@processLoadedOptionalDependenciesOnPlugin false
       }
 
       dependencyMessage = checkCanUnloadWithoutRestart(subDescriptor, mainDescriptor, subDescriptor.pluginId, context)
@@ -969,17 +974,6 @@ object DynamicPlugins {
     val snapshotPath = System.getProperty("memory.snapshots.path", SystemProperties.getUserHome()) + "/" + snapshotFileName
 
     MemoryDumpHelper.captureMemoryDump(snapshotPath)
-    notify(
-      IdeBundle.message("memory.snapshot.captured.text", snapshotPath, snapshotFileName),
-      NotificationType.WARNING,
-      object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {
-        override fun actionPerformed(e: AnActionEvent) = ApplicationManager.getApplication().restart()
-      },
-      object : AnAction(
-        IdeBundle.message("memory.snapshot.captured.action.text", snapshotFileName, RevealFileAction.getFileManagerName())), DumbAware {
-        override fun actionPerformed(e: AnActionEvent) = RevealFileAction.openFile(Paths.get(snapshotPath))
-      }
-    )
 
     if (classloadersFromUnloadedPlugins[pluginId] == null) {
       LOG.info("Successfully unloaded plugin $pluginId (classloader collected during memory snapshot generation)")
@@ -998,6 +992,18 @@ object DynamicPlugins {
         LOG.info("Snapshot analysis result: $analysisResult")
       }
     }
+
+    notify(
+      IdeBundle.message("memory.snapshot.captured.text", snapshotPath, snapshotFileName),
+      NotificationType.WARNING,
+      object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {
+        override fun actionPerformed(e: AnActionEvent) = ApplicationManager.getApplication().restart()
+      },
+      object : AnAction(
+        IdeBundle.message("memory.snapshot.captured.action.text", snapshotFileName, RevealFileAction.getFileManagerName())), DumbAware {
+        override fun actionPerformed(e: AnActionEvent) = RevealFileAction.openFile(Paths.get(snapshotPath))
+      }
+    )
 
     LOG.info("Plugin $pluginId is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
     return false

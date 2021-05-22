@@ -122,6 +122,7 @@ public abstract class PsiAugmentProvider {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<? extends Psi> type) {
     return collectAugments(element, type, null);
   }

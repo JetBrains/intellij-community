@@ -4,6 +4,7 @@
 #import "VMOptionsReader.h"
 #import "PropertyFileReader.h"
 #import "utils.h"
+#import "rosetta.h"
 #import <AppKit/AppKit.h>
 #import <dlfcn.h>
 
@@ -495,16 +496,20 @@ BOOL validationJavaVersion(){
     if (!ok) {
         NSLog(@"Cannot load JVM bundle: %@", error);
         int ret = -1;
+
 #ifdef __arm64__
-        char **new_argv = calloc(argc + 3, sizeof(char *));
+        requestRosetta(@(argv[0]));
+
+        char **new_argv = calloc((size_t) argc + 3, sizeof(char *));
         new_argv[0] = "/usr/bin/arch";
         new_argv[1] = "-x86_64";
         memcpy(&new_argv[2], argv, argc * sizeof(char *));
 
         NSLog(@"Retrying as x86_64...");
         ret = execv("/usr/bin/arch", new_argv);
-        perror("Couldn't launch as x86_64");
+        perror("Could not launch as x86_64");
 #endif
+
         exit(ret);
     }
 

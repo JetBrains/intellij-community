@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.slicer.*;
@@ -37,6 +38,11 @@ public class SliceBackwardTest extends SliceTestCase {
 
   private void doTest(@NotNull String filter) throws Exception {
     doTest(filter, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_16;
   }
 
   private void doTest(@NotNull String filter, @NotNull String @NotNull... stack) throws Exception {
@@ -127,5 +133,9 @@ public class SliceBackwardTest extends SliceTestCase {
   
   public void testStackFilterBridgeMethod2() throws Exception {
     doTest("null", "MainTest$Bar:get", "MainTest$Bar:get", "MainTest:bar", "MainTest:main");
-  }                                                               
+  }
+  
+  public void testRecordComponent() throws Exception { doTest();}
+  public void testRecordComponent2() throws Exception { doTest();}
+  public void testRecordComponent3() throws Exception { doTest();}
 }

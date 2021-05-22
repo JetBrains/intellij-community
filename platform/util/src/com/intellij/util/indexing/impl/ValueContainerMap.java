@@ -99,6 +99,10 @@ class ValueContainerMap<Key, Value> {
     myPersistentMap.close();
   }
 
+  void closeAndDelete() throws IOException {
+    myPersistentMap.closeAndDelete();
+  }
+
   void markDirty() throws IOException {
     myPersistentMap.markDirty();
   }

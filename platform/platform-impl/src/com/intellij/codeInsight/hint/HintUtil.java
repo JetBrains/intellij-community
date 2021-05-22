@@ -10,12 +10,14 @@ import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,11 +34,11 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public final class HintUtil {
   /** @deprecated use getInformationColor() */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Color INFORMATION_COLOR = new JBColor(0xF7F7F7, 0x4B4D4D);
   public static final Color INFORMATION_BORDER_COLOR = JBColor.namedColor("InformationHint.borderColor", new JBColor(0xE0E0E0, 0x5C5E61));
   /** @deprecated use getErrorColor() */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Color ERROR_COLOR = new JBColor(0xffdcdc, 0x781732);
 
   public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
@@ -204,7 +206,7 @@ public final class HintUtil {
     label.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
     label.setBackground(JBUI.CurrentTheme.Advertiser.background());
     label.setOpaque(true);
-    label.setFont(label.getFont().deriveFont((float)(label.getFont().getSize() - 2)));
+    label.setFont(RelativeFont.NORMAL.fromResource("Popup.Advertiser.fontSizeOffset", -2, JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont()));
     if (bottomText != null) {
       label.setBorder(border);
     }

@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.SimpleEditorCustomization;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -48,16 +49,13 @@ import java.util.function.Function;
  * @author Denis Zhdanov
  */
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
-  /**
-   * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getEnabledCustomization()} instead
-   */
-  @Deprecated public static final SpellCheckingEditorCustomization ENABLED =
-    (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
 
   /**
    * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getDisabledCustomization()} instead
    */
-  @Deprecated public static final SpellCheckingEditorCustomization DISABLED =
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final SpellCheckingEditorCustomization DISABLED =
     (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
 
   private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();

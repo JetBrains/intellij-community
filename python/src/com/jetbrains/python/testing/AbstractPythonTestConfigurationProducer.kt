@@ -7,6 +7,7 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Parent of all test configuration producers
@@ -18,6 +19,7 @@ abstract class AbstractPythonTestConfigurationProducer<T : AbstractPythonTestRun
    * @deprecated Override [getConfigurationFactory].
    */
   @Deprecated("Override getConfigurationFactory")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   constructor(configurationFactory: ConfigurationFactory) : super(configurationFactory)
 
   /**

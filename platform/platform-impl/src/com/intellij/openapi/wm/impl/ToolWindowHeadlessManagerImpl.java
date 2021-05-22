@@ -371,7 +371,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
     }
 
     @Override
-    public @NotNull InternalDecorator getDecorator() {
+    public @NotNull ToolwindowHeaderDecorator getDecorator() {
       throw new IncorrectOperationException();
     }
 

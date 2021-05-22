@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +30,12 @@ final class EdtExecutorServiceImpl extends EdtExecutorService {
   @Override
   public void execute(@NotNull Runnable command, @NotNull ModalityState modalityState) {
     Application application = ApplicationManager.getApplication();
+    execute(command, modalityState, application == null ? Conditions.alwaysFalse() : application.getDisposed());
+  }
+
+  @Override
+  public void execute(@NotNull Runnable command, @NotNull ModalityState modalityState, @NotNull Condition<?> expired) {
+    Application application = ApplicationManager.getApplication();
     if (shouldManifestExceptionsImmediately() && !(command instanceof FlippantFuture)) {
       command = new FlippantFuture<>(Executors.callable(command, null));
     }
@@ -36,7 +44,7 @@ final class EdtExecutorServiceImpl extends EdtExecutorService {
       EventQueue.invokeLater(command);
     }
     else {
-      application.invokeLater(command, modalityState);
+      application.invokeLater(command, modalityState, expired);
     }
   }
 

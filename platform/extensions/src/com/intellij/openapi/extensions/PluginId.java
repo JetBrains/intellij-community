@@ -2,6 +2,7 @@
 package com.intellij.openapi.extensions;
 
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,7 @@ public final class PluginId implements Comparable<PluginId> {
    * @deprecated Use {@link #getRegisteredIdList}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static synchronized @NotNull Map<String, PluginId> getRegisteredIds() {
     return CollectionFactory.createSmallMemoryFootprintMap(ourRegisteredIds);
   }

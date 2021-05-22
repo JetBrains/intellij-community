@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui
 
 import com.intellij.space.chat.model.api.SpaceChatItem
@@ -12,7 +12,8 @@ internal class SpaceChatItemListModel : AbstractListModel<SpaceChatItem>() {
 
   override fun getSize() = items.size
 
-  fun messageListUpdated(newItems: List<SpaceChatItem>) {
+  fun messageListUpdated(new: List<SpaceChatItem>) {
+    val newItems = keepOldItemsState(new)
     val oldItems = ArrayList(items)
 
     items.clear()
@@ -28,6 +29,25 @@ internal class SpaceChatItemListModel : AbstractListModel<SpaceChatItem>() {
     }
     if (newItems.size > oldItems.size) {
       fireIntervalAdded(this, oldItems.size, newItems.size - 1)
+    }
+  }
+
+  private fun keepOldItemsState(new: List<SpaceChatItem>): List<SpaceChatItem> {
+    val oldItems = items.associateBy { it.id }
+    return List(new.size) { i ->
+      val newItem = new[i]
+      val oldItem = oldItems[newItem.id]
+      if (oldItem == newItem) {
+        // if nothing changed, keep old reference
+        oldItem
+      }
+      else {
+        if (oldItem != null) {
+          // if smth changed, keep loadingThread state
+          newItem.loadingThread.value = oldItem.loadingThread.value
+        }
+        newItem
+      }
     }
   }
 }

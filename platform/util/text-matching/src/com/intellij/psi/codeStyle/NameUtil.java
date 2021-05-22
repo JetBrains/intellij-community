@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.text.NameUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -267,6 +268,7 @@ public final class NameUtil {
    * @deprecated use {@link com.intellij.util.text.Matcher}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public interface Matcher {
     boolean matches(@NotNull String name);
   }

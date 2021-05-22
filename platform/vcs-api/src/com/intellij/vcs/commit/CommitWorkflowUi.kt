@@ -44,6 +44,8 @@ interface CommitMessageUi : TextAccessor {
   override fun setText(text: String?)
 
   fun focus()
+  fun startLoading()
+  fun stopLoading()
 }
 
 interface CommitExecutorListener : EventListener {

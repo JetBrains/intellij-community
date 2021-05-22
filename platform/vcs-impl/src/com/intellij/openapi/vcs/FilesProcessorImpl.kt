@@ -28,7 +28,7 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
     Disposer.register(parentDisposable, this)
   }
 
-  override fun processFiles(files: List<VirtualFile>): List<VirtualFile> {
+  override fun processFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
     val filteredFiles = doFilterFiles(files)
 
     if (filteredFiles.isEmpty()) return files
@@ -52,7 +52,13 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
   }
 
   @Synchronized
-  protected fun removeFiles(filesToRemove: Collection<VirtualFile>): Boolean = files.removeAll(filesToRemove)
+  protected fun removeFiles(filesToRemove: Collection<VirtualFile>): Boolean {
+    var modified = false
+    for (it in filesToRemove) {
+      modified = modified || files.remove(it)
+    }
+    return modified
+  }
 
   @Synchronized
   protected fun isFilesEmpty() = files.isEmpty()

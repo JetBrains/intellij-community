@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.service;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutorService;
@@ -29,6 +30,7 @@ public abstract class SharedThreadPool implements ExecutorService {
    * @deprecated Use {@link #submit(Runnable)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public abstract Future<?> executeOnPooledThread(@NotNull Runnable action);
 }

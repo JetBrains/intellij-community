@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import org.jetbrains.annotations.Nullable;
@@ -52,14 +53,14 @@ public abstract class ProjectStructureValidator {
     element.check(problemsHolder);
   }
 
-  public static void showDialogAndAddLibraryToDependencies(final Library library, final Project project, boolean allowEmptySelection) {
+  public static void showDialogAndAddLibraryToDependencies(final Library library, final ProjectStructureConfigurable projectStructureConfigurable, boolean allowEmptySelection) {
     for (ProjectStructureValidator validator : EP_NAME.getExtensions()) {
-      if (validator.addLibraryToDependencies(library, project, allowEmptySelection)) {
+      if (validator.addLibraryToDependencies(library, projectStructureConfigurable.getProject(), allowEmptySelection)) {
         return;
       }
     }
 
-    final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
+    final ModuleStructureConfigurable moduleStructureConfigurable = projectStructureConfigurable.getModulesConfig();
     final List<Module> modules =
       LibraryEditingUtil.getSuitableModules(moduleStructureConfigurable, ((LibraryEx)library).getKind(), library);
     if (modules.isEmpty()) return;

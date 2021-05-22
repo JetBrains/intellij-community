@@ -123,7 +123,7 @@ public final class GitPushRepoResult {
 
   @NlsSafe
   @Nullable
-  String getError() {
+  public String getError() {
     return myError;
   }
 

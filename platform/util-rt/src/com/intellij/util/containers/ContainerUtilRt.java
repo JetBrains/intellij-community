@@ -3,6 +3,7 @@ package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ public final class ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static <K, V> HashMap<K, V> newHashMap() {
     return new HashMap<K, V>();
   }
@@ -58,6 +60,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newArrayList(Object[])} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
@@ -72,6 +75,7 @@ public final class ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static <T> HashSet<T> newHashSet() {
     return new HashSet<T>();
   }
@@ -80,6 +84,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(Object[])}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
@@ -103,6 +108,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newLinkedHashSet(Object[])}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
@@ -115,6 +121,7 @@ public final class ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
     return new TreeSet<T>();
   }
@@ -197,6 +204,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#emptyList()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> emptyList() {
@@ -208,6 +216,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#addIfNotNull(Collection, Object)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
     if (element != null) {
       result.add(element);
@@ -221,6 +230,7 @@ public final class ContainerUtilRt {
   @Deprecated
   @NotNull
   @Contract(pure=true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     if (collection.isEmpty()) return emptyList();
     List<V> list = new ArrayList<V>(collection.size());

@@ -30,17 +30,6 @@ public final class TextOccurrencesUtil {
     TextOccurrencesUtilBase.addTextOccurrences(element, stringToSearch, searchScope, results, factory);
   }
 
-    /** @deprecated Use {@link TextOccurrencesUtil#processUsagesInStringsAndComments(
-     * PsiElement, SearchScope, String, boolean, PairProcessor)} */
-  @Deprecated
-  public static boolean processUsagesInStringsAndComments(@NotNull PsiElement element,
-                                                          @NotNull String stringToSearch,
-                                                          boolean ignoreReferences,
-                                                          @NotNull PairProcessor<? super PsiElement, ? super TextRange> processor) {
-    return processUsagesInStringsAndComments(element, GlobalSearchScope.projectScope(element.getProject()),
-                                             stringToSearch, ignoreReferences, processor);
-  }
-
   public static boolean processUsagesInStringsAndComments(@NotNull PsiElement element,
                                                           @NotNull SearchScope searchScope,
                                                           @NotNull String stringToSearch,

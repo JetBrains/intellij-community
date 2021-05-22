@@ -75,11 +75,6 @@ public abstract class LfeBaseProxyAction extends AnAction {
   }
 
   @Override
-  public boolean isTransparentUpdate() {
-    return originalAction.isTransparentUpdate();
-  }
-
-  @Override
   public boolean isDumbAware() {
     return originalAction.isDumbAware();
   }

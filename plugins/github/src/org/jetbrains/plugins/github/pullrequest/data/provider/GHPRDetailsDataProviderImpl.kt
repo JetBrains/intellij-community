@@ -4,11 +4,13 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.EventDispatcher
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
@@ -59,14 +61,20 @@ class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService
   }
 
   override fun adjustReviewers(indicator: ProgressIndicator,
-                               delta: CollectionDelta<GHPullRequestRequestedReviewer>) =
-    detailsService.adjustReviewers(indicator, pullRequestId, delta).notify()
+                               delta: CollectionDelta<GHPullRequestRequestedReviewer>): CompletableFuture<Unit> {
+    indicator.text = GithubBundle.message("pull.request.details.adjusting.reviewers")
+    return detailsService.adjustReviewers(indicator, pullRequestId, delta).notify()
+  }
 
-  override fun adjustAssignees(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>) =
-    detailsService.adjustAssignees(indicator, pullRequestId, delta).notify()
+  override fun adjustAssignees(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>): CompletableFuture<Unit> {
+    indicator.text = GithubBundle.message("pull.request.details.adjusting.assignees")
+    return detailsService.adjustAssignees(indicator, pullRequestId, delta).notify()
+  }
 
-  override fun adjustLabels(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>) =
-    detailsService.adjustLabels(indicator, pullRequestId, delta).notify()
+  override fun adjustLabels(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>): CompletableFuture<Unit> {
+    indicator.text = GithubBundle.message("pull.request.details.adjusting.labels")
+    return detailsService.adjustLabels(indicator, pullRequestId, delta).notify()
+  }
 
   override fun addDetailsReloadListener(disposable: Disposable, listener: () -> Unit) =
     detailsRequestValue.addDropEventListener(disposable, listener)

@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.ActionGroupUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +38,7 @@ public class SmartPopupActionGroup extends DefaultActionGroup {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    int size = ActionGroupUtil.activeActionTraverser(this, e, LaterInvocator.isInModalContext()).traverse().take(3).size();
+    int size = ActionGroupUtil.getActiveActions(this, e).take(3).size();
     e.getPresentation().setEnabledAndVisible(size > 0);
     myCachedIsPopup = size > 2;
   }

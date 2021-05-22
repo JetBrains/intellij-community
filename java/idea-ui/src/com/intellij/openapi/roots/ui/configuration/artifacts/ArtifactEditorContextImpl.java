@@ -30,7 +30,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactModel;
@@ -107,24 +106,24 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
 
   @Override
   public void selectArtifact(@NotNull Artifact artifact) {
-    ProjectStructureConfigurable.getInstance(getProject()).select(artifact, true);
+    myParent.getProjectStructureConfigurable().select(artifact, true);
   }
 
   @Override
   public void selectFacet(@NotNull Facet<?> facet) {
-    ProjectStructureConfigurable.getInstance(getProject()).select(facet, true);
+    myParent.getProjectStructureConfigurable().select(facet, true);
   }
 
   @Override
   public void selectModule(@NotNull Module module) {
-    ProjectStructureConfigurable.getInstance(getProject()).select(module.getName(), null, true);
+    myParent.getProjectStructureConfigurable().select(module.getName(), null, true);
   }
 
   @Override
   public void selectLibrary(@NotNull Library library) {
     final LibraryTable table = library.getTable();
     if (table != null) {
-      ProjectStructureConfigurable.getInstance(getProject()).selectProjectOrGlobalLibrary(library, true);
+      myParent.getProjectStructureConfigurable().selectProjectOrGlobalLibrary(library, true);
     }
     else {
       final Module module = ((LibraryEx)library).getModule();
@@ -136,7 +135,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
             final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
             if (libraryName != null && libraryName.equals(libraryEntry.getLibraryName())
                || libraryName == null && library.equals(libraryEntry.getLibrary())) {
-              ProjectStructureConfigurable.getInstance(getProject()).selectOrderEntry(module, libraryEntry);
+              myParent.getProjectStructureConfigurable().selectOrderEntry(module, libraryEntry);
               return;
             }
           }

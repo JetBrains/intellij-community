@@ -259,7 +259,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
         if (facade.getResolveHelper().isAccessible(method, target, aClass)) {
           final PsiMethodMember methodMember = new PsiMethodMember(method, methodSubstitutor);
           methodInstances.add(methodMember);
-          if (!existingSignatures.contains(signature)) {
+          if (!existingSignatures.contains(signature) && !method.hasModifierProperty(PsiModifier.STATIC)) {
             selection.add(methodMember);
           }
         }

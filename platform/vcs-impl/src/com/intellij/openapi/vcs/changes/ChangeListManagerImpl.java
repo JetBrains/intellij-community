@@ -765,6 +765,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
    * @deprecated use {@link #getUnversionedFilesPaths}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public List<VirtualFile> getUnversionedFiles() {
     return mapNotNull(getUnversionedFilesPaths(), FilePath::getVirtualFile);
@@ -795,6 +796,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
    * @deprecated use {@link #getIgnoredFilePaths}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @NotNull
   public List<VirtualFile> getIgnoredFiles() {
     return mapNotNull(getIgnoredFilePaths(), FilePath::getVirtualFile);

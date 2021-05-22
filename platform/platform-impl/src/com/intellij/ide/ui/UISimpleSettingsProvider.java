@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 /**
  * @author Konstantin Bulenkov
  */
-public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTopHitProvider.CoveredByToggleActions {
+final class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTopHitProvider.CoveredByToggleActions {
   private static final OptionDescription HIDE_TOOL_STRIPES = AppearanceOptionsTopHitProvider.appearance(IdeBundle.message("option.hide.tool.window.bars"), "hideToolStripes");
   private static final OptionDescription IS_BLOCK_CURSOR = EditorOptionsTopHitProvider.editor(IdeBundle.message("label.show.block.cursor"), "IS_BLOCK_CURSOR");
   private static final OptionDescription IS_WHITESPACES_SHOWN = EditorOptionsTopHitProvider.editor(IdeBundle.message("label.show.whitespaces"), "IS_WHITESPACES_SHOWN");
@@ -36,14 +36,5 @@ public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTo
     else if (StringUtil.isBetween(pattern, "line ", "line numbers ") || StringUtil.isBetween(pattern, "show li", "show line numbers ")) {
       collector.accept(ARE_LINE_NUMBERS_SHOWN);
     }
-  }
-
-  private static boolean patternContains(String pattern, String search) {
-    for (String s : pattern.split(" ")) {
-      if (s.contains(search)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

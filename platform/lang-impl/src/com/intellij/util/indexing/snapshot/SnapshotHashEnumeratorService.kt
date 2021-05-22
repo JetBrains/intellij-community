@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.snapshot
 
 import com.intellij.openapi.components.Service
@@ -10,7 +10,6 @@ import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.io.IOUtil
 import java.io.Closeable
-import java.io.File
 import java.io.IOException
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -51,10 +50,10 @@ internal class SnapshotHashEnumeratorService : Closeable {
   fun initialize(): Boolean {
     lock.withLock {
       if (state == State.CLOSED) {
-        val hashEnumeratorFile = File(IndexInfrastructure.getPersistentIndexRoot(), "textContentHashes")
+        val hashEnumeratorFile = IndexInfrastructure.getPersistentIndexRoot().resolve("textContentHashes")
         state = State.OPEN
         contentHashEnumerator =
-          IOUtil.openCleanOrResetBroken({ ContentHashEnumerator(hashEnumeratorFile.toPath()) },
+          IOUtil.openCleanOrResetBroken({ ContentHashEnumerator(hashEnumeratorFile) },
                                         {
                                           IOUtil.deleteAllFilesStartingWith(hashEnumeratorFile)
                                           state = State.OPEN_AND_CLEAN

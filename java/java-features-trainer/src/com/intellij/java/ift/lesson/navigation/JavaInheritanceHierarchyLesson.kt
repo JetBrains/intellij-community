@@ -14,14 +14,12 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.UIBundle
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
 
-class JavaInheritanceHierarchyLesson(module: Module)
-  : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name"), module, "JAVA") {
+class JavaInheritanceHierarchyLesson
+  : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name")) {
   override val existedFile: String = "src/InheritanceHierarchySample.java"
 
   override val lessonContent: LessonContext.() -> Unit = {

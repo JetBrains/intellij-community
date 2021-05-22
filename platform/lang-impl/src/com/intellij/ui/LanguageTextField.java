@@ -107,7 +107,7 @@ public class LanguageTextField extends EditorTextField {
   }
 
   @Override
-  protected EditorEx createEditor() {
+  protected @NotNull EditorEx createEditor() {
     final EditorEx ex = super.createEditor();
 
     if (myLanguage != null) {

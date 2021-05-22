@@ -2,6 +2,7 @@
 package com.intellij.find;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -13,6 +14,7 @@ public interface SearchSession {
 
   /** @deprecated please use {@link FindBundle#message} with {@link #INCORRECT_REGEXP_MESSAGE_KEY} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nls String INCORRECT_REGEX_MESSAGE = FindBundle.message(INCORRECT_REGEXP_MESSAGE_KEY);
 
   @NotNull FindModel getFindModel();

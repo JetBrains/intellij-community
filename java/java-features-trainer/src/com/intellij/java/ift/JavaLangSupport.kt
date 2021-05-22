@@ -115,9 +115,4 @@ class JavaLangSupport : AbstractLangSupport() {
   override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean {
     return file.name != projectSandboxRelativePath
   }
-
-  companion object {
-    @JvmStatic
-    val lang: String = "JAVA"
-  }
 }

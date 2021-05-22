@@ -37,5 +37,14 @@
 
     <applicationService serviceInterface="com.intellij.history.LocalHistory"
                         serviceImplementation="com.intellij.history.integration.LocalHistoryImpl" preload="true"/>
+
+    <virtualFileManagerListener implementation="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryFileManagerListener"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryCommandListener"
+              topic="com.intellij.openapi.command.CommandListener"/>
+    <listener class="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryBulkFileListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </applicationListeners>
 </idea-plugin>

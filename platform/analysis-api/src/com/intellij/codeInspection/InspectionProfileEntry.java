@@ -27,10 +27,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -328,6 +325,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   /**
    * This method is called each time UI is shown.
+   * To get correct spacing, return a JComponent with empty insets using Kotlin UI DSL
+   * or {@link com.intellij.codeInspection.ui.InspectionOptionsPanel}.
    *
    * @return {@code null} if no UI options required.
    */
@@ -430,6 +429,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected @Nullable SerializationFilter getSerializationFilter() {
     return XmlSerializer.getJdomSerializer().getDefaultSerializationFilter();
   }

@@ -36,6 +36,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
    * @deprecated Use {@link #getName()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final String NAME = "Dependencies";
 
   private ClasspathPanelImpl myPanel;
@@ -105,7 +107,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     panel.add(myPanel, BorderLayout.CENTER);
 
     final ModuleJdkConfigurable jdkConfigurable =
-      new ModuleJdkConfigurable(this, ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel()) {
+      new ModuleJdkConfigurable(this, ((ModulesConfigurator)getState().getModulesProvider()).getProjectStructureConfigurable()) {
         @Override
         protected ModifiableRootModel getRootModel() {
           return getModifiableModel();

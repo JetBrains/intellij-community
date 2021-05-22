@@ -18,7 +18,7 @@ internal class JavaFileReferenceProvider : FileExternalReferencesProvider {
       if (DumbService.isDumb(file.project)) {
         return FAILED_COMPUTATION
       }
-      return succeed(uFile.imports.mapNotNull { it.resolve() }.mapNotNull { it.containingFile }.toSet())
+      return succeed(uFile.imports.filter { !it.isOnDemand }.mapNotNull { it.resolve() }.mapNotNull { it.containingFile }.toSet())
     }
     return null
   }

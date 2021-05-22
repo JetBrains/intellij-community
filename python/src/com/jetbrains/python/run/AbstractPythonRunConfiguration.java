@@ -173,7 +173,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
             throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
           }
         }
-        else if (!PythonSdkType.getInstance().isValidSdkHome(getSdkHome())) {
+        else if (getSdkHome() == null || !PythonSdkType.getInstance().isValidSdkHome(getSdkHome())) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
         }
       }

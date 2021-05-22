@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -17,11 +18,13 @@ private val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.int
 
 interface StatisticsEventLogger {
   @Deprecated("Use StatisticsEventLogger.logAsync()", ReplaceWith("logAsync(group, eventId, isState)"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun log(group: EventLogGroup, eventId: String, isState: Boolean) {
     logAsync(group, eventId, isState)
   }
 
   @Deprecated("Use StatisticsEventLogger.logAsync", ReplaceWith("logAsync(group, eventId, data, isState)"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
     logAsync(group, eventId, data, isState)
   }

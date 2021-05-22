@@ -149,7 +149,12 @@
                      bundle="messages.JsonBundle" key="inspection.jsonpath.unknown.function"
                      groupBundle="messages.JsonBundle" groupKey="json.inspection.group"
                      level="WARNING" enabledByDefault="true"/>
-    <localInspection language="JSONPath" shortName="JsonPathEvaluateUnknownKeyInspection"
+    <localInspection language="JSONPath" shortName="JsonPathUnknownOperator"
+                     implementationClass="com.intellij.jsonpath.inspections.JsonPathUnknownOperatorInspection"
+                     bundle="messages.JsonBundle" key="inspection.jsonpath.unknown.operator"
+                     groupBundle="messages.JsonBundle" groupKey="json.inspection.group"
+                     level="WARNING" enabledByDefault="true"/>
+    <localInspection language="JSONPath" shortName="JsonPathEvaluateUnknownKey"
                      implementationClass="com.intellij.jsonpath.inspections.JsonPathEvaluateUnknownKeyInspection"
                      bundle="messages.JsonBundle" key="inspection.jsonpath.unknown.key"
                      groupBundle="messages.JsonBundle" groupKey="json.inspection.group"

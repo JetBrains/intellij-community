@@ -17,6 +17,7 @@ package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +57,7 @@ public interface XValueNode extends Obsolescent {
    * @deprecated use {@link #setPresentation(Icon, XValuePresentation, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @Nullable String value, boolean hasChildren);
 
   /**

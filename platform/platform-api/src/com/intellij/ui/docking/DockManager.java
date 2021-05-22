@@ -4,6 +4,7 @@ package com.intellij.ui.docking;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ public abstract class DockManager {
    * @deprecated Use {@link #register(DockContainer, Disposable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void register(@NotNull DockContainer container);
 
   public abstract void register(@NotNull DockContainer container, @NotNull Disposable parentDisposable);

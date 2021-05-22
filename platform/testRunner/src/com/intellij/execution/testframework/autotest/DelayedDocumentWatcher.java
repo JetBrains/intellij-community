@@ -24,6 +24,7 @@ import com.intellij.util.PsiErrorElementUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
    * @deprecated Use {@link #DelayedDocumentWatcher(Project, int, IntConsumer, Predicate)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public DelayedDocumentWatcher(@NotNull Project project,
                                 int delayMillis,
                                 @NotNull Consumer<? super Integer> modificationStampConsumer,

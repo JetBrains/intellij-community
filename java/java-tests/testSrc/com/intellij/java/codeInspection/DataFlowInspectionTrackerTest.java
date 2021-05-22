@@ -52,7 +52,7 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
     assertTrue("Selected element is not an expression: " + selectedText, element instanceof PsiExpression);
     PsiExpression expression = (PsiExpression)element;
     TrackingRunner.DfaProblemType problemType = getProblemType(selectedText, expression);
-    TrackingRunner.CauseItem item = TrackingRunner.findProblemCause(true, false, expression, problemType);
+    TrackingRunner.CauseItem item = TrackingRunner.findProblemCause(false, expression, problemType);
     assertNotNull(item);
     String dump = item.dump(getEditor().getDocument());
     PsiComment firstComment = PsiTreeUtil.findChildOfType(file, PsiComment.class);

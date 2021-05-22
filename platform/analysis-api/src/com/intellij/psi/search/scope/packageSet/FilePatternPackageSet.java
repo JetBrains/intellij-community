@@ -178,7 +178,19 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
                                        VirtualFile projectBaseDir) {
     final VirtualFile contentRootForFile = index.getContentRootForFile(virtualFile);
     if (contentRootForFile != null) {
-      return VfsUtilCore.getRelativePath(virtualFile, contentRootForFile, '/');
+      String relativePath = VfsUtilCore.getRelativePath(virtualFile, contentRootForFile, '/');
+      if (relativePath != null) {
+        return relativePath;
+      }
+
+      if (!virtualFile.getFileSystem().equals(contentRootForFile.getFileSystem())) {
+        VirtualFile parent = virtualFile.getParent();
+        String relativeToParent = parent != null ? VfsUtilCore.getRelativePath(parent, contentRootForFile, '/') : null;
+        if (relativeToParent != null) {
+          return relativeToParent + '/' + virtualFile.getName();
+        }
+      }
+      return null;
     }
     final Module module = index.getModuleForFile(virtualFile);
     if (module != null) {

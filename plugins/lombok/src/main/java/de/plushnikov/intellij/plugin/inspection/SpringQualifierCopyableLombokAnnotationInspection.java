@@ -4,7 +4,6 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
@@ -41,20 +40,23 @@ public class SpringQualifierCopyableLombokAnnotationInspection extends LombokJav
       if (Objects.equals(PsiAnnotationSearchUtil.getSimpleNameOf(annotation), SPRING_QUALIFIER_SIMPLE_NAME) &&
           Objects.equals(annotation.getQualifiedName(), SPRING_QUALIFIER_FQN)) {
 
-        PsiField psiField = PsiTreeUtil.getParentOfType(annotation, PsiField.class);
-        if (psiField != null) {
-          PsiClass psiClass = psiField.getContainingClass();
-          if (psiClass != null && PsiAnnotationSearchUtil.isAnnotatedWith(psiClass,
-                                                                          LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
-                                                                          LombokClassNames.ALL_ARGS_CONSTRUCTOR)) {
-            String[] configuredCopyableAnnotations =
-              ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, psiClass);
+        PsiAnnotationOwner annotationOwner = annotation.getOwner();
+        if (annotationOwner instanceof PsiModifierList) {
+          PsiElement annotationOwnerParent = ((PsiModifierList)annotationOwner).getParent();
+          if (annotationOwnerParent instanceof PsiField) {
+            PsiClass psiClass = ((PsiField)annotationOwnerParent).getContainingClass();
+            if (psiClass != null && PsiAnnotationSearchUtil.isAnnotatedWith(psiClass,
+                                                                            LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
+                                                                            LombokClassNames.ALL_ARGS_CONSTRUCTOR)) {
+              String[] configuredCopyableAnnotations =
+                ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, psiClass);
 
-            if (!Arrays.asList(configuredCopyableAnnotations).contains(SPRING_QUALIFIER_FQN)) {
-              holder.registerProblem(annotation,
-                                     LombokBundle.message("inspection.message.annotation.not.lombok.copyable",
-                                                          SPRING_QUALIFIER_FQN),
-                                     ProblemHighlightType.WARNING);
+              if (!Arrays.asList(configuredCopyableAnnotations).contains(SPRING_QUALIFIER_FQN)) {
+                holder.registerProblem(annotation,
+                                       LombokBundle.message("inspection.message.annotation.not.lombok.copyable",
+                                                            SPRING_QUALIFIER_FQN),
+                                       ProblemHighlightType.WARNING);
+              }
             }
           }
         }

@@ -263,7 +263,7 @@ public final class PlatformTestUtil {
     if (ignoreOrder) {
       final Set<String> actualLines = Set.of(treeStringPresentation.split("\n"));
       final Set<String> expectedLines = Set.of(expected.split("\n"));
-      assertEquals("Expected:\n" + expected + "\nActual\n:" + treeStringPresentation, expectedLines, actualLines);
+      assertEquals("Expected:\n" + expected + "\nActual:" + treeStringPresentation, expectedLines, actualLines);
     }
     else {
       assertEquals(expected.trim(), treeStringPresentation.trim());

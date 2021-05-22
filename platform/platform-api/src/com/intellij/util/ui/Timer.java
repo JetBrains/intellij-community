@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.concurrent.ScheduledFuture;
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit;
  * @deprecated use {@link AppExecutorUtil#getAppScheduledExecutorService()} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class Timer implements Disposable, Runnable  {
   private final int mySpan;
 

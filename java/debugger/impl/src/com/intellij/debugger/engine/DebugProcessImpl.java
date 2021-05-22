@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -79,10 +79,7 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -210,6 +207,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
    * @deprecated use {@link #getAutoRendererAsync(Type)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
     Type type = descriptor.getType();
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -727,7 +725,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
           .filter(sdk -> versionMatch(sdk, version))
           .findFirst().ifPresent(sdk -> {
-          XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
+          XDebuggerManagerImpl.getNotificationGroup().createNotification(
             JavaDebuggerBundle.message("message.remote.jre.version.mismatch",
                                        versionString,
                                    runjre != null ? runjre.getVersionString() : "unknown",
@@ -1439,7 +1437,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<>(method, args) {
       @Override
-      protected ObjectReference invokeMethod(int invokePolicy, Method method, List<? extends Value> args) 
+      protected ObjectReference invokeMethod(int invokePolicy, Method method, List<? extends Value> args)
         throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("New instance " + classType.name() + "." + method.name());
@@ -2120,7 +2118,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myConnection = environment.getRemoteConnection();
 
     // in client mode start target process before the debugger to reduce polling
-    if (!(myConnection instanceof RemoteConnectionStub) && myConnection.isServerMode()) {
+    if (!(myConnection instanceof RemoteConnectionStub) &&
+        !(myConnection instanceof DelayedRemoteConnection) &&
+        myConnection.isServerMode()) {
       createVirtualMachine(environment);
     }
 
@@ -2148,7 +2148,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw e;
     }
 
-    if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
+    if (myConnection instanceof DelayedRemoteConnection) {
+      ((DelayedRemoteConnection)myConnection).setAttachRunnable(() -> createVirtualMachine(environment));
+    } else if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
       createVirtualMachine(environment);
     }
 

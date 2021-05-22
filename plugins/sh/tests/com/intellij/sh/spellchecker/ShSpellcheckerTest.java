@@ -21,6 +21,7 @@ public class ShSpellcheckerTest extends BasePlatformTestCase {
   public void testTypoInHereDoc() { doTest(); }
   public void testTypoInComment() { doTest(); }
   public void testTypoInRowString() { doTest(); }
+  public void testTypoInVariableName() { doTest(); }
 
   private void doTest() {
     myFixture.testHighlighting(false, false, true, getTestName(true) + ".sh");

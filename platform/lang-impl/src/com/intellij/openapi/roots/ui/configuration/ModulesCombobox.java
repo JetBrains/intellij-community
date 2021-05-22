@@ -16,10 +16,12 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.application.options.ModulesComboBox;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated use {@link ModulesComboBox} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class ModulesCombobox extends ModulesComboBox {
 }

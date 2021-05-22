@@ -4,17 +4,16 @@ package com.jetbrains.python.ift.lesson.completion
 import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
 import com.intellij.testGuiFramework.impl.jList
 import com.jetbrains.python.ift.PythonLessonsBundle
+import training.dsl.LessonContext
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
-import training.learn.lesson.kimpl.parseLessonSample
+import training.learn.course.KLesson
 
 private const val completionSuffix = ".ifnn"
 
-class PythonPostfixCompletionLesson(module: Module)
-  : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name"), module, "Python") {
+class PythonPostfixCompletionLesson
+  : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name")) {
   private val sample = parseLessonSample("""
     movies_dict = {
         'title': 'Aviator',

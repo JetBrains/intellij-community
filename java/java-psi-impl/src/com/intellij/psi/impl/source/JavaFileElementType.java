@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -43,12 +43,12 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  public boolean shouldBuildStubFor(final VirtualFile file) {
+  public boolean shouldBuildStubFor(VirtualFile file) {
     return isInSourceContent(file);
   }
 
   public static boolean isInSourceContent(@NotNull VirtualFile file) {
-    final VirtualFile dir = file.getParent();
+    VirtualFile dir = file.getParent();
     if (dir == null || dir.getUserData(LanguageLevel.KEY) != null) {
       return true;
     }
@@ -57,33 +57,32 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  public ASTNode createNode(final CharSequence text) {
+  public ASTNode createNode(CharSequence text) {
     return new JavaFileElement(text);
   }
 
   @Override
-  public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(final ASTNode chameleon) {
-    final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+  public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(ASTNode chameleon) {
+    PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
     doParse(builder);
     return builder.getLightTree();
   }
 
   @Override
-  public ASTNode parseContents(@NotNull final ASTNode chameleon) {
-    final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+  public ASTNode parseContents(@NotNull ASTNode chameleon) {
+    PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
     doParse(builder);
     return builder.getTreeBuilt().getFirstChildNode();
   }
 
-  private void doParse(final PsiBuilder builder) {
-    final PsiBuilder.Marker root = builder.mark();
+  private void doParse(PsiBuilder builder) {
+    PsiBuilder.Marker root = builder.mark();
     JavaParser.INSTANCE.getFileParser().parse(builder);
     root.done(this);
   }
 
-  @NotNull
   @Override
-  public String getExternalId() {
+  public @NotNull String getExternalId() {
     return "java.FILE";
   }
 
@@ -95,9 +94,8 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
     dataStream.writeName(stub.getPackageName());
   }
 
-  @NotNull
   @Override
-  public PsiJavaFileStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PsiJavaFileStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     boolean compiled = dataStream.readBoolean();
     int level = dataStream.readByte();
     String packageName = dataStream.readNameString();

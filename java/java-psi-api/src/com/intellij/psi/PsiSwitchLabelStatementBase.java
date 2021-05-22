@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,6 +24,7 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
 
   /** @deprecated doesn't support enhanced "switch" statements; use {@link #getCaseValues()} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default PsiExpression getCaseValue() {
     PsiExpressionList expressionList = getCaseValues();
     if (expressionList != null) {

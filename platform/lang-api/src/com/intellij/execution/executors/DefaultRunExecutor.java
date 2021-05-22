@@ -90,6 +90,11 @@ public class DefaultRunExecutor extends Executor {
     return "ideaInterface.run";
   }
 
+  @Override
+  public boolean isSupportedOnTarget() {
+    return EXECUTOR_ID.equalsIgnoreCase(getId());
+  }
+
   public static Executor getRunExecutorInstance() {
     return ExecutorRegistry.getInstance().getExecutorById(EXECUTOR_ID);
   }

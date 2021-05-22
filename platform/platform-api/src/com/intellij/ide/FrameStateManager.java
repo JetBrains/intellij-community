@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,19 +26,21 @@ public abstract class FrameStateManager {
    * @deprecated Use message bus {@link FrameStateListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addListener(@NotNull FrameStateListener listener);
 
   /**
    * @deprecated Use message bus {@link FrameStateListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addListener(@NotNull FrameStateListener listener, @Nullable Disposable disposable);
 
   /**
-   * Removes a listener which is called when the IDE window is activated or deactivated.
-   *
-   * @param listener the listener instance.
+   * @deprecated Use message bus {@link FrameStateListener#TOPIC}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removeListener(@NotNull FrameStateListener listener);
 
 

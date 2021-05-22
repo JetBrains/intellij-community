@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class AdapterUtils {
   @Contract("null -> null;!null -> !null;")
   @Nullable

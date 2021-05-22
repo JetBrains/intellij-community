@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template;
 
@@ -48,6 +48,8 @@ public abstract class Template implements PresentableLookupValue {
                                        boolean skipOnStart);
   @NotNull
   public abstract Variable addVariable(@NonNls @NotNull String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
+
+  public abstract void addVariable(@NotNull Variable variable);
 
   public abstract void addEndVariable();
   public abstract void addSelectionStartVariable();

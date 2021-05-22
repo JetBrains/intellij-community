@@ -34,14 +34,18 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
     return true;
   }
 
-  @NotNull
-  @Override
-  public String getTextValue() {
-    String value = super.getTextValue();
-    if (!value.isEmpty() && getChompingIndicator() != ChompingIndicator.STRIP) {
-      value += "\n";
+  protected boolean shouldIncludeEolInRange(ASTNode child) {
+    if (isEol(child) && child.getTreeNext() == null && getChompingIndicator() == ChompingIndicator.KEEP) {
+      return true;
     }
-    return value;
+    return false;
+  }
+
+  protected boolean isEnding(@Nullable TextRange rangeInHost) {
+    if (rangeInHost == null) return true;
+    TextRange lastItem = ContainerUtil.getLastItem(getContentRanges());
+    if (lastItem == null) return false;
+    return rangeInHost.getEndOffset() == lastItem.getEndOffset();
   }
 
   @NotNull
@@ -72,7 +76,8 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
       }
       else if (childType == YAMLTokenTypes.SCALAR_EOL) {
         if (thisLineStart != -1) {
-          result.add(TextRange.create(thisLineStart, child.getStartOffset()).shiftRight(-myStart));
+          int endOffset = shouldIncludeEolInRange(child) ? child.getTextRange().getEndOffset() : child.getStartOffset();
+          result.add(TextRange.create(thisLineStart, endOffset).shiftRight(-myStart));
         }
         thisLineStart = child.getStartOffset() + 1;
       }
@@ -82,7 +87,8 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
             Logger.getInstance(YAMLBlockScalarImpl.class).warn("thisLineStart == -1: '" + getText() + "'", new Throwable());
             continue;
           }
-          result.add(TextRange.create(thisLineStart, childRange.getEndOffset()).shiftRight(-myStart));
+          int endOffset = shouldIncludeEolInRange(child) ? child.getTreeNext().getTextRange().getEndOffset() : childRange.getEndOffset();
+          result.add(TextRange.create(thisLineStart, endOffset).shiftRight(-myStart));
           thisLineStart = -1;
         }
       }
@@ -186,14 +192,24 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
   }
 
   @Contract("null -> false")
-  private static boolean isEol(@Nullable ASTNode node) {
+  public static boolean isEol(@Nullable ASTNode node) {
     if (node == null) {
       return false;
     }
     return YAMLElementTypes.EOL_ELEMENTS.contains(node.getElementType());
   }
 
-  /** See <a href="http://www.yaml.org/spec/1.2/spec.html#id2794534">8.1.1.2. Block Chomping Indicator</a>*/
+  @Contract("null -> true")
+  public static boolean isEolOrNull(@Nullable ASTNode node) {
+    if (node == null) {
+      return true;
+    }
+    return YAMLElementTypes.EOL_ELEMENTS.contains(node.getElementType());
+  }
+
+  /**
+   * See <a href="http://www.yaml.org/spec/1.2/spec.html#id2794534">8.1.1.2. Block Chomping Indicator</a>
+   */
   protected enum ChompingIndicator {
     CLIP,
     STRIP,

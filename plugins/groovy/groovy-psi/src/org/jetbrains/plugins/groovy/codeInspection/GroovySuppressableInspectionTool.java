@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.BatchSuppressManager;
@@ -12,6 +11,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -34,6 +34,13 @@ import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.UNUSED_SYMB
  * @author peter
  */
 public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool {
+
+  /**
+   * @deprecated don't extend this class, extend {@link LocalInspectionTool} instead
+   */
+  @ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
+  public GroovySuppressableInspectionTool() {}
 
   public static SuppressQuickFix @NotNull [] getSuppressActions(@NotNull String toolId) {
     if (GroovyUnusedDeclarationInspection.SHORT_NAME.equals(toolId)) {
@@ -151,7 +158,4 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     }
     return null;
   }
-
-
-
 }

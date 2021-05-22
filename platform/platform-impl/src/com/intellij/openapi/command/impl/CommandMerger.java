@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.undo.BasicUndoableAction;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +27,11 @@ public final class CommandMerger {
   private boolean myTransparent;
   private @NlsContexts.Command String myCommandName;
   private boolean myValid = true;
+  @NotNull
   private List<UndoableAction> myCurrentActions = new ArrayList<>();
+  @NotNull
   private Set<DocumentReference> myAllAffectedDocuments = new HashSet<>();
+  @NotNull
   private Set<DocumentReference> myAdditionalAffectedDocuments = new HashSet<>();
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
@@ -46,7 +50,7 @@ public final class CommandMerger {
     return myCommandName;
   }
 
-  public void addAction(@NotNull UndoableAction action) {
+  void addAction(@NotNull UndoableAction action) {
     myCurrentActions.add(action);
     DocumentReference[] refs = action.getAffectedDocuments();
     if (refs != null) {
@@ -55,7 +59,7 @@ public final class CommandMerger {
     myForcedGlobal |= action.isGlobal();
   }
 
-  public void commandFinished(@NlsContexts.Command String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
+  void commandFinished(@NlsContexts.Command String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
     // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
     if (!nextCommandToMerge.isTransparent() && nextCommandToMerge.hasActions()) {
       clearRedoStacks(nextCommandToMerge);
@@ -82,6 +86,26 @@ public final class CommandMerger {
       return !hasActions() || !nextCommandToMerge.hasActions() || myAllAffectedDocuments.equals(nextCommandToMerge.myAllAffectedDocuments);
     }
     return !myForcedGlobal && !nextCommandToMerge.myForcedGlobal && canMergeGroup(groupId, SoftReference.dereference(myLastGroupId));
+  }
+
+  // remove all references to document to avoid memory leaks
+  void clearDocumentReferences(@NotNull Document document) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    // DocumentReference for document is not equal to the DocumentReference from the file of that doc, so try both
+    DocumentReference refByFile = DocumentReferenceManager.getInstance().create(document);
+    DocumentReference refByDoc = new DocumentReferenceByDocument(document);
+    myCurrentActions.removeIf(action -> {
+      DocumentReference[] refs = ObjectUtils.notNull(action.getAffectedDocuments(), DocumentReference.EMPTY_ARRAY);
+      return ArrayUtil.contains(refByFile, refs) || ArrayUtil.contains(refByDoc, refs);
+    });
+    myAllAffectedDocuments.remove(refByFile);
+    myAllAffectedDocuments.remove(refByDoc);
+    myAdditionalAffectedDocuments.remove(refByFile);
+    myAdditionalAffectedDocuments.remove(refByDoc);
+  }
+
+  private static boolean refMatch(@NotNull Document document, VirtualFile file, @NotNull DocumentReference ref) {
+    return file != null && file.equals(ref.getFile()) || ref.getDocument() == document;
   }
 
   public static boolean canMergeGroup(Object groupId, Object lastGroupId) {
@@ -120,19 +144,27 @@ public final class CommandMerger {
     }
   }
 
+  private static class MyEmptyUndoableAction extends BasicUndoableAction {
+    MyEmptyUndoableAction(DocumentReference @NotNull [] refs) {
+      super(refs);
+    }
+
+    @Override
+    public void undo() throws UnexpectedUndoException {
+
+    }
+
+    @Override
+    public void redo() throws UnexpectedUndoException {
+
+    }
+  }
+
   void flushCurrentCommand() {
     if (hasActions()) {
       if (!myAdditionalAffectedDocuments.isEmpty()) {
         DocumentReference[] refs = myAdditionalAffectedDocuments.toArray(DocumentReference.EMPTY_ARRAY);
-        myCurrentActions.add(new BasicUndoableAction(refs) {
-          @Override
-          public void undo() {
-          }
-
-          @Override
-          public void redo() {
-          }
-        });
+        myCurrentActions.add(new MyEmptyUndoableAction(refs));
       }
 
       myManager.getUndoStacksHolder().addToStacks(new UndoableGroup(myCommandName,
@@ -175,7 +207,7 @@ public final class CommandMerger {
     myForcedGlobal = true;
   }
 
-  public boolean isTransparent() {
+  boolean isTransparent() {
     return myTransparent;
   }
 
@@ -236,7 +268,7 @@ public final class CommandMerger {
     return isUndo ? new Undo(myManager, editor) : new Redo(myManager, editor);
   }
 
-  public UndoConfirmationPolicy getUndoConfirmationPolicy() {
+  UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return myUndoConfirmationPolicy;
   }
 
@@ -244,7 +276,7 @@ public final class CommandMerger {
     return !myCurrentActions.isEmpty();
   }
 
-  public boolean isPhysical() {
+  boolean isPhysical() {
     if (myAllAffectedDocuments.isEmpty()) return false;
     for (DocumentReference each : myAllAffectedDocuments) {
       if (isVirtualDocumentChange(each.getFile())) return false;
@@ -252,7 +284,7 @@ public final class CommandMerger {
     return true;
   }
 
-  public boolean isUndoAvailable(@NotNull Collection<? extends DocumentReference> refs) {
+  boolean isUndoAvailable(@NotNull Collection<? extends DocumentReference> refs) {
     if (hasNonUndoableActions()) {
       return false;
     }

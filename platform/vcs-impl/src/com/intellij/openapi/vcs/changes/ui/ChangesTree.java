@@ -36,10 +36,7 @@ import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -85,7 +82,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private boolean myScrollToSelection = true;
 
   @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
-  @NonNls private static final String GROUPING_KEYS = "ChangesTree.GroupingKeys";
+  @NonNls protected static final String GROUPING_KEYS = "ChangesTree.GroupingKeys";
 
   public static final String[] DEFAULT_GROUPING_KEYS = ar(DIRECTORY_GROUPING, MODULE_GROUPING);
 
@@ -251,6 +248,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
    * @deprecated Use {@link #setDoubleClickAndEnterKeyHandler(Runnable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setDoubleClickHandler(@NotNull Runnable doubleClickHandler) {
     setDoubleClickAndEnterKeyHandler(doubleClickHandler);
   }
@@ -567,6 +565,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
    * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public AnAction[] getTreeActions() {
     return new AnAction[]{
       ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP),
@@ -617,7 +616,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   @NotNull
-  State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
+  protected State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
@@ -655,12 +654,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return isIncludable((ChangesBrowserNode<?>)lastComponent);
   }
 
-  private boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
+  protected boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
     return isInclusionVisible(node) && isInclusionEnabled(node);
   }
 
   @NotNull
-  private List<Object> getIncludableUserObjects(@NotNull VcsTreeModelData treeModelData) {
+  protected List<Object> getIncludableUserObjects(@NotNull VcsTreeModelData treeModelData) {
     return treeModelData
       .nodesStream()
       .filter(node -> isIncludable(node))

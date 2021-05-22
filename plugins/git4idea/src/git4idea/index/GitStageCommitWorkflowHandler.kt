@@ -3,11 +3,13 @@ package git4idea.index
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.vcs.commit.*
+import git4idea.index.ui.GitStageCommitPanel
 
 class GitStageCommitWorkflowHandler(
   override val workflow: GitStageCommitWorkflow,
-  override val ui: NonModalCommitWorkflowUi
+  override val ui: GitStageCommitPanel
 ) : NonModalCommitWorkflowHandler<GitStageCommitWorkflow, NonModalCommitWorkflowUi>(),
     CommitAuthorTracker by ui {
 
@@ -29,27 +31,36 @@ class GitStageCommitWorkflowHandler(
 
     setupDumbModeTracking()
     setupCommitHandlersTracking()
+    setupCommitChecksResultTracking()
     vcsesChanged()
-    initCommitMessage()
+    initCommitMessage(false)
+
+    DelayedCommitMessageProvider.init(project, ui) { commitMessagePolicy.getCommitMessage(false) }
   }
 
-  override fun isCommitEmpty(): Boolean = !state.hasStagedRoots()
+  override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()
 
   override fun updateWorkflow() {
     workflow.trackerState = state
-    workflow.commitState = GitStageCommitState(state.stagedRoots, getCommitMessage())
+    workflow.commitState = GitStageCommitState(ui.rootsToCommit, getCommitMessage())
   }
 
   override fun addUnversionedFiles(): Boolean = true
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitMessage(), success)
   override fun refreshChanges(callback: () -> Unit) = callback()
 
-  private fun initCommitMessage() = setCommitMessage(commitMessagePolicy.getCommitMessage())
+  private fun initCommitMessage(isAfterCommit: Boolean) = setCommitMessage(commitMessagePolicy.getCommitMessage(isAfterCommit))
+
+  override fun checkCommit(executor: CommitExecutor?): Boolean {
+    ui.commitProgressUi.isEmptyRoots = ui.includedRoots.isEmpty()
+    val superCheckResult = super.checkCommit(executor)
+    return superCheckResult && !ui.commitProgressUi.isEmptyRoots
+  }
 
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
     override fun onSuccess(commitMessage: String) {
       commitAuthor = null
-      initCommitMessage()
+      initCommitMessage(true)
 
       super.onSuccess(commitMessage)
     }

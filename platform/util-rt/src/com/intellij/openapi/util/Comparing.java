@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ public final class Comparing {
   }
 
   /** @deprecated same as {@link Arrays#equals(Object[], Object[])} */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2) {
     return Arrays.equals(arr1, arr2);
   }

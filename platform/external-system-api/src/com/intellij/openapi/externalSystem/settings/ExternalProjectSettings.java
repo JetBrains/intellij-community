@@ -80,6 +80,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
    * @deprecated left for settings backward-compatibility
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isCreateEmptyContentRootDirectories() {
     return myCreateEmptyContentRootDirectories;
   }
@@ -88,6 +89,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
    * @deprecated left for settings backward-compatibility
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setCreateEmptyContentRootDirectories(boolean createEmptyContentRootDirectories) {
     myCreateEmptyContentRootDirectories = createEmptyContentRootDirectories;
   }

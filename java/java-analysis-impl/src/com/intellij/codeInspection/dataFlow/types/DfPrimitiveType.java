@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,4 +11,17 @@ import org.jetbrains.annotations.NotNull;
 public interface DfPrimitiveType extends DfType {
   @NotNull
   PsiPrimitiveType getPsiType();
+
+  /**
+   * Cast this type to the specified primitive type 
+   * @param type target type
+   * @return result of the cast
+   */
+  default @NotNull DfType castTo(@NotNull PsiPrimitiveType type) {
+    Object value = TypeConversionUtil.computeCastTo(getConstantOfType(Object.class), type);
+    if (value != null) {
+      return DfTypes.constant(value, type);
+    }
+    return DfTypes.TOP;
+  }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.Weighted
 import com.intellij.ui.UIBundle
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -65,6 +66,7 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
   fun closePopup() = getUI().closePopup()
 
   @Deprecated("Use setOptions(Action[]) instead", ReplaceWith("setOptions(options)"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun updateOptions(options: Array<Action>?) {
     this.options = options
   }

@@ -36,7 +36,6 @@ public class Utils {
 
       Path dir = Paths.get(path);
       if (!Files.isDirectory(dir)) throw new IOException("Not a directory: " + dir);
-      if (!Files.isWritable(dir)) throw new IOException("Not writable: " + dir);
 
       if (REQUIRED_FREE_SPACE > 0) {
         FileStore fs = Files.getFileStore(dir);

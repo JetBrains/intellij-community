@@ -52,7 +52,7 @@ public class TextFieldWithCompletion extends LanguageTextField {
   }
 
   @Override
-  protected EditorEx createEditor() {
+  protected @NotNull EditorEx createEditor() {
     EditorEx editor = super.createEditor();
     EditorCustomization disableSpellChecking = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
     if (disableSpellChecking != null) disableSpellChecking.customize(editor);

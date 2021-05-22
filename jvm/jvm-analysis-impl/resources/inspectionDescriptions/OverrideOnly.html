@@ -1,10 +1,8 @@
 <html>
 <body>
-<p>
-  Reports invocations of API methods marked with <code>@ApiStatus.OverrideOnly</code> annotation.
-</p>
-<code>@ApiStatus.OverrideOnly</code> indicates that the annotated method is part of SPI (Service Provider Interface),
+Reports calls to API methods marked with an <code>@ApiStatus.OverrideOnly</code> annotation.
+An <code>@ApiStatus.OverrideOnly</code> indicates that the annotated method is part of SPI (Service Provider Interface),
 which is intended to be <strong>only implemented or overridden</strong> but not called by clients of the declaring library.
-If a class or interface is marked with this annotation it means that all its methods can be only overridden.
+If a class or interface is marked with this annotation, it means that all its methods can be only overridden.
 </body>
 </html>

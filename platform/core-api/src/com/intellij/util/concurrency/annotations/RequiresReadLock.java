@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * Methods and constructors annotated with {@code RequiresReadLock} must be called only with read lock held.
  * Parameters annotated with {@code RequiresReadLock} must be callables and are guaranteed to be called with read lock held.
  *
- * <p/>Aside from a documentation purpose, the annotation is processed by the <a href="">Threading Model Helper</a> plugin.
+ * <p/>Aside from a documentation purpose, the annotation is processed by the {@link org.jetbrains.jps.devkit.threadingModelHelper}.
  * The plugin instruments annotated elements with {@link Application#assertReadAccessAllowed()} calls
  * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
  * by setting {@link RequiresReadLock#generateAssertion()} to {@code false}.

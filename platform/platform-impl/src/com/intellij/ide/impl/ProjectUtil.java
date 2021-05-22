@@ -77,6 +77,7 @@ public final class ProjectUtil {
    * @deprecated Use {@link #updateLastProjectLocation(Path)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void updateLastProjectLocation(@NotNull String projectFilePath) {
     updateLastProjectLocation(Paths.get(projectFilePath));
   }

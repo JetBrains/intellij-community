@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -76,6 +77,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     ButtonGroup group = new ButtonGroup();
     for (PreferEmptyArray mode : PreferEmptyArray.values()) {
       JRadioButton radioButton = new JRadioButton(mode.getMessage(), mode == myMode);
+      radioButton.setBorder(JBUI.Borders.emptyLeft(20));
       radioButton.addActionListener(e -> myMode = mode);
       panel.add(radioButton);
       group.add(radioButton);

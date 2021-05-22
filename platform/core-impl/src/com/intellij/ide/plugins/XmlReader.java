@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
@@ -169,7 +169,7 @@ final class XmlReader {
           throw new RuntimeException("Unknown content item type: " + child.getName());
       }
     }
-    descriptor.dependenciesDescriptor = new ModuleDependenciesDescriptor(items);
+    descriptor.dependencyDescriptor = new ModuleDependenciesDescriptor(items);
   }
 
   static void readIdAndName(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {
@@ -239,7 +239,7 @@ final class XmlReader {
                                    @NotNull IdeaPluginDescriptorImpl descriptor,
                                    @NotNull DescriptorListLoadingContext context,
                                    @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver,
-                                   @NotNull List<PluginDependency> dependencies) {
+                                   @NotNull List<PluginDependency> dependencies) throws IOException {
     List<String> visitedFiles = null;
     for (PluginDependency dependency : dependencies) {
       if (dependency.isDisabledOrBroken) {
@@ -252,8 +252,7 @@ final class XmlReader {
         continue;
       }
 
-      if (pathResolver instanceof ClassPathXmlPathResolver &&
-          context.checkOptionalConfigShortName(configFile, descriptor, rootDescriptor)) {
+      if (pathResolver.isFlat() && context.checkOptionalConfigShortName(configFile, descriptor, rootDescriptor)) {
         continue;
       }
 

@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -24,6 +25,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
    * @noinspection unused
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public JavaClassTreeElement(PsiClass cls, boolean inherited, Set<PsiClass> parents) {
     this(cls, inherited);
   }

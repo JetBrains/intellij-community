@@ -12,12 +12,12 @@ import com.intellij.util.EventDispatcher
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.LinkedHashSet
 
 class MockProjectAware(override val projectId: ExternalSystemProjectId) : ExternalSystemProjectAware {
 
   val subscribeCounter = AtomicInteger(0)
   val unsubscribeCounter = AtomicInteger(0)
+  val settingsAccessCounter = AtomicInteger(0)
   val refreshCounter = AtomicInteger(0)
 
   val refreshCollisionPassType = AtomicReference(DUPLICATE)
@@ -26,7 +26,22 @@ class MockProjectAware(override val projectId: ExternalSystemProjectId) : Extern
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
   private val refresh = AnonymousParallelOperationTrace(debugName = "$projectId MockProjectAware.refreshProject")
 
-  override val settingsFiles = LinkedHashSet<String>()
+  private val _settingsFiles = LinkedHashSet<String>()
+  override val settingsFiles: Set<String>
+    get() = _settingsFiles.toSet().also {
+      settingsAccessCounter.incrementAndGet()
+    }
+
+  fun resetAssertionCounters() {
+    settingsAccessCounter.set(0)
+    refreshCounter.set(0)
+    subscribeCounter.set(0)
+    unsubscribeCounter.set(0)
+  }
+
+  fun registerSettingsFile(path: String) {
+    _settingsFiles.add(path)
+  }
 
   override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
     eventDispatcher.addListener(listener.asListener(), parentDisposable)

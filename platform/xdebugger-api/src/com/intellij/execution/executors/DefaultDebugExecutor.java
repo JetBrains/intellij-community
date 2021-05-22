@@ -75,6 +75,11 @@ public class DefaultDebugExecutor extends Executor {
     return "debugging.DebugWindow";
   }
 
+  @Override
+  public boolean isSupportedOnTarget() {
+    return EXECUTOR_ID.equalsIgnoreCase(getId());
+  }
+
   public static Executor getDebugExecutorInstance() {
     return ExecutorRegistry.getInstance().getExecutorById(EXECUTOR_ID);
   }

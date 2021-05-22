@@ -11,7 +11,7 @@ JsonPathFile
             PsiElement(SINGLE_QUOTED_STRING)(''demo'')
           PsiWhiteSpace(' ')
           JsonPathBinaryConditionalOperatorImpl(BINARY_CONDITIONAL_OPERATOR)
-            PsiElement(IN_OP)('in')
+            PsiElement(NAMED_OP)('in')
           PsiWhiteSpace(' ')
           JsonPathPathExpressionImpl(PATH_EXPRESSION)
             JsonPathEvalSegmentImpl(EVAL_SEGMENT)

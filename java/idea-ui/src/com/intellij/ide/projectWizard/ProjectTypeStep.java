@@ -443,13 +443,27 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   private boolean showCustomOptions(@NotNull ModuleBuilder builder) {
     String card = builder.getBuilderId();
+
+    ModuleWizardStep customStep;
     if (!myCustomSteps.containsKey(card)) {
       ModuleWizardStep step = builder.getCustomOptionsStep(myContext, this);
       if (step == null) return false;
       step.updateStep();
       myCustomSteps.put(card, step);
       myOptionsPanel.add(step.getComponent(), card);
+      customStep = step;
+    } else {
+      customStep = myCustomSteps.get(card);
     }
+
+    try {
+      if (customStep != null) {
+        customStep._init();
+      }
+    } catch (Throwable e) {
+      LOG.error(e);
+    }
+
     showCard(card);
     return true;
   }

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator;
 
@@ -14,6 +15,7 @@ import static org.jetbrains.plugins.gradle.tooling.Exceptions.unsupportedMethod;
 import static org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.AdapterUtils.wrap;
 import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.emptyDomainObjectSet;
 
+@ApiStatus.Internal
 public final class InternalIdeaContentRoot implements IdeaContentRoot {
   private File rootDirectory;
   private Set<InternalIdeaSourceDirectory> sourceDirectories = emptyDomainObjectSet();

@@ -63,7 +63,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
 
     group.add(Separator.getInstance());
     group.add(new SourceItemNavigateAction(this));
-    group.add(new SourceItemFindUsagesAction(this, myArtifactsEditor.getContext().getProject(), myArtifactsEditor.getContext().getParent()));
+    group.add(new SourceItemFindUsagesAction(this, myArtifactsEditor.getContext().getParent()));
 
     DefaultTreeExpander expander = new DefaultTreeExpander(this);
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();

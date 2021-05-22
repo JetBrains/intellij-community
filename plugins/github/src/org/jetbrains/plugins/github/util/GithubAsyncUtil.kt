@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.util.GithubAsyncUtil.extractError
 import org.jetbrains.plugins.github.util.GithubAsyncUtil.isCancellation
 import java.util.concurrent.*
@@ -40,6 +41,7 @@ object GithubAsyncUtil {
   }
 
   @Deprecated("Background process value now always drops on PCE")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @JvmStatic
   fun <T> futureOfMutable(futureSupplier: () -> CompletableFuture<T>): CompletableFuture<T> {
     val result = CompletableFuture<T>()

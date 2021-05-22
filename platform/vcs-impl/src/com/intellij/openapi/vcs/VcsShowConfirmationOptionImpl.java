@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.vcs;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated Use {@link VcsShowConfirmationOption#STATIC_SHOW_CONFIRMATION}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class VcsShowConfirmationOptionImpl implements VcsShowConfirmationOption {
   private Value myValue = Value.SHOW_CONFIRMATION;
 

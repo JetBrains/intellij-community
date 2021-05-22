@@ -42,21 +42,6 @@ public interface CodeStyleStatusBarUIContributor {
   String getTooltip();
 
   /**
-   * Returns a text shown in a popup to drag user's attention to a UI element associated with the current indent options and related actions.
-   * The advertisement text may contain basic information about the source of the current indent options so that a user becomes aware of it.
-   * The popup is supposed to be shown just once per a case which requires explanation. Subsequent calls to the method may return {@code null}.
-   *
-   * @param psiFile A PSI file to show the advertisement text for.
-   * @return The text to be shown or null for no popup.
-   * @deprecated Dropped. The returned text is ignored.
-   */
-  @Nullable
-  @Deprecated
-  default String getAdvertisementText(@NotNull PsiFile psiFile) {
-    return null;
-  }
-
-  /**
    * Creates an action which can be used to disable the code style source.
    *
    * @param project The project to disable the source in.

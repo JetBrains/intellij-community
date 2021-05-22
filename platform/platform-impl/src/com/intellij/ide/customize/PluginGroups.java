@@ -524,7 +524,8 @@ public class PluginGroups {
      * @deprecated Deprecated due to internationalization of name field
      */
     @SuppressWarnings("HardCodedStringLiteral")
-    @Deprecated()
+    @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     public Group(@NonNls @NotNull String name, @Nullable Icon icon, @Nullable String description, @NonNls @NotNull List<String> pluginIdDescription) {
       this(name, name, icon, description, pluginIdDescription);
 

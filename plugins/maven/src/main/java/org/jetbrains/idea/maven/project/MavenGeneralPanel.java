@@ -100,10 +100,10 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     data.endUpdate();
   }
 
-  protected void getData(MavenGeneralSettings data) {
+  protected void initializeFormData(MavenGeneralSettings data, Project project) {
     checkboxWorkOffline.setSelected(data.isWorkOffline());
 
-    mavenPathsForm.getData(data);
+    mavenPathsForm.initializeFormData(data, project);
 
     checkboxProduceExceptionErrorMessages.setSelected(data.isPrintErrorStackTraces());
     checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());

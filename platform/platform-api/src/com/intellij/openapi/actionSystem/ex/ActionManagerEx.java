@@ -84,8 +84,6 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract boolean isActionPopupStackEmpty();
 
-  public abstract boolean isTransparentOnlyActionsUpdateNow();
-
   public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
     fireActionPerformed(actionId, event, place, this::fireBeforeActionPerformed);
   }

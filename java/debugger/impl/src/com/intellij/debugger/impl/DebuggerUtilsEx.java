@@ -63,6 +63,7 @@ import com.sun.jdi.event.EventSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -365,6 +366,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * @deprecated use {@link EvaluationContext#keep(Value)} directly
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void keep(Value value, EvaluationContext context) {
     context.keep(value);
   }

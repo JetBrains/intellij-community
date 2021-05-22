@@ -118,6 +118,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ActionCallback refilter() {
     return Promises.toActionCallback(refilter(null, true, false));
   }

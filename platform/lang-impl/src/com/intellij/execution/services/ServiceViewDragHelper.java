@@ -15,7 +15,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.impl.InternalDecorator;
+import com.intellij.openapi.wm.impl.ToolwindowHeaderDecorator;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
@@ -45,7 +45,7 @@ final class ServiceViewDragHelper {
     return new ServiceViewDnDTarget(tree);
   }
 
-  static void installDnDSupport(@NotNull Project project, @NotNull InternalDecorator decorator, @NotNull ContentManager contentManager) {
+  static void installDnDSupport(@NotNull Project project, @NotNull ToolwindowHeaderDecorator decorator, @NotNull ContentManager contentManager) {
     Content dropTargetContent = createDropTargetContent();
     DnDSupport.createBuilder(decorator)
       .setTargetChecker(new DnDTargetChecker() {

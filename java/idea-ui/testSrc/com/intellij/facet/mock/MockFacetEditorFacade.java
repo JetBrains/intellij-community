@@ -10,6 +10,7 @@ import com.intellij.facet.impl.ui.FacetEditorFacade;
 import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -59,4 +60,8 @@ public class MockFacetEditorFacade implements FacetEditorFacade {
     return myModel.getParent(facet);
   }
 
+  @Override
+  public ProjectStructureConfigurable getProjectStructureConfigurable() {
+    throw new UnsupportedOperationException();
+  }
 }

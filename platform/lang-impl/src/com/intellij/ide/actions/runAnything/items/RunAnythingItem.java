@@ -20,18 +20,6 @@ public abstract class RunAnythingItem {
   /**
    * Creates current item {@link Component}
    *
-   * @param isSelected true if item is selected in the list
-   * @deprecated use {@link #createComponent(String, boolean, boolean)}
-   */
-  @Deprecated
-  @Nullable
-  public Component createComponent(boolean isSelected) {
-    return null;
-  }
-
-  /**
-   * Creates current item {@link Component}
-   *
    * @param pattern    search field input field
    * @param isSelected true if item is selected in the list
    * @param hasFocus   true if item has focus in the list

@@ -17,10 +17,10 @@ import training.actions.ChooseProgrammingLanguageForLearningAction
 import training.lang.LangManager
 import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
-import training.ui.views.LanguageChoosePanel
 import training.ui.views.LearnPanel
 import training.ui.views.ModulesPanel
 import java.util.concurrent.TimeUnit
+import javax.swing.JLabel
 
 class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow)
   : SimpleToolWindowPanel(true, true), DataProvider {
@@ -34,8 +34,8 @@ class LearnToolWindow internal constructor(val project: Project, private val who
   init {
     setChooseLanguageButton()
     reinitViewsInternal()
-    scrollPane = if (LangManager.getInstance().isLangUndefined()) {
-      JBScrollPane(LanguageChoosePanel(this))
+    scrollPane = if (LangManager.getInstance().languages.isEmpty()) {
+      JBScrollPane(JLabel(LearnBundle.message("no.supported.languages.found")))
     }
     else {
       JBScrollPane(modulesPanel)

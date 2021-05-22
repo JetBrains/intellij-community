@@ -70,26 +70,14 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   }
 
   private @NotNull GotoData createDataForSource(@NotNull Editor editor, int offset, PsiElement source) {
-    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
-    final TargetElementUtil instance = TargetElementUtil.getInstance();
-    PsiElement[] targets = new ImplementationSearcher.FirstImplementationsSearcher() {
-      @Override
-      protected boolean accept(PsiElement element) {
-        if (reference != null && !reference.getElement().isValid()) return false;
-        return instance.acceptImplementationForReference(reference, element);
-      }
-
-      @Override
-      protected boolean canShowPopupWithOneItem(PsiElement element) {
-        return false;
-      }
-    }.searchImplementations(editor, source, offset);
+    final PsiElement[] targets = findTargets(editor, offset, source);
     if (targets == null) {
       //canceled search
       GotoData data = new GotoData(source, PsiElement.EMPTY_ARRAY, Collections.emptyList());
       data.isCanceled = true;
       return data;
     }
+    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
     GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
     gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference) {
       @Override
@@ -102,6 +90,23 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       }
     };
     return gotoData;
+  }
+
+  protected PsiElement @Nullable [] findTargets(@NotNull Editor editor, int offset, @NotNull PsiElement source) {
+    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
+    final TargetElementUtil instance = TargetElementUtil.getInstance();
+    return new ImplementationSearcher.FirstImplementationsSearcher() {
+      @Override
+      protected boolean accept(PsiElement element) {
+        if (reference != null && !reference.getElement().isValid()) return false;
+        return instance.acceptImplementationForReference(reference, element);
+      }
+
+      @Override
+      protected boolean canShowPopupWithOneItem(PsiElement element) {
+        return false;
+      }
+    }.searchImplementations(editor, source, offset);
   }
 
   public static int tryGetNavigationSourceOffsetFromGutterIcon(@NotNull Editor editor, String actionId) {

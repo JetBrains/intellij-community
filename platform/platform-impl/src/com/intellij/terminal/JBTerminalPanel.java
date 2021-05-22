@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable {
+public class JBTerminalPanel extends TerminalPanel implements FocusListener, Disposable {
   private static final Logger LOG = Logger.getInstance(JBTerminalPanel.class);
   private static final @NonNls String[] ACTIONS_TO_SKIP = new String[]{
     "ActivateTerminalToolWindow",
@@ -117,7 +117,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     addFocusListener(this);
 
-    mySettingsProvider.addListener(this);
+    mySettingsProvider.getUiSettingsManager().addListener(this);
     myEscapeKeyListener = new TerminalEscapeKeyListener(this);
   }
 
@@ -274,7 +274,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorsScheme().getConsoleFontPreferences(), null);
   }
 
-  @Override
   public void fontChanged() {
     reinitFontAndResize();
   }
@@ -282,7 +281,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   @Override
   public void dispose() {
     super.dispose();
-    mySettingsProvider.removeListener(this);
   }
 
   @Override
@@ -290,8 +288,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
       if (newFontSize >= MIN_FONT_SIZE) {
-        mySettingsProvider.getColorsScheme().setConsoleFontSize(newFontSize);
-        mySettingsProvider.fireFontChanged();
+        mySettingsProvider.getUiSettingsManager().setConsoleFontSize(newFontSize);
       }
       return;
     }

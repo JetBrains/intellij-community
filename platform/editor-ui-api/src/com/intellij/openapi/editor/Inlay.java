@@ -106,6 +106,7 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
    * @deprecated Use {@link #update()} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void updateSize() {
     update();
   }

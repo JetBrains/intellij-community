@@ -444,7 +444,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   }
 
   @Override
-  public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
+  public @NotNull Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
     Set<String> result = new HashSet<>();
     collectProcessedWordsWithoutStemming(text, result, stopWords);
     return result;

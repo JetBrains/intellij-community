@@ -5,8 +5,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -32,11 +32,10 @@ object GHPRReviewCommentComponent {
              avatarIconsProvider: GHAvatarIconsProvider,
              showResolvedMarker: Boolean = true): JComponent {
 
-    val avatarLabel: LinkLabel<*> = LinkLabel.create("") {
+    val avatarLabel = ActionLink("") {
       comment.authorLinkUrl?.let { BrowserUtil.browse(it) }
     }.apply {
       icon = avatarIconsProvider.getIcon(comment.authorAvatarUrl)
-      isFocusable = true
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 

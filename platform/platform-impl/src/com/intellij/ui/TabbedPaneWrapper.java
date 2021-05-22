@@ -522,6 +522,7 @@ public class TabbedPaneWrapper  {
       init(tabPlacement, installKeyboardNavigation, new JBTabsFactory(this, project, parent));
     }
 
+    @NotNull
     public JBTabs getTabs() {
       return ((JBTabsPaneImpl)myTabbedPane).getTabs();
     }

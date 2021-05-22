@@ -36,6 +36,7 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -80,6 +81,7 @@ public class CompilerManagerImpl extends CompilerManager {
   @SuppressWarnings("MissingDeprecatedAnnotation")
   @NonInjectable
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public CompilerManagerImpl(@NotNull Project project, @SuppressWarnings("unused") @NotNull MessageBus messageBus) {
     this(project);
   }

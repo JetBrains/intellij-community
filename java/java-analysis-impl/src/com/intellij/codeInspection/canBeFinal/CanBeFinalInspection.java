@@ -5,6 +5,7 @@ package com.intellij.codeInspection.canBeFinal;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(CanBeFinalInspection.class);
@@ -29,40 +29,26 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   public boolean REPORT_FIELDS = true;
   @NonNls public static final String SHORT_NAME = "CanBeFinal";
 
-  private final class OptionsPanel extends JPanel {
+  private final class OptionsPanel extends InspectionOptionsPanel {
     private final JCheckBox myReportClassesCheckbox;
     private final JCheckBox myReportMethodsCheckbox;
     private final JCheckBox myReportFieldsCheckbox;
 
     private OptionsPanel() {
-      super(new GridBagLayout());
-
-      GridBagConstraints gc = new GridBagConstraints();
-      gc.weighty = 0;
-      gc.weightx = 1;
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      gc.anchor = GridBagConstraints.NORTHWEST;
-
-
       myReportClassesCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option"));
       myReportClassesCheckbox.setSelected(REPORT_CLASSES);
       myReportClassesCheckbox.getModel().addItemListener(e -> REPORT_CLASSES = myReportClassesCheckbox.isSelected());
-      gc.gridy = 0;
-      add(myReportClassesCheckbox, gc);
+      add(myReportClassesCheckbox);
 
       myReportMethodsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option1"));
       myReportMethodsCheckbox.setSelected(REPORT_METHODS);
       myReportMethodsCheckbox.getModel().addItemListener(e -> REPORT_METHODS = myReportMethodsCheckbox.isSelected());
-      gc.gridy++;
-      add(myReportMethodsCheckbox, gc);
+      add(myReportMethodsCheckbox);
 
       myReportFieldsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option2"));
       myReportFieldsCheckbox.setSelected(REPORT_FIELDS);
       myReportFieldsCheckbox.getModel().addItemListener(e -> REPORT_FIELDS = myReportFieldsCheckbox.isSelected());
-
-      gc.weighty = 1;
-      gc.gridy++;
-      add(myReportFieldsCheckbox, gc);
+      add(myReportFieldsCheckbox);
     }
   }
 

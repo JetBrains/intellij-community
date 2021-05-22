@@ -180,11 +180,13 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public MavenGeneralSettings getGeneralSettings() {
-    return getWorkspaceSettings().generalSettings;
+    MavenGeneralSettings generalSettings = getWorkspaceSettings().getGeneralSettings();
+    generalSettings.setProject(myProject);
+    return generalSettings;
   }
 
   public MavenImportingSettings getImportingSettings() {
-    return getWorkspaceSettings().importingSettings;
+    return getWorkspaceSettings().getImportingSettings();
   }
 
   private MavenWorkspaceSettings getWorkspaceSettings() {
@@ -1006,13 +1008,18 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                                                      public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
                                                        try {
                                                          MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
+                                                         VirtualFile virtualFile = mavenProject.getFile();
+                                                         File projectFile = MavenWslUtil.resolveWslAware(myProject,
+                                                                                                         () -> new File(virtualFile.getPath()),
+                                                                                                         wsl -> MavenWslUtil.getWslFile(wsl,new File(virtualFile.getPath())));
                                                          String res =
                                                            embedder
-                                                             .evaluateEffectivePom(mavenProject.getFile(), profiles.getEnabledProfiles(),
+                                                             .evaluateEffectivePom(projectFile, profiles.getEnabledProfiles(),
                                                                                    profiles.getDisabledProfiles());
                                                          consumer.consume(res);
                                                        }
                                                        catch (UnsupportedOperationException e) {
+                                                         e.printStackTrace();
                                                          consumer.consume(null); // null means UnsupportedOperationException
                                                        }
                                                      }

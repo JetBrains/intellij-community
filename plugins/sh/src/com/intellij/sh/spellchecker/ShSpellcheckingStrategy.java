@@ -3,6 +3,7 @@ package com.intellij.sh.spellchecker;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
@@ -19,6 +20,7 @@ public class ShSpellcheckingStrategy extends SpellcheckingStrategy {
   public Tokenizer getTokenizer(PsiElement element) {
     final ASTNode node = element.getNode();
     if (node != null && TOKENS_WITH_TEXT.contains(node.getElementType())) return TEXT_TOKENIZER;
-    return super.getTokenizer(element);
+    if (element instanceof PsiNameIdentifierOwner) return ShIdentifierOwnerTokenizer.INSTANCE;
+    return EMPTY_TOKENIZER;
   }
 }

@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -33,6 +34,7 @@ public final class MavenRunnerParameters implements Cloneable {
    * @deprecated use {@link MavenRunnerParameters#MavenRunnerParameters(boolean, String, String, List, Collection)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public MavenRunnerParameters(boolean isPomExecution,
                                @NotNull String workingDirPath,
                                @Nullable List<String> goals,
@@ -60,6 +62,7 @@ public final class MavenRunnerParameters implements Cloneable {
    * @deprecated use {@link MavenRunnerParameters#MavenRunnerParameters(boolean, String, String, List, Collection, Collection)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public MavenRunnerParameters(boolean isPomExecution,
                                @NotNull String workingDirPath,
                                @Nullable List<String> goals,

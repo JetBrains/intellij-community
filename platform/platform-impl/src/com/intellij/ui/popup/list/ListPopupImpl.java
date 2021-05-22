@@ -30,6 +30,7 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +64,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
    * @deprecated use {@link #ListPopupImpl(Project, ListPopupStep)} + {@link #setMaxRowCount(int)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ListPopupImpl(@NotNull ListPopupStep aStep, int maxRowCount) {
     this(aStep);
     setMaxRowCount(maxRowCount);
@@ -470,7 +472,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
     setIndexForShowingChild(myList.getSelectedIndex());
-    Disposer.register(myChild, () -> setIndexForShowingChild(-1));
+    myList.setNextStepButtonSelected(true);
+    Disposer.register(myChild, () -> {
+      setIndexForShowingChild(-1);
+      myList.setNextStepButtonSelected(false);
+    });
   }
 
   @Override
@@ -511,7 +517,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
 
-      myList.setNextStepButtonSelected(false);
       if (isSelectableAt(index)) {
         if (index != myLastSelectedIndex && !isMovingToSubmenu(lastPoint, e.getLocationOnScreen())) {
           myExtendMode = calcExtendMode(index);
@@ -529,12 +534,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         }
 
         if (myExtendMode == ExtendMode.EXTEND_ON_BUTTON) {
-          if (isOnNextStepButton(e)) {
-            showSubMenu(index, false);
-            myList.setNextStepButtonSelected(true);
-          }
-          else {
-            disposeChildren();
+          boolean nextStepButtonSelected = isOnNextStepButton(e);
+          boolean changed = myList.setNextStepButtonSelected(nextStepButtonSelected);
+          if (changed) {
+            if (nextStepButtonSelected) {
+              showSubMenu(index, false);
+            }
+            getContent().repaint();
           }
         }
       }
@@ -659,13 +665,16 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
 
-    public void setNextStepButtonSelected(boolean nextStepButtonSelected) {
+    boolean setNextStepButtonSelected(boolean nextStepButtonSelected) {
+      if (nextStepButtonSelected == myNextStepButtonSelected) return false;
+
       myNextStepButtonSelected = nextStepButtonSelected;
+      return true;
     }
 
     @Override
     public boolean isNextStepButtonSelected() {
-      return myNextStepButtonSelected || getIndexForShowingChild() > -1;
+      return myNextStepButtonSelected;
     }
 
     @Override

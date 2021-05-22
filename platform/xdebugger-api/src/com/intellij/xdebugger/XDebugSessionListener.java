@@ -21,4 +21,7 @@ public interface XDebugSessionListener extends EventListener {
 
   default void settingsChanged() {
   }
+  
+  default void breakpointsMuted(boolean muted) {
+  }
 }

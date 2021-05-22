@@ -331,8 +331,17 @@ public abstract class LongRangeSet {
     }
     return result;
   }
-  
-  abstract public LongRangeSet mul(LongRangeSet multiplier, boolean isLong);
+
+  public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
+    if (multiplier.isEmpty()) return multiplier;
+    if (multiplier instanceof Point) return multiplier.mul(this, isLong);
+    BitString thisMask = getBitwiseMask();
+    BitString thatMask = multiplier.getBitwiseMask();
+    int numZeros = Math.min(6,
+                            Math.min(Long.numberOfTrailingZeros(thisMask.myBits), Long.numberOfTrailingZeros(~thisMask.myMask)) +
+                            Math.min(Long.numberOfTrailingZeros(thatMask.myBits), Long.numberOfTrailingZeros(~thatMask.myMask)));
+    return modRange(isLong ? Long.MIN_VALUE : Integer.MIN_VALUE, isLong ? Long.MAX_VALUE : Integer.MAX_VALUE, 1L << numZeros, 1L);
+  }
 
   BitString getBitwiseMask() {
     if (isEmpty()) {
@@ -1196,6 +1205,13 @@ public abstract class LongRangeSet {
       if (abs < 0 || (abs > Long.SIZE && Long.bitCount(abs) == 1)) {
         abs = Long.SIZE;
       }
+      if (multiplier instanceof ModRange && ((ModRange)multiplier).myBits == 1 && abs < Long.SIZE) {
+        int mod = ((ModRange)multiplier).myMod;
+        abs *= overflow ? Long.lowestOneBit(mod) : mod;
+        if (abs < 0 || (abs > Long.SIZE && Long.bitCount(abs) == 1)) {
+          abs = Long.SIZE;
+        }
+      }
       return modRange(result.min(), result.max(), abs, 1L);
     }
 
@@ -1553,13 +1569,6 @@ public abstract class LongRangeSet {
       return result;
     }
 
-    @Override
-    public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
-      if (multiplier.isEmpty()) return multiplier;
-      if (multiplier instanceof Point) return multiplier.mul(this, isLong);
-      return isLong ? LONG_RANGE : INT_RANGE;
-    }
-
     @NotNull
     private static LongRangeSet plus(long from1, long to1, long from2, long to2, boolean isLong) {
       long len1 = to1 - from1; // may overflow
@@ -1832,21 +1841,25 @@ public abstract class LongRangeSet {
           other instanceof ModRange && ((ModRange)other).myMod == myMod && Long.bitCount(((ModRange)other).myBits) == 1) {
         long[] ranges = set.asRanges();
         LongRangeSet result = empty();
+        int bit = other instanceof Point ? remainder(((Point)other).myValue, myMod) : Long.numberOfTrailingZeros(((ModRange)other).myBits);
+        long bits = rotateRemainders(myBits, myMod, myMod - bit);
         for (int i = 0; i < ranges.length; i += 2) {
-          result = result.unite(plus(ranges[i], ranges[i + 1], other, isLong));
+          LongRangeSet plus;
+          if (Integer.bitCount(myMod) == 1 || !subtractionMayOverflow(other.negate(isLong), isLong)) {
+            plus = modRange(ranges[i], ranges[i + 1], myMod, bits);
+          }
+          else {
+            long min = ranges[i];
+            while (!isSet(bits, remainder(min, myMod))) min++;
+            long max = ranges[i + 1];
+            while (!isSet(bits, remainder(max, myMod))) max--;
+            plus = range(min, max);
+          }
+          result = result.unite(plus);
         }
         return result;
       }
       return set;
-    }
-
-    private LongRangeSet plus(long min, long max, LongRangeSet other, boolean isLong) {
-      if (Integer.bitCount(myMod) == 1 || !subtractionMayOverflow(other.negate(isLong), isLong)) {
-        int bit = other instanceof Point ? remainder(((Point)other).myValue, myMod) : Long.numberOfTrailingZeros(((ModRange)other).myBits);
-        long bits = rotateRemainders(myBits, myMod, myMod - bit);
-        return modRange(min, max, myMod, bits);
-      }
-      return range(min, max);
     }
 
     @NotNull
@@ -2169,13 +2182,6 @@ public abstract class LongRangeSet {
         result = result.unite(range(myRanges[i], myRanges[i + 1]).plus(other, isLong));
       }
       return result;
-    }
-
-    @Override
-    public LongRangeSet mul(LongRangeSet multiplier, boolean isLong) {
-      if (multiplier.isEmpty()) return multiplier;
-      if (multiplier instanceof Point) return multiplier.mul(this, isLong);
-      return isLong ? Range.LONG_RANGE : Range.INT_RANGE;
     }
 
     @NotNull

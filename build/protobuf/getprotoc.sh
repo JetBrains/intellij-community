@@ -24,7 +24,7 @@ getprotoc() {
   rm -f "$_protoc_exe.tmp"
   test -f "$_protoc_exe" && mv -f "$_protoc_exe" "$_protoc_exe.tmp"
 
-  tar --strip-components 1 -xf "$PROTOC_CACHE_DIR/$_protoc_zip_name" -C "$PROTOC_BIN_DIR" bin/protoc || (
+  unzip -j "$PROTOC_CACHE_DIR/$_protoc_zip_name" -d "$PROTOC_BIN_DIR" bin/protoc || (
     test -f "$_protoc_exe.tmp" && mv -f "$_protoc_exe.tmp" "$_protoc_exe"
     rm -f "$PROTOC_CACHE_DIR/$_protoc_zip_name"
     exit 1

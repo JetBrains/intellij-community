@@ -25,9 +25,8 @@ final class JsonPathUnknownFunctionInspection extends LocalInspectionTool {
         JsonPathId functionId = call.getId();
         String functionName = functionId.getText();
 
-        boolean isEvaluateExpr = Boolean.TRUE.equals(holder.getFile().getUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY));
-
-        if (!JsonPathConstants.STANDARD_FUNCTIONS.containsKey(functionId.getText())) {
+        if (!JsonPathConstants.STANDARD_FUNCTIONS.containsKey(functionName)) {
+          boolean isEvaluateExpr = Boolean.TRUE.equals(holder.getFile().getUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY));
           if (isEvaluateExpr) {
             holder.registerProblem(functionId, JsonBundle.message("inspection.message.jsonpath.unsupported.jayway.function", functionName),
                                    ProblemHighlightType.ERROR);

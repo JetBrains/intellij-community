@@ -30,6 +30,7 @@ import git4idea.merge.GitConflictResolver
 import git4idea.ui.StashInfo
 import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
+import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
 
 private val LOG: Logger = Logger.getInstance("#git4idea.stash.GitStashUtils")
@@ -100,6 +101,7 @@ private fun loadChangesInStash(project: Project, root: VirtualFile, hash: Hash):
 }
 
 @Deprecated("use the simpler overloading method which returns a list")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<StashInfo>) {
   for (stash in loadStashStack(project, root)) {
     consumer.consume(stash)

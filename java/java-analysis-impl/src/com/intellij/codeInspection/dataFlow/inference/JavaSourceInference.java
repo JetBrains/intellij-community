@@ -111,7 +111,7 @@ public final class JavaSourceInference {
         method, true, () -> result.getNullability(method, data.methodBody(method)));
       return nullability == null ? Nullability.UNKNOWN : nullability;
     }
-    catch (ClassCastException e) {
+    catch (CannotRestoreExpressionException e) {
       throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
     }
   }
@@ -127,7 +127,7 @@ public final class JavaSourceInference {
         method, true, () -> result.getMutability(method, data.methodBody(method)));
       return mutability == null ? Mutability.UNKNOWN : mutability;
     }
-    catch (ClassCastException e) {
+    catch (CannotRestoreExpressionException e) {
       throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
     }
   }
@@ -157,7 +157,7 @@ public final class JavaSourceInference {
       contracts = RecursionManager.doPreventingRecursion(
         method, true, () -> ContainerUtil.concat(preContracts, c -> c.toContracts(method, data.methodBody(method))));
     }
-    catch (ClassCastException e) {
+    catch (CannotRestoreExpressionException e) {
       throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
     }
     if (contracts == null || contracts.isEmpty()) return Collections.emptyList();

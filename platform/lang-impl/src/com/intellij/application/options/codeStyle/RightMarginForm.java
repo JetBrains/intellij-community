@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.LangBundle;
@@ -13,11 +13,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
-import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,10 +48,10 @@ public class RightMarginForm {
   private JPanel myTopPanel;
   private JComboBox<String> myWrapOnTypingCombo;
   private CommaSeparatedIntegersField myVisualGuidesField;
-  @SuppressWarnings("unused") private ActionLink myResetLink;
+  @SuppressWarnings("unused") private AnActionLink myResetLink;
   private JLabel myVisualGuidesHint;
   private JLabel myVisualGuidesLabel;
-  private ActionLink myResetGuidesLink;
+  private AnActionLink myResetGuidesLink;
   private final Language myLanguage;
   private final CodeStyleSettings mySettings;
 
@@ -92,9 +92,9 @@ public class RightMarginForm {
         myVisualGuidesField.getEmptyText().setText(getDefaultVisualGuidesText(mySettings));
       }
     });
-    myResetLink = new ActionLink(LangBundle.message("action.link.reset"), new ResetRightMarginAction());
+    myResetLink = new AnActionLink(LangBundle.message("action.link.reset"), new ResetRightMarginAction());
     myVisualGuidesLabel = new JLabel();
-    myResetGuidesLink = new ActionLink(LangBundle.message("action.link.reset"), new ResetGuidesAction());
+    myResetGuidesLink = new AnActionLink(LangBundle.message("action.link.reset"), new ResetGuidesAction());
   }
 
   private class ResetRightMarginAction extends DumbAwareAction {

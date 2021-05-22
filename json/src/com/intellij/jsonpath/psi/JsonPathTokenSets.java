@@ -7,5 +7,10 @@ public final class JsonPathTokenSets {
   private JsonPathTokenSets() {
   }
   public static final TokenSet JSONPATH_DOT_NAVIGATION_SET = TokenSet.create(JsonPathTypes.DOT, JsonPathTypes.RECURSIVE_DESCENT);
-  public static final TokenSet JSONPATH_EQUALITY_OPERATOR_SET = TokenSet.create(JsonPathTypes.EQ_OP, JsonPathTypes.NE_OP);
+  public static final TokenSet JSONPATH_EQUALITY_OPERATOR_SET = TokenSet.create(
+    JsonPathTypes.EQ_OP,
+    JsonPathTypes.NE_OP,
+    JsonPathTypes.EEQ_OP,
+    JsonPathTypes.ENE_OP
+  );
 }

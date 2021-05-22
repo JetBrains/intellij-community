@@ -8,12 +8,11 @@ import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.impl.JsonRecursiveElementVisitor;
-import com.intellij.jsonpath.psi.JsonPathArrayValue;
+import com.intellij.jsonpath.psi.JsonPathBinaryConditionalOperator;
 import com.intellij.jsonpath.psi.JsonPathObjectValue;
 import com.intellij.jsonpath.psi.JsonPathStringLiteral;
 import com.intellij.jsonpath.psi.JsonPathTypes;
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager;
-import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +22,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.jsonpath.JsonPathConstants.STANDARD_FUNCTIONS;
+import static com.intellij.jsonpath.JsonPathConstants.STANDARD_NAMED_OPERATORS;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_DOT_NAVIGATION_SET;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_EQUALITY_OPERATOR_SET;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -44,11 +44,7 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
            new FunctionNamesCompletionProvider());
 
     extend(CompletionType.BASIC,
-           psiElement().afterLeafSkipping(StandardPatterns.alwaysFalse(), psiElement().whitespace())
-            .andNot(StandardPatterns.or(
-              psiElement().inside(JsonPathObjectValue.class),
-              psiElement().inside(JsonPathArrayValue.class)
-            )),
+           psiElement().withParent(JsonPathBinaryConditionalOperator.class),
            new OperatorCompletionProvider());
 
     KeywordsCompletionProvider keywordsCompletionProvider = new KeywordsCompletionProvider();
@@ -96,13 +92,11 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
   }
 
   private static class OperatorCompletionProvider extends CompletionProvider<CompletionParameters> {
-    private static final String[] OPERATORS = new String[]{"in", "nin", "subsetof", "anyof", "noneof", "size", "empty"};
-
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
-      for (String keyword : OPERATORS) {
+      for (String keyword : STANDARD_NAMED_OPERATORS) {
         result.addElement(LookupElementBuilder.create(keyword).bold());
       }
     }

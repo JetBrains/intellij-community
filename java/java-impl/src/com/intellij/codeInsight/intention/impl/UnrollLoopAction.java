@@ -4,7 +4,6 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -126,7 +125,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         PsiType type = expression.getType();
         if (type instanceof PsiArrayType) {
           DfType dfType = CommonDataflow.getDfType(expression);
-          Integer arraySize = DfConstantType.getConstantOfType(SpecialField.ARRAY_LENGTH.getFromQualifier(dfType), Integer.class);
+          Integer arraySize = SpecialField.ARRAY_LENGTH.getFromQualifier(dfType).getConstantOfType(Integer.class);
           if (arraySize != null) {
             PsiExpression array = expression;
             return generatedList(loop, arraySize, index -> ParenthesesUtils.getText(array, PsiPrecedenceUtil.POSTFIX_PRECEDENCE)
@@ -135,7 +134,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         }
         if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_LIST)) {
           DfType dfType = CommonDataflow.getDfType(expression);
-          Integer listSize = DfConstantType.getConstantOfType(SpecialField.COLLECTION_SIZE.getFromQualifier(dfType), Integer.class);
+          Integer listSize = SpecialField.COLLECTION_SIZE.getFromQualifier(dfType).getConstantOfType(Integer.class);
           if (listSize != null) {
             PsiExpression list = expression;
             return generatedList(loop, listSize, index -> ParenthesesUtils.getText(list, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE)

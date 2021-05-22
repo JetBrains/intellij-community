@@ -7,6 +7,7 @@ import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations);
 
   /**
@@ -56,6 +58,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void registerFileType(@NotNull FileType type, @NonNls String @Nullable ... defaultAssociatedExtensions) {
     List<FileNameMatcher> matchers = new ArrayList<>();
     if (defaultAssociatedExtensions != null) {
@@ -95,6 +98,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated Subscribe to {@link #TOPIC} on any message bus level instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addFileTypeListener(@NotNull FileTypeListener listener);
 
   /**
@@ -105,6 +109,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated Subscribe to {@link #TOPIC} on any message bus level instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removeFileTypeListener(@NotNull FileTypeListener listener);
 
   /**
@@ -116,6 +121,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated Use {@link #getKnownFileTypeOrAssociate(VirtualFile, Project)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) { return file.getFileType(); }
 
   public abstract @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project);

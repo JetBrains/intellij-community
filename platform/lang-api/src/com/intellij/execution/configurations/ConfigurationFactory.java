@@ -9,10 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.IconUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
@@ -92,6 +89,7 @@ public abstract class ConfigurationFactory {
 
   /** @deprecated Use {@link com.intellij.icons.AllIcons.General#Add} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public Icon getAddIcon() {
     return IconUtil.getAddIcon();
   }

@@ -73,7 +73,7 @@ object PrefixMatchingUtil {
       fun build(prefix: String, lookupString: String): PrefixMatchingScores {
         if (prefix.isEmpty()) return EMPTY_PREFIX_MATCHING_SCORE
         val words = NameUtil.nameToWords(lookupString).filter { it.all { it.isLetterOrDigit() } }
-        startMatchingCount = lookupString.commonPrefixWith(prefix, true).length
+        startMatchingCount = commonPrefixLength(prefix, lookupString)
         exact = lookupString == prefix
         wordsCount = words.size
         lastWordSize = (words.lastOrNull() ?: "").length
@@ -151,6 +151,21 @@ object PrefixMatchingUtil {
         greedyMatchingCount++
         if (withCase) greedyMatchingWithCaseCount++
         if (word == wordsCount - 1) lastWord++
+      }
+
+      private fun commonPrefixLength(prefix: String, lookupString: String): Int {
+        val shortestLength = minOf(prefix.length, lookupString.length)
+
+        var i = 0
+
+        // allow matching lower case in prefix to capital in lookup string, but prohibit capital in prefix with lower in lookup string
+        // prefix = "dir", lookupString = "Directory" - MATCHED
+        // prefix = "Dir", lookupString = "directory" - NOT MATCHED
+        while (i < shortestLength && prefix[i].equals(lookupString[i], ignoreCase = prefix[i].isLowerCase())) {
+          i++
+        }
+
+        return i
       }
     }
   }

@@ -186,7 +186,6 @@ final class DistributionJARsBuilder {
       addModule("intellij.platform.statistics", "stats.jar")
       addModule("intellij.platform.statistics.uploader", "stats.jar")
       addModule("intellij.platform.statistics.config", "stats.jar")
-      addModule("intellij.platform.statistics.validator", "stats.jar")
       addModule("intellij.platform.statistics.devkit")
 
       addModule("intellij.relaxng", "intellij-xml.jar")
@@ -591,10 +590,14 @@ final class DistributionJARsBuilder {
         LayoutBuilder layoutBuilder = createLayoutBuilder()
         buildContext.messages.block("Build bundled plugins for $osFamily.osName") {
           buildPlugins(layoutBuilder, osSpecificPlugins,
-                       Paths.get(buildContext.paths.buildOutputRoot, "dist.$osFamily.distSuffix", "plugins"), projectStructureMapping)
+                       getOsSpecificDistDirectory(osFamily, buildContext).resolve("plugins"), projectStructureMapping)
         }
       }
     }
+  }
+
+  static Path getOsSpecificDistDirectory(OsFamily osFamily, BuildContext buildContext) {
+    Paths.get(buildContext.paths.buildOutputRoot, "dist.$osFamily.distSuffix")
   }
 
   /**

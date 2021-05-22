@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.mac.MacMessages
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Window
 import javax.swing.Icon
@@ -47,12 +48,14 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
   }
 
   @Deprecated(message = "Pass parentComponent to show", level = DeprecationLevel.ERROR)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   fun parentComponent(parentComponent: Component?): T {
     this.parentComponent = parentComponent
     return getThis()
   }
 
   @Deprecated(message = "Pass project to show", level = DeprecationLevel.ERROR)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun project(project: Project?): T {
     this.project = project
     return getThis()
@@ -143,6 +146,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
     fun guessWindowAndAsk() = show(project = null, parentComponent = null)
 
     @Deprecated(message = "Use show(project)", level = DeprecationLevel.ERROR)
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     fun show() = show(project = project, parentComponent = parentComponent)
 
     @YesNoCancelResult

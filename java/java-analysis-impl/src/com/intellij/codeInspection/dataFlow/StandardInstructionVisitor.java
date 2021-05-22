@@ -5,7 +5,10 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -141,7 +144,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private static DfaValue dropLocality(DfaValue value, DfaMemoryState state) {
     if (!(value instanceof DfaVariableValue)) {
       if (DfReferenceType.isLocal(value.getDfType())) {
-        return value.getFactory().fromDfType(((DfReferenceType)value.getDfType()).dropLocality());
+        DfReferenceType dfType = ((DfReferenceType)value.getDfType()).dropLocality();
+        if (value instanceof DfaWrappedValue) {
+          return value.getFactory().getWrapperFactory()
+            .createWrapper(dfType, ((DfaWrappedValue)value).getSpecialField(), ((DfaWrappedValue)value).getWrappedValue());
+        }
+        return value.getFactory().fromDfType(dfType);
       }
       return value;
     }
@@ -615,12 +623,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private <T extends PsiElement> DfaValue dereference(DfaMemoryState memState,
                                                       DfaValue value,
                                                       @Nullable NullabilityProblemKind.NullabilityProblem<T> problem) {
-    boolean ok = checkNotNullable(memState, value, problem);
+    ThreeState ok = checkNotNullable(memState, value, problem);
     if (value instanceof DfaTypeValue) {
       DfType dfType = value.getDfType().meet(NOT_NULL_OBJECT);
       return value.getFactory().fromDfType(dfType == BOTTOM ? NOT_NULL_OBJECT : dfType);
     }
-    if (ok) return value;
+    if (ok != ThreeState.NO) return value;
     if (memState.isNull(value) && problem != null && problem.getKind() == NullabilityProblemKind.nullableFunctionReturn) {
       return value.getFactory().fromDfType(NOT_NULL_OBJECT);
     }
@@ -657,9 +665,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (method != null) {
         CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(method);
         if (handler != null) {
-          DfType dfType = handler.getMethodResult(callArguments, state, factory, method);
-          if (dfType != TOP) {
-            return factory.fromDfType(dfType);
+          DfaValue value = handler.getMethodResultValue(callArguments, state, factory, method);
+          if (value != null) {
+            return value;
           }
         }
       }
@@ -697,9 +705,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           mutable = Mutability.getMutability(realMethod);
         }
         type = narrowReturnType(type, qualifierType, realMethod);
-        if (nullability == Nullability.UNKNOWN) {
-          nullability = factory.suggestNullabilityForNonAnnotatedMember(targetMethod);
-        }
       }
       DfType dfType = instruction.getContext() instanceof PsiNewExpression ?
                       TypeConstraints.exact(type).asDfType().meet(NOT_NULL_OBJECT) :
@@ -765,12 +770,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return precalculated;
   }
 
-  protected boolean checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
-    boolean notNullable = state.checkNotNullable(value);
+  protected ThreeState checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+    DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
+    boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
     if (notNullable && problem != null && problem.thrownException() != null) {
       state.applyCondition(value.cond(RelationType.NE, value.getFactory().getNull()));
     }
-    return notNullable;
+    boolean unknown = nullability == DfaNullability.UNKNOWN;
+    return notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
   }
 
   @Override
@@ -845,21 +852,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue result = runner.getFactory().getUnknown();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
       boolean isLong = PsiType.LONG.equals(type);
-      if (instruction.isWidened()) {
-        LongRangeSet leftRange = DfLongType.extractRange(memState.getDfType(dfaLeft));
-        LongRangeSet rightRange = DfLongType.extractRange(memState.getDfType(dfaRight));
-        LongRangeBinOp op = LongRangeBinOp.fromToken(opSign);
-        LongRangeSet range = op == null ? LongRangeSet.all() : op.evalWide(leftRange, rightRange, isLong);
-        result = runner.getFactory().fromDfType(rangeClamped(range, isLong));
-      }
-      else {
-        result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
-      }
+      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
     }
     if (DfaTypeValue.isUnknown(result) && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
-      result = instruction.isWidened()
-               ? runner.getFactory().getObjectType(type, Nullability.NOT_NULL)
-               : concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
+      result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
     }
     pushExpressionResult(result, instruction, memState);
 
@@ -894,11 +890,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                  DfaMemoryState memState,
                                                  PsiType stringType,
                                                  DfaValueFactory factory) {
-    String leftString = DfConstantType.getConstantOfType(memState.getDfType(left), String.class);
-    String rightString = DfConstantType.getConstantOfType(memState.getDfType(right), String.class);
+    String leftString = memState.getDfType(left).getConstantOfType(String.class);
+    String rightString = memState.getDfType(right).getConstantOfType(String.class);
     if (leftString != null && rightString != null &&
         leftString.length() + rightString.length() <= CustomMethodHandlers.MAX_STRING_CONSTANT_LENGTH_TO_TRACK) {
-      return factory.getConstant(leftString + rightString, stringType);
+      return factory.fromDfType(concatenationResult(leftString + rightString, stringType));
     }
     DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, left);
     DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, right);
@@ -979,7 +975,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     boolean unknownTargetType = false;
     DfaCondition condition = null;
     if (instruction.isClassObjectCheck()) {
-      PsiType type = DfConstantType.getConstantOfType(memState.getDfType(dfaRight), PsiType.class);
+      PsiType type = memState.getDfType(dfaRight).getConstantOfType(PsiType.class);
       if (type == null || type instanceof PsiPrimitiveType) {
         // Unknown/primitive class: just execute contract "null -> false"
         condition = dfaLeft.cond(RelationType.NE, factory.getNull());

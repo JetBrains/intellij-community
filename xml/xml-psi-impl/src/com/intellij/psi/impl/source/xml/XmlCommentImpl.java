@@ -48,13 +48,19 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
 
   @Override
   public XmlTagChild getNextSiblingInTag() {
-    if(getParent() instanceof XmlTag) return (XmlTagChild)getNextSibling();
+    if(getParent() instanceof XmlTag) {
+      PsiElement sibling = getNextSibling();
+      return sibling instanceof XmlTagChild ? (XmlTagChild)sibling : null;
+    }
     return null;
   }
 
   @Override
   public XmlTagChild getPrevSiblingInTag() {
-    if(getParent() instanceof XmlTag) return (XmlTagChild)getPrevSibling();
+    if(getParent() instanceof XmlTag) {
+      PsiElement sibling = getPrevSibling();
+      return sibling instanceof XmlTagChild ? (XmlTagChild)sibling : null;
+    }
     return null;
   }
 

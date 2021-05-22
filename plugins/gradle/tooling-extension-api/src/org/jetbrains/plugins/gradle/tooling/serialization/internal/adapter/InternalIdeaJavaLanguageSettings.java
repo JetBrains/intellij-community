@@ -3,7 +3,9 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.api.JavaVersion;
 import org.gradle.tooling.model.idea.IdeaJavaLanguageSettings;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class InternalIdeaJavaLanguageSettings implements IdeaJavaLanguageSettings {
   private JavaVersion languageLevel;
   private JavaVersion targetBytecodeVersion;

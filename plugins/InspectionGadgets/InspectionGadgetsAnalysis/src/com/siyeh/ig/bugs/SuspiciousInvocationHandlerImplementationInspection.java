@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.FinishElementInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -87,7 +86,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
                                           @NotNull PsiParameterListOwner context,
                                           @NotNull DfaMemoryState state) {
             if (context != method) return;
-            String name = DfConstantType.getConstantOfType(state.getDfType(methodName), String.class);
+            String name = state.getDfType(methodName).getConstantOfType(String.class);
             if (name == null) {
               runner.cancel();
               return;

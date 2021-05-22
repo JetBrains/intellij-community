@@ -497,6 +497,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       processAllBreakpoints(!muted, muted);
     }
     myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueAllBreakpointsUpdate();
+    myDispatcher.getMulticaster().breakpointsMuted(muted);
   }
 
   @Override
@@ -713,7 +714,9 @@ public final class XDebugSessionImpl implements XDebugSession {
         BreakpointsUsageCollector.reportBreakpointVerified(breakpoint, delay);
       }
     }
-    myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
+    XBreakpointManagerImpl debuggerManager = myDebuggerManager.getBreakpointManager(); 
+    debuggerManager.getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
+    debuggerManager.fireBreakpointPresentationUpdated(breakpoint, this);
   }
 
   @Override
@@ -994,7 +997,8 @@ public final class XDebugSessionImpl implements XDebugSession {
         listener.hyperlinkUpdate(event);
       }
     };
-    XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
+    XDebuggerManagerImpl.getNotificationGroup()
+      .createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
   }
 
   private final class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {

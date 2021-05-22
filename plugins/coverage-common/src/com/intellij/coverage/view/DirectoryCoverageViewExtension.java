@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class DirectoryCoverageViewExtension extends CoverageViewExtension {
-  private final CoverageAnnotator myAnnotator;
+  protected final CoverageAnnotator myAnnotator;
 
   public DirectoryCoverageViewExtension(Project project,
                                         CoverageAnnotator annotator,

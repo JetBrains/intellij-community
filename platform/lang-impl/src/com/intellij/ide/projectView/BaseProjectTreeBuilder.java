@@ -132,6 +132,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
    * @deprecated Use {@link #selectAsync}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public ActionCallback select(Object element, VirtualFile file, final boolean requestFocus) {
     return Promises.toActionCallback(_select(element, file, requestFocus, Conditions.alwaysTrue()));

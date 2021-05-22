@@ -30,6 +30,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,9 +78,9 @@ public final class DfaPsiUtil {
       return Nullability.NOT_NULL;
     }
 
-    Nullability fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
-    if (fromAnnotation != Nullability.UNKNOWN) {
-      return fromAnnotation;
+    NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
+    if (fromAnnotation != null) {
+      return fromAnnotation.getNullability();
     }
 
     if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
@@ -103,18 +104,20 @@ public final class DfaPsiUtil {
     return Nullability.UNKNOWN;
   }
 
-  @NotNull
-  private static Nullability getNullabilityFromAnnotation(PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
+  private static @Nullable NullabilityAnnotationInfo getNullabilityFromAnnotation(@NotNull PsiModifierListOwner owner,
+                                                                                  boolean ignoreParameterNullabilityInference) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
     if (info == null || shouldIgnoreAnnotation(info.getAnnotation())) {
-      return Nullability.UNKNOWN;
+      return null;
     }
     if (ignoreParameterNullabilityInference && owner instanceof PsiParameter && info.isInferred()) {
       List<PsiParameter> supers = AnnotationUtil.getSuperAnnotationOwners((PsiParameter)owner);
-      return ContainerUtil.exists(supers, each -> manager.isNullable(each, false)) ? Nullability.NULLABLE :  Nullability.UNKNOWN;
+      return StreamEx.of(supers).map(param -> manager.findEffectiveNullabilityInfo(param))
+        .findFirst(i -> i != null && i.getInheritedFrom() == null && i.getNullability() == Nullability.NULLABLE)
+        .orElse(null);
     }
-    return info.getNullability();
+    return info;
   }
 
   private static boolean isMapMethodWithUnknownNullity(@NotNull PsiMethod method) {
@@ -185,11 +188,11 @@ public final class DfaPsiUtil {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
-      if (nnn.getNullables().contains(qualifiedName) && !shouldIgnoreAnnotation(annotation)) {
-        return new NullabilityAnnotationInfo(annotation, Nullability.NULLABLE, false);
-      }
-      if (nnn.getNotNulls().contains(qualifiedName)) {
-        return new NullabilityAnnotationInfo(annotation, Nullability.NOT_NULL, false);
+      Optional<Nullability> optionalNullability = nnn.getAnnotationNullability(qualifiedName);
+      if (optionalNullability.isPresent()) {
+        Nullability nullability = optionalNullability.get();
+        if (nullability == Nullability.NULLABLE && shouldIgnoreAnnotation(annotation)) continue;
+        return new NullabilityAnnotationInfo(annotation, nullability, false);
       }
     }
     if (eachType instanceof PsiClassType) {
@@ -284,30 +287,38 @@ public final class DfaPsiUtil {
     PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return false;
 
+    if (field.hasModifierProperty(PsiModifier.STATIC)) {
+      for (PsiClassInitializer initializer : containingClass.getInitializers()) {
+        if (initializer.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
+            initializer.hasModifierProperty(PsiModifier.STATIC) &&
+            getBlockNotNullFields(containingClass, initializer.getBody()).contains(field)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     PsiMethod[] constructors = containingClass.getConstructors();
     if (constructors.length == 0) return false;
 
     for (PsiMethod method : constructors) {
-      if (!getNotNullInitializedFields(method, containingClass).contains(field)) {
+      if (!method.getLanguage().isKindOf(JavaLanguage.INSTANCE) ||
+          !getBlockNotNullFields(containingClass, method.getBody()).contains(field)) {
         return false;
       }
     }
     return true;
   }
 
-  private static Set<PsiField> getNotNullInitializedFields(final PsiMethod constructor, final PsiClass containingClass) {
-    if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return Collections.emptySet();
-
-    final PsiCodeBlock body = constructor.getBody();
+  private static Set<PsiField> getBlockNotNullFields(PsiClass containingClass, PsiCodeBlock body) {
     if (body == null) return Collections.emptySet();
 
-    return CachedValuesManager.getCachedValue(constructor, new CachedValueProvider<>() {
+    return CachedValuesManager.getCachedValue(body, new CachedValueProvider<>() {
       @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
-        final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = new HashMap<>();
-        final DataFlowRunner dfaRunner = new DataFlowRunner(constructor.getProject()) {
+        final DataFlowRunner dfaRunner = new DataFlowRunner(body.getProject()) {
           PsiElement currentBlock;
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
@@ -383,7 +394,7 @@ public final class DfaPsiUtil {
             }
           }
         }
-        return Result.create(notNullFields, constructor, PsiModificationTracker.MODIFICATION_COUNT);
+        return Result.create(notNullFields, body, PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }
@@ -436,6 +447,12 @@ public final class DfaPsiUtil {
             constructor.accept(visitor);
           }
         }
+ 
+        for (PsiClassInitializer initializer : psiClass.getInitializers()) {
+          if (initializer.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+            initializer.accept(visitor);
+          }
+        } 
 
         return Result.create(result, psiClass);
       }

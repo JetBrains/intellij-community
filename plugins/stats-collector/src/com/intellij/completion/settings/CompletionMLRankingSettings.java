@@ -2,12 +2,14 @@
 package com.intellij.completion.settings;
 
 import com.intellij.stats.completion.sender.SenderPreloadingActivityKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Use {@link com.intellij.completion.ml.settings.CompletionMLRankingSettings} instead.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public final class CompletionMLRankingSettings {
   private static final CompletionMLRankingSettings instance = new CompletionMLRankingSettings();
 

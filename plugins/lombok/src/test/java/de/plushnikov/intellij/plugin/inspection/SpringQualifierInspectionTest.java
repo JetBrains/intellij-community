@@ -50,6 +50,23 @@ public class SpringQualifierInspectionTest extends LombokInspectionTest {
     myFixture.checkHighlighting();
   }
 
+  public void testNonValidTarget() {
+    addQualifierClass();
+    myFixture.configureByText("Foo.java", "import lombok.NonNull;\n" +
+                                                        "import lombok.RequiredArgsConstructor;\n" +
+                                                        "import org.springframework.beans.factory.annotation.Qualifier;\n" +
+                                                        "@RequiredArgsConstructor\n" +
+                                                        "public class Foo {\n" +
+                                                        "  Runnable r = new Runnable() {\n" +
+                                                        "    @Qualifier\n" +
+                                                        "    public void run() {\n" +
+                                                        "    }\n" +
+                                                        "  };\n" +
+                                                        "}");
+    myFixture.checkHighlighting();
+  }
+
+
   private void addQualifierClass() {
     myFixture.addClass("package org.springframework.beans.factory.annotation;\n" +
                        "\n" +

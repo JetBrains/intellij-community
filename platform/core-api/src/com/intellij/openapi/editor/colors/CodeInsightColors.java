@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import org.jetbrains.annotations.ApiStatus;
+
 @SuppressWarnings({"unused"})
 public interface CodeInsightColors {
   TextAttributesKey WRONG_REFERENCES_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("WRONG_REFERENCES_ATTRIBUTES");
@@ -26,7 +28,7 @@ public interface CodeInsightColors {
   /**
    * @deprecated use {@link #WEAK_WARNING_ATTRIBUTES} instead
    */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   TextAttributesKey INFO_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INFO_ATTRIBUTES");
   TextAttributesKey WEAK_WARNING_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INFO_ATTRIBUTES");
   TextAttributesKey INFORMATION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INFORMATION_ATTRIBUTES");
@@ -40,7 +42,7 @@ public interface CodeInsightColors {
    * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#INSTANCE_FIELD_ATTRIBUTES}.
    * The field will be removed in future versions.
    */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   TextAttributesKey INSTANCE_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -48,7 +50,7 @@ public interface CodeInsightColors {
    * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#STATIC_FIELD_ATTRIBUTES}.
    * The field will be removed in future versions.
    */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   TextAttributesKey STATIC_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -56,7 +58,7 @@ public interface CodeInsightColors {
    * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#STATIC_FINAL_FIELD_ATTRIBUTES}.
    * The field will be removed in future versions.
    */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   TextAttributesKey STATIC_FINAL_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -65,6 +67,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   TextAttributesKey METHOD_CALL_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -73,6 +76,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   TextAttributesKey ANNOTATION_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
 
   TextAttributesKey MATCHED_BRACE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("MATCHED_BRACE_ATTRIBUTES");

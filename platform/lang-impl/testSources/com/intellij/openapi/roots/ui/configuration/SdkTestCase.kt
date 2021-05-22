@@ -99,8 +99,8 @@ abstract class SdkTestCase : LightPlatformTestCase() {
   interface TestSdkType : JavaSdkType, SdkTypeId {
     companion object : SdkType("test-type"), TestSdkType {
       override fun getPresentableName(): String = name
-      override fun isValidSdkHome(path: String?): Boolean = true
-      override fun suggestSdkName(currentSdkName: String?, sdkHome: String?): String = TestSdkGenerator.findTestSdk(sdkHome!!)!!.name
+      override fun isValidSdkHome(path: String): Boolean = true
+      override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String = TestSdkGenerator.findTestSdk(sdkHome)!!.name
       override fun suggestHomePath(): String? = null
       override fun suggestHomePaths(): Collection<String> = TestSdkGenerator.getAllTestSdks().map { it.homePath }
       override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
@@ -119,8 +119,8 @@ abstract class SdkTestCase : LightPlatformTestCase() {
         ?.let { File(it, relativePath).path }
 
     override fun getPresentableName(): String = name
-    override fun isValidSdkHome(path: String?): Boolean = true
-    override fun suggestSdkName(currentSdkName: String?, sdkHome: String?): String = "dependent-sdk-name"
+    override fun isValidSdkHome(path: String): Boolean = true
+    override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String = "dependent-sdk-name"
     override fun suggestHomePath(): String? = null
     override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
     override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}

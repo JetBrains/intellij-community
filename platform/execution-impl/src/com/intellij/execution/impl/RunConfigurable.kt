@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditorConfigurable
@@ -32,6 +33,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
 import com.intellij.ui.*
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
+import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.mac.TouchbarDataKeys
 import com.intellij.ui.popup.PopupState
@@ -229,6 +231,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }
     tree.registerKeyboardAction({ clickDefaultButton() }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
     sortTopLevelBranches()
+    tree.emptyText.appendText(ExecutionBundle.message("status.text.no.run.configurations.added")).appendLine(
+      ExecutionBundle.message("status.text.add.new"), LINK_PLAIN_ATTRIBUTES) {
+      toolbarAddAction.showAddPopup(true, tree)}
+    val shortcut = KeymapUtil.getShortcutsText(toolbarAddAction.shortcutSet.shortcuts)
+    if (shortcut.isNotEmpty()) tree.emptyText.appendText(" $shortcut")
     (tree.model as DefaultTreeModel).reload()
   }
 
@@ -937,14 +944,14 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      showAddPopup(true)
+      showAddPopup(true, null)
     }
 
     override fun run(button: AnActionButton) {
-      showAddPopup(true)
+      showAddPopup(true, null)
     }
 
-    private fun showAddPopup(showApplicableTypesOnly: Boolean) {
+    fun showAddPopup(showApplicableTypesOnly: Boolean, component: JComponent?) {
       if (showApplicableTypesOnly && myPopupState.isRecentlyHidden) return // do not show new popup
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes, true).toMutableList()
@@ -957,10 +964,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
                                                           ExecutionBundle.message("show.irrelevant.configurations.action.name",
                                                                                   hiddenCount),
                                                           { factory -> createNewConfiguration(factory) }, selectedConfigurationType,
-                                                          { showAddPopup(false) }, true)
+                                                          { showAddPopup(false, null) }, true)
       //new TreeSpeedSearch(myTree);
       myPopupState.prepareToShow(popup)
-      popup.showUnderneathOf(toolbarDecorator!!.actionsPanel)
+      if (component == null) popup.showUnderneathOf(toolbarDecorator!!.actionsPanel)
+      else popup.showInBestPositionFor(DataManager.getInstance().getDataContext(component))
     }
   }
 

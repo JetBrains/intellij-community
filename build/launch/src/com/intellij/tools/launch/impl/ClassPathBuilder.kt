@@ -9,6 +9,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.io.File
 import com.intellij.util.SystemProperties
+import org.apache.log4j.Logger
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
@@ -16,6 +17,7 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import java.util.*
 
 class ClassPathBuilder(private val paths: PathsProvider, private val modules: ModulesProvider) {
+  private val logger = Logger.getLogger(ClassPathBuilder::class.java)
 
   companion object {
     fun createClassPathArgFile(paths: PathsProvider, classpath: List<String>): File {
@@ -32,7 +34,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
 
   private val model = JpsElementFactory.getInstance().createModel() ?: throw Exception("Couldn't create JpsModel")
 
-  fun build(): File {
+  fun build(logClasspath: Boolean): File {
     val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
 
     val m2HomePath = File(SystemProperties.getUserHome())
@@ -66,10 +68,10 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
     modulesList.addAll(modules.additionalModules)
     modulesList.add("intellij.configurationScript")
 
-    return createClassPathArgFileForModules(modulesList)
+    return createClassPathArgFileForModules(modulesList, logClasspath)
   }
 
-  private fun createClassPathArgFileForModules(modulesList: List<String>): File {
+  private fun createClassPathArgFileForModules(modulesList: List<String>, logClasspath: Boolean): File {
     val classpath = mutableListOf<String>()
     for (moduleName in modulesList) {
       val module = model.project.modules.singleOrNull { it.name == moduleName }
@@ -80,11 +82,14 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
     }
 
     // Uncomment for big debug output
-    //println("Created classpath:")
-    //for (path in classpath.distinct().sorted()) {
-    //  println("  $path")
-    //}
-    //println("-- END")
+    // seeing as client classpath gets logged anyway, there's no need to comment this out
+    if (logClasspath) {
+      logger.info("Created classpath:")
+      for (path in classpath.distinct().sorted()) {
+        logger.info("  $path")
+      }
+      logger.info("-- END")
+    }
 
     return createClassPathArgFile(paths, classpath)
   }

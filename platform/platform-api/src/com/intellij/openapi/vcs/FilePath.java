@@ -70,7 +70,7 @@ public interface FilePath {
    * @deprecated to remove in IDEA 16.
    * Use {@link com.intellij.openapi.fileEditor.FileDocumentManager#getDocument(VirtualFile)} directly.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   @Nullable
   Document getDocument();
@@ -94,7 +94,7 @@ public interface FilePath {
    * @deprecated to remove in IDEA 16.
    * Use {@link com.intellij.openapi.vfs.VfsUtil#findFileByIoFile} or {@link com.intellij.openapi.vfs.LocalFileSystem#findFileByPath} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   void refresh();
 
@@ -102,7 +102,7 @@ public interface FilePath {
    * @deprecated to remove in IDEA 16.
    * Use {@link com.intellij.openapi.vfs.LocalFileSystem#refreshAndFindFileByPath} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   void hardRefresh();
 

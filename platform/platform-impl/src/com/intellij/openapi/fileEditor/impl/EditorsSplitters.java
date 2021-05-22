@@ -56,6 +56,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -345,6 +346,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @deprecated Use {@link #getOpenFileList()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public @NotNull VirtualFile @NotNull [] getOpenFiles() {
     return VfsUtilCore.toVirtualFileArray(getOpenFileList());
   }
@@ -744,6 +746,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @deprecated Use {@link #getEditorComposites()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public EditorWithProviderComposite @NotNull [] getEditorsComposites() {
     return getEditorComposites().toArray(new EditorWithProviderComposite[0]);
   }

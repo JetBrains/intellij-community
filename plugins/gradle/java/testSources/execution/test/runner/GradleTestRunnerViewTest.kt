@@ -82,6 +82,14 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
                  "  test\n" +
                  "  test",
                  treeStringPresentation.trim())
+
+    buildViewTestFixture.assertBuildViewTreeEquals {
+      assertThat(it)
+        .startsWith("-\n" +
+                    " -failed")
+        .containsOnlyOnce("  -:additionalTest\n" +
+                          "   There were failing tests. See the report at: ")
+    }
   }
 
   @TargetVersions("2.14+")

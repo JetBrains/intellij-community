@@ -13,6 +13,21 @@ public interface ElevationService {
     return ApplicationManager.getApplication().getService(ElevationService.class);
   }
 
+  /**
+   * This method can be used to ensure the service has an active authorization by the time you ask it to elevate a process,
+   * so that creating the process is performed without an authorization prompt.
+   * This is useful when launching the process involves additional non-trivial steps (like launching an external terminal
+   * emulator application), that you would like to avoid performing in case the user decides to cancel the authorization
+   * (or fails the authentication).
+   *
+   * Note that this approach is inherently racy, and should only be treated as the best effort to improve UX.
+   * Successful completion of the authorization using this method does not guarantee that the consequent call to
+   * one of the process creation methods succeeds.
+   * Your code must always be ready that the process creation methods may always request an additional authorization,
+   * even after going through it using this method.
+   */
+  void authorizeService() throws ExecutionException;
+
   @NotNull OSProcessHandler createProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException;
 
   default @NotNull Process createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {

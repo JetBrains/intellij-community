@@ -160,7 +160,7 @@ public class PyDataViewerPanel extends JPanel {
   private EditorTextField createEditorField() {
     return new EditorTextField(EditorFactory.getInstance().createDocument(""), myProject, PythonFileType.INSTANCE, false, true) {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         EditorEx editor = super.createEditor();
         editor.getContentComponent().addKeyListener(new KeyAdapter() {
           @Override

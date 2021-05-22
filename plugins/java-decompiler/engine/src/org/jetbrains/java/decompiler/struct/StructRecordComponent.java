@@ -1,11 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct;
 
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
+import java.util.Map;
 
 /*
   record_component_info {
@@ -15,33 +17,20 @@ import java.io.IOException;
     attribute_info attributes[attributes_count];
    }
 */
-public class StructRecordComponent extends StructMember {
-
-  private final String name;
-  private final String descriptor;
-
-
-  public StructRecordComponent(DataInputFullStream in, ConstantPool pool) throws IOException {
-    accessFlags = 0;
+public class StructRecordComponent extends StructField {
+  public static StructRecordComponent create(DataInputFullStream in, ConstantPool pool) throws IOException {
     int nameIndex = in.readUnsignedShort();
     int descriptorIndex = in.readUnsignedShort();
 
-    name = ((PrimitiveConstant)pool.getConstant(nameIndex)).getString();
-    descriptor = ((PrimitiveConstant)pool.getConstant(descriptorIndex)).getString();
+    String name = ((PrimitiveConstant)pool.getConstant(nameIndex)).getString();
+    String descriptor = ((PrimitiveConstant)pool.getConstant(descriptorIndex)).getString();
 
-    attributes = readAttributes(in, pool);
+    Map<String, StructGeneralAttribute> attributes = readAttributes(in, pool);
+
+    return new StructRecordComponent(0, attributes, name, descriptor);
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public String getDescriptor() {
-    return descriptor;
-  }
-
-  @Override
-  public String toString() {
-    return name;
+  private StructRecordComponent(int flags, Map<String, StructGeneralAttribute> attributes, String name, String descriptor) {
+    super(flags, attributes, name, descriptor);
   }
 }

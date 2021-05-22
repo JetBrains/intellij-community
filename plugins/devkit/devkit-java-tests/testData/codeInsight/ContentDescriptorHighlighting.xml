@@ -1,0 +1,12 @@
+<idea-plugin package="<error descr="Cannot resolve package java">java</error>.<error descr="Cannot resolve package lang">lang</error>">
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <content>
+    <module name="<error descr="Cannot resolve module descriptor 'moduleName.xml' in source roots of module 'moduleName'">moduleName</error>" package="<error descr="Invalid value: 'java.lang'">java.lang</error>"/>
+
+    <module name="<error descr="Cannot resolve module descriptor 'moduleName.xml' in source roots of module 'moduleName'">moduleName</error>"
+            package=<error descr="Invalid value: ''">""</error>/>
+  </content>
+</idea-plugin>

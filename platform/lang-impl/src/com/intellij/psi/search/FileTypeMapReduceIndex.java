@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -79,8 +79,7 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void> {
     return new PersistentStringEnumerator(getFileTypeNameEnumeratorPath(),  128, true, new StorageLockContext(true));
   }
 
-  @NotNull
-  private static Path getFileTypeNameEnumeratorPath() {
-    return IndexInfrastructure.getIndexRootDir(FileTypeIndex.NAME).toPath().resolve("file.type.names");
+  private static @NotNull Path getFileTypeNameEnumeratorPath() throws IOException {
+    return IndexInfrastructure.getIndexRootDir(FileTypeIndex.NAME).resolve("file.type.names");
   }
 }

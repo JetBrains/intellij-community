@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>Runs an activity on project open.</p>
- * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity.
+ * See <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity">docs</a> for details.
  *
  * @see StartupManager
  */

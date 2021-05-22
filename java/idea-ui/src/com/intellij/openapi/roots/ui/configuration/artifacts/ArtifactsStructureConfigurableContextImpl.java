@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzerListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -250,5 +251,10 @@ public final class ArtifactsStructureConfigurableContextImpl implements Artifact
   public ModifiableRootModel getOrCreateModifiableRootModel(Module module) {
     final ModuleEditor editor = myContext.getModulesConfigurator().getOrCreateModuleEditor(module);
     return editor.getModifiableRootModelProxy();
+  }
+
+  @Override
+  public @NotNull ProjectStructureConfigurable getProjectStructureConfigurable() {
+    return myContext.getModulesConfigurator().getProjectStructureConfigurable();
   }
 }

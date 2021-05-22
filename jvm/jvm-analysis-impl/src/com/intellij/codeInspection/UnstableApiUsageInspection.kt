@@ -8,7 +8,7 @@ import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedIn
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.deprecation.DeprecationInspection
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -52,6 +52,9 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
   @JvmField
   var myIgnoreInsideImports: Boolean = true
 
+  @JvmField
+  var myIgnoreApiDeclaredInThisProject: Boolean = true
+
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val annotations = unstableApiAnnotations.toList()
     return if (annotations.any { AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(it, holder.file) }) {
@@ -59,6 +62,7 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
         UnstableApiUsageProcessor(
           holder,
           myIgnoreInsideImports,
+          myIgnoreApiDeclaredInThisProject,
           annotations,
           knownAnnotationMessageProviders
         )
@@ -69,9 +73,9 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
   }
 
   override fun createOptionsPanel(): JPanel {
-    val checkboxPanel = SingleCheckboxOptionsPanel(
-      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports"), this, "myIgnoreInsideImports"
-    )
+    val checkboxPanel = MultipleCheckboxOptionsPanel(this)
+    checkboxPanel.addCheckbox(JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports"),  "myIgnoreInsideImports")
+    checkboxPanel.addCheckbox(JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.declared.inside.this.project"), "myIgnoreApiDeclaredInThisProject")
 
     //TODO in add annotation window "Include non-project items" should be enabled by default
     @Suppress("DialogTitleCapitalization") val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
@@ -88,6 +92,7 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
 private class UnstableApiUsageProcessor(
   private val problemsHolder: ProblemsHolder,
   private val ignoreInsideImports: Boolean,
+  private val ignoreApiDeclaredInThisProject: Boolean,
   private val unstableApiAnnotations: List<String>,
   private val knownAnnotationMessageProviders: Map<String, UnstableApiUsageMessageProvider>
 ) : ApiUsageProcessor {
@@ -136,7 +141,7 @@ private class UnstableApiUsageProcessor(
     (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
 
   private fun checkUnstableApiUsage(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean) {
-    if (!isLibraryElement(target)) {
+    if (ignoreApiDeclaredInThisProject && !isLibraryElement(target)) {
       return
     }
 

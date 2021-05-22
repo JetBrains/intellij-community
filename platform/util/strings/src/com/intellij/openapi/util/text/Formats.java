@@ -3,6 +3,7 @@ package com.intellij.openapi.util.text;
 
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,6 +90,7 @@ public final class Formats {
    */
   @Contract(pure = true)
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull String formatDurationPadded(long millis, @NotNull String unitSeparator) {
     StringBuilder result = new StringBuilder();
 
@@ -119,6 +121,7 @@ public final class Formats {
    */
   @Contract(pure = true)
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull String formatDurationApproximate(long duration) {
     return formatDuration(duration, " ", 2);
   }

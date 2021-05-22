@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaCondition;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -152,17 +154,6 @@ public abstract class InstructionVisitor {
     memState.push(dest);
     flushArrayOnUnknownAssignment(instruction, runner.getFactory(), dest, memState);
     return nextInstruction(instruction, runner, memState);
-  }
-
-  public DfaInstructionState[] visitBox(BoxingInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
-    DfaValue value = state.pop();
-    DfaValueFactory factory = runner.getFactory();
-    if (value instanceof DfaBinOpValue) {
-      value = factory.fromDfType(state.getDfType(value));
-    }
-    DfaValue boxed = factory.getBoxedFactory().createBoxed(value, instruction.getTargetType());
-    state.push(boxed == null ? factory.getObjectType(instruction.getTargetType(), Nullability.NOT_NULL) : boxed);
-    return nextInstruction(instruction, runner, state);
   }
 
   protected void flushArrayOnUnknownAssignment(AssignInstruction instruction,

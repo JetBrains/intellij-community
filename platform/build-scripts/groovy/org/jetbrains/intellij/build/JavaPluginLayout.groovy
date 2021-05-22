@@ -69,6 +69,7 @@ class JavaPluginLayout {
 /* Android Studio: exclude intellij.java.featuresTrainer
         "intellij.java.featuresTrainer",
 Android Studio: exclude intellij.java.featuresTrainer */
+        "intellij.java.ml.models.local"
       ].each {
         withModule(it, "java-impl.jar", "java_resources_en.jar")
       }

@@ -616,16 +616,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       body.accept(this);
     }
 
-    if (!addCountingLoopBound(statement)) {
+    ControlFlowOffset offset = initialization != null ? getEndOffset(initialization) : getStartOffset(statement);
+
+    if (!addCountingLoopBound(statement, offset)) {
       PsiStatement update = statement.getUpdate();
       if (update != null) {
         update.accept(this);
       }
+      addInstruction(new GotoInstruction(offset));
     }
 
-    ControlFlowOffset offset = initialization != null ? getEndOffset(initialization) : getStartOffset(statement);
-
-    addInstruction(new GotoInstruction(offset));
     finishElement(statement);
 
     for (PsiElement declaredVariable : declaredVariables) {
@@ -651,8 +651,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * Does nothing if the statement is not a counting loop.
    *
    * @param statement counting loop candidate.
+   * @param startOffset loop start offset (jump target for back-branch)
    */
-  private boolean addCountingLoopBound(PsiForStatement statement) {
+  private boolean addCountingLoopBound(PsiForStatement statement, ControlFlowOffset startOffset) {
     CountingLoop loop = CountingLoop.from(statement);
     if (loop == null || loop.isDescending()) return false;
     PsiLocalVariable counter = loop.getCounter();
@@ -682,12 +683,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     DfaVariableValue loopVar = myFactory.getVarFactory().createVariableValue(counter);
     if(diff >= 0 && diff <= MAX_UNROLL_SIZE) {
       // Unroll small loops
-      addInstruction(new PushInstruction(loopVar, null, true));
-      addInstruction(new PushInstruction(loopVar, null));
-      addInstruction(new PushValueInstruction(DfTypes.intValue(1)));
-      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getType(), -1, true));
-      addInstruction(new AssignInstruction(null, null));
-      addInstruction(new PopInstruction());
+      Objects.requireNonNull(statement.getUpdate()).accept(this);
+      addInstruction(new GotoInstruction(startOffset, false));
+      return true;
     }
     else if (start != null) {
       long maxValue = end == null ? Long.MAX_VALUE : loop.isIncluding() ? end + 1 : end;
@@ -709,6 +707,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                           .compare(JavaTokenType.LE);
       addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
     }
+    addInstruction(new GotoInstruction(startOffset));
     return true;
   }
 
@@ -1456,7 +1455,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (unboxedType != null && !unboxedType.equals(actualType)) {
         addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
       }
-      addInstruction(new BoxingInstruction(boxedType));
+      addInstruction(new WrapSpecialFieldInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL), SpecialField.UNBOX));
     }
     else if (actualType != expectedType &&
              TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
@@ -1744,13 +1743,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         initializeArray(arrayInitializer, expression);
         return;
       }
-      DfaVariableValue var = getTargetVariable(expression);
-      if (var == null) {
-        var = createTempVariable(type);
-      }
-      DfaValue length = SpecialField.ARRAY_LENGTH.createValue(getFactory(), var);
-      addInstruction(new PushInstruction(length, null, true));
-      // stack: ... var.length
       final PsiExpression[] dimensions = expression.getArrayDimensions();
       int dims = dimensions.length;
       if (dims > 0) {
@@ -1771,19 +1763,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       else {
         pushUnknown();
       }
-      // stack: ... var.length actual_size
-      addInstruction(new PushInstruction(var, null, true));
       DfType arrayValue = TypeConstraints.exact(type).asDfType().meet(DfTypes.LOCAL_OBJECT);
-      addInstruction(new PushValueInstruction(arrayValue, expression));
-      addInstruction(new AssignInstruction(expression, var));
-      // stack: ... var.length actual_size var
-      addInstruction(new SpliceInstruction(3, 0, 2, 1));
-      // stack: ... var var.length actual_size
-      addInstruction(new AssignInstruction(null, length));
-      addInstruction(new PopInstruction());
-      // stack: ... var
+      addInstruction(new WrapSpecialFieldInstruction(arrayValue, SpecialField.ARRAY_LENGTH));
 
-      initializeSmallArray((PsiArrayType)type, var, dimensions);
+      initializeSmallArray((PsiArrayType)type, expression, dimensions);
     }
     else {
       PsiExpression qualifier = expression.getQualifier();
@@ -1829,7 +1812,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return null;
   }
 
-  private void initializeSmallArray(PsiArrayType type, DfaVariableValue var, PsiExpression[] dimensions) {
+  private void initializeSmallArray(PsiArrayType type, PsiExpression arrayExpression, PsiExpression[] dimensions) {
     if (dimensions.length != 1) return;
     PsiType componentType = type.getComponentType();
     // Ignore objects as they may produce false NPE warnings due to non-perfect loop handling
@@ -1838,6 +1821,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (val instanceof Integer) {
       int lengthValue = (Integer)val;
       if (lengthValue > 0 && lengthValue <= MAX_UNROLL_SIZE) {
+        DfaVariableValue var = getTargetVariable(arrayExpression);
+        if (var == null) {
+          var = createTempVariable(type);
+        }
+        addInstruction(new PushInstruction(var, null, true));
+        addInstruction(new SwapInstruction());
+        addInstruction(new AssignInstruction(null, var));
         for (int i = 0; i < lengthValue; i++) {
           DfaValue value = getFactory().getExpressionFactory().getArrayElementValue(var, i);
           addInstruction(new PushInstruction(value == null ? getFactory().getUnknown() : value, null, true));
@@ -1920,7 +1910,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
     }
     if (!(operand.getType() instanceof PsiPrimitiveType)) {
-      addInstruction(new BoxingInstruction(operand.getType()));
+      addInstruction(new WrapSpecialFieldInstruction(DfTypes.typedObject(operand.getType(), Nullability.NOT_NULL), SpecialField.UNBOX));
     }
     addInstruction(new AssignInstruction(operand, null, myFactory.createValue(operand)));
     return true;

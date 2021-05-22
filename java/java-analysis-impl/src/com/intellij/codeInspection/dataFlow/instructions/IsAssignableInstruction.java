@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -22,8 +21,8 @@ public class IsAssignableInstruction extends EvalInstruction {
 
   @Override
   public @NotNull DfaValue eval(@NotNull DfaValueFactory factory, @NotNull DfaMemoryState state, @NotNull DfaValue @NotNull ... arguments) {
-    PsiType superClass = DfConstantType.getConstantOfType(state.getDfType(arguments[1]), PsiType.class);
-    PsiType subClass = DfConstantType.getConstantOfType(state.getDfType(arguments[0]), PsiType.class);
+    PsiType superClass = state.getDfType(arguments[1]).getConstantOfType(PsiType.class);
+    PsiType subClass = state.getDfType(arguments[0]).getConstantOfType(PsiType.class);
     if (superClass != null && subClass != null) {
       TypeConstraint superType = TypeConstraints.instanceOf(superClass);
       TypeConstraint subType = TypeConstraints.instanceOf(subClass);

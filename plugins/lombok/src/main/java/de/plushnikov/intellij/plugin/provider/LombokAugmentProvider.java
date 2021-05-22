@@ -38,6 +38,11 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @NotNull
   @Override
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+    // skip if no lombok library is present
+    if (!LombokLibraryUtil.hasLombokLibrary(modifierList.getProject())) {
+      return modifiers;
+    }
+
     // make copy of original modifiers
     Set<String> result = new HashSet<>(modifiers);
 
@@ -51,18 +56,15 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     return result;
   }
 
-  /**
-   * This method should be available in the next IntelliJ 203 Release
-   */
   @Override
   public boolean canInferType(@NotNull PsiTypeElement typeElement) {
-    return valProcessor.canInferType(typeElement);
+    return LombokLibraryUtil.hasLombokLibrary(typeElement.getProject()) && valProcessor.canInferType(typeElement);
   }
 
   @Nullable
   @Override
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
-    return valProcessor.inferType(typeElement);
+    return LombokLibraryUtil.hasLombokLibrary(typeElement.getProject()) ? valProcessor.inferType(typeElement) : null;
   }
 
   @NotNull

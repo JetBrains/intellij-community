@@ -8,7 +8,6 @@ import com.intellij.util.ui.ThreeStateCheckBox
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import java.util.*
-import kotlin.collections.HashSet
 
 abstract class BaseInclusionModel : InclusionModel {
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
@@ -51,7 +50,11 @@ class DefaultInclusionModel(
   }
 
   override fun removeInclusion(items: Collection<Any>) {
-    if (inclusion.removeAll(items)) fireInclusionChanged()
+    var modified = false
+    for (item in items) {
+      modified = modified || inclusion.remove(item)
+    }
+    if (modified) fireInclusionChanged()
   }
 
   override fun setInclusion(items: Collection<Any>) {

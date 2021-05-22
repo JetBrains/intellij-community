@@ -20,6 +20,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.popup.HintUpdateSupply;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeModel;
@@ -31,6 +32,7 @@ import javax.swing.tree.TreeNode;
  * @see HintUpdateSupply
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class JBTreeWithHintProvider extends DnDAwareTree {
   {
     HintUpdateSupply.installHintUpdateSupply(this, o -> getPsiElementForHint(o));

@@ -10,6 +10,7 @@ import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenWslUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getDefaultMavenDistribution
 
 class WslMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
@@ -27,18 +28,18 @@ class WslMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
   }
 
   override fun isApplicable(project: Project): Boolean {
-    return project.basePath?.let(WslDistributionManager::isWslPath) ?: false
+    return MavenWslUtil.useWslMaven(project)
   }
 }
 
 class WslRemotePathTransformFactory : RemotePathTransformerFactory {
-  override fun isApplicable(projectPath: String?): Boolean {
-    return projectPath != null && WslDistributionManager.isWslPath(projectPath)
+  override fun isApplicable(project: Project): Boolean {
+    return MavenWslUtil.useWslMaven(project)
   }
 
-  override fun createTransformer(projectFile: String?): RemotePathTransformerFactory.Transformer {
-    val wslDistribution = projectFile?.let { WslPath.getDistributionByWindowsUncPath(it) }
-                          ?: throw IllegalArgumentException("Project file $projectFile is not WSL based!")
+  override fun createTransformer(project: Project): RemotePathTransformerFactory.Transformer {
+    val wslDistribution = MavenWslUtil.tryGetWslDistribution(project)
+                          ?: throw IllegalArgumentException("Project $project is not WSL based!")
     return object : RemotePathTransformerFactory.Transformer {
       override fun toRemotePath(localPath: String): String? {
         return wslDistribution.getWslPath(localPath)

@@ -18,7 +18,7 @@ package com.intellij.codeInsight.template.emmet.tokens;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -88,7 +88,7 @@ public class TemplateToken extends ZenCodingToken {
       .createFileFromText("dummy.html", callback.getFile().getLanguage(), templateText, true, true);
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null) {
-      vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+      UndoUtil.disableUndoFor(vFile);
     }
     setFile(file);
   }

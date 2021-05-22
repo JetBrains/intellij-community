@@ -40,7 +40,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
 
-  private val queue = QueueProcessor<List<VirtualFile>> { files -> processFiles(files) }
+  private val queue = QueueProcessor<Collection<VirtualFile>> { files -> processFiles(files) }
 
   private val unprocessedFiles = mutableSetOf<VirtualFile>()
 
@@ -60,7 +60,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun changeListUpdateDone() {
     if (!needProcessExternalFiles()) return
 
-    val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toList() }
+    val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toHashSet() }
 
     UNPROCESSED_FILES_LOCK.write {
       unprocessedFiles.removeAll(files)
@@ -91,7 +91,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
           !isProjectConfigDirOrUnderIt(configDir, it.parent)
         }
         .mapNotNull(VFileEvent::getFile)
-        .toSet()
+        .toList()
 
     if (externallyAddedFiles.isEmpty()) return
     LOG.debug("Got external files from VFS events", externallyAddedFiles)
@@ -146,16 +146,18 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
     vcsManager.getStandardConfirmation(ADD, vcs).value == DO_ACTION_SILENTLY
     && VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY
 
-  override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> =
-    ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
+  override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
+    val parents = files.toHashSet()
+    return ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
       .asSequence()
       .filterNot(vcsIgnoreManager::isPotentiallyIgnoredFile)
-      .filter { isUnder(files, it) }
+      .filter { isUnder(parents, it) }
       .toSet()
+  }
 
   override fun rememberForAllProjects() {}
 
-  private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
+  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 
   private fun isProjectConfigDirOrUnderIt(configDir: VirtualFile?, file: VirtualFile) =
     configDir != null && VfsUtilCore.isAncestor(configDir, file, false)

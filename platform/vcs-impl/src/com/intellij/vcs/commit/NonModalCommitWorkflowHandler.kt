@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -6,26 +6,33 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ApplicationListener
+import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
+import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler.ReturnResult
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vcs.checkin.CommitCheck
-import com.intellij.openapi.vcs.checkin.CommitProblem
-import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
 import java.lang.Runnable
+import kotlin.properties.Delegates.observable
 
 private val LOG = logger<NonModalCommitWorkflowHandler<*, *>>()
+
+private val isBackgroundCommitChecksValue: RegistryValue get() = Registry.get("vcs.background.commit.checks")
+internal fun isBackgroundCommitChecks(): Boolean = isBackgroundCommitChecksValue.asBoolean()
 
 abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : NonModalCommitWorkflowUi> :
   AbstractCommitWorkflowHandler<W, U>(),
@@ -42,7 +49,15 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   private val coroutineScope =
     CoroutineScope(CoroutineName("commit workflow") + uiDispatcher + SupervisorJob() + exceptionHandler)
 
+  private var isCommitChecksResultUpToDate: Boolean by observable(false) { _, oldValue, newValue ->
+    if (oldValue == newValue) return@observable
+    updateDefaultCommitActionName()
+  }
+
   protected fun setupCommitHandlersTracking() {
+    isBackgroundCommitChecksValue.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) = commitHandlersChanged()
+    }, this)
     CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
     VcsCheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
   }
@@ -61,7 +76,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
 
     updateDefaultCommitActionEnabled()
-    ui.defaultCommitActionName = getCommitActionName()
+    updateDefaultCommitActionName()
     ui.setCustomCommitActions(createCommitExecutorActions())
   }
 
@@ -80,6 +95,19 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun executionStarted() = updateDefaultCommitActionEnabled()
   override fun executionEnded() = updateDefaultCommitActionEnabled()
+
+  override fun updateDefaultCommitActionName() {
+    val commitText = getCommitActionName()
+    val isAmend = amendCommitHandler.isAmendCommitMode
+    val isSkipCommitChecks = isSkipCommitChecks()
+
+    ui.defaultCommitActionName = when {
+      isAmend && isSkipCommitChecks -> message("action.amend.commit.anyway.text", commitText)
+      isAmend && !isSkipCommitChecks -> message("amend.action.name", commitText)
+      !isAmend && isSkipCommitChecks -> message("action.commit.anyway.text", commitText)
+      else -> commitText
+    }
+  }
 
   fun updateDefaultCommitActionEnabled() {
     ui.isDefaultCommitActionEnabled = isReady()
@@ -106,29 +134,63 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       !isEmptyChanges && !isEmptyMessage
     }
 
+  protected fun setupCommitChecksResultTracking() =
+    getApplication().addApplicationListener(object : ApplicationListener {
+      override fun writeActionStarted(action: Any) {
+        isCommitChecksResultUpToDate = false
+      }
+    }, this)
+
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: ReturnResult) {
+    super.beforeCommitChecksEnded(isDefaultCommit, result)
+    if (result == ReturnResult.COMMIT) {
+      ui.commitProgressUi.clearCommitCheckFailures()
+    }
+  }
+
+  fun isSkipCommitChecks(): Boolean = isBackgroundCommitChecks() && isCommitChecksResultUpToDate
+
   override fun doExecuteDefault(executor: CommitExecutor?): Boolean {
-    if (!Registry.`is`("vcs.background.commit.checks")) return super.doExecuteDefault(executor)
+    if (!isBackgroundCommitChecks()) return super.doExecuteDefault(executor)
 
     coroutineScope.launch {
       workflow.executeDefault {
-        var result = ReturnResult.COMMIT
+        if (isSkipCommitChecks()) return@executeDefault ReturnResult.COMMIT
 
         ui.commitProgressUi.startProgress()
         try {
-          for (commitCheck in commitHandlers.filterIsInstance<CommitCheck<*>>()) {
-            val problem = runCommitCheck(commitCheck)
-            if (problem != null) result = ReturnResult.CANCEL
-          }
+          runAllHandlers(executor)
         }
         finally {
           ui.commitProgressUi.endProgress()
         }
-
-        result
       }
     }
 
     return true
+  }
+
+  private suspend fun runAllHandlers(executor: CommitExecutor?): ReturnResult {
+    workflow.runMetaHandlers()
+    FileDocumentManager.getInstance().saveAllDocuments()
+
+    val handlersResult = workflow.runHandlers(executor)
+    if (handlersResult != ReturnResult.COMMIT) return handlersResult
+
+    val checksResult = runCommitChecks()
+    if (checksResult != ReturnResult.COMMIT) isCommitChecksResultUpToDate = true
+    return checksResult
+  }
+
+  private suspend fun runCommitChecks(): ReturnResult {
+    var result = ReturnResult.COMMIT
+
+    for (commitCheck in commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()) {
+      val problem = runCommitCheck(commitCheck)
+      if (problem != null) result = ReturnResult.CANCEL
+    }
+
+    return result
   }
 
   private suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>): P? {
@@ -137,7 +199,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return problem
   }
 
-  override fun dispose() = coroutineScope.cancel()
+  override fun dispose() {
+    coroutineScope.cancel()
+    super.dispose()
+  }
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
     ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)
@@ -178,6 +243,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       workflow.clearCommitContext()
       initCommitHandlers()
+
+      isCommitChecksResultUpToDate = false
+      updateDefaultCommitActionName()
     }
   }
 }

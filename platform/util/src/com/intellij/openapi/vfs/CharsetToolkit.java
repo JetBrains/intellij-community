@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,7 @@ public final class CharsetToolkit {
   public static final Charset UTF_32LE_CHARSET = Charset.forName("UTF-32LE");
   /** @deprecated use {@link StandardCharsets#US_ASCII} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Charset US_ASCII_CHARSET = StandardCharsets.US_ASCII;
   public static final Charset WIN_1251_CHARSET = Charset.forName("windows-1251");
 

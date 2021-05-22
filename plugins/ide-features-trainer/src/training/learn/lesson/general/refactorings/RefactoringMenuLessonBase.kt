@@ -6,16 +6,13 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.components.JBList
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
 import javax.swing.JList
 
-abstract class RefactoringMenuLessonBase(lessonId: String, module: Module, languageId: String)
-  : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name"), module, languageId) {
+abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name")) {
   fun LessonContext.extractParameterTasks() {
     lateinit var showPopupTaskId: TaskContext.TaskId
     actionTask("Refactorings.QuickListPopupAction") {
@@ -39,7 +36,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String, module: Module, langu
                                  action("EditorChooseLookupItem"), LessonUtil.actionName(it)))
       trigger(it)
       stateCheck { hasInplaceRename() }
-      restoreState(restoreId = showPopupTaskId) { focusOwner !is JBList<*> }
+      restoreState(delayMillis = defaultRestoreDelay, restoreId = showPopupTaskId) { focusOwner !is JBList<*> }
       test {
         GuiTestUtil.shortcut(Key.ENTER)
       }

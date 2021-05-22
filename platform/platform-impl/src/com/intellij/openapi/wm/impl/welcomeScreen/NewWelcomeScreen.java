@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
@@ -13,8 +13,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.ActionLink;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -71,17 +70,14 @@ public final class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     });
     footerPanel.add(versionLabel);
     footerPanel.add(makeSmallFont(new JLabel(".  ")));
-    footerPanel.add(makeSmallFont(new LinkLabel(IdeBundle.message("link.check"), null, new LinkListener() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+    footerPanel.add(makeSmallFont(new ActionLink(IdeBundle.message("link.check"), e -> {
         UpdateChecker.updateAndShowResult(null, null);
-      }
     })));
     footerPanel.add(makeSmallFont(new JLabel(IdeBundle.message("welcome.screen.check.for.updates.comment"))));
     return footerPanel;
   }
 
-  private static JLabel makeSmallFont(JLabel label) {
+  private static JComponent makeSmallFont(JComponent label) {
     label.setFont(label.getFont().deriveFont((float)10));
     return label;
   }

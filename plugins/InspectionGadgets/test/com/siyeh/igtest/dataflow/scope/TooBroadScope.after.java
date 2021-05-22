@@ -65,6 +65,11 @@ public class TooBroadScope
         System.out.println(before);
     }
 
+  String brokenCode() {
+    var n. = "awesome[]";
+    return n;
+  }
+
     // Option "Only report variables that can be moved to inner blocks" is OFF
     public void test() {
         // Example #1

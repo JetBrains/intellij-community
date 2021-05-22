@@ -111,6 +111,11 @@ public final class AstLoadingFilter {
     disallowTreeLoading(toComputable(runnable));
   }
 
+  public static <E extends Throwable>
+  void disallowTreeLoading(@NotNull ThrowableRunnable<E> runnable, @NotNull Supplier<String> debugInfo) throws E {
+    disallowTreeLoading(toComputable(runnable), debugInfo);
+  }
+
   public static <T, E extends Throwable>
   T disallowTreeLoading(@NotNull ThrowableComputable<? extends T, E> computable) throws E {
     return disallowTreeLoading(computable, () -> null);

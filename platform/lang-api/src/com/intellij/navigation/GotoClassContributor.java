@@ -59,6 +59,12 @@ public interface GotoClassContributor extends ChooseByNameContributor {
     return ContainerUtil.newArrayList(IdeBundle.message("go.to.class.kind.text.pluralized"));
   }
 
+  @NotNull
+  default String getTabTitlePluralized() {
+    List<String> kinds = getElementKindsPluralized();
+    return !kinds.isEmpty() ? kinds.get(0) : IdeBundle.message("go.to.class.kind.text.pluralized");
+  }
+
   /**
    * If the language returned by this method is one of {@link IdeLanguageCustomization#getPrimaryIdeLanguages() the primary IDE languages} the result of
    * {@link #getElementKind()} will be used to name `Navigate | Class' action and in 'Go to Class' popup.

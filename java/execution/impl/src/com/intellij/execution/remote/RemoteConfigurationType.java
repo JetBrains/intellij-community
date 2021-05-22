@@ -14,6 +14,7 @@ import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class RemoteConfigurationType extends SimpleConfigurationType {
@@ -41,6 +42,7 @@ public final class RemoteConfigurationType extends SimpleConfigurationType {
 
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ConfigurationFactory getFactory() {
     return this;
   }

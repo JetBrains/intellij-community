@@ -810,14 +810,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     List<AnAction> actions = myContext.getActions();
     if (actions.size() > 1) {
-      rearrangeByPromoters(actions);
+      rearrangeByPromoters(actions, myContext.getDataContext());
     }
   }
 
-  private void rearrangeByPromoters(List<AnAction> actions) {
+  static void rearrangeByPromoters(List<AnAction> actions, DataContext context) {
     List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
     for (ActionPromoter promoter : ActionPromoter.EP_NAME.getExtensions()) {
-      List<AnAction> promoted = promoter.promote(readOnlyActions, myContext.getDataContext());
+      List<AnAction> promoted = promoter.promote(readOnlyActions, context);
       if (promoted == null || promoted.isEmpty()) continue;
 
       actions.removeAll(promoted);

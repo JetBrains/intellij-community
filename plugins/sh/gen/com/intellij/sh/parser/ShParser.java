@@ -39,6 +39,9 @@ public class ShParser implements PsiParser, LightPsiParser {
     else if (t == DO_BLOCK) {
       r = do_block(b, l + 1);
     }
+    else if (t == PARENTHESES_BLOCK) {
+      r = parentheses_block(b, l + 1);
+    }
     else {
       r = file(b, l + 1);
     }
@@ -90,7 +93,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !('\n'| '{')
+  // !('\n'| '{' | '(')
   static boolean argument_list_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument_list_recover")) return false;
     boolean r;
@@ -100,12 +103,13 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '\n'| '{'
+  // '\n'| '{' | '('
   private static boolean argument_list_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument_list_recover_0")) return false;
     boolean r;
     r = consumeToken(b, LINEFEED);
     if (!r) r = consumeToken(b, LEFT_CURLY);
+    if (!r) r = consumeToken(b, LEFT_PAREN);
     return r;
   }
 
@@ -395,7 +399,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !('{' | '\n' | '}' | do | done)
+  // !('{' | '\n' | '}' | do | done | '(' | ')')
   static boolean block_compound_list_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_compound_list_recover")) return false;
     boolean r;
@@ -405,7 +409,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '{' | '\n' | '}' | do | done
+  // '{' | '\n' | '}' | do | done | '(' | ')'
   private static boolean block_compound_list_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_compound_list_recover_0")) return false;
     boolean r;
@@ -414,6 +418,8 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, RIGHT_CURLY);
     if (!r) r = consumeToken(b, DO);
     if (!r) r = consumeToken(b, DONE);
+    if (!r) r = consumeToken(b, LEFT_PAREN);
+    if (!r) r = consumeToken(b, RIGHT_PAREN);
     return r;
   }
 
@@ -1162,8 +1168,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word argument_list newlines block
-  //                                      | function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines block
+  // word argument_list newlines (block | parentheses_block)
+  //                                      | function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines (block | parentheses_block)
   static boolean function_definition_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "function_definition_inner")) return false;
     if (!nextTokenIs(b, "", FUNCTION, WORD)) return false;
@@ -1175,7 +1181,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // word argument_list newlines block
+  // word argument_list newlines (block | parentheses_block)
   private static boolean function_definition_inner_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "function_definition_inner_0")) return false;
     boolean r, p;
@@ -1184,12 +1190,21 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = r && argument_list(b, l + 1);
     p = r; // pin = function|argument_list
     r = r && report_error_(b, newlines(b, l + 1));
-    r = p && block(b, l + 1) && r;
+    r = p && function_definition_inner_0_3(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines block
+  // block | parentheses_block
+  private static boolean function_definition_inner_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "function_definition_inner_0_3")) return false;
+    boolean r;
+    r = block(b, l + 1);
+    if (!r) r = parentheses_block(b, l + 1);
+    return r;
+  }
+
+  // function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines (block | parentheses_block)
   private static boolean function_definition_inner_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "function_definition_inner_1")) return false;
     boolean r, p;
@@ -1199,7 +1214,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = r && report_error_(b, function_definition_inner_1_1(b, l + 1));
     r = p && report_error_(b, function_definition_inner_1_2(b, l + 1)) && r;
     r = p && report_error_(b, newlines(b, l + 1)) && r;
-    r = p && block(b, l + 1) && r;
+    r = p && function_definition_inner_1_4(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -1220,6 +1235,15 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "function_definition_inner_1_2")) return false;
     argument_list(b, l + 1);
     return true;
+  }
+
+  // block | parentheses_block
+  private static boolean function_definition_inner_1_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "function_definition_inner_1_4")) return false;
+    boolean r;
+    r = block(b, l + 1);
+    if (!r) r = parentheses_block(b, l + 1);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1709,6 +1733,21 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = !consumeToken(b, ARITH_SQUARE_RIGHT);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  /* ********************************************************** */
+  // '('  block_compound_list ')'
+  public static boolean parentheses_block(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parentheses_block")) return false;
+    if (!nextTokenIs(b, LEFT_PAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, PARENTHESES_BLOCK, null);
+    r = consumeToken(b, LEFT_PAREN);
+    p = r; // pin = 1
+    r = r && report_error_(b, block_compound_list(b, l + 1));
+    r = p && consumeToken(b, RIGHT_PAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */

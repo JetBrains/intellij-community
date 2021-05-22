@@ -69,11 +69,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
 
   public void testImportPre173Settings() throws SchemeImportException {
     CodeStyleSettings imported = importSettings();
-    CommonCodeStyleSettings commonSettings = imported.getCommonSettings(JavaLanguage.INSTANCE);
     assertEquals("testprefix", imported.getCustomSettings(JavaCodeStyleSettings.class).FIELD_NAME_PREFIX);
-    assertTrue(commonSettings.WRAP_COMMENTS);
-    //noinspection deprecation
-    assertFalse(imported.WRAP_COMMENTS);
   }
 
   public void testJsonExport() throws IOException {

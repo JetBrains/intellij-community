@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
@@ -60,6 +61,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.java.debugger.streams",
     "intellij.completionMlRanking",
     "intellij.completionMlRankingModels",
+    "intellij.ml.models.local",
     "intellij.sh",
     "intellij.vcs.changeReminder",
     "intellij.filePrediction",
@@ -115,8 +117,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/xpath/lib/rt/xslt-rt.jar"                          : "1.6",
     "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"            : "1.6",
     "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
-    "plugins/android/lib/jb-layoutlib-jdk11-27.1.0.0.jar"       : "9",
-    "plugins/android/lib/android-rt.jar"                        : "1.8",
+    "plugins/android/lib/jb-layoutlib-jdk11-27.1.1.0.jar"       : "9",
   ]
 
   BaseIdeaProperties() {
@@ -162,6 +163,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   }
 
   @Override
+  List<Path> getAdditionalPluginPaths(@NotNull BuildContext context) {
+    return [Path.of(context.paths.kotlinHome).toAbsolutePath().normalize()]
+  }
+
+  @Override
   @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     context.ant.jar(destfile: "$targetDirectory/lib/jdkAnnotations.jar") {
@@ -182,7 +188,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     }
 
     Path targetDir = Paths.get(targetDirectory).toAbsolutePath().normalize()
-    BuildHelper.copyDir(Paths.get("$context.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/Kotlin").toAbsolutePath().normalize(), targetDir.resolve("plugins/Kotlin"), context)  // Android Studio: modified by Change Ib7f754ea
 
     /* Disabled in Android Studio:
     Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")

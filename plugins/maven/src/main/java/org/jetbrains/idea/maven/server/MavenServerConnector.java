@@ -89,6 +89,7 @@ public class MavenServerConnector implements @NotNull Disposable {
     ApplicationManager.getApplication().executeOnPooledThread(new StartServerTask());
   }
 
+  @NotNull
   private MavenServer getServer() {
     try {
         while (!myServerPromise.isDone()) {
@@ -160,7 +161,7 @@ public class MavenServerConnector implements @NotNull Disposable {
   public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
     return perform(() -> {
       MavenModel m = getServer().interpolateAndAlignModel(model, basedir, MavenRemoteObjectWrapper.ourToken);
-      RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(basedir.getPath());
+      RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(myProject);
       if (transformer != RemotePathTransformerFactory.Transformer.ID) {
         new MavenBuildPathsChange((String s) -> transformer.toIdePath(s)).perform(m);
       }

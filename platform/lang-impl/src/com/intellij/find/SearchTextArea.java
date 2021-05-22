@@ -31,6 +31,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -97,16 +98,19 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   private boolean myMultilineEnabled = true;
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public SearchTextArea(boolean searchMode) {
     this(new JBTextArea(), searchMode);
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode) {
     this (textArea, searchMode);
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode, boolean allowInsertTabInMultiline) {
     this(textArea, searchMode);
   }

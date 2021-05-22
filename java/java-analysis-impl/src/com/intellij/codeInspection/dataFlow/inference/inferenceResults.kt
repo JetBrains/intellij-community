@@ -19,7 +19,7 @@ import java.util.*
 /**
  * @author peter
  */
-data class ExpressionRange internal constructor (internal val startOffset: Int, internal val endOffset: Int) {
+data class ExpressionRange internal constructor (val startOffset: Int, val endOffset: Int) {
 
   companion object {
     @JvmStatic
@@ -27,10 +27,15 @@ data class ExpressionRange internal constructor (internal val startOffset: Int, 
       expr.startOffset - scopeStart, expr.endOffset - scopeStart)
   }
 
-  fun restoreExpression(scope: PsiCodeBlock): PsiExpression? {
+  inline fun <reified T : PsiExpression> restoreExpression(scope: PsiCodeBlock): T {
     val scopeStart = scope.textRange.startOffset
-    return PsiTreeUtil.findElementOfClassAtRange(scope.containingFile, startOffset + scopeStart, endOffset + scopeStart,
-                                                 PsiExpression::class.java)
+    val element = PsiTreeUtil.findElementOfClassAtRange(scope.containingFile, startOffset + scopeStart,
+                                                                          endOffset + scopeStart,
+                                                        T::class.java)
+    if (element == null) {
+      throw CannotRestoreExpressionException("No expression of type " + T::class + " found")
+    }
+    return element
   }
 
 }
@@ -53,8 +58,8 @@ data class PurityInferenceResult(internal val mutatesThis: Boolean,
   private fun fromCalls(currentMethod: PsiMethod, body: () -> PsiCodeBlock): MutationSignature {
     if (singleCall == null) return MutationSignature.pure()
 
-    val psiCall = singleCall.restoreExpression(body()) as? PsiCall
-    val method = psiCall?.resolveMethod()
+    val psiCall : PsiCallExpression = singleCall.restoreExpression(body())
+    val method = psiCall.resolveMethod()
     if (method == currentMethod) {
       if (!mutatesThis || psiCall is PsiMethodCallExpression && ExpressionUtil.isEffectivelyUnqualified(psiCall.methodExpression)) {
         return MutationSignature.pure()
@@ -128,7 +133,7 @@ interface MethodReturnInferenceResult {
     }
 
     private fun getDelegateMutability(caller: PsiMethod, delegate: ExpressionRange, body: PsiCodeBlock): Mutability {
-      val call = delegate.restoreExpression(body) as PsiMethodCallExpression
+      val call : PsiMethodCallExpression = delegate.restoreExpression(body) 
       val target = call.resolveMethod()
       return when {
         target == null || target == caller -> Mutability.UNKNOWN
@@ -138,7 +143,7 @@ interface MethodReturnInferenceResult {
     }
 
     private fun isNotNullCall(caller: PsiMethod, delegate: ExpressionRange, body: PsiCodeBlock): Boolean {
-      val call = delegate.restoreExpression(body) as PsiMethodCallExpression
+      val call : PsiMethodCallExpression = delegate.restoreExpression(body) 
       if (call.type is PsiPrimitiveType) return true
 
       val target = call.resolveMethod()

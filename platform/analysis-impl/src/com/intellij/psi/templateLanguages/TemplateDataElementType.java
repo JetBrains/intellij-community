@@ -244,6 +244,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    * @deprecated Use {@link #isInsertionToken(IElementType, CharSequence)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected @NotNull TokenSet getTemplateDataInsertionTokens() {
     return TokenSet.EMPTY;
   }
@@ -273,6 +274,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    * @deprecated this method is going to be removed and com.intellij.lang.ASTFactory#leaf(com.intellij.psi.tree.IElementType, java.lang.CharSequence) going to be used instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected OuterLanguageElementImpl createOuterLanguageElement(@NotNull CharSequence internedTokenText,
                                                                 @NotNull IElementType outerElementType) {
     var factoryCreatedElement = ASTFactory.leaf(outerElementType, internedTokenText);

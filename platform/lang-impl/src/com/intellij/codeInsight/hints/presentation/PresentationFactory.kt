@@ -77,17 +77,14 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   @Contract(pure = true)
   @Deprecated(message = "Bad API for Java, use mouseHandling with ClickListener")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   fun mouseHandling(
     base: InlayPresentation,
     clickListener: ((MouseEvent, Point) -> Unit)?,
     hoverListener: HoverListener?
   ): InlayPresentation {
     val adapter = if (clickListener != null) {
-      object : ClickListener {
-        override fun onClick(event: MouseEvent, translated: Point) {
-          clickListener.invoke(event, translated)
-        }
-      }
+      ClickListener { event, translated -> clickListener.invoke(event, translated) }
     }
     else {
       null

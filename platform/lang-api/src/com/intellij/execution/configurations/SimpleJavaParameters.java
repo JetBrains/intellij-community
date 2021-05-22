@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.PathsList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private boolean myArgFile;
   private boolean myClasspathFile = true;
   private String myJarPath;
+
+  private final JavaTargetDependentParameters myTargetDependentParameters = new JavaTargetDependentParameters();
 
   @Nullable
   public Sdk getJdk() {
@@ -179,6 +182,11 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
 
   public void setJarPath(String jarPath) {
     myJarPath = jarPath;
+  }
+
+  @ApiStatus.Experimental
+  public JavaTargetDependentParameters getTargetDependentParameters() {
+    return myTargetDependentParameters;
   }
 
   /**

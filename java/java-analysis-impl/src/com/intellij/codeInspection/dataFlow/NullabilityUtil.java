@@ -10,16 +10,13 @@ import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,13 +36,14 @@ public final class NullabilityUtil {
     if (value.getType() instanceof PsiPrimitiveType) {
       return DfaNullability.UNKNOWN;
     }
+    if (var instanceof PsiField && DfaUtil.hasInitializationHacks((PsiField)var)) {
+      return DfaNullability.FLUSHED;
+    }
     Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getType(), var);
     if (nullability != Nullability.UNKNOWN) {
       return DfaNullability.fromNullability(nullability);
     }
     if (var == null) return DfaNullability.UNKNOWN;
-
-    Nullability defaultNullability = value.getFactory().suggestNullabilityForNonAnnotatedMember(var);
 
     if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
       PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
@@ -58,13 +56,13 @@ public final class NullabilityUtil {
     }
 
     if (var instanceof PsiField && value.getFactory().canTrustFieldInitializer((PsiField)var)) {
-      return DfaNullability.fromNullability(getNullabilityFromFieldInitializers((PsiField)var, defaultNullability).second);
+      return DfaNullability.fromNullability(getNullabilityFromFieldInitializers((PsiField)var).second);
     }
 
-    return DfaNullability.fromNullability(defaultNullability);
+    return DfaNullability.fromNullability(Nullability.UNKNOWN);
   }
 
-  static Pair<PsiExpression, Nullability> getNullabilityFromFieldInitializers(PsiField field, Nullability defaultNullability) {
+  static Pair<PsiExpression, Nullability> getNullabilityFromFieldInitializers(PsiField field) {
     if (DfaPsiUtil.isFinalField(field)) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null) {
@@ -73,7 +71,7 @@ public final class NullabilityUtil {
 
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
       if (initializers.isEmpty()) {
-        return Pair.create(null, defaultNullability);
+        return Pair.create(null, Nullability.UNKNOWN);
       }
 
       for (PsiExpression expression : initializers) {
@@ -90,7 +88,7 @@ public final class NullabilityUtil {
     else if (isOnlyImplicitlyInitialized(field)) {
       return Pair.create(null, Nullability.NOT_NULL);
     }
-    return Pair.create(null, defaultNullability);
+    return Pair.create(null, Nullability.UNKNOWN);
   }
 
   private static boolean isOnlyImplicitlyInitialized(PsiField field) {
@@ -104,23 +102,9 @@ public final class NullabilityUtil {
   }
 
   private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
-    String name = field.getName();
-    if (field.getInitializer() != null) return false;
-
-    if (!isCheapEnoughToSearch(field, name)) return false;
-
-    return ReferencesSearch.search(field).allMatch(
-        reference -> reference instanceof PsiReferenceExpression && !PsiUtil.isAccessedForWriting((PsiReferenceExpression)reference));
-  }
-
-  private static boolean isCheapEnoughToSearch(PsiField field, String name) {
-    SearchScope scope = field.getUseScope();
-    if (!(scope instanceof GlobalSearchScope)) return true;
-
-    PsiSearchHelper helper = PsiSearchHelper.getInstance(field.getProject());
-    PsiSearchHelper.SearchCostResult result =
-      helper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, field.getContainingFile(), null);
-    return result != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+    if (field.hasInitializer()) return false;
+    if (!field.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    return !VariableAccessUtils.variableIsAssigned(field);
   }
 
   public static Nullability getExpressionNullability(@Nullable PsiExpression expression) {

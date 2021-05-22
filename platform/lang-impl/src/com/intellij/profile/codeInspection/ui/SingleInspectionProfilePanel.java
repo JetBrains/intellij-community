@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -26,6 +26,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -45,10 +46,10 @@ import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.treetable.DefaultTreeTableExpander;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
@@ -60,10 +61,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -244,6 +242,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       else {
         configPanelAnchor.add(ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE));
       }
+      additionalConfigPanel.setBorder(additionalConfigPanel instanceof DialogPanel
+                                      ? JBUI.Borders.empty(12, 20, 0, 0)
+                                      : JBUI.Borders.empty(10, 17, 0, 0));
     }
 
     if (myOptionsLabel != null)
@@ -710,6 +711,7 @@ public class SingleInspectionProfilePanel extends JPanel {
    * @deprecated Use {@link DescriptionEditorPaneKt#readHTML(JEditorPane, String)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void readHTML(JEditorPane browser, String text) {
     DescriptionEditorPaneKt.readHTML(browser, text);
   }
@@ -718,6 +720,7 @@ public class SingleInspectionProfilePanel extends JPanel {
    * @deprecated Use {@link DescriptionEditorPaneKt#toHTML(JEditorPane, String, boolean)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static String toHTML(JEditorPane browser, @Nls String text, boolean miniFontSize) {
     return DescriptionEditorPaneKt.toHTML(browser, text, miniFontSize);
   }
@@ -911,7 +914,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         .add(severityPanel,
              new GridBagConstraints(0, 0, 1, 1, 1.0, severityPanelWeightY,
                                     GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                    JBUI.insets(SECTION_GAP, 2, 0, 0),
+                                    JBUI.insetsTop(SECTION_GAP),
                                     0, 0));
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
       if (configPanelAnchor.getComponentCount() != 0) {
@@ -925,14 +928,14 @@ public class SingleInspectionProfilePanel extends JPanel {
         myOptionsPanel.add(configPanelAnchor,
                            new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0,
                                                   GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                  JBUI.insets(0, 2, 0, 0),
+                                                  JBUI.emptyInsets(),
                                                   0, 0));
       }
       else if (scopesNames.isEmpty()) {
         myOptionsPanel.add(configPanelAnchor,
                            new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0,
                                                   GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                  JBUI.insets(0, 2, 0, 0),
+                                                  JBUI.emptyInsets(),
                                                   0, 0));
       }
       myOptionsPanel.revalidate();
@@ -1256,18 +1259,18 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private class ToolOptionsSeparator extends JPanel {
-    private final LinkLabel<?> myResetLink;
+    private final ActionLink myResetLink;
     @Nullable
     private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
 
     ToolOptionsSeparator(JComponent options, @Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
       myScopesAndSeveritiesTable = scopesAndSeveritiesTable;
       setLayout(new GridBagLayout());
-      setBorder(JBUI.Borders.empty(IdeBorderFactory.TITLED_BORDER_INDENT, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0));
+      setBorder(JBUI.Borders.emptyTop(IdeBorderFactory.TITLED_BORDER_INDENT));
       GridBagConstraints optionsLabelConstraints =
         new GridBagConstraints(0, 0, 1, 1, 0, 1,
                                GridBagConstraints.WEST, GridBagConstraints.NONE,
-                               JBUI.insets(0, 2, 0, 0),
+                               JBUI.emptyInsets(),
                                0, 0);
       add(myOptionsLabel, optionsLabelConstraints);
       GridBagConstraints separatorConstraints =
@@ -1285,7 +1288,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       UserActivityWatcher userActivityWatcher = new UserActivityWatcher();
       userActivityWatcher.addUserActivityListener(() -> setupResetLinkVisibility());
       userActivityWatcher.register(options);
-      myResetLink = LinkLabel.create(IdeBundle.message("reset.action.text"), () -> {
+      myResetLink = new ActionLink(IdeBundle.message("reset.action.text"), e -> {
         ScopeToolState state = getSelectedState();
         if (state != null) {
           state.resetConfigPanel();

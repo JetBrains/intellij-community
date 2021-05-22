@@ -136,11 +136,11 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     if (directorySet == null) return;
     if (isGradleAwareMake) {
       for (File outputDir : directorySet.getGradleOutputDirs()) {
-        result.add(VfsUtilCore.pathToUrl(outputDir.getAbsolutePath()));
+        result.add(VfsUtilCore.pathToUrl(outputDir.getPath()));
       }
     }
     else if (!directorySet.isCompilerOutputPathInherited()) {
-      result.add(VfsUtilCore.pathToUrl(directorySet.getOutputDir().getAbsolutePath()));
+      result.add(VfsUtilCore.pathToUrl(directorySet.getOutputDir().getPath()));
     }
   }
 }

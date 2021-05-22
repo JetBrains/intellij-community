@@ -15,6 +15,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
@@ -139,18 +140,55 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       @Override
       public void visitAnnotation(PsiAnnotation annotation) {
         String qualifiedName = annotation.getQualifiedName();
-        boolean isNotNull = notNulls.contains(qualifiedName);
-        boolean isNullable = nullables.contains(qualifiedName);
-        if (isNotNull || isNullable) {
-          PsiType type = AnnotationUtil.getRelatedType(annotation);
-          if (type instanceof PsiPrimitiveType) {
-            PsiAnnotationOwner owner = annotation.getOwner();
-            PsiModifierListOwner listOwner = owner instanceof PsiModifierList
-                                          ? tryCast(((PsiModifierList)owner).getParent(), PsiModifierListOwner.class) : null;
-            reportPrimitiveType(holder, annotation, listOwner);
-          }
-          checkOppositeAnnotationConflict(annotation, isNotNull);
+        Optional<Nullability> nullabilityOptional = manager.getAnnotationNullability(qualifiedName);
+        if (nullabilityOptional.isEmpty()) return;
+        Nullability nullability = nullabilityOptional.get();
+        PsiType type = AnnotationUtil.getRelatedType(annotation);
+        PsiAnnotationOwner owner = annotation.getOwner();
+        PsiModifierListOwner listOwner = owner instanceof PsiModifierList
+                                         ? tryCast(((PsiModifierList)owner).getParent(), PsiModifierListOwner.class) : null;
+        if (type instanceof PsiPrimitiveType) {
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.primitive.type.annotation");
         }
+        if (type instanceof PsiClassType) {
+          PsiElement context = ((PsiClassType)type).getPsiContext();
+          // outer type
+          if (context instanceof PsiJavaCodeReferenceElement) {
+            PsiElement parent = context.getParent();
+            if (parent instanceof PsiJavaCodeReferenceElement) {
+              reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.outer.type");
+            }
+            if (parent instanceof PsiReferenceList) {
+              PsiElement firstChild = parent.getFirstChild();
+              if ((PsiUtil.isJavaToken(firstChild, JavaTokenType.EXTENDS_KEYWORD) ||
+                   PsiUtil.isJavaToken(firstChild, JavaTokenType.IMPLEMENTS_KEYWORD)) &&
+                  !(parent.getParent() instanceof PsiTypeParameter)) {
+                reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.reference.list");
+              }
+            }
+          }
+        }
+        if (listOwner instanceof PsiMethod && ((PsiMethod)listOwner).isConstructor()) {
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.constructor");
+        }
+        if (listOwner instanceof PsiEnumConstant) {
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.enum.constant");
+        }
+        if ((listOwner instanceof PsiLocalVariable ||
+             listOwner instanceof PsiParameter && ((PsiParameter)listOwner).getDeclarationScope() instanceof PsiCatchSection)
+            && !manager.canAnnotateLocals(qualifiedName)) {
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.local.variable");
+        }
+        if (type instanceof PsiWildcardType && manager.isTypeUseAnnotationLocationRestricted(qualifiedName)) {
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.wildcard");
+        }
+        if (owner instanceof PsiTypeParameter && manager.isTypeUseAnnotationLocationRestricted(qualifiedName)) {
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.type.parameter");
+        }
+        if (listOwner instanceof PsiReceiverParameter && nullability != Nullability.NOT_NULL) {
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.receiver.annotation");
+        }
+        checkOppositeAnnotationConflict(annotation, nullability);
         if (AnnotationUtil.NOT_NULL.equals(qualifiedName)) {
           PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("exception");
           if (value instanceof PsiClassObjectAccessExpression) {
@@ -162,18 +200,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
       }
 
-      private void checkOppositeAnnotationConflict(PsiAnnotation annotation, boolean isNotNull) {
+      private void checkOppositeAnnotationConflict(PsiAnnotation annotation, Nullability nullability) {
         PsiAnnotationOwner owner = annotation.getOwner();
         if (owner == null) return;
-        List<String> opposite = isNotNull ? nullables : notNulls;
         PsiAnnotation oppositeAnno;
         if (owner instanceof PsiModifierList && ((PsiModifierList)owner).getParent() instanceof PsiModifierListOwner) {
           oppositeAnno = manager.findExplicitNullabilityAnnotation((PsiModifierListOwner)((PsiModifierList)owner).getParent(),
-                                                                   isNotNull ? Nullability.NULLABLE : Nullability.NOT_NULL);
+                                                                   ContainerUtil.filter(Nullability.values(), n -> n != nullability));
         }
         else {
-          oppositeAnno = ContainerUtil.find(owner.getAnnotations(), 
-                                            anno -> anno != annotation && opposite.contains(anno.getQualifiedName()));
+          Condition<PsiAnnotation> filter = anno -> 
+            anno != annotation && manager.getAnnotationNullability(anno.getQualifiedName()).filter(n -> n != nullability).isPresent();
+          oppositeAnno = ContainerUtil.find(owner.getAnnotations(), filter);
         }
         if (oppositeAnno != null && 
             Objects.equals(AnnotationUtil.getRelatedType(annotation), AnnotationUtil.getRelatedType(oppositeAnno))) {
@@ -595,8 +633,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
     @NotNull static Annotated from(@NotNull PsiModifierListOwner owner) {
       NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-      return new Annotated(manager.findExplicitNullabilityAnnotation(owner, Nullability.NOT_NULL),
-                           manager.findExplicitNullabilityAnnotation(owner, Nullability.NULLABLE));
+      return new Annotated(manager.findExplicitNullabilityAnnotation(owner, Set.of(Nullability.NOT_NULL)),
+                           manager.findExplicitNullabilityAnnotation(owner, Set.of(Nullability.NULLABLE)));
     }
   }
 
@@ -604,7 +642,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     Annotated annotated = Annotated.from(owner);
     PsiAnnotation annotation = annotated.notNull == null ? annotated.nullable : annotated.notNull;
     if (annotation != null && !annotation.isPhysical() && type instanceof PsiPrimitiveType) {
-      reportPrimitiveType(holder, annotation, owner);
+      reportIncorrectLocation(holder, annotation, owner, "inspection.nullable.problems.primitive.type.annotation");
     }
     if (owner instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)owner;
@@ -629,8 +667,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     }
   }
 
-  private void reportPrimitiveType(ProblemsHolder holder, PsiAnnotation annotation,
-                                   @Nullable PsiModifierListOwner listOwner) {
+  private void reportIncorrectLocation(ProblemsHolder holder, PsiAnnotation annotation,
+                                       @Nullable PsiModifierListOwner listOwner,
+                                       @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey) {
     RemoveAnnotationQuickFix fix = new RemoveAnnotationQuickFix(annotation, listOwner) {
       @Override
       protected boolean shouldRemoveInheritors() {
@@ -638,7 +677,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
     };
     reportProblem(holder, !annotation.isPhysical() && listOwner != null ? listOwner.getNavigationElement() : annotation,
-                  fix, "inspection.nullable.problems.primitive.type.annotation");
+                  fix, messageKey);
   }
 
   @Override

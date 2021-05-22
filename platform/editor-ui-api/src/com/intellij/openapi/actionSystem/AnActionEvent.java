@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PlaceProvider;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,16 +20,20 @@ import java.awt.event.InputEvent;
  * @see AnAction#update(AnActionEvent)
  */
 public class AnActionEvent implements PlaceProvider {
+  private static final String ourInjectedPrefix = "$injected$.";
+
   private final InputEvent myInputEvent;
-  @NotNull private final ActionManager myActionManager;
-  @NotNull private final DataContext myDataContext;
-  @NotNull private final String myPlace;
-  @NotNull private final Presentation myPresentation;
-  @JdkConstants.InputEventMask private final int myModifiers;
-  private boolean myWorksInInjected;
-  @NonNls private static final String ourInjectedPrefix = "$injected$.";
+  private final ActionManager myActionManager;
+  private final DataContext myDataContext;
+  private final String myPlace;
+  private final Presentation myPresentation;
+  @JdkConstants.InputEventMask
+  private final int myModifiers;
   private final boolean myIsContextMenuAction;
   private final boolean myIsActionToolbar;
+
+  private boolean myWorksInInjected;
+  private UpdateSession myUpdateSession;
 
   /**
    * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
@@ -36,7 +41,7 @@ public class AnActionEvent implements PlaceProvider {
    *
    * @see ActionManager#getInstance()
    */
-  public AnActionEvent(InputEvent inputEvent,
+  public AnActionEvent(@Nullable InputEvent inputEvent,
                        @NotNull DataContext dataContext,
                        @NotNull @NonNls String place,
                        @NotNull Presentation presentation,
@@ -51,7 +56,7 @@ public class AnActionEvent implements PlaceProvider {
    *
    * @see ActionManager#getInstance()
    */
-  public AnActionEvent(InputEvent inputEvent,
+  public AnActionEvent(@Nullable InputEvent inputEvent,
                        @NotNull DataContext dataContext,
                        @NotNull @NonNls String place,
                        @NotNull Presentation presentation,
@@ -59,7 +64,6 @@ public class AnActionEvent implements PlaceProvider {
                        @JdkConstants.InputEventMask int modifiers,
                        boolean isContextMenuAction,
                        boolean isActionToolbar) {
-    // TODO[vova,anton] make this constructor package-private. No one is allowed to create AnActionEvents
     myInputEvent = inputEvent;
     myActionManager = actionManager;
     myDataContext = dataContext;
@@ -70,11 +74,20 @@ public class AnActionEvent implements PlaceProvider {
     myIsActionToolbar = isActionToolbar;
   }
 
+  @NotNull
+  public AnActionEvent withDataContext(@NotNull DataContext dataContext) {
+    AnActionEvent event = new AnActionEvent(myInputEvent, dataContext, myPlace, myPresentation,
+                                            myActionManager, myModifiers, myIsContextMenuAction, myIsActionToolbar);
+    event.setInjectedContext(myWorksInInjected);
+    event.setUpdateSession(myUpdateSession);
+    return event;
+  }
 
   /**
    * @deprecated use {@link #createFromInputEvent(InputEvent, String, Presentation, DataContext, boolean, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static AnActionEvent createFromInputEvent(@NotNull AnAction action, @Nullable InputEvent event, @NotNull String place) {
     DataContext context = event == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(event.getComponent());
@@ -231,6 +244,7 @@ public class AnActionEvent implements PlaceProvider {
    * instead to get results only from context menus.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isFromContextMenu() {
     return myIsContextMenuAction;
   }
@@ -270,5 +284,14 @@ public class AnActionEvent implements PlaceProvider {
 
   public void accept(@NotNull AnActionEventVisitor visitor) {
     visitor.visitEvent(this);
+  }
+
+  @Nullable
+  public UpdateSession getUpdateSession() {
+    return myUpdateSession;
+  }
+
+  public void setUpdateSession(@Nullable UpdateSession updateSession) {
+    myUpdateSession = updateSession;
   }
 }

@@ -14,10 +14,11 @@ object Launcher {
 
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
-             options: LauncherOptions): Process {
+             options: LauncherOptions,
+             logClasspath: Boolean): Process {
     val classPathBuilder = ClassPathBuilder(paths, modules)
     logger.info("Building classpath")
-    val classPathArgFile = classPathBuilder.build()
+    val classPathArgFile = classPathBuilder.build(logClasspath)
     logger.info("Done building classpath")
 
     return launch(paths, classPathArgFile, options)

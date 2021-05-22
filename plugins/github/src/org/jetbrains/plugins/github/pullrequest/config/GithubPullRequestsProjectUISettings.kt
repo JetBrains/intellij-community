@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.config
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountSerializer
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -21,6 +22,7 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
   }
 
   @Deprecated("Deprecated when moving to single-tab pull requests")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun getHiddenUrls(): Set<String> = emptySet()
 
   var selectedRepoAndAccount: Pair<GHGitRepositoryMapping, GithubAccount>?

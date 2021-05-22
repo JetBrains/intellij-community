@@ -24,17 +24,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import training.dsl.LessonUtil
+import training.dsl.impl.LessonContextImpl
+import training.dsl.impl.LessonExecutor
 import training.lang.LangManager
 import training.lang.LangSupport
-import training.learn.interfaces.Lesson
-import training.learn.interfaces.LessonType
+import training.learn.course.KLesson
+import training.learn.course.Lesson
+import training.learn.course.LessonType
 import training.learn.lesson.LessonManager
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContextImpl
-import training.learn.lesson.kimpl.LessonExecutor
-import training.learn.lesson.kimpl.LessonUtil
-import training.learn.lesson.listeners.StatisticLessonListener
 import training.project.ProjectUtils
+import training.statistic.StatisticLessonListener
 import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
 import training.util.findLanguageByID
@@ -251,6 +251,20 @@ internal object OpenLessonActivities {
     FileEditorManager.getInstance(project).openFile(readme, true, true)
   }
 
+  fun openOnboardingFromWelcomeScreen(onboarding: Lesson) {
+    initLearnProject(null) { project ->
+      StartupManager.getInstance(project).runAfterOpened {
+        invokeLater {
+          openReadme(project)
+          hideOtherViews(project)
+          if (onboarding.properties.canStartInDumbMode) {
+            CourseManager.instance.openLesson(project, onboarding)
+          }
+        }
+      }
+    }
+  }
+
   fun openLearnProjectFromWelcomeScreen() {
     initLearnProject(null) { project ->
       StartupManager.getInstance(project).runAfterOpened {
@@ -314,7 +328,7 @@ internal object OpenLessonActivities {
   @Throws(IOException::class)
   private fun getScratchFile(project: Project, lesson: Lesson, filename: String): VirtualFile {
     var vf: VirtualFile? = null
-    val languageByID = findLanguageByID(lesson.lang)
+    val languageByID = findLanguageByID(lesson.languageId)
     if (CourseManager.instance.mapModuleVirtualFile.containsKey(lesson.module)) {
       vf = CourseManager.instance.mapModuleVirtualFile[lesson.module]
       ScratchFileService.getInstance().scratchesMapping.setMapping(vf, languageByID)

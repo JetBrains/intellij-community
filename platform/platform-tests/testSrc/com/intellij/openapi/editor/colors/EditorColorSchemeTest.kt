@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
@@ -6,6 +6,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 import com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -108,7 +110,8 @@ class EditorColorSchemeTest {
 
   @Test
   fun loadAdditionalAttributesBeforeOptimization() {
-    val ep = AdditionalTextAttributesEP()
+    val ep = AdditionalTextAttributesEP(DefaultPluginDescriptor(PluginId.getId("loadAdditionalAttributesBeforeOptimization"),
+                                                                EditorColorSchemeTest::class.java.classLoader))
     ep.scheme = "Darcula"
     ep.file = "com/intellij/openapi/editor/colors/foregroundForGoBuiltinTypeReference.xml"
     EditorColorsManagerImpl.ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME.getPoint().registerExtension(ep, disposableRule.disposable)

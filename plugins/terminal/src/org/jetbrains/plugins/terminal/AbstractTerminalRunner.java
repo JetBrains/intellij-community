@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -55,7 +54,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   public AbstractTerminalRunner(@NotNull Project project) {
     myProject = project;
     mySettingsProvider = new JBTerminalSystemSettingsProvider();
-    Disposer.register(project, mySettingsProvider);
   }
 
   public void run() {

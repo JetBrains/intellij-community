@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,11 +150,13 @@ public interface Filter {
     /**
      * @deprecated use {@link #getHighlightAttributes()} instead, the visibility of this field will be decreased.
      */
-    @Deprecated public final @Nullable TextAttributes highlightAttributes;
+    @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    public final @Nullable TextAttributes highlightAttributes;
     /**
      * @deprecated use {@link #getHyperlinkInfo()} instead, the visibility of this field will be decreased.
      */
-    @Deprecated public final @Nullable HyperlinkInfo hyperlinkInfo;
+    @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    public final @Nullable HyperlinkInfo hyperlinkInfo;
 
     private final TextAttributes myFollowedHyperlinkAttributes;
 

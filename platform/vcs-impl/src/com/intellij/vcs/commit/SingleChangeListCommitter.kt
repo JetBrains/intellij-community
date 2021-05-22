@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction
 import com.intellij.openapi.vcs.changes.ui.ChangelistMoveOfferDialog
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ConfirmationDialog.requestForConfirmation
+import org.jetbrains.annotations.ApiStatus
 
 class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String) {
   internal fun copy(commitMessage: String): ChangeListCommitState =
@@ -29,6 +30,7 @@ open class SingleChangeListCommitter(
 ) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, localHistoryActionName) {
 
   @Deprecated("Use constructor without `vcsToCommit: AbstractVcs?` parameter")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   constructor(
     project: Project,
     commitState: ChangeListCommitState,

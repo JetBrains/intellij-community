@@ -27,7 +27,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * A {@link JLabel}-based link that does not support mnemonics.
+ * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
  * @author kir
+ * @see https://jetbrains.github.io/ui/controls/link/
  */
 public class LinkLabel<T> extends JLabel {
   protected boolean myUnderline;
@@ -46,27 +49,58 @@ public class LinkLabel<T> extends JLabel {
   private boolean myClickIsBeingProcessed;
   protected boolean myPaintUnderline = true;
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * Note that this constructor sets inappropriate icon.
+   * @see https://jetbrains.github.io/ui/controls/link/
+   */
   public LinkLabel() {
     this("", AllIcons.Ide.Link);
   }
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * @see https://jetbrains.github.io/ui/controls/link/
+   */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon) {
     this(text, icon, null, null, null);
   }
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * @see https://jetbrains.github.io/ui/controls/link/
+   */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
     this(text, icon, aListener, null, null);
   }
 
+  /**
+   * @see https://jetbrains.github.io/ui/controls/link/
+   * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
+   */
+  @Deprecated
   @NotNull
   public static LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {
     return new LinkLabel<>(text, null, action == null ? null : (__, ___) -> action.run(), null, null);
   }
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * @see https://jetbrains.github.io/ui/controls/link/
+   */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
     this(text, icon, aListener, aLinkData, null);
   }
 
+  /**
+   * @see https://jetbrains.github.io/ui/controls/link/
+   * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
+   */
+  @Deprecated
   public LinkLabel(@NlsContexts.LinkLabel String text,
                    @Nullable Icon icon,
                    @Nullable LinkListener<T> aListener,

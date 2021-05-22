@@ -24,6 +24,7 @@ import java.util.zip.ZipFile;
 
 public abstract class ZipHandlerBase extends ArchiveHandler {
   @ApiStatus.Internal
+  @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean USE_CRC_INSTEAD_OF_TIMESTAMP = getUseCrcInsteadOfTimestampPropertyValue();
 
   private static boolean getUseCrcInsteadOfTimestampPropertyValue() {
@@ -41,7 +42,6 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   public static void resetUseCrcInsteadOfTimestamp() {
     USE_CRC_INSTEAD_OF_TIMESTAMP = getUseCrcInsteadOfTimestampPropertyValue();
   }
-
 
   public ZipHandlerBase(@NotNull String path) {
     super(path);

@@ -114,6 +114,7 @@ public abstract class DaemonCodeAnalyzer {
    * @deprecated Use {@link DaemonListener} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract static class DaemonListenerAdapter implements DaemonListener {
   }
 }

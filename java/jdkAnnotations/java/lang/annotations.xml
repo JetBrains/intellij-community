@@ -1108,7 +1108,16 @@
   <item name='java.lang.String java.lang.String join(java.lang.CharSequence, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name="java.lang.String java.lang.String replace(char, char)">
+  <item name='java.lang.String java.lang.String repeat(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.String java.lang.String repeat(int) 0'>
+        <annotation name='org.jetbrains.annotations.Range'>
+            <val name="from" val="0"/>
+            <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+        </annotation>
+    </item>
+    <item name="java.lang.String java.lang.String replace(char, char)">
     <annotation name="org.jetbrains.annotations.NotNull" />
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>

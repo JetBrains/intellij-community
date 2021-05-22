@@ -7,6 +7,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IStubFileElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface JavaStubElementTypes {
@@ -147,6 +148,6 @@ public interface JavaStubElementTypes {
   /**
    * @deprecated use {@link JavaParserDefinition#JAVA_FILE}
    */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   IStubFileElementType<?> JAVA_FILE = JavaParserDefinition.JAVA_FILE;
 }

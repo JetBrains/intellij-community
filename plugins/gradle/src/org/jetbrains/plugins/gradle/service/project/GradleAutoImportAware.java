@@ -66,13 +66,13 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     for (ExternalProjectSettings setting : projectsSettings) {
       if(setting != null) {
         for (String path : setting.getModules()) {
-          rootPaths.put(new File(path).getAbsolutePath(), setting.getExternalProjectPath());
+          rootPaths.put(new File(path).getPath(), setting.getExternalProjectPath());
         }
       }
     }
 
     for (File f = file.getParentFile(); f != null; f = f.getParentFile()) {
-      String dirPath = f.getAbsolutePath();
+      String dirPath = f.getPath();
       if (rootPaths.containsKey(dirPath)) {
         return rootPaths.get(dirPath);
       }

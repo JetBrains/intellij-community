@@ -7,16 +7,15 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.util.ui.UIUtil
-import training.commands.kotlin.TaskRuntimeContext
-import training.learn.interfaces.Module
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
+import training.dsl.parseLessonSample
 import training.learn.lesson.general.refactorings.RefactoringMenuLessonBase
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.parseLessonSample
 import javax.swing.JDialog
 
-class JavaRefactoringMenuLesson(module: Module) : RefactoringMenuLessonBase("java.refactoring.menu", module, "JAVA") {
+class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.menu") {
   private val sample = parseLessonSample("""
     import java.io.BufferedReader;
     import java.io.FileReader;

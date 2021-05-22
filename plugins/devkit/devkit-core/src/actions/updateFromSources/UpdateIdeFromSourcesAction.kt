@@ -66,8 +66,16 @@ internal open class UpdateIdeFromSourcesAction
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (forceShowSettings || UpdateFromSourcesSettings.getState().showSettings) {
+      val oldWorkIdePath = UpdateFromSourcesSettings.getState().actualIdePath
       val ok = UpdateFromSourcesDialog(project, forceShowSettings).showAndGet()
       if (!ok) return
+      val updatedState = UpdateFromSourcesSettings.getState()
+      if (oldWorkIdePath != updatedState.actualIdePath) {
+        updatedState.workIdePathsHistory.remove(oldWorkIdePath)
+        updatedState.workIdePathsHistory.remove(updatedState.actualIdePath)
+        updatedState.workIdePathsHistory.add(0, updatedState.actualIdePath)
+        updatedState.workIdePathsHistory.add(0, oldWorkIdePath)
+      }
     }
 
     fun error(@NlsContexts.DialogMessage message : String) {
@@ -86,6 +94,13 @@ internal open class UpdateIdeFromSourcesAction
     if (notIdeHomeMessage != null) {
       return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home",
                                         workIdeHome, notIdeHomeMessage))
+    }
+
+    if (FileUtil.isAncestor(workIdeHome, PathManager.getConfigPath(), false)) {
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.config.or.system.directory.under.home", workIdeHome, PathManager.PROPERTY_CONFIG_PATH))
+    }
+    if (FileUtil.isAncestor(workIdeHome, PathManager.getSystemPath(), false)) {
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.config.or.system.directory.under.home", workIdeHome, PathManager.PROPERTY_SYSTEM_PATH))
     }
 
     val scriptFile = File(devIdeaHome, "build/scripts/idea_ultimate.gant")

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ public class BreakpointEditor {
     if (shortcutText != null) {
       text += " (" + shortcutText + ")";
     }
-    myShowMoreOptionsLink = LinkLabel.create(text, () -> {
+    myShowMoreOptionsLink = new ActionLink(text, e -> {
       if (myDelegate != null) {
         myDelegate.more();
       }
@@ -53,7 +53,7 @@ public class BreakpointEditor {
   private JPanel myMainPanel;
   private JButton myDoneButton;
   private JPanel myPropertiesPlaceholder;
-  private LinkLabel myShowMoreOptionsLink;
+  private ActionLink myShowMoreOptionsLink;
   private Delegate myDelegate;
 
   public BreakpointEditor() {

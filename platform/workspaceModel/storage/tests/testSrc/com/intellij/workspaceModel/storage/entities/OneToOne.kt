@@ -26,18 +26,19 @@ internal class OoParentEntityData : WorkspaceEntityData<OoParentEntity>() {
 
 internal class OoParentEntity(val parentProperty: String) : WorkspaceEntityBase() {
 
-  val child: OoChildEntity by OneToOneParent.NotNull<OoParentEntity, OoChildEntity>(OoChildEntity::class.java, false)
+  val child: OoChildEntity? by OneToOneParent.Nullable<OoParentEntity, OoChildEntity>(OoChildEntity::class.java, false)
 }
 
 internal class ModifiableOoParentEntity : ModifiableWorkspaceEntityBase<OoParentEntity>() {
   var parentProperty: String by EntityDataDelegation()
-  var child: OoChildEntity by MutableOneToOneParent.NotNull(OoParentEntity::class.java, OoChildEntity::class.java, false)
+  var child: OoChildEntity? by MutableOneToOneParent.Nullable(OoParentEntity::class.java, OoChildEntity::class.java, false)
 }
 
-internal fun WorkspaceEntityStorageBuilder.addOoParentEntity(parentProperty: String = "parent", source: EntitySource = MySource) =
-  addEntity(ModifiableOoParentEntity::class.java, source) {
+internal fun WorkspaceEntityStorageBuilder.addOoParentEntity(parentProperty: String = "parent", source: EntitySource = MySource): OoParentEntity {
+  return addEntity(ModifiableOoParentEntity::class.java, source) {
     this.parentProperty = parentProperty
   }
+}
 
 // ---------------- Child entity ----------------------
 
@@ -49,12 +50,12 @@ internal class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
 }
 
 internal class OoChildEntity(val childProperty: String) : WorkspaceEntityBase() {
-  val parent: OoParentEntity by OneToOneChild.NotNull(OoParentEntity::class.java, false)
+  val parent: OoParentEntity by OneToOneChild.NotNull(OoParentEntity::class.java, true)
 }
 
 internal class ModifiableOoChildEntity : ModifiableWorkspaceEntityBase<OoChildEntity>() {
   var childProperty: String by EntityDataDelegation()
-  var parent: OoParentEntity by MutableOneToOneChild.NotNull(OoChildEntity::class.java, OoParentEntity::class.java, false)
+  var parent: OoParentEntity by MutableOneToOneChild.NotNull(OoChildEntity::class.java, OoParentEntity::class.java, true)
 }
 
 

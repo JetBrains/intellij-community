@@ -11,7 +11,6 @@ import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -41,8 +40,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private MultipleFacetSettingsEditor myCurrentMultipleSettingsEditor;
   private boolean myTreeWasInitialized;
 
-  public FacetStructureConfigurable(@NotNull Project project) {
-    super(project);
+  public FacetStructureConfigurable(ProjectStructureConfigurable projectStructureConfigurable) {
+    super(projectStructureConfigurable);
   }
 
   @Override
@@ -50,8 +49,12 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return "FacetStructureConfigurable.UI";
   }
 
+  /**
+   * @deprecated use {@link ProjectStructureConfigurable#getFacetStructureConfigurable()} instead
+   */
+  @Deprecated
   public static FacetStructureConfigurable getInstance(final @NotNull Project project) {
-    return ServiceManager.getService(project, FacetStructureConfigurable.class);
+    return ProjectStructureConfigurable.getInstance(project).getFacetStructureConfigurable();
   }
 
   public boolean isVisible() {
@@ -150,7 +153,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     MyNode facetTypeNode = new MyNode(facetTypeConfigurable);
     addNode(facetTypeNode, myRoot);
 
-    FacetEditorFacadeImpl editorFacade = ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade();
+    FacetEditorFacadeImpl editorFacade = myProjectStructureConfigurable.getModulesConfig().getFacetEditorFacade();
     addFacetNodes(facetTypeNode, ProjectFacetManager.getInstance(myProject).getFacets(facetType.getId()), editorFacade);
     return facetTypeNode;
   }
@@ -375,7 +378,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     public boolean remove(@NotNull Collection<? extends Facet> facets) {
       for (Facet facet : facets) {
         List<Facet> removed = myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
-        ModuleStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+        myProjectStructureConfigurable.getModulesConfig().removeFacetNodes(removed);
         for (Facet removedFacet : removed) {
           myContext.getDaemonAnalyzer().removeElement(new FacetProjectStructureElement(myContext, removedFacet));
         }
@@ -414,7 +417,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     public void actionPerformed(@NotNull final AnActionEvent e) {
       NamedConfigurable selected = getSelectedConfigurable();
       if (selected instanceof FacetConfigurable) {
-        ProjectStructureConfigurable.getInstance(myProject).select(((FacetConfigurable)selected).getEditableObject(), true);
+        myProjectStructureConfigurable.select(((FacetConfigurable)selected).getEditableObject(), true);
       }
     }
   }

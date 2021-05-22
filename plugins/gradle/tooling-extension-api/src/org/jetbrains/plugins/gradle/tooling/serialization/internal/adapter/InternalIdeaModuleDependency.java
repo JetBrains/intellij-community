@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.idea.IdeaModuleDependency;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class InternalIdeaModuleDependency extends InternalIdeaDependency implements IdeaModuleDependency {
   private String targetModuleName;
 

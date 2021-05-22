@@ -904,19 +904,21 @@ public final class EditorWindow {
       int arrowsVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.vertical");
       int arrowsHShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.horizontal");
       Function<Icon, Point> function = (icon) -> new Point(centerX - icon.getIconWidth() / 2, centerY - icon.getIconHeight() / 2 + arrowsCenterVShift);
-      Point forUpDownIcons = function.apply(AllIcons.General.ArrowUp);
-      AllIcons.General.ArrowUp.paintIcon(component, g, forUpDownIcons.x, forUpDownIcons.y - arrowsVShift);
-      AllIcons.General.ArrowDown.paintIcon(component, g, forUpDownIcons.x, forUpDownIcons.y + arrowsVShift);
-      Point forLeftRightIcons = function.apply(AllIcons.General.ArrowRight);
-      AllIcons.General.ArrowRight.paintIcon(component, g, forLeftRightIcons.x + arrowsHShift, forLeftRightIcons.y);
-      AllIcons.General.ArrowLeft.paintIcon(component, g, forLeftRightIcons.x - arrowsHShift, forLeftRightIcons.y);
+      Point forUpDownIcons = function.apply(AllIcons.Chooser.Top);
+      AllIcons.Chooser.Top.paintIcon(component, g, forUpDownIcons.x, forUpDownIcons.y - arrowsVShift);
+      AllIcons.Chooser.Bottom.paintIcon(component, g, forUpDownIcons.x, forUpDownIcons.y + arrowsVShift);
+      Point forLeftRightIcons = function.apply(AllIcons.Chooser.Right);
+      AllIcons.Chooser.Right.paintIcon(component, g, forLeftRightIcons.x + arrowsHShift, forLeftRightIcons.y);
+      AllIcons.Chooser.Left.paintIcon(component, g, forLeftRightIcons.x - arrowsHShift, forLeftRightIcons.y);
 
       int textVShift = Registry.intValue("ide.splitter.chooser.info.panel.text.shift");
-      int textY = forUpDownIcons.y + AllIcons.General.ArrowDown.getIconHeight() + textVShift;
-      g.setColor(UIUtil.getLabelForeground());
+      int textY = forUpDownIcons.y + AllIcons.Chooser.Bottom.getIconHeight() + textVShift;
+      g.setColor(UIUtil.getInactiveTextColor());
       g.setFont(font);
       g.drawString(openShortcuts, centerX - openShortcutsWidth / 2, textY);
-      g.drawString(switchShortcuts, centerX - switchShortcutsWidth / 2, textY + fontMetrics.getHeight());
+      if (EditorWindow.this.getOwner().getWindows().length > 1) {
+        g.drawString(switchShortcuts, centerX - switchShortcutsWidth / 2, textY + fontMetrics.getHeight());
+      }
     }
 
     private void positionChanged(RelativePosition position) {

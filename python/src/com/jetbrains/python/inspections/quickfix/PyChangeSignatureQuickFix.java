@@ -6,8 +6,8 @@ import com.google.common.collect.PeekingIterator;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.PyBundle;
@@ -156,12 +157,9 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
         originalCallSite.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, true);
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        try {
-          dialog.createRefactoringProcessor().run();
-        }
-        finally {
-          Disposer.dispose(dialog.getDisposable());
-        }
+        BaseRefactoringProcessor processor = dialog.createRefactoringProcessor();
+        dialog.close(DialogWrapper.OK_EXIT_CODE);
+        processor.run();
       }
       else {
         dialog.show();

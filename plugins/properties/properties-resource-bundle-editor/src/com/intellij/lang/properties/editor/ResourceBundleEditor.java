@@ -27,8 +27,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
-import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -83,11 +83,13 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
-  private static final Logger LOG =
-    Logger.getInstance(ResourceBundleEditor.class);
+  private static final Logger LOG = Logger.getInstance(ResourceBundleEditor.class);
   @NonNls private static final String VALUES               = "values";
   @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
   public static final Key<ResourceBundleEditor> RESOURCE_BUNDLE_EDITOR_KEY = Key.create("resourceBundleEditor");
+
+  private final Project myProject;
+  private final VirtualFile myFile;
 
   private final StructureViewComponent      myStructureViewComponent;
   private final Map<VirtualFile, EditorEx> myEditors;
@@ -95,7 +97,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   private final ResourceBundlePropertiesUpdateManager myPropertiesInsertDeleteManager;
   private final Map<VirtualFile, JPanel> myTitledPanels;
   private final JComponent                    myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
-  private final Project           myProject;
   private final DataProviderPanel myDataProviderPanel;
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
@@ -110,8 +111,9 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   private String              myPropertyToSelectWhenVisible;
   private final ResourceBundleEditorHighlighter myHighlighter;
 
-  public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
-    myProject = resourceBundle.getProject();
+  public ResourceBundleEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull ResourceBundle resourceBundle) {
+    myProject = project;
+    myFile = file;
 
     final JPanel splitPanel = new JPanel();
     myValuesPanel = new JPanel();
@@ -207,6 +209,12 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       }
     });
     myHighlighter = myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile ? null : new ResourceBundleEditorHighlighter(this);
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile getFile() {
+    return myFile;
   }
 
   public ResourceBundle getResourceBundle() {
@@ -555,13 +563,8 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   private void updateDocumentFromPropertyValue(final String value,
                                                final Document document,
                                                final VirtualFile propertiesFile) {
-    @NonNls String text = value;
-    if (myBackSlashPressed.contains(propertiesFile)) {
-      text += "\\";
-    }
-    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-    document.replaceString(0, document.getTextLength(), text);
-    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.FALSE);
+    @NonNls String text = myBackSlashPressed.contains(propertiesFile) ? value + "\\" : value;
+    UndoUtil.disableUndoIn(document, () -> document.replaceString(0, document.getTextLength(), text));
   }
 
   @NotNull
@@ -817,7 +820,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     }
 
     @Override
-    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+    public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
       return false;
     }
 

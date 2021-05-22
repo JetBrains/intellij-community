@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -23,7 +22,10 @@ public class InteractiveSplitAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     EditorWindow editorWindow = e.getData(EditorWindow.DATA_KEY);
-    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    // When invoked from editor VF in context can be different from actual editor VF, e.g. for diff in editor tab
+    VirtualFile file = editorWindow != null && editorWindow.getSelectedFile() != null
+                       ? editorWindow.getSelectedFile()
+                       : e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean openedFromEditor = true;
     if (editorWindow == null) {
       openedFromEditor = false;

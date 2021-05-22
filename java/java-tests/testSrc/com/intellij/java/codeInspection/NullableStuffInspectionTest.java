@@ -10,7 +10,9 @@ import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -321,5 +323,20 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
+  }
+  
+  public void testIncorrectPlacement() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  
+  public void testIncorrectPlacementAmbiguous() {
+    DataFlowInspection8Test.setupAmbiguousAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  
+  public void testIncorrectPlacementAmbiguousJava6() {
+    DataFlowInspection8Test.setupAmbiguousAnnotations("typeUse", myFixture);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
 }

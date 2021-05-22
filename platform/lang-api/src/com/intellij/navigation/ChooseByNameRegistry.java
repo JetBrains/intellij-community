@@ -4,6 +4,7 @@ package com.intellij.navigation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
@@ -30,6 +31,7 @@ public final class ChooseByNameRegistry {
    * @deprecated use {@link ChooseByNameContributor#SYMBOL_EP_NAME} extension point instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void contributeToSymbols(ChooseByNameContributor contributor) {
     myGotoSymbolContributors.add(contributor);
   }

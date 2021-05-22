@@ -23,6 +23,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated Use {@link #empty()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final MultiMap<?,?> EMPTY = new EmptyMap();
 
   private static final long serialVersionUID = -2632269270151455493L;
@@ -60,6 +61,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated Pass map to constructor.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected @NotNull Map<K, Collection<V>> createMap() {
     return new HashMap<>();
   }
@@ -169,6 +171,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated use {@link #remove(Object, Object)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void removeValue(K key, V value) {
     remove(key, value);
   }
@@ -257,6 +260,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated Use {@link #empty()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull <K, V> MultiMap<K, V> emptyInstance() {
     return empty();
   }
@@ -305,6 +309,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated Use {@link #MultiMap()}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull <K, V> MultiMap<K, V> createSmart() {
     return new MultiMap<>();
   }

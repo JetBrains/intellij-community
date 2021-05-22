@@ -20,6 +20,7 @@ public class IdeUICustomization {
    * put the whole message to ProjectConceptBundle.properties and refer to it via {@link #projectMessage} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public String getProjectConceptName() {
     return "project";
@@ -37,6 +38,7 @@ public class IdeUICustomization {
    * @deprecated use {@code projectMessage("tab.title.project")} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nls(capitalization = Nls.Capitalization.Title)
   public String getProjectDisplayName() {
     return projectMessage("tab.title.project");
@@ -47,6 +49,7 @@ public class IdeUICustomization {
    */
   @Deprecated
   @Nls
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public String getCloseProjectActionText() {
     return projectMessage("action.close.project.text");
   }
@@ -63,6 +66,7 @@ public class IdeUICustomization {
    * @deprecated use {@code projectMessage("select.in.item.project.view")} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String getProjectViewSelectInTitle() {
     return projectMessage("select.in.item.project.view");
   }
@@ -71,6 +75,7 @@ public class IdeUICustomization {
    * @deprecated use {@code projectMessage("scope.name.non.project.files")} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public String getNonProjectFilesScopeTitle() {
     return projectMessage("scope.name.non.project.files");
   }

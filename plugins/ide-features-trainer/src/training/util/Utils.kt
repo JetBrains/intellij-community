@@ -25,7 +25,7 @@ import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.CourseManager
 import training.learn.LearnBundle
-import training.learn.interfaces.Lesson
+import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.learn.lesson.LessonStateManager
 import training.ui.LearnToolWindowFactory

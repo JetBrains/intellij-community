@@ -17,6 +17,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
@@ -221,6 +222,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
    */
   @Transient
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isConfirmExtractFiles() {
     return true;
   }
@@ -229,6 +231,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
    * @deprecated unused
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setConfirmExtractFiles(@SuppressWarnings("unused") boolean value) { }
 
   public boolean isConfirmExit() {

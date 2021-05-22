@@ -31,6 +31,8 @@ import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -71,7 +73,7 @@ public abstract class AbstractModelBuilderTest {
     {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
     {"4.0"}, /*{"4.1"}, {"4.2"}, {"4.3"}, {"4.4"}, {"4.5.1"}, {"4.6"}, {"4.7"}, {"4.8"}, {"4.9"},*/ {"4.10.3"},
     {"5.0"}, /*{"5.1"}, {"5.2"}, {"5.3.1"}, {"5.4.1"}, {"5.5.1"},*/ {"5.6.2"},
-    {"6.0"}, /* {"6.0.1"},  {"6.1"}, {"6.2"}, {"6.3"}, {"6.4"}, */ { "6.8.1" }
+    {"6.0"}, /* {"6.0.1"},  {"6.1"}, {"6.2"}, {"6.3"}, {"6.4"}, */ {"6.8.1"}
   };
   public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 
@@ -135,7 +137,8 @@ public abstract class AbstractModelBuilderTest {
     try {
       daemonMaxIdleTime = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "10"));
     }
-    catch (NumberFormatException ignore) {}
+    catch (NumberFormatException ignore) {
+    }
 
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTime, TimeUnit.SECONDS);
     ProjectConnection connection = connector.connect();
@@ -146,15 +149,20 @@ public abstract class AbstractModelBuilderTest {
       projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
                                                                                         ContainerUtil.<Class<?>>set(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
+      GradleExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
+      GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
       assertNotNull(initScript);
+      executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
+
+      buildActionExecutor.withArguments(executionSettings.getArguments());
       String jdkHome = IdeaTestUtil.requireRealJdkHome();
       buildActionExecutor.setJavaHome(new File(jdkHome));
       buildActionExecutor.setJvmArguments("-Xmx128m", "-XX:MaxPermSize=64m");
-      buildActionExecutor.withArguments("--info", GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
       allModels = buildActionExecutor.run();
       assertNotNull(allModels);
-    } finally {
+    }
+    finally {
       connection.close();
     }
   }

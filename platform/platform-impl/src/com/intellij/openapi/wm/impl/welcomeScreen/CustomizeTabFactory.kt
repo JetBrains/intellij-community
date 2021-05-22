@@ -6,6 +6,7 @@ import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsListener
@@ -195,7 +196,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         }
       }
       blockRow {
-        component(AnActionLink("WelcomeScreen.Configure.Import"))
+        component(AnActionLink("WelcomeScreen.Configure.Import", ActionPlaces.WELCOME_SCREEN))
         row {
           component(ActionLink(IdeBundle.message("welcome.screen.all.settings.link")) {
             ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject,

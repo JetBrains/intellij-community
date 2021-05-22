@@ -84,14 +84,17 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
     if (selectedSource != null && selectedServer != null) {
       UIUtil.invokeLaterIfNeeded(() -> {
         myDeploymentSettingsComponent.removeAll();
-        myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selectedSource, selectedServer);
-        if (myDeploymentSettingsEditor != null) {
-          if (myDeploymentConfiguration != null) {
-            myDeploymentSettingsEditor.resetFrom(myDeploymentConfiguration);
+
+        if (!Disposer.isDisposed(this)) {
+          myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selectedSource, selectedServer);
+          if (myDeploymentSettingsEditor != null) {
+            if (myDeploymentConfiguration != null) {
+              myDeploymentSettingsEditor.resetFrom(myDeploymentConfiguration);
+            }
+            myDeploymentSettingsEditor.addSettingsEditorListener(e -> fireEditorStateChanged());
+            Disposer.register(this, myDeploymentSettingsEditor);
+            myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
           }
-          myDeploymentSettingsEditor.addSettingsEditorListener(e -> fireEditorStateChanged());
-          Disposer.register(this, myDeploymentSettingsEditor);
-          myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
         }
       });
     }

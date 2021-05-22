@@ -84,7 +84,7 @@ public class PyConsoleSpecificOptionsPanel {
     myEditorTextField =
       new EditorTextField(createDocument(myProject, optionsProvider.myCustomStartScript), myProject, PythonFileType.INSTANCE) {
         @Override
-        protected EditorEx createEditor() {
+        protected @NotNull EditorEx createEditor() {
           final EditorEx editor = super.createEditor();
           editor.setVerticalScrollbarVisible(true);
           return editor;

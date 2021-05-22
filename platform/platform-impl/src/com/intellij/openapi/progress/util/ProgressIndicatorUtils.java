@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
@@ -51,7 +51,7 @@ public final class ProgressIndicatorUtils {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
-          if (progress.isRunning()) {
+          if (!progress.isCanceled()) {
             progress.cancel();
           }
         }
@@ -71,13 +71,14 @@ public final class ProgressIndicatorUtils {
   /**
    * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicator}
    * instance, which can be used to cancel action externally.
+   * @return true if action executed successfully, false if it was canceled by write action before or during execution
    */
   public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action,
                                                                @Nullable ProgressIndicator progressIndicator) {
-    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
-    runWithWriteActionPriority(() -> result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)),
-                               progressIndicator == null ? new ProgressIndicatorBase(false, false) : progressIndicator);
-    return result.get();
+    AtomicBoolean readActionAcquired = new AtomicBoolean();
+    boolean executed = runWithWriteActionPriority(() -> readActionAcquired.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)),
+                                           progressIndicator == null ? new ProgressIndicatorBase(false, false) : progressIndicator);
+    return readActionAcquired.get() && executed;
   }
 
   /**
@@ -99,6 +100,9 @@ public final class ProgressIndicatorUtils {
     return runInReadActionWithWriteActionPriority(action, null);
   }
 
+  /**
+   * @return true if action executed successfully, false if it was canceled by write action before or during execution
+   */
   public static boolean runWithWriteActionPriority(@NotNull Runnable action, @NotNull ProgressIndicator progressIndicator) {
     ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
@@ -150,10 +154,8 @@ public final class ProgressIndicatorUtils {
         cancellation.run();
         return false;
       }
-      else {
-        action.run();
-        return true;
-      }
+      action.run();
+      return true;
     }
     finally {
       ourWACancellations.remove(cancellation);
@@ -168,7 +170,7 @@ public final class ProgressIndicatorUtils {
     };
   }
 
-  private static boolean isWriting(ApplicationEx application) {
+  private static boolean isWriting(@NotNull ApplicationEx application) {
     return application.isWriteActionPending() || application.isWriteActionInProgress();
   }
 

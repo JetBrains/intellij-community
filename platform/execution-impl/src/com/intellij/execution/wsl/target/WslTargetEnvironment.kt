@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl.target
 
 import com.intellij.execution.ExecutionException
@@ -11,19 +11,22 @@ import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
                            private val distribution: WSLDistribution) : TargetEnvironment(wslRequest) {
 
   private val myUploadVolumes: MutableMap<UploadRoot, UploadableVolume> = HashMap()
-  private val myDownloadVolumes: Map<DownloadRoot, DownloadableVolume> = HashMap()
+  private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()
   private val myTargetPortBindings: MutableMap<TargetPortBinding, Int> = HashMap()
   private val myLocalPortBindings: MutableMap<LocalPortBinding, HostPort> = HashMap()
+  private val localPortBindingsSession : WslTargetLocalPortBindingsSession
 
   override val uploadVolumes: Map<UploadRoot, UploadableVolume>
     get() = Collections.unmodifiableMap(myUploadVolumes)
@@ -44,6 +47,13 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
         myUploadVolumes[uploadRoot] = Volume(uploadRoot.localRootPath, targetRoot)
       }
     }
+    for (downloadRoot in wslRequest.downloadVolumes) {
+      val localRootPath = downloadRoot.localRootPath ?: FileUtil.createTempDirectory("intellij-target.", "").toPath()
+      val targetRoot: String? = toLinuxPath(localRootPath.toAbsolutePath().toString())
+      if (targetRoot != null) {
+        myDownloadVolumes[downloadRoot] = Volume(localRootPath, targetRoot)
+      }
+    }
     for (targetPortBinding in wslRequest.targetPortBindings) {
       val theOnlyPort = targetPortBinding.target
       if (targetPortBinding.local != null && targetPortBinding.local != theOnlyPort) {
@@ -51,12 +61,20 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
       }
       myTargetPortBindings[targetPortBinding] = theOnlyPort
     }
+
+    localPortBindingsSession = WslTargetLocalPortBindingsSession(distribution, wslRequest.localPortBindings)
+    localPortBindingsSession.start()
+
     for (localPortBinding in wslRequest.localPortBindings) {
-      val theOnlyPort = localPortBinding.local
-      if (localPortBinding.target != null && localPortBinding.target != theOnlyPort) {
-        throw UnsupportedOperationException("Local target's TCP port forwarder is not implemented")
+      val targetPortFuture = localPortBindingsSession.getTargetPortFuture(localPortBinding)
+      var targetPort = localPortBinding.local
+      try {
+        targetPort = targetPortFuture.get(10, TimeUnit.SECONDS)
       }
-      myLocalPortBindings[localPortBinding] = HostPort("localhost", theOnlyPort)
+      catch (e: Exception) {
+        LOG.info("Cannot get target port for $localPortBinding")
+      }
+      myLocalPortBindings[localPortBinding] = HostPort(distribution.hostIp, targetPort)
     }
   }
 
@@ -89,12 +107,14 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     line.environment.putAll(commandLine.environmentVariables)
     val options = WSLCommandLineOptions().setRemoteWorkingDirectory(commandLine.workingDirectory)
     line = distribution.patchCommandLine(line, null, options)
-    return line.createProcess()
+    val process = line.createProcess()
+    localPortBindingsSession.stopWhenProcessTerminated(process)
+    return process
   }
 
   override fun shutdown() {}
 
-  private inner class Volume(override val localRoot: Path, override val targetRoot: String) : UploadableVolume {
+  private inner class Volume(override val localRoot: Path, override val targetRoot: String) : UploadableVolume, DownloadableVolume {
 
     @Throws(IOException::class)
     override fun resolveTargetPath(relativePath: String): String {
@@ -105,5 +125,13 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     @Throws(IOException::class)
     override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator) {
     }
+
+    @Throws(IOException::class)
+    override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
+    }
+  }
+
+  companion object {
+    val LOG = logger<WslTargetEnvironment>()
   }
 }

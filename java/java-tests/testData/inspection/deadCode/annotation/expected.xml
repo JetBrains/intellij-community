@@ -25,10 +25,5 @@
     <line>25</line>
     <description>Interface is not implemented.</description>
   </problem>
-  <problem>
-    <file>SimpleAnnotation.java</file>
-    <line>2</line>
-    <description>Method is never used.</description>
-  </problem>
 </problems>
 

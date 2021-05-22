@@ -4,6 +4,7 @@ package com.intellij.execution.application;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     setMinimumWidth(mainClass, 300);
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
       new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClass, 20,
-                                   (configuration, component) -> component.setText(configuration.getMainClassName()),
+                                   (configuration, component) -> component.setText(StringUtil.notNullize(configuration.getMainClassName()).replaceAll("\\$", "\\.")),
                                    (configuration, component) -> configuration.setMainClassName(component.getText()),
                                    configuration -> true);
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));

@@ -1,11 +1,19 @@
 <html>
 <body>
-Reports <a href="http://www.c2.com/cgi/wiki?DoubleBraceInitialization">Double Brace Initialization</a>.
-Double brace initialization can cause memory leaks when used from a non-<b>static</b> context,
-because the anonymous <b>class</b> created will maintain a reference to the surrounding object.
+Reports <a href="https://www.c2.com/cgi/wiki?DoubleBraceInitialization">Double Brace Initialization</a>.
+Double brace initialization can cause memory leaks when used from a non-<code>static</code> context,
+because the anonymous <code>class</code> created will maintain a reference to the surrounding object.
 It has worse performance than regular initialization because of the additional class loading required.
-It can cause <b>equals()</b> comparisons to fail, if the <b>equals()</b> method does not accept subclasses as parameter (see link above).
-And finally, pre Java 9 it cannot be combined with the diamond operator, because that cannot be used with anonymous classes.
+It can cause <code>equals()</code> comparisons to fail, if the <code>equals()</code> method does not accept subclasses as parameter
+(see link above).
+And finally, before Java 9 it could not be combined with the diamond operator, because that could not be used with anonymous classes.
+<p>Example of Double Brace Initialization:
+<pre><code>
+  List<Integer> list = new ArrayList<>() {{
+    add(1);
+    add(2);
+  }};
+</code></pre>
 <!-- tooltip end -->
 <p>
 </body>

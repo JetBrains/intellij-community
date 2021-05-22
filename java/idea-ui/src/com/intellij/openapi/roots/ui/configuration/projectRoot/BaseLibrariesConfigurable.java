@@ -7,12 +7,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
@@ -47,17 +47,18 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @NotNull
   protected final String myLevel;
 
-  protected BaseLibrariesConfigurable(final @NotNull Project project, @NotNull String libraryTableLevel) {
-    super(project);
+  protected BaseLibrariesConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable,
+                                      @NotNull String libraryTableLevel) {
+    super(projectStructureConfigurable);
     myLevel = libraryTableLevel;
   }
 
-  public static BaseLibrariesConfigurable getInstance(@NotNull Project project, @NotNull String tableLevel) {
+  public static BaseLibrariesConfigurable getInstance(@NotNull ProjectStructureConfigurable projectStructureConfigurable, @NotNull String tableLevel) {
     if (tableLevel.equals(LibraryTablesRegistrar.PROJECT_LEVEL)) {
-      return ProjectLibrariesConfigurable.getInstance(project);
+      return projectStructureConfigurable.getProjectLibrariesConfigurable();
     }
     else {
-      return GlobalLibrariesConfigurable.getInstance(project);
+      return projectStructureConfigurable.getGlobalLibrariesConfigurable();
     }
   }
 

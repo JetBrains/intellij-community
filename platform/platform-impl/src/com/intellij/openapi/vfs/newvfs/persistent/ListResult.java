@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 
 // stores result of various FSRecords.list*() methods and the current FSRecords.localModCount for optimistic locking support
-class ListResult {
+final class ListResult {
   private final int modStamp;
   // sorted by getId()
   final List<? extends ChildInfo> children;

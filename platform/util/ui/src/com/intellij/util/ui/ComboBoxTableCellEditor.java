@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.util.ListWithSelection;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
@@ -13,6 +14,7 @@ import java.awt.event.ActionListener;
  * @deprecated Please use {@link com.intellij.util.ui.table.ComboBoxTableCellEditor}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public final class ComboBoxTableCellEditor extends AbstractTableCellEditor {
   public static final ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();
 

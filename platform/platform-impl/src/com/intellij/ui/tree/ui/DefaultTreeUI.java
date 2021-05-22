@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -15,6 +15,8 @@ import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -33,6 +35,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.VariableHeightLayoutCache;
 import java.awt.*;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
@@ -52,6 +55,8 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 public final class DefaultTreeUI extends BasicTreeUI {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
+  @ApiStatus.Internal @ApiStatus.Experimental
+  public static final Key<Boolean> EXPERIMENTAL_PREFERRED_WIDTH = Key.create("allows to calculate a preferred width for visible nodes");
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
@@ -136,6 +141,12 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   private static boolean isLargeModelAllowed(@Nullable JTree tree) {
     return is("ide.tree.large.model.allowed") || UIUtil.isClientPropertyTrue(tree, LARGE_MODEL_ALLOWED);
+  }
+
+  private static boolean isExperimentalPreferredWidth(@Nullable JTree tree) {
+    if (tree instanceof TreeTableTree) return false;
+    Boolean property = UIUtil.getClientProperty(tree, EXPERIMENTAL_PREFERRED_WIDTH);
+    return property != null ? property : is("ide.tree.experimental.preferred.width");
   }
 
   private static boolean isAutoExpandAllowed(@NotNull JTree tree) {
@@ -320,6 +331,54 @@ public final class DefaultTreeUI extends BasicTreeUI {
       bounds.height = height;
     }
     return bounds.contains(mouseX, mouseY);
+  }
+
+  @Override
+  protected void configureLayoutCache() {
+    super.configureLayoutCache();
+    JTree tree = getTree();
+    AbstractLayoutCache cache = treeState; // TODO: treeState ???
+    if (tree != null && cache != null && isExperimentalPreferredWidth(tree)) {
+      if (null == ReflectionUtil.getField(BasicTreeUI.class, this, null, "componentListener")) {
+        ComponentListener listener = createComponentListener();
+        ReflectionUtil.setField(BasicTreeUI.class, this, null, "componentListener", listener);
+        tree.addComponentListener(listener);
+      }
+    }
+  }
+
+  @Override
+  protected void updateCachedPreferredSize() {
+    JTree tree = getTree();
+    AbstractLayoutCache cache = treeState; // TODO: treeState ???
+    if (tree != null && isValid(tree) && cache != null && isExperimentalPreferredWidth(tree)) {
+      Rectangle paintBounds = tree.getVisibleRect();
+      Insets insets = tree.getInsets();
+      TreePath path = cache.getPathClosestTo(0, paintBounds.y - insets.top);
+      int row = cache.getRowForPath(path);
+      if (row >= 0) {
+        Rectangle buffer = new Rectangle();
+        int maxPaintX = paintBounds.x + paintBounds.width;
+        int maxPaintY = paintBounds.y + paintBounds.height;
+        int width = 0;
+        while (path != null) {
+          Rectangle bounds = cache.getBounds(path, buffer);
+          if (bounds == null) continue; // something goes wrong
+          width = Math.max(width, bounds.x + bounds.width);
+          if ((bounds.y + bounds.height) >= maxPaintY) break;
+          path = cache.getPathForRow(++row);
+        }
+        width += insets.left + insets.right;
+        if (paintBounds.width < width && width < maxPaintX) {
+          width = Math.min(width + paintBounds.width / 3, maxPaintX);
+        }
+        preferredSize.width = width;
+        preferredSize.height = insets.top + insets.bottom + cache.getPreferredHeight();
+        validCachedPreferredSize = true;
+        return;
+      }
+    }
+    super.updateCachedPreferredSize();
   }
 
   @Override

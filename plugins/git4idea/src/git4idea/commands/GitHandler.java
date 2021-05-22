@@ -24,6 +24,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -484,6 +485,7 @@ public abstract class GitHandler {
    * @deprecated use {@link #addParameters}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean addProgressParameter() {
     if (myProject != null && GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myProject)) {
       addParameters("--progress");
@@ -497,6 +499,7 @@ public abstract class GitHandler {
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public int getExitCode() {
     if (myExitCode == null) {
       return -1;
@@ -584,6 +587,7 @@ public abstract class GitHandler {
    * @deprecated remove together with {@link GitHandlerUtil} and {@link GitTask}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public List<VcsException> errors() {
     return Collections.unmodifiableList(myErrors);
   }

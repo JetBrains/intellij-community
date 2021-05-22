@@ -9,7 +9,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.ActionLink
 import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
@@ -263,11 +263,10 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       get() = getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
       set(value) = putValue(ACTION_VISIBLE_KEY, value)
 
-    fun createLinkLabel(action: Action): LinkLabel<*> {
-      val label = LinkLabel<Any?>(action.getName(), null) { source, _ ->
-        action.actionPerformed(ActionEvent(source, ActionEvent.ACTION_PERFORMED, null))
+    fun createLinkLabel(action: Action): ActionLink {
+      val label = ActionLink(action.getName()) {
+        action.actionPerformed(it)
       }
-      label.isFocusable = true
       label.isEnabled = action.isEnabled
       label.isVisible = action.getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
 

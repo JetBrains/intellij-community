@@ -22,6 +22,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,8 +47,12 @@ public interface DiffContent extends UserDataHolder {
   @RequiresEdt
   default void onAssigned(boolean isAssigned) { }
 
+  /**
+   * @deprecated isn't called by the platform anymore
+   */
   @Nullable
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default OpenFileDescriptor getOpenFileDescriptor() {
     return ObjectUtils.tryCast(getNavigatable(), OpenFileDescriptor.class);
   }

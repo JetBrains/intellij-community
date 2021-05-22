@@ -3,6 +3,7 @@ package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
 
@@ -12,6 +13,7 @@ inline fun <reified T : Any> @Suppress("unused") T.thisLogger() = Logger.getInst
 inline fun <reified T : Any> logger() = Logger.getInstance(T::class.java)
 
 @Deprecated(level = DeprecationLevel.ERROR, message = "Use Logger directly", replaceWith = ReplaceWith("Logger.getInstance(category)"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 fun logger(@NonNls category: String) = Logger.getInstance(category)
 
 inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> @NonNls String) {

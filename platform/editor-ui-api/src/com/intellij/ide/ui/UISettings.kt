@@ -58,7 +58,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   val animateWindows: Boolean
     get() = Registry.`is`("ide.animate.toolwindows", false)
 
-  @Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
+  @get:Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
+  @get:ScheduledForRemoval(inVersion = "2021.2")
   var showMemoryIndicator: Boolean
     get() = state.showMemoryIndicator
     set(value) {
@@ -586,6 +587,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Please use {@link UISettingsListener#TOPIC}")
+  @ScheduledForRemoval(inVersion = "2021.3")
   fun addUISettingsListener(listener: UISettingsListener, parentDisposable: Disposable) {
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener)
   }

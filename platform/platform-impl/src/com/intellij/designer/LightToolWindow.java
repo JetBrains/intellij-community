@@ -2,6 +2,7 @@
 package com.intellij.designer;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ToolWindowViewModeAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
@@ -420,7 +421,8 @@ public final class LightToolWindow extends JPanel {
     @Override
     public void actionPerformed(ActionEvent e) {
       InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent)e.getSource() : null;
-      myAction.actionPerformed(AnActionEvent.createFromInputEvent(myAction, inputEvent, ActionPlaces.UNKNOWN));
+      DataContext dataContext = DataManager.getInstance().getDataContext(this);
+      myAction.actionPerformed(AnActionEvent.createFromAnAction(myAction, inputEvent, ActionPlaces.TOOLWINDOW_TITLE, dataContext));
     }
   }
 

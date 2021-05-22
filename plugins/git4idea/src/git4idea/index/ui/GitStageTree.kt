@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
+import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.ide.dnd.DnDActionInfo
 import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -17,18 +19,22 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.ColorIcon
+import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.conflicts.getConflictType
@@ -40,16 +46,17 @@ import git4idea.index.ignoredStatus
 import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
 import git4idea.repo.GitConflict
+import git4idea.repo.GitRepository
 import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import java.awt.Color
-import java.awt.Graphics
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.beans.PropertyChangeListener
+import java.util.*
+import java.util.stream.Collectors
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -71,9 +78,12 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   protected abstract val ignoredFilePaths: Map<VirtualFile, List<FilePath>>
   protected abstract val operations: List<StagingAreaOperation>
 
+  private val includedRootsListeners = EventDispatcher.create(IncludedRootsListener::class.java)
+
   init {
     isKeepTreeState = true
     isScrollToSelection = false
+    isShowCheckboxes = true
     setCellRenderer(GitStageTreeRenderer(myProject) { isShowFlatten })
     MyMouseListener().also {
       addMouseMotionListener(it)
@@ -86,6 +96,15 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
         rebuildTree()
       }
     }, parentDisposable)
+
+    groupingSupport.addPropertyChangeListener(PropertyChangeListener {
+      includedRootsListeners.multicaster.includedRootsChanged()
+    })
+    inclusionModel.addInclusionListener(object : InclusionListener {
+      override fun inclusionChanged() {
+        includedRootsListeners.multicaster.includedRootsChanged()
+      }
+    })
   }
 
   abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
@@ -98,7 +117,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     val path = getClosestPathForLocation(point.x, point.y) ?: return null
     val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return null
     val operation = getFirstMatchingOperation(node) ?: return null
-    val componentBounds = operation.icon?.let { getComponentBounds(path, it)} ?: return null
+    val componentBounds = operation.icon?.let { getComponentBounds(path, it) } ?: return null
 
     return HoverData(node, operation, componentBounds.contains(point))
   }
@@ -197,6 +216,61 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     else {
       ListSelection.create(allEntries, selected)
     }
+  }
+
+  fun getIncludedRoots(): Collection<VirtualFile> {
+    if (state.rootStates.size == 1 ||
+        !groupingSupport.isAvailable(REPOSITORY_GROUPING) ||
+        !groupingSupport[REPOSITORY_GROUPING]) return state.rootStates.keys
+
+    return inclusionModel.getInclusion().mapNotNull { (it as? GitRepository)?.root }
+  }
+
+  fun addIncludedRootsListener(listener: IncludedRootsListener, disposable: Disposable) {
+    includedRootsListeners.addListener(listener, disposable)
+  }
+
+  override fun isInclusionEnabled(node: ChangesBrowserNode<*>): Boolean {
+    return state.rootStates.size > 1 && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
+  }
+
+  override fun isInclusionVisible(node: ChangesBrowserNode<*>): Boolean {
+    return state.rootStates.size > 1 && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
+  }
+
+  override fun getIncludableUserObjects(treeModelData: VcsTreeModelData): MutableList<Any> {
+    return treeModelData
+      .rawNodesStream()
+      .filter { node: ChangesBrowserNode<*>? -> isIncludable(node!!) }
+      .map { node: ChangesBrowserNode<*> -> node.userObject }
+      .collect(Collectors.toList())
+  }
+
+  override fun getNodeStatus(node: ChangesBrowserNode<*>): ThreeStateCheckBox.State {
+    return inclusionModel.getInclusionState(node.userObject)
+  }
+
+  private fun isUnderKind(node: ChangesBrowserNode<*>, nodeKind: NodeKind): Boolean {
+    val nodePath = node.path?.takeIf { it.isNotEmpty() } ?: return false
+    return (nodePath.find { it is MyKindNode } as? MyKindNode)?.kind == nodeKind
+  }
+
+  override fun installGroupingSupport(): ChangesGroupingSupport {
+    val result = ChangesGroupingSupport(project, this, false)
+
+    if (PropertiesComponent.getInstance(project).getValues(GROUPING_PROPERTY_NAME) == null) {
+      val oldGroupingKeys = (PropertiesComponent.getInstance(project).getValues(GROUPING_KEYS) ?: DEFAULT_GROUPING_KEYS).toMutableSet()
+      oldGroupingKeys.add(REPOSITORY_GROUPING)
+      PropertiesComponent.getInstance(project).setValues(GROUPING_PROPERTY_NAME, *oldGroupingKeys.toTypedArray())
+    }
+
+    installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, *DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
+    return result
+  }
+
+  companion object {
+    @NonNls
+    private const val GROUPING_PROPERTY_NAME = "GitStage.ChangesTree.GroupingKeys"
   }
 
   private inner class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory)
@@ -362,7 +436,9 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     override fun getSortWeight(): Int = sortOrder.getValue(NodeKind.UNTRACKED)
   }
 
-  private class GitStageTreeRenderer(project: Project, isShowFlatten: () -> Boolean) : ChangesBrowserNodeRenderer(project, isShowFlatten, true) {
+  private class GitStageTreeRenderer(project: Project, isShowFlatten: () -> Boolean) :
+    ChangesTreeCellRenderer(ChangesBrowserNodeRenderer(project, isShowFlatten, true)) {
+
     private var floatingIcon: FloatingIcon? = null
 
     override fun paint(g: Graphics) {
@@ -373,15 +449,16 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
       }
     }
 
-    override fun customizeCellRenderer(tree: JTree,
-                                       value: Any?,
-                                       selected: Boolean,
-                                       expanded: Boolean,
-                                       leaf: Boolean,
-                                       row: Int,
-                                       hasFocus: Boolean) {
-      super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
+    override fun getTreeCellRendererComponent(tree: JTree,
+                                              value: Any,
+                                              selected: Boolean,
+                                              expanded: Boolean,
+                                              leaf: Boolean,
+                                              row: Int,
+                                              hasFocus: Boolean): Component {
+      val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
       floatingIcon = prepareIcon(tree as GitStageTree, value as ChangesBrowserNode<*>, row, selected)
+      return rendererComponent
     }
 
     fun prepareIcon(tree: GitStageTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): FloatingIcon? {
@@ -571,4 +648,8 @@ internal fun GitStageTracker.State.hasMatchingRoots(vararg kinds: NodeKind): Boo
 
 internal fun GitFileStatusNode.createConflict(): GitConflict? {
   return GitStagingAreaHolder.createConflict(root, status)
+}
+
+interface IncludedRootsListener: EventListener {
+  fun includedRootsChanged()
 }

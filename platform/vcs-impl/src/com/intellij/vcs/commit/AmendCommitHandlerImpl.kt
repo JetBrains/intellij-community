@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil.equalsIgnoreWhitespaces
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.util.EventDispatcher
 
 private val AMEND_DATA_KEY = Key.create<AmendData>("Vcs.Commit.AmendData")
@@ -32,10 +31,6 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
   var initialMessage: String? = null
 
-  init {
-    workflow.addCommitListener(AmendPrefixCleaner(), workflowHandler)
-  }
-
   override var isAmendCommitMode: Boolean
     get() = commitContext.isAmendCommitMode
     set(value) {
@@ -50,7 +45,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
     fireAmendCommitModeToggled()
 
     if (isAmendCommitMode) setAmendMessage() else restoreBeforeAmendMessage()
-    setAmendPrefix(isAmendCommitMode)
+    workflowHandler.updateDefaultCommitActionName()
   }
 
   protected fun fireAmendCommitModeToggled() = amendCommitEventDispatcher.multicaster.amendCommitModeToggled()
@@ -63,12 +58,6 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
   override fun addAmendCommitModeListener(listener: AmendCommitModeListener, parent: Disposable) =
     amendCommitEventDispatcher.addListener(listener, parent)
-
-  protected fun setAmendPrefix(isAmend: Boolean) {
-    val commitActionName = workflowHandler.getCommitActionName()
-    val newActionName = if (isAmend) VcsBundle.message("amend.action.name", commitActionName) else commitActionName
-    workflowHandler.ui.defaultCommitActionName = newActionName
-  }
 
   private fun setAmendMessage() {
     val beforeAmendMessage = workflowHandler.getCommitMessage()
@@ -134,11 +123,5 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
       val amendAware = vcsRoot.vcs?.checkinEnvironment as? AmendCommitAware ?: return@mapNotNull null
       amendAware.getLastCommitMessage(vcsRoot.path)
     }
-  }
-
-  private inner class AmendPrefixCleaner : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = setAmendPrefix(false)
-    override fun onCancel() = Unit
-    override fun onFailure() = setAmendPrefix(false)
   }
 }

@@ -14,7 +14,10 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +31,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
@@ -432,6 +436,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     while (!(myState.get() == State.SMART ||
              myState.get() == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS)
            && !myProject.isDisposed()) {
+      PingProgress.interactWithEdtProgress();
       LockSupport.parkNanos(50_000_000);
       // polls next dumb mode task
       myTrackedEdtActivityService.executeAllQueuedActivities();

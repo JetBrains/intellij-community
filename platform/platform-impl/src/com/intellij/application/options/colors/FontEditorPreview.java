@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.function.Supplier;
 
@@ -75,10 +76,14 @@ public class FontEditorPreview implements PreviewPanel{
     previewLabel.setBackground(myEditor.getBackgroundColor());
     myTopPanel.add(previewLabel, BorderLayout.SOUTH);
     myTopPanel.setBackground(myEditor.getBackgroundColor());
-    myTopPanel.setBorder(JBUI.Borders.customLine(JBColor.border()));
+    myTopPanel.setBorder(getBorder());
 
     registerRestoreAction(myEditor);
     installTrafficLights(myEditor);
+  }
+
+  protected Border getBorder() {
+    return JBUI.Borders.customLine(JBColor.border());
   }
 
   private static void registerRestoreAction(EditorEx editor) {

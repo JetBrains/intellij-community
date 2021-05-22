@@ -51,6 +51,9 @@ fun <T> commitProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitCo
 private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCommitMode")
 var CommitContext.isAmendCommitMode: Boolean by commitProperty(IS_AMEND_COMMIT_MODE_KEY)
 
+private val IS_CLEANUP_COMMIT_MESSAGE_KEY = Key.create<Boolean>("Vcs.Commit.IsCleanupCommitMessage")
+var CommitContext.isCleanupCommitMessage: Boolean by commitProperty(IS_CLEANUP_COMMIT_MESSAGE_KEY)
+
 interface CommitWorkflowListener : EventListener {
   fun vcsesChanged()
 
@@ -194,7 +197,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     var checks = Runnable {
       ProgressManager.checkCanceled()
       FileDocumentManager.getInstance().saveAllDocuments()
-      result = runBeforeCommitHandlersChecks(executor)
+      result = runBeforeCommitHandlersChecks(executor, commitHandlers)
     }
 
     commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
@@ -219,8 +222,8 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   protected open fun doRunBeforeCommitChecks(checks: Runnable) = checks.run()
 
-  private fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable {
-    return Runnable {
+  protected fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable =
+    Runnable {
       try {
         LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
         metaHandler.runCheckinHandlers(task)
@@ -234,10 +237,9 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         task.run()
       }
     }
-  }
 
-  private fun runBeforeCommitHandlersChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    commitHandlers.forEachLoggingErrors(LOG) { handler ->
+  protected fun runBeforeCommitHandlersChecks(executor: CommitExecutor?, handlers: List<CheckinHandler>): CheckinHandler.ReturnResult {
+    handlers.forEachLoggingErrors(LOG) { handler ->
       try {
         val result = runBeforeCommitHandler(handler, executor)
         if (result != CheckinHandler.ReturnResult.COMMIT) return result

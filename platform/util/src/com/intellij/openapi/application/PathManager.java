@@ -38,7 +38,6 @@ public final class PathManager {
 
   public static final String OPTIONS_DIRECTORY = "options";
   public static final String DEFAULT_EXT = ".xml";
-  public static final String DEFAULT_OPTIONS_FILE = "other" + DEFAULT_EXT;
 
   private static final String KOTLIN_IDE_IML_RELATIVE_PATH = "kotlin/idea/kotlin.idea.iml";
   private static final String KOTLIN_COMMUNITY_IDE_IML_RELATIVE_PATH = "idea/kotlin.idea.iml";
@@ -389,10 +388,12 @@ public final class PathManager {
     return getSystemPath() + "/tmp";
   }
 
-  public static @NotNull File getIndexRoot() {
+  public static @NotNull Path getIndexRoot() {
     String indexRootPath = getExplicitPath("index_root_path");
-    if (indexRootPath == null) indexRootPath = getSystemPath() + "/index";
-    return Paths.get(indexRootPath).toFile();
+    if (indexRootPath == null) {
+      indexRootPath = getSystemPath() + "/index";
+    }
+    return Paths.get(indexRootPath);
   }
 
   public static @NotNull String getLogPath() {

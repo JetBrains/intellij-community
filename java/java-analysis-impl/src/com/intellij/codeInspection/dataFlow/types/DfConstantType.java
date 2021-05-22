@@ -50,7 +50,8 @@ public abstract class DfConstantType<T> implements DfType {
 
   @Override
   public boolean equals(Object obj) {
-    return obj == this || obj instanceof DfConstantType && Objects.equals(((DfConstantType<?>)obj).myValue, myValue);
+    return obj == this || 
+           obj != null && obj.getClass() == getClass() && Objects.equals(((DfConstantType<?>)obj).myValue, myValue);
   }
 
   @Override
@@ -58,24 +59,14 @@ public abstract class DfConstantType<T> implements DfType {
     return renderValue(myValue);
   }
 
-  /**
-   * @param dfType dfType to check
-   * @param value constant value
-   * @return true if given dfType represents a constant that is equal to given value
-   */
-  public static boolean isConst(@NotNull DfType dfType, @Nullable Object value) {
-    return dfType instanceof DfConstantType && Objects.equals(((DfConstantType<?>)dfType).getValue(), value);
+  @Override
+  public boolean isConst(@Nullable Object constant) {
+    return Objects.equals(myValue, constant);
   }
 
-  /**
-   * @param dfType dfType to extract the constant value from
-   * @param clazz desired constant class
-   * @param <T> type of the constant
-   * @return the constant of given type; null if the supplied dfType is not a constant or its type class differs from the supplied one.
-   */
-  @Nullable
-  public static <T> T getConstantOfType(@NotNull DfType dfType, @NotNull Class<T> clazz) {
-    return dfType instanceof DfConstantType ? ObjectUtils.tryCast(((DfConstantType<?>)dfType).getValue(), clazz) : null;
+  @Override
+  public <C> @Nullable C getConstantOfType(@NotNull Class<C> clazz) {
+    return ObjectUtils.tryCast(myValue, clazz);
   }
 
   /**

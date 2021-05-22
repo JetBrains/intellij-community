@@ -61,18 +61,21 @@ public abstract class LafManager {
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addLafManagerListener(@NotNull LafManagerListener listener);
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable);
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removeLafManagerListener(@NotNull LafManagerListener listener);
 
   public static final class LafReference {

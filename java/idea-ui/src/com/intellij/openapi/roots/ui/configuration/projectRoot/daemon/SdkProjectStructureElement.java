@@ -2,7 +2,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.Nls;
 
@@ -18,7 +17,7 @@ public class SdkProjectStructureElement extends ProjectStructureElement {
   }
 
   private Sdk getModifiableSdk(Sdk sdk) {
-    Sdk modifiableSdk = ProjectStructureConfigurable.getInstance(myContext.getProject()).getProjectJdksModel().getProjectSdks().get(sdk);
+    Sdk modifiableSdk = myContext.getModulesConfigurator().getProjectStructureConfigurable().getProjectJdksModel().getProjectSdks().get(sdk);
     return modifiableSdk != null? modifiableSdk : sdk;
   }
 

@@ -13,6 +13,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
    * @deprecated no effect
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void resetColor() {
   }
 
@@ -194,6 +196,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
      * @deprecated arrows are not painted anymore
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     protected boolean shouldPaintArrows() {
       return false;
     }

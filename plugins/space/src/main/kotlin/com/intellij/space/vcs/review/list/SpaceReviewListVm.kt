@@ -48,6 +48,7 @@ internal enum class ReviewListQuickFilter(@PropertyKey(resourceBundle = SpaceBun
   AUTHORED_BY_ME("review.quick.filters.includes.my.changes"),
   NEEDS_MY_ATTENTION("review.quick.filters.needs.me.attention"),
   NEEDS_MY_REVIEW("review.quick.filters.needs.my.review"),
+  ASSIGNED_TO_ME("review.quick.filters.assigned.to.me"),
   CLOSED("review.quick.filters.closed");
 
   override fun toString(): String = SpaceBundle.message(key)

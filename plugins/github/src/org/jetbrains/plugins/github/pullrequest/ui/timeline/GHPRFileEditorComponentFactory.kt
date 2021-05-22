@@ -4,13 +4,14 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -25,7 +26,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
-import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldModel
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
@@ -33,15 +33,12 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataPr
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.handleOnEdt
-import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.ChangeEvent
@@ -63,8 +60,6 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                                                               editor.timelineLoader::reset))
   private val timelineModel = GHPRTimelineMergingModel()
   private val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(editor.reviewData, uiDisposable)
-
-  private val stateModel = GHPRStateModelImpl(project, editor.stateData, editor.changesData, detailsModel, uiDisposable)
 
   init {
     editor.detailsData.loadDetails(uiDisposable) {
@@ -177,23 +172,12 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       }
     })
 
-    val statePanel = GHPRStatePanel(editor.securityService, stateModel).apply {
-      border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
-                                                  JBUI.Borders.empty(8))
-    }
-    detailsModel.addAndInvokeValueChangedListener {
-      statePanel.select(detailsModel.value.state, true)
-    }
-
-    val contentPanel = JBUI.Panels.simplePanel(scrollPane).addToBottom(JBUI.Panels.simplePanel(statePanel)).andTransparent()
-    mainPanel.setContent(contentPanel)
+    mainPanel.setContent(scrollPane)
 
     val actionManager = ActionManager.getInstance()
     actionManager.getAction("Github.PullRequest.Timeline.Update").registerCustomShortcutSet(scrollPane, uiDisposable)
     val actionGroup = actionManager.getAction("Github.PullRequest.Timeline.Popup") as ActionGroup
     PopupHandler.installPopupHandler(scrollPane, actionGroup, ActionPlaces.UNKNOWN, actionManager)
-
-    PopupHandler.installPopupHandler(statePanel, DefaultActionGroup(GHPRReloadStateAction()), ActionPlaces.UNKNOWN, actionManager)
 
     return mainPanel
   }

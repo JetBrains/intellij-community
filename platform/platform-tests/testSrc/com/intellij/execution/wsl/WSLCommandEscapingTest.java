@@ -258,6 +258,11 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
     assertEchoOutput(createEchoScriptAndGetLinuxPath("echo'`"), params);
   }
 
+  @Test
+  public void testReadShellPath() {
+    Assert.assertNotEquals("/bin/sh", wsl.getShellPath());
+  }
+
   private String createEchoScriptAndGetLinuxPath(String executableName) {
     File file = tempDir.newFile(executableName + ".sh", "#!/bin/sh\necho \"$@\"".getBytes(StandardCharsets.UTF_8));
     String wslPath = wsl.getWslPath(file.getPath());

@@ -233,7 +233,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
     //for macOS, let's try removing Bundle internals
     home = StringUtil.trimEnd(home, "/Contents/Home"); //NON-NLS
     home = StringUtil.trimEnd(home, "/Contents/MacOS");  //NON-NLS
-    home = FileUtil.getLocationRelativeToUserHome(home);
+    home = FileUtil.getLocationRelativeToUserHome(home, false);
     home = StringUtil.shortenTextWithEllipsis(home, maxLength, suffixLength);
     return home;
   }

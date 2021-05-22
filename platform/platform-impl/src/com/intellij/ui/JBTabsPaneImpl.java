@@ -231,6 +231,7 @@ public class JBTabsPaneImpl implements TabbedPane {
     myListeners.remove(listener);
   }
 
+  @NotNull
   public JBTabs getTabs() {
     return myTabs;
   }

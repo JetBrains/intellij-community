@@ -704,6 +704,7 @@ public final class UIUtil {
    * @deprecated Use {@link LinePainter2D#paint(Graphics2D, double, double, double, double)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void drawLine(@NotNull Graphics g, int x1, int y1, int x2, int y2) {
     LinePainter2D.paint((Graphics2D)g, x1, y1, x2, y2);
   }
@@ -899,6 +900,7 @@ public final class UIUtil {
    * @deprecated use {@link #getTreeForeground()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull Color getTreeTextForeground() {
     return getTreeForeground();
   }
@@ -1039,6 +1041,7 @@ public final class UIUtil {
    * @deprecated use {@link JBUI.CurrentTheme.CustomFrameDecorations#separatorForeground()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull Color getSeparatorColor() {
     return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
@@ -1131,6 +1134,7 @@ public final class UIUtil {
 
   @SuppressWarnings("MissingDeprecatedAnnotation")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Border getTableHeaderCellBorder() {
     return UIManager.getBorder("TableHeader.cellBorder");
   }
@@ -1597,14 +1601,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Use {@link ImageUtil#createImage(Graphics, int, int, int)}
-   */
-  @Deprecated
-  public static @NotNull BufferedImage createImage(Graphics g, int width, int height, int type) {
-    return ImageUtil.createImage(g, width, height, type);
-  }
-
-  /**
    * Creates a HiDPI-aware BufferedImage in the component scale.
    *
    * @param component the component associated with the target graphics device
@@ -1780,6 +1776,7 @@ public final class UIUtil {
    * @deprecated use {@link ComponentUtil#findParentByCondition(Component, java.util.function.Predicate)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
     return ComponentUtil.findParentByCondition(c, it -> condition.value(it));
   }
@@ -2522,6 +2519,7 @@ public final class UIUtil {
    * @deprecated Use {@link TimerUtil#createNamedTimer(String, int, ActionListener)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull Timer createNamedTimer(@NonNls @NotNull String name, int delay, @NotNull ActionListener listener) {
     return TimerUtil.createNamedTimer(name, delay, listener);
   }
@@ -3093,6 +3091,7 @@ public final class UIUtil {
    * @deprecated use {@link #getListSelectionBackground(boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull Color getListUnfocusedSelectionBackground() {
     return getListSelectionBackground(false);
   }
@@ -3124,6 +3123,7 @@ public final class UIUtil {
    * @deprecated use {@link #getListForeground(boolean, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull Color getListForeground(boolean selected) {
     return getListForeground(selected, true);
   }
@@ -3277,6 +3277,7 @@ public final class UIUtil {
    * @deprecated use {@link #getTableForeground(boolean, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull Color getTableForeground(boolean selected) {
     return getTableForeground(selected, true);
   }
@@ -3293,6 +3294,7 @@ public final class UIUtil {
    * @deprecated use {@link JBUIScale#getSystemFontData()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Pair<String, Integer> getSystemFontData() {
     return JBUIScale.getSystemFontData();
   }
@@ -3301,6 +3303,7 @@ public final class UIUtil {
    * @deprecated use {@link JreHiDpiUtil#isJreHiDPIEnabled()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean isJreHiDPIEnabled() {
     return JreHiDpiUtil.isJreHiDPIEnabled();
   }

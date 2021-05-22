@@ -2,10 +2,7 @@
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.*;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
+import com.intellij.internal.statistic.eventLog.connection.metadata.*;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
@@ -78,7 +75,7 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
   private @Nullable String updateValidators(@NotNull String rawEventsScheme) throws EventLogMetadataParseException {
     mySemaphore.down();
     try {
-      EventGroupRemoteDescriptors groups = EventGroupRemoteDescriptors.create(rawEventsScheme);
+      EventGroupRemoteDescriptors groups = EventLogMetadataUtils.parseGroupRemoteDescriptors(rawEventsScheme);
       EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
       Map<String, EventGroupRules> result = createValidators(build, groups);
       myIsInitialized.set(false);

@@ -49,6 +49,7 @@ public abstract class CodeStyleFacade {
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getIndentSize(PsiFile)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract int getIndentSize(FileType fileType);
 
   /**
@@ -56,12 +57,14 @@ public abstract class CodeStyleFacade {
    * {@link CodeStyleSettingsFacade#getTabSize()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract int getTabSize(final FileType fileType);
 
   /**
    * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).USE_TAB_CHARACTER}. See {@code CodeStyle for more information}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract boolean useTabCharacter(final FileType fileType);
 
   /**
@@ -69,6 +72,7 @@ public abstract class CodeStyleFacade {
    *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract String getLineSeparator();
 
 }

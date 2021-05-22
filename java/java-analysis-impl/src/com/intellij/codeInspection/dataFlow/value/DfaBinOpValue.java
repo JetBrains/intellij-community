@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a value like "variable+var/const", "variable-var/const", or "variable % const".
@@ -112,7 +113,7 @@ public final class DfaBinOpValue extends DfaValue {
   }
 
   private static long extractLong(DfaTypeValue right) {
-    return ((Number)((DfConstantType<?>)right.getDfType()).getValue()).longValue();
+    return Objects.requireNonNull(right.getDfType().getConstantOfType(Number.class)).longValue();
   }
 
   public static class Factory {
@@ -153,12 +154,12 @@ public final class DfaBinOpValue extends DfaValue {
     private DfaValue doCreate(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, LongRangeBinOp op) {
       if (op != LongRangeBinOp.PLUS && op != LongRangeBinOp.MINUS && op != LongRangeBinOp.MOD) return null;
       DfType leftDfType = state.getDfType(left);
-      Number leftConst = DfConstantType.getConstantOfType(leftDfType, Number.class);
+      Number leftConst = leftDfType.getConstantOfType(Number.class);
       if (leftConst != null) {
         left = left.getFactory().fromDfType(leftDfType);
       }
       DfType rightDfType = state.getDfType(right);
-      Number rightConst = DfConstantType.getConstantOfType(rightDfType, Number.class);
+      Number rightConst = rightDfType.getConstantOfType(Number.class);
       if (rightConst != null) {
         right = right.getFactory().fromDfType(rightDfType);
       }

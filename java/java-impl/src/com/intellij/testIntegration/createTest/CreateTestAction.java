@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -185,6 +186,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
    * @deprecated use {@link #computeTestRoots(Module)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected static void checkForTestRoots(Module srcModule, Set<? super VirtualFile> testFolders) {
     testFolders.addAll(computeTestRoots(srcModule));
   }

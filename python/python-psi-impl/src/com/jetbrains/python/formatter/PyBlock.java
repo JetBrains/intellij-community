@@ -92,6 +92,8 @@ public class PyBlock implements ASTBlock {
   private Alignment myDictAlignment = null;
   private Wrap myDictWrapping = null;
   private Wrap myFromImportWrapping = null;
+  private Wrap myParameterListWrapping = null;
+  private Wrap myArgumentListWrapping = null;
 
   public PyBlock(@Nullable PyBlock parent,
                  @NotNull ASTNode node,
@@ -107,6 +109,7 @@ public class PyBlock implements ASTBlock {
     myContext = context;
     myEmptySequence = isEmptySequence(node);
 
+    final CommonCodeStyleSettings settings = myContext.getSettings();
     final PyCodeStyleSettings pySettings = myContext.getPySettings();
     if (node.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION) {
       myDictAlignment = Alignment.createAlignment(true);
@@ -114,6 +117,12 @@ public class PyBlock implements ASTBlock {
     }
     else if (node.getElementType() == PyElementTypes.FROM_IMPORT_STATEMENT) {
       myFromImportWrapping = Wrap.createWrap(pySettings.FROM_IMPORT_WRAPPING, false);
+    }
+    else if (node.getElementType() == PyElementTypes.PARAMETER_LIST) {
+      myParameterListWrapping = Wrap.createWrap(settings.METHOD_PARAMETERS_WRAP, settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE);
+    }
+    else if (node.getElementType() == PyElementTypes.ARGUMENT_LIST) {
+      myArgumentListWrapping = Wrap.createWrap(settings.CALL_PARAMETERS_WRAP, settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE);
     }
   }
 
@@ -358,8 +367,8 @@ public class PyBlock implements ASTBlock {
       if (childType == PyTokenTypes.RPAR && !settings.HANG_CLOSING_BRACKETS) {
         childIndent = Indent.getNoneIndent();
       }
-      else if (parentType == PyElementTypes.PARAMETER_LIST ||
-               settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS ||
+      else if ((parentType == PyElementTypes.PARAMETER_LIST && settings.USE_CONTINUATION_INDENT_FOR_PARAMETERS) ||
+               (parentType == PyElementTypes.ARGUMENT_LIST && settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS) ||
                argumentMayHaveSameIndentAsFollowingStatementList()) {
         childIndent = Indent.getContinuationIndent();
       }
@@ -397,6 +406,18 @@ public class PyBlock implements ASTBlock {
     }
     if (childType == PyElementTypes.KEY_VALUE_EXPRESSION && isChildOfDictLiteral(child)) {
       childWrap = myDictWrapping;
+    }
+    if (parentType == PyElementTypes.PARAMETER_LIST &&
+        childType != PyTokenTypes.COMMA &&
+        childType != PyTokenTypes.LPAR &&
+        childType != PyTokenTypes.RPAR) {
+      childWrap = myParameterListWrapping;
+    }
+    if (parentType == PyElementTypes.ARGUMENT_LIST &&
+        childType != PyTokenTypes.COMMA &&
+        childType != PyTokenTypes.LPAR &&
+        childType != PyTokenTypes.RPAR) {
+      childWrap = myArgumentListWrapping;
     }
 
     if (isAfterStatementList(child) &&
@@ -1074,7 +1095,7 @@ public class PyBlock implements ASTBlock {
     final IElementType parentType = myNode.getElementType();
     // constructs that imply indent for their children
     final PyCodeStyleSettings settings = myContext.getPySettings();
-    if (parentType == PyElementTypes.PARAMETER_LIST ||
+    if ((parentType == PyElementTypes.PARAMETER_LIST && settings.USE_CONTINUATION_INDENT_FOR_PARAMETERS) ||
         (parentType == PyElementTypes.ARGUMENT_LIST && settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS)) {
       return Indent.getContinuationIndent();
     }

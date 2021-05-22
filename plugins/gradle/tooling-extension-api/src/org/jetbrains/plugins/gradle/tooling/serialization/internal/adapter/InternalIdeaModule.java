@@ -6,6 +6,7 @@ import org.gradle.tooling.model.HierarchicalElement;
 import org.gradle.tooling.model.idea.IdeaCompilerOutput;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.util.Collections;
@@ -16,6 +17,7 @@ import java.util.Set;
 import static org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.AdapterUtils.wrap;
 import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.emptyDomainObjectSet;
 
+@ApiStatus.Internal
 public final class InternalIdeaModule implements IdeaModule {
   private String name;
   private String description;

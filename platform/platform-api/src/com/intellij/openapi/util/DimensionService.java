@@ -62,7 +62,10 @@ public final class DimensionService extends SimpleModificationTracker implements
    * is outside of current screen bounds then the method returns {@code null}. It
    * properly works in multi-monitor configuration.
    * @throws IllegalArgumentException if {@code key} is {@code null}.
+   *
+   * @deprecated use {@link #getLocation(String, Project)} instead.
    */
+  @Deprecated
   @Nullable
   public synchronized Point getLocation(String key) {
     return getLocation(key, guessProject());
@@ -93,7 +96,10 @@ public final class DimensionService extends SimpleModificationTracker implements
    * @param key   a String key to store location for.
    * @param point location to save.
    * @throws IllegalArgumentException if {@code key} is {@code null}.
+   *
+   * @deprecated use {@link #setLocation(String, Point, Project)} instead.
    */
+  @Deprecated
   public synchronized void setLocation(String key, Point point) {
     setLocation(key, point, guessProject());
   }
@@ -118,7 +124,10 @@ public final class DimensionService extends SimpleModificationTracker implements
    * @return point stored under the specified {@code key}. The method returns
    * {@code null} if there is no stored value under the {@code key}.
    * @throws IllegalArgumentException if {@code key} is {@code null}.
+   *
+   * @deprecated use {@link #getSize(String, Project)} instead.
    */
+  @Deprecated
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key) {
     return getSize(key, guessProject());
@@ -146,7 +155,10 @@ public final class DimensionService extends SimpleModificationTracker implements
    * @param key  a String key to to save size for.
    * @param size a Size to save.
    * @throws IllegalArgumentException if {@code key} is {@code null}.
+   *
+   * @deprecated use {@link #setSize(String, Dimension, Project)} instead.
    */
+  @Deprecated
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size) {
     setSize(key, size, guessProject());
   }
@@ -237,6 +249,7 @@ public final class DimensionService extends SimpleModificationTracker implements
     }
   }
 
+  @Deprecated
   @Nullable
   private static Project guessProject() {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();

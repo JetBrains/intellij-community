@@ -118,6 +118,9 @@ public abstract class SingleRowLayout extends TabLayout {
 
       data.position = getStrategy().getStartPosition(data) - getScrollOffset();
 
+      layoutTitle(data);
+      data.position += myTabs.isHorizontalTabs() ? data.titleRect.width : data.titleRect.height;
+
       layoutLabels(data);
 
       layoutMoreButton(data);
@@ -162,6 +165,10 @@ public abstract class SingleRowLayout extends TabLayout {
     data.vToolbar =
       new WeakReference<>(selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ?  selectedToolbar : null);
     data.toFitLength = getStrategy().getToFitLength(data);
+  }
+
+  protected void layoutTitle(SingleRowPassInfo data) {
+    data.titleRect = getStrategy().getTitleRect(data);
   }
 
   protected void layoutMoreButton(SingleRowPassInfo data) {
