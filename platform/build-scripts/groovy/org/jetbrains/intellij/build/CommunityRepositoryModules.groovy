@@ -290,10 +290,12 @@ Android Studio: exclude intellij.space */
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
     },
+/* Android Studio: exclude intellij.android.jpsBuildPlugin
     plugin("intellij.android.jpsBuildPlugin") {
       withModule("intellij.android.jpsBuildPlugin.common")
       withModule("intellij.android.jpsBuildPlugin.jps", "jps/android-jps-plugin.jar", null)
     }
+Android Studio: exclude intellij.android.jpsBuildPlugin */
   ]
 
   static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = [
