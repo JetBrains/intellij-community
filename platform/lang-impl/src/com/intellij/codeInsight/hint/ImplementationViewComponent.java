@@ -553,6 +553,7 @@ public class ImplementationViewComponent extends JPanel {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setTargetComponent(myEditor.getContentComponent());
     return toolbar;
   }
 
