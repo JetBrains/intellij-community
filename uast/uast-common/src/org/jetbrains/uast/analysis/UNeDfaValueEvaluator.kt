@@ -67,7 +67,11 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
       }
     }
 
-    if (graph.dependencies[element] == null && element is UReferenceExpression) {
+    if (
+      element is USimpleNameReferenceExpression &&
+      (graph.dependencies[element] == null || // no dependencies -> should check other sources
+       element.uastParent is UQualifiedReferenceExpression) // qualified reference can have dependencies, but we should check sources
+    ) {
       val declaration = element.resolveToUElement()
       val value = when {
         declaration is UField && configuration.isAppropriateField(declaration) -> {
