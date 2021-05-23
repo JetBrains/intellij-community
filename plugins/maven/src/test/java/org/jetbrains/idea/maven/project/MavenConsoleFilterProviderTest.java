@@ -37,15 +37,15 @@ public class MavenConsoleFilterProviderTest extends CodeInsightFixtureTestCase {
   }
 
   public void testMavenFilterKtOk() {
-    assertSuccess("[ERROR] " + getFilePath(ktFilePath) + ": (1, 32) Unresolved reference: ff", ktFilePath, getStartOffset(8));
+    assertSuccess("[ERROR] " + getFilePath(ktFilePath) + ": (1, 32) Unresolved reference: ff", ktFilePath);
   }
 
   public void testMavenFilterJavaOk() {
-    assertSuccess("[ERROR] " + getFilePath(ktFilePath) + ":[1,32] Unresolved reference: ff", ktFilePath, getStartOffset(8));
+    assertSuccess("[ERROR] " + getFilePath(ktFilePath) + ":[1,32] Unresolved reference: ff", ktFilePath);
   }
 
   public void testMavenFilterJavaOk2() {
-    assertSuccess("[ERROR] " + getFilePath(javaFilePath) + ":[9,1] class, interface, or enum expected", javaFilePath, getStartOffset(8));
+    assertSuccess("[ERROR] " + getFilePath(javaFilePath) + ":[9,1] class, interface, or enum expected", javaFilePath);
   }
 
   public void testMavenFilterKtBad() {
@@ -60,11 +60,8 @@ public class MavenConsoleFilterProviderTest extends CodeInsightFixtureTestCase {
     return (SystemInfo.isWindows) ? "/" + path : path;
   }
 
-  private static int getStartOffset(int offset) {
-    return (SystemInfo.isWindows) ? offset + 1 : offset;
-  }
-
-  private void assertSuccess(String line, String expectedPath, int expectedStart) {
+  private void assertSuccess(String line, String expectedPath) {
+    int expectedStart = line.indexOf(expectedPath);
     List<Filter.Result> results = applyFilter(line);
     Assert.assertEquals(1, results.size());
     Filter.Result filterResult = results.get(0);
