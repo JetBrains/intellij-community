@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -185,26 +185,17 @@ public final class PluginDownloader {
       myOldFile = descriptor.isBundled() ? null : descriptor.getPluginPath();
     }
 
-    // download plugin
     myFile = tryDownloadPlugin(indicator, showMessageOnError);
-    if (myFile != null && ApplicationManager.getApplication() != null) {
-      if (Registry.is("marketplace.certificate.signature.check")) {
+    if (myFile == null) return null;
 
-        if (isFromMarketplace()) {
-          if (!PluginSignatureChecker.verifyPluginByJetBrains(myDescriptor, myFile)) {
-            myShownErrors = true;
-            return null;
-          }
-        } else {
-          if (!PluginSignatureChecker.verifyPluginByCustomCertificates(myDescriptor, myFile)) {
-            myShownErrors = true;
-            return null;
-          }
-        }
+    if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check")) {
+      boolean certified = isFromMarketplace()
+                          ? PluginSignatureChecker.verifyPluginByJetBrains(myDescriptor, myFile)
+                          : PluginSignatureChecker.verifyPluginByCustomCertificates(myDescriptor, myFile);
+      if (!certified) {
+        myShownErrors = true;
+        return null;
       }
-    }
-    else {
-      return null;
     }
 
     IdeaPluginDescriptorImpl actualDescriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(myFile.toPath(), myBuildNumber);
