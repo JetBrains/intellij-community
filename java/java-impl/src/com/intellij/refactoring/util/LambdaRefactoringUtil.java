@@ -284,6 +284,7 @@ public final class LambdaRefactoringUtil {
           PsiClassType.ClassResolveResult funcResult = functionalInterfaceType.resolveGenerics();
           PsiClass funcClass = funcResult.getElement();
           PsiSubstitutor funcSubstitutor = funcResult.getSubstitutor();
+          PsiSubstitutor recapture = new RecaptureTypeMapper().recapture(funcSubstitutor);
           PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)methodReferenceInCopy.replace(lambdaExpression);
 
           PsiClassType lambdaCopyType = (PsiClassType)lambdaCopy.getFunctionalInterfaceType();
@@ -292,7 +293,7 @@ public final class LambdaRefactoringUtil {
           PsiClass lambdaCopyClass = lambdaCopyResult.getElement();
           PsiSubstitutor lambdaCopySubstitutor = lambdaCopyResult.getSubstitutor();
           return lambdaExpression.getManager().areElementsEquivalent(funcClass, lambdaCopyClass)
-                 && new RecaptureTypeMapper().recapture(funcSubstitutor).equals(lambdaCopySubstitutor);
+                 && recapture.equals(lambdaCopySubstitutor);
         }
       }
     }
