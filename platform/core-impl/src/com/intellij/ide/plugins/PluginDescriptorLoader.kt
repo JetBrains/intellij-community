@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 @file:JvmName("PluginDescriptorLoader")
 @file:ApiStatus.Internal
@@ -10,7 +10,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.platform.util.plugins.LocalFsDataLoader
@@ -119,7 +119,7 @@ private fun loadDescriptorFromJar(file: Path,
   try {
     val dataLoader: DataLoader
     val pool = ZipFilePool.POOL
-    if (pool == null) {
+    if (pool == null || parentContext.transient) {
       val zipFile = ZipFile(file.toFile(), StandardCharsets.UTF_8)
       closeable = zipFile
       dataLoader = JavaZipFileDataLoader(zipFile)
@@ -479,45 +479,42 @@ fun loadUncachedDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boole
 fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
                                              disabledPlugins = DisabledPluginsState.disabledPlugins(),
-                                             result = createPluginLoadingResult(buildNumber))
-  var outputDir: Path? = null
-  try {
-    var descriptor = loadDescriptorFromFileOrDir(file = file,
-                                                 pathName = PluginManagerCore.PLUGIN_XML,
-                                                 context = context,
-                                                 pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                                 isBundled = false,
-                                                 isEssential = false,
-                                                 isDirectory = false)
-    if (descriptor != null || !file.toString().endsWith(".zip")) {
-      return descriptor
-    }
+                                             result = createPluginLoadingResult(buildNumber),
+                                             transient = true)
 
-    outputDir = Files.createTempDirectory("plugin")
-    Decompressor.Zip(file).extract(outputDir!!)
-    try {
-      Files.newDirectoryStream(outputDir).use { stream ->
-        val iterator = stream.iterator()
-        if (iterator.hasNext()) {
-          descriptor = loadDescriptorFromFileOrDir(file = iterator.next(),
-                                                   pathName = PluginManagerCore.PLUGIN_XML,
-                                                   context = context,
-                                                   pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                                   isBundled = false,
-                                                   isEssential = false,
-                                                   isDirectory = true)
-        }
-      }
-    }
-    catch (ignore: NoSuchFileException) {
-    }
+  val descriptor = loadDescriptorFromFileOrDir(file = file,
+                                               pathName = PluginManagerCore.PLUGIN_XML,
+                                               context = context,
+                                               pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                               isBundled = false,
+                                               isEssential = false,
+                                               isDirectory = false)
+  if (descriptor != null || !file.toString().endsWith(".zip")) {
     return descriptor
   }
-  finally {
-    outputDir?.let {
-      FileUtil.delete(it)
+
+  val outputDir = Files.createTempDirectory("plugin")!!
+  try {
+    Decompressor.Zip(file).extract(outputDir)
+    try {
+      val rootDir = NioFiles.list(outputDir).firstOrNull()
+      if (rootDir != null) {
+        return loadDescriptorFromFileOrDir(file = rootDir,
+                                           pathName = PluginManagerCore.PLUGIN_XML,
+                                           context = context,
+                                           pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                           isBundled = false,
+                                           isEssential = false,
+                                           isDirectory = true)
+      }
     }
+    catch (ignore: NoSuchFileException) { }
   }
+  finally {
+    NioFiles.deleteRecursively(outputDir)
+  }
+
+  return null
 }
 
 fun loadDescriptor(file: Path,
