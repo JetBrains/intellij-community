@@ -419,6 +419,14 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
   private static boolean arrayCreationSignature(@NotNull MethodSignature signature) {
     PsiType[] parameterTypes = signature.getParameterTypes();
-    return parameterTypes.length == 1 && parameterTypes[0] != null && TypeConversionUtil.isAssignable(PsiType.INT, parameterTypes[0]);
+    if (parameterTypes.length == 1 && parameterTypes[0] != null) {
+      if (TypeConversionUtil.isAssignable(PsiType.INT, parameterTypes[0])) {
+        return true;
+      }
+      if (parameterTypes[0] instanceof PsiClassType) {
+        return ((PsiClassType)parameterTypes[0]).resolve() instanceof PsiTypeParameter;
+      }
+    }
+    return false;
   }
 }
