@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 
 final class ImplementMethodAction extends OverrideImplementMethodAction {
   @Override
-  protected final void update(final Presentation presentation, final int toImplement, final int toOverride) {
+  protected final void update(Presentation presentation, int toImplement, int toOverride) {
     if (toImplement > 0) {
       presentation.setEnabledAndVisible(true);
       presentation.setText(toImplement == 1 ? JavaBundle.message("action.implement.method") : JavaBundle.message("action.implement.methods"));

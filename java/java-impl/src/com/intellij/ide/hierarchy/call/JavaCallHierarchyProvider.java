@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaCallHierarchyProvider implements HierarchyProvider {
   @Override
-  public PsiElement getTarget(@NotNull final DataContext dataContext) {
+  public PsiElement getTarget(@NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -32,7 +32,7 @@ public class JavaCallHierarchyProvider implements HierarchyProvider {
   }
 
   @Override
-  public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
+  public void browserActivated(@NotNull HierarchyBrowser hierarchyBrowser) {
     ((CallHierarchyBrowser)hierarchyBrowser).changeView(CallHierarchyBrowserBase.getCallerType());
   }
 }

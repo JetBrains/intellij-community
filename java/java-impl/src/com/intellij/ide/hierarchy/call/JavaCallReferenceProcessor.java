@@ -101,7 +101,7 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
     return false;
   }
 
-  private static boolean isRecursiveNode(@NotNull PsiMethod method, @NotNull CallHierarchyNodeDescriptor parentDescriptor) {
+  static boolean isRecursiveNode(@NotNull PsiMethod method, @NotNull CallHierarchyNodeDescriptor parentDescriptor) {
     // detect recursion
     // the current call-site calls *method*
     // Thus, we already have a node that represents *method*
