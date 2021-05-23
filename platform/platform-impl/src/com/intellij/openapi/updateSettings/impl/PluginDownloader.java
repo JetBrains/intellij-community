@@ -254,8 +254,9 @@ public final class PluginDownloader {
 
   public static String getMarketplaceDownloadsUUID() {
     try {
-      return DeviceIdManager.getOrGenerateId(new DeviceIdManager.DeviceIdToken() {}, "MarketplaceDownloads");
-    } catch (DeviceIdManager.InvalidDeviceIdTokenException e){
+      return DeviceIdManager.getOrGenerateId(new DeviceIdManager.DeviceIdToken() { }, "MarketplaceDownloads");
+    }
+    catch (DeviceIdManager.InvalidDeviceIdTokenException e) {
       return "";
     }
   }
@@ -315,19 +316,15 @@ public final class PluginDownloader {
     return PluginInstaller.installAndLoadDynamicPlugin(myFile.toPath(), ownerComponent, descriptorImpl);
   }
 
-  private @Nullable File tryDownloadPlugin(@NotNull ProgressIndicator indicator,
-                                           boolean showMessageOnError) {
+  private @Nullable File tryDownloadPlugin(@NotNull ProgressIndicator indicator, boolean showMessageOnError) {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-    MarketplacePluginDownloadService downloadService = myDownloadService != null ?
-                                                       myDownloadService :
-                                                       MarketplacePluginDownloadService.getInstance();
-
+    MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : MarketplacePluginDownloadService.getInstance();
     try {
       return myOldFile != null ?
-             downloadService.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :
-             downloadService.downloadPlugin(myPluginUrl, indicator);
+             downloader.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :
+             downloader.downloadPlugin(myPluginUrl, indicator);
     }
     catch (IOException ex) {
       LOG.warn(ex);
@@ -376,27 +373,21 @@ public final class PluginDownloader {
     return node;
   }
 
-  private static @NotNull String getDownloadUrl(@NotNull PluginNode pluginNode,
-                                                @NotNull String host) throws IOException {
-    String downloadUrl = pluginNode.getDownloadUrl();
+  private static String getDownloadUrl(PluginNode pluginNode, String host) throws IOException {
+    String url = pluginNode.getDownloadUrl();
     try {
-      return new URI(downloadUrl).isAbsolute() ?
-             downloadUrl :
-             new URL(new URL(host), downloadUrl).toExternalForm();
+      return new URI(url).isAbsolute() ? url : new URL(new URL(host), url).toExternalForm();
     }
     catch (URISyntaxException e) {
       throw new IOException(e);
     }
   }
 
-  private static @NotNull String getUrl(@NotNull PluginId pluginId,
-                                        @Nullable BuildNumber buildNumber) {
-    Map<String, String> parameters = Map.of("id", pluginId.getIdString(),
-                                            "build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
-                                            "uuid", getMarketplaceDownloadsUUID());
-
+  private static String getUrl(PluginId pluginId, @Nullable BuildNumber buildNumber) {
     return Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
-      .addParameters(parameters)
+      .addParameters(Map.of("id", pluginId.getIdString(),
+                            "build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
+                            "uuid", getMarketplaceDownloadsUUID()))
       .toExternalForm();
   }
 }
