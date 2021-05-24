@@ -22,4 +22,10 @@ class Test {
       default -> throw new NullPointerException();
     };
   }
+
+  Runnable lambdaContext(int x) {
+    return switch (x) {
+      default -> x > 0 ? () -> {} : () -> {};
+    };
+  }
 }

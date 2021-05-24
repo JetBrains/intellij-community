@@ -109,10 +109,10 @@ public final class LambdaUtil {
       return true;
     }
     if (context instanceof PsiConditionalExpression) {
-      PsiElement parentContext = PsiUtil.skipParenthesizedExprUp(context.getParent());
-      if (isAssignmentOrInvocationContext(parentContext)) return true;
-      if (parentContext instanceof PsiConditionalExpression) {
-        return isValidLambdaContext(parentContext);
+      context = PsiUtil.skipParenthesizedExprUp(context.getParent());
+      if (isAssignmentOrInvocationContext(context)) return true;
+      if (context instanceof PsiConditionalExpression) {
+        return isValidLambdaContext(context);
       }
     }
     if (context instanceof PsiYieldStatement) {
