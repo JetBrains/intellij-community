@@ -139,14 +139,14 @@ public abstract class PopupHandler extends MouseAdapter {
     return handler;
   }
 
-  /**
-   * @deprecated Use {@link #installUnknownPopupHandler(JComponent, ActionGroup)}
-   */
+  /** @deprecated Use {@link #installPopupHandler(JComponent, ActionGroup, String)} */
   @Deprecated
   public static MouseListener installUnknownPopupHandler(JComponent component, ActionGroup group, ActionManager actionManager) {
     return installPopupHandler(component, group, ActionPlaces.UNKNOWN, actionManager, null);
   }
 
+  /** @deprecated Use {@link #installPopupHandler(JComponent, ActionGroup, String)} */
+  @Deprecated
   public static MouseListener installUnknownPopupHandler(JComponent component, ActionGroup group) {
     return installPopupHandler(component, group, ActionPlaces.UNKNOWN, null, null);
   }
