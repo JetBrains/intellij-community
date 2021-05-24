@@ -25,6 +25,7 @@ abstract class AccountsListModelBase<A : Account, Cred> : AccountsListModel<A, C
 
   protected fun notifyCredentialsChanged(account: A) {
     credentialsChangesListeners.forEach { it(account) }
+    accountsListModel.contentsChanged(account)
   }
 
   final override fun addCredentialsChangeListener(listener: (A) -> Unit) {
