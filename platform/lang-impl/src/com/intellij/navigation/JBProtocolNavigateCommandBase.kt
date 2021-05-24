@@ -105,6 +105,24 @@ open class JBProtocolNavigateCommandBase(command: String) : JBProtocolCommand(co
         }
       }
   }
+
+  private fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
+    for (it in parameters) {
+      if (it.key.startsWith(FQN_KEY)) {
+        navigateByFqn(project, parameters, it.value)
+      }
+    }
+
+    for (it in parameters) {
+      if (it.key.startsWith(PATH_KEY)) {
+        navigateByPath(project, parameters, it.value)
+      }
+    }
+  }
+
+  open fun navigateByPath(project: Project, parameters: Map<String, String>, pathText: String) {
+    PathNavigator(project, parameters, pathText).navigate()
+  }
 }
 
 private const val FILE_PROTOCOL = "file://"
@@ -114,54 +132,6 @@ private const val LINE_GROUP = "line"
 private const val COLUMN_GROUP = "column"
 private const val REVISION = "revision"
 private val PATH_WITH_LOCATION = Pattern.compile("(?<${PATH_GROUP}>[^:]*)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${COLUMN_GROUP}>[\\d]+))?")
-
-private fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
-  for (it in parameters) {
-    if (it.key.startsWith(JBProtocolNavigateCommandBase.FQN_KEY)) {
-      navigateByFqn(project, parameters, it.value)
-    }
-  }
-
-  for (it in parameters) {
-    if (it.key.startsWith(JBProtocolNavigateCommandBase.PATH_KEY)) {
-      navigateByPath(project, parameters, it.value)
-    }
-  }
-}
-
-private fun navigateByPath(project: Project, parameters: Map<String, String>, pathText: String) {
-  val matcher = PATH_WITH_LOCATION.matcher(pathText)
-  if (!matcher.matches()) {
-    return
-  }
-
-  var path: String? = matcher.group(PATH_GROUP)
-  val line: String? = matcher.group(LINE_GROUP)
-  val column: String? = matcher.group(COLUMN_GROUP)
-
-  if (path == null) {
-    return
-  }
-
-  path = FileUtil.expandUserHome(path)
-  if (!FileUtil.isAbsolute(path)) {
-    path = File(project.basePath, path).absolutePath
-  }
-
-  runNavigateTask(pathText, project) {
-    val virtualFile = findFile(project, path, parameters[REVISION])
-    if (virtualFile == null) return@runNavigateTask
-
-    ApplicationManager.getApplication().invokeLater {
-      FileEditorManager.getInstance(project).openFile(virtualFile, true)
-        .filterIsInstance<TextEditor>().first().let { textEditor ->
-          val editor = textEditor.editor
-          editor.caretModel.moveToOffset(editor.logicalPositionToOffset(LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)))
-          setSelections(parameters, project)
-        }
-    }
-  }
-}
 
 private fun findFile(project: Project, absolutePath: String?, revision: String?): VirtualFile? {
   absolutePath ?: return null
@@ -239,5 +209,45 @@ private fun parsePosition(range: String): LogicalPosition? {
   }
   catch (e: Exception) {
     return null
+  }
+}
+
+open class PathNavigator(val project: Project, val parameters: Map<String, String>, val pathText: String) {
+  fun navigate() {
+    val matcher = PATH_WITH_LOCATION.matcher(pathText)
+    if (!matcher.matches()) {
+      return
+    }
+
+    var path: String? = matcher.group(PATH_GROUP)
+    val line: String? = matcher.group(LINE_GROUP)
+    val column: String? = matcher.group(COLUMN_GROUP)
+
+    if (path == null) {
+      return
+    }
+
+    path = FileUtil.expandUserHome(path)
+    if (!FileUtil.isAbsolute(path)) {
+      path = File(project.basePath, path).absolutePath
+    }
+
+    runNavigateTask(pathText, project) {
+      val virtualFile = findFile(project, path, parameters[REVISION])
+      if (virtualFile == null) return@runNavigateTask
+
+      ApplicationManager.getApplication().invokeLater {
+        FileEditorManager.getInstance(project).openFile(virtualFile, true)
+          .filterIsInstance<TextEditor>().first().let { textEditor ->
+            performEditorAction(textEditor, line, column)
+          }
+      }
+    }
+  }
+
+  open fun performEditorAction(textEditor: TextEditor, line: String?, column: String?) {
+    val editor = textEditor.editor
+    editor.caretModel.moveToOffset(editor.logicalPositionToOffset(LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)))
+    setSelections(parameters, project)
   }
 }
