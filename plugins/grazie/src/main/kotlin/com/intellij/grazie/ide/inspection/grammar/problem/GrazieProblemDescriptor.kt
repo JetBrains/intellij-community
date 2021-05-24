@@ -35,7 +35,7 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
     private fun Typo.toFixes(isOnTheFly: Boolean): List<LocalQuickFix> {
       val fixes = ArrayList<LocalQuickFix>()
 
-      if (isOnTheFly && !ApplicationManager.getApplication().isUnitTestMode) {
+      if (isOnTheFly) {
         if (this.fixes.isNotEmpty()) {
           GrazieFUSCounter.typoFound(this@toFixes)
           fixes.addAll(GrazieReplaceTypoQuickFix(this@toFixes).getAllAsFixes())
