@@ -1,0 +1,34 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.hints.presentation
+
+import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.colors.TextAttributesScheme
+import com.intellij.openapi.editor.markup.TextAttributes
+import java.awt.Graphics2D
+
+class WithAttributesPresentation(presentation: InlayPresentation,
+                                 val textAttributesKey: TextAttributesKey,
+                                 private val scheme: TextAttributesScheme,
+                                 val isDefault: Boolean = false
+) : StaticDelegatePresentation(presentation) {
+  override fun paint(g: Graphics2D, attributes: TextAttributes) {
+    if (!isDefault) super.paint(g, scheme.getAttributes(textAttributesKey) ?: TextAttributes())
+    else {
+      val other = scheme.getAttributes(textAttributesKey) ?: TextAttributes()
+      val result = attributes.clone()
+      if (result.foregroundColor == null) {
+        result.foregroundColor = other.foregroundColor
+      }
+      if (result.backgroundColor == null) {
+        result.backgroundColor = other.backgroundColor
+      }
+      if (result.effectType == null) {
+        result.effectType = other.effectType
+      }
+      if (result.effectColor == null) {
+        result.effectColor = other.effectColor
+      }
+      super.paint(g, result)
+    }
+  }
+}

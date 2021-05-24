@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.problems.Problem;
-import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation;
+import com.intellij.codeInsight.hints.presentation.WithAttributesPresentation;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.MouseButton;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
@@ -64,8 +64,7 @@ public final class ProjectProblemUtils {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     InlayPresentation problemsOffset = factory.textSpacePlaceholder(column, true);
     InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.hint.text", relatedProblems.size()));
-    InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ ->
-      editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
+    InlayPresentation errorTextPresentation = new WithAttributesPresentation(textPresentation, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, editor.getColorsScheme(), false);
     InlayPresentation problemsPresentation =
       factory.referenceOnHover(errorTextPresentation, (e, p) -> showProblems(editor, member));
 

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeInsight.codevision
 
 import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
 import com.intellij.codeInsight.hints.InlayHintsSink
-import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.MouseButton
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
@@ -191,16 +190,8 @@ class KotlinCodeVisionHintsCollector(
         return factory.changeOnHover(text, {
             val onClick = factory.onClick(text, MouseButton.Left)
             { event, _ -> result.onClick(editor, element, event) }
-            applyReferenceColor(onClick)
+            factory.withReferenceAttributes(onClick)
         }) { true }
-    }
-
-    private fun applyReferenceColor(presentation: InlayPresentation): InlayPresentation {
-        return AttributesTransformerPresentation(presentation) {
-            val attributes = EditorColorsManager.getInstance()
-                .globalScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).clone()
-            attributes.apply { effectType = null }
-        }
     }
 
     private fun createSettings(factory: PresentationFactory, element: PsiElement, editor: Editor): InlayPresentation {
