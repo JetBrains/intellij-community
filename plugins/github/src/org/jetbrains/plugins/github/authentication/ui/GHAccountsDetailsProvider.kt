@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.authentication.ui
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
-import com.intellij.collaboration.ui.codereview.avatar.ScalingDeferredSquareImageIcon
 import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -27,6 +26,8 @@ internal class GHAccountsDetailsProvider(progressIndicatorsProvider: ProgressInd
                                          private val accountsModel: GHAccountsListModel)
   : LoadingAccountsDetailsProvider<GithubAccount, GithubUserDetailed>(progressIndicatorsProvider) {
 
+  override val defaultIcon = IconUtil.resizeSquared(GithubIcons.DefaultAvatar, 40)
+
   override fun scheduleLoad(account: GithubAccount,
                             indicator: ProgressIndicator): CompletableFuture<DetailsLoadingResult<GithubUserDetailed>> {
     val token = accountsModel.newCredentials.getOrElse(account) {
@@ -36,12 +37,8 @@ internal class GHAccountsDetailsProvider(progressIndicatorsProvider: ProgressInd
     return ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
       val (details, scopes) = GHSecurityUtil.loadCurrentUserWithScopes(executor, it, account.server)
       if (!GHSecurityUtil.isEnoughScopes(scopes.orEmpty())) return@submitIOTask noScopes()
-      val icon = details.avatarUrl?.let { url ->
-        ScalingDeferredSquareImageIcon(40, GithubIcons.DefaultAvatar, url) { key ->
-          CachingGHUserAvatarLoader.getInstance().requestAvatar(executor, key).join()
-        }
-      } ?: IconUtil.resizeSquared(GithubIcons.DefaultAvatar, 40)
-      DetailsLoadingResult<GithubUserDetailed>(details, icon, null, false)
+      val image = details.avatarUrl?.let { url -> CachingGHUserAvatarLoader.getInstance().requestAvatar(executor, url).join() }
+      DetailsLoadingResult<GithubUserDetailed>(details, image, null, false)
     }.successOnEdt(ModalityState.any()) {
       accountsModel.accountsListModel.contentsChanged(account)
       it

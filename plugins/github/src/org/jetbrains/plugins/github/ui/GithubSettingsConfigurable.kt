@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.layout.*
+import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
@@ -34,7 +35,7 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
 
     return panel {
       row {
-        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!).also {
+        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, GithubIcons.DefaultAvatar).also {
           DataManager.registerDataProvider(it.component) { key ->
             if (GHAccountsHost.KEY.`is`(key)) accountsModel
             else null
