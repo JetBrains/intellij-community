@@ -41,7 +41,39 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
   }
 
   override fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder, configLocation: JpsProjectConfigLocation) {
-    //todo implement this (it isn't needed in 211 and until workspace model is enabled for artifacts in 212)
+    /// XXX In fact, we suppose that all packaging element have a connection to the corresponding artifact.
+    // However, technically, it's possible to create a packaging element without artifact or connection to another packaging element.
+    // Here we could check that the amount of "processed" packaging elements equals to the amount of packaging elements in store,
+    //   but unfortunately [WorkspaceModel.entities] function doesn't work with abstract entities at the moment.
+    builder.entities(ArtifactEntity::class.java).forEach {
+      // Convert artifact to the new source
+      val artifactSource = JpsProjectEntitiesLoader.createJpsEntitySourceForArtifact(configLocation)
+      builder.changeSource(it, artifactSource)
+
+      // Convert it's packaging elements
+      it.rootElement.forThisAndFullTree {
+        builder.changeSource(it, artifactSource)
+      }
+    }
+
+    // Convert properties
+    builder.entities(ArtifactPropertiesEntity::class.java).forEach {
+      builder.changeSource(it, it.artifact.entitySource)
+    }
+  }
+
+  private fun PackagingElementEntity.forThisAndFullTree(action: (PackagingElementEntity) -> Unit) {
+    action(this)
+    if (this is CompositePackagingElementEntity) {
+      this.children.forEach {
+        if (it is CompositePackagingElementEntity) {
+          it.forThisAndFullTree(action)
+        }
+        else {
+          action(it)
+        }
+      }
+    }
   }
 }
 
