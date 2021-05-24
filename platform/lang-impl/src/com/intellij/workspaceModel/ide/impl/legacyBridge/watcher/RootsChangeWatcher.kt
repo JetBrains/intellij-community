@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
@@ -147,8 +148,12 @@ internal class RootsChangeWatcher(val project: Project) {
           val projectRootManager = ProjectRootManager.getInstance(project) as ProjectRootManagerBridge
           if (beforeRootsChanged)
             projectRootManager.rootsChanged.beforeRootsChanged()
-          else
+          else {
+            if (log.isTraceEnabled) {
+              log.trace("Roots changed: changed urls = $changedUrlsList, changed module store paths = $changedModuleStorePaths")
+            }
             projectRootManager.rootsChanged.rootsChanged(result!!)
+          }
         }
       }
 
@@ -205,6 +210,8 @@ internal class RootsChangeWatcher(val project: Project) {
   }
 
   companion object {
+    private val log = logger<RootsChangeWatcher>()
+
     @JvmStatic
     fun getInstance(project: Project): RootsChangeWatcher = project.getComponent(RootsChangeWatcher::class.java)
   }
