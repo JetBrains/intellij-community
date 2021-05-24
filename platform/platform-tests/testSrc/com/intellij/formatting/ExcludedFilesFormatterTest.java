@@ -2,11 +2,11 @@
 package com.intellij.formatting;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor;
+import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInsight.actions.DirectoryFormattingOptions;
 import com.intellij.codeInsight.actions.ReformatCodeAction;
 import com.intellij.codeInsight.actions.TextRangeType;
-import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
-import com.intellij.application.options.codeStyle.excludedFiles.PatternDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
@@ -120,7 +120,7 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
   private void addPatternExclusions(String... patterns) {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     for (String pattern : patterns) {
-      settings.getExcludedFiles().addDescriptor(new PatternDescriptor(pattern));
+      settings.getExcludedFiles().addDescriptor(new GlobPatternDescriptor(pattern));
     }
   }
 
