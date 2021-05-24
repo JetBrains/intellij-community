@@ -12,7 +12,7 @@ class NewProjectModuleBuilder : NewWizardModuleBuilder<NewProjectStepSettings>()
   override fun getGroupName(): String = DEFAULT_GROUP
 
   override fun setupProject(project: Project) {
-    step.wizards.find { it.language == step.settings.language }?.setupProject(project)
+    step.wizards.find { it.language == step.settings.languageProperty.get() }?.setupProject(project)
   }
 
   override fun getPresentableName() = UIBundle.message("list.item.new.project")

@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.ide.NewProjectWizard.Companion.EP_WIZARD
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
@@ -12,46 +13,39 @@ import com.intellij.util.ui.JBUI
 
 class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
   private val settingsMap = mutableMapOf<String, List<LabelAndComponent>>()
+  private val rows = mutableMapOf<String, List<Row>>()
+
   val wizards: List<NewProjectWizardWithSettings<out Any?>> = EP_WIZARD.extensions.filter { it.enabled() }
     .map { NewProjectWizardWithSettings(it) }
     .onEach { settingsMap[it.language] = it.settingsList() }
 
-  override var settings = NewProjectStepSettings()
-
-  val propertyGraph: PropertyGraph = PropertyGraph()
   private var languages = wizards.map { it.language }
-  private val languageProperty = propertyGraph.graphProperty { languages.first() }
+  override var settings = NewProjectStepSettings(languages.first())
 
   init {
-    languageProperty.afterPropagation {
-      settingsMap.values.forEach { it.forEach { it.component.isVisible = false } }
-      settingsMap[languageProperty.get()]?.forEach { it.component.isVisible = true }
+    settings.languageProperty.afterPropagation {
+      rows.values.forEach { it.forEach { it.visible = false } }
+      rows[settings.languageProperty.get()]?.forEach { it.visible = true }
     }
-    languageProperty.set(languages.first())
   }
 
   override var panel: DialogPanel = panel {
     nameAndPath()
-    row {
-      row(UIBundle.message("label.project.wizard.new.project.language")) {
-        buttonSelector(languages, languageProperty) { it }
-      }
+    gitCheckbox()
+    row(UIBundle.message("label.project.wizard.new.project.language")) {
+      buttonSelector(languages, settings.languageProperty) { it }
     }
 
-    settingsMap.values.forEach {
-      it.forEach { lc ->
-        row {
-          lc.label?.let {
-            twoColumnRow(
-              { component(it) },
-              { component(lc.component) }
-            )
-          } ?: row { component(lc.component) }
+    settingsMap.entries.forEach {
+      rows[it.key] = it.value.map { lc ->
+        row(lc.label) {
+          component(lc.component)
         }.apply { visible = false }
       }
     }
-    gitCheckbox()
-  }.withBorder(JBUI.Borders.empty(10, 0))
+
+    settings.languageProperty.set(languages.first())
+  }.withBorder(JBUI.Borders.empty(10, 10))
 
   class NewProjectWizardWithSettings<T>(wizard: NewProjectWizard<T>) : NewProjectWizard<T> by wizard {
     var settings : T = settingsFactory.invoke()
@@ -61,6 +55,7 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
   }
 }
 
-class NewProjectStepSettings {
-  var language: String = "Java"
+class NewProjectStepSettings(val initialLanguage: String) {
+  val propertyGraph: PropertyGraph = PropertyGraph()
+  val languageProperty: GraphProperty<String> = propertyGraph.graphProperty { initialLanguage }
 }
