@@ -164,7 +164,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
   @Override
   List<Path> getAdditionalPluginPaths(@NotNull BuildContext context) {
+    /* Android Studio: bundle our own Kotlin plugin instead
     return [Path.of(context.paths.kotlinHome).toAbsolutePath().normalize()]
+    */
+    def workspaceRoot = "$context.paths.communityHome/../.."
+    return [Path.of("$workspaceRoot/prebuilts/tools/common/kotlin-plugin/Kotlin").toAbsolutePath().normalize()]
   }
 
   @Override
