@@ -28,7 +28,7 @@ class RuleGroup(rules: LinkedSet<String>): com.intellij.grazie.text.RuleGroup(ru
     val LITERALS = CASING + PUNCTUATION
   }
 
-  fun getRules(): LinkedSet<String> = rules as LinkedSet<String>
+  fun getRules(): LinkedSet<String> = LinkedSet(rules)
 
   operator fun plus(other: RuleGroup) = RuleGroup((rules + other.rules) as LinkedSet<String>)
 }
