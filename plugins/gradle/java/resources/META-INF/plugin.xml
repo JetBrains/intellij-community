@@ -91,5 +91,6 @@
 
     <dependencyCollector kind="java" implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyCollector"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyUpdater"/>
+    <newProjectWizard.buildSystem.java implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaBuildSystemType"/>
   </extensions>
 </idea-plugin>
