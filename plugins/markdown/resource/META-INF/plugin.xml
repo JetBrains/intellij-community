@@ -74,7 +74,9 @@ Includes the following features:</p>
 
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
 
-    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.MarkdownImagePasteProvider"/>
+    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.images.MarkdownImagePasteProvider"/>
+
+    <customFileDropHandler implementation="org.intellij.plugins.markdown.editor.images.MarkdownImageFileDropHandler"/>
 
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
@@ -149,9 +151,16 @@ Includes the following features:</p>
 
     <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceDownloadLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureMarkdownImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureHtmlImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
 
     <intentionAction>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
+      <category>Markdown</category>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.images.MarkdownConfigureImageIntention</className>
       <category>Markdown</category>
     </intentionAction>
     <notificationGroup id="Markdown" displayType="BALLOON"/>
@@ -239,6 +248,11 @@ Includes the following features:</p>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
               icon="MarkdownIcons.EditorActions.Link">
+      </action>
+
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+              icon="AllIcons.General.LayoutPreviewOnly">
       </action>
     </group>
 

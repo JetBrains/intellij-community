@@ -12,7 +12,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
-import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil
@@ -30,7 +29,7 @@ abstract class MarkdownCodeFenceDownloadLineMarkerProvider : LineMarkerProviderD
     invokeLater {
       val extension = getExtension() ?: return@invokeLater
       MarkdownSettingsUtil.downloadExtension(extension, enableAfterDownload = true)
-      LineMarkerProviders.getInstance().clearCache(MarkdownLanguage.INSTANCE)
+      LineMarkerProviders.getInstance().clearCache()
     }
   }
 

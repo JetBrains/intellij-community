@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.editor
+package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
@@ -9,15 +9,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.images.ide.EditorImagePasteProvider
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 
-
-class MarkdownImagePasteProvider : EditorImagePasteProvider() {
-  override val supportedFileType: FileType = MarkdownFileType.INSTANCE
+internal class MarkdownImagePasteProvider : EditorImagePasteProvider() {
+  override val supportedFileType: FileType
+    get() = MarkdownFileType.INSTANCE
 
   override fun Editor.imageFilePasted(imageFile: VirtualFile) {
     val pastedFileName = imageFile.name
 
     caretModel.currentCaret.offset.let { currentCaretOffset ->
-      val textToInsert = "![$pastedFileName]($pastedFileName)"
+      val textToInsert = ImageUtils.createMarkdownImageText(pastedFileName, pastedFileName)
       try {
         document.insertString(currentCaretOffset, textToInsert)
         caretModel.moveToOffset(currentCaretOffset + textToInsert.length)
