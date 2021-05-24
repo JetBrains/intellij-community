@@ -42,19 +42,53 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         null -> pushUnknown()
         is KtBlockExpression -> processBlock(expr)
         is KtParenthesizedExpression -> processExpression(expr.expression)
-        is KtReturnExpression -> processReturnExpression(expr)
         is KtBinaryExpression -> processBinaryExpression(expr)
         is KtPrefixExpression -> processPrefixExpression(expr)
+        is KtCallExpression -> processCallExpression(expr)
         is KtConstantExpression -> processConstantExpression(expr)
         is KtSimpleNameExpression -> processReferenceExpression(expr)
+        is KtDotQualifiedExpression -> processQualifiedReferenceExpression(expr)
+        is KtSafeQualifiedExpression -> processQualifiedReferenceExpression(expr)
+        is KtReturnExpression -> processReturnExpression(expr)
         is KtIfExpression -> processIfExpression(expr)
         is KtWhileExpression -> processWhileExpression(expr)
         is KtDoWhileExpression -> processDoWhileExpression(expr)
         is KtProperty -> processDeclaration(expr)
+        // break, continue, when, try, lambdas, anonymous classes, local functions
+        // as, as?, is, is?
         else -> {
             // unsupported construct
             broken = true
         }
+    }
+
+    private fun processCallExpression(expr: KtCallExpression) {
+        val args = expr.valueArgumentList?.arguments
+        if (args != null) {
+            for (arg: KtValueArgument in args) {
+                val argExpr = arg.getArgumentExpression()
+                if (argExpr != null) {
+                    processExpression(argExpr)
+                    addInstruction(PopInstruction())
+                }
+            }
+        }
+        for(lambdaArg in expr.lambdaArguments) {
+            processExpression(lambdaArg.getLambdaExpression())
+            addInstruction(PopInstruction())
+        }
+        pushUnknown()
+        addInstruction(FlushFieldsInstruction())
+        // TODO: support pure calls, some known methods, probably Java contracts, etc.
+    }
+
+    private fun processQualifiedReferenceExpression(expr: KtQualifiedExpression) {
+        // TODO: support qualified references as variables
+        processExpression(expr.receiverExpression)
+        addInstruction(PopInstruction())
+        processExpression(expr.selectorExpression)
+        addInstruction(PopInstruction())
+        pushUnknown()
     }
 
     private fun processPrefixExpression(expr: KtPrefixExpression) {
@@ -89,6 +123,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (dfType is DfBooleanType && ref == "!") {
                 addInstruction(NotInstruction(anchor))
                 return
+            }
+            if (descriptor != null && (ref == "++" || ref == "--")) {
+                // Custom inc/dec may update the variable
+                addInstruction(FlushVariableInstruction(factory.varFactory.createVariableValue(descriptor)))
             }
         }
         addInstruction(EvalUnknownInstruction(anchor, 1))
@@ -161,7 +199,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(JvmPushInstruction(descriptor.createValue(factory, null), KotlinExpressionAnchor(expr)))
             return
         }
-        // TODO: support other references
         broken = true
     }
 
