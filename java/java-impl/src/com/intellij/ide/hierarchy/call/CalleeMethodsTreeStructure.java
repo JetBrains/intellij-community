@@ -39,7 +39,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
 
     PsiCodeBlock body = method.getBody();
     if (body != null) {
-      visitor(body, methods);
+      collectCallees(body, methods);
     }
 
     PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
@@ -51,13 +51,16 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
 
     // also add overriding methods as children
     Iterable<PsiMethod> methodsToAdd = ContainerUtil.concat(methods, OverridingMethodsSearch.search(method));
-    for (PsiMethod calledMethod : methodsToAdd) {
-      if (!isInScope(baseClass, calledMethod, myScopeType)) continue;
+    for (PsiMethod callee : methodsToAdd) {
+      if (!isInScope(baseClass, callee, myScopeType)
+        || JavaCallReferenceProcessor.isRecursiveNode(callee, descriptor)) {
+        continue;
+      }
 
-      CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(calledMethod);
+      CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(callee);
       if (d == null) {
-        d = new CallHierarchyNodeDescriptor(myProject, descriptor, calledMethod, false, false);
-        methodToDescriptorMap.put(calledMethod, d);
+        d = new CallHierarchyNodeDescriptor(myProject, descriptor, callee, false, false);
+        methodToDescriptorMap.put(callee, d);
         result.add(d);
       }
       else {
@@ -69,10 +72,10 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   }
 
 
-  private static void visitor(PsiElement element, List<? super PsiMethod> methods) {
+  private static void collectCallees(@NotNull PsiElement element, @NotNull List<? super PsiMethod> methods) {
     PsiElement[] children = element.getChildren();
     for (PsiElement child : children) {
-      visitor(child, methods);
+      collectCallees(child, methods);
       if (child instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression callExpression = (PsiMethodCallExpression)child;
         PsiReferenceExpression methodExpression = callExpression.getMethodExpression();

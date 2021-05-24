@@ -32,50 +32,61 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     return "ide/hierarchy/call/" + getTestName(false);
   }
 
-  private void doJavaCallTypeHierarchyTest(final String classFqn, final String methodName, final String... fileNames) throws Exception {
+  private void doJavaCallerTypeHierarchyTest(@NotNull String classFqn, @NotNull String methodName, String @NotNull ... fileNames) throws Exception {
     doHierarchyTest(() -> {
-      final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
-      final PsiMember method = psiClass.findMethodsByName(methodName, false) [0];
+      PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
+      PsiMember method = psiClass.findMethodsByName(methodName, false) [0];
       return new CallerMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, fileNames);
+  }
+  private void doJavaCalleeTypeHierarchyTest(@NotNull String classFqn, @NotNull String methodName, String @NotNull ... fileNames) throws Exception {
+    doHierarchyTest(() -> {
+      PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
+      PsiMember method = psiClass.findMethodsByName(methodName, false) [0];
+      return new CalleeMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
     }, fileNames);
   }
 
   public void testIdeaDev41005() throws Exception {
-    doJavaCallTypeHierarchyTest("B", "xyzzy", "B.java", "D.java", "A.java");
+    doJavaCallerTypeHierarchyTest("B", "xyzzy", "B.java", "D.java", "A.java");
   }
 
   public void testDirectRecursion() throws Exception {
-    doJavaCallTypeHierarchyTest("A", "recursive", "A.java");
+    doJavaCallerTypeHierarchyTest("A", "recursive", "A.java");
+  }
+
+  public void testCalleeDirectRecursion() throws Exception {
+    doJavaCalleeTypeHierarchyTest("A", "recursive", "A.java");
   }
 
   public void testIndirectRecursion() throws Exception {
-    doJavaCallTypeHierarchyTest("A", "recursive2", "A.java");
+    doJavaCallerTypeHierarchyTest("A", "recursive2", "A.java");
   }
 
   public void testIdeaDev41005_Inheritance() throws Exception {
-    doJavaCallTypeHierarchyTest("D", "xyzzy", "B.java", "D.java", "A.java", "C.java");
+    doJavaCallerTypeHierarchyTest("D", "xyzzy", "B.java", "D.java", "A.java", "C.java");
   }
 
   public void testIdeaDev41005_Sibling() throws Exception {
-    doJavaCallTypeHierarchyTest("D", "xyzzy", "B.java", "D.java", "A.java", "C.java");
+    doJavaCallerTypeHierarchyTest("D", "xyzzy", "B.java", "D.java", "A.java", "C.java");
   }
 
   public void testIdeaDev41005_SiblingUnderInheritance() throws Exception {
-    doJavaCallTypeHierarchyTest("D", "xyzzy", "B.java", "D.java", "A.java", "C.java", "CChild.java");
+    doJavaCallerTypeHierarchyTest("D", "xyzzy", "B.java", "D.java", "A.java", "C.java", "CChild.java");
   }
 
   public void testIdeaDev41232() throws Exception {
-    doJavaCallTypeHierarchyTest("A", "main", "B.java", "A.java");
+    doJavaCallerTypeHierarchyTest("A", "main", "B.java", "A.java");
   }
 
   public void testDefaultConstructor() throws Exception {
-    doJavaCallTypeHierarchyTest("A", "A", "A.java", "B.java");
+    doJavaCallerTypeHierarchyTest("A", "A", "A.java", "B.java");
   }
 
   public void testMethodRef() throws Exception {
     doHierarchyTest(() -> {
-      final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("A", ProjectScope.getProjectScope(getProject()));
-      final PsiMember method = psiClass.findMethodsByName("testMethod", false) [0];
+      PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("A", ProjectScope.getProjectScope(getProject()));
+      PsiMember method = psiClass.findMethodsByName("testMethod", false) [0];
       return new CalleeMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
     }, "A.java");
   }
@@ -89,7 +100,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   }
 
   public void testAnonymous2() throws Exception {
-    doJavaCallTypeHierarchyTest("A", "doIt", "A.java");
+    doJavaCallerTypeHierarchyTest("A", "doIt", "A.java");
   }
 
   public void testActionAvailableInXml() {
@@ -106,6 +117,6 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   }
 
   public void testMustIgnoreJavadocReferences() throws Exception {
-    doJavaCallTypeHierarchyTest("p.X", "persist", "X.java");
+    doJavaCallerTypeHierarchyTest("p.X", "persist", "X.java");
   }
 }

@@ -15,10 +15,12 @@
  */
 package com.intellij.ide.hierarchy.call;
 
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +103,11 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
     return false;
   }
 
-  static boolean isRecursiveNode(@NotNull PsiMethod method, @NotNull CallHierarchyNodeDescriptor parentDescriptor) {
+  private static PsiMember getEnclosingElement(PsiElement element) {
+    return PsiTreeUtil.getNonStrictParentOfType(element, PsiField.class, PsiMethod.class, PsiClass.class);
+  }
+
+  static boolean isRecursiveNode(@NotNull PsiMethod method, @NotNull HierarchyNodeDescriptor parentDescriptor) {
     // detect recursion
     // the current call-site calls *method*
     // Thus, we already have a node that represents *method*
@@ -110,8 +116,8 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
     NodeDescriptor ancestorDescriptor = parentDescriptor;
     // Start check on grandparent
     while ((ancestorDescriptor = ancestorDescriptor.getParentDescriptor()) != null) {
-      if (ancestorDescriptor instanceof CallHierarchyNodeDescriptor) {
-        PsiMember ancestorCallSite = ((CallHierarchyNodeDescriptor)ancestorDescriptor).getEnclosingElement();
+      if (ancestorDescriptor instanceof HierarchyNodeDescriptor) {
+        PsiMember ancestorCallSite = getEnclosingElement(((HierarchyNodeDescriptor)ancestorDescriptor).getPsiElement());
         if (ancestorCallSite == method) {
           // We have at least two occurrences in the parent chain of method already
           // Don't search any deeper
