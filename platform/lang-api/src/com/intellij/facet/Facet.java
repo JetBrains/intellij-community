@@ -127,7 +127,7 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     return myExternalSource;
   }
 
-  void setExternalSource(ProjectModelExternalSource externalSource) {
+  public void setExternalSource(ProjectModelExternalSource externalSource) {
     myExternalSource = externalSource;
   }
 

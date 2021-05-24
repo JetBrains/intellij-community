@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
-import com.intellij.facet.FacetManagerImpl
 import com.intellij.facet.ModifiableFacetModel
 import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
@@ -59,7 +58,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
     val facetTypeId = if (facet !is InvalidFacet) facet.type.stringId else facet.configuration.facetState.facetType
     val entity = diff.addFacetEntity(facet.name, facetTypeId, facetConfigurationXml, moduleEntity, underlyingEntity, source)
     diff.mutableFacetMapping().addMapping(entity, facet)
-    FacetManagerImpl.setExternalSource(facet, externalSource)
+    facet.externalSource = externalSource
     facetsChanged()
   }
 
