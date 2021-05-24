@@ -440,7 +440,7 @@ class EntityStorageSerializerImpl(
     }
   }
 
-  override fun deserializeCache(stream: InputStream, consistencyCheckingMode: ConsistencyCheckingMode): WorkspaceEntityStorageBuilder? {
+  override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder? {
     return Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
 
@@ -478,8 +478,8 @@ class EntityStorageSerializerImpl(
         val persistentIdIndex = kryo.readClassAndObject(input) as PersistentIdInternalIndex
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
-        val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes, consistencyCheckingMode)
-        val builder = WorkspaceEntityStorageBuilderImpl.from(storage, consistencyCheckingMode)
+        val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
+        val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
 
         builder.entitiesByType.entityFamilies.forEach { family ->
           family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
@@ -539,7 +539,7 @@ class EntityStorageSerializerImpl(
   }
 
   fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): WorkspaceEntityStorageBuilder? {
-    val builder = this.deserializeCache(storeStream, ConsistencyCheckingMode.default()) ?: return null
+    val builder = this.deserializeCache(storeStream) ?: return null
 
     var log: ChangeLog
     Input(diffLogStream, KRYO_BUFFER_SIZE).use { input ->

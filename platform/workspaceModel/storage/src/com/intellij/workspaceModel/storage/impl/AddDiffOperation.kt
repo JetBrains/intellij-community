@@ -13,7 +13,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   private val diffLog = diff.changeLog.changeLog
 
   // Initial storage is required in case something will fail and we need to send a report
-  private val initialStorage = if (target.consistencyCheckingMode != ConsistencyCheckingMode.DISABLED) target.toStorage() else null
+  private val initialStorage = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) target.toStorage() else null
 
   fun addDiff() {
     if (target === diff) LOG.error("Trying to apply diff to itself")

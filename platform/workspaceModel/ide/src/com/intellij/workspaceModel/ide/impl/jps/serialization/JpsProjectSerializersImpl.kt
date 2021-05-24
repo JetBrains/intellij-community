@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.concurrency.JobSchedulerImpl
 import com.intellij.diagnostic.AttachmentFactory
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
@@ -13,10 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.projectModel.ProjectModelBundle
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.text.UniqueNameGenerator
@@ -26,7 +23,6 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.impl.reportErrorAndAttachStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -239,7 +235,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create(ConsistencyCheckingMode.defaultIde())
+    val builder = WorkspaceEntityStorageBuilder.create()
     affectedFileLoaders.forEach {
       loadEntitiesAndReportExceptions(it, builder, reader, errorReporter)
     }
@@ -250,11 +246,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                        builder: WorkspaceEntityStorageBuilder,
                        errorReporter: ErrorReporter,
                        project: Project?): List<EntitySource> {
-    val consistencyCheckingMode = ConsistencyCheckingMode.defaultIde()
     val serializers = synchronized(lock) { fileSerializersByUrl.values.toList() }
     val tasks = serializers.map { serializer ->
       ForkJoinTask.adapt(Callable {
-        val myBuilder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
+        val myBuilder = WorkspaceEntityStorageBuilder.create()
         loadEntitiesAndReportExceptions(serializer, myBuilder, reader, errorReporter)
         myBuilder
       })
@@ -263,7 +258,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     ForkJoinTask.invokeAll(tasks)
     val builders = tasks.mapNotNull { it.rawResult }
     val sourcesToUpdate = removeDuplicatingEntities(builders, serializers, project)
-    val squashedBuilder = squash(builders, consistencyCheckingMode)
+    val squashedBuilder = squash(builders)
     builder.addDiff(squashedBuilder)
     return sourcesToUpdate
   }
@@ -424,7 +419,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     LOG.error(text, *attachments.values.toTypedArray())
   }
 
-  private fun squash(builders: List<WorkspaceEntityStorageBuilder>, consistencyCheckingMode: ConsistencyCheckingMode): WorkspaceEntityStorageBuilder {
+  private fun squash(builders: List<WorkspaceEntityStorageBuilder>): WorkspaceEntityStorageBuilder {
     var result = builders
 
     while (result.size > 1) {
@@ -435,7 +430,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
     }
 
-    return result.singleOrNull() ?: WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)  }
+    return result.singleOrNull() ?: WorkspaceEntityStorageBuilder.create()  }
 
   @TestOnly
   override fun saveAllEntities(storage: WorkspaceEntityStorage, writer: JpsFileContentWriter) {

@@ -26,7 +26,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import java.io.IOException
@@ -158,7 +157,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
     removeUnloadedModule(moduleName)
 
-    val builder = WorkspaceEntityStorageBuilder.create(ConsistencyCheckingMode.defaultIde())
+    val builder = WorkspaceEntityStorageBuilder.create()
     var errorMessage: String? = null
     JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), getJpsProjectConfigLocation(project)!!, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {

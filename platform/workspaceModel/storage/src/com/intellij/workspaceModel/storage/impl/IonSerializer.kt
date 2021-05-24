@@ -7,7 +7,6 @@ import com.intellij.serialization.WriteConfiguration
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.indices.*
-import com.intellij.workspaceModel.storage.impl.indices.EntityId2Vfu
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
@@ -37,7 +36,7 @@ class IonSerializer(virtualFileManager: VirtualFileUrlManager) : EntityStorageSe
     return SerializationResult.Success
   }
 
-  override fun deserializeCache(stream: InputStream, consistencyCheckingMode: ConsistencyCheckingMode): WorkspaceEntityStorageBuilder? {
+  override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder? {
     val configuration = ReadConfiguration(allowAnySubTypes = true)
     val ion = ObjectSerializer.instance
 
@@ -56,8 +55,8 @@ class IonSerializer(virtualFileManager: VirtualFileUrlManager) : EntityStorageSe
     val persistentIdIndex = ion.read(EntityStorageInternalIndex::class.java, stream, configuration) as PersistentIdInternalIndex
     val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
-    val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes, consistencyCheckingMode)
-    val builder = WorkspaceEntityStorageBuilderImpl.from(storage, consistencyCheckingMode)
+    val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
+    val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
 
     builder.entitiesByType.entityFamilies.forEach { family ->
       family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }

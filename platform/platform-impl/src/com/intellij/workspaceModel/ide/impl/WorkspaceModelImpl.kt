@@ -15,7 +15,6 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import kotlin.system.measureTimeMillis
 
@@ -42,7 +41,6 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     log.debug { "Loading workspace model" }
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
-    val consistencyCheckingMode = ConsistencyCheckingMode.defaultIde()
     val projectEntities = when {
       initialContent != null -> initialContent
       cache != null -> {
@@ -57,11 +55,11 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
           printInfoAboutTracedEntity(previousStorage, "cache")
           previousStorage
         }
-        else WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
+        else WorkspaceEntityStorageBuilder.create()
         activity.end()
         storage
       }
-      else -> WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
+      else -> WorkspaceEntityStorageBuilder.create()
     }
 
     entityStorage = VersionedEntityStorageImpl((projectEntities as? WorkspaceEntityStorageBuilder)?.toStorage() ?: projectEntities)

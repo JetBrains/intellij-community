@@ -21,7 +21,6 @@ import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -119,7 +118,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
       LOG.debug("Loading project model cache from $cacheFile")
 
       val stopWatch = Stopwatch.createStarted()
-      val builder = cacheFile.inputStream().use { serializer.deserializeCache(it, ConsistencyCheckingMode.defaultIde()) }
+      val builder = cacheFile.inputStream().use { serializer.deserializeCache(it) }
       LOG.debug("Loaded project model cache from $cacheFile in ${stopWatch.stop()}")
 
       return builder
