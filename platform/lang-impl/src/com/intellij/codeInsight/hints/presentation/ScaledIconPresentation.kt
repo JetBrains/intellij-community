@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.presentation
 import com.intellij.codeInsight.hints.fireContentChanged
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.IconUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
 import java.awt.Component
 import java.awt.Graphics2D
@@ -12,8 +13,9 @@ import javax.swing.Icon
 /**
  * Draws image. If you need to position image inside inlay, use [InsetPresentation]
  */
-internal class ScaledIconPresentation(
-  val metricsStorage: InlayTextMetricsStorage,
+@ApiStatus.Internal
+class ScaledIconPresentation(
+  private val metricsStorage: InlayTextMetricsStorage,
   val isSmall: Boolean,
   icon: Icon, private val component: Component) : BasePresentation() {
   var icon = icon

@@ -5,14 +5,16 @@ import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 
 /**
  * Draws text.
  */
-internal class TextInlayPresentation(
-  val metricsStorage: InlayTextMetricsStorage,
+@ApiStatus.Internal
+class TextInlayPresentation(
+  private val metricsStorage: InlayTextMetricsStorage,
   val isSmall: Boolean,
   var text: String
 ) : BasePresentation() {
