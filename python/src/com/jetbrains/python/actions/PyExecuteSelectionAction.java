@@ -280,9 +280,7 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
                                       boolean requestFocusToConsole) {
     if (project != null) {
       if (canFindConsole(project, null)) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          selectConsole(project, consumer, editor, requestFocusToConsole);
-        });
+        selectConsole(project, consumer, editor, requestFocusToConsole);
       }
       else {
         showConsole(project, consumer);
