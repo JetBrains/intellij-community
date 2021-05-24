@@ -62,10 +62,11 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
       }
 
       val lastErrorProject = parsingContext.startedProjects.last() + ":"
-      val failedProject = parsingContext.projectsInReactor.find { it.startsWith(lastErrorProject) }
-      if (failedProject == null) return false
+      val failedProject = parsingContext.projectsInReactor.find { it.startsWith(lastErrorProject) } ?: return false
+      val mavenProject = MavenProjectsManager.getInstance(parsingContext.ideaProject).findProject(MavenId(failedProject)) ?: return false
+
       messageConsumer.accept(
-        BuildIssueEventImpl(parentId, SourceLevelBuildIssue(parsingContext.ideaProject, logLine.line, logLine.line, failedProject),
+        BuildIssueEventImpl(parentId, SourceLevelBuildIssue(parsingContext.ideaProject, logLine.line, logLine.line, mavenProject),
                             MessageEvent.Kind.ERROR));
       return true
     }
@@ -78,9 +79,9 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
 class SourceLevelBuildIssue(project: Project,
                             private val message: String,
                             override val title: String,
-                            private val failedProjectId: String) : BuildIssue {
+                            private val mavenProject: MavenProject) : BuildIssue {
 
-  override val quickFixes: List<UpdateSourceLevelQuickFix> = prepareQuickFixes(project, failedProjectId)
+  override val quickFixes: List<UpdateSourceLevelQuickFix> = Collections.singletonList(prepareQuickFixes(project, mavenProject))
   override val description = createDescription()
 
   private fun createDescription() = "$message\n<br/>" + quickFixes.map {
@@ -89,20 +90,22 @@ class SourceLevelBuildIssue(project: Project,
 
 
   override fun getNavigatable(project: Project): Navigatable? {
-    val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId(failedProjectId))
-    return mavenProject?.file?.let { OpenFileDescriptor(project, it) }
+    return mavenProject.file.let { OpenFileDescriptor(project, it) }
   }
 
   companion object {
-    private fun prepareQuickFixes(project: Project, failedProjectId: String): List<UpdateSourceLevelQuickFix> {
-      var mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId(failedProjectId));
-      val result = ArrayList<UpdateSourceLevelQuickFix>()
-      while (mavenProject != null) {
-        result.add(UpdateSourceLevelQuickFix(mavenProject))
-        val parentId = mavenProject.parentId
-        mavenProject = parentId?.let { MavenProjectsManager.getInstance(project).findProject(parentId) }
+    private fun prepareQuickFixes(project: Project, mavenProject: MavenProject): UpdateSourceLevelQuickFix {
+      if (mavenProject.parentId == null) {
+        return UpdateSourceLevelQuickFix(mavenProject)
       }
-      return result
+      else {
+        var parentProject = mavenProject;
+        while (parentProject.parentId != null) {
+          parentProject = MavenProjectsManager.getInstance(project).findProject(parentProject.parentId!!)
+                          ?: return UpdateSourceLevelQuickFix(mavenProject)
+        }
+        return UpdateSourceLevelQuickFix(parentProject)
+      }
     }
   }
 }
@@ -124,9 +127,10 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
       return null
     }
     val moduleName = moduleNames.firstOrNull() ?: return null
-    val predicates = CacheForCompilerErrorMessages.getPredicatesToCheck(project, moduleName);
+    val predicates = CacheForCompilerErrorMessages.getPredicatesToCheck(project, moduleName)
     val failedId = extractFailedMavenId(project, moduleName) ?: return null;
-    if (predicates.any { it(message) }) return SourceLevelBuildIssue(project, title, message, failedId.displayString)
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(failedId) ?: return null
+    if (predicates.any { it(message) }) return SourceLevelBuildIssue(project, title, message, mavenProject)
     return null
   }
 
