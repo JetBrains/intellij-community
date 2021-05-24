@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
@@ -28,22 +29,31 @@ import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.NonNls
 import java.io.*
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 
 class GitIndexVirtualFile(private val project: Project,
                           val root: VirtualFile,
                           val filePath: FilePath) : VirtualFile(), VirtualFilePathWrapper {
   private val refresher: GitIndexFileSystemRefresher get() = GitIndexFileSystemRefresher.getInstance(project)
 
-  private val cachedData: AtomicReference<CachedData?> = AtomicReference()
-
+  @Volatile
+  private var hash: Hash? = null
+  @Volatile
+  private var length: Long = 0
+  @Volatile
+  private var isExecutable = false
   @Volatile
   private var modificationStamp = LocalTimeCounter.currentTime()
 
   init {
-    val task = Runnable { cachedData.compareAndSet(null, readCachedData()) }
+    val task = Runnable {
+      val stagedFile = readMetadataFromGit() ?: return@Runnable
+      hash = stagedFile.hash()
+      length = readLengthFromGit(stagedFile.blobHash)
+      isExecutable = stagedFile.isExecutable
+    }
     if (ApplicationManager.getApplication().isDispatchThread) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(task, GitBundle.message("stage.vfs.read.process", name),
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(task,
+                                                                        GitBundle.message("stage.vfs.read.process", name),
                                                                         false, project)
     }
     else {
@@ -56,13 +66,13 @@ class GitIndexVirtualFile(private val project: Project,
   override fun getChildren(): Array<VirtualFile> = EMPTY_ARRAY
   override fun isWritable(): Boolean = true
   override fun isDirectory(): Boolean = false
-  override fun isValid(): Boolean = cachedData.get() != null && !project.isDisposed
+  override fun isValid(): Boolean = hash != null && !project.isDisposed
   override fun getName(): String = filePath.name
   override fun getPresentableName(): String = GitBundle.message("stage.vfs.presentable.file.name", filePath.name)
   override fun getPath(): String = encode(project, root, filePath)
   override fun getPresentablePath(): String = filePath.path
   override fun enforcePresentableName(): Boolean = true
-  override fun getLength(): Long = cachedData.get()?.length ?: 0
+  override fun getLength(): Long = length
   override fun getTimeStamp(): Long = 0
   override fun getModificationStamp(): Long = modificationStamp
   override fun getFileType(): FileType = filePath.virtualFile?.fileType ?: super.getFileType()
@@ -71,11 +81,13 @@ class GitIndexVirtualFile(private val project: Project,
   }
 
   internal fun getRefresh(): Refresh? {
-    val newCachedData = readCachedData()
-    val oldCachedData = cachedData.get()
-    if (oldCachedData != newCachedData) {
+    val oldHash = hash
+    val stagedFile = readMetadataFromGit()
+    val newHash = stagedFile?.hash()
+    if (oldHash != newHash) {
+      val newLength = if (stagedFile != null) readLengthFromGit(stagedFile.blobHash) else 0
       LOG.debug("Preparing refresh for $this")
-      return Refresh(oldCachedData, newCachedData, modificationStamp)
+      return Refresh(oldHash, newHash, length, newLength, stagedFile?.isExecutable ?: false, modificationStamp)
     }
     return null
   }
@@ -96,18 +108,22 @@ class GitIndexVirtualFile(private val project: Project,
       val event = VFileContentChangeEvent(requestor, this, modificationStamp, newModStamp, false)
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(listOf(event))
 
+      val oldHash = hash
+      val newHash = Ref<Hash>(null)
+
       PotemkinProgress(GitBundle.message("stage.vfs.write.process", this.name), project, null, null).runInBackground {
-        val oldCachedData = cachedData.get()
-        if (oldCachedData != readCachedData()) {
+        if (oldHash != readMetadataFromGit()?.hash()) {
           LOG.warn("Skipping write for $this as it is not up to date")
           return@runInBackground
         }
-        val isExecutable = oldCachedData?.isExecutable ?: false
-        val newHash = GitIndexUtil.write(project, root, filePath, ByteArrayInputStream(newContent), isExecutable)
+        newHash.set(GitIndexUtil.write(project, root, filePath, ByteArrayInputStream(newContent), isExecutable))
         LOG.debug("Written $this. newHash=$newHash")
+      }
 
+      if (newHash.get() != null) {
+        hash = newHash.get()
+        length = newContent.size.toLong()
         modificationStamp = newModStamp
-        cachedData.compareAndSet(oldCachedData, CachedData(newHash, newContent.size.toLong(), isExecutable))
       }
 
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(listOf(event))
@@ -148,20 +164,24 @@ class GitIndexVirtualFile(private val project: Project,
     }
   }
 
-  private fun readCachedData(): CachedData? {
-    val stagedFile = GitIndexUtil.listStaged(project, root, listOf(filePath)).singleOrNull() ?: return null
-    return CachedData(HashImpl.build(stagedFile.blobHash), calculateLength(stagedFile.blobHash), stagedFile.isExecutable)
+  private fun readMetadataFromGit(): GitIndexUtil.StagedFile? {
+    return GitIndexUtil.listStaged(project, root, listOf(filePath)).singleOrNull()
   }
 
-  @Throws(VcsException::class)
-  private fun calculateLength(hash: String): Long {
-    val h = GitLineHandler(project, root, GitCommand.CAT_FILE)
-    h.setSilent(true)
-    h.addParameters("-s")
-    h.addParameters(hash)
-    h.endOptions()
-    val output = Git.getInstance().runCommand(h).getOutputOrThrow()
-    return java.lang.Long.valueOf(output.trim())
+  private fun readLengthFromGit(hash: String): Long {
+    try {
+      val h = GitLineHandler(project, root, GitCommand.CAT_FILE)
+      h.setSilent(true)
+      h.addParameters("-s")
+      h.addParameters(hash)
+      h.endOptions()
+      val output = Git.getInstance().runCommand(h).getOutputOrThrow()
+      return java.lang.Long.valueOf(output.trim())
+    }
+    catch (e: VcsException) {
+      LOG.warn(e)
+      return 0
+    }
   }
 
   override fun equals(other: Any?): Boolean {
@@ -185,16 +205,23 @@ class GitIndexVirtualFile(private val project: Project,
     return "GitIndexVirtualFile: [${root.name}]/${VcsFileUtil.relativePath(root, filePath)}"
   }
 
-  internal inner class Refresh internal constructor(private val oldCachedData: CachedData?,
-                                                    private val newCachedData: CachedData?,
+  internal inner class Refresh internal constructor(private val oldHash: Hash?,
+                                                    private val newHash: Hash?,
+                                                    oldLength: Long,
+                                                    private val newLength: Long,
+                                                    private val newExecutable: Boolean,
                                                     oldModificationStamp: Long) {
     val event: VFileContentChangeEvent = VFileContentChangeEvent(null, this@GitIndexVirtualFile, oldModificationStamp, -1,
                                                                  0, 0,
-                                                                 oldCachedData?.length ?: 0, newCachedData?.length ?: 0, true)
+                                                                 oldLength, newLength, true)
 
     fun run(): Boolean {
       LOG.debug("Refreshing ${this@GitIndexVirtualFile}")
-      return cachedData.compareAndSet(oldCachedData, newCachedData)
+      if (hash != oldHash) return false
+      hash = newHash
+      length = newLength
+      isExecutable = newExecutable
+      return true
     }
 
     override fun toString(): @NonNls String {
@@ -227,9 +254,9 @@ class GitIndexVirtualFile(private val project: Project,
     fun extractPresentableUrl(path: String): String {
       return path.substringAfterLast(SEPARATOR).replace('/', File.separatorChar)
     }
-  }
 
-  internal data class CachedData(val hash: Hash, val length: Long, val isExecutable: Boolean = false)
+    private fun GitIndexUtil.StagedFile.hash(): Hash = HashImpl.build(blobHash)
+  }
 }
 
 internal fun VirtualFile.filePath(): FilePath {
