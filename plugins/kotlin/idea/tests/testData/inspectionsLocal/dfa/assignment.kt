@@ -9,4 +9,6 @@ fun test(x : Int) {
         a *= 3
     }
     if (a == 5 || a <caret>== 9) {}
+    var b : Boolean
+    b = true
 }
