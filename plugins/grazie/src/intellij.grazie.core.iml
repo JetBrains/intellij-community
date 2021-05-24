@@ -61,23 +61,27 @@
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
-      <library name="org.languagetool:languagetool-core:5.2" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.2" />
+      <library name="org.languagetool:languagetool-core:5.3" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.3" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.2/languagetool-core-5.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.3/languagetool-core-5.3.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.3/languagetool-core-5.3-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.languagetool:language-en:5.2" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.2" />
+      <library name="org.languagetool:language-en:5.3" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.3" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.2/language-en-5.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.3/language-en-5.3.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.3/language-en-5.3-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -117,15 +121,13 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="com.carrotsearch:hppc:0.8.1" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.carrotsearch:hppc:0.8.1" />
+      <library name="com.carrotsearch:hppc:0.8.2" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.carrotsearch:hppc:0.8.2" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.8.1/hppc-0.8.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.8.2/hppc-0.8.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.8.1/hppc-0.8.1-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
