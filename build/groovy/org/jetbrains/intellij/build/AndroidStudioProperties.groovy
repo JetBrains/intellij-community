@@ -111,6 +111,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   }
 
   @Override
+  List<Path> getAdditionalPluginPaths(BuildContext context) {
+    def workspaceRoot = "$context.paths.communityHome/../.."
+    return [Path.of("$workspaceRoot/prebuilts/tools/common/kotlin-plugin/Kotlin").toAbsolutePath().normalize()]
+  }
+
+  @Override
   @CompileDynamic
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
     super.copyAdditionalFiles(buildContext, targetDirectory)
