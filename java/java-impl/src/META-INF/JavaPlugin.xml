@@ -345,7 +345,6 @@
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
     <projectService serviceImplementation="com.intellij.psi.util.ProjectIconsAccessor"/>
-    <projectService serviceImplementation="com.intellij.testIntegration.TestFailedLineManager"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
@@ -1314,11 +1313,6 @@
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.codeEditor.JavaStripTrailingSpacesFilterFactory"/>
 
-    <localInspection groupPath="Java" language="JAVA" shortName="TestFailedLine"
-                     enabledByDefault="true" level="WARNING"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
-                     implementationClass="com.intellij.execution.testframework.TestFailedLineInspection"
-                     key="inspection.test.failed.line.display.name" bundle="messages.JavaBundle"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"
