@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.java.inst.*
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField
 import com.intellij.codeInspection.dataFlow.lang.ir.*
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.DeferredOffset
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp
@@ -96,7 +97,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(operand)
         val anchor = KotlinExpressionAnchor(expr)
         if (operand != null) {
-            val dfType = operand.getKotlinType().toDfType()
+            val dfType = operand.getKotlinType().toDfType(expr)
             val descriptor = KtLocalVariableDescriptor.create(operand)
             val ref = expr.operationReference.text
             if (dfType is DfIntegralType) {
@@ -197,6 +198,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val descriptor = KtLocalVariableDescriptor.create(expr)
         if (descriptor != null) {
             addInstruction(JvmPushInstruction(descriptor.createValue(factory, null), KotlinExpressionAnchor(expr)))
+            val exprType = expr.getKotlinType()
+            val declaredType = descriptor.variable.type()
+            addImplicitConversion(expr, declaredType, exprType)
             return
         }
         broken = true
@@ -217,7 +221,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processBinaryRelationExpression(expr, relation, token == KtTokens.EXCLEQ || token == KtTokens.EQEQ)
             return
         }
-        val leftType = expr.left?.getKotlinType()?.toDfType() ?: DfType.TOP
+        val leftType = expr.left?.getKotlinType()?.toDfType(expr) ?: DfType.TOP
         if (leftType is DfIntegralType) {
             val mathOp = mathOpFromToken(expr.operationReference)
             if (mathOp != null) {
@@ -332,6 +336,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (actualType == expectedType) return
         val actualPsiType = actualType.toPsiType(expression)
         val expectedPsiType = expectedType.toPsiType(expression)
+        if (actualType.isMarkedNullable && !expectedType.isMarkedNullable && expectedPsiType is PsiPrimitiveType) {
+            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+        }
+        else if (!actualType.isMarkedNullable && expectedType.isMarkedNullable && actualPsiType is PsiPrimitiveType) {
+            addInstruction(WrapDerivedVariableInstruction(
+                expectedType.toDfType(expression).meet(DfTypes.NOT_NULL_OBJECT), SpecialField.UNBOX))
+        }
         if (actualPsiType is PsiPrimitiveType && expectedPsiType is PsiPrimitiveType) {
             addInstruction(PrimitiveConversionInstruction(expectedPsiType, null))
         }

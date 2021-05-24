@@ -1,8 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
+import com.intellij.codeInsight.Nullability
+import com.intellij.codeInspection.dataFlow.DfaNullability
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
@@ -22,9 +27,21 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 
-internal fun KotlinType?.toDfType() : DfType {
+internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
+    if (this == null) return DfType.TOP
+    if (isMarkedNullable) {
+        var notNullableType = makeNotNullable().toDfType(context)
+        if (notNullableType is DfPrimitiveType) {
+            notNullableType = SpecialField.UNBOX.asDfType(notNullableType)
+                .meet(DfTypes.typedObject(toPsiType(context), Nullability.UNKNOWN))
+        }
+        return if (notNullableType is DfReferenceType) {
+            notNullableType.dropNullability().meet(DfaNullability.NULLABLE.asDfType())
+        } else {
+            notNullableType
+        }
+    }
     return when {
-        this == null -> DfType.TOP
         isBoolean() -> DfTypes.BOOLEAN
         isByte() -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
         isChar() -> DfTypes.intRange(LongRangeSet.range(Character.MIN_VALUE.toLong(), Character.MAX_VALUE.toLong()))
@@ -33,7 +50,7 @@ internal fun KotlinType?.toDfType() : DfType {
         isLong() -> DfTypes.LONG
         isFloat() -> DfTypes.FLOAT
         isDouble() -> DfTypes.DOUBLE
-        else -> DfType.TOP
+        else -> DfTypes.typedObject(toPsiType(context), Nullability.NOT_NULL)
     }
 }
 

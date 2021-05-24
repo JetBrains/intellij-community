@@ -4466,6 +4466,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/booleanNot.kt");
         }
 
+        @TestMetadata("boxing.kt")
+        public void testBoxing() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/boxing.kt");
+        }
+
+        @TestMetadata("boxing2.kt")
+        public void testBoxing2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/boxing2.kt");
+        }
+
+        @TestMetadata("boxing3.kt")
+        public void testBoxing3() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/boxing3.kt");
+        }
+
         @TestMetadata("declaration.kt")
         public void testDeclaration() throws Exception {
             runTest("testData/inspectionsLocal/dfa/declaration.kt");

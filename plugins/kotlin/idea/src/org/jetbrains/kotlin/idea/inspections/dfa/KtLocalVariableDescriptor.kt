@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.*
 class KtLocalVariableDescriptor(val variable : KtCallableDeclaration) : VariableDescriptor {
     override fun isStable(): Boolean = true
 
-    override fun getDfType(qualifier: DfaVariableValue?): DfType = variable.type().toDfType()
+    override fun getDfType(qualifier: DfaVariableValue?): DfType = variable.type().toDfType(variable)
 
     override fun createValue(factory: DfaValueFactory, qualifier: DfaValue?): DfaValue {
         assert(qualifier == null) { "Local variable descriptor should not be qualified, got qualifier '$qualifier'" }
