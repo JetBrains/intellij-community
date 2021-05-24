@@ -61,8 +61,8 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         // Set storage for the new child
         setStorageForPackagingElement(child);
         return child;
-      },
-      true);
+      }
+    );
   }
 
   private <T extends PackagingElement<?>> T myAddOrFindChild(@NotNull T child) {
@@ -116,7 +116,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         });
         // Set storage for the new child
         setStorageForPackagingElement(child);
-      }, true
+      }
     );
   }
 
@@ -167,8 +167,8 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
           return myPackagingElementInitializer.initialize(entityToReturn, myProject, builder);
         }
         return objectToReturn;
-      },
-      true);
+      }
+    );
   }
 
   @Nullable
@@ -193,7 +193,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         if (entity != null) {
           builder.removeEntity(entity);
         }
-      }, false
+      }
     );
   }
 
@@ -206,7 +206,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
           .map(o -> ContainerUtil.getFirstItem(mapping.getEntities(o)))
           .filter(Objects::nonNull)
           .forEach(o -> builder.removeEntity(o));
-      }, false
+      }
     );
   }
 
@@ -268,7 +268,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
           o.setChildren(SequencesKt.emptySequence());
           return Unit.INSTANCE;
         });
-      }, false
+      }
     );
   }
 
