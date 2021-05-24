@@ -5,6 +5,6 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Convert to primary constructor</problem_class>
-        <description>Convert to primary constructor</description>
+        <description>Secondary constructor should be converted to a primary one</description>
     </problem>
 </problems>

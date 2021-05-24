@@ -34,7 +34,8 @@ class ConvertSecondaryConstructorToPrimaryInspection : IntentionBasedInspection<
             if (property?.setter?.hasBody() == true) return false
         }
         return true
-    }
+    },
+    problemText = KotlinBundle.message("convert.to.primary.constructor.before.text")
 ) {
     override fun inspectionTarget(element: KtSecondaryConstructor) = element.getConstructorKeyword()
 }
