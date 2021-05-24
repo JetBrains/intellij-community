@@ -28,8 +28,6 @@ repositories {
 
 dependencies {
     implementation(toolsJarApi())
-    runtimeOnly(intellijDep(forIde = true))
-    testRuntimeOnly(intellijDep(forIde = true))
     jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
     jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-junit4-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
     jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-legacy-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
@@ -133,4 +131,3 @@ tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile> {
 }
 
 testsJar()
-projectTest()

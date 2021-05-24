@@ -28,8 +28,6 @@ repositories {
 
 dependencies {
     implementation(toolsJarApi())
-    runtimeOnly(intellijDep(forIde = true))
-    testRuntimeOnly(intellijDep(forIde = true))
     jpsLikeJarDependency(intellijPluginDep("java", forIde = true), JpsDepScope.COMPILE, exported = true) // 'intellij.java' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-core-analysis-deprecated") }, exported = true) // 'intellij.java' dependency
     jpsLikeJarDependency(intellijCoreDep(), JpsDepScope.COMPILE, exported = true) // 'intellij.java' dependency
@@ -212,4 +210,3 @@ tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile> {
 }
 
 testsJar()
-projectTest()

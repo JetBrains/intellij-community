@@ -28,8 +28,6 @@ repositories {
 
 dependencies {
     implementation(toolsJarApi())
-    runtimeOnly(intellijDep(forIde = true))
-    testRuntimeOnly(intellijDep(forIde = true))
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("testFramework") }) // 'intellij.platform.testFramework' dependency
     jpsLikeJarDependency("junit:junit:4.12", JpsDepScope.COMPILE) // 'intellij.platform.testFramework' dependency
     jpsLikeJarDependency("log4j:log4j:1.2.17", JpsDepScope.COMPILE) // 'intellij.platform.testFramework' dependency
