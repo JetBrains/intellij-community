@@ -46,7 +46,10 @@ import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 @Suppress("DEPRECATION")
-class ConvertLambdaToReferenceInspection : IntentionBasedInspection<KtLambdaExpression>(ConvertLambdaToReferenceIntention::class)
+class ConvertLambdaToReferenceInspection : IntentionBasedInspection<KtLambdaExpression>(
+    ConvertLambdaToReferenceIntention::class,
+    problemText = KotlinBundle.message("convert.lambda.to.reference.before.text")
+)
 
 open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTargetingOffsetIndependentIntention<KtLambdaExpression>(
     KtLambdaExpression::class.java,
