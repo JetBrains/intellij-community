@@ -108,9 +108,7 @@ class GitIndexVirtualFile(private val project: Project,
         LOG.debug("Written $this. newHash=$newHash")
 
         modificationStamp = newModStamp
-        if (oldCachedData?.hash != newHash) {
-          cachedData.compareAndSet(oldCachedData, CachedData(newHash, calculateLength(newHash.asString()), isExecutable))
-        }
+        cachedData.compareAndSet(oldCachedData, CachedData(newHash, newContent.size.toLong(), isExecutable))
       }
     }
     catch (e: Exception) {
