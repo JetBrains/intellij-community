@@ -6,12 +6,41 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.psi.*
 
 class KtLocalVariableDescriptor(val variable : KtCallableDeclaration) : VariableDescriptor {
-    override fun isStable(): Boolean = true
+    val stable: Boolean = calculateStable()
+
+    private fun calculateStable(): Boolean {
+        if (variable !is KtProperty || !variable.isVar) return true
+        return getVariablesChangedInLambdas(variable.parent).contains(variable)
+    }
+
+    private fun getVariablesChangedInLambdas(parent: PsiElement): Set<KtProperty> =
+        CachedValuesManager.getProjectPsiDependentCache(parent) { scope ->
+            val result = hashSetOf<KtProperty>()
+            PsiTreeUtil.processElements(scope) { e ->
+                if (e is KtSimpleNameExpression && e.readWriteAccess(false).isWrite) {
+                    val target = e.mainReference.resolve()
+                    if (target is KtProperty && target.isLocal && PsiTreeUtil.isAncestor(parent, target, true)) {
+                        val parentLambda = PsiTreeUtil.getParentOfType(parent, KtLambdaExpression::class.java)
+                        if (parentLambda != null && PsiTreeUtil.isAncestor(parent, parentLambda, true)) {
+                            result.add(target)
+                        }
+                    }
+                }
+                return@processElements true
+            }
+            return@getProjectPsiDependentCache result
+        }
+
+    override fun isStable(): Boolean = stable
 
     override fun getDfType(qualifier: DfaVariableValue?): DfType = variable.type().toDfType(variable)
 

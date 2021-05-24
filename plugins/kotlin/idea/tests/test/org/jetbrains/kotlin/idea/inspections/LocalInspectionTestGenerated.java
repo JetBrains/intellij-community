@@ -1,4 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
 
 package org.jetbrains.kotlin.idea.inspections;
 
@@ -4479,6 +4482,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("boxing3.kt")
         public void testBoxing3() throws Exception {
             runTest("testData/inspectionsLocal/dfa/boxing3.kt");
+        }
+
+        @TestMetadata("changeLocalInLambda.kt")
+        public void testChangeLocalInLambda() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/changeLocalInLambda.kt");
         }
 
         @TestMetadata("declaration.kt")

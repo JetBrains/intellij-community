@@ -55,12 +55,18 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         is KtWhileExpression -> processWhileExpression(expr)
         is KtDoWhileExpression -> processDoWhileExpression(expr)
         is KtProperty -> processDeclaration(expr)
-        // break, continue, when, try, lambdas, anonymous classes, local functions
+        is KtLambdaExpression -> processLambda(expr)
+        // break, continue, when, try, anonymous classes, local functions
         // as, as?, is, is?
         else -> {
             // unsupported construct
             broken = true
         }
+    }
+
+    private fun processLambda(expr: KtLambdaExpression) {
+        addInstruction(ClosureInstruction(listOf(expr)))
+        pushUnknown()
     }
 
     private fun processCallExpression(expr: KtCallExpression) {
