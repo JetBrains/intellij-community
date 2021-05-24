@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution.configuration
 
-import com.intellij.execution.ui.BeforeRunComponent
-import com.intellij.execution.ui.BeforeRunFragment
-import com.intellij.execution.ui.RunConfigurationEditorFragment
-import com.intellij.execution.ui.SettingsEditorFragment
+import com.intellij.execution.ui.*
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
@@ -101,7 +98,7 @@ abstract class ExternalSystemReifiedRunConfigurationExtension<C : ExternalSystem
         null,
         LabeledComponent.create(projectPathField, projectPathLabel, BorderLayout.WEST),
         -10,
-        SettingsEditorFragment.Type.EDITOR,
+        SettingsEditorFragmentType.EDITOR,
         { it, c -> it.externalProjectPath?.let { p -> c.component.projectPath = p } },
         { it, c -> it.externalProjectPath = FileUtil.toCanonicalPath(c.component.projectPath) },
         { true }

@@ -41,7 +41,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private final BiConsumer<? super Settings, ? super C> myReset;
   private final BiConsumer<? super Settings, ? super C> myApply;
   private @Nullable Function<Settings, List<ValidationInfo>> myValidation;
-  private final @NotNull Type myType;
+  private final @NotNull SettingsEditorFragmentType myType;
   private final int myPriority;
   private final Predicate<? super Settings> myInitialSelection;
   private @Nullable @Nls String myHint;
@@ -58,7 +58,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 C component,
                                 int priority,
-                                @NotNull Type type,
+                                @NotNull SettingsEditorFragmentType type,
                                 BiConsumer<? super Settings, ? super C> reset,
                                 BiConsumer<? super Settings, ? super C> apply,
                                 Predicate<? super Settings> initialSelection) {
@@ -77,7 +77,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                 @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 C component,
-                                @NotNull Type type,
+                                @NotNull SettingsEditorFragmentType type,
                                 BiConsumer<? super Settings, ? super C> reset,
                                 BiConsumer<? super Settings, ? super C> apply,
                                 Predicate<? super Settings> initialSelection) {
@@ -95,12 +95,12 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     this(id, name, group, component, commandLinePosition, getType(component, commandLinePosition), reset, apply, initialSelection);
   }
 
-  private static @NotNull Type getType(JComponent component, int commandLinePosition) {
-    return component instanceof TagButton ? Type.TAG :
-           commandLinePosition == -2 ? Type.BEFORE_RUN :
-           commandLinePosition == -1 ? Type.HEADER :
-           commandLinePosition == 0 ? Type.EDITOR :
-           Type.COMMAND_LINE;
+  private static @NotNull SettingsEditorFragmentType getType(JComponent component, int commandLinePosition) {
+    return component instanceof TagButton ? SettingsEditorFragmentType.TAG :
+           commandLinePosition == -2 ? SettingsEditorFragmentType.BEFORE_RUN :
+           commandLinePosition == -1 ? SettingsEditorFragmentType.HEADER :
+           commandLinePosition == 0 ? SettingsEditorFragmentType.EDITOR :
+           SettingsEditorFragmentType.COMMAND_LINE;
   }
 
   public SettingsEditorFragment(String id,
@@ -110,7 +110,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 BiConsumer<? super Settings, ? super C> reset,
                                 BiConsumer<? super Settings, ? super C> apply,
                                 Predicate<? super Settings> initialSelection) {
-    this(id, name, group, component, 0, Type.EDITOR, reset, apply, initialSelection);
+    this(id, name, group, component, 0, SettingsEditorFragmentType.EDITOR, reset, apply, initialSelection);
   }
 
   public static <S> SettingsEditorFragment<S, ?> createWrapper(String id,
@@ -143,7 +143,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
       ref.get().logChange(false, e);
     });
     SettingsEditorFragment<Settings, TagButton> fragment = new SettingsEditorFragment<>(
-      id, name, group, tagButton, Type.TAG,
+      id, name, group, tagButton, SettingsEditorFragmentType.TAG,
       (settings, button) -> button.setVisible(getter.test(settings)),
       (settings, button) -> setter.accept(settings, button.isVisible()),
       getter
@@ -176,23 +176,23 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public boolean isTag() {
-    return Type.TAG == myType;
+    return SettingsEditorFragmentType.TAG == myType;
   }
 
   public boolean isCommandLine() {
-    return Type.COMMAND_LINE == myType;
+    return SettingsEditorFragmentType.COMMAND_LINE == myType;
   }
 
   public boolean isHeader() {
-    return Type.HEADER == myType;
+    return SettingsEditorFragmentType.HEADER == myType;
   }
 
   public boolean isBeforeRun() {
-    return Type.BEFORE_RUN == myType;
+    return SettingsEditorFragmentType.BEFORE_RUN == myType;
   }
 
   public boolean isEditor() {
-    return Type.EDITOR == myType;
+    return SettingsEditorFragmentType.EDITOR == myType;
   }
 
   public int getPriority() {
@@ -401,6 +401,4 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   public String toString() {
     return myId + " " + myName;
   }
-
-  public enum Type {TAG, COMMAND_LINE, HEADER, BEFORE_RUN, EDITOR}
 }

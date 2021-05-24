@@ -164,7 +164,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
       null,
       null,
       jLabel,
-      SettingsEditorFragment.Type.HEADER,
+      SettingsEditorFragmentType.HEADER,
       (__, ___) -> {},
       (__, ___) -> {},
       (__) -> true
