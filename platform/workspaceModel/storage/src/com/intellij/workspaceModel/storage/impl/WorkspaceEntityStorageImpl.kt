@@ -824,7 +824,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             Concurrent write to builder from the following threads
             First Thread: $threadName
             Second Thread: ${currentThread.name}
-            ${if (trackStackTrace) "Previous stack trace: $stackTrace" else ""}
+            Previous stack trace: $stackTrace
           """.trimIndent())
         trackStackTrace = true
       }
