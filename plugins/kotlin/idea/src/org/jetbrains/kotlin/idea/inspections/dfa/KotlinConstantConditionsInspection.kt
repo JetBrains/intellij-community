@@ -21,27 +21,31 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     }
 
     private class KotlinDfaListener : DfaListener {
-        val constantConditions : MutableMap<KtExpression, ConstantValue> = hashMapOf()
+        val constantConditions = hashMapOf<KtExpression, ConstantValue>()
 
         override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
             if (anchor is KotlinExpressionAnchor) {
-                val expression = anchor.expression
-                if (expression is KtConstantExpression || expression is KtProperty ||
-                    expression is KtBinaryExpression && expression.operationToken == KtTokens.EQ) {
-                    return
-                }
-                val oldVal = constantConditions[expression]
-                if (oldVal == ConstantValue.UNKNOWN) return
-                var newVal = when (state.getDfType(value)) {
-                    DfTypes.TRUE -> ConstantValue.TRUE
-                    DfTypes.FALSE -> ConstantValue.FALSE
-                    else -> ConstantValue.UNKNOWN
-                }
-                if (oldVal != null && oldVal != newVal) {
-                    newVal = ConstantValue.UNKNOWN
-                }
-                constantConditions[expression] = newVal
+                recordExpressionValue(anchor.expression, state, value)
             }
+        }
+
+        private fun recordExpressionValue(expression: KtExpression, state: DfaMemoryState, value: DfaValue) {
+            if (expression is KtConstantExpression || expression is KtProperty ||
+                expression is KtBinaryExpression && expression.operationToken == KtTokens.EQ
+            ) {
+                return
+            }
+            val oldVal = constantConditions[expression]
+            if (oldVal == ConstantValue.UNKNOWN) return
+            var newVal = when (state.getDfType(value)) {
+                DfTypes.TRUE -> ConstantValue.TRUE
+                DfTypes.FALSE -> ConstantValue.FALSE
+                else -> ConstantValue.UNKNOWN
+            }
+            if (oldVal != null && oldVal != newVal) {
+                newVal = ConstantValue.UNKNOWN
+            }
+            constantConditions[expression] = newVal
         }
     }
     
