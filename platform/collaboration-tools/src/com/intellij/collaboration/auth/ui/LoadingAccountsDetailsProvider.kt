@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth.ui
 
+import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.ui.codereview.SingleValueModelImpl
@@ -36,7 +37,10 @@ abstract class LoadingAccountsDetailsProvider<in A : Account, D : AccountDetails
           runningProcesses--
           if(runningProcesses == 0) loadingStateModel.value = false
         }
-      })
+      }).exceptionally {
+        val error = CompletableFutureUtil.extractError(it)
+        DetailsLoadingResult(null, null, error.localizedMessage, false)
+      }
     }
   }
 

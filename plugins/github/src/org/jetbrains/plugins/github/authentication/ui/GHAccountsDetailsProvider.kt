@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
@@ -19,7 +18,6 @@ import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.util.concurrent.CompletableFuture
@@ -44,9 +42,6 @@ internal class GHAccountsDetailsProvider(progressIndicatorsProvider: ProgressInd
         }
       } ?: IconUtil.resizeSquared(GithubIcons.DefaultAvatar, 40)
       DetailsLoadingResult<GithubUserDetailed>(details, icon, null, false)
-    }.exceptionally {
-      val error = CompletableFutureUtil.extractError(it)
-      DetailsLoadingResult(null, null, error.message, error is GithubAuthenticationException)
     }.successOnEdt(ModalityState.any()) {
       accountsModel.accountsListModel.contentsChanged(account)
       it
