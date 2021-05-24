@@ -4,7 +4,7 @@ Reports methods with too many <code>return</code> points. Methods with too many 
 and hard to refactor. A <code>return</code> point is either a <code>return</code> statement or the falling through the bottom of a
 <code>void</code> method or constructor.
 <p>For example, such method is reported if inspection allows only two <code>return</code> statement:</p>
-<pre>
+<pre><code>
   void doSmth(User[] users) {
     for (User user : users) {
       if (cond1(user)) {
@@ -18,9 +18,9 @@ and hard to refactor. A <code>return</code> point is either a <code>return</code
       }
     }
   }
-</pre>
-<p>And it can be rewritten with much more comprehensive code:</p>
-<pre>
+</code></pre>
+<p>And it could be rewritten in an easier to understand way:</p>
+<pre><code>
   void doSmth(User[] users) {
     for (User user : users) {
       if (cond1(user) || cond2(user) && cond3(user)) {
@@ -29,7 +29,7 @@ and hard to refactor. A <code>return</code> point is either a <code>return</code
       }
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the field below to specify the maximum number of <code>return</code> points a method is allowed to have.
