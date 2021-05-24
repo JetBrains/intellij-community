@@ -2,13 +2,12 @@
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
-import java.util.concurrent.CopyOnWriteArrayList
+import com.intellij.util.containers.DisposableWrapperList
 
 abstract class AbstractObservableProperty<T> : ObservableClearableProperty<T> {
 
-  private val changeListeners = CopyOnWriteArrayList<(T) -> Unit>()
-  private val resetListeners = CopyOnWriteArrayList<() -> Unit>()
+  private val changeListeners = DisposableWrapperList<(T) -> Unit>()
+  private val resetListeners = DisposableWrapperList<() -> Unit>()
 
   protected fun fireChangeEvent(value: T) {
     changeListeners.forEach { it(value) }
@@ -27,12 +26,10 @@ abstract class AbstractObservableProperty<T> : ObservableClearableProperty<T> {
   }
 
   override fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable) {
-    changeListeners.add(listener)
-    Disposer.register(parentDisposable, Disposable { changeListeners.remove(listener) })
+    changeListeners.add(listener, parentDisposable)
   }
 
   override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
-    resetListeners.add(listener)
-    Disposer.register(parentDisposable, Disposable { resetListeners.remove(listener) })
+    resetListeners.add(listener, parentDisposable)
   }
 }

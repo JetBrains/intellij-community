@@ -2,12 +2,11 @@
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
-import java.util.concurrent.CopyOnWriteArrayList
+import com.intellij.util.containers.DisposableWrapperList
 
 abstract class AbstractObservableBooleanProperty : AbstractObservableProperty<Boolean>(), BooleanProperty {
 
-  private val setListeners = CopyOnWriteArrayList<() -> Unit>()
+  private val setListeners = DisposableWrapperList<() -> Unit>()
 
   protected fun fireChangeEvents(oldValue: Boolean, newValue: Boolean) {
     when {
@@ -26,7 +25,6 @@ abstract class AbstractObservableBooleanProperty : AbstractObservableProperty<Bo
   }
 
   override fun afterSet(listener: () -> Unit, parentDisposable: Disposable) {
-    setListeners.add(listener)
-    Disposer.register(parentDisposable, Disposable { setListeners.remove(listener) })
+    setListeners.add(listener, parentDisposable)
   }
 }
