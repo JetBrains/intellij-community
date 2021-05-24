@@ -382,11 +382,13 @@
     </action>
     <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
+      <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
     </action>
     <group>
       <action id="Vcs.Diff.ShowDiffInNewWindow"
               icon="AllIcons.Actions.MoveToWindow"
               class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToNewWindowAction">
+        <add-to-group group-id="Diff.Binary.Settings"/>
       </action>
       <separator/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.binary;
 
 import com.intellij.diff.DiffContext;
@@ -82,6 +82,8 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     group.add(Separator.getInstance());
     group.add(myTransferableStateSupport.createToggleAction());
     group.addAll(super.createToolbarActions());
+
+    group.add(ActionManager.getInstance().getAction("Diff.Binary.Settings"));
 
     return group;
   }
