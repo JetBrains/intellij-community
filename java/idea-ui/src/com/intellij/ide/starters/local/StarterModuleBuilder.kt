@@ -122,7 +122,10 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
   protected open fun getCustomizedMessages(): CustomizedMessages? = null
 
+  protected open fun getCollapsedDependencyCategories(): List<String> = emptyList()
   protected open fun getFilePathsToOpen(): List<String> = emptyList()
+
+  internal open fun getCollapsedDependencyCategoriesInternal(): List<String> = getCollapsedDependencyCategories()
 
   internal fun isDependencyAvailableInternal(starter: Starter, dependency: Library): Boolean {
     return isDependencyAvailable(starter, dependency)
