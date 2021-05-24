@@ -162,14 +162,12 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     }, second = { expanded() }, initiallyFirstEnabled = startWithPlaceholder)
     presentationToChange = content
 
-    class ContentFlippingPresentation(base: InlayPresentation) : StaticDelegatePresentation(base) {
-      override fun mouseClicked(event: MouseEvent, translated: Point) {
-        content.flipState()
-      }
+    val prefixExposed = OnClickPresentation(matchingPrefix) { _: MouseEvent, _: Point ->
+      content.flipState()
     }
-
-    val prefixExposed = ContentFlippingPresentation(matchingPrefix)
-    val suffixExposed = ContentFlippingPresentation(matchingSuffix)
+    val suffixExposed = OnClickPresentation(matchingSuffix) { _: MouseEvent, _: Point ->
+      content.flipState()
+    }
     return seq(prefixExposed, content, suffixExposed)
   }
 
