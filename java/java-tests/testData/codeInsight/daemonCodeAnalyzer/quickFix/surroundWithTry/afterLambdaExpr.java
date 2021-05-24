@@ -8,8 +8,8 @@ public class ExTest {
         Block<String> b = (t) -> {
             try {
                 ExTest.maybeThrow(t);
-            } catch (Ex ex) {
-                ex.printStackTrace();
+            } catch (Ex e) {
+                e.printStackTrace();
             }
         };
     }
