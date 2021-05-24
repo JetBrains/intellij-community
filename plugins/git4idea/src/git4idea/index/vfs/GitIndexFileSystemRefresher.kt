@@ -15,9 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
@@ -81,18 +79,6 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
                                                                         false, project)
       ApplicationManager.getApplication().runWriteAction { session.apply() }
     }
-  }
-
-  @RequiresWriteLock
-  internal fun changeContent(file: GitIndexVirtualFile, requestor: Any?, modificationStamp: Long, writeCommand: () -> Unit) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
-
-    val event = VFileContentChangeEvent(requestor, file, file.modificationStamp, modificationStamp, false)
-    ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(listOf(event))
-    PotemkinProgress(GitBundle.message("stage.vfs.write.process", file.name), project, null, null).runInBackground {
-      writeCommand()
-    }
-    ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(listOf(event))
   }
 
   override fun dispose() {

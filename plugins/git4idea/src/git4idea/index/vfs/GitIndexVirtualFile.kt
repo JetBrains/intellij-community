@@ -5,16 +5,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFilePathWrapper
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.util.LocalTimeCounter
 import com.intellij.vcs.log.Hash
@@ -95,14 +93,15 @@ class GitIndexVirtualFile(private val project: Project,
   private fun write(requestor: Any?, newContent: ByteArray, newModificationStamp: Long) {
     try {
       val newModStamp = if (newModificationStamp > 0) newModificationStamp else LocalTimeCounter.currentTime()
-      refresher.changeContent(this, requestor, newModStamp) {
+      val event = VFileContentChangeEvent(requestor, this, modificationStamp, newModStamp, false)
+      ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(listOf(event))
+
+      PotemkinProgress(GitBundle.message("stage.vfs.write.process", this.name), project, null, null).runInBackground {
         val oldCachedData = cachedData.get()
         if (oldCachedData != readCachedData()) {
-          // TODO
           LOG.warn("Skipping write for $this as it is not up to date")
-          return@changeContent
+          return@runInBackground
         }
-
         val isExecutable = oldCachedData?.isExecutable ?: false
         val newHash = GitIndexUtil.write(project, root, filePath, ByteArrayInputStream(newContent), isExecutable)
         LOG.debug("Written $this. newHash=$newHash")
@@ -110,6 +109,8 @@ class GitIndexVirtualFile(private val project: Project,
         modificationStamp = newModStamp
         cachedData.compareAndSet(oldCachedData, CachedData(newHash, newContent.size.toLong(), isExecutable))
       }
+
+      ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(listOf(event))
     }
     catch (e: Exception) {
       throw IOException(e)
