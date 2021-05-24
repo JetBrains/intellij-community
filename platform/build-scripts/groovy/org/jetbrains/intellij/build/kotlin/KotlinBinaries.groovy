@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.GradleRunner
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
+import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 import org.jetbrains.jps.model.serialization.JpsLoaderBase
 import org.jetbrains.jps.model.serialization.JpsMacroExpander
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -74,9 +75,7 @@ final class KotlinBinaries {
   }
 
   boolean isCompilerRequired() {
-    !options.useCompiledClassesFromProjectOutput &&
-    options.pathToCompiledClassesArchive == null &&
-    options.pathToCompiledClassesArchivesMetadata == null
+    return !CompilationTasksImpl.areCompiledClassesProvided(options)
   }
 
   void setUpCompilerIfRequired(GradleRunner gradle, AntBuilder ant) {
