@@ -376,6 +376,7 @@
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
+    <registryKey key="java.additional.external.annotations.root.url" defaultValue="" description="URL of a zip file or a directory containing additional external annotations which will be applied to all modules and libraries"/>
 
     <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.RenameModuleAndDirectoryHandler"/>
