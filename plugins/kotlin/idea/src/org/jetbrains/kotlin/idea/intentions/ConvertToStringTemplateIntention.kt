@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ConvertToStringTemplateInspection : IntentionBasedInspection<KtBinaryExpression>(
     ConvertToStringTemplateIntention::class,
-    { it -> ConvertToStringTemplateIntention.shouldSuggestToConvert(it) }
+    { it -> ConvertToStringTemplateIntention.shouldSuggestToConvert(it) },
+    problemText = KotlinBundle.message("convert.concatenation.to.template.before.text")
 )
 
 open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
