@@ -72,7 +72,7 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
   }
 
   override val component by lazy {
-    panel {
+    panel tree@{
       // register tree on languages list update from proofreading tab
       myConnection = service<GrazieInitializerManager>().register(this@GrazieTreeComponent)
       panel(constraint = BorderLayout.NORTH) {
@@ -84,7 +84,9 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
           add(actionManager.createExpandAllAction(treeExpander, this@GrazieTreeComponent))
           add(actionManager.createCollapseAllAction(treeExpander, this@GrazieTreeComponent))
 
-          add(ActionManager.getInstance().createActionToolbar("GrazieRulesPanel", this, true).component, BorderLayout.WEST)
+          val toolbar = ActionManager.getInstance().createActionToolbar("GrazieRulesTab", this, true)
+          toolbar.setTargetComponent(this@tree)
+          add(toolbar.component, BorderLayout.WEST)
         }
 
         add(filterComponent, BorderLayout.CENTER)
