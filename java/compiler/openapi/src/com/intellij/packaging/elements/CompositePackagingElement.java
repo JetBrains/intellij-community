@@ -14,6 +14,7 @@ import kotlin.Unit;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -243,6 +244,11 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       myUnmodifiableChildren = Collections.unmodifiableList(myChildren);
     }
     return myUnmodifiableChildren;
+  }
+
+  @TestOnly
+  public List<PackagingElement<?>> getNonWorkspaceModelChildren() {
+    return myChildren;
   }
 
   @Override
