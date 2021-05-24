@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
@@ -729,13 +729,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return openFileWithProviders(file, null, options);
   }
 
-  private @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                  @Nullable EditorWindow window,
-                                                                                  @NotNull FileEditorOpenOptions options) {
+  @Override
+  public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                 @Nullable EditorWindow window,
+                                                                                 @NotNull FileEditorOpenOptions options) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertDispatchThread();
+    if (window != null && window.isDisposed()) {
+      window = null;
+    }
 
     if (window == null) {
       OpenMode mode = getOpenMode(IdeEventQueue.getInstance().getTrueCurrentEvent());

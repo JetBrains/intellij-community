@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -400,10 +400,6 @@ public final class EditorWindow {
 
   public void requestFocus(boolean forced) {
     myTabbedPane.requestFocus(forced);
-  }
-
-  public boolean isValid() {
-    return myPanel.isShowing();
   }
 
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
