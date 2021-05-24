@@ -6,12 +6,15 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.inst.CheckNotNullInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
@@ -143,8 +146,9 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     DfaValueFactory factory = new DfaValueFactory(expressionToAnalyze.getProject());
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(expressionToAnalyze, factory, true);
     if (flow == null) return Map.of();
-    var interceptor = new JavaDfaListener() {
+    var listener = new JavaDfaListener() {
       final Map<PsiExpression, ThreeState> values = new HashMap<>();
+      DataFlowInterpreter myInterpreter;
 
       @Override
       public void beforeExpressionPush(@NotNull DfaValue value,
@@ -160,8 +164,18 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         }
         values.put(expression, old == null || old == result ? result : ThreeState.UNSURE);
       }
+
+      @Override
+      public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                              @NotNull DfaValue value,
+                              @NotNull ThreeState failed,
+                              @NotNull DfaMemoryState state) {
+        if (problem instanceof ContractFailureProblem && failed != ThreeState.NO) {
+          myInterpreter.cancel();
+        }
+      }
     };
-    var runner = new StandardDataFlowInterpreter(flow, interceptor) {
+    var interpreter = new StandardDataFlowInterpreter(flow, listener) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();
@@ -179,8 +193,9 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         return super.acceptInstruction(instructionState);
       }
     };
-    RunnerResult result = runner.interpret(createMemoryState(factory));
-    return result == RunnerResult.OK ? interceptor.values : Collections.emptyMap();
+    listener.myInterpreter = interpreter;
+    RunnerResult result = interpreter.interpret(createMemoryState(factory));
+    return result == RunnerResult.OK ? listener.values : Collections.emptyMap();
   }
 
   @NotNull
