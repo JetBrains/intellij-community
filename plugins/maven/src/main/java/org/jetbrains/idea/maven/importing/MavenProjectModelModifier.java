@@ -278,11 +278,15 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     if (psiSource == null || psiTarget == null) return null;
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(tagProperty);
-    builder.replaceElement(psiSource, "variableSource",
-                           new ConstantNode(prevSource.isEmpty() ? option : prevSource).withLookupStrings(option), true);
-    builder.replaceElement(psiTarget, "variableTarget",
-                           new ConstantNode(prevTarget.isEmpty() ? option : prevTarget).withLookupStrings(option), true);
+    builder.replaceElement(psiSource, "variableSource", getExpression(prevSource, option), true);
+    builder.replaceElement(psiTarget, "variableTarget", getExpression(prevTarget, option), true);
     return builder.buildInlineTemplate();
+  }
+
+  @NotNull
+  private static ConstantNode getExpression(String prevSource, String option) {
+    return new ConstantNode(prevSource.isEmpty() ? option : prevSource)
+      .withLookupStrings(prevSource.isEmpty() ? option : prevSource, option);
   }
 
   private void runTemplate(Template template, XmlTag tagProperty) {
