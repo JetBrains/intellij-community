@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.util.text.StringUtil.ELLIPSIS
 import com.intellij.openapi.util.text.StringUtil.THREE_DOTS
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.impl.status.InlineProgressIndicator
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -21,7 +22,7 @@ internal class CommitChecksTaskInfo : TaskInfo {
   override fun isCancellable(): Boolean = true
 }
 
-internal class CommitChecksProgressIndicator : InlineProgressIndicator(true, CommitChecksTaskInfo()) {
+internal abstract class CommitChecksProgressIndicator : InlineProgressIndicator(true, CommitChecksTaskInfo()) {
   init {
     component.toolTipText = null
 
@@ -30,6 +31,13 @@ internal class CommitChecksProgressIndicator : InlineProgressIndicator(true, Com
     })
   }
 
+  override fun updateProgressNow() {
+    super.updateProgressNow()
+    setText2Enabled(false) // to set "gray" color
+  }
+}
+
+internal class InlineCommitChecksProgressIndicator : CommitChecksProgressIndicator() {
   override fun createCompactTextAndProgress(component: JPanel) {
     val detailsPanel = NonOpaquePanel(HorizontalLayout(6)).apply {
       border = emptyTop(5)
@@ -43,11 +51,6 @@ internal class CommitChecksProgressIndicator : InlineProgressIndicator(true, Com
 
     myText.recomputeSize()
     myText2.recomputeSize()
-  }
-
-  override fun updateProgressNow() {
-    super.updateProgressNow()
-    setText2Enabled(false) // to set "gray" color
   }
 
   override fun setTextValue(text: String) {
@@ -71,4 +74,23 @@ internal class CommitChecksProgressIndicator : InlineProgressIndicator(true, Com
 
   private fun String.endsWithEllipsis(): Boolean = endsWith(ELLIPSIS) || endsWith(THREE_DOTS)
   private fun String.startsWithEllipsis(): Boolean = startsWith(ELLIPSIS) || startsWith(THREE_DOTS)
+}
+
+internal class PopupCommitChecksProgressIndicator(private val original: ProgressIndicatorEx) : CommitChecksProgressIndicator() {
+  init {
+    original.addStateDelegate(this)
+  }
+
+  override fun createCompactTextAndProgress(component: JPanel) {
+    component.add(myText, BorderLayout.NORTH)
+    component.add(myProgress, BorderLayout.CENTER)
+    component.add(myText2, BorderLayout.SOUTH)
+
+    myText.recomputeSize()
+    myText2.recomputeSize()
+  }
+
+  override fun cancelRequest() = original.cancel()
+
+  override fun isStopping(): Boolean = isCanceled
 }

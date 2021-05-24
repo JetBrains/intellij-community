@@ -88,6 +88,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
 
     setupShowProgressInStatusBar()
     setupProgressVisibilityDelay()
+    setupProgressSpinnerTooltip()
   }
 
   private fun setupShowProgressInStatusBar() =
@@ -111,12 +112,17 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
       .launchIn(scope + CoroutineName("Commit checks indicator visibility"))
   }
 
+  private fun setupProgressSpinnerTooltip() {
+    val tooltip = CommitChecksProgressIndicatorTooltip({ progress }, { failuresPanel.width })
+    tooltip.installOn(failuresPanel.iconLabel, this)
+  }
+
   override fun dispose() = Unit
 
   override fun startProgress(): ProgressIndicator {
     check(progress == null) { "Commit checks indicator already created" }
 
-    val indicator = CommitChecksProgressIndicator()
+    val indicator = InlineCommitChecksProgressIndicator()
     Disposer.register(this, indicator)
 
     indicator.component.isVisible = false
@@ -199,7 +205,7 @@ private class FailuresPanel : BorderLayoutPanel() {
   private var nextFailureId = 0
   private val failures = mutableMapOf<Int, CommitCheckFailure>()
 
-  private val iconLabel = JBLabel()
+  val iconLabel = JBLabel()
   private val description = createHtmlViewer(true, null, null, null)
 
   init {
