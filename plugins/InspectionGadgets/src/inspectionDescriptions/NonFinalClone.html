@@ -8,12 +8,14 @@ Reports <code>clone()</code> methods which are not declaring the <code>final</co
 </p>
 <p>Example:</p>
 <pre>
-  class Main implements Cloneable {
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
-      return super.clone();
+  <code>
+    class Main implements Cloneable {
+      @Override
+      protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+      }
     }
-  }
+  </code>
 </pre>
 <!-- tooltip end -->
 </body>

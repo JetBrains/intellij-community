@@ -2,31 +2,36 @@
 <body>
 Reports method parameters that are named identically to the visible fields of the method's class
 or surrounding classes if it is a parameter inside of an inner or anonymous class.
-Such a parameter name may be confusing.
+Such a parameter name may be confusing and it's possible to accidentally use the parameter where the field is intended.
 <p>The quick-fix is suggested to rename the parameter.</p>
 <p>Example:</p>
 <pre>
-  class Main {
-    private final int value;
+  <code>
+    class Main {
+      private final int value;
 
-    public Main(int value) {
-        this.value = value;
+      public Main(int value) {
+          this.value = value;
+      }
     }
-  }
+  </code>
 </pre>
 <!-- tooltip end -->
 <p>
   Use the "Options" panel below to configure the inspection:
 </p>
 <ol>
-  <li>Enable the first checkbox to ignore parameters of simple setters.</li>
-  <li>Enable the second checkbox to ignore for private fields in a superclass, which are not visible from the parameter.</li>
-  <li>Enable the third checkbox to ignore parameters of constructors.</li>
-  <li>Enable the fourth checkbox to ignore parameters of abstract methods.</li>
+  <li>Enable the <strong>"Ignore for property setters"</strong> checkbox to ignore parameters of simple setters.</li>
   <li>
-    Enable the fifth checkbox to ignore parameters of <code>static</code> methods hiding an instance field and
-    to ignore parameters of instance methods in static inner classes hiding an instance field in an outer class.
-    While not strictly hiding, such parameters can still be confusing.
+    Enable the <strong>"Ignore superclass fields not visible from subclass"</strong> checkbox to ignore <code>private</code>
+    fields in a superclass, which are not visible from the parameter.
+  </li>
+  <li>Enable the <strong>"Ignore for constructors"</strong> checkbox to ignore parameters of constructors.</li>
+  <li>Enable the <strong>"Ignore for abstract methods"</strong> checkbox to ignore parameters of abstract methods.</li>
+  <li>
+    Enable the <strong>"Ignore for static method parameters hiding instance fields"</strong> checkbox to ignore parameters
+    of <code>static</code> methods hiding an instance field and to ignore parameters of instance methods in static inner
+    classes hiding an instance field in an outer class. While not strictly hiding, such parameters can still be confusing.
   </li>
 </ol>
 

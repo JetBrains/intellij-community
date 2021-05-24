@@ -13,21 +13,24 @@ Reports <code>java.util.concurrent.ThreadLocalRandom</code> instances which migh
 </p>
 <p>Example:</p>
 <pre>
-  class Main {
-    void printRandomNumbersAsync() {
-      ThreadLocalRandom random = ThreadLocalRandom.current();
-      CompletableFuture.supplyAsync(() -&gt; generateNumbers(random))
-        .thenAccept(numbers -&gt; System.out.println(Arrays.toString(numbers)));
-    }
+  <code>
+    class Main {
+      void printRandomNumbersAsync() {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        CompletableFuture.supplyAsync(() -&gt; generateNumbers(random))
+          .thenAccept(numbers -&gt; System.out.println(Arrays.toString(numbers)));
+      }
 
-    private int[] generateNumbers(Random random) {
-      return random.ints(1000, 0, 100).toArray();
+      private int[] generateNumbers(Random random) {
+        return random.ints(1000, 0, 100).toArray();
+      }
     }
-  }
+  </code>
 </pre>
 <!-- tooltip end -->
 <p>
-  Use the table below to specify methods that are safe to pass a <code>ThreadLocalRandom</code> to as an argument.
+  Use the table in the "Options" panel to specify methods that are safe to pass a <code>ThreadLocalRandom</code> to as an argument.
+  It's possible to use regular expressions for method names.
 </p>
 </body>
 </html>

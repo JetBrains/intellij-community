@@ -24,26 +24,30 @@ There are several reasons a <code>synchronized</code> modifier on a method may b
 <p>The quick-fix is provided to wrap the method body with <code>synchronized(this)</code>.</p>
 <p>Example:</p>
 <pre>
-  class Main {
-    public synchronized void fooBar() {
+  <code>
+    class Main {
+      public synchronized void fooBar() {
+      }
     }
-  }
+  </code>
 </pre>
 <p>After the quick-fix is applied:</p>
 <pre>
-  class Main {
-    public void fooBar() {
-      synchronized (this) {
+  <code>
+    class Main {
+      public void fooBar() {
+        synchronized (this) {
+        }
       }
     }
-  }
+  </code>
 </pre>
 
 <!-- tooltip end -->
-<p>Use the Options panel below to configure the inspection:</p>
+<p>Use the "Options" panel below to configure the inspection:</p>
 <ol>
-  <li>Enable the first checkbox to include native methods into the inspection's scope.</li>
-  <li>Enable the second checkbox to exclude methods that override a synchronized method.</li>
+  <li>Enable the <strong>"Include native methods"</strong> checkbox to include native methods into the inspection's scope.</li>
+  <li>Enable the <strong>"Ignore methods overriding a synchronized method"</strong> checkbox to exclude methods that override a <code>synchronized</code> method.</li>
 </ol>
 
 </body>

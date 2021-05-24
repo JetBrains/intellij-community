@@ -6,19 +6,22 @@ Reports non-static inner classes that implement <code>Serializable</code> and ar
 </p>
 <p>Example:</p>
 <pre>
-  class A {
-    class Main implements Serializable {
+  <code>
+    class A {
+      class Main implements Serializable {
+      }
     }
-  }
+  </code>
 </pre>
 <!-- tooltip end -->
 <p>Use the Options panel below to configure the inspection:</p>
 <ul>
   <li>
-    Fill the table below to suppress the reporting subclasses of a class that implement <code>Serializable</code> as they are not intended to be serialized.
+    Fill the <strong>"Ignore subclasses of:"</strong> table below to suppress the reporting subclasses
+    of a class that implement <code>Serializable</code> as they are not intended to be serialized.
   </li>
   <li>
-    Enable the checkbox below to ignore <code>Serializable</code> anonymous classes.
+    Enable the <strong>"Ignore anonymous inner classes"</strong> checkbox to ignore <code>Serializable</code> anonymous classes.
   </li>
 </ul>
 </body>
