@@ -43,6 +43,11 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
 
     fun testHighlightAllKtFilesInProject() {
         val emptyProfile = System.getProperty("emptyProfile", "false")!!.toBoolean()
+        val percentOfFiles = System.getProperty("files.percentOfFiles", "10")!!.toInt()
+        val maxFilesPerPart = System.getProperty("files.maxFilesPerPart", "300")!!.toInt()
+        val warmUpIterations = System.getProperty("iterations.warmup", "0")!!.toInt()
+        val numberOfIterations = System.getProperty("iterations.number", "1")!!.toInt()
+
         val projectSpecs = projectSpecs()
         logMessage { "projectSpecs: $projectSpecs" }
         try {
@@ -55,8 +60,8 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
                         warmUpProject()
 
                         with(config) {
-                            warmup = 1
-                            iterations = 3
+                            warmup = warmUpIterations
+                            iterations = numberOfIterations
                         }
 
                         try {
@@ -82,22 +87,24 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
                                 }
 
                                 logStatValue("number of kt files", ktFiles.size)
-                                val topMidLastFiles =
-                                    limitedFiles(ktFiles, 10)
-                                logStatValue("limited number of kt files", topMidLastFiles.size)
+                                val filesToProcess =
+                                    limitedFiles(ktFiles, percentOfFiles = percentOfFiles, maxFilesPerPart = maxFilesPerPart)
+                                logStatValue("limited number of kt files", filesToProcess.size)
 
-                                topMidLastFiles.forEach {
+                                filesToProcess.forEach {
                                     logMessage { "${project.relativePath(it)} fileSize: ${Files.size(it.toNioPath())}" }
                                 }
 
-                                topMidLastFiles.forEachIndexed { idx, file ->
-                                    logMessage { "${idx + 1} / ${topMidLastFiles.size} : ${project.relativePath(file)} fileSize: ${Files.size(file.toNioPath())}" }
+                                filesToProcess.forEachIndexed { idx, file ->
+                                    logMessage { "${idx + 1} / ${filesToProcess.size} : ${project.relativePath(file)} fileSize: ${Files.size(file.toNioPath())}" }
 
                                     try {
                                         fixture(file).use {
                                             measure<List<HighlightInfo>>(it.fileName, clearCaches = false) {
                                                 test = {
-                                                    highlight(it)
+                                                    highlight(it).also { infos ->
+                                                        assertTrue("${it.fileName} has no highlighting infos", infos.isNotEmpty())
+                                                    }
                                                 }
                                             }
                                         }
@@ -121,16 +128,16 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
         }
     }
 
-    private fun limitedFiles(ktFiles: Collection<VirtualFile>, partPercent: Int): Collection<VirtualFile> {
+    private fun limitedFiles(ktFiles: Collection<VirtualFile>, percentOfFiles: Int, maxFilesPerPart: Int): Collection<VirtualFile> {
         val sortedBySize = ktFiles
             .filter { Files.size(it.toNioPath()) > 0 }
             .map { it to Files.size(it.toNioPath()) }.sortedByDescending { it.second }
-        val percentOfFiles = (sortedBySize.size * partPercent) / 100
+        val numberOfFiles = minOf((sortedBySize.size * percentOfFiles) / 100, maxFilesPerPart)
 
-        val topFiles = sortedBySize.take(percentOfFiles).map { it.first }
+        val topFiles = sortedBySize.take(numberOfFiles).map { it.first }
         val midFiles =
-            sortedBySize.take(sortedBySize.size / 2 + percentOfFiles / 2).takeLast(percentOfFiles).map { it.first }
-        val lastFiles = sortedBySize.takeLast(percentOfFiles).map { it.first }
+            sortedBySize.take(sortedBySize.size / 2 + numberOfFiles / 2).takeLast(numberOfFiles).map { it.first }
+        val lastFiles = sortedBySize.takeLast(numberOfFiles).map { it.first }
 
         return LinkedHashSet(topFiles + midFiles + lastFiles)
     }

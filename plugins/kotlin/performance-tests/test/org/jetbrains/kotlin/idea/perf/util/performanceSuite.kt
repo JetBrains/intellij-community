@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.perf.util
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.EditorFactory
@@ -185,8 +186,9 @@ class PerformanceSuite {
                 }
             }
 
-            fixture("src/HelloMain.kt").use {
-                highlight(it)
+            fixture("src/HelloMain.kt").use { fixture ->
+                highlight(fixture).firstOrNull { it.severity == HighlightSeverity.WARNING }
+                    ?: error("`[UNUSED_PARAMETER] Parameter 'args' is never used` has to be highlighted")
             }
         }
 
