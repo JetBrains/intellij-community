@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.CommonBundle;
@@ -90,6 +90,13 @@ public final class XFramesView extends XDebugView {
     };
     myFramesList = new XDebuggerFramesList(project) {
       @Override
+      protected @NotNull OccurenceInfo goOccurrence(int step) {
+        OccurenceInfo info = super.goOccurrence(step);
+        ScrollingUtil.ensureIndexIsVisible(this, getSelectedIndex(), step);
+        return info;
+      }
+
+      @Override
       protected @NotNull Navigatable getSelectedFrameNavigatable() {
         Navigatable navigatable = super.getSelectedFrameNavigatable();
         return new NavigatableAdapter() {
@@ -116,6 +123,7 @@ public final class XFramesView extends XDebugView {
     });
 
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
+    ScrollingUtil.installActions(myFramesList, myMainPanel, false);
 
     myThreadComboBox = new XDebuggerEmbeddedComboBox<>();
     myThreadComboBox.setSwingPopup(false);

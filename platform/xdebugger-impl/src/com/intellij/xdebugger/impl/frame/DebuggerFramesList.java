@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.OccurenceNavigator;
@@ -56,13 +56,16 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
 
   @Override
   public OccurenceInfo goNextOccurence() {
-    setSelectedIndex(getSelectedIndex() + 1);
-    return getOccurenceInfo();
+    return goOccurrence(1);
   }
 
   @Override
   public OccurenceInfo goPreviousOccurence() {
-    setSelectedIndex(getSelectedIndex() - 1);
+    return goOccurrence(-1);
+  }
+
+  protected @NotNull OccurenceInfo goOccurrence(int step) {
+    setSelectedIndex(getSelectedIndex() + step);
     return getOccurenceInfo();
   }
 
