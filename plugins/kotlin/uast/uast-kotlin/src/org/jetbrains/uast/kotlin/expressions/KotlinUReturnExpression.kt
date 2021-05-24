@@ -36,6 +36,11 @@ class KotlinUImplicitReturnExpression(
     override lateinit var returnExpression: UExpression
         internal set
 
+    // Due to the lack of [psi], (lazily) delegate to the one in [returnExpression]
+    override val baseResolveProviderService: BaseKotlinUastResolveProviderService by lz {
+        (returnExpression as KotlinAbstractUElement).baseResolveProviderService
+    }
+
     override fun unwrapToSourcePsi(): List<PsiElement> {
         return returnExpression.toSourcePsiFakeAware()
     }
