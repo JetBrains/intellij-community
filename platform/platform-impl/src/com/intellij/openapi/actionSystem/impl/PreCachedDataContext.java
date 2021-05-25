@@ -37,7 +37,7 @@ import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
 /**
  * @author gregsh
  */
-class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier {
+class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier, AsyncDataContext {
 
   private static int ourPrevMapEventCount;
   private static final Map<Component, Map<String, Object>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
