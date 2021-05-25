@@ -79,15 +79,6 @@ val kotlinUastPlugin: UastLanguagePlugin by lz {
 internal inline fun String?.orAnonymous(kind: String = ""): String =
     this ?: ("<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">")
 
-internal fun KtExpression.unwrapBlockOrParenthesis(): KtExpression {
-    val innerExpression = KtPsiUtil.safeDeparenthesize(this)
-    if (innerExpression is KtBlockExpression) {
-        val statement = innerExpression.statements.singleOrNull() ?: return this
-        return KtPsiUtil.safeDeparenthesize(statement)
-    }
-    return innerExpression
-}
-
 internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
     (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
 
