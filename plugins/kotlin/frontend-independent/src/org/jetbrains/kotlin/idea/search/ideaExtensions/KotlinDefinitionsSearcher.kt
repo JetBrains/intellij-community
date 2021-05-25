@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains
-import java.util.*
 
 class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
     override fun execute(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in PsiElement>): Boolean {
@@ -88,13 +87,12 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
 
         private fun isDelegated(element: PsiElement): Boolean = element is KtLightMethod && element.isDelegated
 
-        private fun isFieldParameter(parameter: KtParameter): Boolean {
-            return runReadAction { KtPsiUtil.getClassIfParameterIsProperty(parameter) != null }
+        private fun isFieldParameter(parameter: KtParameter): Boolean = runReadAction {
+            KtPsiUtil.getClassIfParameterIsProperty(parameter) != null
         }
 
         private fun processClassImplementations(klass: KtClass, consumer: Processor<PsiElement>): Boolean {
-            val psiClass = runReadAction { klass.providedToLightClass() ?: providedCreateKtFakeLightClass(klass) }
-                as? KtLightClass
+            val psiClass = runReadAction { klass.providedToLightClass() ?: providedCreateKtFakeLightClass(klass) } as? KtLightClass
                 ?: return false //TODO Implement FIR support for not nullable providedCreateKtFakeLightClass
 
             val searchScope = runReadAction { psiClass.useScope }
@@ -127,49 +125,44 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
             }
         }
 
-        private fun processFunctionImplementations(function: KtFunction, scope: SearchScope, consumer: Processor<PsiElement>): Boolean {
-            return runReadAction {
-                function.toPossiblyFakeLightMethods().firstOrNull()?.forEachImplementation(scope, consumer::process) ?: true
-            }
+        private fun processFunctionImplementations(
+            function: KtFunction,
+            scope: SearchScope,
+            consumer: Processor<PsiElement>,
+        ): Boolean = runReadAction {
+            function.toPossiblyFakeLightMethods().firstOrNull()?.forEachImplementation(scope, consumer::process) ?: true
         }
 
         private fun processPropertyImplementations(
             declaration: KtNamedDeclaration,
             scope: SearchScope,
             consumer: Processor<PsiElement>
-        ): Boolean {
-            return runReadAction {
-                processPropertyImplementationsMethods(declaration.toPossiblyFakeLightMethods(), scope, consumer)
-            }
+        ): Boolean = runReadAction {
+            processPropertyImplementationsMethods(declaration.toPossiblyFakeLightMethods(), scope, consumer)
         }
 
-        private fun processActualDeclarations(declaration: KtDeclaration, consumer: Processor<PsiElement>): Boolean {
-            return runReadAction {
-                if (!declaration.isExpectDeclaration()) true
-                else declaration.actualsForExpected().all(consumer::process)
-            }
+        private fun processActualDeclarations(declaration: KtDeclaration, consumer: Processor<PsiElement>): Boolean = runReadAction {
+            if (!declaration.isExpectDeclaration()) true
+            else declaration.actualsForExpected().all(consumer::process)
         }
 
         fun processPropertyImplementationsMethods(
             accessors: Iterable<PsiMethod>,
             scope: SearchScope,
             consumer: Processor<PsiElement>
-        ): Boolean {
-            return accessors.all { method ->
-                method.forEachOverridingMethod(scope) { implementation ->
-                    if (isDelegated(implementation)) return@forEachOverridingMethod true
+        ): Boolean = accessors.all { method ->
+            method.forEachOverridingMethod(scope) { implementation ->
+                if (isDelegated(implementation)) return@forEachOverridingMethod true
 
-                    val elementToProcess = runReadAction {
-                        val mirrorElement = (implementation as? KtLightMethod)?.kotlinOrigin
-                        when (mirrorElement) {
-                            is KtProperty, is KtParameter -> mirrorElement
-                            is KtPropertyAccessor -> if (mirrorElement.parent is KtProperty) mirrorElement.parent else implementation
-                            else -> implementation
-                        }
+                val elementToProcess = runReadAction {
+                    when (val mirrorElement = (implementation as? KtLightMethod)?.kotlinOrigin) {
+                        is KtProperty, is KtParameter -> mirrorElement
+                        is KtPropertyAccessor -> if (mirrorElement.parent is KtProperty) mirrorElement.parent else implementation
+                        else -> implementation
                     }
-
-                    consumer.process(elementToProcess)
                 }
+
+                consumer.process(elementToProcess)
             }
         }
     }
