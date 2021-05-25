@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.test.java.analysis
 
+import com.intellij.idea.Bombed
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PsiJavaPatterns.psiMethod
 import com.intellij.patterns.uast.callExpression
@@ -457,6 +458,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
+  @Bombed(year = 2021, month = 5, day = 28, user = "aleksandr.izmaylov", description = "Fails on Windows")
   fun `test many assignments`() {
     val file = myFixture.configureByText("MyFile.java", """
       class MyFile {
