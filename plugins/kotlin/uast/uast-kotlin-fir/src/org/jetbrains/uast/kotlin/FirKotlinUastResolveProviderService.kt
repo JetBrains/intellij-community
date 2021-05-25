@@ -32,4 +32,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun getExpressionType(uExpression: UExpression): PsiType? {
         TODO("Not yet implemented")
     }
+
+    override fun evaluate(uExpression: UExpression): Any? {
+        TODO("Not yet implemented")
+    }
 }
