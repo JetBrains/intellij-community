@@ -19,7 +19,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
   public boolean isIncludeInherited;
   public boolean isIncludeOverloadUsages;
   public boolean isImplicitToString = true;
-  public boolean isSearchForBaseMethod;
+  public boolean isSearchForBaseMethod = true;
 
   public JavaMethodFindUsagesOptions(@NotNull Project project) {
     super(project);
@@ -42,7 +42,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     isIncludeInherited = properties.getBoolean(prefix + "isIncludeInherited");
     isIncludeOverloadUsages = properties.getBoolean(prefix + "isIncludeOverloadUsages");
     isImplicitToString = properties.getBoolean(prefix + "isImplicitToString", true);
-    isSearchForBaseMethod = properties.getBoolean(prefix + "isSearchForBaseMethod", false);
+    isSearchForBaseMethod = properties.getBoolean(prefix + "isSearchForBaseMethod", true);
   }
 
   @Override
@@ -56,7 +56,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     properties.setValue(prefix + "isIncludeInherited", isIncludeInherited);
     properties.setValue(prefix + "isIncludeOverloadUsages", isIncludeOverloadUsages);
     properties.setValue(prefix + "isImplicitToString", isImplicitToString, true);
-    properties.setValue(prefix + "isSearchForBaseMethod", isSearchForBaseMethod);
+    properties.setValue(prefix + "isSearchForBaseMethod", isSearchForBaseMethod, true);
   }
 
   public boolean equals(Object o) {
