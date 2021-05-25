@@ -105,10 +105,7 @@ object TestGenerator {
 
     private fun Code.appendCopyrightComment() {
         val year = GregorianCalendar()[Calendar.YEAR]
-        appendMultilineComment("""
-            Copyright 2010-$year JetBrains s.r.o. and Kotlin Programming Language contributors.
-            Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
-        """.trimIndent())
+        appendLine("// Copyright 2000-$year JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.")
     }
 
     private fun Code.appendGeneratedComment() {
