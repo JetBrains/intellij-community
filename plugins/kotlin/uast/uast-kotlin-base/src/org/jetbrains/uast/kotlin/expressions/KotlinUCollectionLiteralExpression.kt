@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.uast.kotlin.expressions
+package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiElement
@@ -8,9 +8,6 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.KotlinAbstractUExpression
-import org.jetbrains.uast.kotlin.KotlinConverter
-import org.jetbrains.uast.kotlin.KotlinUElementWithType
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 class KotlinUCollectionLiteralExpression(
@@ -40,7 +37,9 @@ class KotlinUCollectionLiteralExpression(
         get() = sourcePsi.getInnerExpressions().size
 
     override val valueArguments by lazy {
-        sourcePsi.getInnerExpressions().map { KotlinConverter.convertOrEmpty(it, this) }
+        sourcePsi.getInnerExpressions().map {
+            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it, this)
+        }
     }
 
     override fun asRenderString(): String = "collectionLiteral[" + valueArguments.joinToString { it.asRenderString() } + "]"
