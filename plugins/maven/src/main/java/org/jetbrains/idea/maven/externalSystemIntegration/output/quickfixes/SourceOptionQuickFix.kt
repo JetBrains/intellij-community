@@ -20,7 +20,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.jrt.JrtFileSystem
@@ -64,9 +63,11 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
       val lastErrorProject = parsingContext.startedProjects.last() + ":"
       val failedProject = parsingContext.projectsInReactor.find { it.startsWith(lastErrorProject) } ?: return false
       val mavenProject = MavenProjectsManager.getInstance(parsingContext.ideaProject).findProject(MavenId(failedProject)) ?: return false
+      val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(parsingContext.ideaProject), mavenProject) ?: return false
 
       messageConsumer.accept(
-        BuildIssueEventImpl(parentId, SourceLevelBuildIssue(parsingContext.ideaProject, logLine.line, logLine.line, mavenProject),
+        BuildIssueEventImpl(parentId,
+                            SourceLevelBuildIssue(parsingContext.ideaProject, logLine.line, logLine.line, mavenProject, moduleJdk),
                             MessageEvent.Kind.ERROR));
       return true
     }
@@ -79,13 +80,16 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
 class SourceLevelBuildIssue(project: Project,
                             private val message: String,
                             override val title: String,
-                            private val mavenProject: MavenProject) : BuildIssue {
+                            private val mavenProject: MavenProject,
+                            private val moduleJdk: Sdk) : BuildIssue {
 
   override val quickFixes: List<UpdateSourceLevelQuickFix> = Collections.singletonList(prepareQuickFixes(project, mavenProject))
   override val description = createDescription()
 
   private fun createDescription() = "$message\n<br/>" + quickFixes.map {
-    HtmlChunk.link(it.id, message("maven.source.level.not.supported.update", it.mavenProject.displayName)).toString()
+    message("maven.source.level.not.supported.update",
+            LanguageLevel.parse(moduleJdk.versionString)?.toJavaVersion(),
+            it.id, it.mavenProject.displayName)
   }.joinToString("\n<br/>")
 
 
@@ -130,7 +134,9 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
     val predicates = CacheForCompilerErrorMessages.getPredicatesToCheck(project, moduleName)
     val failedId = extractFailedMavenId(project, moduleName) ?: return null;
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(failedId) ?: return null
-    if (predicates.any { it(message) }) return SourceLevelBuildIssue(project, title, message, mavenProject)
+    val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(project), mavenProject) ?: return null
+
+    if (predicates.any { it(message) }) return SourceLevelBuildIssue(project, title, message, mavenProject, moduleJdk)
     return null
   }
 
@@ -195,17 +201,17 @@ object CacheForCompilerErrorMessages {
   fun connectToJdkListener(myProject: Project, disposable: Disposable) {
     myProject.messageBus.connect(disposable).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
       override fun jdkAdded(jdk: Sdk) {
-        synchronized(map){map.remove(jdk.name)}
+        synchronized(map) { map.remove(jdk.name) }
       }
 
       override fun jdkRemoved(jdk: Sdk) {
-        synchronized(map){map.remove(jdk.name)}
+        synchronized(map) { map.remove(jdk.name) }
       }
 
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-        synchronized(map){
+        synchronized(map) {
           val list = map[previousName]
-          if(list!=null){
+          if (list != null) {
             map[jdk.name] = list
           }
         }
