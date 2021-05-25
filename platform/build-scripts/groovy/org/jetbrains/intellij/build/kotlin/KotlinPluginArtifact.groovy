@@ -69,6 +69,7 @@ final class KotlinPluginArtifact {
 
     switch (kind) {
       case KotlinPluginKind.AC:
+      case KotlinPluginKind.MI_AC:
         def extendedBuild = sinceBuild.substring(0, sinceBuild.lastIndexOf('.'))
         if (!sinceBuild.matches("\\d+\\.\\d+")) {
           sinceBuild = extendedBuild
@@ -111,6 +112,7 @@ final class KotlinPluginArtifact {
         )
         break
       case KotlinPluginKind.MI:
+      case KotlinPluginKind.MI_AC:
       case KotlinPluginKind.AC:
       case KotlinPluginKind.ROBOSCOPE:
         break
