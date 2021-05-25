@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
 
@@ -204,6 +204,31 @@ class PluginDescriptorTest {
 
     assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
     assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
+  }
+
+  @Suppress("PluginXmlValidity")
+  @Test
+  fun `use newer plugin if disabled`() {
+    val pluginDir = inMemoryFs.fs.getPath("/plugins")
+    writeDescriptor("foo_3-0", pluginDir, """
+      <idea-plugin>
+        <id>foo</id>
+        <vendor>JetBrains</vendor>
+        <version>1.0</version>
+      </idea-plugin>""")
+    writeDescriptor("foo_2-0", pluginDir, """
+      <idea-plugin>
+        <id>foo</id>
+        <vendor>JetBrains</vendor>
+        <version>2.0</version>
+      </idea-plugin>""")
+
+    val context = loadDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("foo")))
+    val plugins = context.result.incompletePlugins
+    assertThat(plugins).hasSize(1)
+    val foo = plugins.values.single()
+    assertThat(foo.version).isEqualTo("2.0")
+    assertThat(foo.pluginId.idString).isEqualTo("foo")
   }
 
   @Suppress("PluginXmlValidity")
