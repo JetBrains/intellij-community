@@ -6,19 +6,19 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
-import com.intellij.codeInspection.dataFlow.java.inst.CheckNotNullInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
-import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -148,12 +148,20 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     if (flow == null) return Map.of();
     var listener = new JavaDfaListener() {
       final Map<PsiExpression, ThreeState> values = new HashMap<>();
+      final Set<DfaVariableValue> myOkNullChecks = new HashSet<>();
       DataFlowInterpreter myInterpreter;
 
       @Override
       public void beforeExpressionPush(@NotNull DfaValue value,
                                        @NotNull PsiExpression expression,
                                        @NotNull DfaMemoryState state) {
+        if (value instanceof DfaVariableValue && myOkNullChecks.contains(value)) {
+          DfType type = state.getDfType(value);
+          if (type instanceof DfReferenceType && ((DfReferenceType)type).getNullability() == DfaNullability.NOT_NULL) {
+            type = type instanceof DfConstantType ? DfType.TOP : ((DfReferenceType)type).dropNullability();
+            ((DfaMemoryStateImpl)state).recordVariableType((DfaVariableValue)value, type);
+          }
+        }
         if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) != expressionToAnalyze) return;
         ThreeState old = values.get(expression);
         if (old == ThreeState.UNSURE) return;
@@ -170,29 +178,15 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
                               @NotNull DfaValue value,
                               @NotNull ThreeState failed,
                               @NotNull DfaMemoryState state) {
-        if (problem instanceof ContractFailureProblem && failed != ThreeState.NO) {
+        if (failed != ThreeState.NO && problem instanceof ContractFailureProblem) {
           myInterpreter.cancel();
         }
-      }
-    };
-    var interpreter = new StandardDataFlowInterpreter(flow, listener) {
-      @Override
-      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
-        Instruction instruction = instructionState.getInstruction();
-        if (instruction instanceof CheckNotNullInstruction) {
-          DfaMemoryState state = instructionState.getMemoryState();
-          DfaValue value = state.peek();
-          if (value instanceof DfaVariableValue) {
-            DfType dfType = state.getDfType(value);
-            if (dfType instanceof DfReferenceType) {
-              state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
-              return instructionState.nextStates(this);
-            }
-          }
+        else if (problem instanceof NullabilityProblemKind.NullabilityProblem<?> && value instanceof DfaVariableValue) {
+          myOkNullChecks.add((DfaVariableValue)value);
         }
-        return super.acceptInstruction(instructionState);
       }
     };
+    var interpreter = new StandardDataFlowInterpreter(flow, listener);
     listener.myInterpreter = interpreter;
     RunnerResult result = interpreter.interpret(createMemoryState(factory));
     return result == RunnerResult.OK ? listener.values : Collections.emptyMap();

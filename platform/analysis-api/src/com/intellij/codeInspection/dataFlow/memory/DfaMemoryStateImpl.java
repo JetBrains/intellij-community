@@ -1213,7 +1213,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return value.getDfType();
   }
 
-  protected void recordVariableType(@NotNull DfaVariableValue dfaVar, @NotNull DfType type) {
+  public void recordVariableType(@NotNull DfaVariableValue dfaVar, @NotNull DfType type) {
     dfaVar = canonicalize(dfaVar);
     type = type.getBasicType();
     if (type.equals(dfaVar.getInherentType())) {

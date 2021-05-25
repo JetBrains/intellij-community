@@ -7,6 +7,10 @@ public class StringLength {
     if (<warning descr="Condition 'str.isEmpty()' covered by subsequent condition 'str.length() < 3'">str.isEmpty()</warning> || str.length() < 3) {}
   }
 
+  void testNullcheck(String str) {
+    if (str != null && str.equals("foo")) {}
+  }
+
   void test2(String str) {
     if (str.length() > 8 && str.charAt(8) == 'a') {}
   }
