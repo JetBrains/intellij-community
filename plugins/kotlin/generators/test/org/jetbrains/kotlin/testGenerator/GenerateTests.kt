@@ -1222,6 +1222,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/lateinit", pattern = pattern)
             model("quickfix/modifiers", pattern = pattern, isRecursive = false)
             model("quickfix/nullables/unsafeInfixCall", pattern = pattern)
+            model("quickfix/override", pattern = pattern, filenameStartsLowerCase = true, isRecursive = false)
             model("quickfix/override/typeMismatchOnOverride", pattern = pattern, isRecursive = false)
             model("quickfix/replaceInfixOrOperatorCall", pattern = pattern)
             model("quickfix/replaceWithDotCall", pattern = pattern)
