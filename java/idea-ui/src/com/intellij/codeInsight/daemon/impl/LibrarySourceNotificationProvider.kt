@@ -6,6 +6,7 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
@@ -55,6 +56,27 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
                 DiffManager.getInstance().showDiff(project, request)
               }
             }
+            if (ApplicationManager.getApplication().isInternal) {
+              val cls = offender.originalElement
+              if (cls is PsiClass) {
+                @Suppress("HardCodedStringLiteral")
+                panel.createActionLabel("Show member diff") {
+                  if (!project.isDisposed && clsFile.isValid) {
+                    val sourceMembers = formatMembers(offender)
+                    val clsMembers = formatMembers(cls)
+                    val cf = DiffContentFactory.getInstance()
+                    val request = SimpleDiffRequest(
+                      null,
+                      cf.create(project, clsMembers),
+                      cf.create(project, sourceMembers),
+                      clsFile.path,
+                      file.path
+                    )
+                    DiffManager.getInstance().showDiff(project, request)
+                  }
+                }
+              }
+            }
             return panel
           }
         }
@@ -88,4 +110,11 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
   private fun format(m: PsiMethod) = formatMethod(m, PsiSubstitutor.EMPTY, METHOD, PARAMETER)
 
   private fun format(c: PsiClass) = formatClass(c, CLASS).removeSuffix(" extends java.lang.Object")
+
+  private fun formatMembers(c: PsiClass): String {
+    val members = fields(c).map(::format).sorted() +
+                  methods(c).map(::format).sorted() +
+                  inners(c).map(::format).sorted()
+    return members.joinToString(separator = "\n", postfix = "\n")
+  }
 }
