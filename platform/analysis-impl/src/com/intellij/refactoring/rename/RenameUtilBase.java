@@ -61,25 +61,29 @@ public final class RenameUtilBase {
     if (hasBindables) {
       for (UsageInfo usage : usages) {
         final PsiReference ref = usage.getReference();
-        if (ref instanceof BindablePsiReference) {
-          boolean fallback = true;
-          if (!(ref instanceof FragmentaryPsiReference
-                && ((FragmentaryPsiReference)ref).isFragmentOnlyRename())) {
-            try {
-              ref.bindToElement(namedElement);
-              fallback = false;
-            }
-            catch (IncorrectOperationException ignored) {
-            }
-          }
-          if (fallback) {//fall back to old scheme
-            ref.handleElementRename(newName);
-          }
-        }
+        if(ref != null)
+          renameReference(namedElement, newName, ref);
       }
     }
     if (listener != null) {
       listener.elementRenamed(namedElement);
+    }
+  }
+
+  public static void renameReference(@NotNull PsiElement namedElement, String newName, @NotNull PsiReference ref) {
+    if (ref instanceof BindablePsiReference) {
+      boolean fallback = true;
+      if (!(ref instanceof FragmentaryPsiReference && ((FragmentaryPsiReference)ref).isFragmentOnlyRename())) {
+        try {
+          ref.bindToElement(namedElement);
+          fallback = false;
+        }
+        catch (IncorrectOperationException ignored) {
+        }
+      }
+      if (fallback) {//fall back to old scheme
+        ref.handleElementRename(newName);
+      }
     }
   }
 
