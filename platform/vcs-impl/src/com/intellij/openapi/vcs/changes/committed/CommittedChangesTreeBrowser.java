@@ -357,7 +357,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
       menuGroup.add(action);
     }
     menuGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
-    PopupHandler.installPopupHandler(myChangesTree, menuGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myChangesTree, menuGroup, "CommittedChangesTreePopup");
   }
 
   @Override

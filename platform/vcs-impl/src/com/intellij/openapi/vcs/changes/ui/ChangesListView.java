@@ -417,7 +417,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
 
   @Override
   public void installPopupHandler(@NotNull ActionGroup group) {
-    PopupHandler.installPopupHandler(this, group, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(this, group, ActionPlaces.CHANGES_VIEW_POPUP);
   }
 
   @Override

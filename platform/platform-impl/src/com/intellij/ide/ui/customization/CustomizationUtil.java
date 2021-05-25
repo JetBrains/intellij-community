@@ -264,14 +264,14 @@ public final class CustomizationUtil {
   }
 
   @NotNull
-  public static MouseListener installPopupHandler(JComponent component, @NotNull String groupId, String place) {
-    return PopupHandler.installPopupHandler(
+  public static MouseListener installPopupHandler(@NotNull JComponent component, @NotNull String groupId, @NotNull String place) {
+    return PopupHandler.installPopupMenu(
       component, new ActionGroup() {
         @Override
         public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
           return group == null ? EMPTY_ARRAY : group.getChildren(e);
         }
-      }, place, ActionManager.getInstance(), null);
+      }, place);
   }
 }

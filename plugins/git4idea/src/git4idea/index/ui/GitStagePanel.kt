@@ -124,7 +124,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     toolbar = ActionManager.getInstance().createActionToolbar(GIT_STAGE_PANEL_PLACE, toolbarGroup, true)
     toolbar.setTargetComponent(tree)
 
-    PopupHandler.installPopupHandler(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
+    PopupHandler.installPopupMenu(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
 
     val statusPanel = CommitStatusPanel(commitPanel).apply {
       border = empty(0, 1, 0, 6)

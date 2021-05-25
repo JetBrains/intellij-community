@@ -2,11 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.util.containers.MultiMap
@@ -14,12 +12,8 @@ import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsUser
-import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
-import org.jetbrains.plugins.github.api.data.GHGitActor
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import javax.swing.JComponent
@@ -43,9 +37,10 @@ internal class GHPRCommitsBrowserComponentFactory(private val project: Project) 
       ScrollingUtil.installActions(it)
       ListUiUtil.Selection.installSelectionOnFocus(it)
       ListUiUtil.Selection.installSelectionOnRightClick(it)
-      PopupHandler.installSelectionListPopup(it,
-                                             DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")),
-                                             ActionPlaces.UNKNOWN, actionManager)
+      PopupHandler.installSelectionListPopup(
+        it,
+        DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")),
+        "GHPRCommitsPopup")
       ListSpeedSearch(it) { commit -> commit.subject }
     }
 

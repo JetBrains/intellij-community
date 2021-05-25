@@ -243,7 +243,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
     SmartExpander.installOn(tree);
     EditSourceOnDoubleClickHandler.install(tree);
     new TreeSpeedSearch(tree);
-    PopupHandler.installPopupHandler(tree, createTreePopupActions(), "MigrationPanelPopup");
+    PopupHandler.installPopupMenu(tree, createTreePopupActions(), "MigrationPanelPopup");
   }
 
   private ActionGroup createTreePopupActions() {

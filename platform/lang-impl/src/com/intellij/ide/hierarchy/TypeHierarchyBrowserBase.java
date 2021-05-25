@@ -33,27 +33,22 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected abstract boolean isInterface(@NotNull PsiElement psiElement);
 
-  protected void createTreeAndSetupCommonActions(@NotNull Map<? super String, ? super JTree> trees, @NotNull String typeHierarchyActionGroupName) {
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(typeHierarchyActionGroupName);
-    createTreeAndSetupCommonActions(trees, group);
-  }
-
-  protected void createTreeAndSetupCommonActions(@NotNull Map<? super String, ? super JTree> trees, @NotNull ActionGroup group) {
+  protected void createTreeAndSetupCommonActions(@NotNull Map<? super String, ? super JTree> trees, @NotNull String groupId) {
     BaseOnThisTypeAction baseOnThisTypeAction = createBaseOnThisAction();
     JTree tree1 = createTree(true);
-    PopupHandler.installPopupHandler(tree1, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree1, groupId, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP);
     baseOnThisTypeAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree1);
     trees.put(getTypeHierarchyType(), tree1);
 
     JTree tree2 = createTree(true);
-    PopupHandler.installPopupHandler(tree2, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree2, groupId, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP);
     baseOnThisTypeAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree2);
     trees.put(getSupertypesHierarchyType(), tree2);
 
     JTree tree3 = createTree(true);
-    PopupHandler.installPopupHandler(tree3, group, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree3, groupId, ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP);
     baseOnThisTypeAction
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_TYPE_HIERARCHY).getShortcutSet(), tree3);
     trees.put(getSubtypesHierarchyType(), tree3);

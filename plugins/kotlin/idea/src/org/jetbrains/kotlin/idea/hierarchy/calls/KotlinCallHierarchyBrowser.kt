@@ -6,7 +6,6 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.ide.hierarchy.JavaHierarchyUtil
 import com.intellij.ide.util.treeView.NodeDescriptor
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
@@ -19,15 +18,13 @@ import javax.swing.JTree
 class KotlinCallHierarchyBrowser(element: PsiElement) :
     CallHierarchyBrowserBase(element.project, element) {
     override fun createTrees(trees: MutableMap<in String, in JTree>) {
-        val group = ActionManager.getInstance().getAction(IdeActions.GROUP_CALL_HIERARCHY_POPUP) as ActionGroup
         val baseOnThisMethodAction = BaseOnThisMethodAction()
 
         val tree1 = createTree(false)
-        PopupHandler.installPopupHandler(
+        PopupHandler.installPopupMenu(
             tree1,
-            group,
-            ActionPlaces.CALL_HIERARCHY_VIEW_POPUP,
-            ActionManager.getInstance()
+            IdeActions.GROUP_CALL_HIERARCHY_POPUP,
+            ActionPlaces.CALL_HIERARCHY_VIEW_POPUP
         )
         baseOnThisMethodAction.registerCustomShortcutSet(
             ActionManager.getInstance().getAction(IdeActions.ACTION_CALL_HIERARCHY).shortcutSet,
@@ -36,11 +33,10 @@ class KotlinCallHierarchyBrowser(element: PsiElement) :
         trees[CALLEE_TYPE] = tree1
 
         val tree2 = createTree(false)
-        PopupHandler.installPopupHandler(
+        PopupHandler.installPopupMenu(
             tree2,
-            group,
-            ActionPlaces.CALL_HIERARCHY_VIEW_POPUP,
-            ActionManager.getInstance()
+            IdeActions.GROUP_CALL_HIERARCHY_POPUP,
+            ActionPlaces.CALL_HIERARCHY_VIEW_POPUP
         )
         baseOnThisMethodAction.registerCustomShortcutSet(
             ActionManager.getInstance().getAction(IdeActions.ACTION_CALL_HIERARCHY).shortcutSet,
