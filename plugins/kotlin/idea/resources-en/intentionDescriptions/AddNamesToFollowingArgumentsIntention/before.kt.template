@@ -1,7 +1,9 @@
-fun foo(x: Int, y: Int, comment: String) {
-
+fun checkEquals(expected: Int, actual: Int, message: String) {
+    if (expected != actual) {
+        println(message)
+    }
 }
 
-fun test() {
-    foo(24, <spot>42, "Hello"</spot>)
+fun usage() {
+    <spot>checkEquals(24, <spot>42, "Consistency check failed"</spot>)
 }
