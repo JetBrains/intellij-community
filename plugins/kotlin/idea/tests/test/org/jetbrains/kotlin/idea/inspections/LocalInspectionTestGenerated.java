@@ -4456,6 +4456,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/assignment.kt");
         }
 
+        @TestMetadata("basicForLoop.kt")
+        public void testBasicForLoop() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicForLoop.kt");
+        }
+
         @TestMetadata("basicRange.kt")
         public void testBasicRange() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicRange.kt");
@@ -4489,6 +4494,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("declaration.kt")
         public void testDeclaration() throws Exception {
             runTest("testData/inspectionsLocal/dfa/declaration.kt");
+        }
+
+        @TestMetadata("divByZero.kt")
+        public void testDivByZero() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/divByZero.kt");
         }
 
         @TestMetadata("doWhileStatement.kt")
