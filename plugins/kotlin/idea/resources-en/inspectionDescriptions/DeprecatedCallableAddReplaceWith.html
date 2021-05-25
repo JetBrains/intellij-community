@@ -1,6 +1,25 @@
 <html>
 <body>
-Reports deprecated functions and properties that do not have a <code>kotlin.ReplaceWith</code> argument in its <code>kotlin.deprecated</code> annotation
-and there is a suggestion to add one based on the body.
+Reports deprecated functions and properties that do not have a <code>kotlin.ReplaceWith</code> argument in its
+<code>kotlin.deprecated</code> annotation and there is a suggestion to add one based on their body.
+<p>
+    Kotlin allows to provide a automatized replacement for deprecated declarations by providing a <code>replaceWith</code> argument.
+    It is recommended to provide it so users will be able to fix deprecation issues in their code easier.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  @Deprecated("Use refined() instead.")
+  fun deprecated() = refined()
+
+  fun refined() = 42
+</code></pre>
+<p>A quick-fix is suggested to add a missing <code>ReplaceWith()</code> argument:</p>
+<pre><code>
+  @Deprecated("Use refined() instead.", ReplaceWith("refined()"))
+  fun deprecated() = refined()
+
+  fun refined() = 42
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>
