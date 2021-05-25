@@ -31,7 +31,7 @@ public class JavaCallHierarchyData {
   private final PsiMethod myMethodToFind;
   private final PsiClassType myOriginalType;
   private final PsiMethod myMethod;
-  private final Set<PsiMethod> myMethodsToFind;
+  private final Set<? extends PsiMethod> myMethodsToFind;
   private final NodeDescriptor<?> myNodeDescriptor;
   private final Map<PsiMember, NodeDescriptor<?>> myResultMap;
   private final Project myProject;
@@ -40,7 +40,7 @@ public class JavaCallHierarchyData {
                                @NotNull PsiMethod methodToFind,
                                @NotNull PsiClassType originalType,
                                @NotNull PsiMethod method,
-                               @NotNull Set<PsiMethod> methodsToFind,
+                               @NotNull Set<? extends PsiMethod> methodsToFind,
                                @NotNull NodeDescriptor<?> nodeDescriptor,
                                @NotNull Map<PsiMember, NodeDescriptor<?>> resultMap,
                                @NotNull Project project) {
@@ -76,7 +76,7 @@ public class JavaCallHierarchyData {
   }
 
   @NotNull
-  public Set<PsiMethod> getMethodsToFind() {
+  public Set<? extends PsiMethod> getMethodsToFind() {
     return myMethodsToFind;
   }
 

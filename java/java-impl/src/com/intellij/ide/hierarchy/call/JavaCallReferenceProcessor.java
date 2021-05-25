@@ -33,7 +33,7 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
   public boolean process(@NotNull PsiReference reference, @NotNull JavaCallHierarchyData data) {
     PsiClass originalClass = data.getOriginalClass();
     PsiMethod method = data.getMethod();
-    Set<PsiMethod> methodsToFind = data.getMethodsToFind();
+    Set<? extends PsiMethod> methodsToFind = data.getMethodsToFind();
     PsiMethod methodToFind = data.getMethodToFind();
     PsiClassType originalType = data.getOriginalType();
     Map<PsiMember, NodeDescriptor<?>> methodToDescriptorMap = data.getResultMap();
@@ -113,7 +113,7 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
     // Thus, we already have a node that represents *method*
     // Check whether we have any other node along the parent-chain that represents that same method
 
-    NodeDescriptor ancestorDescriptor = parentDescriptor;
+    NodeDescriptor<?> ancestorDescriptor = parentDescriptor;
     // Start check on grandparent
     while ((ancestorDescriptor = ancestorDescriptor.getParentDescriptor()) != null) {
       if (ancestorDescriptor instanceof HierarchyNodeDescriptor) {
