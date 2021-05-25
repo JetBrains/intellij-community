@@ -160,8 +160,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
       val entityId = e.id
 
-      val beforeParents = this.refs.getParentRefsOfChild(entityId)
-      val beforeChildren = this.refs.getChildrenRefsOfParentBy(entityId).flatMap { (key, value) -> value.map { key to it } }
+      val beforeParents = this.refs.getParentRefsOfChild(entityId.asChild())
+      val beforeChildren = this.refs.getChildrenRefsOfParentBy(entityId.asParent()).flatMap { (key, value) -> value.map { key to it } }
 
       // Execute modification code
       (modifiableEntity as ModifiableWorkspaceEntityBase<*>).allowModifications {
@@ -336,30 +336,31 @@ internal class WorkspaceEntityStorageBuilderImpl(
       //   If the reference leads to the unmatched entity, we should save the entity to try to restore the reference later.
       for ((_, entityId) in localMatchedEntities.values()) {
         // Traverse parents of the entity
-        for ((connectionId, parentId) in this.refs.getParentRefsOfChild(entityId)) {
-          val parentEntity = this.entityDataByIdOrDie(parentId)
+        val childEntityId = entityId.asChild()
+        for ((connectionId, parentId) in this.refs.getParentRefsOfChild(childEntityId)) {
+          val parentEntity = this.entityDataByIdOrDie(parentId.id)
           if (sourceFilter(parentEntity.entitySource)) {
             // Remove the connection between matched entities
-            this.refs.removeParentToChildRef(connectionId, parentId, entityId)
+            this.refs.removeParentToChildRef(connectionId, parentId, childEntityId)
           }
           else {
             // Save the entity for restoring reference to it later
-            localUnmatchedReferencedNodes.put(parentEntity.identificator(this), parentId)
+            localUnmatchedReferencedNodes.put(parentEntity.identificator(this), parentId.id)
           }
         }
 
         // TODO: 29.04.2020 Do we need iterate over children and parents? Maybe only parents would be enough?
         // Traverse children of the entity
-        for ((connectionId, childrenIds) in this.refs.getChildrenRefsOfParentBy(entityId)) {
+        for ((connectionId, childrenIds) in this.refs.getChildrenRefsOfParentBy(entityId.asParent())) {
           for (childId in childrenIds) {
-            val childEntity = this.entityDataByIdOrDie(childId)
+            val childEntity = this.entityDataByIdOrDie(childId.id)
             if (sourceFilter(childEntity.entitySource)) {
               // Remove the connection between matched entities
-              this.refs.removeParentToChildRef(connectionId, entityId, childId)
+              this.refs.removeParentToChildRef(connectionId, entityId.asParent(), childId)
             }
             else {
               // Save the entity for restoring reference to it later
-              localUnmatchedReferencedNodes.put(childEntity.identificator(this), childId)
+              localUnmatchedReferencedNodes.put(childEntity.identificator(this), childId.id)
             }
           }
         }
@@ -478,26 +479,26 @@ internal class WorkspaceEntityStorageBuilderImpl(
         if (replaceWithUnmatchedEntity == null || replaceWithUnmatchedEntity != this.entityDataByIdOrDie(unmatchedId)) {
           // Okay, replaceWith storage doesn't have this "unmatched" entity at all.
           // TODO: 14.04.2020 Don't forget about entities with persistence id
-          for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId)) {
-            val parent = this.entityDataById(parentId)
+          for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId.asChild())) {
+            val parent = this.entityDataById(parentId.id)
 
             // TODO: 29.04.2020 Review and write tests
             if (parent == null) {
               if (connectionId.canRemoveParent()) {
-                this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
+                this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId.asChild())
               }
               else {
-                this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
+                this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId.asChild())
                 lostChildren += unmatchedId
               }
             }
           }
-          for ((connectionId, childIds) in this.refs.getChildrenRefsOfParentBy(unmatchedId)) {
+          for ((connectionId, childIds) in this.refs.getChildrenRefsOfParentBy(unmatchedId.asParent())) {
             for (childId in childIds) {
-              val child = this.entityDataById(childId)
+              val child = this.entityDataById(childId.id)
               if (child == null) {
                 if (connectionId.canRemoveChild()) {
-                  this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
+                  this.refs.removeParentToChildRef(connectionId, unmatchedId.asParent(), childId)
                 }
                 else rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore, replaceWith)
               }
@@ -509,18 +510,18 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
           val removedConnections = HashMap<ConnectionId, EntityId>()
           // Remove parents in local store
-          for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId)) {
-            val parentData = this.entityDataById(parentId)
+          for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId.asChild())) {
+            val parentData = this.entityDataById(parentId.id)
             if (parentData != null && !sourceFilter(parentData.entitySource)) continue
-            this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
-            removedConnections[connectionId] = parentId
+            this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId.asChild())
+            removedConnections[connectionId] = parentId.id
           }
 
           // Transfer parents from replaceWith storage
-          for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(unmatchedId)) {
-            if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) continue
-            val localParentId = replaceMap.inverse().getValue(parentId)
-            this.refs.updateParentOfChild(connectionId, unmatchedId, localParentId)
+          for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(unmatchedId.asChild())) {
+            if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId.id).entitySource)) continue
+            val localParentId = replaceMap.inverse().getValue(parentId.id)
+            this.refs.updateParentOfChild(connectionId, unmatchedId.asChild(), localParentId.asParent())
             removedConnections.remove(connectionId)
           }
 
@@ -533,19 +534,19 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
           // ----------------- Update children references -----------------------
 
-          for ((connectionId, childrenId) in this.refs.getChildrenRefsOfParentBy(unmatchedId)) {
+          for ((connectionId, childrenId) in this.refs.getChildrenRefsOfParentBy(unmatchedId.asParent())) {
             for (childId in childrenId) {
-              val childData = this.entityDataById(childId)
+              val childData = this.entityDataById(childId.id)
               if (childData != null && !sourceFilter(childData.entitySource)) continue
-              this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
+              this.refs.removeParentToChildRef(connectionId, unmatchedId.asParent(), childId)
             }
           }
 
-          for ((connectionId, childrenId) in replaceWith.refs.getChildrenRefsOfParentBy(unmatchedId)) {
+          for ((connectionId, childrenId) in replaceWith.refs.getChildrenRefsOfParentBy(unmatchedId.asParent())) {
             for (childId in childrenId) {
-              if (!sourceFilter(replaceWith.entityDataByIdOrDie(childId).entitySource)) continue
-              val localChildId = replaceMap.inverse().getValue(childId)
-              this.refs.updateParentOfChild(connectionId, localChildId, unmatchedId)
+              if (!sourceFilter(replaceWith.entityDataByIdOrDie(childId.id).entitySource)) continue
+              val localChildId = replaceMap.inverse().getValue(childId.id)
+              this.refs.updateParentOfChild(connectionId, localChildId.asChild(), unmatchedId.asParent())
             }
           }
         }
@@ -553,7 +554,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
       // Some children left without parents. We should delete these children as well.
       for (entityId in lostChildren) {
-        if (this.refs.getParentRefsOfChild(entityId).any { !it.key.isChildNullable }) {
+        if (this.refs.getParentRefsOfChild(entityId.asChild()).any { !it.key.isChildNullable }) {
           rbsFailedAndReport("Trying to remove lost children. Cannot perform operation because some parents have strong ref to this child",
                              sourceFilter, initialStore, replaceWith)
         }
@@ -562,26 +563,26 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
       LOG.debug { "5) Restore references in matching ids" }
       for (nodeId in replaceWithMatchedEntities.values()) {
-        for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId)) {
-          if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) {
+        for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId.asChild())) {
+          if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId.id).entitySource)) {
             // replaceWith storage has a link to unmatched entity. We should check if we can "transfer" this link to the current storage
             if (!connectionId.isParentNullable) {
-              val localParent = this.entityDataById(parentId)
+              val localParent = this.entityDataById(parentId.id)
               if (localParent == null) rbsFailedAndReport(
                 "Cannot link entities. Child entity doesn't have a parent after operation; $connectionId", sourceFilter, initialStore,
                 replaceWith)
 
               val localChildId = replaceMap.inverse().getValue(nodeId)
 
-              this.refs.updateParentOfChild(connectionId, localChildId, parentId)
+              this.refs.updateParentOfChild(connectionId, localChildId.asChild(), parentId)
             }
             continue
           }
 
           val localChildId = replaceMap.inverse().getValue(nodeId)
-          val localParentId = replaceMap.inverse().getValue(parentId)
+          val localParentId = replaceMap.inverse().getValue(parentId.id)
 
-          this.refs.updateParentOfChild(connectionId, localChildId, localParentId)
+          this.refs.updateParentOfChild(connectionId, localChildId.asChild(), localParentId.asParent())
         }
       }
 
@@ -640,33 +641,33 @@ internal class WorkspaceEntityStorageBuilderImpl(
                                           replaceMap: Map<EntityId, EntityId>,
                                           matchedEntityId: EntityId,
                                           localEntityId: EntityId): Set<WorkspaceEntityData<out WorkspaceEntity>> {
-    val replacingChildrenOneToOneConnections = replaceWith.refs.getChildrenOneToOneRefsOfParentBy(matchedEntityId)
+    val replacingChildrenOneToOneConnections = replaceWith.refs.getChildrenOneToOneRefsOfParentBy(matchedEntityId.asParent())
       .filter { !it.key.isParentNullable }
-    val result = this.refs.getChildrenOneToOneRefsOfParentBy(localEntityId)
+    val result = this.refs.getChildrenOneToOneRefsOfParentBy(localEntityId.asParent())
       .asSequence()
       .filter { !it.key.isParentNullable }
       .mapNotNull { (connectionId, entityId) ->
         val suggestedNewChildEntityId = replacingChildrenOneToOneConnections[connectionId] ?: return@mapNotNull null
-        val suggestedNewChildEntityData = replaceWith.entityDataByIdOrDie(suggestedNewChildEntityId)
+        val suggestedNewChildEntityData = replaceWith.entityDataByIdOrDie(suggestedNewChildEntityId.id)
         if (sourceFilter(suggestedNewChildEntityData.entitySource)) {
-          val childEntityData = this.entityDataByIdOrDie(entityId)
-          removeEntity(entityId) { it != localEntityId && !replaceMap.containsKey(it) }
+          val childEntityData = this.entityDataByIdOrDie(entityId.id)
+          removeEntity(entityId.id) { it != localEntityId && !replaceMap.containsKey(it) }
           return@mapNotNull childEntityData
         }
         return@mapNotNull null
       }.toMutableSet()
 
-    val replacingParentOneToOneConnections = replaceWith.refs.getParentOneToOneRefsOfChild(matchedEntityId)
+    val replacingParentOneToOneConnections = replaceWith.refs.getParentOneToOneRefsOfChild(matchedEntityId.asChild())
       .filter { !it.key.isChildNullable }
-    this.refs.getParentOneToOneRefsOfChild(localEntityId)
+    this.refs.getParentOneToOneRefsOfChild(localEntityId.asChild())
       .asSequence()
       .filter { !it.key.isChildNullable }
       .forEach { (connectionId, entityId) ->
         val suggestedNewChildEntityId = replacingParentOneToOneConnections[connectionId] ?: return@forEach
-        val suggestedNewChildEntityData = replaceWith.entityDataByIdOrDie(suggestedNewChildEntityId)
+        val suggestedNewChildEntityData = replaceWith.entityDataByIdOrDie(suggestedNewChildEntityId.id)
         if (sourceFilter(suggestedNewChildEntityData.entitySource)) {
-          val childEntityData = this.entityDataByIdOrDie(entityId)
-          removeEntity(entityId) { it != localEntityId && !replaceMap.containsKey(it) }
+          val childEntityData = this.entityDataByIdOrDie(entityId.id)
+          removeEntity(entityId.id) { it != localEntityId && !replaceMap.containsKey(it) }
           result.add(childEntityData)
         }
       }
@@ -857,20 +858,20 @@ internal class WorkspaceEntityStorageBuilderImpl(
    * Cleanup references and accumulate hard linked entities in [accumulator]
    */
   private fun accumulateEntitiesToRemove(id: EntityId, accumulator: MutableSet<EntityId>, entityFilter: (EntityId) -> Boolean) {
-    val children = refs.getChildrenRefsOfParentBy(id)
+    val children = refs.getChildrenRefsOfParentBy(id.asParent())
     for ((connectionId, childrenIds) in children) {
       for (childId in childrenIds) {
-        if (childId in accumulator) continue
-        if (!entityFilter(childId)) continue
-        accumulator.add(childId)
-        accumulateEntitiesToRemove(childId, accumulator, entityFilter)
-        refs.removeRefsByParent(connectionId, id)
+        if (childId.id in accumulator) continue
+        if (!entityFilter(childId.id)) continue
+        accumulator.add(childId.id)
+        accumulateEntitiesToRemove(childId.id, accumulator, entityFilter)
+        refs.removeRefsByParent(connectionId, id.asParent())
       }
     }
 
-    val parents = refs.getParentRefsOfChild(id)
+    val parents = refs.getParentRefsOfChild(id.asChild())
     for ((connectionId, parent) in parents) {
-      refs.removeParentToChildRef(connectionId, parent, id)
+      refs.removeParentToChildRef(connectionId, parent, id.asChild())
     }
   }
 
@@ -900,12 +901,13 @@ internal class WorkspaceEntityStorageBuilderImpl(
       }
     }
 
-    internal fun <T : WorkspaceEntity> addReplaceEvent(builder: WorkspaceEntityStorageBuilderImpl, entityId: EntityId,
-                                                       beforeChildren: List<Pair<ConnectionId, EntityId>>,
-                                                       beforeParents: Map<ConnectionId, EntityId>,
+    internal fun <T : WorkspaceEntity> addReplaceEvent(builder: WorkspaceEntityStorageBuilderImpl,
+                                                       entityId: EntityId,
+                                                       beforeChildren: List<Pair<ConnectionId, ChildEntityId>>,
+                                                       beforeParents: Map<ConnectionId, ParentEntityId>,
                                                        copiedData: WorkspaceEntityData<T>) {
-      val parents = builder.refs.getParentRefsOfChild(entityId)
-      val unmappedChildren = builder.refs.getChildrenRefsOfParentBy(entityId)
+      val parents = builder.refs.getParentRefsOfChild(entityId.asChild())
+      val unmappedChildren = builder.refs.getChildrenRefsOfParentBy(entityId.asParent())
       val children = unmappedChildren.flatMap { (key, value) -> value.map { key to it } }
 
       // Collect children changes
@@ -913,7 +915,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val (removedChildren, addedChildren) = getDiff(beforeChildrenSet, children)
 
       // Collect parent changes
-      val parentsMapRes: MutableMap<ConnectionId, EntityId?> = beforeParents.toMutableMap()
+      val parentsMapRes: MutableMap<ConnectionId, ParentEntityId?> = beforeParents.toMutableMap()
       for ((connectionId, parentId) in parents) {
         val existingParent = parentsMapRes[connectionId]
         if (existingParent != null) {
@@ -1053,17 +1055,17 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
-        assertResolvable(parentId.clazz, parentId.arrayId)
-        assertResolvable(childId.clazz, childId.arrayId)
+        assertResolvable(parentId.id.clazz, parentId.id.arrayId)
+        assertResolvable(childId.id.clazz, childId.id.arrayId)
 
         //  1.1) For abstract containers: EntityId has the class of ConnectionId
-        assertCorrectEntityClass(connectionId.parentClass, parentId)
-        assertCorrectEntityClass(connectionId.childClass, childId)
+        assertCorrectEntityClass(connectionId.parentClass, parentId.id)
+        assertCorrectEntityClass(connectionId.childClass, childId.id)
       }
 
       //  2) Connections satisfy connectionId requirements
       if (!connectionId.isParentNullable) {
-        checkStrongAbstractConnection(map.keys.toMutableSet(), map.keys.toMutableSet().map { it.clazz }.toSet(), connectionId.debugStr())
+        checkStrongAbstractConnection(map.keys.map { it.id }.toMutableSet(), map.keys.map { it.id.clazz }.toSet(), connectionId.debugStr())
       }
     }
 
@@ -1074,20 +1076,20 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
-        assertResolvable(parentId.clazz, parentId.arrayId)
-        assertResolvable(childId.clazz, childId.arrayId)
+        assertResolvable(parentId.id.clazz, parentId.id.arrayId)
+        assertResolvable(childId.id.clazz, childId.id.arrayId)
 
         //  1.1) For abstract containers: EntityId has the class of ConnectionId
-        assertCorrectEntityClass(connectionId.parentClass, parentId)
-        assertCorrectEntityClass(connectionId.childClass, childId)
+        assertCorrectEntityClass(connectionId.parentClass, parentId.id)
+        assertCorrectEntityClass(connectionId.childClass, childId.id)
       }
 
       //  2) Connections satisfy connectionId requirements
       if (!connectionId.isParentNullable) {
-        checkStrongAbstractConnection(map.keys.toMutableSet(), map.keys.toMutableSet().map { it.clazz }.toSet(), connectionId.debugStr())
+        checkStrongAbstractConnection(map.keys.mapTo(HashSet()) { it.id }, map.keys.toMutableSet().map { it.id.clazz }.toSet(), connectionId.debugStr())
       }
       if (!connectionId.isChildNullable) {
-        checkStrongAbstractConnection(map.values.toMutableSet(), map.values.toMutableSet().map { it.clazz }.toSet(),
+        checkStrongAbstractConnection(map.values.mapTo(HashSet()) { it.id }, map.values.toMutableSet().map { it.id.clazz }.toSet(),
                                       connectionId.debugStr())
       }
     }

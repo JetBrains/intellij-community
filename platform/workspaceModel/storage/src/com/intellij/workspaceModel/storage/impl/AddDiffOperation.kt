@@ -105,53 +105,53 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   }
 
   private fun addRestoreParents(sourceEntityId: EntityId, targetEntityId: EntityId) {
-    val allParents = diff.refs.getParentRefsOfChild(sourceEntityId)
+    val allParents = diff.refs.getParentRefsOfChild(sourceEntityId.asChild())
     for ((connectionId, sourceParentId) in allParents) {
-      val targetParentId = if (diffLog[sourceParentId] is ChangeEntry.AddEntity<*>) {
-        replaceMap[sourceParentId] ?: run {
+      val targetParentId = if (diffLog[sourceParentId.id] is ChangeEntry.AddEntity<*>) {
+        replaceMap[sourceParentId.id] ?: run {
           // target entity isn't added to the current builder yet. Add a placeholder
-          val placeholderId = target.entitiesByType.book(sourceParentId.clazz)
-          replaceMap[sourceParentId] = placeholderId
+          val placeholderId = target.entitiesByType.book(sourceParentId.id.clazz)
+          replaceMap[sourceParentId.id] = placeholderId
           placeholderId
         }
       }
       else {
-        if (target.entityDataById(sourceParentId) != null) sourceParentId
+        if (target.entityDataById(sourceParentId.id) != null) sourceParentId.id
         else {
           if (!connectionId.canRemoveParent()) {
-            target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceParentId", initialStorage, diff)
+            target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceParentId.id", initialStorage, diff)
           }
           null
         }
       }
       if (targetParentId != null) {
-        target.refs.updateParentOfChild(connectionId, targetEntityId, targetParentId)
+        target.refs.updateParentOfChild(connectionId, targetEntityId.asChild(), targetParentId.asParent())
       }
     }
   }
 
   private fun addRestoreChildren(sourceEntityId: EntityId, targetEntityId: EntityId) {
     // Restore children references
-    val allSourceChildren = diff.refs.getChildrenRefsOfParentBy(sourceEntityId)
+    val allSourceChildren = diff.refs.getChildrenRefsOfParentBy(sourceEntityId.asParent())
     for ((connectionId, sourceChildrenIds) in allSourceChildren) {
-      val targetChildrenIds = mutableListOf<EntityId>()
+      val targetChildrenIds = mutableListOf<ChildEntityId>()
       for (sourceChildId in sourceChildrenIds) {
-        if (diffLog[sourceChildId] is ChangeEntry.AddEntity<*>) {
+        if (diffLog[sourceChildId.id] is ChangeEntry.AddEntity<*>) {
           // target particular entity is added in the same transaction.
-          val possibleTargetChildId = replaceMap[sourceChildId]
+          val possibleTargetChildId = replaceMap[sourceChildId.id]
           if (possibleTargetChildId != null) {
             // Entity was already added to the structure
-            targetChildrenIds += possibleTargetChildId
+            targetChildrenIds += possibleTargetChildId.asChild()
           }
           else {
             // target entity isn't added yet. Add a placeholder
-            val placeholderId = target.entitiesByType.book(sourceChildId.clazz)
-            replaceMap[sourceChildId] = placeholderId
-            targetChildrenIds += placeholderId
+            val placeholderId = target.entitiesByType.book(sourceChildId.id.clazz)
+            replaceMap[sourceChildId.id] = placeholderId
+            targetChildrenIds += placeholderId.asChild()
           }
         }
         else {
-          if (target.entityDataById(sourceChildId) != null) {
+          if (target.entityDataById(sourceChildId.id) != null) {
             targetChildrenIds += sourceChildId
           }
           else if (!connectionId.canRemoveChild()) {
@@ -159,7 +159,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           }
         }
       }
-      target.refs.updateChildrenOfParent(connectionId, targetEntityId, targetChildrenIds)
+      target.refs.updateChildrenOfParent(connectionId, targetEntityId.asParent(), targetChildrenIds)
     }
   }
 
@@ -168,8 +168,8 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
     val sourceEntityId = change.newData.createEntityId()
 
-    val beforeChildren = target.refs.getChildrenRefsOfParentBy(sourceEntityId).flatMap { (key, value) -> value.map { key to it } }
-    val beforeParents = target.refs.getParentRefsOfChild(sourceEntityId)
+    val beforeChildren = target.refs.getChildrenRefsOfParentBy(sourceEntityId.asParent()).flatMap { (key, value) -> value.map { key to it } }
+    val beforeParents = target.refs.getParentRefsOfChild(sourceEntityId.asChild())
 
     val targetEntityId = replaceMap.getOrDefault(sourceEntityId, sourceEntityId)
     val newTargetEntityData = change.newData.clone()
@@ -195,13 +195,13 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     target.updatePersistentIdIndexes(newTargetEntityData.createEntity(target), oldPersistentId, newTargetEntityData)
 
 
-    val addedChildrenMap = HashMultimap.create<ConnectionId, EntityId>()
+    val addedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
     change.newChildren.forEach { addedChildrenMap.put(it.first, it.second) }
 
-    val removedChildrenMap = HashMultimap.create<ConnectionId, EntityId>()
+    val removedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
     change.removedChildren.forEach { removedChildrenMap.put(it.first, it.second) }
 
-    replaceRestoreChildren(sourceEntityId, newEntityId, addedChildrenMap, removedChildrenMap)
+    replaceRestoreChildren(sourceEntityId.asParent(), newEntityId.asParent(), addedChildrenMap, removedChildrenMap)
 
     replaceRestoreParents(change, newEntityId)
 
@@ -209,10 +209,10 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   }
 
   private fun replaceRestoreChildren(
-    sourceEntityId: EntityId,
-    newEntityId: EntityId,
-    addedChildrenMap: HashMultimap<ConnectionId, EntityId>,
-    removedChildrenMap: HashMultimap<ConnectionId, EntityId>,
+    sourceEntityId: ParentEntityId,
+    newEntityId: ParentEntityId,
+    addedChildrenMap: HashMultimap<ConnectionId, ChildEntityId>,
+    removedChildrenMap: HashMultimap<ConnectionId, ChildEntityId>,
   ) {
     val existingChildren = target.refs.getChildrenRefsOfParentBy(newEntityId)
 
@@ -260,20 +260,20 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     }
   }
 
-  private fun childrenMapper(child: EntityId): EntityId? {
-    return if (diffLog[child] is ChangeEntry.AddEntity<*>) {
-      val possibleNewChildId = replaceMap[child]
+  private fun childrenMapper(child: ChildEntityId): ChildEntityId? {
+    return if (diffLog[child.id] is ChangeEntry.AddEntity<*>) {
+      val possibleNewChildId = replaceMap[child.id]
       if (possibleNewChildId != null) {
-        possibleNewChildId
+        possibleNewChildId.asChild()
       }
       else {
-        val bookedChildId = target.entitiesByType.book(child.clazz)
-        replaceMap[child] = bookedChildId
-        bookedChildId
+        val bookedChildId = target.entitiesByType.book(child.id.clazz)
+        replaceMap[child.id] = bookedChildId
+        bookedChildId.asChild()
       }
     }
     else {
-      if (target.entityDataById(child) != null) {
+      if (target.entityDataById(child.id) != null) {
         child
       }
       else null
@@ -287,7 +287,8 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     val updatedModifiedParents = change.modifiedParents.mapValues { it.value }
 
     val modifiedParentsMap = updatedModifiedParents.toMutableMap()
-    val existingParents = target.refs.getParentRefsOfChild(newEntityId)
+    val newChildEntityId = newEntityId.asChild()
+    val existingParents = target.refs.getParentRefsOfChild(newChildEntityId)
     for ((connectionId, existingParent) in existingParents) {
       if (connectionId in modifiedParentsMap) {
         val newParent = modifiedParentsMap.getValue(connectionId)
@@ -295,25 +296,25 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           // target child doesn't have a parent anymore
           if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
                                                                        initialStorage, diff)
-          else target.refs.removeParentToChildRef(connectionId, existingParent, newEntityId)
+          else target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
         }
         else {
-          if (diffLog[newParent] is ChangeEntry.AddEntity<*>) {
-            var possibleNewParent = replaceMap[newParent]
+          if (diffLog[newParent.id] is ChangeEntry.AddEntity<*>) {
+            var possibleNewParent = replaceMap[newParent.id]
             if (possibleNewParent == null) {
-              possibleNewParent = target.entitiesByType.book(newParent.clazz)
-              replaceMap[newParent] = possibleNewParent
+              possibleNewParent = target.entitiesByType.book(newParent.id.clazz)
+              replaceMap[newParent.id] = possibleNewParent
             }
-            target.refs.updateParentOfChild(connectionId, newEntityId, possibleNewParent)
+            target.refs.updateParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.asParent())
           }
           else {
-            if (target.entityDataById(newParent) != null) {
-              target.refs.updateParentOfChild(connectionId, newEntityId, newParent)
+            if (target.entityDataById(newParent.id) != null) {
+              target.refs.updateParentOfChild(connectionId, newEntityId.asChild(), newParent)
             }
             else {
               if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
                                                                            initialStorage, diff)
-              target.refs.removeParentToChildRef(connectionId, existingParent, newEntityId)
+              target.refs.removeParentToChildRef(connectionId, existingParent, newChildEntityId)
             }
           }
         }
@@ -324,17 +325,17 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     // Any new parents? Add them
     for ((connectionId, parentId) in modifiedParentsMap) {
       if (parentId == null) continue
-      if (diffLog[parentId] is ChangeEntry.AddEntity<*>) {
-        var possibleNewParent = replaceMap[parentId]
+      if (diffLog[parentId.id] is ChangeEntry.AddEntity<*>) {
+        var possibleNewParent = replaceMap[parentId.id]
         if (possibleNewParent == null) {
-          possibleNewParent = target.entitiesByType.book(parentId.clazz)
-          replaceMap[parentId] = possibleNewParent
+          possibleNewParent = target.entitiesByType.book(parentId.id.clazz)
+          replaceMap[parentId.id] = possibleNewParent
         }
-        target.refs.updateParentOfChild(connectionId, newEntityId, possibleNewParent)
+        target.refs.updateParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.asParent())
       }
       else {
-        if (target.entityDataById(parentId) != null) {
-          target.refs.updateParentOfChild(connectionId, newEntityId, parentId)
+        if (target.entityDataById(parentId.id) != null) {
+          target.refs.updateParentOfChild(connectionId, newEntityId.asChild(), parentId)
         }
       }
     }
