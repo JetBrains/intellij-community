@@ -133,8 +133,6 @@ private class KtExpressionPostfixTemplateSelector(
         // Both KtLambdaExpression and KtFunctionLiteral have the same offset, so we add only one of them -> KtLambdaExpression
         if (element is KtFunctionLiteral) return false
 
-        val bindingContext by lazy { element.analyze(BodyResolveMode.PARTIAL) }
-
         if (statementsOnly) {
             // We use getQualifiedExpressionForReceiverOrThis because when postfix completion is run on some statement like:
             // foo().try<caret>
@@ -144,7 +142,7 @@ private class KtExpressionPostfixTemplateSelector(
         }
         if (checkCanBeUsedAsValue && !element.canBeUsedAsValue()) return false
 
-        return predicate?.invoke(element, bindingContext) ?: true
+        return predicate?.invoke(element, element.analyze(BodyResolveMode.PARTIAL)) ?: true
     }
 
     private fun KtExpression.canBeUsedAsValue() =
@@ -188,9 +186,8 @@ private class KtExpressionPostfixTemplateSelector(
         return result
     }
 
-    override fun hasExpression(context: PsiElement, copyDocument: Document, newOffset: Int): Boolean {
-        return !getExpressions(context, copyDocument, newOffset).isEmpty()
-    }
+    override fun hasExpression(context: PsiElement, copyDocument: Document, newOffset: Int): Boolean =
+        getExpressions(context, copyDocument, newOffset).isNotEmpty()
 
     override fun getRenderer() = Function(PsiElement::getText)
 }
