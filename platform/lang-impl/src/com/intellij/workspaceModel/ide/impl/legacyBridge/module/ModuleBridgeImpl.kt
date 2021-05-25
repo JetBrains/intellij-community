@@ -84,6 +84,7 @@ internal class ModuleBridgeImpl(
                              app = app,
                              precomputedExtensionModel = precomputedExtensionModel,
                              listenerCallbacks = listenerCallbacks)
+    if (corePlugin == null) return
     unregisterComponent(DeprecatedModuleOptionManager::class.java)
 
     try {

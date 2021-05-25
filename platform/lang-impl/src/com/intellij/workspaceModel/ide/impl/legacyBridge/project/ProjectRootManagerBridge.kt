@@ -27,7 +27,6 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
-@Suppress("ComponentNotRegistered")
 class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
   companion object {
     private const val LIBRARY_NAME_DELIMITER = ":"

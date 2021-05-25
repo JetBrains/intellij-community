@@ -317,7 +317,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     return entityStore.cachedValue(if (includeTests) dependencyGraphWithTestsValue else dependencyGraphWithoutTestsValue)
   }
 
-  internal val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
+  internal val entityStore = WorkspaceModel.getInstance(project).entityStorage
 
   internal fun loadModules(entities: Sequence<ModuleEntity>) {
     val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
