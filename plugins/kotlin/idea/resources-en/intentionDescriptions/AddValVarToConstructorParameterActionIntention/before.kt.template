@@ -1,1 +1,1 @@
-class Foo(n: Int, <spot>s</spot>: String)
+class User(name: String, <spot>email</spot>: String)
