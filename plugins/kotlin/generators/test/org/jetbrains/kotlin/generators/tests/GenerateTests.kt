@@ -1642,6 +1642,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             testClass<AbstractFirLegacyUastTypesTest> {
                 model("")
             }
+
+            testClass<AbstractFirLegacyUastValuesTest> {
+                model("")
+            }
         }
 
         testGroup("uast/uast-kotlin-fir") {
@@ -1660,6 +1664,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             }
 
             testClass<AbstractFE1LegacyUastTypesTest> {
+                model("")
+            }
+
+            testClass<AbstractFE1LegacyUastValuesTest> {
                 model("")
             }
         }
