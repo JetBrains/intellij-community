@@ -12,11 +12,9 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,27 +60,22 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     if (originalClass == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     
     PsiClassType originalType = JavaPsiFacade.getElementFactory(myProject).createType(originalClass);
-    Set<PsiMethod> methodsToFind = new HashSet<>();
 
     if (enclosingElement instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)enclosingElement;
-      methodsToFind.add(method);
-      ContainerUtil.addAll(methodsToFind, method.findDeepestSuperMethods());
 
       Map<PsiMember, NodeDescriptor<?>> methodToDescriptorMap = new HashMap<>();
-      for (PsiMethod methodToFind : methodsToFind) {
-        JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
+      JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, method, originalType, method, Set.of(method), descriptor, methodToDescriptorMap, myProject);
 
-        MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(reference -> {
-          // references in javadoc really couldn't "call" anything
-          if (!PsiUtil.isInsideJavadocComment(reference.getElement())) {
-            for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
-              if (!processor.process(reference, data)) break;
-            }
+      MethodReferencesSearch.search(method, searchScope, true).forEach(reference -> {
+        // references in javadoc really couldn't "call" anything
+        if (!PsiUtil.isInsideJavadocComment(reference.getElement())) {
+          for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
+            if (!processor.process(reference, data)) break;
           }
-          return true;
-        });
-      }
+        }
+        return true;
+      });
 
       return ArrayUtil.toObjectArray(methodToDescriptorMap.values());
     }
@@ -91,7 +84,8 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
     return ReferencesSearch
       .search(enclosingElement, enclosingElement.getUseScope()).findAll().stream()
-      .map(PsiReference::getElement).distinct()
+      .map(PsiReference::getElement)
+      .distinct()
       .map(e -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, e, false, false)).toArray();
   }
 
