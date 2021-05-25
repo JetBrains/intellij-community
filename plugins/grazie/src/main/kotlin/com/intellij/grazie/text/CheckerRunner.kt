@@ -106,13 +106,13 @@ internal class CheckerRunner(val text: TextContent) {
     val sentence = findSentence(problem)
     val defaultPattern = defaultSuppressionPattern(problem, sentence)
     val suppressed = GrazieConfig.get().suppressingContext.suppressed
-    if (defaultPattern in suppressed) {
+    if (defaultPattern.full in suppressed) {
       return true
     }
 
     val patternRange = problem.patternRange
     val errorText = problem.highlightRange.subSequence(text)
-    return patternRange != null && sentence != null && calcSuppressionPattern(errorText, sentence) in suppressed
+    return patternRange != null && sentence != null && SuppressionPattern(errorText, sentence).full in suppressed
   }
 
   private fun findSentence(problem: TextProblem) =
@@ -139,18 +139,19 @@ internal class CheckerRunner(val text: TextContent) {
   private fun toFileRange(range: TextRange) =
     TextRange(text.textOffsetToFile(range.startOffset), text.textOffsetToFile(range.endOffset))
 
-  private fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): String {
+  private fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
     val text = problem.text
     val patternRange = problem.patternRange
     if (patternRange != null) {
-      return calcSuppressionPattern(patternRange.subSequence(text), null)
+      return SuppressionPattern(patternRange.subSequence(text), null)
     }
-    return calcSuppressionPattern(problem.highlightRange.subSequence(text), sentenceText)
+    return SuppressionPattern(problem.highlightRange.subSequence(text), sentenceText)
   }
+}
 
-  private fun calcSuppressionPattern(errorText: CharSequence, sentenceText: String?): String {
-    return normalize(errorText) + (if (sentenceText == null) "" else "|" + normalize(sentenceText))
-  }
+internal class SuppressionPattern(errorText: CharSequence, sentenceText: String?) {
+  val errorText : String = normalize(errorText)
+  val full : String = this.errorText + (if (sentenceText == null) "" else "|" + normalize(sentenceText))
 
   private fun normalize(text: CharSequence) = text.replace(Regex("\\s+"), " ").trim()
 }

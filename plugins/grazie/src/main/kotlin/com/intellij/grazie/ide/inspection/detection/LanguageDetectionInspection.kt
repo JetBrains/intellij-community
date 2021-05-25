@@ -8,10 +8,9 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.detection.toLanguage
-import com.intellij.grazie.grammar.ide.GraziePsiElementProcessor
 import com.intellij.grazie.ide.inspection.detection.problem.LanguageDetectionProblemDescriptor
-import com.intellij.grazie.ide.language.LanguageGrammarChecking
-import com.intellij.grazie.ide.msg.GrazieStateLifecycle
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
+import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.PsiElement
@@ -40,15 +39,13 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
     if (!isOnTheFly || InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(holder.file))
       return PsiElementVisitor.EMPTY_VISITOR
 
+    val domains = GrazieInspection.checkedDomains()
+    val fileLanguage = holder.file.language
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        val strategies = LanguageGrammarChecking.getEnabledStrategiesForElement(element)
-
-        for (strategy in strategies) {
-          val (_, _, _, text) = GraziePsiElementProcessor.processElements(listOf(element), strategy)
-          LangDetector.updateContext(text.first().text, session.getUserData(key)!!)
-          break
-        }
+        if (GrazieInspection.areChecksDisabled(element, fileLanguage)) return
+        val text = TextExtractor.findUniqueTextAt(element, domains) ?: return
+        LangDetector.updateContext(text, session.getUserData(key)!!)
       }
     }
   }
