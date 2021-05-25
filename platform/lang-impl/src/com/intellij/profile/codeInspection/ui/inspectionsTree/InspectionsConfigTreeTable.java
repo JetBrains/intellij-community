@@ -26,10 +26,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
@@ -143,7 +140,8 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       updateUI();
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
-    getEmptyText().setText(AnalysisBundle.message("inspections.settings.empty.text"));
+    final StatusText emptyText = getEmptyText();
+    emptyText.setText(AnalysisBundle.message("inspections.settings.empty.text"));
   }
 
   @Nullable

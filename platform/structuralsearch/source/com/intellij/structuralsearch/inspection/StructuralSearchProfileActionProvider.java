@@ -48,19 +48,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull SingleInspectionProfilePanel panel) {
-    final InspectionProfileModifiableModel profile = panel.getProfile();
-    if (profile.getToolsOrNull(SSBasedInspection.SHORT_NAME, null) != null &&
-        !profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
-      // enable SSBasedInspection if it was manually disabled
-      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true, panel.getProject(), false);
-
-      for (ScopeToolState tool : profile.getAllTools()) {
-        final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
-        if (wrapper instanceof StructuralSearchInspectionToolWrapper) {
-          tool.setEnabled(false);
-        }
-      }
-    }
+    enableSSIfDisabled(panel.getProfile(), panel.getProject());
 
     final DefaultActionGroup actionGroup = new DefaultActionGroup(
       new AddInspectionAction(panel, false),
@@ -72,6 +60,20 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     presentation.setIcon(AllIcons.General.Add);
     presentation.setText(SSRBundle.messagePointer("add.inspection.button"));
     return Arrays.asList(actionGroup, new RemoveInspectionAction(panel));
+  }
+
+  public static void enableSSIfDisabled(@NotNull InspectionProfileModifiableModel profile, @NotNull Project project) {
+    if (profile.getToolsOrNull(SSBasedInspection.SHORT_NAME, null) != null &&
+        !profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
+      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true, project, false);
+
+      for (ScopeToolState tool : profile.getAllTools()) {
+        final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
+        if (wrapper instanceof StructuralSearchInspectionToolWrapper) {
+          tool.setEnabled(false);
+        }
+      }
+    }
   }
 
   private static final class RemoveInspectionAction extends DumbAwareAction {
@@ -136,7 +138,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     createNewInspection(configuration, project, InspectionProfileManager.getInstance(project).getCurrentProfile());
   }
 
-  private static boolean createNewInspection(@NotNull Configuration configuration,
+  public static boolean createNewInspection(@NotNull Configuration configuration,
                                              @NotNull Project project,
                                              @NotNull InspectionProfileImpl profile) {
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);

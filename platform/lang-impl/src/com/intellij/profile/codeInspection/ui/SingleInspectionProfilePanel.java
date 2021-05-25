@@ -549,6 +549,15 @@ public class SingleInspectionProfilePanel extends JPanel {
     }, myDisposable);
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
+
+    for (EmptyInspectionTreeLinkProvider provider : EmptyInspectionTreeLinkProvider.EP_NAME.getExtensionList()) {
+      myTreeTable.getEmptyText().appendLine(
+        provider.getText(),
+        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+        provider.getActionListener(this)
+      );
+    }
+
     final TreeTableTree tree = myTreeTable.getTree();
     tree.putClientProperty(DefaultTreeUI.LARGE_MODEL_ALLOWED, true);
     tree.setRowHeight(renderer.getTreeCellRendererComponent(tree, "xxx", true, true, false, 0, true).getPreferredSize().height);
