@@ -116,9 +116,10 @@ public class TextMateSyntaxTable {
     return result;
   }
 
+  @SuppressWarnings("SSBasedInspection")
   @Nullable
   private static Int2ObjectMap<CharSequence> loadCaptures(@NotNull Plist captures, @NotNull Interner<CharSequence> interner) {
-    Int2ObjectMap<CharSequence> result = new Int2ObjectOpenHashMap<>();
+    Int2ObjectOpenHashMap<CharSequence> result = new Int2ObjectOpenHashMap<>();
     for (Map.Entry<String, PListValue> capture : captures.entries()) {
       try {
         int index = Integer.parseInt(capture.getKey());
@@ -132,9 +133,7 @@ public class TextMateSyntaxTable {
     if (result.isEmpty()) {
       return null;
     }
-    if (result instanceof Int2ObjectOpenHashMap) {
-      ((Int2ObjectOpenHashMap<CharSequence>)result).trim();
-    }
+    result.trim();
     return result;
   }
 
