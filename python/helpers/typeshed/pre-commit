@@ -7,7 +7,7 @@
 #
 # To enable this hook, copy this file to ".git/hooks".
 
-BIN_DIR=./.venv/bin
+BIN_DIR=./.venv3/bin
 
 CHANGED_FILES=$(git diff --cached --name-only --diff-filter=AM | grep .pyi || true)
 

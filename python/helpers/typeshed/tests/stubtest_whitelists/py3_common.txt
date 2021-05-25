@@ -12,7 +12,6 @@ _collections_abc.Mapping.get  # Adding None to the Union messed up mypy
 _collections_abc.Sequence.index  # Supporting None in end is not mandatory
 _csv.Dialect.__init__  # C __init__ signature is inaccurate
 _dummy_threading
-_importlib_modulespec
 _threading_local.local.__new__
 _typeshed.*  # Utility types for typeshed, doesn't exist at runtime
 abc.abstractclassmethod
@@ -38,19 +37,10 @@ builtins.classmethod.__get__  # this function can accept no value for the type p
 builtins.ellipsis  # type is not exposed anywhere
 builtins.function
 builtins.memoryview.__contains__  # C type that implements __getitem__
-builtins.memoryview.__iter__  # C type that implements __getitem__
-builtins.memoryview.cast  # inspect.signature is incorrect about shape being kw-only
 builtins.object.__init__  # default C signature is incorrect
 builtins.property.__get__  # this function can accept no value for the type parameter.
 builtins.staticmethod.__get__  # this function can accept no value for the type parameter.
 bz2.BZ2Decompressor.__init__  # function does not accept parameters but C signature is set
-# The following methods were changed in point releases from Python 3.6 to 3.9
-# as part of a security fix. These excludes can be removed when the GitHub
-# action workflow uses Python versions that include the fix (adding a
-# separator argument).
-cgi.FieldStorage.__init__
-cgi.parse
-cgi.parse_multipart
 # The following CodecInfo properties are added in __new__
 codecs.CodecInfo.decode
 codecs.CodecInfo.encode
@@ -58,19 +48,8 @@ codecs.CodecInfo.incrementaldecoder
 codecs.CodecInfo.incrementalencoder
 codecs.CodecInfo.streamreader
 codecs.CodecInfo.streamwriter
-collections.Callable  # Some typecheckers need this as specialform
 # Coroutine and Generator properties are added programmatically
 collections.ChainMap.get  # Adding None to the underlying Mapping Union messed up mypy
-collections.Coroutine.cr_await
-collections.Coroutine.cr_code
-collections.Coroutine.cr_frame
-collections.Coroutine.cr_running
-collections.Generator.gi_code
-collections.Generator.gi_frame
-collections.Generator.gi_running
-collections.Generator.gi_yieldfrom
-collections.Mapping.get  # Adding None to the Union messed up mypy
-collections.Sequence.index  # Supporting None in end is not mandatory
 # Coroutine and Generator properties are added programmatically
 collections.abc.Coroutine.cr_await
 collections.abc.Coroutine.cr_code
@@ -85,6 +64,7 @@ configparser.SectionProxy.__getattr__  # SectionProxy can have arbitrary attribu
 configparser.SectionProxy.getboolean
 configparser.SectionProxy.getfloat
 configparser.SectionProxy.getint
+copy.PyStringMap  # defined only in Jython
 # The Dialect properties are initialized as None in Dialect but their values are enforced in _Dialect
 csv.Dialect.delimiter
 csv.Dialect.doublequote
@@ -190,9 +170,6 @@ pydoc.TextDoc.docproperty
 pydoc.TextDoc.docroutine
 select.poll  # Depends on configuration
 selectors.DevpollSelector  # Depends on configuration
-selectors.KqueueSelector  # Depends on system
-signal.SIGEMT  # Depends on system
-signal.SIGINFO  # Depends on system
 socketserver.BaseServer.fileno  # implemented in derived classes
 socketserver.BaseServer.get_request  # implemented in derived classes
 socketserver.BaseServer.server_bind  # implemented in derived classes
@@ -222,20 +199,12 @@ traceback.TracebackException.from_exception  # explicitly expanding arguemnts go
 types.GetSetDescriptorType.__get__  # this function can accept no value for the type parameter.
 types.MemberDescriptorType.__get__  # this function can accept no value for the type parameter.
 types.SimpleNamespace.__init__  # class doesn't accept positional arguments but has default C signature
-typing.IO.__iter__  # Added because IO streams are iterable. See https://github.com/python/typeshed/commit/97bc450acd60c1bcdafef3ce8fbe3b95a9c0cac3  
+typing.IO.__iter__  # Added because IO streams are iterable. See https://github.com/python/typeshed/commit/97bc450acd60c1bcdafef3ce8fbe3b95a9c0cac3
 typing.IO.__next__  # Added because IO streams are iterable. See https://github.com/python/typeshed/commit/97bc450acd60c1bcdafef3ce8fbe3b95a9c0cac3
 typing.type_check_only  # typing decorator that is not available at runtime
 unittest.mock.patch  # It's a complicated overload and I haven't been able to figure out why stubtest doesn't like it
 urllib.parse._DefragResultBase.__new__  # Generic NamedTuple is problematic in mypy, so regular tuple was used. See https://github.com/python/mypy/issues/685
-# The following methods were changed in point releases from Python 3.6 to 3.9
-# as part of a security fix. These excludes can be removed when the GitHub
-# action workflow uses Python versions that include the fix (adding a
-# separator argument).
-urllib.parse.parse_qs
-urllib.parse.parse_qsl
-urllib.request.BaseHandler.http_error_nnn
-urllib.request.HTTPPasswordMgrWithPriorAuth.__init__
-urllib.robotparser.RobotFileParser.can_fetch
+urllib.request.HTTPPasswordMgrWithPriorAuth.__init__  # Args are passed as is to super, so super args are specified
 warnings.catch_warnings.__init__  # Defining this ruins the __new__ overrides
 weakref.CallableProxyType.__getattr__  # Should have all attributes of proxy
 weakref.ProxyType.__getattr__  # Should have all attributes of proxy
@@ -243,24 +212,10 @@ weakref.ReferenceType.__call__  # C function default annotation is wrong
 weakref.WeakKeyDictionary.get
 weakref.WeakKeyDictionary.update
 weakref.WeakValueDictionary.get
-webbrowser.Mozilla.raise_opts
-webbrowser.UnixBrowser.raise_opts
-webbrowser.UnixBrowser.remote_action
-webbrowser.UnixBrowser.remote_action_newtab
-webbrowser.UnixBrowser.remote_action_newwin
+webbrowser.UnixBrowser.remote_action  # always overridden in inheriting class
+webbrowser.UnixBrowser.remote_action_newtab  # always overridden in inheriting class
+webbrowser.UnixBrowser.remote_action_newwin  # always overridden in inheriting class
 wsgiref.types  # Doesn't exist, see comments in file
-
-# These enums derive from (int, IntEnum) or (str, Enum). Strangely,
-# at runtime, they inherit Enum.__new__, not int.__new__ or
-# str.__new__ as the mro would dictate, which is why stubtest balks.
-enum.IntEnum.__new__
-http.HTTPStatus.__new__
-inspect._ParameterKind.__new__
-signal.Handlers.__new__
-signal.Sigmasks.__new__
-signal.Signals.__new__
-socket.AddressFamily.__new__
-socket.SocketKind.__new__
 
 # ==========
 # Whitelist entries that cannot or should not be fixed
