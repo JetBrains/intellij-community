@@ -3,12 +3,15 @@ package com.intellij.grazie.grammar.strategy
 
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
+import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.Text
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.LanguageParserDefinitions
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
 
 
@@ -54,6 +57,23 @@ object StrategyUtils {
     repeat(offset) { deleteCharAt(0) } // remove opening quotes and whitespace
 
     return offset
+  }
+
+  internal fun trimLeadingQuotesAndSpaces(content: TextContent): TextContent? {
+    val text = content.toString()
+    var trimPrefix = quotesOffset(text)
+    var trimSuffix = text.length - trimPrefix
+    require(trimPrefix <= trimSuffix)
+
+    while (trimSuffix > trimPrefix && text[trimSuffix - 1].isWhitespace()) trimSuffix--
+    while (trimSuffix > trimPrefix && text[trimPrefix].isWhitespace()) trimPrefix++
+
+    if (trimSuffix <= trimPrefix) return null
+
+    if (trimPrefix > 0 || trimSuffix < text.length) {
+      return content.excludeRange(TextRange(trimSuffix, text.length)).excludeRange(TextRange(0, trimPrefix))
+    }
+    return content
   }
 
   /**
@@ -164,6 +184,34 @@ object StrategyUtils {
     yieldAll(element.process(checkSibling, false).toList().asReversed())
     yield(element)
     yieldAll(element.process(checkSibling, true))
+  }
+
+  /**
+   * Get all siblings of [element] that are accepted by [checkSibling]
+   * which are separated by whitespace containing at most one line break
+   */
+  @JvmStatic
+  fun getNotSoDistantSimilarSiblings(element: PsiElement, whitespaceTokens: TokenSet, checkSibling: (PsiElement) -> Boolean): List<PsiElement> {
+    require(checkSibling(element))
+    fun PsiElement.process(next: Boolean): List<PsiElement> {
+      val result = arrayListOf<PsiElement>()
+      var newLinesBetweenSiblingsCount = 0
+
+      var sibling: PsiElement = this@process
+      while (true) {
+        sibling = (if (next) sibling.nextSibling else sibling.prevSibling) ?: break
+        if (checkSibling(sibling)) {
+          newLinesBetweenSiblingsCount = 0
+          result.add(sibling)
+        } else if (sibling.elementType in whitespaceTokens) {
+          newLinesBetweenSiblingsCount += sibling.text.count { char -> char == '\n' }
+          if (newLinesBetweenSiblingsCount > 1) break
+        } else break
+      }
+      return result
+    }
+
+    return element.process(false) + listOf(element) + element.process(true)
   }
 
   private fun quotesOffset(str: CharSequence): Int {

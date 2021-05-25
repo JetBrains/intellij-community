@@ -57,8 +57,15 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <grammar.strategy language="TEXT" implementationClass="com.intellij.grazie.ide.language.plain.PlainTextGrammarCheckingStrategy"/>
-    <grammar.strategy language="TEXT" implementationClass="com.intellij.grazie.ide.language.commit.CommitMessageGrammarCheckingStrategy"/>
+    <textChecker implementation="com.intellij.grazie.grammar.LanguageToolChecker" id="languageTool"/>
+
+    <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
+
+    <problemFilter language="" implementationClass="com.intellij.grazie.text.CommentProblemFilter"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <annotator language="TEXT" implementationClass="com.intellij.grazie.ide.language.commit.CommitAnnotator"/>
   </extensions>
 
   <extensionPoints>
@@ -66,5 +73,15 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.grazie.textExtractor" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.grazie.text.TextExtractor"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.grazie.problemFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.grazie.text.ProblemFilter"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.grazie.textChecker" interface="com.intellij.grazie.text.TextChecker"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
