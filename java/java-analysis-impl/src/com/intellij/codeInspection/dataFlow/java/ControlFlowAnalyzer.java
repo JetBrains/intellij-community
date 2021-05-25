@@ -215,6 +215,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression index = arrayStore.getIndexExpression();
       if (index != null) {
         index.accept(this);
+        generateBoxingUnboxingInstructionFor(index, PsiType.INT);
       } else {
         pushUnknown();
       }
