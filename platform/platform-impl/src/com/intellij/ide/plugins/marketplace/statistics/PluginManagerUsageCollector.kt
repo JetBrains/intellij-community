@@ -61,7 +61,10 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
       descriptor: IdeaPluginDescriptor,
       source: InstallationSourceEnum,
       previousVersion: String? = null
-    ) = PLUGIN_INSTALLATION_STARTED.log(source, getPluginInfoByDescriptor(descriptor), previousVersion)
+    ) {
+      val pluginInfo = getPluginInfoByDescriptor(descriptor)
+      PLUGIN_INSTALLATION_STARTED.log(source, pluginInfo, if (pluginInfo.isSafeToReport()) previousVersion else null)
+    }
 
     @JvmStatic
     fun pluginInstallationFinished(descriptor: IdeaPluginDescriptor) = getPluginInfoByDescriptor(descriptor).let {
