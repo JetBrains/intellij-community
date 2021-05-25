@@ -2,11 +2,11 @@ package com.intellij.grazie.ide.ui.grammar.tabs.scope
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.CheckingContext
-import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.ui.components.GrazieUIComponent
 import com.intellij.grazie.ide.ui.components.dsl.border
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.ide.ui.components.dsl.panel
+import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.Language
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.CheckBoxListListener
@@ -61,7 +61,7 @@ class GrazieScopeTab : GrazieUIComponent {
     }
 
     languageList.clear()
-    for (language in LanguageGrammarChecking.getEnabledLanguages().sortedBy { it.displayName }) {
+    for (language in TextExtractor.getSupportedLanguages().sortedBy { it.displayName }) {
       languageList.addItem(language, language.displayName, language.id !in myDisabledLanguageIds)
     }
   }
