@@ -245,7 +245,7 @@ public final class MavenIndex implements MavenSearchIndex {
     catch (MavenIndexException e) {
       MavenLog.LOG.warn(e);
     }
-    data = null;
+    myData = null;
   }
 
   private synchronized void save() {

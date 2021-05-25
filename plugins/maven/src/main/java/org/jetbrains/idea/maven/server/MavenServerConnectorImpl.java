@@ -119,7 +119,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
       if (myProject.isDisposed()) {
         throw new CannotStartServerException("Project already disposed");
       }
-
+      ProgressManager.checkCanceled();
     }
     return myServerPromise.get();
   }
