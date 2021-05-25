@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -1338,5 +1338,36 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof MyTestFileType);
     });
+  }
+
+  public void testDuplicateNativeFileType() {
+    FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint().registerExtension(new FileTypeFactory() {
+      @Override
+      public void createFileTypes(@NotNull FileTypeConsumer consumer) {
+        consumer.consume(new FakeFileType() {
+          @Override
+          public boolean isMyFileType(@NotNull VirtualFile file) {
+            return false;
+          }
+
+          @Override
+          public @NotNull String getName() {
+            return "Foo";
+          }
+
+          @Override
+          public @NotNull String getDescription() {
+            return "Foo";
+          }
+        }, "chm;xyz");
+      }
+    }, getTestRootDisposable());
+    try {
+      myFileTypeManager.initStandardFileTypes();
+      assertEquals("Foo", myFileTypeManager.getFileTypeByFileName("foo.xyz").getName());
+    }
+    finally {
+      myFileTypeManager.unregisterFileType(myFileTypeManager.findFileTypeByName("Foo"));
+    }
   }
 }
