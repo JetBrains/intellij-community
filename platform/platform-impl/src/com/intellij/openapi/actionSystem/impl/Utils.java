@@ -86,7 +86,7 @@ public final class Utils {
   }
 
   public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
-    return dataContext instanceof PreCachedDataContext;
+    return dataContext instanceof AsyncDataContext;
   }
 
   @ApiStatus.Internal
