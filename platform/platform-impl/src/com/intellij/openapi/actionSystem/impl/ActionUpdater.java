@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.Disposable;
@@ -278,18 +279,21 @@ final class ActionUpdater {
       });
     };
     ourPromises.add(promise);
+    ClientId clientId = ClientId.getCurrent();
     ourExecutor.execute(() -> {
       boolean[] success = {false};
       try {
-        ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
-        BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () ->
-          success[0] = ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
-            applicationEx,
-            () -> cancelPromise(promise, "write-action requested"),
-            () -> applicationEx.tryRunReadAction(runnable)), indicator);
-        if (!success[0] && !promise.isDone()) {
-          cancelPromise(promise, "read-action unavailable");
-        }
+        ClientId.withClientId(clientId, () -> {
+          ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () ->
+            success[0] = ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
+              applicationEx,
+              () -> cancelPromise(promise, "write-action requested"),
+              () -> applicationEx.tryRunReadAction(runnable)), indicator);
+          if (!success[0] && !promise.isDone()) {
+            cancelPromise(promise, "read-action unavailable");
+          }
+        });
       }
       catch (Throwable e) {
         if (!promise.isDone()) {
