@@ -49,7 +49,6 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinTask
 
-@Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
   private val unloadedModules: MutableMap<String, UnloadedModuleDescription> = LinkedHashMap()
 
