@@ -272,8 +272,8 @@ class ModifiableArtifactEntity : ModifiableWorkspaceEntityBase<ArtifactEntity>()
   var artifactType: String by EntityDataDelegation()
   var includeInProjectBuild: Boolean by EntityDataDelegation()
   var outputUrl: VirtualFileUrl? by VirtualFileUrlNullableProperty()
-  var rootElement: CompositePackagingElementEntity by MutableOneToAbstractOneChild(ArtifactEntity::class.java,
-                                                                                   CompositePackagingElementEntity::class.java)
+  var rootElement: CompositePackagingElementEntity by MutableOneToAbstractOneParent(ArtifactEntity::class.java,
+                                                                                    CompositePackagingElementEntity::class.java)
   var customProperties: Sequence<ArtifactPropertiesEntity> by customPropertiesDelegate
 
   companion object {

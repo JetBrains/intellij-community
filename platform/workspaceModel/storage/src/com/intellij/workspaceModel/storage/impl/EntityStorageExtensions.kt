@@ -26,6 +26,12 @@ internal fun <Parent : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.up
   refs.updateOneToAbstractOneParentOfChild(connectionId, childId, parent)
 }
 
+internal fun <Child : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToAbstractOneChildOfParent(connectionId: ConnectionId,
+                                                                                                                 parentId: ParentEntityId,
+                                                                                                                 child: Child) {
+  refs.updateOneToAbstractOneChildOfParent(connectionId, parentId, child)
+}
+
 internal fun <Child : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.updateOneToOneChildOfParent(connectionId: ConnectionId,
                                                                                                         parentId: EntityId,
                                                                                                         child: Child?) {
@@ -89,11 +95,9 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstrac
   } as? Sequence<Child> ?: emptySequence()
 }
 
-internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractAbstractOneToOneChildren(connectionId: ConnectionId,
-                                                                                            parentId: ParentEntityId): Sequence<Child> {
-  return refs.getAbstractOneToOneChildren(connectionId, parentId)?.let { pid ->
-    sequenceOf(entityDataByIdOrDie(pid.id).createEntity(this))
-  } as? Sequence<Child> ?: emptySequence()
+internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractAbstractOneToOneChild(connectionId: ConnectionId,
+                                                                                          parentId: ParentEntityId): Child? {
+  return refs.getAbstractOneToOneChildren(connectionId, parentId)?.let { entityDataByIdOrDie(it.id).createEntity(this) as Child }
 }
 
 internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractOneParent(connectionId: ConnectionId,

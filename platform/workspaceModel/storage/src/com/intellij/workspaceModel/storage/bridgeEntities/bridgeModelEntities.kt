@@ -811,7 +811,7 @@ class ArtifactEntity(
   val customProperties: Sequence<ArtifactPropertiesEntity> by customPropertiesDelegate
 
   companion object {
-    val rootElementDelegate = OneToAbstractOneChild<CompositePackagingElementEntity, ArtifactEntity>(
+    val rootElementDelegate = OneToAbstractOneParent<ArtifactEntity, CompositePackagingElementEntity>(
       CompositePackagingElementEntity::class.java)
     val customPropertiesDelegate = OneToMany<ArtifactEntity, ArtifactPropertiesEntity>(ArtifactPropertiesEntity::class.java, false)
   }

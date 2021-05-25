@@ -120,7 +120,9 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
       ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild<R>(connectionId, id)?.let { sequenceOf(it) }
                                                 ?: emptySequence()
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id.asParent())
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChildren(connectionId, id.asParent())
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
+        sequenceOf(it)
+      } ?: emptySequence()
     }
   }
 

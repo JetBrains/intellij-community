@@ -278,6 +278,14 @@ internal class MutableRefsTable(
     copiedMap[childId] = parentEntity.id.asParent()
   }
 
+  fun <Child : WorkspaceEntityBase, OriginChild : Child> updateOneToAbstractOneChildOfParent(connectionId: ConnectionId,
+                                                                                             parentId: ParentEntityId,
+                                                                                             childEntity: OriginChild) {
+    val copiedMap = getAbstractOneToOneMutableMap(connectionId)
+    copiedMap.inverse().remove(parentId)
+    copiedMap[childEntity.id.asChild()] = parentId
+  }
+
   fun <Child : WorkspaceEntityBase> updateOneToOneChildOfParent(connectionId: ConnectionId, parentId: Int, childEntity: Child) {
     val copiedMap = getOneToOneMutableMap(connectionId)
     copiedMap.removeValue(parentId)
