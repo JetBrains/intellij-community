@@ -7,6 +7,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
@@ -47,7 +48,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
     //   but unfortunately [WorkspaceModel.entities] function doesn't work with abstract entities at the moment.
     builder.entities(ArtifactEntity::class.java).forEach {
       // Convert artifact to the new source
-      val artifactSource = JpsProjectEntitiesLoader.createJpsEntitySourceForArtifact(configLocation)
+      val artifactSource = JpsEntitySourceFactory.createJpsEntitySourceForArtifact(configLocation)
       builder.changeSource(it, artifactSource)
 
       // Convert it's packaging elements

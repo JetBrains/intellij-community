@@ -452,11 +452,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           // We have a situations when we don't have an association at for `fileIdToFileName` entity source returned from `getActualFileSource`
           // but we have it for the original `JpsImportedEntitySource.internalFile` and base on it we try to calculate actual file url
           if (source is JpsImportedEntitySource && source.internalFile is JpsFileEntitySource.FileInDirectory && source.storedExternally) {
-            fileIdToFileName.get(source.internalFile.fileNameId)?.substringBeforeLast(".")?.let { "$it.xml" }
+            fileIdToFileName.get((source.internalFile as JpsFileEntitySource.FileInDirectory).fileNameId)?.substringBeforeLast(".")?.let { "$it.xml" }
           } else null
         }
         if (fileName != null) actualFileSource.directory.url + "/" + fileName else null
       }
+      else -> error("Unexpected implementation of JpsFileEntitySource: ${actualFileSource.javaClass}")
     }
   }
 

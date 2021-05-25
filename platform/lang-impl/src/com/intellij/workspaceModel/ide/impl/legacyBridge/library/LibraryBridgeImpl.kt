@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
@@ -103,7 +102,7 @@ internal class LibraryBridgeImpl(
   override fun getExternalSource(): ProjectModelExternalSource? = librarySnapshot.externalSource
   override fun getInvalidRootUrls(type: OrderRootType): List<String> = librarySnapshot.getInvalidRootUrls(type)
   override fun getKind(): PersistentLibraryKind<*>? = librarySnapshot.kind
-  override fun getName(): String? = getLegacyLibraryName(entityId)
+  override fun getName(): String? = LibraryNameGenerator.getLegacyLibraryName(entityId)
   override fun getUrls(rootType: OrderRootType): Array<String> = librarySnapshot.getUrls(rootType)
   override fun getFiles(rootType: OrderRootType): Array<VirtualFile> = librarySnapshot.getFiles(rootType)
   override fun getProperties(): LibraryProperties<*>? = librarySnapshot.properties

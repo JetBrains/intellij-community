@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -203,7 +203,7 @@ internal class LibraryOrderEntryBridge(
 
   override fun getLibraryLevel() = libraryDependencyItem.library.tableId.level
 
-  override fun getLibraryName() = getLegacyLibraryName(libraryDependencyItem.library)
+  override fun getLibraryName() = LibraryNameGenerator.getLegacyLibraryName(libraryDependencyItem.library)
 
   override fun getLibrary(): Library? {
     val libraryId = libraryDependencyItem.library

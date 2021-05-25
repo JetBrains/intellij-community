@@ -5,11 +5,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
 
 class JpsProjectLoadingManagerImpl : JpsProjectLoadingManager {
-
-  internal val projectLoaded = AtomicBoolean(false)
+  @TestOnly
+  fun isProjectLoaded(): Boolean = projectLoaded.get()
+  
+  private val projectLoaded = AtomicBoolean(false)
   private val projectActivities = ContainerUtil.createConcurrentList<Runnable>()
 
   @Synchronized

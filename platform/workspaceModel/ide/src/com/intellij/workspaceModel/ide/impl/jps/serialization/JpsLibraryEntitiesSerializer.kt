@@ -7,6 +7,8 @@ import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
@@ -47,7 +49,7 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
   override fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder, configLocation: JpsProjectConfigLocation) {
     builder.entities(LibraryEntity::class.java).forEach {
       if (it.tableId == LibraryTableId.ProjectLibraryTableId) {
-        builder.changeSource(it, JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(configLocation))
+        builder.changeSource(it, JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation))
       }
     }
     builder.entities(LibraryPropertiesEntity::class.java).forEach {
@@ -209,7 +211,7 @@ private val libraryRootTypes = ConcurrentFactoryMap.createMap<String, LibraryRoo
 
 internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?, isExternalStorage: Boolean): Element {
   val libraryTag = Element(LIBRARY_TAG)
-  val legacyName = getLegacyLibraryName(library.persistentId())
+  val legacyName = LibraryNameGenerator.getLegacyLibraryName(library.persistentId())
   if (legacyName != null) {
     libraryTag.setAttribute(NAME_ATTRIBUTE, legacyName)
   }
@@ -265,46 +267,6 @@ internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?, isEx
 }
 
 private val ROOT_TYPES_TO_WRITE_EMPTY_TAG = listOf("CLASSES", "SOURCES", "JAVADOC").map { libraryRootTypes[it]!! }
-internal const val UNNAMED_LIBRARY_NAME_PREFIX = "#"
-private const val UNIQUE_INDEX_LIBRARY_NAME_SUFFIX = "-d1a6f608-UNIQUE-INDEX-f29c-4df6-"
-
-fun getLegacyLibraryName(libraryId: LibraryId): String? {
-  if (libraryId.name.startsWith(UNNAMED_LIBRARY_NAME_PREFIX)) return null
-  if (libraryId.name.contains(UNIQUE_INDEX_LIBRARY_NAME_SUFFIX)) return libraryId.name.substringBefore(UNIQUE_INDEX_LIBRARY_NAME_SUFFIX)
-  return libraryId.name
-}
-
-fun generateLibraryEntityName(legacyLibraryName: String?, exists: (String) -> Boolean): String {
-  if (legacyLibraryName == null) {
-    var index = 1
-    while (true) {
-      val candidate = "$UNNAMED_LIBRARY_NAME_PREFIX$index"
-      if (!exists(candidate)) {
-        return candidate
-      }
-
-      index++
-    }
-    @Suppress("UNREACHABLE_CODE")
-    error("Unable to suggest unique name for unnamed module library")
-  }
-
-  return generateUniqueLibraryName(legacyLibraryName, exists)
-}
-
-internal fun generateUniqueLibraryName(name: String, exists: (String) -> Boolean): String {
-  if (!exists(name)) return name
-
-  var index = 1
-  while (true) {
-    val candidate = "$name$UNIQUE_INDEX_LIBRARY_NAME_SUFFIX$index"
-    if (!exists(candidate)) {
-      return candidate
-    }
-
-    index++
-  }
-}
 
 /**
  * This property indicates that external-system-id attribute should be stored in library configuration file to avoid unnecessary modifications

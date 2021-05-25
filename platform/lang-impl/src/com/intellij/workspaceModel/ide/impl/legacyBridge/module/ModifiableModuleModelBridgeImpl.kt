@@ -17,6 +17,7 @@ import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -90,7 +91,7 @@ internal class ModifiableModuleModelBridgeImpl(
     }
     removeUnloadedModule(moduleName)
 
-    val entitySource = JpsProjectEntitiesLoader.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
+    val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
 
     val moduleEntity = diff.addModuleEntity(
       name = moduleName,

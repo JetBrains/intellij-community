@@ -9,7 +9,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -53,7 +53,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
         is ModuleDependencyItem.Exportable.LibraryDependency -> {
           val libTag = Element("lib")
           val library = moduleLibraries[dep.library.name]
-          val libName = getLegacyLibraryName(dep.library) ?: generateLibName(library)
+          val libName = LibraryNameGenerator.getLegacyLibraryName(dep.library) ?: generateLibName(library)
           libTag.setAttribute("name", libName)
           libTag.setAttribute("scope", dep.scope.name)
           when (val tableId = dep.library.tableId) {
