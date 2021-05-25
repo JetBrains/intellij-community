@@ -99,9 +99,12 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
 
   private fun fields(c: PsiClass) = if (c is PsiExtensibleClass) c.ownFields else c.fields.asList()
 
-  private fun methods(c: PsiClass) = (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filter { !defaultInit(it) }
+  private fun methods(c: PsiClass) = (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filterNot(::ignoreMethod)
 
-  private fun defaultInit(it: PsiMethod) = it.isConstructor && it.parameterList.parametersCount == 0
+  private fun ignoreMethod(m: PsiMethod): Boolean {
+    return m.isConstructor && m.parameterList.parametersCount == 0 // default constructor
+           || m.name.contains("$\$bridge") // org.jboss.bridger.Bridger adds ACC_BRIDGE | ACC_SYNTHETIC to such methods
+  }
 
   private fun inners(c: PsiClass) = if (c is PsiExtensibleClass) c.ownInnerClasses else c.innerClasses.asList()
 
