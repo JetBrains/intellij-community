@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor
@@ -56,7 +57,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         val state = JvmDfaMemoryStateImpl(factory)
         val listener = KotlinDfaListener()
         val interpreter = StandardDataFlowInterpreter(flow, listener)
-        interpreter.interpret(state)
+        if (interpreter.interpret(state) != RunnerResult.OK) return
         listener.constantConditions.forEach { (expr, cv) -> 
             if (cv != ConstantValue.UNKNOWN) {
                 val key = if (cv == ConstantValue.TRUE) "inspection.message.condition.always.true" 
