@@ -1,4 +1,4 @@
-// PROBLEM: 'copy' method of data class is called without named arguments
+// PROBLEM: Parameter names should be specified explicitly for the 'copy()' method call
 
 data class Foo(val a: String)
 
