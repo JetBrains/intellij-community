@@ -100,7 +100,7 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
                 return processLightClassLocalImplementations(psiClass, searchScope, consumer)
             }
 
-            return ContainerUtil.process(ClassInheritorsSearch.search(psiClass, true), consumer)
+            return runReadAction { ContainerUtil.process(ClassInheritorsSearch.search(psiClass, true), consumer) }
         }
 
         private fun processLightClassLocalImplementations(
