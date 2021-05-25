@@ -130,9 +130,8 @@ public final class HierarchyViewTestFixture {
     assertEquals("Incorrect base node", mustBeBase, baseDescriptor == descriptor);
   }
 
-  private static void checkContent(@NotNull HierarchyNodeDescriptor descriptor,
-                                   @NotNull Element expectedElement) {
-    assertEquals(expectedElement.getAttributeValue(TEXT_ATTR_NAME), descriptor.getHighlightedText().getText());
+  private static void checkContent(@NotNull HierarchyNodeDescriptor descriptor, @NotNull Element expectedElement) {
+    assertEquals("parent: "+descriptor.getParentDescriptor(), expectedElement.getAttributeValue(TEXT_ATTR_NAME), descriptor.getHighlightedText().getText());
   }
 
   private static void checkChildren(@NotNull HierarchyTreeStructure treeStructure,
