@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
   </component>
 </module>
