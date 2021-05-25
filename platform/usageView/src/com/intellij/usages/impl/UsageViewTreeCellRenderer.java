@@ -2,18 +2,13 @@
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.tags.TagManager;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DirtyUI;
-import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.usageView.UsageTreeColors;
@@ -126,16 +121,9 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           append("<root>", patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)); //NON-NLS root is invisible
         }
         else {
-          UsageGroup group = node.getGroup();
-          PsiElement element = group instanceof DataProvider ? CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group) : null;
-          Icon tagIcon = TagManager.appendTags(element, this);
-          append(group.getText(myView),
+          append(node.getGroup().getText(myView),
                  patchAttrs(node, showAsReadOnly ? UsageTreeColors.READ_ONLY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES));
-          Icon icon = node.getGroup().getIcon(expanded);
-          if (tagIcon != null) {
-            icon = new RowIcon(tagIcon, icon);
-          }
-          setIcon(icon);
+          setIcon(node.getGroup().getIcon(expanded));
         }
 
         int count = node.getRecursiveUsageCount();

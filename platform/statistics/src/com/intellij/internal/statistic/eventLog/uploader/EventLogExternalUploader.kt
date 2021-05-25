@@ -67,7 +67,8 @@ object EventLogExternalUploader {
     }
 
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderId)
-    val device = DeviceConfiguration(EventLogConfiguration.deviceId, EventLogConfiguration.bucket)
+    val config = EventLogConfiguration.getOrCreate(recorderId)
+    val device = DeviceConfiguration(config.deviceId, config.bucket)
     val application = EventLogInternalApplicationInfo(recorderId, isTest)
     try {
       val command = prepareUploadCommand(device, recorder, application)

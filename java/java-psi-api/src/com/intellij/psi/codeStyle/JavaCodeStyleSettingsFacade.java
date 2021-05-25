@@ -33,12 +33,6 @@ public abstract class JavaCodeStyleSettingsFacade {
   public abstract boolean useFQClassNames();
 
   /**
-   * @deprecated Use {@link JavaFileCodeStyleFacade#getIndentSize()}
-   */
-  @Deprecated
-  public abstract int getIndentSize();
-
-  /**
    * @deprecated Use {@link JavaFileCodeStyleFacade#isGenerateFinalParameters()}
    */
   @Deprecated

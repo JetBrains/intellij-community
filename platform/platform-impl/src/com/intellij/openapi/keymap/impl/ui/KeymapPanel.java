@@ -31,10 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.FilterComponent;
-import com.intellij.ui.ToggleActionButton;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.foundation.NSDefaults;
@@ -790,7 +787,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private class EditShortcutAction extends AnAction {
     private EditShortcutAction() {
       super(KeyMapBundle.message("edit.shortcut.action.text"), KeyMapBundle.message("edit.shortcut.action.description"),
-            AllIcons.Actions.Edit);
+            new LayeredIcon(AllIcons.Actions.Edit, AllIcons.General.Dropdown));
       registerCustomShortcutSet(CommonShortcuts.ENTER, myActionsTree.getTree());
     }
 

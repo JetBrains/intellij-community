@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
+import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
@@ -284,7 +285,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   boolean isAutoScrollMode() {
     String activeToolWindowId = ToolWindowManager.getInstance(getProject()).getActiveToolWindowId();
     return myGlobalInspectionContext.getUIOptions().AUTOSCROLL_TO_SOURCE &&
-           (activeToolWindowId == null || activeToolWindowId.equals(ToolWindowId.INSPECTION));
+           (activeToolWindowId == null || activeToolWindowId.equals(ProblemsView.ID));
   }
 
   public void setApplyingFix(boolean applyingFix) {

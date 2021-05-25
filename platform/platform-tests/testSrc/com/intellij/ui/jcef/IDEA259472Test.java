@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
@@ -42,12 +41,11 @@ public class IDEA259472Test {
   public void test() {
     TestScaleHelper.assumeStandalone();
 
-    RegistryManager.getInstance().get("ide.browser.jcef.headless.enabled").setValue("true");
-
     CountDownLatch latch1 = new CountDownLatch(1);
     CountDownLatch latch2 = new CountDownLatch(1);
 
     JBCefBrowser jbCefBrowser = new JBCefBrowser("https://maps.google.com"); // need some heavy page, taking time to load
+    jbCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
 
     jbCefBrowser.getJBCefClient().addLoadHandler(new CefLoadHandler() {
       @Override

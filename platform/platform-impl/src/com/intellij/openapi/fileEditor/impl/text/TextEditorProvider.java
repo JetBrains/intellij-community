@@ -9,13 +9,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -183,14 +181,11 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
       return new Document[]{document};
     }
 
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = projects.length - 1; i >= 0; i--) {
-      VirtualFile file = FileEditorManagerEx.getInstanceEx(projects[i]).getFile(editor);
-      if (file != null) {
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document != null) {
-          return new Document[]{document};
-        }
+    VirtualFile file = editor.getFile();
+    if (file != null) {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        return new Document[]{document};
       }
     }
 

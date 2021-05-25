@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.ThreeStateCheckBox
+import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import java.util.*
@@ -50,11 +51,7 @@ class DefaultInclusionModel(
   }
 
   override fun removeInclusion(items: Collection<Any>) {
-    var modified = false
-    for (item in items) {
-      modified = modified || inclusion.remove(item)
-    }
-    if (modified) fireInclusionChanged()
+    if (VcsUtil.removeAllFromSet(inclusion, items)) fireInclusionChanged()
   }
 
   override fun setInclusion(items: Collection<Any>) {

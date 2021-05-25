@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.refactorings
 
-import com.intellij.testGuiFramework.impl.jList
 import com.intellij.ui.components.JBList
 import training.dsl.LessonContext
 import training.dsl.LessonSample
@@ -40,9 +39,13 @@ class ExtractVariableFromBubbleLesson(private val sample: LessonSample)
         }
       }
 
-      actionTask("NextTemplateVariable") {
+      task("NextTemplateVariable") {
         //TODO: fix the shortcut: it should be ${action(it)} but with preference for Enter
-        LessonsBundle.message("extract.variable.choose.name", LessonUtil.rawEnter())
+        text(LessonsBundle.message("extract.variable.choose.name", LessonUtil.rawEnter()))
+        trigger(it)
+        test(waitEditorToBeReady = false) {
+          actions(it)
+        }
       }
     }
 }

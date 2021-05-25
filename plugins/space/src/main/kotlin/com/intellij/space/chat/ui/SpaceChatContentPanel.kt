@@ -32,7 +32,7 @@ internal class SpaceChatContentPanel(
   private val lifetime: Lifetime,
   parent: Disposable,
   channelsVm: ChannelsVm,
-  chatRecord: Ref<M2ChannelRecord>,
+  chatRecord: Ref<M2ChannelRecord>
 ) : SpaceChatContentPanelBase(lifetime, parent, channelsVm, chatRecord) {
   private val server = channelsVm.client.server
 

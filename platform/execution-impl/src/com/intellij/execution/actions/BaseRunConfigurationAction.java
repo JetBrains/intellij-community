@@ -13,6 +13,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -153,6 +154,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   private void perform(final ConfigurationFromContext configurationFromContext, final ConfigurationContext context) {
+    int eventCount = IdeEventQueue.getInstance().getEventCount();
     RunnerAndConfigurationSettings configurationSettings = configurationFromContext.getConfigurationSettings();
     context.setConfiguration(configurationSettings);
     configurationFromContext.onFirstRun(context, () -> {
@@ -161,6 +163,13 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
         RunConfiguration configuration = settings == null ? null : settings.getConfiguration();
         String configurationClass = configuration == null ? null : configuration.getClass().getName();
         LOG.debug(String.format("Create run configuration: %s", configurationClass));
+      }
+      // Reset event counter if some UI was shown as
+      // stated in `ConfigurationFromContext.onFirstRun` javadoc.
+      // Can be removed if pre-cached context is used in ConfigurationFromContext.
+      if (!Utils.isAsyncDataContext(context.getDataContext()) &&
+          eventCount != IdeEventQueue.getInstance().getEventCount()) {
+        IdeEventQueue.getInstance().setEventCount(eventCount);
       }
       perform(configurationSettings, context);
     });

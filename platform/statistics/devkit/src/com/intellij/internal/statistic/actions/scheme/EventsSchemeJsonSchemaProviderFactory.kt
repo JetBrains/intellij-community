@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions.scheme
 
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,7 +15,7 @@ internal class EventsSchemeJsonSchemaProviderFactory : JsonSchemaProviderFactory
   private class EventsSchemeJsonSchemaFileProvider : JsonSchemaFileProvider {
     override fun isAvailable(file: VirtualFile): Boolean {
       val isValidationRulesFile = file.getUserData(EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY) ?: false
-      return isValidationRulesFile && TestModeValidationRule.isTestModeEnabled()
+      return isValidationRulesFile && StatisticsRecorderUtil.isAnyTestModeEnabled()
     }
 
     override fun getName(): String = "Events Test Scheme"

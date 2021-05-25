@@ -4,16 +4,12 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowRecentlyEditedFilesAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getProject();
-    if (project != null) {
-      Switcher.createAndShowSwitcher(e, IdeBundle.message("window.title.recently.edited.files"), "RecentChangedFiles", true, true);
-    }
+    Switcher.createAndShowSwitcher(e, IdeBundle.message("window.title.recently.edited.files"), true, true);
   }
 
   @Override

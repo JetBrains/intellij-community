@@ -6,12 +6,14 @@ import training.dsl.LessonContext
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
+import training.dsl.TaskTestContext
 import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class JavaBasicCompletionLesson
-  : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name")) {
+class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name")) {
+
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   val sample = parseLessonSample("""
     import java.lang.*;

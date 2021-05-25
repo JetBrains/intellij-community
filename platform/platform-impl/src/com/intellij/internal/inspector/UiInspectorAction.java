@@ -26,6 +26,11 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManagerListener;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.keymap.impl.ui.MouseShortcutPanel;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -34,6 +39,10 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowEP;
+import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.impl.StripeButton;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -57,7 +66,6 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import net.miginfocom.layout.*;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,26 +96,79 @@ import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_
 
 public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible {
   private static final String CLICK_INFO = "CLICK_INFO";
+  private static final String ACTION_ID = "UiInspector";
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
+  private final List<MouseShortcut> myMouseShortcuts = new ArrayList<>();
 
   public UiInspectorAction() {
     setEnabledInModalContext(true);
+    updateMouseShortcuts();
+    KeymapManagerEx.getInstanceEx().addWeakListener(new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(@Nullable Keymap keymap) {
+        updateMouseShortcuts();
+      }
+
+      @Override
+      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+        if (ACTION_ID.equals(actionId)) {
+          updateMouseShortcuts();
+        }
+      }
+    });
+    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event instanceof MouseEvent && ((MouseEvent)event).getClickCount() > 0 && !myMouseShortcuts.isEmpty()) {
+          MouseEvent me = (MouseEvent)event;
+          MouseShortcut mouseShortcut = new MouseShortcut(me.getButton(), me.getModifiersEx(), me.getClickCount());
+          if (myMouseShortcuts.contains(mouseShortcut) && !(me.getComponent() instanceof MouseShortcutPanel)) {
+            me.consume();
+          }
+        }
+      }
+    }, AWTEvent.MOUSE_EVENT_MASK);
+  }
+
+  private void updateMouseShortcuts() {
+    if (KeymapManagerImpl.isKeymapManagerInitialized()) {
+      myMouseShortcuts.clear();
+      Keymap keymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
+      for (Shortcut shortcut : keymap.getShortcuts(ACTION_ID)) {
+        if (shortcut instanceof MouseShortcut) {
+          myMouseShortcuts.add((MouseShortcut)shortcut);
+        }
+      }
+    }
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     InputEvent event = e.getInputEvent();
+    event.consume();
     Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+
+    Project project = e.getProject();
+    closeAllInspectorWindows();
+
     if (event instanceof MouseEvent && event.getComponent() != null) {
-      component = UIUtil.getDeepestComponentAt(event.getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY());
+      new UiInspector(project).processMouseEvent(project, (MouseEvent)event);
+      return;
     }
     if (component == null) {
-      component = IdeFocusManager.getInstance(e.getProject()).getFocusOwner();
+      component = IdeFocusManager.getInstance(project).getFocusOwner();
     }
+
     assert component != null;
-    new UiInspector(e.getProject()).showInspector(e.getProject(), component);
+    new UiInspector(project).showInspector(project, component);
+  }
+
+  private static void closeAllInspectorWindows() {
+    Arrays.stream(Window.getWindows())
+      .filter(w -> w instanceof InspectorWindow)
+      .forEach(w -> Disposer.dispose(((InspectorWindow)w).myInspector));
   }
 
   private static final class InspectorWindow extends JDialog implements Disposable {
@@ -120,10 +181,14 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     @NotNull private final HierarchyTree myHierarchyTree;
     @NotNull private final Wrapper myWrapperPanel;
     @Nullable private final Project myProject;
+    private final UiInspector myInspector;
 
-    private InspectorWindow(@Nullable Project project, @NotNull Component component) throws HeadlessException {
+    private InspectorWindow(@Nullable Project project,
+                            @NotNull Component component,
+                            UiInspector inspector) throws HeadlessException {
       super(findWindow(component));
       myProject = project;
+      myInspector = inspector;
       Window window = findWindow(component);
       setModal(window instanceof JDialog && ((JDialog)window).isModal());
       myComponents.add(component);
@@ -134,8 +199,8 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
       setLayout(new BorderLayout());
       setTitle(component.getClass().getName());
-      Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey());
-      Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey());
+      Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey(), null);
+      Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey(), null);
       if (size != null) setSize(size);
       if (location != null) setLocation(location);
 
@@ -216,35 +281,32 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           updateHighlighting();
         }
       };
-      DataProvider provider = new DataProvider() {
-        @Override
-        public @Nullable Object getData(@NotNull @NonNls String dataId) {
-          if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-            return new Navigatable() {
-              @Override
-              public void navigate(boolean requestFocus) {
-                if (myHierarchyTree.hasFocus()) {
-                  openClass(myComponents.get(0).getClass().getName(), requestFocus);
-                } else if (myInspectorTable.myTable.hasFocus()) {
-                  int row = myInspectorTable.myTable.getSelectedRow();
-                  Object at = myInspectorTable.myModel.getValueAt(row, 1);
-                  openClass(at.toString(), requestFocus);
-                }
+      DataProvider provider = dataId -> {
+        if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+          return new Navigatable() {
+            @Override
+            public void navigate(boolean requestFocus) {
+              if (myHierarchyTree.hasFocus()) {
+                openClass(myComponents.get(0).getClass().getName(), requestFocus);
+              } else if (myInspectorTable.myTable.hasFocus()) {
+                int row = myInspectorTable.myTable.getSelectedRow();
+                Object at = myInspectorTable.myModel.getValueAt(row, 1);
+                openClass(String.valueOf(at), requestFocus);
               }
+            }
 
-              @Override
-              public boolean canNavigate() {
-                return true;
-              }
+            @Override
+            public boolean canNavigate() {
+              return true;
+            }
 
-              @Override
-              public boolean canNavigateToSource() {
-                return true;
-              }
-            };
-          }
-          return null;
+            @Override
+            public boolean canNavigateToSource() {
+              return true;
+            }
+          };
         }
+        return null;
       };
       myWrapperPanel.setContent(myInspectorTable);
 
@@ -332,8 +394,8 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     @Override
     public void dispose() {
-      DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize());
-      DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation());
+      DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize(), null);
+      DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
       super.dispose();
       DialogWrapper.cleanupRootPane(rootPane);
       DialogWrapper.cleanupWindowListeners(this);
@@ -349,7 +411,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       myComponents.clear();
       updateHighlighting();
       setVisible(false);
-      dispose();
+      Disposer.dispose(this);
     }
 
     private void updateHighlighting() {
@@ -461,6 +523,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           }
 
           if (myInitialSelection == componentNode.getComponent()) {
+            //noinspection UseJBColor
             background = new Color(31, 128, 8, 58);
           }
         }
@@ -485,7 +548,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
         else {
           append(getComponentName(component));
-          Pair<Class, String> class2field = getClassAndFieldName(component);
+          Pair<Class<?>, String> class2field = getClassAndFieldName(component);
           if (class2field != null) {
             append("(" + class2field.second + "@" + class2field.first.getSimpleName() + ")");
           }
@@ -504,10 +567,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           componentNode.setText(toString());
           setIcon(UiInspectorIcons.findIconFor(component));
         }
-        if (value instanceof HierarchyTree.ClickInfoNode) {
-          append(value.toString());
-          setIcon(AllIcons.Ide.Rating);
-        }
+      }
+      if (value instanceof HierarchyTree.ClickInfoNode) {
+        append(value.toString());
+        setIcon(AllIcons.Ide.Rating);
       }
       setForeground(foreground);
       setBackground(background);
@@ -528,19 +591,19 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   }
 
   @Nullable
-  private static Pair<Class, String> getClassAndFieldName(Component component) {
+  private static Pair<Class<?>, String> getClassAndFieldName(Component component) {
     Container parent = component.getParent();
     int deepness = 1;
     while(parent != null && deepness <= MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME) {
       Class<?> aClass = parent.getClass();
-      Map<Field, Class> fields = new HashMap<>();
+      Map<Field, Class<?>> fields = new HashMap<>();
       while (aClass != null) {
         for (Field field : aClass.getDeclaredFields()) {
           fields.put(field, aClass);
         }
         aClass = aClass.getSuperclass();
       }
-      for (Map.Entry<Field, Class> entry : fields.entrySet()) {
+      for (Map.Entry<Field, Class<?>> entry : fields.entrySet()) {
         try {
           Field field = entry.getKey();
           field.setAccessible(true);
@@ -607,10 +670,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     @Override
     public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof ComponentNode) {
-        Pair<Class, String> pair = null;
-if (((HierarchyTree.ComponentNode)value).myComponent != null) {
-  pair = getClassAndFieldName(((HierarchyTree.ComponentNode)value).myComponent);
-}
+        Pair<Class<?>, String> pair = null;
+        if (((HierarchyTree.ComponentNode)value).myComponent != null) {
+          pair = getClassAndFieldName(((HierarchyTree.ComponentNode)value).myComponent);
+        }
         if (pair != null) {
           return pair.first.getSimpleName() + '.' + pair.second;
         } else {
@@ -696,8 +759,8 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
       }
 
       @SuppressWarnings("UseOfObsoleteCollectionType")
-      private static Vector prepareChildren(@NotNull Accessible a) {
-        Vector<DefaultMutableTreeNode> result = new Vector<>();
+      private static Vector<TreeNode> prepareChildren(@NotNull Accessible a) {
+        Vector<TreeNode> result = new Vector<>();
         AccessibleContext ac = a.getAccessibleContext();
         if (ac != null) {
           int count = ac.getAccessibleChildrenCount();
@@ -731,12 +794,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
           return myText != null ? myText : myComponent.getClass().getName();
         }
         else {
-          if (myText != null) {
-            return myText;
-          }
-          else {
-            return myAccessible.getClass().getName();
-          }
+          return Objects.requireNonNullElseGet(myText, () -> myAccessible.getClass().getName());
         }
       }
 
@@ -859,8 +917,8 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
     StripeTable myTable;
 
     private InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
-       myModel = new InspectorTableModel(clickInfo);
-       init(null);
+      myModel = new InspectorTableModel(clickInfo);
+      init(null);
     }
     private InspectorTable(@NotNull final Component component) {
 
@@ -918,7 +976,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
           int column = myTable.columnAtPoint(event.getPoint());
           if (row >=0 && row < myTable.getRowCount() && column >= 0 && column < myTable.getColumnCount()) {
             Component renderer = myTable.getCellRenderer(row, column)
-                                        .getTableCellRendererComponent(myTable, myModel.getValueAt(row, column), false, false, row, column);
+              .getTableCellRendererComponent(myTable, myModel.getValueAt(row, column), false, false, row, column);
             if (renderer instanceof JLabel) {
               //noinspection UseOfSystemOutOrSystemErr
               System.out.println((component != null ? getComponentName(component)+ " " : "" )
@@ -1088,7 +1146,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
   }
 
   private static class ValueCellRenderer implements TableCellRenderer {
-    private static final Map<Class, Renderer> RENDERERS = new HashMap<>();
+    private static final Map<Class<?>, Renderer<?>> RENDERERS = new HashMap<>();
 
     static {
       RENDERERS.put(Point.class, new PointRenderer());
@@ -1125,14 +1183,15 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
     }
 
     @Nullable
-    private static Renderer<Object> getRenderer(Class clazz) {
+    private static Renderer<Object> getRenderer(Class<?> clazz) {
       if (clazz == null) return null;
 
+      @SuppressWarnings("unchecked")
       Renderer<Object> renderer = (Renderer<Object>)RENDERERS.get(clazz);
       if (renderer != null) return renderer;
 
-      Class[] interfaces = clazz.getInterfaces();
-      for (Class aClass : interfaces) {
+      Class<?>[] interfaces = clazz.getInterfaces();
+      for (Class<?> aClass : interfaces) {
         renderer = getRenderer(aClass);
         if (renderer != null) {
           return renderer;
@@ -1194,7 +1253,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
 
       sb.append(" argb:0x");
       String hex = Integer.toHexString(value.getRGB());
-      for (int i = hex.length(); i < 8; i++) sb.append('0');
+      sb.append("0".repeat(8 - hex.length()));
       sb.append(StringUtil.toUpperCase(hex));
 
       if (value instanceof UIResource) sb.append(" UIResource");
@@ -1314,7 +1373,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
       sb.append(getClassName(value));
 
       Color color = getBorderColor(value);
-      if (color != null) sb.append(" color=").append(color.toString());
+      if (color != null) sb.append(" color=").append(color);
 
       if (value instanceof LineBorder) {
         if (((LineBorder)value).getRoundedCorners()) sb.append(" roundedCorners=true");
@@ -1356,7 +1415,6 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
     }
   }
 
-  @SuppressWarnings("rawtypes")
   @NotNull
   private static String getToStringValue(@NotNull Object value) {
     StringBuilder sb = new StringBuilder();
@@ -1373,9 +1431,8 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
             }
           }
           else if (table instanceof Map) {
-            Map map = (Map)table;
-            Set<Map.Entry> set = map.entrySet();
-            for (Map.Entry entry : set) {
+            Map<?, ?> map = (Map<?, ?>)table;
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
               if (entry.getKey().equals("uiInspector.addedAt")) continue;
               if (sb.length() > 0) sb.append(",");
               sb.append('[').append(entry.getKey()).append("->").append(entry.getValue()).append(']');
@@ -1417,10 +1474,6 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
 
   private static Icon createColorIcon(Color color1, Color color2) {
     return JBUIScale.scaleIcon(new ColorsIcon(11, color1, color2));
-  }
-
-  private static Icon createComponentIcon(Component component) {
-    return UiInspectorIcons.findIconFor(component);
   }
 
   private static class InspectorTableModel extends AbstractTableModel {
@@ -1530,6 +1583,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
 
       addActionInfo(component);
       addToolbarInfo(component);
+      addToolWindowInfo(component);
       addGutterInfo(component);
 
       UiInspectorContextProvider contextProvider = UiInspectorUtil.getProvider(component);
@@ -1643,6 +1697,25 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
       }
     }
 
+    private void addToolWindowInfo(Object component) {
+      if (component instanceof StripeButton) {
+        ToolWindowImpl window = ((StripeButton)component).getToolWindow();
+        myProperties.add(new PropertyBean("Tool Window ID", window.getId(), true));
+        myProperties.add(new PropertyBean("Tool Window Icon", window.getIcon()));
+
+        ToolWindowFactory contentFactory = ReflectionUtil.getField(ToolWindowImpl.class, window, ToolWindowFactory.class, "contentFactory");
+        if (contentFactory != null) {
+          myProperties.add(new PropertyBean("Tool Window Factory", contentFactory));
+        }
+        else {
+          ToolWindowEP ep = ToolWindowEP.EP_NAME.findFirstSafe(it -> it.id == window.getId());
+          if (ep != null && ep.factoryClass != null) {
+            myProperties.add(new PropertyBean("Tool Window Factory", ep.factoryClass));
+          }
+        }
+      }
+    }
+
     private void addLayoutProperties(@NotNull Container component) {
       String prefix = "  ";
 
@@ -1676,7 +1749,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
         CardLayout cardLayout = (CardLayout)layout;
         Integer currentCard = ReflectionUtil.getField(CardLayout.class, cardLayout, null, "currentCard");
         //noinspection UseOfObsoleteCollectionType
-        Vector vector = ReflectionUtil.getField(CardLayout.class, cardLayout, Vector.class, "vector");
+        Vector<?> vector = ReflectionUtil.getField(CardLayout.class, cardLayout, Vector.class, "vector");
         String cardDescription = "???";
         if (vector != null && currentCard != null) {
           Object card = vector.get(currentCard);
@@ -2021,16 +2094,12 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
     return UIUtil.getClientProperty(c, ACTION_KEY);
   }
 
-  static void showUiInspectorForEvent(@Nullable Project project, Component component) {
-    new UiInspector(project).showInspector(project, component);
-  }
-
   private static class UiInspector implements AWTEventListener, Disposable {
 
-    private Project myProject;
-
     UiInspector(@Nullable Project project) {
-      myProject = project;
+      if (project != null) {
+        Disposer.register(project, this);
+      }
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.CONTAINER_EVENT_MASK);
     }
 
@@ -2045,9 +2114,9 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
     }
 
     public void showInspector(@Nullable Project project, @NotNull Component c) {
-      InspectorWindow window = new InspectorWindow(project, c);
+      InspectorWindow window = new InspectorWindow(project, c, this);
       Disposer.register(window, this);
-      if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey()) == null) {
+      if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey(), null) == null) {
         window.pack();
       }
       window.setVisible(true);
@@ -2056,23 +2125,17 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      if (event instanceof MouseEvent) {
-        processMouseEvent((MouseEvent)event);
-      }
-      else if (event instanceof ContainerEvent) {
+      if (event instanceof ContainerEvent) {
         processContainerEvent((ContainerEvent)event);
       }
     }
 
-    private void processMouseEvent(MouseEvent me) {
-      if (!me.isAltDown() || !me.isControlDown()) return;
-      if (me.getClickCount() != 1 || me.isPopupTrigger()) return;
+    private void processMouseEvent(Project project, MouseEvent me) {
       me.consume();
-      if (me.getID() != MouseEvent.MOUSE_RELEASED) return;
       Component component = me.getComponent();
 
       if (component instanceof Container) {
-        component = ((Container)component).findComponentAt(me.getPoint());
+        component = UIUtil.getDeepestComponentAt(component, me.getX(), me.getY());
       }
       else if (component == null) {
         component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -2082,7 +2145,8 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
           ((JComponent)component).putClientProperty(CLICK_INFO, getClickInfo(me, component));
           ((JComponent)component).putClientProperty(CLICK_INFO_POINT, me.getPoint());
         }
-        showInspector(myProject, component);
+
+        showInspector(project, component);
       }
     }
 
@@ -2092,7 +2156,8 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
       List<PropertyBean> clickInfo = new ArrayList<>();
       //clickInfo.add(new PropertyBean("Click point", me.getPoint()));
       if (component instanceof JList) {
-        JList list = (JList)component;
+        @SuppressWarnings("unchecked")
+        JList<Object> list = (JList<Object>)component;
         int row = list.getUI().locationToIndex(list, me.getPoint());
         if (row != -1) {
           Component rendererComponent = list.getCellRenderer()
@@ -2123,10 +2188,10 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
         if (path != null) {
           Object object = path.getLastPathComponent();
           Component rendererComponent = tree.getCellRenderer().getTreeCellRendererComponent(
-              tree, object, tree.getSelectionModel().isPathSelected(path),
-              tree.isExpanded(path),
-              tree.getModel().isLeaf(object),
-              tree.getRowForPath(path), tree.hasFocus());
+            tree, object, tree.getSelectionModel().isPathSelected(path),
+            tree.isExpanded(path),
+            tree.getModel().isLeaf(object),
+            tree.getRowForPath(path), tree.hasFocus());
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
           clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
           return clickInfo;
@@ -2200,6 +2265,7 @@ if (((HierarchyTree.ComponentNode)value).myComponent != null) {
     }
     else if (type == Insets.class) {
       if (s.length >= 5) {
+        //noinspection UseDPIAwareInsets
         return new Insets(Integer.parseInt(s[1]), Integer.parseInt(s[2]),
                           Integer.parseInt(s[4]), Integer.parseInt(s[4]));
       }

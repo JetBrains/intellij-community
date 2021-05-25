@@ -4,9 +4,9 @@ package com.intellij.internal.statistic.toolwindow
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.internal.statistic.StatisticsDevKitUtil.DEFAULT_RECORDER
+import com.intellij.internal.statistic.StatisticsDevKitUtil.getLogProvidersInTestMode
 import com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction
-import com.intellij.internal.statistic.eventLog.getEventLogProviders
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
@@ -24,7 +24,11 @@ import com.intellij.ui.content.ContentFactory
  */
 private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    createNewTab(project, toolWindow, DEFAULT_RECORDER)
+    val recorders = StatisticsRecorderUtil.getRecordersInTestMode()
+    if (recorders.isEmpty()) return
+
+    val mainTab = if (recorders.contains(DEFAULT_RECORDER)) DEFAULT_RECORDER else recorders[0]
+    createNewTab(project, toolWindow, mainTab)
     toolWindow.setToHideOnEmptyContent(true)
     if (toolWindow is ToolWindowEx) {
       val newSessionActionGroup = createNewSessionActionGroup(project)
@@ -35,13 +39,13 @@ private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware
       override fun toolWindowShown(toolWindow: ToolWindow) {
         if (eventLogToolWindowsId == toolWindow.id && toolWindow.isVisible && toolWindow.contentManager.contentCount == 0) {
           // open a new session if all tabs were closed manually
-          createNewTab(project, toolWindow, DEFAULT_RECORDER)
+          createNewTab(project, toolWindow, mainTab)
         }
       }
     })
   }
 
-  override fun isApplicable(project: Project) = TestModeValidationRule.isTestModeEnabled()
+  override fun isApplicable(project: Project) = StatisticsRecorderUtil.isAnyTestModeEnabled()
 }
 
 private fun createNewSessionActionGroup(project: Project): NonEmptyActionGroup {
@@ -49,7 +53,7 @@ private fun createNewSessionActionGroup(project: Project): NonEmptyActionGroup {
   actionGroup.isPopup = true
   actionGroup.templatePresentation.icon = AllIcons.General.Add
 
-  val actions = getEventLogProviders().map { logger ->
+  val actions = getLogProvidersInTestMode().map { logger ->
     val recorder = logger.recorderId
     CreateNewSessionAction(project, recorder)
   }

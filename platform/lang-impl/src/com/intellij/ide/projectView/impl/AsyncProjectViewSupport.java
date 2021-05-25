@@ -80,18 +80,17 @@ public class AsyncProjectViewSupport {
     connection.subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
       @Override
       public void bookmarkAdded(@NotNull Bookmark bookmark) {
-        bookmarkChanged(bookmark);
+        updateByFile(bookmark.getFile(), false);
       }
 
       @Override
       public void bookmarkRemoved(@NotNull Bookmark bookmark) {
-        bookmarkChanged(bookmark);
+        updateByFile(bookmark.getFile(), false);
       }
 
       @Override
       public void bookmarkChanged(@NotNull Bookmark bookmark) {
-        VirtualFile file = bookmark.getFile();
-        updateByFile(file, !file.isDirectory());
+        updateByFile(bookmark.getFile(), false);
       }
     });
     PsiManager.getInstance(project).addPsiTreeChangeListener(new ProjectViewPsiTreeChangeListener(project) {

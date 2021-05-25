@@ -4,6 +4,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderUtil;
+import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
@@ -434,13 +435,13 @@ public class DeclarationParser {
   }
 
   private static boolean isSealedToken(PsiBuilder builder, IElementType tokenType) {
-    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_15_PREVIEW) &&
+    return JavaLexer.isSealedAvailable(getLanguageLevel(builder)) &&
            tokenType == JavaTokenType.IDENTIFIER &&
            PsiKeyword.SEALED.equals(builder.getTokenText());
   }
 
   private static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
-    if (!getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_15_PREVIEW) ||
+    if (!JavaLexer.isSealedAvailable(getLanguageLevel(builder)) ||
         tokenType != JavaTokenType.IDENTIFIER ||
         !"non".equals(builder.getTokenText()) ||
         builder.lookAhead(1) != JavaTokenType.MINUS ||

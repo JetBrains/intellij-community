@@ -2,8 +2,6 @@
 package com.jetbrains.python.ift.lesson.refactorings
 
 import com.intellij.icons.AllIcons
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.jetbrains.python.ift.PythonLessonsBundle
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
@@ -70,7 +68,7 @@ class PythonInPlaceRefactoringLesson
         val expected = template.replace("<caret>", "").replace("<name>", newName)
         newName != variableName && editor.document.text == expected
       }
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      test { invokeActionViaShortcut("ENTER") }
     }
 
     waitBeforeContinue(500)
@@ -127,7 +125,7 @@ class PythonInPlaceRefactoringLesson
         ui.javaClass.name.contains("ChangeSignaturePopup")
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      test { invokeActionViaShortcut("ENTER") }
     }
 
     task {
@@ -138,7 +136,7 @@ class PythonInPlaceRefactoringLesson
       restoreAfterStateBecomeFalse(restoreId = showIntentionsTaskId) {
         previous.ui?.isShowing != true
       }
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      test(waitEditorToBeReady = false) { invokeActionViaShortcut("ENTER") }
     }
     task {
       lateinit var beforeSecondRefactoring: String
@@ -152,9 +150,9 @@ class PythonInPlaceRefactoringLesson
           it.className.contains("PySuggestedRefactoringExecution") && it.methodName == "performChangeSignature"
         }
       }
-      test {
+      test(waitEditorToBeReady = false) {
         type("0")
-        GuiTestUtil.shortcut(Key.ENTER)
+        invokeActionViaShortcut("ENTER")
       }
     }
     text(PythonLessonsBundle.message("python.in.place.refactoring.remark.about.application.scope"))

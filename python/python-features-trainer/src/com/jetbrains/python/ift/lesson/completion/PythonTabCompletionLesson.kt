@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.ift.lesson.completion
 
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.jetbrains.python.ift.PythonLessonsBundle
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
@@ -67,7 +65,7 @@ class PythonTabCompletionLesson
           restoreAfterStateBecomeFalse {
             selectNeededItem()?.not() ?: true
           }
-          test { GuiTestUtil.shortcut(Key.TAB) }
+          test { invokeActionViaShortcut("TAB") }
         }
       }
     }

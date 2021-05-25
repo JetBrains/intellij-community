@@ -8,8 +8,6 @@ import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.testGuiFramework.framework.GuiTestUtil.shortcut
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.UIBundle
 import com.intellij.ui.table.JBTable
 import training.dsl.LessonContext
@@ -56,7 +54,7 @@ abstract class DeclarationAndUsagesLesson
           actions(it)
           ideFrame {
             waitComponent(JBTable::class.java, "ShowUsagesTable")
-            shortcut(Key.ENTER)
+            invokeActionViaShortcut("ENTER")
           }
         }
       }

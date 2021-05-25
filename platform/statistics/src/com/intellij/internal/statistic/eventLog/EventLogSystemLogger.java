@@ -53,6 +53,7 @@ public final class EventLogSystemLogger {
                                   boolean external,
                                   @NotNull List<String> successfullySentFiles,
                                   @NotNull List<Integer> errors) {
+    EventLogRecorderConfiguration config = EventLogConfiguration.INSTANCE.getOrCreate(recorderId);
     final FeatureUsageData data = new FeatureUsageData().
       addData("total", total).
       addData("send", succeed + failed).
@@ -60,7 +61,7 @@ public final class EventLogSystemLogger {
       addData("failed", failed).
       addData("errors", ContainerUtil.map(errors, error -> String.valueOf(error))).
       addData("external", external).
-      addData("paths", ContainerUtil.map(successfullySentFiles, path -> EventLogConfiguration.INSTANCE.anonymize(path)));
+      addData("paths", ContainerUtil.map(successfullySentFiles, path -> config.anonymize(path)));
     logEvent(recorderId, "logs.send", data);
   }
 

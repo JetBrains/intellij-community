@@ -1531,10 +1531,6 @@
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
 
-    <action class="com.intellij.codeInspection.ui.actions.ActivateInspectionResultsToolWindowAction" id="ActivateInspectionResultsToolWindow">
-      <add-to-group group-id="ActivateToolWindowActions"/>
-    </action>
-
     <action class="com.intellij.internal.DumpRunDebugActionStateAction" internal="true" text="Dump State of Run/Debug Combobox"/>
 
     <action id="SwitchFileBasedIndexStorageAction"

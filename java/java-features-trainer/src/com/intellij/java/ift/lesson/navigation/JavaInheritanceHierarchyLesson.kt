@@ -10,8 +10,6 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.BaseLabel
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.UIBundle
 import training.dsl.*
@@ -43,7 +41,7 @@ class JavaInheritanceHierarchyLesson
 
       test {
         Thread.sleep(1000)
-        GuiTestUtil.shortcut(Key.ENTER)
+        invokeActionViaShortcut("ENTER")
       }
     }
 

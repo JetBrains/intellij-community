@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory
 import org.slf4j.impl.Log4jLoggerFactory
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 internal class GradleServerEnvironmentSetupImpl(private val project: Project) : GradleServerEnvironmentSetup, UserDataHolderBase() {
@@ -100,7 +102,9 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project) : 
 
     val projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(
       ExternalSystemApiUtil.toCanonicalPath(workingDir.path))
-    projectSettings?.modules?.mapTo(pathsToUpload) { toSystemDependentName(it) }
+    projectSettings?.modules
+      ?.filter { Files.exists(Path.of(it)) }
+      ?.mapTo(pathsToUpload) { toSystemDependentName(it) }
 
     val commonAncestor = findCommonAncestor(pathsToUpload)
     val uploadPath = Paths.get(toSystemDependentName(commonAncestor!!))

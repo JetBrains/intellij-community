@@ -1091,8 +1091,6 @@
     <fileDocumentSynchronizationVetoer implementation="com.intellij.codeInsight.lookup.impl.LookupDocumentSavingVetoer"/>
     <toolsProvider implementation="com.intellij.tools.LocalToolsProvider"/>
 
-    <projectService serviceInterface="com.intellij.ide.tags.TagManager" serviceImplementation="com.intellij.ide.tags.TagManagerImpl"/>
-
     <favoritesListProvider implementation="com.intellij.ide.bookmarks.BookmarksFavoriteListProvider"/>
     <favoritesListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsFavoriteListProvider"/>
     <applicationService serviceInterface="com.intellij.codeInsight.FileModificationService"

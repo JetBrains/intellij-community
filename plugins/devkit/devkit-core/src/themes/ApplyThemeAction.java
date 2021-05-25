@@ -129,7 +129,7 @@ public class ApplyThemeAction extends DumbAwareAction {
     for (VirtualFile file : filesByName) {
       String path = file.getPath();
       if (path.endsWith(relativePath) || path.endsWith(relativePath.replaceAll("/", "\\"))) {
-        return "file:/" + path; // NON-NLS
+        return "file://" + path; // NON-NLS
       }
     }
     return defaultResult;

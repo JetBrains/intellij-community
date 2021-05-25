@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui
 
 import circlet.client.api.M2ChannelRecord
@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.space.chat.model.api.SpaceChatHeaderDetails
 import com.intellij.space.chat.ui.header.createComponent
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -48,7 +49,9 @@ internal class SpaceChatPanel(
   }
 
   private fun createContentComponent(): JComponent {
-    val contentPanel = SpaceChatContentPanel(project, lifetime, parent, channelsVm, chatRecord)
+    val contentPanel = SpaceChatContentPanel(project, lifetime, parent, channelsVm, chatRecord).apply {
+      setLoadingText(SpaceBundle.message("chat.loading.text"))
+    }
 
     return JPanel(null).apply {
       isOpaque = false

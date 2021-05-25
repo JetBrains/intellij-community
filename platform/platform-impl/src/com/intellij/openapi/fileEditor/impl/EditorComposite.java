@@ -110,6 +110,9 @@ public class EditorComposite implements Disposable {
     myFile = file;
     myEditors = editors;
     myProviders = providers;
+    for (FileEditor editor : editors) {
+      FileEditor.FILE_KEY.set(editor, myFile);
+    }
     if (ArrayUtil.contains(null, editors)) throw new IllegalArgumentException("Must not pass null editors in " + Arrays.asList(editors));
     myFileEditorManager = fileEditorManager;
     myInitialFileTimeStamp = myFile.getTimeStamp();
@@ -545,6 +548,7 @@ public class EditorComposite implements Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     //noinspection NonAtomicOperationOnVolatileField : field is modified only in EDT
     myEditors = ArrayUtil.append(myEditors, editor);
+    FileEditor.FILE_KEY.set(editor, myFile);
     if (myTabbedPaneWrapper == null) {
       myTabbedPaneWrapper = createTabbedPaneWrapper(myEditors, myComponent);
       myComponent.setComponent(myTabbedPaneWrapper.getComponent());

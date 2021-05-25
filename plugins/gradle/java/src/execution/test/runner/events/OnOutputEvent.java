@@ -4,6 +4,10 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemMessageEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
@@ -12,6 +16,9 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionCo
  */
 public class OnOutputEvent extends AbstractTestEvent {
 
+  private static final String OUT = "StdOut";
+  private static final String ERR = "StdErr";
+
   public OnOutputEvent(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }
@@ -19,14 +26,37 @@ public class OnOutputEvent extends AbstractTestEvent {
   @Override
   public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
     final String testId = eventXml.getTestId();
-    final String destination = eventXml.getTestEventTestDescription();
+    final String destinationString = eventXml.getTestEventTestDescription();
     final String output = decode(eventXml.getTestEventTest());
 
+    Key destination = OUT.equals(destinationString) ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR;
+    doProcess(testId, output, destination);
+  }
+
+  @Override
+  public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
+    if (!(testEvent instanceof ExternalSystemMessageEvent)) {
+      return;
+    }
+    TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
+
+    final String testId = testEvent.getEventId();
+    final String description = ((ExternalSystemMessageEvent)testEvent).getDescription();
+
+    if (description == null) {
+      doProcess(testId, "", ProcessOutputTypes.STDERR);
+    } else if (description.startsWith(OUT)) {
+      doProcess(testId, description.substring(OUT.length()), ProcessOutputTypes.STDOUT);
+    } else if (description.startsWith(ERR)) {
+      doProcess(testId, description.substring(ERR.length()), ProcessOutputTypes.STDERR);
+    }
+  }
+
+  private void doProcess(String testId, String output, @NotNull Key type) {
     SMTestProxy testProxy = findTestProxy(testId);
     if (testProxy == null) return;
 
-    boolean isOut = "StdOut".equals(destination);
-    testProxy.addOutput(output, isOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
-    getExecutionConsole().getEventPublisher().onTestOutput(testProxy, new TestOutputEvent(testProxy.getName(), output, isOut));
+    testProxy.addOutput(output, type);
+    getExecutionConsole().getEventPublisher().onTestOutput(testProxy, new TestOutputEvent(testProxy.getName(), output, type == ProcessOutputTypes.STDOUT));
   }
 }

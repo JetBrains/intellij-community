@@ -14,6 +14,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
@@ -38,10 +39,12 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
     super.setUp()
     buildViewTestFixture = BuildViewTestFixture(myProject)
     buildViewTestFixture.setUp()
+    Registry.get("gradle.testLauncherAPI.enabled").setValue(true)
   }
 
   override fun tearDown() {
     RunAll(
+      ThrowableRunnable { Registry.get("gradle.testLauncherAPI.enabled").setValue(false) },
       ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
       ThrowableRunnable { super.tearDown() }
     ).run()

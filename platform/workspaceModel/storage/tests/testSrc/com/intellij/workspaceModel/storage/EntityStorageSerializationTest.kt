@@ -112,7 +112,7 @@ private val expectedKryoRegistration = """
   [16, java.util.HashMap]
   [17, com.intellij.util.SmartList]
   [18, java.util.LinkedHashMap]
-  [19, com.intellij.util.containers.BidirectionalMap]
+  [19, com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap]
   [20, com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap]
   [21, java.util.HashSet]
   [22, com.intellij.util.containers.BidirectionalMultiMap]

@@ -597,4 +597,15 @@ public class VcsUtil {
     }
     return -1;
   }
+
+  /**
+   * Helper that allows to avoid potential O(N*M) in {@link AbstractSet#removeAll(Collection)} due to {@code list.contains(c)} calls.
+   */
+  public static <T> boolean removeAllFromSet(@NotNull Set<T> set, @NotNull Collection<? extends T> toRemove) {
+    boolean modified = false;
+    for (T value : toRemove) {
+      modified |= set.remove(value);
+    }
+    return modified;
+  }
 }

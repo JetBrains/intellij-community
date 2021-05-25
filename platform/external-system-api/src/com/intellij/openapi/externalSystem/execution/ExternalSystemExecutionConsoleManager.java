@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,6 +38,9 @@ public interface ExternalSystemExecutionConsoleManager<
                 @NotNull ExternalSystemProcessHandler processHandler,
                 @NotNull String text,
                 @NotNull Key processOutputType);
+
+  default void onStatusChange(@NotNull ExternalSystemExecutionConsole executionConsole,
+                              @NotNull ExternalSystemTaskNotificationEvent event) { }
 
   boolean isApplicableFor(@NotNull ExternalSystemTask task);
 

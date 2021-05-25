@@ -82,7 +82,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private boolean myScrollToSelection = true;
 
   @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
-  @NonNls protected static final String GROUPING_KEYS = "ChangesTree.GroupingKeys";
+  @NonNls private static final String GROUPING_KEYS = "ChangesTree.GroupingKeys";
 
   public static final String[] DEFAULT_GROUPING_KEYS = ar(DIRECTORY_GROUPING, MODULE_GROUPING);
 

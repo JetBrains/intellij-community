@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.dsl.impl
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.invokeLater
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -222,9 +220,21 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     steps.add(step)
   }
 
-  override fun test(action: TaskTestContext.() -> Unit) {
+  override fun test(waitEditorToBeReady: Boolean, action: TaskTestContext.() -> Unit) {
     testActions.add(Runnable {
       DumbService.getInstance(runtimeContext.project).waitForSmartMode()
+      // This wait implementation is quite ugly, but it works and it is needed in the test mode only. So should be ok for now.
+      if (waitEditorToBeReady) {
+        val psiFile = invokeAndWaitIfNeeded { PsiDocumentManager.getInstance(project).getPsiFile(runtimeContext.editor.document) } ?: return@Runnable
+        var t = 0
+        val step = 100
+        while (!runReadAction { DaemonCodeAnalyzerEx.getInstanceEx(project).isErrorAnalyzingFinished(psiFile) }) {
+          Thread.sleep(step.toLong())
+          t += step
+          if (t > 3000) return@Runnable
+        }
+      }
+
       TaskTestContext(runtimeContext).action()
     })
   }

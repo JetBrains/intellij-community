@@ -15,19 +15,22 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
+import com.intellij.util.containers.MultiMap;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.filesEqual;
 import static com.intellij.openapi.util.io.FileUtil.loadFile;
 import static com.intellij.testFramework.UsefulTestCase.*;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
-import static org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.mergeJvmArgs;
+import static org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -44,7 +47,7 @@ public class GradleExecutionHelperTest {
       "/tmp/asLocalRepo1004.gradle"
     );
 
-    List<String> obfuscatedArgs = GradleExecutionHelper.obfuscatePasswordParameters(originalArgs);
+    List<String> obfuscatedArgs = obfuscatePasswordParameters(originalArgs);
 
     List<String> expectedArgs = ImmutableList.of(
       "--configure-on-demand",
@@ -62,19 +65,19 @@ public class GradleExecutionHelperTest {
   public void testWriteToFileGradleInitScript() throws IOException {
     String prefix = "init";
 
-    File tempFile = GradleExecutionHelper.writeToFileGradleInitScript("foo", prefix);
+    File tempFile = writeToFileGradleInitScript("foo", prefix);
     assertTrue(tempFile.exists());
     assertEquals("foo", loadFile(tempFile));
 
-    assertTrue(filesEqual(tempFile, GradleExecutionHelper.writeToFileGradleInitScript("foo", prefix)));
+    assertTrue(filesEqual(tempFile, writeToFileGradleInitScript("foo", prefix)));
 
-    File anotherTempFile = GradleExecutionHelper.writeToFileGradleInitScript("bar", prefix);
+    File anotherTempFile = writeToFileGradleInitScript("bar", prefix);
     assertTrue(anotherTempFile.exists());
     assertEquals("bar", loadFile(anotherTempFile));
 
     assertFalse(filesEqual(tempFile, anotherTempFile));
 
-    assertTrue(filesEqual(anotherTempFile, GradleExecutionHelper.writeToFileGradleInitScript("bar", prefix)));
+    assertTrue(filesEqual(anotherTempFile, writeToFileGradleInitScript("bar", prefix)));
   }
 
   @Test
@@ -98,5 +101,46 @@ public class GradleExecutionHelperTest {
                                         Arrays.asList("-Xmx512", "--add-opens", "java.base/java.lang=ALL-UNNAMED"));
     assertDoesntContain(jvmArgs, "-Xmx256", "--add-opens", "java.base/java.util=ALL-UNNAMED", "java.base/java.lang=ALL-UNNAMED");
     assertContainsElements(jvmArgs, "-Xmx512");
+  }
+
+  @Test
+  public void testCommandLineTestArgsMerge() {
+    MultiMap<String, String> r = extractTestCommandOptions(Collections.emptyList());
+
+    assertTrue("Expecting empty result for empty arg", r.isEmpty());
+
+    r = extractTestCommandOptions(asList("task1"));
+    assertContainsElements(r.get("task1"), "*");
+
+    r = extractTestCommandOptions(asList("task1", "task2"));
+    assertContainsElements(r.get("task1"), "*");
+    assertContainsElements(r.get("task2"), "*");
+
+    r = extractTestCommandOptions(asList("t1", "t2", "t3", "--tests", "my.test.name"));
+    assertContainsElements(r.get("t1"), "*");
+    assertContainsElements(r.get("t2"), "*");
+    assertContainsElements(r.get("t3"), "my.test.name");
+
+    List<String> args = asList("t1", "--tests", "my.test1", "--tests", "my.test2", "--tests", "my.test3",
+                               "t2", "--tests", "my2.test1", "--tests", "my2.test2", "--init-script", "a.init.gradle",
+                               "--init-script", "b.init.gradle",
+                               "t3",
+                               "--info",
+                               "t4", "--tests", "my4.test1",
+                               "-s");
+    r = extractTestCommandOptions(args);
+
+    assertContainsElements(r.get("t1"), "my.test1", "my.test2", "my.test3");
+    assertContainsElements(r.get("t2"), "my2.test1", "my2.test2");
+    assertContainsElements(r.get("t3"), "*");
+    assertContainsElements(r.get("t4"), "my4.test1");
+
+    assertContainsElements(args, "--init-script", "a.init.gradle", "--init-script", "b.init.gradle", "--info", "-s");
+  }
+
+  private static List<String> asList(String... strings) {
+    ArrayList<String> list = new ArrayList<>();
+    Collections.addAll(list, strings);
+    return list;
   }
 }

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.refactoring.rename.RenameProcessor
-import com.intellij.testGuiFramework.impl.button
 import com.intellij.util.ui.UIUtil
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor

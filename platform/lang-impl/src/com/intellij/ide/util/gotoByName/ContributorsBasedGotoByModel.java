@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
@@ -246,11 +246,10 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
    * Get elements by name from contributors.
    *
    * @param name a name
-   * @param checkBoxState if true, non-project files are considered as well
+   * @param checkBoxState if {@code true}, non-project files are considered as well
    * @param pattern a pattern to use
    * @return a list of navigation items from contributors for
-   *  which {@link #acceptItem(NavigationItem) returns true.
-   *
+   *  which {@link #acceptItem(NavigationItem)} returns {@code true}.
    */
   @Override
   public Object @NotNull [] getElementsByName(@NotNull final String name, final boolean checkBoxState, @NotNull final String pattern) {

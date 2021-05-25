@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,7 @@ public final class TipDialog extends DialogWrapper {
   public static final Key<Boolean> DISABLE_TIPS_FOR_PROJECT = Key.create("DISABLE_TIPS_FOR_PROJECT");
   @NonNls private static final String LAST_TIME_TIPS_WERE_SHOWN = "lastTimeTipsWereShown";
   private final TipPanel myTipPanel;
+  private final boolean myShowingOnStartup;
 
   TipDialog(@NotNull final Window parent) {
     super(parent, true);
@@ -39,6 +41,7 @@ public final class TipDialog extends DialogWrapper {
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myTipPanel = new TipPanel();
     setDoNotAskOption(myTipPanel);
+    myShowingOnStartup = myTipPanel.isToBeShown();
     setHorizontalStretch(1.33f);
     setVerticalStretch(1.25f);
     init();
@@ -55,6 +58,12 @@ public final class TipDialog extends DialogWrapper {
     JComponent component = super.createSouthPanel();
     component.setBorder(JBUI.Borders.empty(8, 12));
     return component;
+  }
+
+  @Override
+  public void doCancelAction() {
+    super.doCancelAction();
+    TipsOfTheDayUsagesCollector.triggerDialogClosed(myShowingOnStartup);
   }
 
   @Override

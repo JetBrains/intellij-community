@@ -1490,8 +1490,9 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      bundle="messages.JavaBundle" key="inspection.message.record.can.be.converted.to.class"
                      implementationClass="com.intellij.codeInspection.RecordCanBeClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ClassCanBeRecord" enabledByDefault="true" level="WEAK WARNING"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" 
+                     shortName="ClassCanBeRecord" enabledByDefault="true" level="WEAK WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids15"
                      bundle="messages.JavaBundle" key="class.can.be.record.display.name"
                      implementationClass="com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EndlessStream"

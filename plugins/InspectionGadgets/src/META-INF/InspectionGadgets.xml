@@ -2809,7 +2809,7 @@
                      implementationClass="com.intellij.codeInspection.RedundantExplicitVariableTypeInspection"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="PatternVariableCanBeUsed" enabledByDefault="true" level="WARNING"
                      bundle="messages.InspectionGadgetsBundle" key="inspection.pattern.variable.can.be.used.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids14"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids15"
                      implementationClass="com.intellij.codeInspection.PatternVariableCanBeUsedInspection"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"

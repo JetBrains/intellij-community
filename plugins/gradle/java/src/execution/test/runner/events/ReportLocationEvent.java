@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
@@ -33,5 +35,10 @@ public class ReportLocationEvent extends AbstractTestEvent {
   public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
     final String testReport = eventXml.getEventTestReport();
     getProperties().setGradleTestReport(new File(testReport));
+  }
+
+  @Override
+  public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
+    // TODO not yet implemented
   }
 }

@@ -89,9 +89,7 @@ public final class ExternalSystemTaskSettingsControl implements ExternalSystemSe
     myTasksLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.tasks"));
     myTasksTextField = new EditorTextField("", myProject, PlainTextFileType.INSTANCE);
     canvas.add(myTasksLabel, ExternalSystemUiUtil.getLabelConstraints(0));
-    GridBag c = ExternalSystemUiUtil.getFillLineConstraints(0);
-    c.insets.right = myProjectPathField.getButton().getPreferredSize().width + 8 /* street magic, sorry */;
-    canvas.add(myTasksTextField, c);
+    canvas.add(myTasksTextField, ExternalSystemUiUtil.getFillLineConstraints(0));
 
     new TaskCompletionProvider(myProject, myExternalSystemId, myProjectPathField).apply(myTasksTextField);
 

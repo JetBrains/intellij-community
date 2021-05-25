@@ -19,7 +19,6 @@ import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +56,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
   private JDialog myDevtoolsFrame = null;
   protected CefContextMenuHandler myDefaultContextMenuHandler;
-  private boolean myRequestFocusOnStart = true;
 
   @NotNull private static final Dimension DEF_PREF_SIZE = new Dimension(800, 600);
 
@@ -142,13 +140,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
           }
           return true; // suppress focusing the browser on navigation events
         }
-
-        //This is a workaround for WebPreview to keep focus in the editor
-        if (!myRequestFocusOnStart) {
-          myRequestFocusOnStart = true;
-          return true;
-        }
-
         if (SystemInfoRt.isLinux) {
           browser.getUIComponent().requestFocus();
         }
@@ -199,31 +190,30 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
   @NotNull
   private JPanel createComponent() {
-    // Preferred size should not be zero, otherwise the content loading is not triggered
-    Function<Dimension, Dimension> adjustPrefSize = size -> size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
-
     Component uiComp = getCefBrowser().getUIComponent();
-    JPanel resultPanel = SystemInfoRt.isWindows ?
-      new JPanel(new BorderLayout()) {
-        @Override
-        public void removeNotify() {
-         if (myCefBrowser.getUIComponent().hasFocus()) {
-           // pass focus before removal
-           myCefBrowser.setFocus(false);
-         }
-         super.removeNotify();
+    JPanel resultPanel = new JPanel(new BorderLayout()) {
+      @Override
+      public void setBackground(Color bg) {
+        uiComp.setBackground(bg);
+        super.setBackground(bg);
+      }
+      @Override
+      public void removeNotify() {
+        if (SystemInfoRt.isWindows) {
+          if (myCefBrowser.getUIComponent().hasFocus()) {
+            // pass focus before removal
+            myCefBrowser.setFocus(false);
+          }
         }
-        @Override
-        public Dimension getPreferredSize() {
-         return adjustPrefSize.apply(super.getPreferredSize());
-        }
-      } :
-      new JPanel(new BorderLayout()) {
-        @Override
-        public Dimension getPreferredSize() {
-          return adjustPrefSize.apply(super.getPreferredSize());
-        }
-      };
+        super.removeNotify();
+      }
+      @Override
+      public Dimension getPreferredSize() {
+        // Preferred size should not be zero, otherwise the content loading is not triggered
+        Dimension size = super.getPreferredSize();
+        return size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
+      }
+    };
 
     resultPanel.setBackground(JBColor.background());
     resultPanel.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
@@ -348,16 +338,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
       myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
       myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
     });
-  }
-
-  /**
-   * This method is temporary and should be removed as soon as CefBrowser stops stealing focus on appearance
-   *
-   * @param requestFocusOnStart if <code>true</code> skips first focus request with type FocusSource#FOCUS_SOURCE_SYSTEM
-   */
-  @ApiStatus.Internal
-  public void setRequestFocusOnStart(boolean requestFocusOnStart) {
-    myRequestFocusOnStart = requestFocusOnStart;
   }
 
   protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {

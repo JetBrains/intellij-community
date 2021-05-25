@@ -224,11 +224,19 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
     try {
       ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
-      return super.performInplaceRefactoring(nameSuggestions)
-    } catch (e: Exception) {
+      val succeed = super.performInplaceRefactoring(nameSuggestions)
+      if (!succeed) {
+        Disposer.dispose(disposable)
+      }
+      return succeed
+    } catch (e: Throwable) {
       Disposer.dispose(disposable)
       throw e
     }
+  }
+
+  override fun checkLocalScope(): PsiElement {
+    return context.targetClass
   }
 
   override fun revertState() {

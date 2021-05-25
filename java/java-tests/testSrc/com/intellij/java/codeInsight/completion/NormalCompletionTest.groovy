@@ -2363,4 +2363,19 @@ class Abc {
       "StriBar", // final project class (red)
       "StringBufferInputStream"] // deprecated library class
   }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test primitive type after annotation"() {
+    myFixture.configureByText("X.java", "class C {\n" +
+                                        "  void m() {\n" +
+                                        "    @SuppressWarnings(\"x\") boo<caret>\n" +
+                                        "  }\n" +
+                                        "}")
+    myFixture.completeBasic()
+    myFixture.checkResult("class C {\n" +
+                          "  void m() {\n" +
+                          "    @SuppressWarnings(\"x\") boolean\n" +
+                          "  }\n" +
+                          "}")
+  }
 }

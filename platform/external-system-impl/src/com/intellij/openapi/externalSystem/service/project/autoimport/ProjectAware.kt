@@ -43,6 +43,9 @@ class ProjectAware(
     if (!context.isExplicitReload) {
       importSpec.dontReportRefreshErrors()
     }
+    if (context.isPreviewMode) {
+      importSpec.usePreviewMode()
+    }
     ExternalSystemUtil.refreshProject(projectPath, importSpec)
   }
 

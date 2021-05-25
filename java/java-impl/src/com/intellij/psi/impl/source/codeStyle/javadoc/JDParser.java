@@ -574,7 +574,7 @@ public class JDParser {
     (tag, line, c) -> {
       boolean isMyTag = c instanceof JDMethodComment && JDTag.RETURN.tagEqual(tag);
       if (isMyTag) {
-        ((JDMethodComment)c).setReturnTag(line);
+        ((JDMethodComment)c).addReturnTag(line);
       }
       return isMyTag;
     },

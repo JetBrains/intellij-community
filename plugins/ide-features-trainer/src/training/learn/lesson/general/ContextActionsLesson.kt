@@ -17,6 +17,8 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
   abstract val intentionCaret: String
   abstract val intentionPossibleArea: String
 
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
+
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
     lateinit var showIntentionsTaskId: TaskContext.TaskId

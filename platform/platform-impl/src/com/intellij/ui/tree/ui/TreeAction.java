@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ui.TreeActions;
@@ -40,6 +40,7 @@ final class TreeAction extends AbstractAction implements UIResource {
     new TreeAction(TreeAction::selectNextChangeLead, "selectNextChangeLead"),
     new TreeAction(TreeAction::selectNextExtendSelection, TreeActions.ShiftDown.ID),
 
+    new TreeAction(TreeAction::selectParentNoCollapse, TreeActions.SelectParent.ID),
     new TreeAction(TreeAction::selectParent, TreeActions.Left.ID, getKeyStroke(VK_LEFT, 0), getKeyStroke(VK_KP_LEFT, 0)),
     // new TreeAction(TreeAction::selectParentChangeLead, "selectParentChangeLead"),
     // new TreeAction(TreeAction::selectParentExtendSelection, TreeActions.ShiftLeft.ID),
@@ -201,13 +202,13 @@ final class TreeAction extends AbstractAction implements UIResource {
     select(type, tree, tree.getRowCount() - 1);
   }
 
-  private static void selectParent(@NotNull MoveType type, @NotNull JTree tree) {
+  private static void selectParent(@NotNull MoveType type, @NotNull JTree tree, boolean canCollapse) {
     TreePath lead = tree.getLeadSelectionPath();
     int row = tree.getRowForPath(lead);
     if (lead == null || row < 0) {
       selectFirst(type, tree);
     }
-    else if (type == MoveType.ChangeSelection && tree.isExpanded(lead)) {
+    else if (canCollapse && tree.isExpanded(lead)) {
       tree.collapsePath(lead);
     }
     else {
@@ -383,17 +384,21 @@ final class TreeAction extends AbstractAction implements UIResource {
   }
 
   private static void selectParent(@NotNull JTree tree) {
-    selectParent(MoveType.ChangeSelection, tree);
+    selectParent(MoveType.ChangeSelection, tree, true);
+  }
+
+  private static void selectParentNoCollapse(@NotNull JTree tree) {
+    selectParent(MoveType.ChangeSelection, tree, false);
   }
 
   @SuppressWarnings("unused")
   private static void selectParentChangeLead(@NotNull JTree tree) {
-    selectParent(MoveType.ChangeLead, tree);
+    selectParent(MoveType.ChangeLead, tree, false);
   }
 
   @SuppressWarnings("unused") // because inconvenient
   private static void selectParentExtendSelection(@NotNull JTree tree) {
-    selectParent(MoveType.ExtendSelection, tree);
+    selectParent(MoveType.ExtendSelection, tree, false);
   }
 
   private static void selectPrevious(@NotNull JTree tree) {

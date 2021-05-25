@@ -109,4 +109,18 @@ public abstract class XmlElementFactory {
    */
   @NotNull
   public abstract XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context) throws IncorrectOperationException;
+
+  /**
+   * Creates an attribute with the specified name and value quoted with given quotes and with given context.
+   *
+   * @param name  the name of the attribute to create.
+   * @param value the value of the attribute to create.
+   * @param quoteStyle preferred quote style.
+   * @param context element which can be used to determine created attribute file type.
+   * @return the created attribute instance.
+   * @throws IncorrectOperationException if either {@code name} or {@code value} are not valid.
+   */
+  @NotNull
+  public abstract XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable Character quoteStyle,
+                                               @Nullable PsiElement context) throws IncorrectOperationException;
 }

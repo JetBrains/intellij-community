@@ -28,12 +28,17 @@ public class TestOperationDescriptorImpl extends OperationDescriptorImpl impleme
   private final String myClassName;
   private final String myMethodName;
 
-  public TestOperationDescriptorImpl(@Nls String displayName, long eventTime, String suiteName, String className, String methodName) {
+  public TestOperationDescriptorImpl(@Nls String displayName,
+                                     long eventTime,
+                                     String suiteName,
+                                     String className,
+                                     String methodName) {
     super(displayName, eventTime);
     mySuiteName = suiteName;
     myClassName = className;
     myMethodName = methodName;
   }
+
 
   @Nullable
   @Override

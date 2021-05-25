@@ -4,8 +4,6 @@ package com.intellij.java.ift.lesson.refactorings
 import com.intellij.CommonBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.util.ui.UIUtil
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
@@ -88,8 +86,8 @@ class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.me
       stateCheck {
         !extractConstantDialogShowing()
       }
-      test {
-        GuiTestUtil.shortcut(Key.ENTER)
+      test(waitEditorToBeReady = false) {
+        invokeActionViaShortcut("ENTER")
       }
     }
   }

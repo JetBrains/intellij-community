@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
 import com.intellij.openapi.ui.ComboBox
@@ -52,7 +52,7 @@ internal class SpaceReviewListFiltersPanel(private val listVm: SpaceReviewsListV
 
   init {
     val quickFiltersPanel = NonOpaquePanel(BorderLayout()).apply {
-      add(JBLabel(SpaceBundle.message("label.quick.filters")).withBorder(JBUI.Borders.emptyLeft(4)), BorderLayout.WEST)
+      add(JBLabel(SpaceBundle.message("label.quick.filters")).withBorder(JBUI.Borders.empty(0, 5)), BorderLayout.WEST)
       add(quickFiltersComboBox, BorderLayout.CENTER)
     }
 

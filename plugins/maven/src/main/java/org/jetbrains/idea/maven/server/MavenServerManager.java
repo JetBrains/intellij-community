@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.impl.TrustChangeNotifier;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
@@ -79,7 +82,7 @@ public final class MavenServerManager implements Disposable {
   }
 
   public MavenServerManager() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
@@ -89,6 +92,30 @@ public final class MavenServerManager implements Disposable {
             shutdown(true);
           }
         });
+      }
+    });
+
+    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        if (MavenUtil.INTELLIJ_PLUGIN_ID.equals(pluginDescriptor.getPluginId().getIdString())) {
+          ProgressManager.getInstance().run(new Task.Modal(null, RunnerBundle.message("maven.server.shutdown"), false) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              shutdown(true);
+            }
+          });
+        }
+      }
+    });
+
+    connection.subscribe(TrustChangeNotifier.TOPIC, new TrustChangeNotifier() {
+      @Override
+      public void projectTrusted(@NotNull Project project) {
+        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+        if (manager.isMavenizedProject()) {
+          MavenUtil.restartMavenConnectors(project);
+        }
       }
     });
   }
@@ -123,8 +150,17 @@ public final class MavenServerManager implements Disposable {
     MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory);
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
-    MavenLog.LOG.info("Creating new maven connector for " + project + " in " + multimoduleDirectory);
-    MavenServerConnector connector = new MavenServerConnector(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
+    MavenServerConnector connector;
+    if (MavenUtil.isProjectTrustedEnoughToImport(project, false)) {
+      MavenLog.LOG.info("Creating new maven connector for " + project + " in " + multimoduleDirectory);
+      connector =
+        new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
+    }
+    else {
+      MavenLog.LOG.warn("Project " + project + " not trusted enough. Will not start maven for it");
+      connector =
+        new DummyMavenServerConnector(project, this, jdk, vmOptions, distribution, multimoduleDirectory);
+    }
     registerDisposable(project, connector);
     return connector;
   }
@@ -190,7 +226,8 @@ public final class MavenServerManager implements Disposable {
     synchronized (myMultimoduleDirToConnectorMap) {
       values = new ArrayList<>(myMultimoduleDirToConnectorMap.values());
     }
-    values.forEach(c -> c.shutdownForce(wait));
+
+    values.forEach(c -> c.shutdown(wait));
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
@@ -415,13 +452,13 @@ public final class MavenServerManager implements Disposable {
 
   public void addDownloadListener(MavenServerDownloadListener listener) {
     synchronized (myMultimoduleDirToConnectorMap) {
-      myMultimoduleDirToConnectorMap.values().forEach(l -> l.addDownloadListener(listener));
+      myMultimoduleDirToConnectorMap.values().forEach(connector -> connector.addDownloadListener(listener));
     }
   }
 
   public void removeDownloadListener(MavenServerDownloadListener listener) {
     synchronized (myMultimoduleDirToConnectorMap) {
-      myMultimoduleDirToConnectorMap.values().forEach(l -> l.removeDownloadListener(listener));
+      myMultimoduleDirToConnectorMap.values().forEach(connector -> connector.removeDownloadListener(listener));
     }
   }
 

@@ -20,11 +20,14 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.apache.commons.cli.Option;
 import org.gradle.initialization.BuildLayoutParameters;
-import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -35,6 +38,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -236,6 +240,19 @@ public class GradleExecutionHelper {
     );
   }
 
+  @NotNull
+  public TestLauncher getTestLauncher(@NotNull final ExternalSystemTaskId id,
+                                      @NotNull ProjectConnection connection,
+                                      @NotNull List<String> tasks,
+                                      @Nullable GradleExecutionSettings settings,
+                                      @NotNull ExternalSystemTaskNotificationListener listener) {
+    TestLauncher result = connection.newTestLauncher();
+    if (settings != null) {
+      prepareForTestLauncher(result, id, settings, listener, connection, tasks);
+    }
+    return result;
+  }
+
   @Nullable
   public static BuildEnvironment getBuildEnvironment(ProjectResolverContext projectResolverContext) {
     CancellationTokenSource cancellationTokenSource = projectResolverContext.getCancellationTokenSource();
@@ -252,7 +269,20 @@ public class GradleExecutionHelper {
                              @NotNull GradleExecutionSettings settings,
                              @NotNull final ExternalSystemTaskNotificationListener listener,
                              @NotNull ProjectConnection connection) {
-    prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false));
+    prepare(operation, id, settings, listener, connection,
+            new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false),
+            false, Collections.emptyList());
+  }
+
+  public static void prepareForTestLauncher(@NotNull LongRunningOperation operation,
+                                            @NotNull final ExternalSystemTaskId id,
+                                            @NotNull GradleExecutionSettings settings,
+                                            @NotNull final ExternalSystemTaskNotificationListener listener,
+                                            @NotNull ProjectConnection connection,
+                                            @NotNull List<String> tasks) {
+    prepare(operation, id, settings, listener, connection,
+            new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false),
+            true, tasks);
   }
 
   public static void prepare(@NotNull LongRunningOperation operation,
@@ -261,7 +291,9 @@ public class GradleExecutionHelper {
                              @NotNull final ExternalSystemTaskNotificationListener listener,
                              @NotNull ProjectConnection connection,
                              @NotNull final OutputStream standardOutput,
-                             @NotNull final OutputStream standardError) {
+                             @NotNull final OutputStream standardError,
+                             boolean forTestLauncher,
+                             @NotNull List<String> tasks) {
     List<String> jvmArgs = settings.getJvmArguments();
     BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, (CancellationToken)null, settings);
 
@@ -309,8 +341,23 @@ public class GradleExecutionHelper {
       // filter nulls and empty strings
       filteredArgs.addAll(ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s));
 
-      // TODO remove this replacement when --tests option will become available for tooling API
-      replaceTestCommandOptionWithInitScript(filteredArgs);
+      if (forTestLauncher) {
+        List<String> tasksWithArgs = new ArrayList<>(tasks);
+        tasksWithArgs.addAll(filteredArgs);
+        filteredArgs = tasksWithArgs;
+        MultiMap<String, String> testTasksConfiguration = extractTestCommandOptions(tasksWithArgs);
+        if (operation instanceof TestLauncher) {
+          TestLauncher testLauncher = (TestLauncher)operation;
+          for (Map.Entry<String, Collection<String>> entry : testTasksConfiguration.entrySet()) {
+            // TODO we need better point of call to pass this info
+            testLauncher.withTaskAndTestClasses(entry.getKey(), entry.getValue());
+          }
+        }
+      }
+      else {
+        // TODO remove this replacement when --tests option will become available for tooling API
+        replaceTestCommandOptionWithInitScript(filteredArgs);
+      }
     }
     filteredArgs.add("-Didea.active=true");
     filteredArgs.add("-Didea.version=" + getIdeaVersion());
@@ -334,9 +381,15 @@ public class GradleExecutionHelper {
     }
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
-    operation.addProgressListener(gradleProgressListener,
-                                  OperationType.TASK,
-                                  OperationType.TEST);
+    if (forTestLauncher) {
+      operation.addProgressListener(gradleProgressListener,
+                                    OperationType.TASK,
+                                    OperationType.TEST,
+                                    OperationType.TEST_OUTPUT);
+    } else {
+      operation.addProgressListener(gradleProgressListener,
+                                    OperationType.TASK);
+    }
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
     InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
@@ -625,6 +678,56 @@ public class GradleExecutionHelper {
         ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
       }
     }
+  }
+
+  /**
+   * For Test Launcher, all tasks are considered test task names and should be set through separate API
+   * Args list will contain all other known arguments.
+   *
+   * @param args full command line
+   * @return test tasks grouped with its patterns
+   */
+  static  MultiMap<String, String> extractTestCommandOptions(@NotNull List<String> args) {
+    MultiMap<String, String> taskToTestsPatterns = new MultiMap<>();
+
+    Map<String, Option> optionsIndex = new HashMap<>();
+    for (Option option : GradleCommandLineOptionsProvider.getSupportedOptions().getOptions()) {
+      optionsIndex.put(option.getOpt(), option);
+      optionsIndex.put(option.getLongOpt(), option);
+    }
+
+    int j = 0;
+    while (j < args.size()) {
+      String token = args.get(j);
+      Option option = optionsIndex.get(StringUtil.trimLeading(token, '-'));
+      if (option!= null) {
+        j++;
+        if (option.hasArg()) {
+          j++;
+        }
+        continue;
+      }
+
+      while (j < args.size() - 2) {
+        String peek = args.get(j + 1);
+        if (GradleConstants.TESTS_ARG_NAME.equals(peek)) {
+          taskToTestsPatterns.putValue(token, args.get(j + 2));
+          // remove --tests <pattern> argument
+          args.remove(j + 1);
+          args.remove(j + 1);
+        } else {
+          break;
+        }
+      }
+
+      if (!taskToTestsPatterns.containsKey(token)) {
+        taskToTestsPatterns.putValue(token, "*");
+      }
+      // remove current task name
+      args.remove(j);
+    }
+
+    return taskToTestsPatterns;
   }
 
   @NotNull

@@ -63,6 +63,8 @@ class PythonOnboardingTour :
     openFileAtStart = false
   )
 
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
+
   val sample: LessonSample = parseLessonSample("""
     def find_average(values: list)<caret id=3/>:
         result = 0

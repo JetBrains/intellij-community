@@ -200,32 +200,11 @@ public class InspectionTree extends Tree {
 
   @Nullable
   public RefEntity getCommonSelectedElement() {
-    final Object node = getCommonSelectedNode();
-    return node instanceof RefElementNode ? ((RefElementNode)node).getElement() : null;
-  }
-
-  @Nullable
-  private Object getCommonSelectedNode() {
     final TreePath[] paths = getSelectionPaths();
-    if (paths == null) return null;
-    final Object[][] resolvedPaths = new Object[paths.length][];
-    for (int i = 0; i < paths.length; i++) {
-      TreePath path = paths[i];
-      resolvedPaths[i] = path.getPath();
-    }
-
-    Object currentCommonNode = null;
-    for (int i = 0; i < resolvedPaths[0].length; i++) {
-      final Object currentNode = resolvedPaths[0][i];
-      for (int j = 1; j < resolvedPaths.length; j++) {
-        final Object o = resolvedPaths[j][i];
-        if (!o.equals(currentNode)) {
-          return currentCommonNode;
-        }
-      }
-      currentCommonNode = currentNode;
-    }
-    return currentCommonNode;
+    final TreePath ancestor = TreePathUtil.findCommonAncestor(paths);
+    if (ancestor == null) return null;
+    final Object node = ancestor.getLastPathComponent();
+    return node instanceof RefElementNode ? ((RefElementNode)node).getElement() : null;
   }
 
   public RefEntity @NotNull [] getSelectedElements() {

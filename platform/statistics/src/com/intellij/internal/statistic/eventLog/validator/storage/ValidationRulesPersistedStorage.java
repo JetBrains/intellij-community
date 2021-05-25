@@ -136,14 +136,15 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
   @NotNull
   protected Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);
-    return createValidators(build, groups, globalRulesHolder);
+    return createValidators(build, groups, globalRulesHolder, myRecorderId);
   }
 
   @NotNull
   public static Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build,
-                                                               @NotNull EventGroupRemoteDescriptors groups,
-                                                               @NotNull GlobalRulesHolder globalRulesHolder) {
-    ValidationSimpleRuleFactory ruleFactory = new ValidationSimpleRuleFactory(new CustomRuleProducer());
+                                                              @NotNull EventGroupRemoteDescriptors groups,
+                                                              @NotNull GlobalRulesHolder globalRulesHolder,
+                                                              @NotNull String recorderId) {
+    ValidationSimpleRuleFactory ruleFactory = new ValidationSimpleRuleFactory(new CustomRuleProducer(recorderId));
     return groups.groups.stream()
       .filter(group -> EventGroupFilterRules.create(group, EventLogBuild.EVENT_LOG_BUILD_PRODUCER).accepts(build))
       .collect(Collectors.toMap(group -> group.id, group -> {

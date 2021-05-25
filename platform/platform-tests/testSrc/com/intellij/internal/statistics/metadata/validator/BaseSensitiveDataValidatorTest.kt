@@ -20,6 +20,8 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import java.io.File
 import kotlin.test.assertTrue
 
+private const val RECORDER_ID = "TEST"
+
 abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
   private var myFixture: CodeInsightTestFixture? = null
 
@@ -45,7 +47,7 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
   }
 
   internal fun newValidator(content: String, customBuild: String? = null): TestSensitiveDataValidator {
-    val storage = object : ValidationRulesPersistedStorage("TEST", TestEventLogMetadataPersistence(content), TestEventLogMetadataLoader(content)) {
+    val storage = object : ValidationRulesPersistedStorage(RECORDER_ID, TestEventLogMetadataPersistence(content), TestEventLogMetadataLoader(content)) {
       override fun createValidators(build: EventLogBuild?,
                                     groups: EventGroupRemoteDescriptors): MutableMap<String, EventGroupRules> {
         if (customBuild != null) {
@@ -54,7 +56,7 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
         return super.createValidators(build, groups)
       }
     }
-    return TestSensitiveDataValidator(storage)
+    return TestSensitiveDataValidator(storage, RECORDER_ID)
   }
 
   internal fun newValidatorByFile(fileName: String): TestSensitiveDataValidator {
@@ -68,7 +70,7 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
   }
 }
 
-internal class TestSensitiveDataValidator(storage: ValidationRulesPersistedStorage) : IntellijSensitiveDataValidator(storage) {
+internal class TestSensitiveDataValidator(storage: ValidationRulesPersistedStorage, recorderId: String) : IntellijSensitiveDataValidator(storage, recorderId) {
   fun getEventRules(group: EventLogGroup): Array<FUSRule> {
     val rules = validationRulesStorage.getGroupRules(group.id)
 
@@ -92,7 +94,7 @@ internal class TestSensitiveDataValidator(storage: ValidationRulesPersistedStora
 }
 
 class TestEventLogMetadataPersistence(private val myContent: String) : EventLogMetadataPersistence("TEST") {
-  override fun getCachedEventsScheme(): String? {
+  override fun getCachedEventsScheme(): String {
     return myContent
   }
 }

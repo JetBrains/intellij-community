@@ -133,8 +133,9 @@ class JsonPathEvaluateManager internal constructor(private val project: Project)
     @JvmField
     internal val JSON_PATH_EVALUATE_EXPRESSION_KEY: Key<Boolean> = Key.create("JSON_PATH_EVALUATE_EXPRESSION")
 
+    @ApiStatus.Internal
     @JvmField
-    internal val JSON_PATH_EVALUATE_SOURCE_KEY: Key<Supplier<JsonFile?>> = Key.create("JSON_PATH_EVALUATE_SOURCE")
+    val JSON_PATH_EVALUATE_SOURCE_KEY: Key<Supplier<JsonFile?>> = Key.create("JSON_PATH_EVALUATE_SOURCE")
 
     @JvmField
     internal val JSON_PATH_EVALUATE_RESULT_KEY: Key<Boolean> = Key.create("JSON_PATH_EVALUATE_RESULT")

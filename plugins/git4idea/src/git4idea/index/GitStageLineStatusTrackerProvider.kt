@@ -7,8 +7,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.ContentInfo
@@ -79,6 +81,7 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     val indexFileRefresher = GitIndexFileSystemRefresher.getInstance(project)
     val indexFile = indexFileRefresher.getFile(repository.root, status.path(ContentVersion.STAGED))
     val indexDocument = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile) } ?: return null
+    indexDocument.putUserData(LineStatusTrackerBase.SEPARATE_UNDO_STACK, Registry.`is`("git.stage.separate.undo.stack"))
 
     if (!status.has(ContentVersion.HEAD)) return StagedTrackerContent("", indexDocument)
 

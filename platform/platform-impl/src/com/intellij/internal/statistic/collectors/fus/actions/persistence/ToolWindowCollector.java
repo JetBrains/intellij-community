@@ -74,7 +74,6 @@ public final class ToolWindowCollector {
     ourToolwindowWhitelist.put(FIND, new ToolWindowInfo("Find"));
     ourToolwindowWhitelist.put("CVS", new ToolWindowInfo("CVS"));
     ourToolwindowWhitelist.put(HIERARCHY, new ToolWindowInfo("Hierarchy"));
-    ourToolwindowWhitelist.put(INSPECTION, new ToolWindowInfo("Inspection_Results"));
     ourToolwindowWhitelist.put(DEPENDENCIES, new ToolWindowInfo("Dependency_Viewer"));
     ourToolwindowWhitelist.put(MODULES_DEPENDENCIES, new ToolWindowInfo("Module_Dependencies"));
     ourToolwindowWhitelist.put(DUPLICATES, new ToolWindowInfo("Duplicates"));

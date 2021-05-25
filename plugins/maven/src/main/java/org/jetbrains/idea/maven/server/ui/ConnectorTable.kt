@@ -13,7 +13,6 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
 import javax.swing.ListSelectionModel
 import javax.swing.SortOrder
-import javax.swing.table.AbstractTableModel
 
 class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
 
@@ -27,7 +26,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
 
     override fun updateButton(e: AnActionEvent) {
       val connector = tableView.selectedObject
-      isEnabled = connector != null && connector.state == MavenServerConnector.State.RUNNING
+      isEnabled = connector?.state == MavenServerConnector.State.RUNNING
     }
   }
   val refresh = object : AnActionButton(MavenConfigurableBundle.message("connector.ui.refresh"), AllIcons.Actions.Refresh) {
@@ -42,7 +41,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
     tableView.selectionModel.addListSelectionListener {
       if (it.valueIsAdjusting) return@addListSelectionListener
       val connector = tableView.selectedObject
-      stop.isEnabled = connector != null && connector.state == MavenServerConnector.State.RUNNING
+      stop.isEnabled = connector?.state == MavenServerConnector.State.RUNNING
     }
   }
 
@@ -53,8 +52,10 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
     val dir = TableColumn(MavenConfigurableBundle.message("connector.ui.dir")) { it.multimoduleDirectory }
     val maven = TableColumn(
       MavenConfigurableBundle.message("connector.ui.maven")) { "${it.mavenDistribution.version} ${it.mavenDistribution.mavenHome}" }
-    val state = TableColumn(MavenConfigurableBundle.message("connector.ui.state")) { it.state.toString() }
-    val type = TableColumn(MavenConfigurableBundle.message("connector.ui.type")) { it.supportType }
+    val state = TableColumn(
+      MavenConfigurableBundle.message("connector.ui.state")) { it.state.toString() }
+    val type = TableColumn(
+      MavenConfigurableBundle.message("connector.ui.type")) { it.supportType }
     val columnInfos = arrayOf<TableColumn>(project, dir, type, maven, state)
     return ListTableModel<MavenServerConnector>(columnInfos, MavenServerManager.getInstance().allConnectors.toList(), 3,
                                                 SortOrder.DESCENDING);

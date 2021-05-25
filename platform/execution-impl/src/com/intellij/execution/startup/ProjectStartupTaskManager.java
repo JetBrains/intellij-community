@@ -15,7 +15,7 @@ import java.util.*;
 
 @Service
 final class ProjectStartupTaskManager {
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Project Startup Tasks Messages");
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Project Startup Tasks Messages");
   public static final String PREFIX = "Project Startup Tasks: ";
 
   private final Project myProject;

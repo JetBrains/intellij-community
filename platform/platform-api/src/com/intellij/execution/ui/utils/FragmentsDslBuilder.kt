@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.utils
 
-import com.intellij.execution.ui.FragmentedSettings
-import com.intellij.execution.ui.NestedGroupFragment
-import com.intellij.execution.ui.SettingsEditorFragment
-import com.intellij.execution.ui.TagButton
+import com.intellij.execution.ui.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ComponentWithBrowseButton
@@ -21,7 +18,7 @@ import javax.swing.JLabel
 import kotlin.concurrent.thread
 
 @DslMarker
-private annotation class FragmentsDsl
+annotation class FragmentsDsl
 
 abstract class AbstractFragmentBuilder<Settings : FragmentedSettings> {
   @Nls
@@ -43,6 +40,8 @@ class Group<Settings : FragmentedSettings>(
   val name: @Nls String
 ) : AbstractFragmentBuilder<Settings>() {
 
+  var onVisibilityChanged: (Settings, Boolean) -> Unit = { _, _ -> }
+
   var visible: (Settings) -> Boolean = { true }
 
   @Nls
@@ -57,6 +56,11 @@ class Group<Settings : FragmentedSettings>(
       }
 
       override fun getChildrenGroupName(): String? = this@Group.childrenGroupName ?: super.getChildrenGroupName()
+
+      override fun applyEditorTo(s: Settings) {
+        onVisibilityChanged(s, component().isVisible)
+        super.applyEditorTo(s)
+      }
     }.also {
       it.actionHint = actionHint
       it.actionDescription = actionDescription
@@ -71,18 +75,22 @@ class Tag<Settings : FragmentedSettings>(
   val name: @Nls String
 ) : AbstractFragmentBuilder<Settings>() {
 
-  var getter: (Settings) -> Boolean = { true }
+  var holder: SettingsEditorFragment<Settings, *>? = null
+
+  var buttonAction: (SettingsEditorFragment<Settings, *>) -> Unit = { it.isSelected = false }
+
+  var getter: (Settings) -> Boolean = { false }
   var setter: (Settings, Boolean) -> Unit = { _, _ -> }
 
   @Nls
-  var toolTip: String? = actionHint
+  var toolTip: String? = null
 
   var validation: ((Settings, TagButton) -> ValidationInfo?)? = null
 
   override fun build(): SettingsEditorFragment<Settings, TagButton> {
     val ref = Ref<SettingsEditorFragment<Settings, *>>()
     val tagButton = TagButton(name) {
-      ref.get().isSelected = false
+      buttonAction(ref.get())
     }
 
     return Fragment<Settings, TagButton>(id, tagButton).also {
@@ -95,8 +103,13 @@ class Tag<Settings : FragmentedSettings>(
       it.validation = validation
       it.actionDescription = actionDescription
     }.build().also {
-      it.component().setToolTip(toolTip)
-      ref.set(it)
+      it.component().setToolTip(toolTip ?: actionHint)
+      if (holder == null) {
+        ref.set(it)
+      }
+      else {
+        ref.set(holder)
+      }
     }
   }
 }
@@ -137,16 +150,14 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
           if (validator != null) {
             val validationInfo = (validation!!)(s, this.component())
 
-            if (validationInfo != null) {
-              validationInfo.component?.let {
-                if (ComponentValidator.getInstance(it).isEmpty) {
-                  when (it) {
-                    is ComponentWithBrowseButton<*> -> validator.withOutlineProvider(ComponentValidator.CWBB_PROVIDER)
-                    is TagButton -> validator.withOutlineProvider(TagButton.COMPONENT_VALIDATOR_TAG_PROVIDER)
-                  }
-
-                  validator.installOn(it)
+            validationInfo?.component?.let {
+              if (ComponentValidator.getInstance(it).isEmpty) {
+                when (it) {
+                  is ComponentWithBrowseButton<*> -> validator.withOutlineProvider(ComponentValidator.CWBB_PROVIDER)
+                  is TagButton -> validator.withOutlineProvider(TagButton.COMPONENT_VALIDATOR_TAG_PROVIDER)
                 }
+
+                validator.installOn(it)
               }
             }
 
@@ -179,6 +190,13 @@ class FragmentsBuilder<Settings : FragmentedSettings> {
     id: String,
     setup: Fragment<Settings, Component>.() -> Unit
   ): SettingsEditorFragment<Settings, Component> = fragment(id, this, setup)
+
+  fun <Builder : AbstractFragmentBuilder<Settings>> withCustomBuilder(
+    builder: Builder,
+    setup: Builder.() -> Unit
+  ): SettingsEditorFragment<Settings, *> {
+    return builder.apply(setup).let { it.build().apply { fragments += this } }
+  }
 
   fun <Component : JComponent> fragment(
     id: String,

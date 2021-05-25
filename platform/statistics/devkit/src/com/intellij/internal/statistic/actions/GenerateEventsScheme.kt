@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.actions
 import com.google.gson.GsonBuilder
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.json.JsonLanguage
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -13,6 +14,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
 
 class GenerateEventsScheme : AnAction() {
+  override fun update(event: AnActionEvent) {
+    event.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled("FUS")
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val eventsScheme = EventsSchemeBuilder.buildEventsScheme()

@@ -4502,6 +4502,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (fontSize < MIN_FONT_SIZE) fontSize = MIN_FONT_SIZE;
       if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
       if (fontSize == myFontSize) return;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Font size overridden for " + EditorImpl.this, new Throwable());
+      }
       myFontPreferencesAreSetExplicitly = false;
       myFontSize = fontSize;
       reinitFontsAndSettings();
@@ -4517,6 +4520,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setFontPreferences(@NotNull FontPreferences preferences) {
       if (myFontPreferencesAreSetExplicitly && Comparing.equal(preferences, myFontPreferences)) return;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Font preferences overridden for " + EditorImpl.this, new Throwable());
+      }
       myFontPreferencesAreSetExplicitly = true;
       myFaceName = null;
       myFontSize = -1;
@@ -4552,6 +4558,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setEditorFontName(String fontName) {
       if (Objects.equals(fontName, myFaceName)) return;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Font name overridden for " + EditorImpl.this, new Throwable());
+      }
       myFontPreferencesAreSetExplicitly = false;
       myFaceName = fontName;
       reinitFontsAndSettings();
@@ -4894,6 +4903,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.validateState();
     myCaretModel.validateState();
     myInlayModel.validateState();
+  }
+
+  @Override
+  public String toString() {
+    return "EditorImpl[" + FileDocumentManager.getInstance().getFile(myDocument) + "]";
   }
 
   private class DefaultPopupHandler extends ContextMenuPopupHandler {

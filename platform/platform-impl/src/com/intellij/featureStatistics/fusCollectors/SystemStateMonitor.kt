@@ -13,8 +13,8 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfo
@@ -75,7 +75,7 @@ internal class SystemStateMonitor : FeatureUsageStateEventTracker {
     val app = ApplicationManager.getApplication()
     events.add(DEBUG.metric(DebugAttachDetector.isDebugEnabled()))
     events.add(REPORT.metric(isSuppressStatisticsReport(), isLocalStatisticsWithoutReport()))
-    events.add(TEST.metric(TestModeValidationRule.isTestModeEnabled(), app.isInternal, isTeamcityDetected()))
+    events.add(TEST.metric(StatisticsRecorderUtil.isTestModeEnabled("FUS"), app.isInternal, isTeamcityDetected()))
     events.add(HEADLESS.metric(app.isHeadlessEnvironment, app.isCommandLine))
     FUStateUsagesLogger.logStateEventsAsync(SESSION_GROUP, events)
   }

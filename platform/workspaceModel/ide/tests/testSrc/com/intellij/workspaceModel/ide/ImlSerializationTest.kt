@@ -46,7 +46,7 @@ class ImlSerializationTest {
     checkSerializationSize(bytes, expectedSize, 2_000)
 
     assertTrue("This assertion is a reminder. Have you updated the serializer? Update the serializer version!",
-               50_000 == expectedSize && "v9" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
+               50_000 == expectedSize && "v10" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
   }
 
   @Test

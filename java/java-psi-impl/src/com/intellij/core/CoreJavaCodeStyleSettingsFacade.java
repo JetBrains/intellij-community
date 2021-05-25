@@ -28,11 +28,6 @@ public class CoreJavaCodeStyleSettingsFacade extends JavaCodeStyleSettingsFacade
   }
 
   @Override
-  public int getIndentSize() {
-    return 4;
-  }
-
-  @Override
   public boolean isGenerateFinalParameters() {
     return false;
   }

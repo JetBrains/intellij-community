@@ -4,11 +4,13 @@ package com.intellij.java.ift.lesson.completion
 import com.intellij.java.ift.JavaLessonsBundle
 import training.dsl.LessonContext
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskTestContext
 import training.dsl.parseLessonSample
 import training.learn.course.KLesson
 
-class JavaSmartTypeCompletionLesson
-  : KLesson("Smart type completion", JavaLessonsBundle.message("java.smart.type.completion.lesson.name")) {
+class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", JavaLessonsBundle.message("java.smart.type.completion.lesson.name")) {
+
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   val sample = parseLessonSample("""
     import java.lang.String;

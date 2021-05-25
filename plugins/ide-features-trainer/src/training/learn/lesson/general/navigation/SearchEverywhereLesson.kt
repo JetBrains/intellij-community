@@ -8,10 +8,6 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.psi.search.ProjectScope
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
-import com.intellij.testGuiFramework.util.Modifier
-import com.intellij.testGuiFramework.util.Shortcut
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.UIUtil
 import training.dsl.*
@@ -52,7 +48,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
         !checkInsideSearchEverywhere()
       }
       test {
-        GuiTestUtil.shortcut(Key.ENTER)
+        invokeActionViaShortcut("ENTER")
       }
     }
 
@@ -79,7 +75,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
         !checkInsideSearchEverywhere() && focusOwner !is JList<*>
       }
       test {
-        GuiTestUtil.shortcut(Shortcut(HashSet(setOf(Modifier.ALT)), Key.P))
+        invokeActionViaShortcut("ALT P")
       }
     }
 
@@ -93,7 +89,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     task {
       text(LessonsBundle.message("search.everywhere.close.documentation.popup", LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
       stateCheck { previous.ui?.isShowing != true }
-      test { GuiTestUtil.shortcut(Key.ESCAPE) }
+      test { invokeActionViaShortcut("ENTER") }
     }
 
     task {
@@ -103,8 +99,8 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     if (TaskTestContext.inTestMode) task {
       stateCheck { focusOwner is EditorComponentImpl }
       test {
-        GuiTestUtil.shortcut(Key.ESCAPE)
-        GuiTestUtil.shortcut(Key.ESCAPE)
+        invokeActionViaShortcut("ESCAPE")
+        invokeActionViaShortcut("ESCAPE")
       }
     }
 

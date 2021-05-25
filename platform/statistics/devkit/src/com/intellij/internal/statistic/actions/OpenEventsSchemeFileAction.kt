@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.BaseEventLogMetadataPersistence
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -21,6 +22,10 @@ internal class OpenEventsSchemeFileAction(private val recorderId: String = Stati
   : DumbAwareAction(StatisticsBundle.message("stats.open.0.scheme.file", recorderId),
                     ActionsBundle.message("group.OpenEventsSchemeFileAction.description"),
                     AllIcons.FileTypes.Config) {
+  override fun update(event: AnActionEvent) {
+    event.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     openFileInEditor(getEventsSchemeFile(recorderId), project)

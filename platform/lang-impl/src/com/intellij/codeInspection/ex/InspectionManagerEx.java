@@ -6,6 +6,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.icons.AllIcons;
@@ -35,16 +36,13 @@ public class InspectionManagerEx extends InspectionManagerBase {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myContentManager = NotNullLazyValue.createValue(() -> {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-        toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
+        toolWindowManager.registerToolWindow(ProblemsView.ID, true, ToolWindowAnchor.BOTTOM, project);
         return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
       });
     }
     else {
       myContentManager = NotNullLazyValue.createValue(() -> {
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow(
-          RegisterToolWindowTask.closable(ToolWindowId.INSPECTION, UIBundle.messagePointer("tool.window.name.inspection"),
-                                          AllIcons.Toolwindows.ToolWindowInspection, ToolWindowAnchor.BOTTOM));
+        ToolWindow toolWindow = ProblemsView.getToolWindow(project);
         ContentManager contentManager = toolWindow.getContentManager();
         ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
         return contentManager;

@@ -52,7 +52,7 @@ class ActionStepBuilder {
       myPresentationFactory = Objects.requireNonNull(presentationFactory);
     }
     myListModel = new ArrayList<>();
-    myDataContext = dataContext;
+    myDataContext = Utils.wrapDataContext(dataContext);
     myShowNumbers = showNumbers;
     myShowDisabled = showDisabled;
     myCurrentNumber = 0;
@@ -115,8 +115,8 @@ class ActionStepBuilder {
   }
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
-    List<AnAction> newVisibleActions = Utils.expandActionGroup(false, actionGroup, myPresentationFactory, myDataContext,
-                                                               myActionPlace, null, true);
+    List<AnAction> newVisibleActions = Utils.expandActionGroup(
+      false, actionGroup, myPresentationFactory, myDataContext, myActionPlace, true, null);
     for (AnAction action : newVisibleActions) {
       if (action instanceof Separator) {
         myPrependWithSeparator = true;

@@ -81,7 +81,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   private var contentUi: ToolWindowContentUi? = null
 
-  private var decorator: InternalDecorator? = null
+  private var decorator: InternalDecoratorImpl? = null
 
   private var hideOnEmptyContent = false
   var isPlaceholderMode = false
@@ -131,7 +131,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     addContentNotInHierarchyComponents(contentUi!!)
 
     val contentComponent = contentManager.component
-    InternalDecorator.installFocusTraversalPolicy(contentComponent, LayoutFocusTraversalPolicy())
+    InternalDecoratorImpl.installFocusTraversalPolicy(contentComponent, LayoutFocusTraversalPolicy())
     Disposer.register(parentDisposable, UiNotifyConnector(contentComponent, object : Activatable {
       override fun showNotify() {
         showing.onReady()
@@ -143,7 +143,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       decoratorChild = DumbService.getInstance(toolWindowManager.project).wrapGently(decoratorChild, parentDisposable)
     }
 
-    val decorator = InternalDecorator(this, contentUi!!, decoratorChild)
+    val decorator = InternalDecoratorImpl(this, contentUi!!, decoratorChild)
     this.decorator = decorator
 
     decorator.applyWindowInfo(windowInfo)
@@ -315,7 +315,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowManager.stretchHeight(this, value)
   }
 
-  override fun getDecorator(): InternalDecorator = decorator!!
+  override fun getDecorator(): InternalDecoratorImpl = decorator!!
 
   override fun setAdditionalGearActions(value: ActionGroup?) {
     additionalGearActions = value
@@ -626,7 +626,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     init {
-      ActionUtil.copyFrom(this, InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID)
+      ActionUtil.copyFrom(this, InternalDecoratorImpl.HIDE_ACTIVE_WINDOW_ACTION_ID)
       templatePresentation.text = UIBundle.message("tool.window.hide.action.name")
     }
   }

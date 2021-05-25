@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.ift.lesson.completion
 
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.util.Key
 import com.jetbrains.python.ift.PythonLessonsBundle
 import training.dsl.LessonContext
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
@@ -74,7 +72,7 @@ class FStringCompletionLesson
       stateCheck {
         editor.document.text == result
       }
-      test { GuiTestUtil.shortcut(Key.ENTER) }
+      test(waitEditorToBeReady = false) { invokeActionViaShortcut("ENTER") }
     }
     text(PythonLessonsBundle.message("python.f.string.completion.result.message"))
   }

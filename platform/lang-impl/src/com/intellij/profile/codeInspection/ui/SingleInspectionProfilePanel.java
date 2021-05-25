@@ -108,7 +108,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private TreeExpander myTreeExpander;
   private boolean myIsInRestore;
 
-  private String[] myInitialScopesOrder;
+  private List<String> myInitialScopesOrder;
   private Disposable myDisposable = Disposer.newDisposable();
 
   public SingleInspectionProfilePanel(@NotNull ProjectInspectionProfileManager projectProfileManager,
@@ -890,7 +890,11 @@ public class SingleInspectionProfilePanel extends JPanel {
             }
           });
 
-        final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions().setRemoveActionUpdater(
+        final ToolbarDecorator wrappedTable = ToolbarDecorator
+            .createDecorator(scopesAndScopesAndSeveritiesTable)
+            .disableUpDownActions()
+            .setAddIcon(new LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown))
+            .setRemoveActionUpdater(
           __ -> {
             final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
             final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
@@ -1118,7 +1122,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myProfile.isChanged()) return true;
     if (myProfile.getSource().isProjectLevel() != myProfile.isProjectLevel()) return true;
     if (!Comparing.strEqual(myProfile.getSource().getName(), myProfile.getName())) return true;
-    if (!Arrays.equals(myInitialScopesOrder, myProfile.getScopesOrder())) return true;
+    if (!myInitialScopesOrder.equals(myProfile.getScopesOrder())) return true;
     return descriptorsAreChanged();
   }
 

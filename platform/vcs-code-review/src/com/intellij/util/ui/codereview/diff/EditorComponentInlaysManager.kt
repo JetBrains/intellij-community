@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.codereview.diff
 
 import com.intellij.openapi.Disposable
@@ -11,12 +11,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
-import javax.swing.ScrollPaneConstants
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
@@ -55,17 +55,12 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
       }
   }
 
-  private inner class ComponentWrapper(private val component: JComponent) : JBScrollPane(component) {
+  private inner class ComponentWrapper(private val component: JComponent) : BorderLayoutPanel() {
     init {
       isOpaque = false
-      viewport.isOpaque = false
 
       border = JBUI.Borders.empty()
-      viewportBorder = JBUI.Borders.empty()
-
-      horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-      verticalScrollBar.preferredSize = Dimension(0, 0)
-      setViewportView(component)
+      addToCenter(component)
 
       component.addComponentListener(object : ComponentAdapter() {
         override fun componentResized(e: ComponentEvent) = dispatchEvent(ComponentEvent(component, ComponentEvent.COMPONENT_RESIZED))

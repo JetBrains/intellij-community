@@ -7,6 +7,8 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -57,7 +59,10 @@ public class CodeStyleSettingsServiceImpl implements CodeStyleSettingsService {
 
   @Override
   public @NotNull List<? extends CustomCodeStyleSettingsFactory> getCustomCodeStyleSettingsFactories() {
-    return CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList();
+    List<CustomCodeStyleSettingsFactory> result = new ArrayList<>();
+    result.addAll(CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
+    result.addAll(LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
+    return result;
   }
 
   @Override
@@ -66,7 +71,8 @@ public class CodeStyleSettingsServiceImpl implements CodeStyleSettingsService {
   }
 
   @Override
+  @Deprecated
   public @NotNull Set<? extends CustomCodeStyleSettingsFactory> getSettingsPagesProviders() {
-    return LanguageCodeStyleSettingsProvider.getSettingsPagesProviders();
+    return Collections.emptySet();
   }
 }

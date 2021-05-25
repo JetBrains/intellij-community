@@ -3,9 +3,11 @@ package com.intellij.coverage;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
+import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.java.JavaTargetParameter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
@@ -20,7 +22,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
@@ -72,11 +76,18 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      @Nullable String sourceMapPath) {
     String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(ProjectData.class));
     if (agentPath == null) return;
-    javaParameters.getTargetDependentParameters().asTargetParameters().add(request -> {
+    List<Function<TargetEnvironmentRequest, JavaTargetParameter>> targetParameters =
+      javaParameters.getTargetDependentParameters().asTargetParameters();
+    targetParameters.add(request -> {
       return createArgumentTargetParameter(agentPath, sessionDataFilePath,
                                            patterns, excludePatterns,
                                            collectLineInfo, isSampling, sourceMapPath);
     });
+    if (!Registry.is("idea.coverage.thread.safe.enabled")) {
+      targetParameters.add(request -> {
+        return JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false");
+      });
+    }
   }
 
   @Nullable

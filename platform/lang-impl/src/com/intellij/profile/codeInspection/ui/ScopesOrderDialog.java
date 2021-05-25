@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -113,12 +112,12 @@ public class ScopesOrderDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final int size = myOptionsList.getModel().getSize();
-    final String[] newScopeOrder = new String[size];
+    final List<String> newScopeOrder = new ArrayList<>();
     for (int i = 0; i < size; i++) {
       final NamedScope namedScope = myOptionsList.getModel().getElementAt(i);
-      newScopeOrder[i] = namedScope.getScopeId();
+      newScopeOrder.add(namedScope.getScopeId());
     }
-    if (!Arrays.equals(newScopeOrder, myInspectionProfile.getScopesOrder())) {
+    if (!newScopeOrder.equals(myInspectionProfile.getScopesOrder())) {
       myInspectionProfile.setScopesOrder(newScopeOrder);
     }
     super.doOKAction();

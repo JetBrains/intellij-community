@@ -3,7 +3,6 @@ package training.learn.lesson.general.refactorings
 
 import com.intellij.CommonBundle
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.testGuiFramework.impl.button
 import com.intellij.ui.UIBundle
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
@@ -43,11 +42,9 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
         }
 
         restoreByUi(delayMillis = defaultRestoreDelay)
-        test {
-          with(TaskTestContext.guiTestCase) {
-            dialog(extractMethodDialogTitle, needToKeepDialog = true) {
-              button(okButtonText).click()
-            }
+        test(waitEditorToBeReady = false) {
+          dialog(extractMethodDialogTitle) {
+            button(okButtonText).click()
           }
         }
       }
@@ -61,11 +58,9 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
         }
 
         restoreByUi(restoreId = startTaskId, delayMillis = defaultRestoreDelay)
-        test {
-          with(TaskTestContext.guiTestCase) {
-            dialog(extractMethodDialogTitle) {
-              button(yesButtonText).click()
-            }
+        test(waitEditorToBeReady = false) {
+          dialog(extractMethodDialogTitle) {
+            button(yesButtonText).click()
           }
         }
       }
@@ -76,11 +71,9 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
           previous.ui?.isShowing?.not() ?: true
         }
 
-        test {
-          with(TaskTestContext.guiTestCase) {
-            dialog(replaceFragmentDialogTitle) {
-              button(UIBundle.message("replace.prompt.replace.button").dropMnemonic()).click()
-            }
+        test(waitEditorToBeReady = false) {
+          dialog(replaceFragmentDialogTitle) {
+            button(UIBundle.message("replace.prompt.replace.button").dropMnemonic()).click()
           }
         }
       }

@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionListModel
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.awt.RelativePoint
@@ -73,6 +74,7 @@ internal class GHAccountsPanel(
     addToCenter(ToolbarDecorator.createDecorator(accountList)
                   .disableUpDownActions()
                   .setAddAction { showAddAccountActions(it.preferredPopupPoint ?: getCenterOf(accountList)) }
+                  .setAddIcon(LayeredIcon(AllIcons.General.Add, AllIcons.General.Dropdown))
                   .addExtraAction(object : ToolbarDecorator.ElementActionButton(GithubBundle.message("accounts.set.default"),
                                                                                 AllIcons.Actions.Checked) {
                     override fun actionPerformed(e: AnActionEvent) {

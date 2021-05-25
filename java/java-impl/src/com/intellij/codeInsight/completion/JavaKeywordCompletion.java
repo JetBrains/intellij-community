@@ -827,6 +827,11 @@ public class JavaKeywordCompletion {
   }
 
   private static boolean isVariableTypePosition(PsiElement position) {
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement && parent.getParent() instanceof PsiTypeElement &&
+        parent.getParent().getParent() instanceof PsiDeclarationStatement) {
+      return true;
+    }
     return START_FOR.accepts(position) ||
            isInsideParameterList(position) ||
            INSIDE_RECORD_HEADER.accepts(position) ||

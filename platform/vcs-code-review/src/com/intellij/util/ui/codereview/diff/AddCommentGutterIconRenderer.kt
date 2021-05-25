@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.codereview.diff
 
 import com.intellij.icons.AllIcons
@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.DumbAware
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.codereview.messages.VcsCodeReviewBundle
 import javax.swing.Icon
 
 abstract class AddCommentGutterIconRenderer : GutterIconRenderer(), DumbAware, Disposable {
@@ -15,6 +16,8 @@ abstract class AddCommentGutterIconRenderer : GutterIconRenderer(), DumbAware, D
   var iconVisible = false
 
   override fun getIcon(): Icon = if (iconVisible) AllIcons.General.InlineAdd else EmptyIcon.ICON_16
+
+  override fun getTooltipText() = VcsCodeReviewBundle.message("diff.add.comment.icon.tooltip")
 
   override fun isNavigateAction() = true
 

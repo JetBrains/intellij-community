@@ -21,8 +21,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * Is intended to hold specific java formatting tests for 'wrapping' settings.
- *
- * @author Denis Zhdanov
  */
 @SuppressWarnings("SpellCheckingInspection")
 public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
@@ -1015,6 +1013,46 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "                .addInt()\n" +
       "                .addText()\n" +
       "                .end().toString();\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+
+  public void testIdea189817_noWrap() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 40;
+
+    doTextTest(
+      "public class Cls {\n" +
+      " public void foo () {\n" +
+      " int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0\n" +
+      "  }\n" +
+      "}",
+
+      "public class Cls {\n" +
+      "    public void foo() {\n" +
+      "        int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testIdea189817_wrapAfterUrl() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 40;
+
+    doTextTest(
+      "public class Cls {\n" +
+      " public void foo () {\n" +
+      " int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0 and other sources\n" +
+      "  }\n" +
+      "}",
+
+      "public class Cls {\n" +
+      "    public void foo() {\n" +
+      "        int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0\n" +
+      "        // and other sources\n" +
       "    }\n" +
       "}"
     );

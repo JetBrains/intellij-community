@@ -12,8 +12,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -31,9 +29,6 @@ import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -134,25 +129,9 @@ public final class DvcsUtil {
    * Returns the currently selected file, based on which VcsBranch or StatusBar components will identify the current repository root.
    */
   @Nullable
-  @RequiresEdt
   public static VirtualFile getSelectedFile(@NotNull Project project) {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(statusBar);
-    VirtualFile result = null;
-    if (fileEditor != null) {
-      result = fileEditor.getFile();
-    }
-
-    if (result == null) {
-      final FileEditorManager manager = FileEditorManager.getInstance(project);
-      if (manager != null) {
-        Editor editor = manager.getSelectedTextEditor();
-        if (editor != null) {
-          result = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        }
-      }
-    }
-    return result;
+    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor();
+    return fileEditor == null ? null : fileEditor.getFile();
   }
 
   @NlsSafe
@@ -299,7 +278,6 @@ public final class DvcsUtil {
   }
 
   @Nullable
-  @RequiresEdt
   public static <T extends Repository> T guessCurrentRepositoryQuick(@NotNull Project project,
                                                                      @NotNull AbstractRepositoryManager<T> manager,
                                                                      @Nullable @NonNls String defaultRootPathValue) {

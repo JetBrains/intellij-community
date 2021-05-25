@@ -309,7 +309,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
   }
 
   private fun processTestActions(taskContext: TaskContextImpl) {
-    if (TaskTestContext.inTestMode) {
+    if (TaskTestContext.inTestMode && taskContext.testActions.isNotEmpty()) {
       LessonManager.instance.testActionsExecutor.execute {
         taskContext.testActions.forEach { it.run() }
       }

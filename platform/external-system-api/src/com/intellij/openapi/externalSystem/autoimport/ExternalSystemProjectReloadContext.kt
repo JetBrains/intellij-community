@@ -14,6 +14,14 @@ interface ExternalSystemProjectReloadContext {
   val isExplicitReload: Boolean
 
   /**
+   * Project reload should be made in preview mode.
+   * It is fast reload without project build scripts evaluation.
+   *
+   * @see com.intellij.openapi.externalSystem.importing.ImportSpec.isPreviewMode
+   */
+  val isPreviewMode: Boolean
+
+  /**
    * Project has undefined modifications
    * Undefined modifications are modifications, provided by [ExternalSystemProjectTracker.markDirty]
    *  e.g. changes in settings from UI, cache invalidation and etc.

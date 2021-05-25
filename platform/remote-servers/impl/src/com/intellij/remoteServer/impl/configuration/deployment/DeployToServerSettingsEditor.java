@@ -68,10 +68,6 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
   protected final void updateDeploymentSettingsEditor() {
     RemoteServer<S> selectedServer = myServerCombo.getSelectedServer();
 
-    if (selectedServer == null) {
-      UIUtil.invokeLaterIfNeeded(() -> myDeploymentSettingsComponent.removeAll());
-    }
-
     DeploymentSource selectedSource = getSelectedSource();
     if (Comparing.equal(selectedSource, myLastSelectedSource) && Comparing.equal(selectedServer, myLastSelectedServer)) {
       return;
@@ -81,18 +77,20 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
       updateBeforeRunOptions(myLastSelectedSource, false);
       updateBeforeRunOptions(selectedSource, true);
     }
-    if (selectedSource != null && selectedServer != null) {
+    if (selectedSource != null) {
       UIUtil.invokeLaterIfNeeded(() -> {
-        myDeploymentSettingsComponent.removeAll();
-
         if (!Disposer.isDisposed(this)) {
           myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selectedSource, selectedServer);
+
           if (myDeploymentSettingsEditor != null) {
             if (myDeploymentConfiguration != null) {
               myDeploymentSettingsEditor.resetFrom(myDeploymentConfiguration);
             }
+
             myDeploymentSettingsEditor.addSettingsEditorListener(e -> fireEditorStateChanged());
             Disposer.register(this, myDeploymentSettingsEditor);
+
+            myDeploymentSettingsComponent.removeAll();
             myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
           }
         }

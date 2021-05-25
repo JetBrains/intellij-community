@@ -175,7 +175,7 @@ final class PassExecutorService implements Disposable {
     }
 
     if (LOG.isDebugEnabled()) {
-      Set<VirtualFile> vFiles = ContainerUtil.map2Set(passesMap.keySet(), fe -> myFileEditorManager.getFile(fe));
+      Set<VirtualFile> vFiles = ContainerUtil.map2Set(passesMap.keySet(), FileEditor::getFile);
 
       log(updateProgress, null, vFiles + " ----- starting " + threadsToStartCountdown.get(), freePasses);
     }
@@ -482,8 +482,7 @@ final class PassExecutorService implements Disposable {
         throw e;
       }
       catch (RuntimeException e) {
-        FileEditorManagerEx fileEditorManagerEx = FileEditorManagerEx.getInstanceEx(myProject);
-        VirtualFile file = fileEditorManagerEx == null ? null : fileEditorManagerEx.getFile(fileEditor);
+        VirtualFile file = fileEditor.getFile();
         FileType fileType = file == null ? null : file.getFileType();
         String message = "Exception while applying information to " + fileEditor + "("+fileType+")";
         log(updateProgress, pass, message + e);

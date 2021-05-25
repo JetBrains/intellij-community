@@ -208,8 +208,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     return baseActions;
   }
 
-  @Nullable
-  public static ProcessTtyConnector getProcessTtyConnector(@NotNull TtyConnector connector) {
+  public static @Nullable ProcessTtyConnector getProcessTtyConnector(@Nullable TtyConnector connector) {
     if (connector instanceof ProcessTtyConnector) {
       return (ProcessTtyConnector)connector;
     }

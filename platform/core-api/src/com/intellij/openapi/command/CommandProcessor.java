@@ -59,6 +59,15 @@ public abstract class CommandProcessor {
                                       @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                                       boolean shouldRecordCommandForActiveDocument);
 
+  @ApiStatus.Experimental
+  public abstract void executeCommand(@Nullable Project project,
+                                      @NotNull Runnable command,
+                                      @Nullable @NlsContexts.Command String name,
+                                      @Nullable Object groupId,
+                                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
+                                      boolean shouldRecordCommandForActiveDocument,
+                                      @Nullable Document document);
+
   public abstract void setCurrentCommandName(@Nullable @NlsContexts.Command String name);
 
   public abstract void setCurrentCommandGroupId(@Nullable Object groupId);

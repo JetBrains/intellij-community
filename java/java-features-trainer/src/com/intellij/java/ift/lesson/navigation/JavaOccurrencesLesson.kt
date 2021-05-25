@@ -3,9 +3,6 @@ package com.intellij.java.ift.lesson.navigation
 
 import com.intellij.find.SearchTextArea
 import com.intellij.java.ift.JavaLessonsBundle
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.actionButton
-import com.intellij.testGuiFramework.util.Key
 import com.intellij.usageView.UsageViewBundle
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
@@ -95,7 +92,7 @@ class JavaOccurrencesLesson
       stateCheck {
         editor.headerComponent == null
       }
-      test { GuiTestUtil.shortcut(Key.ESCAPE) }
+      test { invokeActionViaShortcut("ESCAPE") }
     }
     actionTask("FindNext") {
       JavaLessonsBundle.message("java.find.occurrences.find.next.in.editor", action(it))

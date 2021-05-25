@@ -64,7 +64,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
     topToolbarActions.add(OpenEventsSchemeFileAction(recorderId))
     topToolbarActions.addSeparator(StatisticsBundle.message("stats.events.test.scheme"))
     topToolbarActions.add(AddGroupToTestSchemeAction(recorderId))
-    topToolbarActions.add(CleanupEventsTestSchemeAction())
+    topToolbarActions.add(CleanupEventsTestSchemeAction(recorderId))
     topToolbarActions.add(EditEventsTestSchemeAction(recorderId))
     val toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", topToolbarActions, true)
     toolbar.setShowSeparatorTitles(true)

@@ -3,7 +3,10 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
@@ -28,6 +31,22 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
     final String name = eventXml.getTestName();
     final String fqClassName = eventXml.getTestClassName();
 
+    doProcess(testId, parentTestId, name, fqClassName);
+  }
+
+  @Override
+  public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
+    TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
+    final String testId = testEvent.getEventId();
+    final String parentTestId = testEvent.getParentEventId();
+    final String name = ObjectUtils.coalesce(testDescriptor.getDisplayName(), testDescriptor.getMethodName(), testId);
+    final String fqClassName = testDescriptor.getClassName();
+
+    doProcess(testId, parentTestId, name, fqClassName);
+  }
+
+
+  private void doProcess(String testId, String parentTestId, String name, String fqClassName) {
     if (StringUtil.isEmpty(parentTestId)) {
       registerTestProxy(testId, getResultsViewer().getTestsRootNode());
     }

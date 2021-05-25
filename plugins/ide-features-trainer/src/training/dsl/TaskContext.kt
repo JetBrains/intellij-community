@@ -102,7 +102,7 @@ abstract class TaskContext : LearningDslBase {
   open fun addStep(step: CompletableFuture<Boolean>) = Unit
 
   /** [action] What should be done to pass the current task */
-  open fun test(action: TaskTestContext.() -> Unit) = Unit
+  open fun test(waitEditorToBeReady: Boolean = true, action: TaskTestContext.() -> Unit) = Unit
 
   fun triggerByFoundPathAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false, usePulsation: Boolean = false,
                                      checkPath: TaskRuntimeContext.(tree: JTree, path: TreePath) -> Boolean) {

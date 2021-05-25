@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -214,8 +214,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     Dimension size = super.getPreferredSize();
     if (myAdditionalRowsCount == 0) return size;
     int additionalHeight = myAdditionalRowsCount * getRowHeight();
-    Container parent = getParent();
-    int visibleAreaHeight = parent instanceof JViewport ? parent.getSize().height : 0;
+    JViewport viewport = ComponentUtil.getViewport(this);
+    int visibleAreaHeight = viewport == null ? 0 : viewport.getHeight();
     if (visibleAreaHeight > 0) additionalHeight = Math.min(visibleAreaHeight - rowHeight, additionalHeight);
     return new Dimension(size.width, size.height + additionalHeight);
   }

@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.ide.dnd.DnDActionInfo
 import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -26,9 +25,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPO
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
@@ -135,7 +134,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   }
 
   private fun getComponentWidth(icon: Icon): Int {
-    val hasTransparentScrollbar = JBScrollPane.findScrollPane(this)?.verticalScrollBar?.let { it.isVisible && !it.isOpaque } == true
+    val hasTransparentScrollbar = ComponentUtil.getScrollPane(this)?.verticalScrollBar?.let { it.isVisible && !it.isOpaque } == true
     if (hasTransparentScrollbar) return icon.iconWidth + UIUtil.getScrollBarWidth()
     return icon.iconWidth
   }
@@ -253,24 +252,6 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   private fun isUnderKind(node: ChangesBrowserNode<*>, nodeKind: NodeKind): Boolean {
     val nodePath = node.path?.takeIf { it.isNotEmpty() } ?: return false
     return (nodePath.find { it is MyKindNode } as? MyKindNode)?.kind == nodeKind
-  }
-
-  override fun installGroupingSupport(): ChangesGroupingSupport {
-    val result = ChangesGroupingSupport(project, this, false)
-
-    if (PropertiesComponent.getInstance(project).getValues(GROUPING_PROPERTY_NAME) == null) {
-      val oldGroupingKeys = (PropertiesComponent.getInstance(project).getValues(GROUPING_KEYS) ?: DEFAULT_GROUPING_KEYS).toMutableSet()
-      oldGroupingKeys.add(REPOSITORY_GROUPING)
-      PropertiesComponent.getInstance(project).setValues(GROUPING_PROPERTY_NAME, *oldGroupingKeys.toTypedArray())
-    }
-
-    installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, *DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
-    return result
-  }
-
-  companion object {
-    @NonNls
-    private const val GROUPING_PROPERTY_NAME = "GitStage.ChangesTree.GroupingKeys"
   }
 
   private inner class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory)

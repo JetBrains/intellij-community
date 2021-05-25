@@ -17,6 +17,7 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Modification
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
@@ -126,19 +127,19 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     if (!projectChangeOperation.isOperationCompleted()) return
     if (smart && !projectRefreshOperation.isOperationCompleted()) return
     var isSkippedProjectRefresh = true
-    for (projectData in projectDataMap.values) {
-      val projectId = projectData.projectAware.projectId.readableName
+    for ((projectId, projectData) in projectDataMap) {
       val isAllowAutoReload = !smart || projectData.isActivated
       if (isAllowAutoReload && !projectData.isUpToDate()) {
         isSkippedProjectRefresh = false
-        LOG.debug("$projectId: Project refresh")
+        LOG.debug("${projectId.readableName}: Project refresh")
         val hasUndefinedModifications = !projectData.status.isUpToDate()
         val settingsContext = projectData.settingsTracker.getSettingsContext()
-        val context = ProjectReloadContext(!smart, hasUndefinedModifications, settingsContext)
+        val isPreviewMode = !smart && !ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, projectId.systemId)
+        val context = ProjectReloadContext(!smart, isPreviewMode, hasUndefinedModifications, settingsContext)
         projectData.projectAware.reloadProject(context)
       }
       else {
-        LOG.debug("$projectId: Skip project refresh")
+        LOG.debug("${projectId.readableName}: Skip project refresh")
       }
     }
     if (isSkippedProjectRefresh) {
@@ -322,6 +323,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   private data class ProjectReloadContext(
     override val isExplicitReload: Boolean,
+    override val isPreviewMode: Boolean,
     override val hasUndefinedModifications: Boolean,
     override val settingsFilesContext: ExternalSystemSettingsFilesReloadContext
   ) : ExternalSystemProjectReloadContext

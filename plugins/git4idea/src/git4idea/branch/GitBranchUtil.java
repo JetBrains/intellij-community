@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.commands.*;
@@ -231,7 +230,6 @@ public final class GitBranchUtil {
    *         or if the current Git root couldn't be determined.
    */
   @Nullable
-  @RequiresEdt
   public static GitRepository getCurrentRepository(@NotNull Project project) {
     return getRepositoryOrGuess(project, DvcsUtil.getSelectedFile(project));
   }

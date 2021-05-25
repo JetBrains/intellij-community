@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
+import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -28,6 +29,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,7 +50,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -82,7 +83,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   @SuppressWarnings("StaticNonFinalField")
   @TestOnly
   public static volatile boolean TESTING_VIEW;
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager
+    .getInstance()
+    .getNotificationGroup("Inspection Results");
 
   private final NotNullLazyValue<? extends ContentManager> myContentManager;
   private final InspectListener myInspectTopicPublisher;
@@ -131,7 +134,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     contentManager.addContent(myContent);
     contentManager.setSelectedContent(myContent);
 
-    ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.INSPECTION).activate(null);
+    ToolWindowManager.getInstance(getProject()).getToolWindow(ProblemsView.ID).activate(null);
   }
 
   public void addView(@NotNull InspectionResultsView view) {

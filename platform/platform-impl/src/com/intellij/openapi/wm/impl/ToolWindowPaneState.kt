@@ -18,7 +18,7 @@ internal class ToolWindowPaneState {
     return if (f == 0f) defaultValue else f
   }
 
-  fun addSplitProportion(info: WindowInfo, component: InternalDecorator?, splitter: Splitter) {
+  fun addSplitProportion(info: WindowInfo, component: InternalDecoratorImpl?, splitter: Splitter) {
     if (info.isSplit && component != null) {
       idToSplitProportion.put(component.toolWindow.id, splitter.proportion)
     }

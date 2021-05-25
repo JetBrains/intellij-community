@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider;
 
@@ -31,10 +32,13 @@ import static org.jetbrains.idea.maven.utils.actions.MavenActionUtil.*;
 public class AddFileAsMavenProjectAction extends MavenAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+
     DataContext context = e.getDataContext();
     Project project = getProject(context);
+
     VirtualFile file = getSelectedFile(context);
     if (project != null && file != null) {
+      MavenUtil.isProjectTrustedEnoughToImport(project, true);
       MavenOpenProjectProvider openProjectProvider = new MavenOpenProjectProvider();
       openProjectProvider.linkToExistingProject(file, project);
     }

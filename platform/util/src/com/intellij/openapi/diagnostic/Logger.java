@@ -210,6 +210,8 @@ public abstract class Logger {
 
   protected static Throwable checkException(@Nullable Throwable t) {
     boolean pce = t instanceof ControlFlowException;
-    return pce ? new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged", t) : t;
+    return pce ? new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged: " +
+                               "ignore for explicitly started processes or rethrow to handle on the outer process level", t) 
+               : t;
   }
 }

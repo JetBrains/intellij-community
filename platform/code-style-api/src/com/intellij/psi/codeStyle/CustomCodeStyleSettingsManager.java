@@ -21,8 +21,13 @@ class CustomCodeStyleSettingsManager {
     myRootSettings = settings;
   }
 
+  void initCustomSettings() {
+    for (final CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getCustomCodeStyleSettingsFactories()) {
+      addCustomSettings(myRootSettings, factory);
+    }
+  }
 
-  void addCustomSettings(@NotNull CodeStyleSettings rootSettings, @NotNull CustomCodeStyleSettingsFactory factory) {
+  private void addCustomSettings(@NotNull CodeStyleSettings rootSettings, @NotNull CustomCodeStyleSettingsFactory factory) {
     CustomCodeStyleSettings customSettings = factory.createCustomSettings(rootSettings);
     if (customSettings != null) {
       synchronized (myCustomSettings) {
@@ -33,14 +38,22 @@ class CustomCodeStyleSettingsManager {
 
   @NotNull
   <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> aClass) {
+    String className = aClass.getName();
+    CustomCodeStyleSettings result;
     synchronized (myCustomSettings) {
-      //noinspection unchecked
-      T result = (T)myCustomSettings.get(aClass.getName());
-      if (result == null) {
-        throw new RuntimeException("Unable to get registered settings of #" + aClass.getSimpleName() + " (" + aClass.getName() + ")");
-      }
-      return result;
+      result = myCustomSettings.get(className);
     }
+    if (result == null) {
+      result = createCustomSettings(className);
+      if (result != null) {
+        registerCustomSettings(result);
+      }
+      else {
+        throw new RuntimeException("Unable to get or create settings of #" + aClass.getSimpleName() + " (" + className + ")");
+      }
+    }
+    //noinspection unchecked
+    return (T)result;
   }
 
   @Nullable
@@ -52,18 +65,33 @@ class CustomCodeStyleSettingsManager {
   }
 
 
+  @Nullable
+  private CustomCodeStyleSettings createCustomSettings(@NotNull String customSettingsClassName) {
+    for (final CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getCustomCodeStyleSettingsFactories()) {
+      CustomCodeStyleSettings customSettings = factory.createCustomSettings(myRootSettings);
+      if (customSettings != null && customSettingsClassName.equals(customSettings.getClass().getName())) {
+        return customSettings;
+      }
+    }
+    return null;
+  }
+
   void registerCustomSettings(@NotNull CodeStyleSettings rootSettings, @NotNull CustomCodeStyleSettingsFactory factory) {
     CustomCodeStyleSettings customSettings = factory.createCustomSettings(rootSettings);
     if (customSettings != null) {
-      for (String tagName : customSettings.getKnownTagNames()) {
-        if (myUnknownCustomElements.containsKey(tagName)) {
-          restoreCustomSettings(customSettings);
-          return;
-        }
+      registerCustomSettings(customSettings);
+    }
+  }
+
+  private void registerCustomSettings(@NotNull CustomCodeStyleSettings customSettings) {
+    for (String tagName : customSettings.getKnownTagNames()) {
+      if (myUnknownCustomElements.containsKey(tagName)) {
+        restoreCustomSettings(customSettings);
+        return;
       }
-      synchronized (myCustomSettings) {
-        myCustomSettings.put(customSettings.getClass().getName(), customSettings);
-      }
+    }
+    synchronized (myCustomSettings) {
+      myCustomSettings.put(customSettings.getClass().getName(), customSettings);
     }
   }
 

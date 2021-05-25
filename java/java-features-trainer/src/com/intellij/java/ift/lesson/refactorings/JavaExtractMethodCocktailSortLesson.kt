@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ift.lesson.refactorings
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.refactoring.JavaRefactoringBundle
-import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.testGuiFramework.impl.button
 import com.intellij.ui.UIBundle
 import training.dsl.LessonContext
+import training.dsl.LessonUtil.rawEnter
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
 import training.dsl.dropMnemonic
 import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
@@ -25,32 +25,21 @@ class JavaExtractMethodCocktailSortLesson
         restoreIfModifiedOrMoved()
         LessonsBundle.message("extract.method.invoke.action", action(it))
       }
-      // Now will be open the first dialog
 
       val processDuplicatesTitle = JavaRefactoringBundle.message("process.duplicates.title")
       task {
-        val refactorButtonText = RefactoringBundle.message("refactor.button").dropMnemonic()
-        text(LessonsBundle.message("extract.method.start.refactoring", strong(refactorButtonText)))
+        text(JavaLessonsBundle.message("java.extract.method.edit.method.name", rawEnter()))
 
-        // Wait until the second dialog
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog : JDialog ->
+        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
           dialog.title == processDuplicatesTitle
         }
 
-        var needRestore = false
-        restoreState {
-          val insideDialog = Thread.currentThread().stackTrace.any {
-            it.className.contains(ExtractMethodHandler::class.simpleName!!)
-          }
-          (needRestore && !insideDialog).also { needRestore = insideDialog }
+        restoreState(delayMillis = defaultRestoreDelay) {
+          TemplateManagerImpl.getTemplateState(editor) == null
         }
 
-        test {
-          with(TaskTestContext.guiTestCase) {
-            dialog(RefactoringBundle.message("extract.method.title"), needToKeepDialog=true) {
-              button(refactorButtonText).click()
-            }
-          }
+        test(waitEditorToBeReady = false) {
+          invokeActionViaShortcut("ENTER")
         }
       }
 
@@ -62,11 +51,9 @@ class JavaExtractMethodCocktailSortLesson
           previous.ui?.isShowing?.not() ?: true
         }
 
-        test {
-          with(TaskTestContext.guiTestCase) {
-            dialog(processDuplicatesTitle) {
-              button(replaceButtonText).click()
-            }
+        test(waitEditorToBeReady = false) {
+          dialog(processDuplicatesTitle) {
+            button(replaceButtonText).click()
           }
         }
       }
