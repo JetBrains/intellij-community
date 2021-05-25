@@ -268,6 +268,8 @@
                     serviceImplementation="com.intellij.openapi.diff.impl.dir.DirDiffManagerImpl"/>
     <diff.DiffExtension implementation="com.intellij.diff.actions.ShowBlankDiffWindowDiffExtension"/>
 
+    <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
+                    serviceImplementation="com.intellij.diff.editor.DefaultDiffTabFilesManager"/>
 
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightFilter"/>
     <daemon.intentionActionFilter implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$IntentionFilter"/>
