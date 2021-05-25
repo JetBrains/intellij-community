@@ -22,7 +22,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,12 +66,13 @@ public class DiffManagerImpl extends DiffManagerEx {
 
   @Override
   public void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints) {
-    if (Registry.is("show.diff.as.editor.tab") &&
-        project != null &&
+    DiffEditorTabFilesManager diffEditorTabFilesManager = project != null ? DiffEditorTabFilesManager.getInstance(project) : null;
+    if (diffEditorTabFilesManager != null &&
+        diffEditorTabFilesManager.isEditorDiffAvailable() &&
         DiffUtil.getWindowMode(hints) == WindowWrapper.Mode.FRAME &&
         hints.getWindowConsumer() == null) {
       ChainDiffVirtualFile diffFile = new ChainDiffVirtualFile(requests, DiffBundle.message("label.default.diff.editor.tab.name"));
-      DiffEditorTabFilesManager.getInstance(project).showDiffFile(diffFile, true);
+      diffEditorTabFilesManager.showDiffFile(diffFile, true);
       return;
     }
     new DiffWindow(project, requests, hints).show();

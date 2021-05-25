@@ -1,30 +1,32 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.editor.ChainDiffVirtualFile
 import com.intellij.diff.editor.DiffEditorTabFilesManager
+import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.SHOW_DIFF_IN_EDITOR_SETTING
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 
 class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabFilesManager {
 
-  fun isEditorDiffPreviewAvailable() =
-    ChangesViewContentManager.isCommitToolWindowShown(project) || Registry.`is`("show.diff.preview.as.editor.tab")
+  fun isEditorDiffPreviewAvailable() = isEditorDiffAvailable()
 
   fun subscribeToPreviewVisibilityChange(disposable: Disposable, onVisibilityChange: Runnable) {
-    isEditorDiffPreview.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        onVisibilityChange.run()
-      }
-    }, disposable)
+    ApplicationManager.getApplication().messageBus.connect(disposable)
+      .subscribe(AdvancedSettingsChangeListener.TOPIC,
+                 object : AdvancedSettingsChangeListener {
+                   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+                     if (id == SHOW_DIFF_IN_EDITOR_SETTING && oldValue != newValue) {
+                       onVisibilityChange.run()
+                     }
+                   }
+                 })
     project.messageBus.connect(disposable)
       .subscribe(ChangesViewContentManagerListener.TOPIC,
                  object : ChangesViewContentManagerListener {
@@ -43,8 +45,6 @@ class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabF
   }
 
   companion object {
-    private val isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab")
-
     @JvmField
     val EDITOR_TAB_DIFF_PREVIEW = DataKey.create<DiffPreview>("EditorTabDiffPreview")
 
