@@ -1,6 +1,6 @@
 // "Surround with null check" "false"
 // ACTION: Add non-null asserted (!!) call
-// ACTION: Add return@bar
+// ACTION: Add 'return@bar'
 // ACTION: Introduce local variable
 // ACTION: Replace 'it' with explicit parameter
 // ACTION: Replace with safe (?.) call
