@@ -141,11 +141,11 @@ class GitIndexVirtualFile(private val project: Project,
     try {
       if (ApplicationManager.getApplication().isDispatchThread) {
         return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ByteArray, IOException> {
-          contentToByteArrayImpl()
+          readContentFromGit()
         }, GitBundle.message("stage.vfs.read.process", name), false, project)
       }
       else {
-        return contentToByteArrayImpl()
+        return readContentFromGit()
       }
     }
     catch (e: Exception) {
@@ -153,7 +153,8 @@ class GitIndexVirtualFile(private val project: Project,
     }
   }
 
-  private fun contentToByteArrayImpl(): ByteArray {
+  @Throws(IOException::class)
+  private fun readContentFromGit(): ByteArray {
     return try {
       GitFileUtils.getFileContent(project, root, "", VcsFileUtil.relativePath(root, filePath))
     }
