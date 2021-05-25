@@ -4,6 +4,7 @@ package org.jetbrains.uast.test.env.kotlin
 
 import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.mock.MockProject
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiManager
@@ -24,6 +25,10 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
 
     protected val project: MockProject
         get() = environment.project
+
+    protected val uastContext: org.jetbrains.uast.UastContext by lazy {
+        com.intellij.openapi.components.ServiceManager.getService(project, org.jetbrains.uast.UastContext::class.java)
+    }
 
     protected val psiManager: PsiManager by lazy {
         PsiManager.getInstance(project)

@@ -202,6 +202,7 @@ fun <T : KtDeclaration> insertMembersAfter(
     getAnchor: (KtDeclaration) -> PsiElement? = { null },
 ): List<SmartPsiElementPointer<T>> {
     members.ifEmpty { return emptyList() }
+    val project = classOrObject.project
     val insertedMembers = SmartList<SmartPsiElementPointer<T>>()
     val (parameters, otherMembers) = members.partition { it is KtParameter }
 
