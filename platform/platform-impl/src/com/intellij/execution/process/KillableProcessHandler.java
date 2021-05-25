@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -33,6 +33,11 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
+    myMediatedProcess = RunnerMediator.isRunnerCommandInjected(commandLine);
+  }
+
+  protected KillableProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
+    super(process, commandLine.getCommandLineString(), commandLine.getCharset());
     myMediatedProcess = RunnerMediator.isRunnerCommandInjected(commandLine);
   }
 
