@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -20,6 +21,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Query;
+import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
@@ -32,6 +35,8 @@ import java.util.List;
 import java.util.Set;
 
 public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider {
+
+  @NonNls private static final String INSPECTION_CLASS_NAME_SUFFIX = "Inspection";
 
   @NotNull
   @Override
@@ -69,7 +74,10 @@ public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvide
 
     // Try to find class by description name first. It may improve performance significantly.
     PsiShortNamesCache psiShortNamesCache = PsiShortNamesCache.getInstance(project);
-    String possibleImplementationName = FileUtilRt.getNameWithoutExtension(descriptionFile.getName()) + "Inspection";
+    String possibleImplementationName = FileUtilRt.getNameWithoutExtension(descriptionFile.getName());
+    if (!StringUtil.endsWith(possibleImplementationName, INSPECTION_CLASS_NAME_SUFFIX)) {
+      possibleImplementationName += INSPECTION_CLASS_NAME_SUFFIX;
+    }
     Set<PsiClass> checkedPossibleImplementation = new HashSet<>();
     for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
       PsiClass[] possibleImplementations = psiShortNamesCache.getClassesByName(possibleImplementationName, scope);
