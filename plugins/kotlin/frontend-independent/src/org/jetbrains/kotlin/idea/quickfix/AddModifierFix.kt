@@ -108,6 +108,7 @@ open class AddModifierFix(
         val addOpenToContainingClass = AddModifierFix.createFactory(KtTokens.OPEN_KEYWORD, KtClassOrObject::class.java)
         val addFinalToProperty = AddModifierFix.createFactory(KtTokens.FINAL_KEYWORD, KtProperty::class.java)
         val addInnerModifier = createFactory(KtTokens.INNER_KEYWORD)
+        val addOverrideModifier = createFactory(KtTokens.OVERRIDE_KEYWORD)
 
         val modifiersWithWarning = setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.FINAL_KEYWORD)
 
