@@ -16,4 +16,6 @@ interface BaseKotlinUastResolveProviderService {
     fun resolveToDeclaration(ktExpression: KtExpression): PsiElement?
 
     fun getExpressionType(uExpression: UExpression): PsiType?
+
+    fun evaluate(uExpression: UExpression): Any?
 }
