@@ -107,7 +107,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         editor: Editor?
     ) {
         if (nameSuggestions.isNotEmpty() && editor != null) {
-            val restoredElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(declaration)
+            val restoredElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(declaration) ?: return
             val restoredParam = restoredElement.getValueParameters().first()
 
             val paramRefs = ReferencesSearch.search(restoredParam, LocalSearchScope(restoredElement)).toList()

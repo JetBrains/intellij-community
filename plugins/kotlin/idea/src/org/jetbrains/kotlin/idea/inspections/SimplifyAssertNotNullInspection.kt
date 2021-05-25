@@ -85,7 +85,7 @@ class SimplifyAssertNotNullInspection : AbstractApplicabilityBasedInspection<KtC
         commentSaver.restore(declaration)
 
         if (editor != null) {
-            val newInitializer = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(declaration).initializer!!
+            val newInitializer = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(declaration)?.initializer ?: return
             val offset = if (message == null)
                 newInitializer.endOffset
             else

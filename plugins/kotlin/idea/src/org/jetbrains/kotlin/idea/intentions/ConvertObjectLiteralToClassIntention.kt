@@ -103,7 +103,7 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
             val introducedClass = functionDeclaration.replaced(newClass).apply {
                 if (hasMemberReference && containingClass == (parent.parent as? KtClass)) addModifier(KtTokens.INNER_KEYWORD)
                 primaryConstructor?.reformatted()
-            }.let { CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(it) }
+            }.let { CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(it) } ?: return@run
 
             val file = introducedClass.containingFile
 

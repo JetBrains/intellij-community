@@ -53,7 +53,7 @@ internal class CreateEnumConstantAction(
     for (expression in argumentList.expressions) {
       builder.replaceElement(expression, EmptyExpression())
     }
-    enumConstant = forcePsiPostprocessAndRestoreElement(enumConstant)
+    enumConstant = forcePsiPostprocessAndRestoreElement(enumConstant) ?: return
     val template = builder.buildTemplate()
 
     val newEditor = positionCursor(project, targetClass.containingFile, enumConstant) ?: return

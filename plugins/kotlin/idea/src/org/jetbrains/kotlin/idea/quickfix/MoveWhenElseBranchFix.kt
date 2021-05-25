@@ -33,7 +33,7 @@ class MoveWhenElseBranchFix(element: KtWhenExpression) : KotlinQuickFixAction<Kt
 
         val insertedBranch = element.addAfter(elseEntry, lastEntry) as KtWhenEntry
         elseEntry.delete()
-        val insertedWhenEntry = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedBranch)
+        val insertedWhenEntry = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedBranch) ?: return
 
         editor.caretModel.moveToOffset(insertedWhenEntry.textOffset + cursorOffset)
     }
