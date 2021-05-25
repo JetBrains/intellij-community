@@ -804,12 +804,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars) {
-    if (chars instanceof String || chars instanceof CharSequenceWithStringHash) {
-      // we know for sure these classes have conformant (and maybe faster) hashCode()
-      return chars.hashCode();
-    }
-
-    return stringHashCode(chars, 0, chars.length());
+    return Strings.stringHashCode(chars);
   }
 
   @Contract(pure = true)
@@ -1310,102 +1305,52 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull <T> String join(T @NotNull [] items, @NotNull Function<? super T, String> f, @NotNull String separator) {
-    return join(Arrays.asList(items), f, separator);
+    return Strings.join(items, f, separator);
   }
 
   @Contract(pure = true)
   public static @NotNull <T> String join(@NotNull Collection<? extends T> items,
                                          @NotNull Function<? super T, String> f,
                                          @NotNull String separator) {
-    if (items.isEmpty()) return "";
-    if (items.size() == 1) return notNullize(f.fun(items.iterator().next()));
-    return join((Iterable<? extends T>)items, f, separator);
+    return Strings.join(items, f, separator);
   }
 
   @Contract(pure = true)
   public static @NotNull String join(@NotNull Iterable<?> items, @NotNull String separator) {
-    StringBuilder result = new StringBuilder();
-    for (Object item : items) {
-      result.append(item).append(separator);
-    }
-    if (result.length() > 0) {
-      result.setLength(result.length() - separator.length());
-    }
-    return result.toString();
+    return Strings.join(items, separator);
   }
 
   @Contract(pure = true)
   public static @NotNull <T> String join(@NotNull Iterable<? extends T> items,
                                          @NotNull Function<? super T, ? extends CharSequence> f,
                                          @NotNull String separator) {
-    StringBuilder result = new StringBuilder();
-    join(items, f, separator, result);
-    return result.toString();
+    return Strings.join(items, f, separator);
   }
 
   public static <T> void join(@NotNull Iterable<? extends T> items,
                               @NotNull Function<? super T, ? extends CharSequence> f,
                               @NotNull String separator,
                               @NotNull StringBuilder result) {
-    boolean isFirst = true;
-    for (T item : items) {
-      CharSequence string = f.fun(item);
-      if (!isEmpty(string)) {
-        if (isFirst) {
-          isFirst = false;
-        }
-        else {
-          result.append(separator);
-        }
-        result.append(string);
-      }
-    }
+    Strings.join(items, f, separator, result);
   }
 
   @Contract(pure = true)
   public static @NotNull String join(@NotNull Collection<String> strings, @NotNull String separator) {
-    if (strings.size() <= 1) {
-      return notNullize(strings.isEmpty() ? null : strings.iterator().next());
-    }
-    StringBuilder result = new StringBuilder();
-    join(strings, separator, result);
-    return result.toString();
+    return Strings.join(strings, separator);
   }
 
   public static void join(@NotNull Collection<String> strings, @NotNull String separator, @NotNull StringBuilder result) {
-    boolean isFirst = true;
-    for (String string : strings) {
-      if (string != null) {
-        if (isFirst) {
-          isFirst = false;
-        }
-        else {
-          result.append(separator);
-        }
-        result.append(string);
-      }
-    }
+    Strings.join(strings, separator, result);
   }
 
   @Contract(pure = true)
   public static @NotNull String join(final int @NotNull [] strings, final @NotNull String separator) {
-    final StringBuilder result = new StringBuilder();
-    for (int i = 0; i < strings.length; i++) {
-      if (i > 0) result.append(separator);
-      result.append(strings[i]);
-    }
-    return result.toString();
+    return Strings.join(strings, separator);
   }
 
   @Contract(pure = true)
   public static @NotNull String join(final String @NotNull ... strings) {
-    if (strings.length == 0) return "";
-
-    final StringBuilder builder = new StringBuilder();
-    for (final String string : strings) {
-      builder.append(string);
-    }
-    return builder.toString();
+    return Strings.join(strings);
   }
 
   @Contract(pure = true)
@@ -2683,7 +2628,6 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String formatLinks(@NotNull String message) {
-    @SuppressWarnings("HttpUrlsUsage")
     Pattern linkPattern = Pattern.compile("http://[a-zA-Z0-9./\\-+]+");
     StringBuffer result = new StringBuffer();
     Matcher m = linkPattern.matcher(message);

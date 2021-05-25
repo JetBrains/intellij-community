@@ -95,7 +95,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testSoftMapTossedEvenWithIdentityStrategy() {
-    Map<Object, Object> map = CollectionFactory.createSoftIdentityMap();
+    Map<Object, Object> map = ContainerUtil.createSoftMap(HashingStrategy.identity());
     checkKeyTossedEventually(map);
   }
 
@@ -266,7 +266,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testWeakMapCustomStrategy() {
-    Map<String, String> map = ContainerUtil.createWeakMap(10, 0.5f, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
+    Map<String, String> map = CollectionFactory.createWeakMap(10, 0.5f, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     String keyL = "ab";
     String keyU = StringUtil.toUpperCase(keyL);
@@ -288,7 +288,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testSoftNativeHashCodeDoesNotGetCalledWhenCustomStrategyIsSpecified() {
-    Map<Object, Object> map = CollectionFactory.createSoftIdentityMap();
+    Map<Object, Object> map = ContainerUtil.createSoftMap(HashingStrategy.identity());
 
     checkHashCodeDoesntCalledFor(map);
   }

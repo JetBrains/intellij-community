@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ObjectUtilsRt;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +82,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
         newKey[pos] = k;
         newValue[pos] = value[i];
         // avoid inserting gced keys into new table
-        ObjectUtils.reachabilityFence(referent);
+        ObjectUtilsRt.reachabilityFence(referent);
       }
       newValue[newN] = value[n];
       n = newN;
