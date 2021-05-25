@@ -6,20 +6,18 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.excludedFromUpdateCheckPlugins
-import com.intellij.psi.search.FileTypeIndex
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinPluginCompatibilityVerifier.checkCompatibility
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyKotlinStyleUpdateIfNeeded
 import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupReportingFromRelease
+import org.jetbrains.kotlin.idea.search.containsKotlinFile
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
@@ -40,22 +38,19 @@ class PluginStartupActivity : StartupActivity.Background {
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")
         checkCompatibility()
         setupReportingFromRelease()
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-            runReadAction {
-                notifyKotlinStyleUpdateIfNeeded(project)
-            }
-        }
 
         //todo[Sedunov]: wait for fix in platform to avoid misunderstood from Java newbies (also ConfigureKotlinInTempDirTest)
         //KotlinSdkType.Companion.setUpIfNeeded();
 
-        ReadAction.nonBlocking(Callable {
-            FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(project))
-        })
+        ReadAction.nonBlocking(Callable { project.containsKotlinFile() })
             .inSmartMode(project)
             .expireWith(startupService)
             .finishOnUiThread(ModalityState.any()) { hasKotlinFiles ->
                 if (!hasKotlinFiles) return@finishOnUiThread
+
+                if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+                    notifyKotlinStyleUpdateIfNeeded(project)
+                }
 
                 val daemonCodeAnalyzer = DaemonCodeAnalyzerImpl.getInstanceEx(project) as DaemonCodeAnalyzerImpl
                 daemonCodeAnalyzer.serializeCodeInsightPasses(true)

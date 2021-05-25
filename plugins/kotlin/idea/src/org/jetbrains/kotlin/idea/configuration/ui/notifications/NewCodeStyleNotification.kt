@@ -16,8 +16,6 @@ import org.jetbrains.kotlin.idea.search.containsKotlinFile
 private const val KOTLIN_UPDATE_CODE_STYLE_GROUP_ID = "Update Kotlin code style"
 
 fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
-    if (!project.containsKotlinFile()) return
-
     if (CodeStyle.getSettings(project).kotlinCodeStyleDefaults() == KotlinStyleGuideCodeStyle.CODE_STYLE_ID) return
     if (SuppressKotlinCodeStyleComponent.getInstance(project).state.disableForAll) {
         return
