@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider {
+
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
@@ -86,6 +87,10 @@ public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvide
       query.forEach(psiClass -> {
         if (checkedPossibleImplementation.contains(psiClass)) {
           return true; // already tried this class
+        }
+
+        if (!PsiUtil.isInstantiable(psiClass)) {
+          return true; // only check actual inspection
         }
 
         if (isTargetInspectionPsiClass(psiClass, descriptionFile, module)) {
