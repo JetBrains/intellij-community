@@ -2,10 +2,13 @@
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -18,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
 import io.github.classgraph.AnnotationEnumValue
@@ -27,7 +31,7 @@ import java.util.function.BiConsumer
 import kotlin.properties.Delegates.notNull
 
 @Suppress("HardCodedStringLiteral")
-internal class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
+private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
     val errors = mutableListOf<Throwable>()
@@ -62,6 +66,33 @@ internal class CreateAllServicesAndExtensionsAction : AnAction("Create All Servi
     Notification("Error Report", "", message, NotificationType.INFORMATION).notify(null)
   }
 }
+
+private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
+
+  init {
+    if (!ApplicationManager.getApplication().isInternal
+        || !Registry.`is`("ide.plugins.create.all.services.and.extensions", false)) {
+      throw ExtensionNotApplicableException.INSTANCE
+    }
+  }
+
+  override fun appStarted() = ApplicationManager.getApplication().invokeLater {
+    performAction()
+  }
+}
+
+fun performAction() {
+  val actionManager = ActionManager.getInstance()
+  actionManager.tryToExecute(
+    actionManager.getAction(ACTION_ID),
+    null,
+    null,
+    ActionPlaces.UNKNOWN,
+    true,
+  )
+}
+
+const val ACTION_ID = "CreateAllServicesAndExtensions"
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val badServices = java.util.Set.of(

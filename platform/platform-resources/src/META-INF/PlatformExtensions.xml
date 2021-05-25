@@ -1258,8 +1258,12 @@
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.openapi.fileTypes.StdFileTypes$StdFileTypesUpdater" activeInHeadlessMode="true" activeInTestMode="false"
-              topic="com.intellij.openapi.fileTypes.FileTypeListener" />
-    <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger$TypingEventsListener" activeInHeadlessMode="true" activeInTestMode="false"
+              topic="com.intellij.openapi.fileTypes.FileTypeListener"/>
+    <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger$TypingEventsListener" activeInHeadlessMode="true"
+              activeInTestMode="false"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+
+    <listener class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsActivity" topic="com.intellij.ide.AppLifecycleListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
 </idea-plugin>
